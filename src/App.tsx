@@ -1,48 +1,75 @@
+import React from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AppShell from './components/AppShell';
+import Dashboard from './pages/Dashboard';
 
-// A simple component to test the connection
-function TestDashboard() {
-  const { user, loginWithGoogle, logout } = useAuth();
-
+// --- LOGIN SCREEN COMPONENT ---
+function LoginScreen() {
+  const { loginWithGoogle } = useAuth();
+  
   return (
-    <div className="min-h-screen bg-serene-teal flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold text-deep-charcoal mb-4">
-          My Recovery Toolkit
-        </h1>
-        <p className="text-healing-green mb-6 font-medium">
-          Cloud Native Environment: <span className="text-hopeful-coral">Active</span>
-        </p>
-
-        {user ? (
-          <div>
-            <p className="mb-4 text-gray-600">Welcome, {user.displayName}!</p>
-            <button 
-              onClick={logout}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-            >
-              Sign Out
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-serene-teal to-teal-900 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all hover:scale-[1.01]">
+        <div className="p-8 text-center">
+          {/* Logo / Icon */}
+          <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <svg className="w-10 h-10 text-serene-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
           </div>
-        ) : (
+          
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">My Recovery Toolkit</h1>
+          <p className="text-gray-500 mb-8">Your digital companion for the journey.</p>
+          
+          {/* Login Button */}
           <button 
             onClick={loginWithGoogle}
-            className="px-4 py-2 bg-serene-teal text-white rounded hover:bg-teal-700 transition"
+            className="w-full bg-white border-2 border-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 hover:border-serene-teal hover:text-serene-teal transition duration-200 flex items-center justify-center gap-3 group"
           >
-            Sign In with Google
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
+            <span>Continue with Google</span>
           </button>
-        )}
+          
+          <p className="mt-6 text-xs text-gray-400">
+            Secure authentication provided by Firebase
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-function App() {
+// --- ROUTER / CONTENT LOGIC ---
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  // Show a spinner while checking if user is logged in
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-serene-teal"></div>
+      </div>
+    );
+  }
+
+  // If not logged in, show Login Screen
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  // If logged in, show the App Shell (Navbar) wrapping the Dashboard
   return (
-    <AuthProvider>
-      <TestDashboard />
-    </AuthProvider>
+    <AppShell>
+      <Dashboard />
+    </AppShell>
   );
 }
 
-export default App;
+// --- MAIN APP COMPONENT ---
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
