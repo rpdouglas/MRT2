@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Bars3Icon, 
@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface AppShellProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function AppShell({ children }: AppShellProps) {

@@ -1,9 +1,8 @@
-import React from 'react';
+// REMOVED 'import React' from here
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import Dashboard from './pages/Dashboard';
 
-// --- LOGIN SCREEN COMPONENT ---
 function LoginScreen() {
   const { loginWithGoogle } = useAuth();
   
@@ -11,7 +10,6 @@ function LoginScreen() {
     <div className="min-h-screen bg-gradient-to-br from-serene-teal to-teal-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all hover:scale-[1.01]">
         <div className="p-8 text-center">
-          {/* Logo / Icon */}
           <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <svg className="w-10 h-10 text-serene-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -21,7 +19,6 @@ function LoginScreen() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Recovery Toolkit</h1>
           <p className="text-gray-500 mb-8">Your digital companion for the journey.</p>
           
-          {/* Login Button */}
           <button 
             onClick={loginWithGoogle}
             className="w-full bg-white border-2 border-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 hover:border-serene-teal hover:text-serene-teal transition duration-200 flex items-center justify-center gap-3 group"
@@ -39,11 +36,9 @@ function LoginScreen() {
   );
 }
 
-// --- ROUTER / CONTENT LOGIC ---
 function AppContent() {
   const { user, loading } = useAuth();
 
-  // Show a spinner while checking if user is logged in
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -52,12 +47,10 @@ function AppContent() {
     );
   }
 
-  // If not logged in, show Login Screen
   if (!user) {
     return <LoginScreen />;
   }
 
-  // If logged in, show the App Shell (Navbar) wrapping the Dashboard
   return (
     <AppShell>
       <Dashboard />
@@ -65,7 +58,6 @@ function AppContent() {
   );
 }
 
-// --- MAIN APP COMPONENT ---
 export default function App() {
   return (
     <AuthProvider>
