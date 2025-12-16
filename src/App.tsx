@@ -43,7 +43,7 @@ function LoginScreen() {
 
 // --- 2. ROUTE GUARDS ---
 
-// Redirects to Login if not authenticated
+// PrivateRoute: Protects pages AND wraps them in the AppShell (The Menu)
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
@@ -59,11 +59,11 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
 
-  // Wrap private pages in the AppShell (Navbar)
+  // This is the ONLY place AppShell should be used
   return <AppShell>{children}</AppShell>;
 }
 
-// Redirects to Dashboard if already authenticated
+// PublicRoute: Redirects logged-in users away from Login page
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
@@ -88,28 +88,28 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Route: Login */}
+          {/* LOGIN ROUTE */}
           <Route path="/login" element={
             <PublicRoute>
               <LoginScreen />
             </PublicRoute>
           } />
           
-          {/* Private Route: Dashboard */}
+          {/* DASHBOARD ROUTE - Shows ONLY Dashboard */}
           <Route path="/" element={
             <PrivateRoute>
               <Dashboard />
             </PrivateRoute>
           } />
 
-          {/* Private Route: Profile */}
+          {/* PROFILE ROUTE - Shows ONLY Profile */}
           <Route path="/profile" element={
             <PrivateRoute>
               <Profile />
             </PrivateRoute>
           } />
 
-          {/* Fallback: Redirect unknown routes to Dashboard */}
+          {/* CATCH ALL - Redirects to Dashboard */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
