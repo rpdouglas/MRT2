@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link, useLocation } from 'react-router-dom'; // Added Link and useLocation
 import { 
   Bars3Icon, 
   XMarkIcon, 
   HomeIcon, 
   BookOpenIcon, 
   SparklesIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon // Added for Profile link
 } from '@heroicons/react/24/outline';
 
 interface AppShellProps {
@@ -16,13 +18,18 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation(); // Gets current URL path
 
+  // Defined routes for navigation
   const navigation = [
-    { name: 'Dashboard', href: '#', icon: HomeIcon, current: true },
-    { name: 'Big Book', href: '#', icon: BookOpenIcon, current: false },
-    { name: 'Step Work', href: '#', icon: SparklesIcon, current: false },
-    { name: 'Meetings', href: '#', icon: ChatBubbleLeftRightIcon, current: false },
+    { name: 'Dashboard', href: '/', icon: HomeIcon },
+    { name: 'Big Book', href: '/big-book', icon: BookOpenIcon }, // Placeholder
+    { name: 'Step Work', href: '/step-work', icon: SparklesIcon }, // Placeholder
+    { name: 'Meetings', href: '/meetings', icon: ChatBubbleLeftRightIcon }, // Placeholder
   ];
+
+  // Helper to check if link is active
+  const isCurrent = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,22 +45,23 @@ export default function AppShell({ children }: AppShellProps) {
                   My Recovery Toolkit
                 </span>
               </div>
+              
               {/* Desktop Nav Links */}
               <div className="hidden md:block">
                 <div className="ml-10 flex items-baseline space-x-4">
                   {navigation.map((item) => (
-                    <a
+                    <Link
                       key={item.name}
-                      href={item.href}
+                      to={item.href} // Use 'to' instead of 'href'
                       className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
-                        item.current
+                        isCurrent(item.href)
                           ? 'bg-teal-800 text-white'
                           : 'text-teal-100 hover:bg-teal-700 hover:text-white'
                       }`}
                     >
                       <item.icon className="h-5 w-5 mr-2" />
                       {item.name}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -65,17 +73,21 @@ export default function AppShell({ children }: AppShellProps) {
                 <span className="text-teal-100 mr-4 text-sm font-medium">
                   {user?.displayName}
                 </span>
+                
+                {/* Profile Link */}
+                <Link 
+                  to="/profile"
+                  className="rounded-full bg-teal-800 p-1 text-teal-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 mr-2"
+                  title="Profile Settings"
+                >
+                   <UserCircleIcon className="h-6 w-6" />
+                </Link>
+
                 <button
                   onClick={logout}
-                  className="rounded-full bg-teal-800 p-1 text-teal-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                  title="Sign Out"
+                  className="ml-2 rounded-md bg-teal-800 px-3 py-1 text-sm text-teal-100 hover:bg-teal-700 hover:text-white"
                 >
-                  <span className="sr-only">Sign out</span>
-                  <div className="h-8 w-8 flex items-center justify-center rounded-full border-2 border-teal-200">
-                    <span className="text-xs font-bold">
-                        {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
-                    </span>
-                  </div>
+                  Sign Out
                 </button>
               </div>
             </div>
@@ -102,11 +114,12 @@ export default function AppShell({ children }: AppShellProps) {
           <div className="md:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
               {navigation.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
+                  to={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
                   className={`block rounded-md px-3 py-2 text-base font-medium ${
-                    item.current
+                    isCurrent(item.href)
                       ? 'bg-teal-900 text-white'
                       : 'text-teal-100 hover:bg-teal-700 hover:text-white'
                   }`}
@@ -115,8 +128,21 @@ export default function AppShell({ children }: AppShellProps) {
                     <item.icon className="h-5 w-5 mr-3" />
                     {item.name}
                   </div>
-                </a>
+                </Link>
               ))}
+              
+              {/* Mobile Profile Link */}
+              <Link
+                  to="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-medium text-teal-100 hover:bg-teal-700 hover:text-white"
+                >
+                  <div className="flex items-center">
+                    <UserCircleIcon className="h-5 w-5 mr-3" />
+                    Profile Settings
+                  </div>
+              </Link>
+
               <div className="border-t border-teal-700 pt-4 pb-3">
                   <div className="flex items-center px-5">
                       <div className="ml-3">

@@ -1,8 +1,9 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile'; // Ensure you created this file in the previous step!
+import Profile from './pages/Profile';
 
 // --- 1. LOGIN SCREEN COMPONENT ---
 function LoginScreen() {
