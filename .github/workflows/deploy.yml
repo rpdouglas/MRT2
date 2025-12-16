@@ -64,6 +64,13 @@ jobs:
 
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD_BASE64 }}" | base64 -d > ./service-account.json
 
+      # --- NEW STEP: LOAD FILE CONTENT INTO ENV VAR ---
+      - name: Load Service Account JSON
+        run: |
+          echo "SERVICE_ACCOUNT_JSON<<EOF" >> $GITHUB_ENV
+          cat ./service-account.json >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       # --- 2. BUILD APPLICATION ---
 
       - name: Build Application
@@ -72,13 +79,13 @@ jobs:
           VITE_FIREBASE_CONFIG: ${{ env.VITE_FIREBASE_CONFIG }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
-      # --- 3. DEPLOY TO FIREBASE HOSTING OK ---
+      # --- 3. DEPLOY TO FIREBASE HOSTING ---
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          # Point to the file we just created
-          firebaseServiceAccount: ./service-account.json
+          # FIX: Use the ENV VAR (Content) instead of the filename
+          firebaseServiceAccount: ${{ env.SERVICE_ACCOUNT_JSON }}
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
           channelId: live
