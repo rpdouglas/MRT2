@@ -24,48 +24,59 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # --- 1. SET ENVIRONMENT VARIABLES & DECODE SECRETS ---
+      # --- 1. SET ENVIRONMENT VARIABLES ---
       
-      # DEV: Feature Branches
+      # DEV Environment
       - name: Set Env Vars (DEV)
         if: startsWith(github.ref, 'refs/heads/feature/')
         run: |
           echo "FIREBASE_PROJECT_ID=mrt2-app-dev" >> $GITHUB_ENV
           
-          # Inject Config safely
-          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
-          echo "${{ secrets.VITE_FIREBASE_CONFIG_DEV }}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # Inject Individual Keys for Vite
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_DEV }}" >> $GITHUB_ENV
           
-          # Decode Base64 to a temporary file
+          # Decode Service Account
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV_BASE64 }}" | base64 -d > ./service-account.json
 
-      # UAT: Release Branches
+      # UAT Environment
       - name: Set Env Vars (UAT)
         if: startsWith(github.ref, 'refs/heads/release/')
         run: |
           echo "FIREBASE_PROJECT_ID=mrt2-app-uat" >> $GITHUB_ENV
           
-          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
-          echo "${{ secrets.VITE_FIREBASE_CONFIG_UAT }}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_UAT }}" >> $GITHUB_ENV
 
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_UAT_BASE64 }}" | base64 -d > ./service-account.json
 
-      # PROD: Main Branch
+      # PROD Environment
       - name: Set Env Vars (PROD)
         if: github.ref == 'refs/heads/main'
         run: |
           echo "FIREBASE_PROJECT_ID=mrt2-app-prod" >> $GITHUB_ENV
           
-          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
-          echo "${{ secrets.VITE_FIREBASE_CONFIG_PROD }}" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_PROD }}" >> $GITHUB_ENV
 
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD_BASE64 }}" | base64 -d > ./service-account.json
 
-      # --- CRITICAL STEP: READ FILE CONTENT INTO ENV VAR ---
-      # We read the file we just decoded and store its CONTENT in 'SERVICE_ACCOUNT_JSON'
+      # --- LOAD SERVICE ACCOUNT CONTENT ---
       - name: Load Service Account JSON
         run: |
           echo "SERVICE_ACCOUNT_JSON<<EOF" >> $GITHUB_ENV
@@ -77,7 +88,14 @@ jobs:
       - name: Build Application
         run: npm run build
         env:
-          VITE_FIREBASE_CONFIG: ${{ env.VITE_FIREBASE_CONFIG }}
+          # Pass the Individual Keys to the Build Process
+          VITE_FIREBASE_API_KEY: ${{ env.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ env.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ env.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ env.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ env.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ env.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ env.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       # --- 3. DEPLOY TO FIREBASE HOSTING ---
@@ -86,7 +104,6 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          # FIX: We pass the CONTENT of the JSON, not the filename
           firebaseServiceAccount: ${{ env.SERVICE_ACCOUNT_JSON }}
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
           channelId: live
