@@ -24,46 +24,63 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # --- 1. SET ENVIRONMENT VARIABLES BASED ON BRANCH ---
+      # --- 1. SET ENVIRONMENT VARIABLES (Multiline Safe) ---
       
       # DEV: Triggered by any 'feature/*' branch
       - name: Set Env Vars (DEV)
         if: startsWith(github.ref, 'refs/heads/feature/')
         run: |
-          echo "VITE_FIREBASE_CONFIG=${{ secrets.VITE_FIREBASE_CONFIG_DEV }}" >> $GITHUB_ENV
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}" >> $GITHUB_ENV
           echo "FIREBASE_PROJECT_ID=mrt2-app-dev" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.VITE_FIREBASE_CONFIG_DEV }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "FIREBASE_SERVICE_ACCOUNT<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       # UAT: Triggered by any 'release/*' branch
       - name: Set Env Vars (UAT)
         if: startsWith(github.ref, 'refs/heads/release/')
         run: |
-          echo "VITE_FIREBASE_CONFIG=${{ secrets.VITE_FIREBASE_CONFIG_UAT }}" >> $GITHUB_ENV
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_UAT }}" >> $GITHUB_ENV
           echo "FIREBASE_PROJECT_ID=mrt2-app-uat" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.VITE_FIREBASE_CONFIG_UAT }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "FIREBASE_SERVICE_ACCOUNT<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_UAT }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       # PROD: Triggered ONLY by 'main'
       - name: Set Env Vars (PROD)
         if: github.ref == 'refs/heads/main'
         run: |
-          echo "VITE_FIREBASE_CONFIG=${{ secrets.VITE_FIREBASE_CONFIG_PROD }}" >> $GITHUB_ENV
-          echo "FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}" >> $GITHUB_ENV
           echo "FIREBASE_PROJECT_ID=mrt2-app-prod" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_CONFIG<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.VITE_FIREBASE_CONFIG_PROD }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "FIREBASE_SERVICE_ACCOUNT<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       # --- 2. BUILD APPLICATION ---
 
       - name: Build Application
         run: npm run build
         env:
-          # This injects the JSON config string we set above
+          # Injects the JSON config string we set above
           VITE_FIREBASE_CONFIG: ${{ env.VITE_FIREBASE_CONFIG }}
-          # Inject Gemini Key (Shared or Specific)
+          # Inject Gemini Key
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
-     # --- 3. DEPLOY TO FIREBASE HOSTING ---
+      # --- 3. DEPLOY TO FIREBASE HOSTING ---
 
       - name: Deploy to Firebase Hosting
-        # FIX: Changed 'firebaseops' to 'FirebaseExtended'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
