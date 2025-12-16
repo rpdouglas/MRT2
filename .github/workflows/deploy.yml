@@ -37,7 +37,7 @@ jobs:
           echo "${{ secrets.VITE_FIREBASE_CONFIG_DEV }}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
           
-          # DECODE the Service Account back to a JSON file
+          # Decode Base64 to a temporary file
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV_BASE64 }}" | base64 -d > ./service-account.json
 
       # UAT: Release Branches
@@ -64,7 +64,8 @@ jobs:
 
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD_BASE64 }}" | base64 -d > ./service-account.json
 
-      # --- NEW STEP: LOAD FILE CONTENT INTO ENV VAR ---
+      # --- CRITICAL STEP: READ FILE CONTENT INTO ENV VAR ---
+      # We read the file we just decoded and store its CONTENT in 'SERVICE_ACCOUNT_JSON'
       - name: Load Service Account JSON
         run: |
           echo "SERVICE_ACCOUNT_JSON<<EOF" >> $GITHUB_ENV
@@ -85,7 +86,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          # FIX: Use the ENV VAR (Content) instead of the filename
+          # FIX: We pass the CONTENT of the JSON, not the filename
           firebaseServiceAccount: ${{ env.SERVICE_ACCOUNT_JSON }}
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
           channelId: live
