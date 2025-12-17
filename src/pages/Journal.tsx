@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   addJournalEntry, 
@@ -15,9 +15,73 @@ import {
   PencilSquareIcon, 
   TrashIcon, 
   XCircleIcon,
-  SparklesIcon, // The "Magic" Icon
-  XMarkIcon
-} from '@heroicons/react/24/outline'; 
+  SparklesIcon, 
+  XMarkIcon,
+  DocumentPlusIcon
+} from '@heroicons/react/24/outline';
+
+// --- TEMPLATES CONFIGURATION ---
+const TEMPLATES = [
+  {
+    name: "Morning Check-in",
+    emoji: "☀️",
+    content: `☀️ MORNING CHECK-IN #morning_checkin
+
+1. Three things I am grateful for today:
+-
+-
+-
+
+2. My main intention/focus for today is:
+(e.g., Patience, Honesty, Service, Self-Care)
+
+3. One action I will take for my recovery today:
+
+4. How am I feeling right now? (Physically/Emotionally):`
+  },
+  {
+    name: "Nightly Inventory",
+    emoji: "🌙",
+    content: `🌙 NIGHTLY INVENTORY #nightly_review
+
+1. What went well today? (Wins & Successes):
+
+2. Did I experience any strong cravings or triggers? How did I handle them?
+
+3. Reviewing my interactions: Was I resentful, selfish, dishonest, or afraid?
+(If yes, do I need to make amends?)
+
+4. What is one thing I want to do better tomorrow?`
+  },
+  {
+    name: "Urge Log / SOS",
+    emoji: "🌊",
+    content: `🌊 URGE LOG #urge_log
+
+1. Trigger: What happened right before I felt this urge?
+(A thought, a feeling, an event?)
+
+2. The Lie: What is my addiction telling me right now?
+(e.g., "Just one won't hurt," "I deserve this")
+
+3. The Reality: If I use, what will happen? (Play the tape forward):
+
+4. My Plan: Who can I call, or what distraction can I use right now?`
+  },
+  {
+    name: "Meeting Reflection",
+    emoji: "🤝",
+    content: `🤝 MEETING REFLECTION #meeting_reflection
+
+1. Meeting Name/Topic:
+
+2. Key Takeaway: What was the most important thing I heard?
+
+3. Identification: How does this apply to my own story or struggle?
+
+4. Action: Is there something from this meeting I want to practice?`
+  }
+];
 
 export default function Journal() {
   const { user } = useAuth();
@@ -43,6 +107,7 @@ export default function Journal() {
     if (user) loadEntries();
   }, [user]);
 
+  // Load Weather
   useEffect(() => {
     async function fetchLocalWeather() {
       const data = await getCurrentWeather();
@@ -56,6 +121,16 @@ export default function Journal() {
     const data = await getUserJournals(user.uid);
     setEntries(data);
   }
+
+  // --- TEMPLATE HANDLER ---
+  const applyTemplate = (templateContent: string) => {
+    // Prevent accidental overwrite if user has typed a lot (more than 10 chars)
+    if (content.length > 10 && !window.confirm("This will replace your current text. Are you sure?")) {
+      return;
+    }
+    setContent(templateContent);
+    // Optionally focus the textarea (handled by React state update usually)
+  };
 
   // --- ACTIONS ---
 
@@ -83,22 +158,14 @@ export default function Journal() {
     }
   };
 
-  // --- THE AI SPARKLE BUTTON ACTION ---
   const handleAnalyze = async () => {
     if (!user || entries.length === 0) return;
-    
     setAnalyzing(true);
     try {
-      // 1. Gather text from last 5 entries
       const recentTexts = entries.slice(0, 5).map(e => e.content);
-      
-      // 2. Send to Gemini
       const result = await analyzeJournalEntries(recentTexts);
-      setInsight(result); // Show Popup
-      
-      // 3. Save to Database
+      setInsight(result); 
       await saveInsight(user.uid, result);
-      
     } catch (error) {
       console.error("Analysis failed", error);
       alert("AI Analysis failed. Check console.");
@@ -113,7 +180,8 @@ export default function Journal() {
 
     setLoading(true);
     try {
-      const tags = content.match(/#[a-z0-9]+/gi) || [];
+      // Extract hashtags automatically
+      const tags = content.match(/#[a-z0-9_]+/gi) || [];
       
       if (editingId) {
         await updateJournalEntry(editingId, content, mood, tags as string[]);
@@ -184,7 +252,6 @@ export default function Journal() {
 
       {/* --- MAIN PAGE --- */}
 
-      {/* 1. ENTRY FORM */}
       <div className={`bg-white shadow sm:rounded-lg p-6 border-t-4 ${editingId ? 'border-orange-500' : 'border-blue-600'}`}>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">
@@ -201,11 +268,41 @@ export default function Journal() {
             )}
         </div>
 
+        {/* --- TEMPLATES SELECTOR --- */}
+        {!editingId && (
+          <div className="mb-4">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+              Quick Templates
+            </label>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {TEMPLATES.map((t) => (
+                <button
+                  key={t.name}
+                  type="button"
+                  onClick={() => applyTemplate(t.content)}
+                  className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 transition-colors"
+                >
+                  <span className="mr-1.5">{t.emoji}</span>
+                  {t.name}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => applyTemplate("")}
+                className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
+              >
+                <DocumentPlusIcon className="w-3 h-3 mr-1" />
+                Clear / New
+              </button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <textarea
-              rows={4}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border"
+              rows={8} // Made slightly taller for templates
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border font-sans text-base"
               placeholder="Write your thoughts here... Use #hashtags to tag topics."
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -223,6 +320,11 @@ export default function Journal() {
               onChange={(e) => setMood(Number(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+            <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+              <span>Struggling</span>
+              <span>Neutral</span>
+              <span>Thriving</span>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3">
@@ -250,7 +352,6 @@ export default function Journal() {
         </form>
       </div>
 
-      {/* 2. HISTORY LIST HEADER & ANALYZE BUTTON */}
       <div className="flex items-center justify-between border-b pb-4 mb-4">
         <h3 className="text-lg font-medium text-gray-900">Recent Entries</h3>
         
@@ -272,7 +373,6 @@ export default function Journal() {
         )}
       </div>
       
-      {/* 3. ENTRIES LIST */}
       <div className="space-y-4">
         {entries.map((entry) => (
           <div key={entry.id} className={`bg-white shadow rounded-lg p-6 relative group ${editingId === entry.id ? 'ring-2 ring-orange-400' : ''}`}>
