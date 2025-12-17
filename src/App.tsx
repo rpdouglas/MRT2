@@ -1,46 +1,61 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AppShell from './components/AppShell';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 
-// 1. Simple Debug Navigation (No AppShell)
-function DebugNav() {
-  const { user, loginWithGoogle, logout } = useAuth();
-  
+// Login Screen (Simplified for blue theme)
+function LoginScreen() {
+  const { loginWithGoogle } = useAuth();
   return (
-    <nav className="p-4 bg-gray-200 border-b-4 border-red-500 mb-4 flex gap-4 items-center">
-      <strong className="text-red-700">DEBUG MODE:</strong>
-      <Link to="/" className="text-blue-600 underline">Dashboard</Link>
-      <Link to="/profile" className="text-blue-600 underline">Profile</Link>
-      
-      <div className="ml-auto">
-        {!user ? (
-          <button onClick={loginWithGoogle} className="bg-blue-500 text-white px-3 py-1 rounded">
-            Log In
+    <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-4">
+       <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm w-full">
+          <h1 className="text-2xl font-bold text-blue-900 mb-2">My Recovery Toolkit</h1>
+          <p className="text-gray-500 mb-6">Welcome back.</p>
+          <button 
+            onClick={loginWithGoogle} 
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
+          >
+            Sign in with Google
           </button>
-        ) : (
-          <button onClick={logout} className="bg-gray-500 text-white px-3 py-1 rounded">
-            Log Out ({user.displayName})
-          </button>
-        )}
-      </div>
-    </nav>
+       </div>
+    </div>
   );
 }
 
-// 2. Main App - No Layouts, just Routes inside a Red Box
+// Private Route Wrapper - Applies AppShell
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  
+  // This is the ONLY place AppShell wraps content
+  return <AppShell>{children}</AppShell>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <DebugNav />
-        
-        <div className="p-4 border-4 border-red-500 m-4">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
-        </div>
+        <Routes>
+          <Route path="/login" element={<LoginScreen />} />
+          
+          <Route path="/" element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          } />
+
+          <Route path="/profile" element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          } />
+          
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
