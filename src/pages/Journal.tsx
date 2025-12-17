@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Removed unused 'React'
 import { useAuth } from '../contexts/AuthContext';
 import { 
   addJournalEntry, 
@@ -17,14 +17,15 @@ import {
   XCircleIcon,
   SparklesIcon, 
   XMarkIcon,
-  DocumentPlusIcon
+  DocumentPlusIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
 // --- TEMPLATES CONFIGURATION ---
 const TEMPLATES = [
   {
+    id: "morning",
     name: "Morning Check-in",
-    emoji: "☀️",
     content: `☀️ MORNING CHECK-IN #morning_checkin
 
 1. Three things I am grateful for today:
@@ -40,8 +41,8 @@ const TEMPLATES = [
 4. How am I feeling right now? (Physically/Emotionally):`
   },
   {
+    id: "nightly",
     name: "Nightly Inventory",
-    emoji: "🌙",
     content: `🌙 NIGHTLY INVENTORY #nightly_review
 
 1. What went well today? (Wins & Successes):
@@ -54,8 +55,8 @@ const TEMPLATES = [
 4. What is one thing I want to do better tomorrow?`
   },
   {
+    id: "urge",
     name: "Urge Log / SOS",
-    emoji: "🌊",
     content: `🌊 URGE LOG #urge_log
 
 1. Trigger: What happened right before I felt this urge?
@@ -69,8 +70,8 @@ const TEMPLATES = [
 4. My Plan: Who can I call, or what distraction can I use right now?`
   },
   {
+    id: "meeting",
     name: "Meeting Reflection",
-    emoji: "🤝",
     content: `🤝 MEETING REFLECTION #meeting_reflection
 
 1. Meeting Name/Topic:
@@ -123,13 +124,27 @@ export default function Journal() {
   }
 
   // --- TEMPLATE HANDLER ---
-  const applyTemplate = (templateContent: string) => {
-    // Prevent accidental overwrite if user has typed a lot (more than 10 chars)
+  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    
+    // Handle "Clear / New"
+    if (selectedId === "clear") {
+       if (content.length > 10 && !window.confirm("Clear current text?")) return;
+       setContent("");
+       return;
+    }
+
+    const template = TEMPLATES.find(t => t.id === selectedId);
+    if (!template) return;
+
+    // Prevent accidental overwrite if user has typed a lot
     if (content.length > 10 && !window.confirm("This will replace your current text. Are you sure?")) {
+      // Reset dropdown to default if they cancel
+      e.target.value = ""; 
       return;
     }
-    setContent(templateContent);
-    // Optionally focus the textarea (handled by React state update usually)
+    
+    setContent(template.content);
   };
 
   // --- ACTIONS ---
@@ -268,32 +283,26 @@ export default function Journal() {
             )}
         </div>
 
-        {/* --- TEMPLATES SELECTOR --- */}
+        {/* --- TEMPLATES DROPDOWN (UPDATED) --- */}
         {!editingId && (
-          <div className="mb-4">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
-              Quick Templates
-            </label>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {TEMPLATES.map((t) => (
-                <button
-                  key={t.name}
-                  type="button"
-                  onClick={() => applyTemplate(t.content)}
-                  className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 transition-colors"
+          <div className="mb-4 relative">
+             <div className="relative">
+                <DocumentPlusIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                <select
+                  onChange={handleTemplateChange}
+                  defaultValue=""
+                  className="block w-full rounded-md border-gray-300 pl-10 pr-10 py-2 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none border"
                 >
-                  <span className="mr-1.5">{t.emoji}</span>
-                  {t.name}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => applyTemplate("")}
-                className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
-              >
-                <DocumentPlusIcon className="w-3 h-3 mr-1" />
-                Clear / New
-              </button>
+                  <option value="" disabled>Select a Quick Template...</option>
+                  <option value="clear">✨ Clear / New Entry</option>
+                  <hr />
+                  {TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
         )}
@@ -301,7 +310,7 @@ export default function Journal() {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <textarea
-              rows={8} // Made slightly taller for templates
+              rows={8}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border font-sans text-base"
               placeholder="Write your thoughts here... Use #hashtags to tag topics."
               value={content}
