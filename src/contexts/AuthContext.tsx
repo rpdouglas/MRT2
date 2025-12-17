@@ -1,27 +1,38 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
-  onAuthStateChanged, 
+  type User, 
+  GoogleAuthProvider, 
   signInWithPopup, 
   signOut, 
-  type User 
-} from "firebase/auth";
-import { auth, googleProvider } from "../lib/firebase";
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // FIX 1: Safety check. If auth is missing, stop loading and do nothing.
     if (!auth) {
+      console.error("Firebase Auth not initialized");
       setLoading(false);
       return;
     }
@@ -30,39 +41,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(currentUser);
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => unsubscribe();
   }, []);
 
-  const loginWithGoogle = async () => {
-    if (!auth) return;
+  const signInWithGoogle = async () => {
+    // FIX 2: Safety check before login
+    if (!auth) {
+        throw new Error("Authentication service is not available");
+    }
+
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Login Failed:", error);
       throw error;
     }
   };
 
   const logout = async () => {
+    // FIX 3: Safety check before logout
     if (!auth) return;
+    
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Logout Failed:", error);
+      console.error("Logout failed:", error);
+      throw error;
     }
   };
 
+  const value = {
+    user,
+    loading,
+    signInWithGoogle,
+    logout
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }
