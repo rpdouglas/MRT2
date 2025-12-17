@@ -4,15 +4,19 @@ import {
   addJournalEntry, 
   getUserJournals, 
   deleteJournalEntry, 
-  updateJournalEntry, // Added update import
+  updateJournalEntry, 
   type JournalEntry 
 } from '../lib/journal';
 import { getCurrentWeather, type WeatherData } from '../lib/weather';
+import { analyzeJournalEntries, type AnalysisResult } from '../lib/gemini';
+import { saveInsight } from '../lib/insights';
 import { 
   SunIcon, 
   PencilSquareIcon, 
   TrashIcon, 
-  XCircleIcon 
+  XCircleIcon,
+  SparklesIcon, // The "Magic" Icon
+  XMarkIcon
 } from '@heroicons/react/24/outline'; 
 
 export default function Journal() {
@@ -25,10 +29,14 @@ export default function Journal() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   
   // Edit Mode State
-  const [editingId, setEditingId] = useState<string | null>(null); // Tracks if we are editing
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // List State
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  
+  // AI Insight State
+  const [analyzing, setAnalyzing] = useState(false);
+  const [insight, setInsight] = useState<AnalysisResult | null>(null);
 
   // Load Data
   useEffect(() => {
@@ -52,34 +60,50 @@ export default function Journal() {
   // --- ACTIONS ---
 
   const handleEditClick = (entry: JournalEntry) => {
-    // Populate form with existing data
     setContent(entry.content);
     setMood(entry.moodScore);
-    setEditingId(entry.id!); // Enable Edit Mode
-    
-    // Scroll to top for mobile users
+    setEditingId(entry.id!);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelEdit = () => {
-    // Reset form to "New Entry" mode
     setContent('');
     setMood(5);
     setEditingId(null);
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this entry? This cannot be undone.")) return;
-    
+    if (!window.confirm("Delete this entry?")) return;
     try {
       await deleteJournalEntry(id);
       await loadEntries();
-      
-      // If we deleted the item we were currently editing, cancel edit mode
       if (editingId === id) handleCancelEdit();
-      
     } catch (error) {
       console.error("Delete failed", error);
+    }
+  };
+
+  // --- THE AI SPARKLE BUTTON ACTION ---
+  const handleAnalyze = async () => {
+    if (!user || entries.length === 0) return;
+    
+    setAnalyzing(true);
+    try {
+      // 1. Gather text from last 5 entries
+      const recentTexts = entries.slice(0, 5).map(e => e.content);
+      
+      // 2. Send to Gemini
+      const result = await analyzeJournalEntries(recentTexts);
+      setInsight(result); // Show Popup
+      
+      // 3. Save to Database
+      await saveInsight(user.uid, result);
+      
+    } catch (error) {
+      console.error("Analysis failed", error);
+      alert("AI Analysis failed. Check console.");
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -92,14 +116,11 @@ export default function Journal() {
       const tags = content.match(/#[a-z0-9]+/gi) || [];
       
       if (editingId) {
-        // UPDATE Existing Entry
         await updateJournalEntry(editingId, content, mood, tags as string[]);
       } else {
-        // CREATE New Entry
         await addJournalEntry(user.uid, content, mood, tags as string[], weather);
       }
       
-      // Reset and Reload
       handleCancelEdit();
       await loadEntries();
     } catch (error) {
@@ -110,9 +131,60 @@ export default function Journal() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8 relative">
       
-      {/* 1. ENTRY FORM (Dynamic Title based on Mode) */}
+      {/* --- AI INSIGHT MODAL --- */}
+      {insight && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex justify-between items-start">
+               <div>
+                 <h3 className="text-white text-lg font-bold flex items-center gap-2">
+                   <SparklesIcon className="h-5 w-5 text-yellow-300" />
+                   Recovery Insights
+                 </h3>
+                 <p className="text-purple-100 text-sm mt-1">Based on your recent entries</p>
+               </div>
+               <button onClick={() => setInsight(null)} className="text-purple-200 hover:text-white">
+                 <XMarkIcon className="h-6 w-6" />
+               </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                <p className="text-gray-800 italic">"{insight.analysis}"</p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">Suggested Actions</h4>
+                <ul className="space-y-2">
+                  {insight.actionableSteps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="text-gray-700 text-sm">{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 flex justify-end">
+              <button 
+                onClick={() => setInsight(null)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MAIN PAGE --- */}
+
+      {/* 1. ENTRY FORM */}
       <div className={`bg-white shadow sm:rounded-lg p-6 border-t-4 ${editingId ? 'border-orange-500' : 'border-blue-600'}`}>
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">
@@ -134,7 +206,7 @@ export default function Journal() {
             <textarea
               rows={4}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border"
-              placeholder="Write your thoughts here..."
+              placeholder="Write your thoughts here... Use #hashtags to tag topics."
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
@@ -178,27 +250,38 @@ export default function Journal() {
         </form>
       </div>
 
-      {/* 2. HISTORY LIST */}
-      <div className="space-y-4">
+      {/* 2. HISTORY LIST HEADER & ANALYZE BUTTON */}
+      <div className="flex items-center justify-between border-b pb-4 mb-4">
         <h3 className="text-lg font-medium text-gray-900">Recent Entries</h3>
         
+        {entries.length > 0 && (
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzing}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+          >
+            {analyzing ? (
+               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+               <SparklesIcon className="h-4 w-4 text-yellow-300" />
+            )}
+            <span className="text-sm font-bold">
+              {analyzing ? 'Analyzing...' : 'Get AI Insights'}
+            </span>
+          </button>
+        )}
+      </div>
+      
+      {/* 3. ENTRIES LIST */}
+      <div className="space-y-4">
         {entries.map((entry) => (
           <div key={entry.id} className={`bg-white shadow rounded-lg p-6 relative group ${editingId === entry.id ? 'ring-2 ring-orange-400' : ''}`}>
             
-            {/* ACTION BUTTONS (Edit/Delete) */}
             <div className="absolute top-4 right-4 flex space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-              <button 
-                onClick={() => handleEditClick(entry)}
-                className="text-gray-400 hover:text-blue-600 p-1"
-                title="Edit"
-              >
+              <button onClick={() => handleEditClick(entry)} className="text-gray-400 hover:text-blue-600 p-1">
                 <PencilSquareIcon className="h-5 w-5" />
               </button>
-              <button 
-                onClick={() => handleDeleteClick(entry.id!)}
-                className="text-gray-400 hover:text-red-600 p-1"
-                title="Delete"
-              >
+              <button onClick={() => handleDeleteClick(entry.id!)} className="text-gray-400 hover:text-red-600 p-1">
                 <TrashIcon className="h-5 w-5" />
               </button>
             </div>
