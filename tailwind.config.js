@@ -7,19 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        'serene-teal': '#2A7886',
-        'healing-green': '#5A8B7C',
-        'hopeful-coral': '#E07A5F',
-        'soft-linen': '#F4F0E9',
-        'deep-charcoal': '#343A40',
-        'light-stone': '#DEE2E6',
-        'pure-white': '#FFFFFF',
-      },
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-      },
+        // Unified Blue Theme (from Master Tech Doc)
+        blue: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8', // Primary Brand Color
+          800: '#1e40af',
+          900: '#1e3a8a',
+        }
+      }
     },
   },
   plugins: [],
-  
 }
