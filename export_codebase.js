@@ -87,7 +87,7 @@ function generateExport() {
     console.log(`👉 Please upload this file to the chat.`);
     
   } catch (e) {
-    console.error('❌ Error generating export:', e);
+    console.error('❌ Error generating exports:', e);
   }
 }
 
