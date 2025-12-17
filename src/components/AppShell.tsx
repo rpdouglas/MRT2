@@ -1,98 +1,95 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react'; // Added useState
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useLocation } from 'react-router-dom'; 
 import { 
-  Bars3Icon, 
-  XMarkIcon, 
   HomeIcon, 
-  BookOpenIcon, // Added for Journal
-  UserCircleIcon 
+  BookOpenIcon, 
+  UserCircleIcon, 
+  ArrowRightOnRectangleIcon,
+  Bars3Icon, // Hamburger Icon
+  XMarkIcon  // Close Icon
 } from '@heroicons/react/24/outline';
 
-interface AppShellProps {
-  children: ReactNode;
-}
-
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell() {
   const { user, logout } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // State for Mobile Menu (Open/Closed)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Navigation Items
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
+  };
+
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Journal', href: '/journal', icon: BookOpenIcon }, // Added Journal Link
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
-  const isCurrent = (path: string) => location.pathname === path;
-
   return (
-    // "Unified Blue" Background
-    <div className="flex flex-col min-h-screen bg-blue-50">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       
-      {/* Top Navigation Bar - Blue-700 */}
-      <nav className="bg-blue-700 shadow-lg shrink-0">
+      {/* --- TOP NAVIGATION BAR --- */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-16 justify-between">
             
-            {/* Logo Section */}
-            <div className="flex items-center">
-              <Link to="/" className="flex-shrink-0">
-                <span className="text-white font-bold text-lg tracking-tight">
-                  My Recovery Toolkit
+            {/* LEFT: Logo & Desktop Nav */}
+            <div className="flex">
+              <div className="flex flex-shrink-0 items-center">
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  MRT
                 </span>
-              </Link>
+              </div>
               
-              {/* Desktop Nav Links */}
-              <div className="hidden md:block">
-                <div className="ml-10 flex items-baseline space-x-4">
-                  {navigation.map((item) => (
+              {/* Desktop Links (Hidden on Mobile) */}
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {navigation.map((item) => {
+                  const isActive = location.pathname.startsWith(item.href);
+                  return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${
-                        isCurrent(item.href)
-                          ? 'bg-blue-800 text-white'
-                          : 'text-blue-100 hover:bg-blue-600 hover:text-white'
+                      className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-all ${
+                        isActive
+                          ? 'border-blue-500 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                       }`}
                     >
-                      <item.icon className="h-5 w-5 mr-2" />
+                      <item.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-blue-500' : 'text-gray-400'}`} />
                       {item.name}
                     </Link>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Desktop Profile Menu */}
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6">
-                <span className="text-blue-100 mr-4 text-sm font-medium">
-                  {user?.displayName}
-                </span>
-                
-                <Link 
-                  to="/profile"
-                  className="rounded-full bg-blue-800 p-1 text-blue-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-800 mr-3"
-                  title="Profile Settings"
-                >
-                   <UserCircleIcon className="h-6 w-6" />
-                </Link>
-
-                <button
-                  onClick={logout}
-                  className="rounded-md bg-blue-800 px-3 py-1 text-xs text-blue-100 hover:bg-blue-600 hover:text-white border border-blue-600"
-                >
-                  Sign Out
-                </button>
-              </div>
+            {/* RIGHT: User & Logout (Desktop) */}
+            <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+              <span className="text-sm text-gray-500">
+                {user?.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="rounded-full bg-white p-1 text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                title="Sign Out"
+              >
+                <ArrowRightOnRectangleIcon className="h-6 w-6" />
+              </button>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="-mr-2 flex md:hidden">
+            {/* MOBILE: Hamburger Button */}
+            <div className="-mr-2 flex items-center sm:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center rounded-md bg-blue-800 p-2 text-blue-200 hover:bg-blue-600 hover:text-white focus:outline-none"
+                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               >
                 <span className="sr-only">Open main menu</span>
                 {isMobileMenuOpen ? (
@@ -105,56 +102,60 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
         </div>
 
-        {/* Mobile Menu (Dropdown) */}
+        {/* --- MOBILE MENU (Conditional Render) --- */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-blue-600 bg-blue-800">
-            <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block rounded-md px-3 py-2 text-base font-medium ${
-                    isCurrent(item.href)
-                      ? 'bg-blue-900 text-white'
-                      : 'text-blue-100 hover:bg-blue-600 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <item.icon className="h-5 w-5 mr-3" />
-                    {item.name}
-                  </div>
-                </Link>
-              ))}
-              
-              <Link
-                  to="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-blue-100 hover:bg-blue-600 hover:text-white"
-                >
-                  <div className="flex items-center">
-                    <UserCircleIcon className="h-5 w-5 mr-3" />
-                    Profile Settings
-                  </div>
-              </Link>
-
-              <div className="pt-2 border-t border-blue-600 mt-2">
-                 <button
-                    onClick={logout}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-red-200 hover:text-white hover:bg-red-600 rounded-md"
+          <div className="sm:hidden bg-white border-t border-gray-100 shadow-lg">
+            <div className="space-y-1 pb-3 pt-2">
+              {navigation.map((item) => {
+                 const isActive = location.pathname.startsWith(item.href);
+                 return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
+                    className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${
+                      isActive
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                    }`}
                   >
-                    Sign Out
-                 </button>
+                    <div className="flex items-center">
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            
+            {/* Mobile User Section */}
+            <div className="border-t border-gray-200 pb-3 pt-4">
+              <div className="flex items-center px-4">
+                <div className="flex-shrink-0">
+                  <UserCircleIcon className="h-10 w-10 text-gray-300" />
+                </div>
+                <div className="ml-3">
+                  <div className="text-base font-medium text-gray-800">{user?.displayName || 'User'}</div>
+                  <div className="text-sm font-medium text-gray-500">{user?.email}</div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1">
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                >
+                  Sign out
+                </button>
               </div>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Main Content - Renders the child (Dashboard OR Profile OR Journal) here */}
-      <main className="flex-grow">
-        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-          {children}
+      {/* --- MAIN CONTENT AREA --- */}
+      <main className="flex-1 py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Outlet />
         </div>
       </main>
     </div>
