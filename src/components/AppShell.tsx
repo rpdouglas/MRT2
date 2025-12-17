@@ -5,6 +5,7 @@ import {
   Bars3Icon, 
   XMarkIcon, 
   HomeIcon, 
+  BookOpenIcon, // Added for Journal
   UserCircleIcon 
 } from '@heroicons/react/24/outline';
 
@@ -20,12 +21,13 @@ export default function AppShell({ children }: AppShellProps) {
   // Navigation Items
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
+    { name: 'Journal', href: '/journal', icon: BookOpenIcon }, // Added Journal Link
   ];
 
   const isCurrent = (path: string) => location.pathname === path;
 
   return (
-    // "Unified Blue" Background 
+    // "Unified Blue" Background
     <div className="flex flex-col min-h-screen bg-blue-50">
       
       {/* Top Navigation Bar - Blue-700 */}
@@ -105,7 +107,7 @@ export default function AppShell({ children }: AppShellProps) {
 
         {/* Mobile Menu (Dropdown) */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-blue-600">
+          <div className="md:hidden border-t border-blue-600 bg-blue-800">
             <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
               {navigation.map((item) => (
                 <Link
@@ -149,7 +151,7 @@ export default function AppShell({ children }: AppShellProps) {
         )}
       </nav>
 
-      {/* Main Content - Renders the child (Dashboard OR Profile) here */}
+      {/* Main Content - Renders the child (Dashboard OR Profile OR Journal) here */}
       <main className="flex-grow">
         <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
           {children}
