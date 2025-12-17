@@ -1,4 +1,4 @@
-import { useState } from 'react'; // Added useState
+import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -6,8 +6,8 @@ import {
   BookOpenIcon, 
   UserCircleIcon, 
   ArrowRightOnRectangleIcon,
-  Bars3Icon, // Hamburger Icon
-  XMarkIcon  // Close Icon
+  Bars3Icon,
+  XMarkIcon 
 } from '@heroicons/react/24/outline';
 
 export default function AppShell() {
@@ -15,7 +15,7 @@ export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // State for Mobile Menu (Open/Closed)
+  // State for Mobile Menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -34,36 +34,36 @@ export default function AppShell() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       
-      {/* --- TOP NAVIGATION BAR --- */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      {/* --- TOP NAVIGATION BAR (Unified Blue) --- */}
+      <nav className="bg-blue-600 shadow-lg sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
+          <div className="flex h-16 justify-between items-center">
             
             {/* LEFT: Logo & Desktop Nav */}
-            <div className="flex">
-              <div className="flex flex-shrink-0 items-center">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  MRT
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-xl font-bold text-white tracking-wide">
+                  My Recovery Toolkit
                 </span>
               </div>
               
-              {/* Desktop Links (Hidden on Mobile) */}
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              {/* Desktop Links */}
+              <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
                 {navigation.map((item) => {
                   const isActive = location.pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-all ${
+                      className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         isActive
-                          ? 'border-blue-500 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                          ? 'bg-blue-700 text-white shadow-sm'
+                          : 'text-blue-100 hover:bg-blue-500 hover:text-white'
                       }`}
                     >
-                      <item.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-blue-500' : 'text-gray-400'}`} />
+                      <item.icon className={`mr-2 h-4 w-4 ${isActive ? 'text-white' : 'text-blue-200'}`} />
                       {item.name}
                     </Link>
                   );
@@ -72,24 +72,24 @@ export default function AppShell() {
             </div>
 
             {/* RIGHT: User & Logout (Desktop) */}
-            <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
-              <span className="text-sm text-gray-500">
+            <div className="hidden sm:flex sm:items-center gap-4">
+              <span className="text-sm text-blue-100 font-medium">
                 {user?.email}
               </span>
               <button
                 onClick={handleLogout}
-                className="rounded-full bg-white p-1 text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="rounded-full bg-blue-700 p-2 text-blue-100 hover:bg-blue-800 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
                 title="Sign Out"
               >
-                <ArrowRightOnRectangleIcon className="h-6 w-6" />
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
               </button>
             </div>
 
             {/* MOBILE: Hamburger Button */}
-            <div className="-mr-2 flex items-center sm:hidden">
+            <div className="flex items-center sm:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                className="inline-flex items-center justify-center rounded-md p-2 text-blue-100 hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               >
                 <span className="sr-only">Open main menu</span>
                 {isMobileMenuOpen ? (
@@ -102,21 +102,21 @@ export default function AppShell() {
           </div>
         </div>
 
-        {/* --- MOBILE MENU (Conditional Render) --- */}
+        {/* --- MOBILE MENU (Blue Theme) --- */}
         {isMobileMenuOpen && (
-          <div className="sm:hidden bg-white border-t border-gray-100 shadow-lg">
-            <div className="space-y-1 pb-3 pt-2">
+          <div className="sm:hidden bg-blue-600 border-t border-blue-500 shadow-xl">
+            <div className="space-y-1 px-2 pb-3 pt-2">
               {navigation.map((item) => {
                  const isActive = location.pathname.startsWith(item.href);
                  return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
-                    className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block rounded-md px-3 py-2 text-base font-medium ${
                       isActive
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                        ? 'bg-blue-800 text-white'
+                        : 'text-blue-100 hover:bg-blue-500 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center">
@@ -129,20 +129,20 @@ export default function AppShell() {
             </div>
             
             {/* Mobile User Section */}
-            <div className="border-t border-gray-200 pb-3 pt-4">
-              <div className="flex items-center px-4">
+            <div className="border-t border-blue-500 pb-4 pt-4">
+              <div className="flex items-center px-5">
                 <div className="flex-shrink-0">
-                  <UserCircleIcon className="h-10 w-10 text-gray-300" />
+                  <UserCircleIcon className="h-10 w-10 text-blue-200" />
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">{user?.displayName || 'User'}</div>
-                  <div className="text-sm font-medium text-gray-500">{user?.email}</div>
+                  <div className="text-base font-medium text-white">{user?.displayName || 'User'}</div>
+                  <div className="text-sm font-medium text-blue-200">{user?.email}</div>
                 </div>
               </div>
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-1 px-2">
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-blue-100 hover:bg-blue-500 hover:text-white"
                 >
                   Sign out
                 </button>
@@ -153,7 +153,7 @@ export default function AppShell() {
       </nav>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 py-10">
+      <main className="flex-1 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Outlet />
         </div>
