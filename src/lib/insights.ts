@@ -1,15 +1,22 @@
 import { 
   collection, 
   addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
-// Make sure to import the type from gemini.ts
 import type { AnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
 
-// Updated Signature: Accepts just the UID and the Result Object
+/**
+ * Saves a new AI Insight to Firestore.
+ * @param uid - The User ID (e.g., "user_123")
+ * @param result - The structured result from Gemini (analysis, sentiment, actions)
+ */
 export async function saveInsight(uid: string, result: AnalysisResult) {
   if (!db) throw new Error("Database not initialized");
 
@@ -20,4 +27,37 @@ export async function saveInsight(uid: string, result: AnalysisResult) {
     actionableSteps: result.actionableSteps,
     createdAt: Timestamp.now()
   });
+}
+
+/**
+ * Fetches the history of AI Insights for a user, sorted by newest first.
+ * Used by the Dashboard to show the "Latest Insight".
+ */
+export async function getInsightHistory(uid: string) {
+  if (!db) throw new Error("Database not initialized");
+
+  try {
+    const q = query(
+      collection(db, COLLECTION),
+      where("uid", "==", uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      // Safely convert Firestore Timestamp to JS Date
+      createdAt: doc.data().createdAt?.toDate() || new Date() 
+    }));
+
+  } catch (e: any) {
+    console.error("Error fetching insights:", e);
+    // If we hit a Missing Index error (common with new collections),
+    // warn the user to check the console.
+    if (e.message && e.message.includes("index")) {
+        console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
+    }
+    return [];
+  }
 }
