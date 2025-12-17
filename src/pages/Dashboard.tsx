@@ -4,7 +4,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getUserJournals, type JournalEntry } from '../lib/journal';
 import { getInsightHistory } from '../lib/insights';
-import { getUserTasks, addTask, toggleTask, deleteTask, type Task } from '../lib/tasks';
+// Note: We are importing 'Frequency' type now
+import { getUserTasks, addTask, toggleTask, deleteTask, type Task, type Frequency } from '../lib/tasks';
 import SobrietyCounter from '../components/SobrietyCounter';
 import { Link } from 'react-router-dom';
 import { 
@@ -15,7 +16,9 @@ import {
   PlusIcon,
   FireIcon, 
   NoSymbolIcon, 
-  TrashIcon
+  TrashIcon,
+  CalendarDaysIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { isSameDay, startOfDay } from 'date-fns';
 
@@ -30,7 +33,8 @@ export default function Dashboard() {
   // Task State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [isNewTaskRecurring, setIsNewTaskRecurring] = useState(false);
+  // FIX: This replaces the old boolean 'isNewTaskRecurring'
+  const [newFrequency, setNewFrequency] = useState<Frequency>('once');
   
   const [loading, setLoading] = useState(true);
 
@@ -39,17 +43,14 @@ export default function Dashboard() {
       if (!user || !db) return;
 
       try {
-        // 1. Fetch User Profile for Sobriety Date
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().sobrietyDate) {
           setSobrietyDate(userDoc.data().sobrietyDate.toDate());
         }
 
-        // 2. Fetch Recent Journals
         const journals = await getUserJournals(user.uid);
         setRecentEntries(journals.slice(0, 7)); 
 
-        // 3. Fetch Latest Insight
         try {
             const insights = await getInsightHistory(user.uid);
             if (insights.length > 0) setLatestInsight(insights[0]);
@@ -57,7 +58,6 @@ export default function Dashboard() {
             console.warn("Insight history fetch failed", e);
         }
 
-        // 4. Fetch Tasks (Triggers Lazy Evaluation)
         const fetchedTasks = await getUserTasks(user.uid);
         setTasks(fetchedTasks);
 
@@ -73,13 +73,17 @@ export default function Dashboard() {
 
   // --- TASK HANDLERS ---
   const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     if (!user || !newTaskTitle.trim()) return;
     
     try {
-        await addTask(user.uid, newTaskTitle, isNewTaskRecurring);
+        // FIX: Passing 'newFrequency' (string) instead of boolean
+        await addTask(user.uid, newTaskTitle, newFrequency);
+        
+        // Reset Form
         setNewTaskTitle('');
-        setIsNewTaskRecurring(false);
+        setNewFrequency('once');
+        
         // Reload tasks
         const updated = await getUserTasks(user.uid);
         setTasks(updated);
@@ -89,17 +93,13 @@ export default function Dashboard() {
   };
 
   const handleToggleTask = async (task: Task) => {
-    // FIX: Safety check to ensure user exists before proceeding
     if (!user) return;
 
-    // Check if already completed today
     const today = startOfDay(new Date());
     const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
-    
-    // If it's completed today, we are unchecking it. If not, we are checking it.
     const newState = !isCompletedToday;
 
-    // Optimistic UI Update (Make it feel instant)
+    // Optimistic UI Update
     const updatedTasks = tasks.map(t => {
         if (t.id === task.id) {
             return { 
@@ -112,8 +112,6 @@ export default function Dashboard() {
     setTasks(updatedTasks);
 
     await toggleTask(task, newState);
-    
-    // Refresh from DB to get correct streaks using the safe 'user.uid'
     const confirmedTasks = await getUserTasks(user.uid);
     setTasks(confirmedTasks);
   };
@@ -161,39 +159,43 @@ export default function Dashboard() {
       {/* 3. GRID LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* --- HABIT TRACKER (NEW) --- */}
+        {/* --- HABIT TRACKER (UPDATED) --- */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-blue-500" />
                 Daily Habits & Tasks
             </h3>
 
-            {/* Task Input */}
-            <form onSubmit={handleCreateTask} className="flex gap-2 mb-6">
+            {/* Task Input Form */}
+            <form onSubmit={handleCreateTask} className="flex flex-col sm:flex-row gap-2 mb-6">
                 <input 
                     type="text" 
                     placeholder="Add a new habit or task..." 
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                 />
-                <div className="flex items-center gap-2 bg-gray-50 px-3 rounded-md border border-gray-200">
-                    <input 
-                        type="checkbox" 
-                        id="recurring"
-                        checked={isNewTaskRecurring}
-                        onChange={(e) => setIsNewTaskRecurring(e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                    />
-                    <label htmlFor="recurring" className="text-sm text-gray-600 cursor-pointer select-none">Daily</label>
+                
+                <div className="flex gap-2">
+                    <select
+                        value={newFrequency}
+                        onChange={(e) => setNewFrequency(e.target.value as Frequency)}
+                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 text-sm p-2 border"
+                    >
+                        <option value="once">Once</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+
+                    <button 
+                        type="submit"
+                        disabled={!newTaskTitle.trim()}
+                        className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center w-10 sm:w-auto"
+                    >
+                        <PlusIcon className="h-5 w-5" />
+                    </button>
                 </div>
-                <button 
-                    type="submit"
-                    disabled={!newTaskTitle.trim()}
-                    className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                    <PlusIcon className="h-5 w-5" />
-                </button>
             </form>
 
             {/* Task List */}
@@ -226,7 +228,10 @@ export default function Dashboard() {
                                     </span>
                                     {task.isRecurring && (
                                         <span className="text-xs text-gray-400 flex items-center gap-1">
-                                            Recurring Daily
+                                            {task.frequency === 'daily' && <ClockIcon className="h-3 w-3" />}
+                                            {task.frequency === 'weekly' && <CalendarDaysIcon className="h-3 w-3" />}
+                                            {task.frequency === 'monthly' && <CalendarDaysIcon className="h-3 w-3" />}
+                                            <span className="capitalize">{task.frequency}</span>
                                         </span>
                                     )}
                                 </div>
@@ -244,7 +249,7 @@ export default function Dashboard() {
                                         ) : (
                                             <NoSymbolIcon className="h-3 w-3" />
                                         )}
-                                        {Math.abs(task.currentStreak)} Day Streak
+                                        {Math.abs(task.currentStreak)} Streak
                                     </div>
                                 )}
 

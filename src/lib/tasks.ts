@@ -10,14 +10,16 @@ import {
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { startOfDay, isBefore, addDays, isSameDay } from "date-fns";
+import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
+
+export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
 
 export interface Task {
   id?: string;
   uid: string;
   title: string;
   isRecurring: boolean;
-  frequency: 'daily'; // Expandable to 'weekly' later
+  frequency: Frequency; 
   currentStreak: number;
   lastCompletedAt: Date | null;
   dueDate: Date;
@@ -27,17 +29,17 @@ export interface Task {
 const COLLECTION = 'tasks';
 
 // 1. CREATE
-export async function addTask(uid: string, title: string, isRecurring: boolean) {
+export async function addTask(uid: string, title: string, frequency: Frequency) {
   if (!db) throw new Error("Database not initialized");
   
-  // Default due date is Today (start of day)
   const today = startOfDay(new Date());
+  const isRecurring = frequency !== 'once';
 
   await addDoc(collection(db, COLLECTION), {
     uid,
     title,
     isRecurring,
-    frequency: 'daily',
+    frequency,
     currentStreak: 0,
     lastCompletedAt: null,
     dueDate: Timestamp.fromDate(today),
@@ -58,7 +60,6 @@ export async function getUserTasks(uid: string) {
   const tasks: Task[] = [];
   const today = startOfDay(new Date());
 
-  // Process tasks and check for missed streaks
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
     const task = { 
@@ -71,31 +72,27 @@ export async function getUserTasks(uid: string) {
 
     // --- LAZY EVALUATION LOGIC ---
     // If it's recurring, overdue, and NOT completed today:
-    // We punish the streak and reset the due date to today so they can try again.
     if (task.isRecurring && isBefore(task.dueDate, today)) {
         
-        // Only punish if they didn't actually do it (double safety check)
         const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
         
         if (!completedToday) {
             let newStreak = task.currentStreak;
             
-            // If they had a positive streak, break it to 0.
-            // If they are already negative/zero, go deeper into negative.
+            // Punishment Logic
             if (newStreak > 0) {
-                newStreak = 0; 
+                newStreak = 0; // Break positive streak
             } else {
-                newStreak -= 1;
+                newStreak -= 1; // Deepen negative streak
             }
 
-            // Update DB immediately
+            // Reset due date to Today so they can get back on track
             const taskRef = doc(db, COLLECTION, task.id!);
             await updateDoc(taskRef, {
                 currentStreak: newStreak,
-                dueDate: Timestamp.fromDate(today) // Reset due date to today
+                dueDate: Timestamp.fromDate(today)
             });
 
-            // Update local object for UI
             task.currentStreak = newStreak;
             task.dueDate = today;
         }
@@ -116,28 +113,27 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
   if (isCompleted) {
     // MARKING DONE
     let newStreak = task.currentStreak;
-    
-    // Logic: If streak was negative, reset to 1. If positive, add 1.
     if (newStreak < 0) {
-        newStreak = 1;
+        newStreak = 1; // Bounce back from negative
     } else {
         newStreak += 1;
     }
 
-    // Calculate next due date
-    // If recurring, due date becomes Tomorrow. If one-off, it stays as is (completed).
-    const nextDue = task.isRecurring ? addDays(today, 1) : task.dueDate;
+    // Calculate next due date based on Frequency
+    let nextDue = task.dueDate;
+    if (task.frequency === 'daily') nextDue = addDays(today, 1);
+    else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
+    else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
+    // If 'once', date doesn't strictly matter as it won't recur, but we keep it valid.
 
     await updateDoc(taskRef, {
         currentStreak: newStreak,
-        lastCompletedAt: Timestamp.fromDate(new Date()), // Now
+        lastCompletedAt: Timestamp.fromDate(new Date()),
         dueDate: Timestamp.fromDate(nextDue)
     });
 
   } else {
-    // UNCHECKING (Oops, I didn't mean to check it)
-    // Revert logic is complex, for simplicity we just decrement streak back
-    // and reset dates.
+    // UNCHECKING
     const newStreak = task.currentStreak > 0 ? task.currentStreak - 1 : task.currentStreak;
     
     await updateDoc(taskRef, {
@@ -154,13 +150,10 @@ export async function deleteTask(id: string) {
   await deleteDoc(doc(db, COLLECTION, id));
 }
 
-// 5. GET COMPLETED TODAY (For Journal Import)
+// 5. GET COMPLETED TODAY
 export async function getCompletedTasksForToday(uid: string) {
     if (!db) throw new Error("Database not initialized");
     const today = startOfDay(new Date());
-    
-    // We fetch all tasks and filter in memory for simplicity 
-    // (Firestore date filtering can be tricky with timezone offsets)
     const allTasks = await getUserTasks(uid);
     
     return allTasks.filter(t => 
