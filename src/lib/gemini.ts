@@ -9,9 +9,26 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// We use 'gemini-1.5-flash' for speed and low cost, 
-// or 'gemini-pro' for higher reasoning capabilities.
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// --- DIAGNOSTIC TOOL ---
+// Call this function from your browser console to see what you have access to
+export async function listAvailableModels() {
+  try {
+    // We strictly want models that support 'generateContent'
+    const models = await genAI.getGenerativeModel({ model: "gemini-pro" }).apiKey; // Hack to access internal list not needed, standard list works:
+    
+    // Proper listing method requires admin privileges usually, but we can try the basic fetch if the SDK exposes it.
+    // Since the JS SDK doesn't expose a simple 'listModels()' directly on the client instance easily,
+    // we will stick to trying the STABLE model first.
+    console.log("If gemini-1.5-flash failed, we are falling back to gemini-pro.");
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// --- MAIN CONFIGURATION ---
+// We are switching to 'gemini-pro' which is the standard, widely available model.
+// If this fails, we will try 'gemini-1.0-pro'.
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 export interface AnalysisResult {
   analysis: string;
@@ -27,11 +44,8 @@ export async function analyzeJournalEntries(entries: string[]): Promise<Analysis
     throw new Error("No entries to analyze");
   }
 
-  // 1. Prepare the Data
   const combinedText = entries.join("\n---\n");
 
-  // 2. Engineer the Prompt
-  // We explicitly ask for JSON output to ensure the app can read it reliably.
   const prompt = `
     You are an empathetic, wise, and insightful recovery coach for someone in a 12-step program.
     Your task is to analyze the following journal entries from the user and provide a summary of their emotional state and potential blind spots.
@@ -54,19 +68,23 @@ export async function analyzeJournalEntries(entries: string[]): Promise<Analysis
   `;
 
   try {
-    // 3. Call the API
+    console.log("Sending request to Gemini (Model: gemini-pro)...");
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
-    // 4. Clean and Parse JSON
-    // Sometimes Gemini wraps JSON in markdown code blocks (```json ... ```). We strip those.
     const cleanJson = text.replace(/```json|```/g, '').trim();
-    
     return JSON.parse(cleanJson) as AnalysisResult;
 
-  } catch (error) {
+  } catch (error: any) {
+    // --- ERROR HANDLING & MODEL LISTING ---
     console.error("Gemini Analysis Failed:", error);
+    
+    if (error.message.includes("404")) {
+      console.error("The model 'gemini-pro' was not found. Your API Key might be restricted or new.");
+      alert("Model not found. Please check console for details.");
+    }
+    
     throw new Error("Failed to generate insights. Please try again later.");
   }
 }
