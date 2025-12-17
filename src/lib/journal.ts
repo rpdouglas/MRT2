@@ -7,25 +7,25 @@ import {
   getDocs, 
   Timestamp,
   deleteDoc,
-  doc
+  doc,
+  updateDoc // <--- Added this
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { WeatherData } from "./weather"; // Import the type
+import type { WeatherData } from "./weather";
 
-// Updated Interface to include Weather
 export interface JournalEntry {
   id?: string;
   uid: string;
   content: string;
   tags: string[];
   moodScore: number;
-  weather?: WeatherData | null; // New Field
+  weather?: WeatherData | null;
   createdAt: Date;
 }
 
 const COLLECTION = 'journals';
 
-// 1. CREATE: Accepts weather object now
+// 1. CREATE
 export async function addJournalEntry(
   uid: string, 
   content: string, 
@@ -40,7 +40,7 @@ export async function addJournalEntry(
     content,
     tags,
     moodScore,
-    weather, // Save to Firestore
+    weather: weather || null, 
     createdAt: Timestamp.now()
   });
 }
@@ -63,7 +63,24 @@ export async function getUserJournals(uid: string) {
   })) as JournalEntry[];
 }
 
-// 3. DELETE
+// 3. UPDATE (New)
+export async function updateJournalEntry(
+  id: string,
+  content: string, 
+  moodScore: number, 
+  tags: string[]
+) {
+  if (!db) throw new Error("Database not initialized");
+  const docRef = doc(db, COLLECTION, id);
+  await updateDoc(docRef, {
+    content,
+    moodScore,
+    tags,
+    // We do NOT update createdAt or weather, as those are historical facts
+  });
+}
+
+// 4. DELETE
 export async function deleteJournalEntry(id: string) {
   if (!db) throw new Error("Database not initialized");
   await deleteDoc(doc(db, COLLECTION, id));
