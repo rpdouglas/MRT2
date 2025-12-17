@@ -4,8 +4,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getUserJournals, type JournalEntry } from '../lib/journal';
 import { getInsightHistory } from '../lib/insights';
-// Note: We are importing 'Frequency' type now
-import { getUserTasks, addTask, toggleTask, deleteTask, type Task, type Frequency } from '../lib/tasks';
+import { getUserTasks, toggleTask, type Task } from '../lib/tasks';
+import { calculateJournalStats, type GamificationStats } from '../lib/gamification'; // <--- NEW IMPORT
 import SobrietyCounter from '../components/SobrietyCounter';
 import { Link } from 'react-router-dom';
 import { 
@@ -13,12 +13,10 @@ import {
   ChartBarIcon, 
   SparklesIcon,
   CheckCircleIcon,
-  PlusIcon,
-  FireIcon, 
-  NoSymbolIcon, 
-  TrashIcon,
-  CalendarDaysIcon,
-  ClockIcon
+  FireIcon,
+  TrophyIcon,
+  PencilSquareIcon,
+  ScaleIcon
 } from '@heroicons/react/24/outline';
 import { isSameDay, startOfDay } from 'date-fns';
 
@@ -30,12 +28,13 @@ export default function Dashboard() {
   const [recentEntries, setRecentEntries] = useState<JournalEntry[]>([]);
   const [latestInsight, setLatestInsight] = useState<any | null>(null);
   
-  // Task State
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  // FIX: This replaces the old boolean 'isNewTaskRecurring'
-  const [newFrequency, setNewFrequency] = useState<Frequency>('once');
+  // Task State (Only top 5)
+  const [priorityTasks, setPriorityTasks] = useState<Task[]>([]);
   
+  // Gamification State
+  const [stats, setStats] = useState<GamificationStats | null>(null);
+  const [taskStreak, setTaskStreak] = useState(0);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,14 +42,19 @@ export default function Dashboard() {
       if (!user || !db) return;
 
       try {
+        // 1. Fetch User Profile
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().sobrietyDate) {
           setSobrietyDate(userDoc.data().sobrietyDate.toDate());
         }
 
+        // 2. Fetch Journals & Calc Gamification
         const journals = await getUserJournals(user.uid);
         setRecentEntries(journals.slice(0, 7)); 
+        const journalStats = calculateJournalStats(journals);
+        setStats(journalStats);
 
+        // 3. Fetch Latest Insight
         try {
             const insights = await getInsightHistory(user.uid);
             if (insights.length > 0) setLatestInsight(insights[0]);
@@ -58,8 +62,26 @@ export default function Dashboard() {
             console.warn("Insight history fetch failed", e);
         }
 
+        // 4. Fetch Tasks & Prioritize
         const fetchedTasks = await getUserTasks(user.uid);
-        setTasks(fetchedTasks);
+        
+        // Calculate total positive task streak (sum of all positive recurring streaks)
+        // Or just find the best one? Let's sum them for a "Global Score" feel
+        const totalStreak = fetchedTasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
+        setTaskStreak(totalStreak);
+
+        // Filter: Not Completed OR Completed Today (so you see what you achieved)
+        const today = startOfDay(new Date());
+        const visibleTasks = fetchedTasks.filter(t => {
+            if (!t.lastCompletedAt) return true; // Not done yet
+            return isSameDay(t.lastCompletedAt, today); // Done today
+        });
+
+        // Sort: Overdue/Today first (Ascending Due Date)
+        visibleTasks.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+        
+        // Top 5
+        setPriorityTasks(visibleTasks.slice(0, 5));
 
       } catch (error) {
         console.error("Error loading dashboard:", error);
@@ -71,27 +93,7 @@ export default function Dashboard() {
     loadDashboardData();
   }, [user]);
 
-  // --- TASK HANDLERS ---
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    if (!user || !newTaskTitle.trim()) return;
-    
-    try {
-        // FIX: Passing 'newFrequency' (string) instead of boolean
-        await addTask(user.uid, newTaskTitle, newFrequency);
-        
-        // Reset Form
-        setNewTaskTitle('');
-        setNewFrequency('once');
-        
-        // Reload tasks
-        const updated = await getUserTasks(user.uid);
-        setTasks(updated);
-    } catch (err) {
-        console.error("Failed to create task", err);
-    }
-  };
-
+  // --- HANDLERS ---
   const handleToggleTask = async (task: Task) => {
     if (!user) return;
 
@@ -100,7 +102,7 @@ export default function Dashboard() {
     const newState = !isCompletedToday;
 
     // Optimistic UI Update
-    const updatedTasks = tasks.map(t => {
+    const updatedTasks = priorityTasks.map(t => {
         if (t.id === task.id) {
             return { 
                 ...t, 
@@ -109,19 +111,12 @@ export default function Dashboard() {
         }
         return t;
     });
-    setTasks(updatedTasks);
+    setPriorityTasks(updatedTasks);
 
     await toggleTask(task, newState);
-    const confirmedTasks = await getUserTasks(user.uid);
-    setTasks(confirmedTasks);
+    // Note: We don't reload everything here for smoothness, 
+    // but the full list is updated on the /tasks page
   };
-
-  const handleDeleteTask = async (id: string) => {
-    if(!window.confirm("Delete this task?")) return;
-    await deleteTask(id);
-    setTasks(tasks.filter(t => t.id !== id));
-  };
-
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
@@ -159,110 +154,105 @@ export default function Dashboard() {
       {/* 3. GRID LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* --- HABIT TRACKER (UPDATED) --- */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <CheckCircleIcon className="h-5 w-5 text-blue-500" />
-                Daily Habits & Tasks
-            </h3>
+        {/* --- PRIORITIES WIDGET (LEFT) --- */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <CheckCircleIcon className="h-5 w-5 text-blue-500" />
+                    Priorities
+                </h3>
+                <Link to="/tasks" className="text-sm text-blue-600 hover:underline">Manage All &rarr;</Link>
+            </div>
 
-            {/* Task Input Form */}
-            <form onSubmit={handleCreateTask} className="flex flex-col sm:flex-row gap-2 mb-6">
-                <input 
-                    type="text" 
-                    placeholder="Add a new habit or task..." 
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                />
-                
-                <div className="flex gap-2">
-                    <select
-                        value={newFrequency}
-                        onChange={(e) => setNewFrequency(e.target.value as Frequency)}
-                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 text-sm p-2 border"
-                    >
-                        <option value="once">Once</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-
-                    <button 
-                        type="submit"
-                        disabled={!newTaskTitle.trim()}
-                        className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center w-10 sm:w-auto"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                    </button>
-                </div>
-            </form>
-
-            {/* Task List */}
             <div className="space-y-3">
-                {tasks.length === 0 && (
-                    <p className="text-center text-gray-400 text-sm py-4">No tasks yet. Add one above!</p>
+                {priorityTasks.length === 0 && (
+                    <p className="text-center text-gray-400 text-sm py-4">All caught up! Great job.</p>
                 )}
                 
-                {tasks.map(task => {
+                {priorityTasks.map(task => {
                     const today = startOfDay(new Date());
                     const isCompleted = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
 
                     return (
-                        <div key={task.id} className="flex items-center justify-between group p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+                        <div key={task.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100 cursor-pointer" onClick={() => handleToggleTask(task)}>
                             <div className="flex items-center gap-3">
-                                <button 
-                                    onClick={() => handleToggleTask(task)}
-                                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
                                         isCompleted 
                                             ? 'bg-green-500 border-green-500 text-white' 
-                                            : 'border-gray-300 hover:border-blue-500'
+                                            : 'border-gray-300'
                                     }`}
                                 >
-                                    {isCompleted && <CheckCircleIcon className="h-4 w-4" />}
-                                </button>
-                                
-                                <div>
-                                    <span className={`block font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                        {task.title}
-                                    </span>
-                                    {task.isRecurring && (
-                                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                                            {task.frequency === 'daily' && <ClockIcon className="h-3 w-3" />}
-                                            {task.frequency === 'weekly' && <CalendarDaysIcon className="h-3 w-3" />}
-                                            {task.frequency === 'monthly' && <CalendarDaysIcon className="h-3 w-3" />}
-                                            <span className="capitalize">{task.frequency}</span>
-                                        </span>
-                                    )}
+                                    {isCompleted && <CheckCircleIcon className="h-3 w-3" />}
                                 </div>
+                                
+                                <span className={`block text-sm font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                    {task.title}
+                                </span>
                             </div>
-
-                            <div className="flex items-center gap-4">
-                                {/* Streak Badge */}
-                                {task.isRecurring && (
-                                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                                        task.currentStreak > 0 ? 'bg-orange-100 text-orange-700' : 
-                                        task.currentStreak < 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-400'
-                                    }`}>
-                                        {task.currentStreak > 0 ? (
-                                            <FireIcon className="h-3 w-3" />
-                                        ) : (
-                                            <NoSymbolIcon className="h-3 w-3" />
-                                        )}
-                                        {Math.abs(task.currentStreak)} Streak
-                                    </div>
-                                )}
-
-                                <button 
-                                    onClick={() => handleDeleteTask(task.id!)}
-                                    className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <TrashIcon className="h-5 w-5" />
-                                </button>
-                            </div>
+                            
+                            {/* Simple Status Badge for Priorities */}
+                            {!isCompleted && task.isRecurring && (
+                                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-bold">
+                                    Due
+                                </span>
+                            )}
                         </div>
                     );
                 })}
+            </div>
+        </div>
+
+        {/* --- PROGRESS HUB (RIGHT) --- */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <TrophyIcon className="h-5 w-5 text-yellow-500" />
+                Achievements
+            </h3>
+            
+            <div className="space-y-4">
+                
+                {/* Journal Streak */}
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                    <div className="flex items-center gap-3">
+                        <PencilSquareIcon className="h-6 w-6 text-purple-600" />
+                        <div>
+                            <span className="block text-sm font-bold text-purple-900">Journal Streak</span>
+                            <span className="text-xs text-purple-700">Consecutive Days</span>
+                        </div>
+                    </div>
+                    <div className="text-xl font-bold text-purple-700">
+                        {stats?.journalStreak || 0}
+                    </div>
+                </div>
+
+                {/* Consistency */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex items-center gap-3">
+                        <ScaleIcon className="h-6 w-6 text-blue-600" />
+                        <div>
+                            <span className="block text-sm font-bold text-blue-900">Consistency</span>
+                            <span className="text-xs text-blue-700">Entries / Week</span>
+                        </div>
+                    </div>
+                    <div className="text-xl font-bold text-blue-700">
+                        {stats?.consistencyRate || 0}
+                    </div>
+                </div>
+
+                {/* Task Fire */}
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100">
+                    <div className="flex items-center gap-3">
+                        <FireIcon className="h-6 w-6 text-orange-600" />
+                        <div>
+                            <span className="block text-sm font-bold text-orange-900">Habit Fire</span>
+                            <span className="text-xs text-orange-700">Total Streak Points</span>
+                        </div>
+                    </div>
+                    <div className="text-xl font-bold text-orange-700">
+                        {taskStreak}
+                    </div>
+                </div>
+
             </div>
         </div>
 

@@ -5,13 +5,14 @@ import AppShell from './components/AppShell';
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
 import Profile from './pages/Profile';
-import Login from './pages/Login'; 
+import Tasks from './pages/Tasks'; // <--- IMPORT
+import Login from './pages/Login';
 
 // --- PROTECTED ROUTE WRAPPER ---
 // If the user is not logged in, redirect them to /login
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -50,13 +51,19 @@ export default function App() {
               </PrivateRoute>
             } />
             
+            <Route path="tasks" element={ 
+              <PrivateRoute>
+                <Tasks />
+              </PrivateRoute>
+            } />
+
             <Route path="profile" element={
               <PrivateRoute>
                 <Profile />
               </PrivateRoute>
             } />
           </Route>
-          
+         
           {/* Catch-all: Redirect unknown URLs to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
