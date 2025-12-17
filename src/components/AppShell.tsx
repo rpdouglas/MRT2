@@ -7,7 +7,8 @@ import {
   UserCircleIcon, 
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  XMarkIcon 
+  XMarkIcon,
+  CheckCircleIcon // <--- IMPORT
 } from '@heroicons/react/24/outline';
 
 export default function AppShell() {
@@ -30,6 +31,7 @@ export default function AppShell() {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'Tasks', href: '/tasks', icon: CheckCircleIcon }, // <--- NEW ITEM
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
