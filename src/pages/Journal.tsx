@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Removed unused 'React'
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   addJournalEntry, 
@@ -10,6 +10,7 @@ import {
 import { getCurrentWeather, type WeatherData } from '../lib/weather';
 import { analyzeJournalEntries, type AnalysisResult } from '../lib/gemini';
 import { saveInsight } from '../lib/insights';
+import { getCompletedTasksForToday } from '../lib/tasks'; // <--- IMPORT
 import { 
   SunIcon, 
   PencilSquareIcon, 
@@ -18,7 +19,8 @@ import {
   SparklesIcon, 
   XMarkIcon,
   DocumentPlusIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ClipboardDocumentCheckIcon // <--- IMPORT ICON
 } from '@heroicons/react/24/outline';
 
 // --- TEMPLATES CONFIGURATION ---
@@ -137,14 +139,31 @@ export default function Journal() {
     const template = TEMPLATES.find(t => t.id === selectedId);
     if (!template) return;
 
-    // Prevent accidental overwrite if user has typed a lot
     if (content.length > 10 && !window.confirm("This will replace your current text. Are you sure?")) {
-      // Reset dropdown to default if they cancel
       e.target.value = ""; 
       return;
     }
     
     setContent(template.content);
+  };
+
+  // --- IMPORT TASKS HANDLER ---
+  const handleImportTasks = async () => {
+    if (!user) return;
+    try {
+        const completed = await getCompletedTasksForToday(user.uid);
+        if (completed.length === 0) {
+            alert("No completed tasks found for today.");
+            return;
+        }
+
+        const taskList = completed.map(t => `- [x] ${t.title}`).join('\n');
+        const importText = `\n\n✅ TODAY'S ACHIEVEMENTS:\n${taskList}\n\nReflection:\n`;
+        
+        setContent(prev => prev + importText);
+    } catch (err) {
+        console.error("Failed to import tasks", err);
+    }
   };
 
   // --- ACTIONS ---
@@ -195,7 +214,6 @@ export default function Journal() {
 
     setLoading(true);
     try {
-      // Extract hashtags automatically
       const tags = content.match(/#[a-z0-9_]+/gi) || [];
       
       if (editingId) {
@@ -283,10 +301,10 @@ export default function Journal() {
             )}
         </div>
 
-        {/* --- TEMPLATES DROPDOWN (UPDATED) --- */}
+        {/* --- TOOLBAR: TEMPLATES & IMPORT --- */}
         {!editingId && (
-          <div className="mb-4 relative">
-             <div className="relative">
+          <div className="mb-4 flex gap-2">
+             <div className="relative flex-1">
                 <DocumentPlusIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                 <select
                   onChange={handleTemplateChange}
@@ -304,6 +322,16 @@ export default function Journal() {
                 </select>
                 <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
+
+            {/* Smart Import Button */}
+            <button
+                type="button"
+                onClick={handleImportTasks}
+                title="Import completed tasks"
+                className="flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+                <ClipboardDocumentCheckIcon className="h-5 w-5 text-green-600" />
+            </button>
           </div>
         )}
 
