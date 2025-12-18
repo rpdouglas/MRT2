@@ -29,6 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
+      setSidebarOpen(false); // Ensure menu closes on logout too
       await logout();
       navigate('/login');
     } catch (error) {
@@ -57,6 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                          <li key={item.name}>
                            <Link
                              to={item.href}
+                             onClick={() => setSidebarOpen(false)} // <--- CLOSE SIDEBAR ON CLICK
                              className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 ${
                                location.pathname === item.href
                                  ? 'bg-blue-700 text-white'
@@ -156,7 +158,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="lg:pl-72">
-        {/* MOBILE TOP BAR - Fixed to Blue Theme */}
+        {/* MOBILE TOP BAR */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-700 bg-blue-600 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 lg:hidden">
           <button type="button" className="-m-2.5 p-2.5 text-blue-200 hover:text-white lg:hidden" onClick={() => setSidebarOpen(true)}>
             <span className="sr-only">Open sidebar</span>
