@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWorkbook } from '../data/workbooks';
-import { getSectionAnswers, saveAnswer, WorkbookProgress } from '../lib/workbooks';
+import { getSectionAnswers, saveAnswer, type WorkbookProgress } from '../lib/workbooks';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   ArrowLeftIcon, 

@@ -2,7 +2,7 @@ import { useEffect, useState, Fragment } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getWorkbook } from '../data/workbooks';
 import { getSectionCompletion, getAllWorkbookAnswers } from '../lib/workbooks'; // Updated Import
-import { analyzeFullWorkbook, WorkbookInsight } from '../lib/gemini'; // Updated Import
+import { analyzeFullWorkbook, type WorkbookInsight } from '../lib/gemini'; // Updated Import
 import { useAuth } from '../contexts/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
