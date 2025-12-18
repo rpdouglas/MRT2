@@ -17,7 +17,7 @@ interface RecoveryHeroProps {
 
 export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }: RecoveryHeroProps) {
   
-  // --- SOBRIETY CALCULATION LOGIC ---
+  // --- SOBRIETY CALCULATION LOGIC CODE ---
   const calculateDuration = () => {
     if (!sobrietyDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
     
