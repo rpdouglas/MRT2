@@ -17,7 +17,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); // <--- accessing 'user' object here
+  const { user, logout } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -71,7 +71,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                      </ul>
                    </li>
                    
-                   {/* Mobile Bottom Section: User Info + Logout */}
                    <li className="mt-auto">
                      <div className="flex flex-col gap-2">
                         {user && (
@@ -129,7 +128,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </ul>
               </li>
 
-              {/* Desktop Bottom Section: User Info + Logout */}
               <li className="mt-auto">
                  <div className="flex flex-col gap-2 border-t border-blue-500 pt-4">
                     {user && (
@@ -158,12 +156,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="lg:pl-72">
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 lg:hidden">
-          <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
+        {/* MOBILE TOP BAR - Fixed to Blue Theme */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-700 bg-blue-600 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 lg:hidden">
+          <button type="button" className="-m-2.5 p-2.5 text-blue-200 hover:text-white lg:hidden" onClick={() => setSidebarOpen(true)}>
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
-          <div className="flex-1 text-sm font-semibold leading-6 text-gray-900">Dashboard</div>
+          <div className="flex-1 text-sm font-bold leading-6 text-white">My Recovery Toolkit</div>
         </div>
 
         <main className="py-10">
