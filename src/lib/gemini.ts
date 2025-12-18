@@ -8,7 +8,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 export interface AnalysisResult {
   analysis: string;
   mood: string;
-  sentiment: string; // <--- ADDED THIS FIELD
+  sentiment: string;
   actionableSteps: string[];
 }
 
@@ -38,18 +38,16 @@ export async function analyzeJournalEntries(journalEntries: string[]): Promise<A
     const response = await result.response;
     const text = response.text();
     
-    // Clean up potential markdown code blocks if the model adds them
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return JSON.parse(cleanText) as AnalysisResult;
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    // Fallback if API fails or key is missing
     return {
       analysis: "Great job keeping up with your journaling. Keep coming back!",
       mood: "Stable",
-      sentiment: "Positive", // <--- ADDED FALLBACK
+      sentiment: "Positive",
       actionableSteps: ["Attend a meeting", "Call a friend", "Meditate for 5 mins"]
     };
   }
@@ -62,23 +60,25 @@ export interface WorkbookInsight {
   encouragement: string;
 }
 
-export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
+// Updated for Full Workbook Context
+export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string): Promise<WorkbookInsight> {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-      You are a compassionate Recovery Sponsor reviewing a sponsee's workbook answers.
+      You are a compassionate Recovery Sponsor reviewing a sponsee's entire workbook.
       
-      Workbook Section: "${sectionTitle}"
+      Workbook: "${workbookTitle}"
       
-      User's Q&A:
-      ${JSON.stringify(qaPairs)}
+      User's Answers (grouped by section):
+      ${fullContent}
 
-      Please analyze their answers for honesty, depth, and recovery understanding.
+      Please analyze their work holistically. Look for patterns across different sections, emotional trajectory, and depth of honesty.
+      
       Return a JSON object with this structure (no Markdown):
       {
-        "feedback": "A warm, insightful paragraph (3-4 sentences) reflecting on what they wrote. Highlight a specific strength you see in their answers.",
-        "encouragement": "A short, punchy closing statement of support."
+        "feedback": "A deep, insightful paragraph (4-6 sentences) connecting the dots between their answers. Mention specific patterns you notice across the workbook.",
+        "encouragement": "A strong, motivating closing statement."
       }
     `;
 
@@ -93,8 +93,13 @@ export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question:
   } catch (error) {
     console.error("Gemini Workbook Error:", error);
     return {
-      feedback: "You're doing important work here. Honest self-reflection is the key to freedom. Keep pushing forward.",
-      encouragement: "One day at a time!"
+      feedback: "You have done a significant amount of work here. The consistency in your answers shows a real desire for change.",
+      encouragement: "Keep trusting the process!"
     };
   }
+}
+
+// Deprecated single-section analyzer (kept for type safety if referenced elsewhere, but unused now)
+export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
+  return analyzeFullWorkbook(sectionTitle, JSON.stringify(qaPairs));
 }

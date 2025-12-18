@@ -51,3 +51,26 @@ export async function getSectionCompletion(uid: string, workbookId: string, sect
   
   return Math.round((answeredCount / totalQuestions) * 100);
 }
+
+// --- NEW FUNCTION: Fetch ALL answers for a specific workbook ---
+export async function getAllWorkbookAnswers(uid: string, workbookId: string, sections: { id: string, title: string }[]): Promise<string> {
+  if (!db) throw new Error("Firestore database is not initialized");
+
+  // Fetch all section documents in parallel
+  const promises = sections.map(async (section) => {
+    const answers = await getSectionAnswers(uid, workbookId, section.id);
+    
+    // Convert the object { q1: "text", q2: "text" } into a readable string
+    const answerText = Object.entries(answers)
+      .filter(([key, value]) => key !== 'lastUpdated' && typeof value === 'string' && value.trim().length > 0)
+      .map(([_, value]) => `- ${value}`)
+      .join('\n');
+
+    if (!answerText) return null; // Skip empty sections
+
+    return `SECTION: ${section.title}\n${answerText}`;
+  });
+
+  const results = await Promise.all(promises);
+  return results.filter(r => r !== null).join('\n\n');
+}

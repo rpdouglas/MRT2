@@ -1,17 +1,14 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWorkbook } from '../data/workbooks';
-import { getSectionAnswers, saveAnswer, type WorkbookProgress } from '../lib/workbooks';
-import { analyzeWorkbook, type WorkbookInsight } from '../lib/gemini'; // NEW Import
+import { getSectionAnswers, saveAnswer, WorkbookProgress } from '../lib/workbooks';
 import { useAuth } from '../contexts/AuthContext';
-import { Dialog, Transition } from '@headlessui/react';
 import { 
   ArrowLeftIcon, 
   ArrowRightIcon, 
   DocumentArrowDownIcon,
   InformationCircleIcon,
-  XMarkIcon,
-  SparklesIcon // NEW Icon
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 export default function WorkbookSession() {
@@ -30,11 +27,6 @@ export default function WorkbookSession() {
   
   // Print Mode State
   const [isPrintMode, setIsPrintMode] = useState(false);
-
-  // --- AI INSIGHT STATE ---
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiResult, setAiResult] = useState<WorkbookInsight | null>(null);
-  const [showAiModal, setShowAiModal] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -90,25 +82,6 @@ export default function WorkbookSession() {
     setTimeout(() => {
       window.print();
     }, 500);
-  };
-
-  // --- AI HANDLER ---
-  const handleAiAnalysis = async () => {
-    if (!section) return;
-    
-    setIsAnalyzing(true);
-    setShowAiModal(true); // Show modal immediately with loading state
-
-    // 1. Bundle Q&A pairs
-    const qaPairs = section.questions.map(q => ({
-        question: q.text,
-        answer: answers[q.id] || "No answer provided."
-    }));
-
-    // 2. Call API
-    const result = await analyzeWorkbook(section.title, qaPairs);
-    setAiResult(result);
-    setIsAnalyzing(false);
   };
 
   if (!workbook || !section || loading) return <div className="p-8">Loading session...</div>;
@@ -178,15 +151,7 @@ export default function WorkbookSession() {
          </div>
          
          <div className="flex items-center gap-3">
-            {/* SPARKLE BUTTON */}
-            <button 
-                onClick={handleAiAnalysis}
-                className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-sm font-medium bg-purple-50 px-3 py-1 rounded-full transition-colors"
-            >
-                <SparklesIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Insight</span>
-            </button>
-
+            {/* Export Only - Sparkle Button Removed */}
             <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
                 <DocumentArrowDownIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
@@ -254,77 +219,6 @@ export default function WorkbookSession() {
              </button>
           </div>
       </div>
-
-      {/* 5. AI INSIGHT MODAL */}
-      <Transition appear show={showAiModal} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setShowAiModal(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                    <SparklesIcon className="h-6 w-6 text-purple-500" />
-                    <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900">
-                      Coach's Feedback
-                    </Dialog.Title>
-                  </div>
-
-                  {isAnalyzing ? (
-                    <div className="py-8 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                        <p className="text-sm text-gray-500">Reading your answers...</p>
-                    </div>
-                  ) : (
-                    aiResult && (
-                        <div className="space-y-4">
-                            <div className="bg-purple-50 p-4 rounded-xl text-sm text-gray-800 leading-relaxed border border-purple-100">
-                                {aiResult.feedback}
-                            </div>
-                            
-                            <div className="text-center font-bold text-purple-600 text-sm">
-                                "{aiResult.encouragement}"
-                            </div>
-                        </div>
-                    )
-                  )}
-
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-purple-100 px-4 py-2 text-sm font-medium text-purple-900 hover:bg-purple-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
-                      onClick={() => setShowAiModal(false)}
-                    >
-                      Got it
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
-
     </div>
   );
 }
