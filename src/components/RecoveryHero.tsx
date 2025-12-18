@@ -17,7 +17,7 @@ interface RecoveryHeroProps {
 
 export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }: RecoveryHeroProps) {
   
-  // --- SOBRIETY CALCULATION LOGIC CODE ---
+  // --- SOBRIETY CALCULATION LOGIC ---
   const calculateDuration = () => {
     if (!sobrietyDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
     
@@ -58,13 +58,13 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
           
           {sobrietyDate ? (
             <div className="flex flex-col justify-center items-center h-full">
-               {/* Big Total Number */}
-               <div className="text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
-                 {duration.totalDays}
-                 <span className="text-xl sm:text-3xl font-medium ml-2 opacity-80">Days</span>
+               {/* Big Total Number - Flexbox added for vertical centering */}
+               <div className="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
+                 <span>{duration.totalDays}</span>
+                 <span className="text-xl sm:text-3xl font-medium ml-3 sm:ml-4 opacity-80">Days</span>
                </div>
                
-               {/* Breakdown Subtext - Scaled Up Another 25% */}
+               {/* Breakdown Subtext */}
                <div className="flex flex-wrap items-center justify-center gap-1 text-lg sm:text-2xl font-medium text-blue-50 opacity-90">
                   <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-2 rounded-lg truncate max-w-full">
                      <CalendarDaysIcon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
