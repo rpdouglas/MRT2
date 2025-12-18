@@ -3,13 +3,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-export interface AiInsight {
+// --- 1. JOURNAL ANALYSIS ---
+
+export interface AnalysisResult {
   analysis: string;
   mood: string;
+  sentiment: string; // <--- ADDED THIS FIELD
   actionableSteps: string[];
 }
 
-export async function getAiInsight(journalEntries: string[]): Promise<AiInsight> {
+export async function analyzeJournalEntries(journalEntries: string[]): Promise<AnalysisResult> {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -24,6 +27,7 @@ export async function getAiInsight(journalEntries: string[]): Promise<AiInsight>
       {
         "analysis": "A 2-3 sentence summary of their emotional state and progress.",
         "mood": "One word summary (e.g., Hopeful, Struggling, Determined)",
+        "sentiment": "Positive, Neutral, or Negative", 
         "actionableSteps": ["Step 1", "Step 2", "Step 3"]
       }
 
@@ -37,7 +41,7 @@ export async function getAiInsight(journalEntries: string[]): Promise<AiInsight>
     // Clean up potential markdown code blocks if the model adds them
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return JSON.parse(cleanText) as AiInsight;
+    return JSON.parse(cleanText) as AnalysisResult;
 
   } catch (error) {
     console.error("Gemini API Error:", error);
@@ -45,12 +49,14 @@ export async function getAiInsight(journalEntries: string[]): Promise<AiInsight>
     return {
       analysis: "Great job keeping up with your journaling. Keep coming back!",
       mood: "Stable",
+      sentiment: "Positive", // <--- ADDED FALLBACK
       actionableSteps: ["Attend a meeting", "Call a friend", "Meditate for 5 mins"]
     };
   }
 }
 
-// --- NEW WORKBOOK ANALYSIS FUNCTION ---
+// --- 2. WORKBOOK ANALYSIS ---
+
 export interface WorkbookInsight {
   feedback: string;
   encouragement: string;
