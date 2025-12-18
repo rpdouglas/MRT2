@@ -1,71 +1,92 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import AppShell from './components/AppShell'; 
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
+import Tasks from './pages/Tasks';
 import Profile from './pages/Profile';
-import Tasks from './pages/Tasks'; // <--- IMPORT
-import Login from './pages/Login';
+import Workbooks from './pages/Workbooks'; // NEW
+import WorkbookDetail from './pages/WorkbookDetail'; // NEW
+import WorkbookSession from './pages/WorkbookSession'; // NEW
+import AppShell from './components/AppShell';
 
-// --- PROTECTED ROUTE WRAPPER ---
-// If the user is not logged in, redirect them to /login
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
   
-  return user ? <>{children}</> : <Navigate to="/login" />;
+  if (loading) return <div>Loading...</div>;
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <AppShell>{children}</AppShell>;
 }
 
-// --- MAIN APPLICATION ---
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Route: Login Page */}
           <Route path="/login" element={<Login />} />
-
-          {/* Protected Routes: Wrapped in AppShell (Navigation) */}
-          <Route path="/" element={<AppShell />}>
-            
-            {/* Redirect root '/' to Dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            
-            <Route path="dashboard" element={
+          <Route
+            path="/dashboard"
+            element={
               <PrivateRoute>
                 <Dashboard />
               </PrivateRoute>
-            } />
-            
-            <Route path="journal" element={
+            }
+          />
+          <Route
+            path="/journal"
+            element={
               <PrivateRoute>
                 <Journal />
               </PrivateRoute>
-            } />
-            
-            <Route path="tasks" element={ 
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
               <PrivateRoute>
                 <Tasks />
               </PrivateRoute>
-            } />
-
-            <Route path="profile" element={
+            }
+          />
+          {/* --- WORKBOOK ROUTES --- */}
+          <Route
+            path="/workbooks"
+            element={
+              <PrivateRoute>
+                <Workbooks />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/workbooks/:workbookId"
+            element={
+              <PrivateRoute>
+                <WorkbookDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/workbooks/:workbookId/session/:sectionId"
+            element={
+              <PrivateRoute>
+                <WorkbookSession />
+              </PrivateRoute>
+            }
+          />
+          {/* ----------------------- */}
+          <Route
+            path="/profile"
+            element={
               <PrivateRoute>
                 <Profile />
               </PrivateRoute>
-            } />
-          </Route>
-         
-          {/* Catch-all: Redirect unknown URLs to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
     </AuthProvider>
