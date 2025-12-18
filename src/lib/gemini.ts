@@ -1,70 +1,94 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize the API
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-if (!API_KEY) {
-  console.error("Missing VITE_GEMINI_API_KEY in .env file");
-}
-
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-// UPDATED: Using the model explicitly found in your list
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-export interface AnalysisResult {
+export interface AiInsight {
   analysis: string;
-  sentiment: 'positive' | 'neutral' | 'negative' | 'mixed';
+  mood: string;
   actionableSteps: string[];
 }
 
-/**
- * Analyzes a list of journal text entries to find patterns and insights.
- */
-export async function analyzeJournalEntries(entries: string[]): Promise<AnalysisResult> {
-  if (entries.length === 0) {
-    throw new Error("No entries to analyze");
-  }
-
-  // 1. Prepare the Data
-  const combinedText = entries.join("\n---\n");
-
-  // 2. Engineer the Prompt
-  const prompt = `
-    You are an empathetic, wise, and insightful recovery coach for someone in a 12-step program.
-    Your task is to analyze the following journal entries from the user and provide a summary of their emotional state and potential blind spots.
-
-    USER ENTRIES:
-    ${combinedText}
-
-    INSTRUCTIONS:
-    1. Identify the core emotional themes (e.g., "Anxiety about work," "Gratitude for family").
-    2. Look for "cognitive distortions" or patterns that might lead to relapse.
-    3. Suggest 3 small, concrete, positive actions they can take.
-
-    FORMAT:
-    Return ONLY a raw JSON object (no markdown formatting, no backticks) with this structure:
-    {
-      "analysis": "A 2-3 sentence empathetic summary of their recent headspace.",
-      "sentiment": "positive" | "neutral" | "negative" | "mixed",
-      "actionableSteps": ["Step 1", "Step 2", "Step 3"]
-    }
-  `;
-
+export async function getAiInsight(journalEntries: string[]): Promise<AiInsight> {
   try {
-    console.log("Sending request to Gemini (Model: gemini-2.5-flash)...");
-    
-    // 3. Call the API
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `
+      You are a compassionate, wise, and experienced Recovery Coach and Sponsor. 
+      Analyze the following journal entries from a user in recovery from addiction.
+      
+      Entries:
+      ${JSON.stringify(journalEntries)}
+
+      Return a JSON object with the following structure (do NOT use Markdown formatting, just raw JSON):
+      {
+        "analysis": "A 2-3 sentence summary of their emotional state and progress.",
+        "mood": "One word summary (e.g., Hopeful, Struggling, Determined)",
+        "actionableSteps": ["Step 1", "Step 2", "Step 3"]
+      }
+
+      The actionable steps should be practical, recovery-focused suggestions (e.g., "Call your sponsor", "Go to a meeting", "Practice self-care").
+    `;
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
+    
+    // Clean up potential markdown code blocks if the model adds them
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    // 4. Clean and Parse JSON
-    const cleanJson = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleanJson) as AnalysisResult;
+    return JSON.parse(cleanText) as AiInsight;
 
   } catch (error) {
-    console.error("Gemini Analysis Failed:", error);
-    throw new Error("Failed to generate insights. Please try again later.");
+    console.error("Gemini API Error:", error);
+    // Fallback if API fails or key is missing
+    return {
+      analysis: "Great job keeping up with your journaling. Keep coming back!",
+      mood: "Stable",
+      actionableSteps: ["Attend a meeting", "Call a friend", "Meditate for 5 mins"]
+    };
+  }
+}
+
+// --- NEW WORKBOOK ANALYSIS FUNCTION ---
+export interface WorkbookInsight {
+  feedback: string;
+  encouragement: string;
+}
+
+export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `
+      You are a compassionate Recovery Sponsor reviewing a sponsee's workbook answers.
+      
+      Workbook Section: "${sectionTitle}"
+      
+      User's Q&A:
+      ${JSON.stringify(qaPairs)}
+
+      Please analyze their answers for honesty, depth, and recovery understanding.
+      Return a JSON object with this structure (no Markdown):
+      {
+        "feedback": "A warm, insightful paragraph (3-4 sentences) reflecting on what they wrote. Highlight a specific strength you see in their answers.",
+        "encouragement": "A short, punchy closing statement of support."
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    return JSON.parse(cleanText) as WorkbookInsight;
+
+  } catch (error) {
+    console.error("Gemini Workbook Error:", error);
+    return {
+      feedback: "You're doing important work here. Honest self-reflection is the key to freedom. Keep pushing forward.",
+      encouragement: "One day at a time!"
+    };
   }
 }

@@ -1,16 +1,17 @@
-// REMOVED 'useRef'
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// REMOVED 'Question' type import
 import { getWorkbook } from '../data/workbooks';
 import { getSectionAnswers, saveAnswer, type WorkbookProgress } from '../lib/workbooks';
+import { analyzeWorkbook, type WorkbookInsight } from '../lib/gemini'; // NEW Import
 import { useAuth } from '../contexts/AuthContext';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
   ArrowLeftIcon, 
   ArrowRightIcon, 
   DocumentArrowDownIcon,
   InformationCircleIcon,
-  XMarkIcon
+  XMarkIcon,
+  SparklesIcon // NEW Icon
 } from '@heroicons/react/24/outline';
 
 export default function WorkbookSession() {
@@ -27,8 +28,13 @@ export default function WorkbookSession() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // For Print Mode
+  // Print Mode State
   const [isPrintMode, setIsPrintMode] = useState(false);
+
+  // --- AI INSIGHT STATE ---
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<WorkbookInsight | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -81,15 +87,33 @@ export default function WorkbookSession() {
 
   const handlePrint = () => {
     setIsPrintMode(true);
-    // Slight delay to allow render, then print
     setTimeout(() => {
       window.print();
     }, 500);
   };
 
+  // --- AI HANDLER ---
+  const handleAiAnalysis = async () => {
+    if (!section) return;
+    
+    setIsAnalyzing(true);
+    setShowAiModal(true); // Show modal immediately with loading state
+
+    // 1. Bundle Q&A pairs
+    const qaPairs = section.questions.map(q => ({
+        question: q.text,
+        answer: answers[q.id] || "No answer provided."
+    }));
+
+    // 2. Call API
+    const result = await analyzeWorkbook(section.title, qaPairs);
+    setAiResult(result);
+    setIsAnalyzing(false);
+  };
+
   if (!workbook || !section || loading) return <div className="p-8">Loading session...</div>;
 
-  // --- PRINT MODE VIEW (Simple Report Layout) ---
+  // --- PRINT MODE VIEW ---
   if (isPrintMode) {
     return (
       <div className="bg-white min-h-screen text-black p-8 max-w-4xl mx-auto print:p-0">
@@ -136,24 +160,38 @@ export default function WorkbookSession() {
     );
   }
 
-  // --- WIZARD MODE VIEW (Mobile Focused) ---
+  // --- WIZARD MODE VIEW ---
   if (!currentQuestion) return <div>Error</div>;
 
   return (
-    <div className="max-w-2xl mx-auto h-[calc(100vh-80px)] flex flex-col">
+    <div className="max-w-2xl mx-auto h-[calc(100vh-80px)] flex flex-col relative">
       
       {/* 1. Top Bar */}
       <div className="flex items-center justify-between mb-4">
-         <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="text-gray-400 hover:text-gray-900">
-             <XMarkIcon className="h-6 w-6" />
-         </button>
-         <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-            Question {currentIndex + 1} of {section.questions.length}
+         <div className="flex items-center gap-2">
+            <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="text-gray-400 hover:text-gray-900">
+                <XMarkIcon className="h-6 w-6" />
+            </button>
+            <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                Question {currentIndex + 1} of {section.questions.length}
+            </div>
          </div>
-         <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
-             <DocumentArrowDownIcon className="h-4 w-4" />
-             <span className="hidden sm:inline">Export</span>
-         </button>
+         
+         <div className="flex items-center gap-3">
+            {/* SPARKLE BUTTON */}
+            <button 
+                onClick={handleAiAnalysis}
+                className="text-purple-500 hover:text-purple-600 flex items-center gap-1 text-sm font-medium bg-purple-50 px-3 py-1 rounded-full transition-colors"
+            >
+                <SparklesIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Insight</span>
+            </button>
+
+            <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
+                <DocumentArrowDownIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Export</span>
+            </button>
+         </div>
       </div>
 
       {/* 2. Progress Line */}
@@ -164,7 +202,7 @@ export default function WorkbookSession() {
         />
       </div>
 
-      {/* 3. The Question Area (Scrollable) */}
+      {/* 3. The Question Area */}
       <div className="flex-1 overflow-y-auto pb-20">
          <div className="prose prose-lg max-w-none mb-6">
             <h2 className="text-2xl font-bold text-gray-900 leading-tight">
@@ -178,7 +216,6 @@ export default function WorkbookSession() {
             )}
          </div>
 
-         {/* Input Area */}
          <textarea
             className="w-full min-h-[300px] p-4 text-lg border-0 bg-transparent focus:ring-0 placeholder-gray-300 resize-none"
             placeholder="Type your answer here..."
@@ -188,7 +225,7 @@ export default function WorkbookSession() {
          />
       </div>
 
-      {/* 4. Bottom Navigation (Fixed) */}
+      {/* 4. Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 lg:static lg:bg-transparent lg:border-0">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
              <button 
@@ -217,6 +254,76 @@ export default function WorkbookSession() {
              </button>
           </div>
       </div>
+
+      {/* 5. AI INSIGHT MODAL */}
+      <Transition appear show={showAiModal} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowAiModal(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="h-6 w-6 text-purple-500" />
+                    <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900">
+                      Coach's Feedback
+                    </Dialog.Title>
+                  </div>
+
+                  {isAnalyzing ? (
+                    <div className="py-8 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                        <p className="text-sm text-gray-500">Reading your answers...</p>
+                    </div>
+                  ) : (
+                    aiResult && (
+                        <div className="space-y-4">
+                            <div className="bg-purple-50 p-4 rounded-xl text-sm text-gray-800 leading-relaxed border border-purple-100">
+                                {aiResult.feedback}
+                            </div>
+                            
+                            <div className="text-center font-bold text-purple-600 text-sm">
+                                "{aiResult.encouragement}"
+                            </div>
+                        </div>
+                    )
+                  )}
+
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-purple-100 px-4 py-2 text-sm font-medium text-purple-900 hover:bg-purple-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      onClick={() => setShowAiModal(false)}
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
     </div>
   );
