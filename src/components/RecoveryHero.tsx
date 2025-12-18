@@ -53,21 +53,21 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
         <div className="flex-1 flex flex-col justify-center items-center text-center min-w-0">
           <div className="flex items-center gap-2 mb-2 opacity-80">
             <TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">Clean Time</span>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">Recovery Time</span>
           </div>
           
           {sobrietyDate ? (
             <div className="flex flex-col justify-center items-center h-full">
-               {/* Big Total Number - Scaled Up ~25% */}
+               {/* Big Total Number */}
                <div className="text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
                  {duration.totalDays}
                  <span className="text-xl sm:text-3xl font-medium ml-2 opacity-80">Days</span>
                </div>
                
-               {/* Breakdown Subtext - Scaled Up */}
-               <div className="flex flex-wrap items-center justify-center gap-1 text-xs sm:text-base font-medium text-blue-50 opacity-90">
-                  <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg truncate max-w-full">
-                     <CalendarDaysIcon className="h-4 w-4 flex-shrink-0" />
+               {/* Breakdown Subtext - Increased by another ~25% */}
+               <div className="flex flex-wrap items-center justify-center gap-1 text-sm sm:text-xl font-medium text-blue-50 opacity-90">
+                  <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-2 rounded-lg truncate max-w-full">
+                     <CalendarDaysIcon className="h-5 w-5 flex-shrink-0" />
                      <span className="truncate">
                         {duration.years}y, {duration.months}m, {duration.days}d
                      </span>
