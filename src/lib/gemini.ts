@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini
+// Ensure your VITE_GEMINI_API_KEY is set in .env
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 // --- 1. JOURNAL ANALYSIS ---
@@ -14,7 +15,9 @@ export interface AnalysisResult {
 
 export async function analyzeJournalEntries(journalEntries: string[]): Promise<AnalysisResult> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // UPDATED: Using 'gemini-2.5-flash' which is the stable release as of Dec 2025
+    //
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       You are a compassionate, wise, and experienced Recovery Coach and Sponsor. 
@@ -38,12 +41,14 @@ export async function analyzeJournalEntries(journalEntries: string[]): Promise<A
     const response = await result.response;
     const text = response.text();
     
+    // Clean up potential markdown code blocks if the model adds them
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return JSON.parse(cleanText) as AnalysisResult;
 
   } catch (error) {
     console.error("Gemini API Error:", error);
+    // Fallback if API fails or key is missing
     return {
       analysis: "Great job keeping up with your journaling. Keep coming back!",
       mood: "Stable",
@@ -60,10 +65,10 @@ export interface WorkbookInsight {
   encouragement: string;
 }
 
-// Updated for Full Workbook Context
 export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string): Promise<WorkbookInsight> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // UPDATED: Using 'gemini-2.5-flash'
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       You are a compassionate Recovery Sponsor reviewing a sponsee's entire workbook.
@@ -99,7 +104,7 @@ export async function analyzeFullWorkbook(workbookTitle: string, fullContent: st
   }
 }
 
-// Deprecated single-section analyzer (kept for type safety if referenced elsewhere, but unused now)
+// Deprecated single-section analyzer (kept for type safety if referenced elsewhere)
 export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
   return analyzeFullWorkbook(sectionTitle, JSON.stringify(qaPairs));
 }
