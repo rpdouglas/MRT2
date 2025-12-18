@@ -1,4 +1,3 @@
-// REMOVED 'updateDoc' from the import list below
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -39,7 +38,14 @@ export async function getSectionAnswers(uid: string, workbookId: string, section
 // Helper to check completion status for a section
 export async function getSectionCompletion(uid: string, workbookId: string, sectionId: string, totalQuestions: number): Promise<number> {
   const answers = await getSectionAnswers(uid, workbookId, sectionId);
-  const answeredCount = Object.keys(answers).filter(k => k !== 'lastUpdated').length;
+  
+  // LOGIC UPDATE: Only count answers that are non-empty strings
+  const answeredCount = Object.entries(answers).filter(([key, value]) => {
+    // Ignore metadata keys like 'lastUpdated'
+    if (key === 'lastUpdated') return false;
+    // Ensure value is a string and has content (not just whitespace)
+    return typeof value === 'string' && value.trim().length > 0;
+  }).length;
   
   if (totalQuestions === 0) return 0;
   

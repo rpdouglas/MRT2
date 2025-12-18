@@ -57,7 +57,6 @@ const generalQuestions: Question[] = [
 ];
 
 // --- 2. 12-STEP WORKBOOK (12 Steps, ~15 Qs each) ---
-// Note: Providing full questions for Step 1, generic structure for 2-12 for brevity while maintaining architecture.
 const step1Questions: Question[] = [
   { id: 's1_q1', text: "Do you accept that you have a disease of addiction?", context: "We admitted we were powerless over our addiction..." },
   { id: 's1_q2', text: "How has the disease of addiction manifested in your life?" },
