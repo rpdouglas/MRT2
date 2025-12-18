@@ -41,90 +41,101 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
   const duration = calculateDuration();
 
   return (
-    <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl shadow-lg p-5 text-white overflow-hidden relative">
+    <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl shadow-lg p-4 text-white overflow-hidden relative">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
 
-      <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center md:items-stretch">
+      {/* LAYOUT: Flex Row (Side-by-Side)
+         This enforces the "Vertical Split" (Left | Right) look even on mobile.
+      */}
+      <div className="relative z-10 flex flex-row items-stretch gap-3 sm:gap-6 h-full">
         
         {/* --- SECTION 1: TIME (Left Side) --- */}
-        <div className="flex-grow flex flex-col justify-center text-center md:text-left min-w-0 py-2">
-          <div className="flex items-center justify-center md:justify-start gap-2 mb-2 opacity-80">
-            <TrophyIcon className="h-4 w-4 flex-shrink-0" />
-            <span className="text-xs font-bold uppercase tracking-wider">Clean Time</span>
+        <div className="flex-1 flex flex-col justify-center min-w-0">
+          <div className="flex items-center gap-2 mb-1 opacity-80">
+            <TrophyIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Clean Time</span>
           </div>
           
           {sobrietyDate ? (
-            <div className="flex flex-col justify-center">
-               {/* Big Total Number */}
-               <div className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-none mb-3">
+            <div className="flex flex-col justify-center h-full">
+               {/* Big Total Number - Scaled for Side-by-Side */}
+               <div className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-none mb-2">
                  {duration.totalDays}
-                 <span className="text-lg sm:text-2xl font-medium ml-1 sm:ml-2 opacity-80">Days</span>
+                 <span className="text-sm sm:text-xl font-medium ml-1 opacity-80">Days</span>
                </div>
                
                {/* Breakdown Subtext */}
-               <div className="flex justify-center md:justify-start">
-                  <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-blue-50 backdrop-blur-sm">
-                     <CalendarDaysIcon className="h-4 w-4" />
-                     <span className="truncate">{duration.years} Years, {duration.months} Months, {duration.days} Days</span>
+               <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-sm font-medium text-blue-50 opacity-90">
+                  <div className="inline-flex items-center gap-1 bg-black/10 px-2 py-1 rounded truncate max-w-full">
+                     <CalendarDaysIcon className="h-3 w-3 flex-shrink-0" />
+                     <span className="truncate">
+                        {duration.years}y, {duration.months}m, {duration.days}d
+                     </span>
                   </div>
                </div>
             </div>
           ) : (
-            <div className="bg-white/10 rounded-lg p-3 text-blue-100 text-sm">
+            <div className="bg-white/10 rounded-lg p-2 text-blue-100 text-xs sm:text-sm">
               Set sobriety date in Profile.
             </div>
           )}
         </div>
 
-        {/* --- VERTICAL DIVIDER (Desktop Only) --- */}
-        <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0 my-2"></div>
-        {/* --- HORIZONTAL DIVIDER (Mobile Only) --- */}
-        <div className="md:hidden w-full h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        {/* --- VERTICAL DIVIDER --- */}
+        <div className="w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0"></div>
 
         {/* --- SECTION 2: STATS GRID (Right Side - 2x2) --- */}
-        <div className="flex-shrink-0 w-full md:w-auto">
+        {/* We use a fixed percentage width or flex-basis to ensure the grid stays square-ish */}
+        <div className="flex-shrink-0 w-[45%] sm:w-auto flex flex-col justify-center">
            
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 
                 {/* 1. Journal Streak */}
-                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
-                    <div className="p-2 bg-purple-500/30 rounded-lg text-white">
-                        <PencilSquareIcon className="h-5 w-5" />
+                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
+                    <div className="hidden sm:block p-1.5 bg-purple-500/30 rounded-md text-white">
+                        <PencilSquareIcon className="h-4 w-4" />
                     </div>
+                    {/* Mobile Icon */}
+                    <PencilSquareIcon className="h-4 w-4 sm:hidden mb-1 text-purple-200" />
+                    
                     <div>
-                        <span className="block text-xl font-bold leading-none">{journalStats?.journalStreak || 0}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Journal</span>
+                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.journalStreak || 0}</span>
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Journal</span>
                     </div>
                 </div>
 
                 {/* 2. Consistency */}
-                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
-                    <div className="p-2 bg-green-500/30 rounded-lg text-white">
-                        <ScaleIcon className="h-5 w-5" />
+                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
+                    <div className="hidden sm:block p-1.5 bg-green-500/30 rounded-md text-white">
+                        <ScaleIcon className="h-4 w-4" />
                     </div>
+                    <ScaleIcon className="h-4 w-4 sm:hidden mb-1 text-green-200" />
+                    
                     <div>
-                        <span className="block text-xl font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Avg/Week</span>
+                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg/Wk</span>
                     </div>
                 </div>
 
                 {/* 3. Habit Fire */}
-                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
-                    <div className="p-2 bg-orange-500/30 rounded-lg text-white">
-                        <FireIcon className="h-5 w-5" />
+                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
+                    <div className="hidden sm:block p-1.5 bg-orange-500/30 rounded-md text-white">
+                        <FireIcon className="h-4 w-4" />
                     </div>
+                    <FireIcon className="h-4 w-4 sm:hidden mb-1 text-orange-200" />
+                    
                     <div>
-                        <span className="block text-xl font-bold leading-none">{taskStreak}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Streak</span>
+                        <span className="block text-lg sm:text-xl font-bold leading-none">{taskStreak}</span>
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Streak</span>
                     </div>
                 </div>
 
-                {/* 4. Future Slot (Placeholder) */}
-                <div className="border border-dashed border-white/20 rounded-xl p-3 flex items-center justify-center gap-2 min-w-[140px] text-blue-200/50">
-                    <PlusIcon className="h-4 w-4" />
-                    <span className="text-[10px] uppercase tracking-wide font-medium">Soon</span>
+                {/* 4. Future Slot */}
+                <div className="border border-dashed border-white/20 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-center sm:justify-start sm:gap-3 text-blue-200/50">
+                    <PlusIcon className="h-4 w-4 mb-1 sm:mb-0" />
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-wide font-medium">Soon</span>
                 </div>
 
             </div>
