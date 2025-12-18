@@ -4,7 +4,7 @@ import {
   PencilSquareIcon, 
   ScaleIcon,
   CalendarDaysIcon,
-  FaceSmileIcon // <--- New Import
+  FaceSmileIcon
 } from '@heroicons/react/24/outline';
 import { differenceInYears, differenceInMonths, differenceInDays, addYears, addMonths } from 'date-fns';
 import type { GamificationStats } from '../lib/gamification';
@@ -49,25 +49,25 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
       {/* LAYOUT: Flex Row (Side-by-Side) */}
       <div className="relative z-10 flex flex-row items-stretch gap-3 sm:gap-6 h-full">
         
-        {/* --- SECTION 1: TIME (Left Side) --- */}
-        <div className="flex-1 flex flex-col justify-center min-w-0">
-          <div className="flex items-center gap-2 mb-1 opacity-80">
-            <TrophyIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">Clean Time</span>
+        {/* --- SECTION 1: TIME (Left Side - Centered & Larger) --- */}
+        <div className="flex-1 flex flex-col justify-center items-center text-center min-w-0">
+          <div className="flex items-center gap-2 mb-2 opacity-80">
+            <TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">Clean Time</span>
           </div>
           
           {sobrietyDate ? (
-            <div className="flex flex-col justify-center h-full">
-               {/* Big Total Number */}
-               <div className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-none mb-2">
+            <div className="flex flex-col justify-center items-center h-full">
+               {/* Big Total Number - Scaled Up ~25% */}
+               <div className="text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
                  {duration.totalDays}
-                 <span className="text-sm sm:text-xl font-medium ml-1 opacity-80">Days</span>
+                 <span className="text-xl sm:text-3xl font-medium ml-2 opacity-80">Days</span>
                </div>
                
-               {/* Breakdown Subtext */}
-               <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-sm font-medium text-blue-50 opacity-90">
-                  <div className="inline-flex items-center gap-1 bg-black/10 px-2 py-1 rounded truncate max-w-full">
-                     <CalendarDaysIcon className="h-3 w-3 flex-shrink-0" />
+               {/* Breakdown Subtext - Scaled Up */}
+               <div className="flex flex-wrap items-center justify-center gap-1 text-xs sm:text-base font-medium text-blue-50 opacity-90">
+                  <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg truncate max-w-full">
+                     <CalendarDaysIcon className="h-4 w-4 flex-shrink-0" />
                      <span className="truncate">
                         {duration.years}y, {duration.months}m, {duration.days}d
                      </span>
@@ -75,7 +75,7 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
                </div>
             </div>
           ) : (
-            <div className="bg-white/10 rounded-lg p-2 text-blue-100 text-xs sm:text-sm">
+            <div className="bg-white/10 rounded-lg p-3 text-blue-100 text-sm">
               Set sobriety date in Profile.
             </div>
           )}
