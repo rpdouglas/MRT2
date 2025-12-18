@@ -64,10 +64,10 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
                  <span className="text-xl sm:text-3xl font-medium ml-2 opacity-80">Days</span>
                </div>
                
-               {/* Breakdown Subtext - Increased by another ~25% */}
-               <div className="flex flex-wrap items-center justify-center gap-1 text-sm sm:text-xl font-medium text-blue-50 opacity-90">
+               {/* Breakdown Subtext - Scaled Up Another 25% */}
+               <div className="flex flex-wrap items-center justify-center gap-1 text-lg sm:text-2xl font-medium text-blue-50 opacity-90">
                   <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-2 rounded-lg truncate max-w-full">
-                     <CalendarDaysIcon className="h-5 w-5 flex-shrink-0" />
+                     <CalendarDaysIcon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
                      <span className="truncate">
                         {duration.years}y, {duration.months}m, {duration.days}d
                      </span>
