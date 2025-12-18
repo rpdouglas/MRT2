@@ -4,7 +4,7 @@ import {
   PencilSquareIcon, 
   ScaleIcon,
   CalendarDaysIcon,
-  PlusIcon
+  FaceSmileIcon // <--- New Import
 } from '@heroicons/react/24/outline';
 import { differenceInYears, differenceInMonths, differenceInDays, addYears, addMonths } from 'date-fns';
 import type { GamificationStats } from '../lib/gamification';
@@ -46,9 +46,7 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
 
-      {/* LAYOUT: Flex Row (Side-by-Side)
-         This enforces the "Vertical Split" (Left | Right) look even on mobile.
-      */}
+      {/* LAYOUT: Flex Row (Side-by-Side) */}
       <div className="relative z-10 flex flex-row items-stretch gap-3 sm:gap-6 h-full">
         
         {/* --- SECTION 1: TIME (Left Side) --- */}
@@ -60,7 +58,7 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
           
           {sobrietyDate ? (
             <div className="flex flex-col justify-center h-full">
-               {/* Big Total Number - Scaled for Side-by-Side */}
+               {/* Big Total Number */}
                <div className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-none mb-2">
                  {duration.totalDays}
                  <span className="text-sm sm:text-xl font-medium ml-1 opacity-80">Days</span>
@@ -87,7 +85,6 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
         <div className="w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0"></div>
 
         {/* --- SECTION 2: STATS GRID (Right Side - 2x2) --- */}
-        {/* We use a fixed percentage width or flex-basis to ensure the grid stays square-ish */}
         <div className="flex-shrink-0 w-[45%] sm:w-auto flex flex-col justify-center">
            
            <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -132,10 +129,17 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
                     </div>
                 </div>
 
-                {/* 4. Future Slot */}
-                <div className="border border-dashed border-white/20 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-center sm:justify-start sm:gap-3 text-blue-200/50">
-                    <PlusIcon className="h-4 w-4 mb-1 sm:mb-0" />
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-wide font-medium">Soon</span>
+                {/* 4. Average Mood (Pink) */}
+                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
+                    <div className="hidden sm:block p-1.5 bg-pink-500/30 rounded-md text-white">
+                        <FaceSmileIcon className="h-4 w-4" />
+                    </div>
+                    <FaceSmileIcon className="h-4 w-4 sm:hidden mb-1 text-pink-200" />
+                    
+                    <div>
+                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.averageMood || 0}</span>
+                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg Mood</span>
+                    </div>
                 </div>
 
             </div>

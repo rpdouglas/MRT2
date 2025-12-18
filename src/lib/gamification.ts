@@ -6,11 +6,18 @@ export interface GamificationStats {
   totalEntries: number;
   totalWords: number;
   consistencyRate: number; // Avg entries per week
+  averageMood: number; // Lifetime average
 }
 
 export function calculateJournalStats(entries: JournalEntry[]): GamificationStats {
   if (entries.length === 0) {
-    return { journalStreak: 0, totalEntries: 0, totalWords: 0, consistencyRate: 0 };
+    return { 
+      journalStreak: 0, 
+      totalEntries: 0, 
+      totalWords: 0, 
+      consistencyRate: 0,
+      averageMood: 0 
+    };
   }
 
   // 1. Sort entries by date descending (Newest first)
@@ -59,10 +66,15 @@ export function calculateJournalStats(entries: JournalEntry[]): GamificationStat
   const weeksActive = Math.max(daysActive / 7, 1);
   const consistencyRate = parseFloat((entries.length / weeksActive).toFixed(1));
 
+  // 5. Average Mood (Lifetime)
+  const totalMood = entries.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
+  const averageMood = parseFloat((totalMood / entries.length).toFixed(1));
+
   return {
     journalStreak: streak,
     totalEntries: entries.length,
     totalWords,
-    consistencyRate
+    consistencyRate,
+    averageMood
   };
 }
