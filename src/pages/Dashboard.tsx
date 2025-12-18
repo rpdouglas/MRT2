@@ -6,7 +6,7 @@ import { getUserJournals, type JournalEntry } from '../lib/journal';
 import { getInsightHistory } from '../lib/insights';
 import { getUserTasks, toggleTask, type Task } from '../lib/tasks';
 import { calculateJournalStats, type GamificationStats } from '../lib/gamification';
-import RecoveryHero from '../components/RecoveryHero'; // <--- NEW COMPONENT
+import RecoveryHero from '../components/RecoveryHero';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRightIcon, 
@@ -116,14 +116,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       
-      {/* 1. WELCOME SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-           <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.displayName}</h1>
-           <p className="text-gray-500">Here is your recovery overview for today.</p>
-        </div>
+      {/* 1. ACTION BUTTON (Aligned Right) */}
+      <div className="flex justify-end">
         <Link 
           to="/journal" 
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-sm"
