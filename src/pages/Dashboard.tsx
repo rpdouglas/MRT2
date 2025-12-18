@@ -9,7 +9,6 @@ import { calculateJournalStats, type GamificationStats } from '../lib/gamificati
 import RecoveryHero from '../components/RecoveryHero';
 import { Link } from 'react-router-dom';
 import { 
-  ArrowRightIcon, 
   ChartBarIcon, 
   SparklesIcon,
   CheckCircleIcon
@@ -118,25 +117,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       
-      {/* 1. ACTION BUTTON (Aligned Right) */}
-      <div className="flex justify-end">
-        <Link 
-          to="/journal" 
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-sm"
-        >
-          <span>Check In</span>
-          <ArrowRightIcon className="h-4 w-4" />
-        </Link>
-      </div>
-
-      {/* 2. RECOVERY HERO (Unified Component) */}
+      {/* 1. RECOVERY HERO (Unified Component) */}
       <RecoveryHero 
         sobrietyDate={sobrietyDate} 
         journalStats={stats}
         taskStreak={taskStreak}
       />
 
-      {/* 3. MAIN GRID (Priorities + Mood) */}
+      {/* 2. MAIN GRID (Priorities + Mood) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* --- PRIORITIES WIDGET --- */}
@@ -219,7 +207,7 @@ export default function Dashboard() {
 
       </div>
 
-      {/* 4. LATEST INSIGHT CARD (Full Width Bottom) */}
+      {/* 3. LATEST INSIGHT CARD (Full Width Bottom) */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-purple-500" />
