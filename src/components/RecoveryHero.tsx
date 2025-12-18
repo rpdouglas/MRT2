@@ -3,7 +3,8 @@ import {
   FireIcon, 
   PencilSquareIcon, 
   ScaleIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import { differenceInYears, differenceInMonths, differenceInDays, addYears, addMonths } from 'date-fns';
 import type { GamificationStats } from '../lib/gamification';
@@ -45,17 +46,17 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
       <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
 
-      <div className="relative z-10 flex flex-row gap-4 h-full">
+      <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center md:items-stretch">
         
-        {/* --- SECTION 1: TIME (70% - The Hero) --- */}
-        <div className="flex-grow flex flex-col justify-center min-w-0">
-          <div className="flex items-center gap-2 mb-2 opacity-80">
+        {/* --- SECTION 1: TIME (Left Side) --- */}
+        <div className="flex-grow flex flex-col justify-center text-center md:text-left min-w-0 py-2">
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-2 opacity-80">
             <TrophyIcon className="h-4 w-4 flex-shrink-0" />
-            <span className="text-xs font-bold uppercase tracking-wider truncate">Clean Time</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Clean Time</span>
           </div>
           
           {sobrietyDate ? (
-            <div className="flex flex-col justify-center h-full pb-2">
+            <div className="flex flex-col justify-center">
                {/* Big Total Number */}
                <div className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-none mb-3">
                  {duration.totalDays}
@@ -63,10 +64,10 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
                </div>
                
                {/* Breakdown Subtext */}
-               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-medium text-blue-50 opacity-90">
-                  <div className="inline-flex items-center gap-1 bg-black/10 px-2 py-1 rounded">
-                     <CalendarDaysIcon className="h-3 w-3" />
-                     <span className="truncate">{duration.years}y, {duration.months}m, {duration.days}d</span>
+               <div className="flex justify-center md:justify-start">
+                  <div className="inline-flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-blue-50 backdrop-blur-sm">
+                     <CalendarDaysIcon className="h-4 w-4" />
+                     <span className="truncate">{duration.years} Years, {duration.months} Months, {duration.days} Days</span>
                   </div>
                </div>
             </div>
@@ -77,46 +78,56 @@ export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }:
           )}
         </div>
 
-        {/* --- VERTICAL DIVIDER --- */}
-        <div className="w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0"></div>
+        {/* --- VERTICAL DIVIDER (Desktop Only) --- */}
+        <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0 my-2"></div>
+        {/* --- HORIZONTAL DIVIDER (Mobile Only) --- */}
+        <div className="md:hidden w-full h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
 
-        {/* --- SECTION 2: STATS (30% - The Dock) --- */}
-        <div className="flex-shrink-0 w-[25%] sm:w-[30%] flex flex-col justify-between py-1">
+        {/* --- SECTION 2: STATS GRID (Right Side - 2x2) --- */}
+        <div className="flex-shrink-0 w-full md:w-auto">
            
-           {/* 1. Journal Streak */}
-           <div className="flex flex-col items-center justify-center p-1 rounded-lg hover:bg-white/10 transition-colors group relative">
-               <div className="p-1.5 bg-purple-500/30 rounded-md text-white mb-1">
-                   <PencilSquareIcon className="h-5 w-5" />
-               </div>
-               <span className="text-lg font-bold leading-none">{journalStats?.journalStreak || 0}</span>
-               
-               {/* Desktop Label / Mobile Tiny Text */}
-               <span className="hidden sm:inline text-xs text-blue-100 mt-1">Journal</span>
-               <span className="sm:hidden text-[10px] text-blue-200 opacity-80">Strk</span>
-           </div>
+           <div className="grid grid-cols-2 gap-3">
+                
+                {/* 1. Journal Streak */}
+                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
+                    <div className="p-2 bg-purple-500/30 rounded-lg text-white">
+                        <PencilSquareIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <span className="block text-xl font-bold leading-none">{journalStats?.journalStreak || 0}</span>
+                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Journal</span>
+                    </div>
+                </div>
 
-           {/* 2. Consistency */}
-           <div className="flex flex-col items-center justify-center p-1 rounded-lg hover:bg-white/10 transition-colors group relative">
-               <div className="p-1.5 bg-green-500/30 rounded-md text-white mb-1">
-                   <ScaleIcon className="h-5 w-5" />
-               </div>
-               <span className="text-lg font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
-               
-               <span className="hidden sm:inline text-xs text-blue-100 mt-1">Avg/Wk</span>
-               <span className="sm:hidden text-[10px] text-blue-200 opacity-80">Avg</span>
-           </div>
+                {/* 2. Consistency */}
+                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
+                    <div className="p-2 bg-green-500/30 rounded-lg text-white">
+                        <ScaleIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <span className="block text-xl font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
+                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Avg/Week</span>
+                    </div>
+                </div>
 
-           {/* 3. Habit Fire */}
-           <div className="flex flex-col items-center justify-center p-1 rounded-lg hover:bg-white/10 transition-colors group relative">
-               <div className="p-1.5 bg-orange-500/30 rounded-md text-white mb-1">
-                   <FireIcon className="h-5 w-5" />
-               </div>
-               <span className="text-lg font-bold leading-none">{taskStreak}</span>
-               
-               <span className="hidden sm:inline text-xs text-blue-100 mt-1">Habits</span>
-               <span className="sm:hidden text-[10px] text-blue-200 opacity-80">Fire</span>
-           </div>
+                {/* 3. Habit Fire */}
+                <div className="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex items-center gap-3 min-w-[140px] border border-white/5">
+                    <div className="p-2 bg-orange-500/30 rounded-lg text-white">
+                        <FireIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <span className="block text-xl font-bold leading-none">{taskStreak}</span>
+                        <span className="text-[10px] uppercase tracking-wide text-blue-200">Streak</span>
+                    </div>
+                </div>
 
+                {/* 4. Future Slot (Placeholder) */}
+                <div className="border border-dashed border-white/20 rounded-xl p-3 flex items-center justify-center gap-2 min-w-[140px] text-blue-200/50">
+                    <PlusIcon className="h-4 w-4" />
+                    <span className="text-[10px] uppercase tracking-wide font-medium">Soon</span>
+                </div>
+
+            </div>
         </div>
 
       </div>
