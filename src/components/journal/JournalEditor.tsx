@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
     PlusIcon, 
     Cog6ToothIcon,
     MapPinIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
+    TagIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { getCurrentWeather } from '../../lib/weather';
@@ -29,10 +31,10 @@ interface JournalEditorProps {
 }
 
 const DEFAULT_TEMPLATES = [
-  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['#morning'] },
-  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['#nightly'] },
-  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['#urge', '#sos'] },
-  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['#meeting'] },
+  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['Morning'] },
+  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['Nightly'] },
+  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['Urge', 'SOS'] },
+  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['Meeting'] },
 ];
 
 export default function JournalEditor({ initialEntry, onSaveComplete }: JournalEditorProps) {
@@ -46,6 +48,12 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   const [saving, setSaving] = useState(false);
   const [weatherLoading, setWeatherLoading] = useState(false);
   
+  // Tag State
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
   // Template State
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
@@ -56,6 +64,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     if (initialEntry) {
       setNewEntry(initialEntry.content);
       setMood(initialEntry.moodScore);
+      setTags(initialEntry.tags || []);
       // Load saved weather if it exists
       if (initialEntry.weather) {
         setWeather(initialEntry.weather);
@@ -65,6 +74,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
       // Reset if switching from edit back to new
       setNewEntry('');
       setMood(5);
+      setTags([]);
       setActiveTemplate(null);
       setFormAnswers([]);
       setWeather(null);
@@ -77,6 +87,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   useEffect(() => {
     if (!user) return;
     loadCustomTemplates();
+    loadUserTags();
     if (!initialEntry) fetchLocalWeather(); 
   }, [user]);
 
@@ -84,6 +95,30 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     if (!user) return;
     const t = await getUserTemplates(user.uid);
     setCustomTemplates(t);
+  };
+
+  const loadUserTags = async () => {
+    if (!user || !db) return;
+    try {
+        // Fetch last 50 entries to gather recent tags
+        const q = query(
+            collection(db, 'journals'),
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        const snapshot = await getDocs(q);
+        const tagSet = new Set<string>();
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.tags && Array.isArray(data.tags)) {
+                data.tags.forEach((t: string) => tagSet.add(t));
+            }
+        });
+        setAvailableTags(Array.from(tagSet).sort());
+    } catch (e) {
+        console.warn("Failed to load user tags", e);
+    }
   };
 
   const fetchLocalWeather = async () => {
@@ -107,6 +142,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
         setNewEntry(defTemplate.text);
+        // Merge template tags
+        setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
         setActiveTemplate(null);
         return;
     }
@@ -116,11 +153,42 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         setActiveTemplate(custTemplate);
         setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
         setNewEntry('');
+        // Merge template tags
+        setTags(prev => [...new Set([...prev, ...custTemplate.defaultTags])]);
     } else {
         setActiveTemplate(null);
         setNewEntry('');
+        setTags([]);
     }
   };
+
+  // Tag Handling Functions
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(tagInput);
+    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+        // Remove last tag if input is empty
+        setTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const addTag = (tagName: string) => {
+    const cleanTag = tagName.trim().replace(/^#/, ''); // Remove # if user typed it
+    if (cleanTag && !tags.includes(cleanTag)) {
+        setTags([...tags, cleanTag]);
+    }
+    setTagInput('');
+    setShowSuggestions(false);
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const filteredSuggestions = availableTags.filter(t => 
+    t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
+  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,22 +202,12 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setSaving(true);
 
     let finalContent = newEntry;
-    let finalTags: string[] = [];
 
     if (activeTemplate) {
         finalContent = `**${activeTemplate.name}**\n\n`;
         activeTemplate.prompts.forEach((prompt, idx) => {
             finalContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
         });
-        finalTags = [...activeTemplate.defaultTags];
-    } else {
-        const textTags = newEntry.match(/#[a-z0-9]+/gi) || [];
-        finalTags = textTags as string[];
-        
-        const matchedDef = DEFAULT_TEMPLATES.find(t => newEntry.startsWith(t.text.split('\n')[0]));
-        if (matchedDef) {
-            finalTags = [...new Set([...finalTags, ...matchedDef.tags])];
-        }
     }
 
     try {
@@ -157,7 +215,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
             content: finalContent, 
             moodScore: mood,
-            tags: finalTags
+            tags: tags // Save explicit tags
         });
       } else {
         await addDoc(collection(db, 'journals'), {
@@ -166,7 +224,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
           moodScore: mood,
           sentiment: 'Pending', 
           weather, 
-          tags: finalTags,
+          tags: tags, // Save explicit tags
           createdAt: Timestamp.now()
         });
       }
@@ -175,6 +233,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
       setFormAnswers([]);
       setActiveTemplate(null);
       setMood(5);
+      setTags([]);
       onSaveComplete();
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -184,12 +243,12 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible relative">
         
         {/* HEADER: Weather (Left) | Templates (Right) */}
         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3">
              
-             {/* LEFT: Weather Widget (Moved Here) */}
+             {/* LEFT: Weather Widget */}
              <div>
                 {weather ? (
                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
@@ -292,10 +351,57 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             <textarea
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
-                placeholder="How are you feeling today? (Type # to add tags)"
+                placeholder="How are you feeling today?"
                 className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
             />
           )}
+
+          {/* --- TAG INPUT BAR --- */}
+          <div className="relative group">
+              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                  <TagIcon className="h-4 w-4 text-gray-400" />
+                  
+                  {/* Selected Tags Chips */}
+                  {tags.map(tag => (
+                      <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                              <XMarkIcon className="h-3 w-3" />
+                          </button>
+                      </span>
+                  ))}
+
+                  {/* Input Field */}
+                  <input 
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => {
+                          setTagInput(e.target.value);
+                          setShowSuggestions(true);
+                      }}
+                      onKeyDown={handleAddTag}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay so click registers
+                      placeholder={tags.length === 0 ? "Add tags (e.g. Grateful, Morning)..." : ""}
+                      className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
+                  />
+              </div>
+
+              {/* Autocomplete Suggestions */}
+              {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-10">
+                      {filteredSuggestions.map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => addTag(tag)}
+                          >
+                              {tag}
+                          </button>
+                      ))}
+                  </div>
+              )}
+          </div>
 
           {/* FOOTER: Mood (Left) | Save Button (Right) */}
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -316,7 +422,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {/* Save Button (Moved to Right) */}
+            {/* Save Button */}
             <button
               type="submit"
               disabled={saving}
