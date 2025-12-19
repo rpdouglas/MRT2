@@ -4,7 +4,7 @@ import { getUserJournals } from '../lib/journal';
 import { calculateJournalStats } from '../lib/gamification';
 import { FireIcon } from '@heroicons/react/24/outline';
 import JournalTabs from '../components/journal/JournalTabs';
-import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
+import JournalEditor, { JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
 
@@ -52,8 +52,7 @@ export default function Journal() {
         try {
             const journals = await getUserJournals(user.uid);
             const stats = calculateJournalStats(journals);
-            // FIXED: Use correct property 'journalStreak' defined in GamificationStats
-            setStreak(stats.journalStreak); 
+            setStreak(stats.journalStreak);
         } catch (error) {
             console.error("Failed to load journal stats", error);
         }
@@ -72,9 +71,6 @@ export default function Journal() {
   const handleSaveComplete = () => {
     setEditingEntry(null);
     setActiveTab('history'); // Auto-switch to history to see the result
-    
-    // Refresh streak logic could optionally go here if we moved loadStats out of useEffect
-    // For now, it updates on next page load/mount which is standard
   };
 
   return (
@@ -82,18 +78,19 @@ export default function Journal() {
       
       {/* --- SMART HEADER --- */}
       <div className="mb-8 p-6 bg-gradient-to-r from-white to-blue-50/30 rounded-2xl border border-blue-50 shadow-sm animate-fadeIn">
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+         <div className="flex flex-row items-center justify-between gap-4">
              <div>
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                {/* UPDATED: Reduced text size to 2xl */}
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                     {greeting}, <span className="text-blue-700">{user?.displayName ? user.displayName.split(' ')[0] : 'Friend'}</span>
                 </h1>
-                <p className="text-gray-500 font-medium mt-1 italic">
+                <p className="text-gray-500 font-medium mt-1 italic text-sm">
                     "{mantra}"
                 </p>
              </div>
              
-             {/* Streak Badge */}
-             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-blue-100 self-start md:self-auto transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
+             {/* Streak Badge - Right Justified on same line */}
+             <div className="flex-shrink-0 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
                 <FireIcon className={`h-5 w-5 ${streak > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
                 <span className="font-bold text-gray-700">{streak} Day Streak</span>
              </div>
