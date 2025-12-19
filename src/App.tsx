@@ -5,9 +5,10 @@ import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
 import Tasks from './pages/Tasks';
 import Profile from './pages/Profile';
-import Workbooks from './pages/Workbooks'; // NEW
-import WorkbookDetail from './pages/WorkbookDetail'; // NEW
-import WorkbookSession from './pages/WorkbookSession'; // NEW
+import Workbooks from './pages/Workbooks'; 
+import WorkbookDetail from './pages/WorkbookDetail'; 
+import WorkbookSession from './pages/WorkbookSession'; 
+import TemplateEditor from './pages/TemplateEditor'; // NEW IMPORT
 import AppShell from './components/AppShell';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
 
+  // Your existing logic: AppShell wraps the protected content here
   return <AppShell>{children}</AppShell>;
 }
 
@@ -28,6 +30,7 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          
           <Route
             path="/dashboard"
             element={
@@ -52,6 +55,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          
           {/* --- WORKBOOK ROUTES --- */}
           <Route
             path="/workbooks"
@@ -77,6 +81,17 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          
+          {/* --- NEW: TEMPLATES ROUTE --- */}
+          <Route
+            path="/templates"
+            element={
+              <PrivateRoute>
+                <TemplateEditor />
+              </PrivateRoute>
+            }
+          />
+          
           {/* ----------------------- */}
           <Route
             path="/profile"
