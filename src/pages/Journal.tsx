@@ -82,7 +82,6 @@ export default function Journal() {
   };
 
   return (
-    // UPDATED: Added -mt-6 to reduce whitespace between nav and header
     <div className="max-w-5xl mx-auto -mt-6">
       
       {/* --- SMART HEADER --- */}
@@ -97,25 +96,25 @@ export default function Journal() {
                 </p>
              </div>
              
-             {/* GAMIFICATION BADGES ROW */}
-             <div className="flex flex-wrap items-center justify-center md:justify-end gap-3">
+             {/* GAMIFICATION BADGES ROW (Reduced size for mobile fit) */}
+             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
                  
                  {/* 1. Streak Badge */}
-                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
-                    <FireIcon className={`h-4 w-4 ${streak > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
-                    <span className="text-sm font-bold text-gray-700">{streak} Day Streak</span>
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
+                    <FireIcon className={`h-3.5 w-3.5 ${streak > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
+                    <span className="text-xs font-bold text-gray-700">{streak} Day Streak</span>
                  </div>
 
                  {/* 2. Consistency Badge */}
-                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Average entries per week">
-                    <ChartBarIcon className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-bold text-gray-700">{consistency} / wk</span>
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Average entries per week">
+                    <ChartBarIcon className="h-3.5 w-3.5 text-blue-500" />
+                    <span className="text-xs font-bold text-gray-700">{consistency} / wk</span>
                  </div>
 
                  {/* 3. Word Count Badge */}
-                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Total words journaled">
-                    <PencilSquareIcon className="h-4 w-4 text-purple-500" />
-                    <span className="text-sm font-bold text-gray-700">{totalWords.toLocaleString()} Words</span>
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Total words journaled">
+                    <PencilSquareIcon className="h-3.5 w-3.5 text-purple-500" />
+                    <span className="text-xs font-bold text-gray-700">{totalWords.toLocaleString()} Words</span>
                  </div>
 
              </div>

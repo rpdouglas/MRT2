@@ -185,38 +185,75 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-end items-center gap-3">
-             <div className="relative">
-                <select 
-                    onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    defaultValue=""
-                    disabled={!!initialEntry} 
-                >
-                    <option value="" disabled>Choose a Template...</option>
-                    <option value="none">Free Write (Blank)</option>
-                    <optgroup label="Standard">
-                        {DEFAULT_TEMPLATES.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                    </optgroup>
-                    {customTemplates.length > 0 && (
-                        <optgroup label="My Templates">
-                            {customTemplates.map(t => (
+        
+        {/* HEADER: Weather (Left) | Templates (Right) */}
+        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3">
+             
+             {/* LEFT: Weather Widget (Moved Here) */}
+             <div>
+                {weather ? (
+                   <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                      <span>{weather.condition}</span>
+                      <span className="font-bold">{weather.temp}°C</span>
+                      {!initialEntry && (
+                          <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
+                              <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
+                          </button>
+                      )}
+                   </div>
+                ) : (
+                    !initialEntry && (
+                        <button 
+                            type="button" 
+                            onClick={fetchLocalWeather} 
+                            disabled={weatherLoading}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-white hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
+                        >
+                            {weatherLoading ? (
+                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                            ) : (
+                                <MapPinIcon className="h-3 w-3" />
+                            )}
+                            <span>Add Weather</span>
+                        </button>
+                    )
+                )}
+             </div>
+
+             {/* RIGHT: Template Controls */}
+             <div className="flex items-center gap-2">
+                 <div className="relative">
+                    <select 
+                        onChange={(e) => handleTemplateSelect(e.target.value)}
+                        className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        defaultValue=""
+                        disabled={!!initialEntry} 
+                    >
+                        <option value="" disabled>Choose a Template...</option>
+                        <option value="none">Free Write (Blank)</option>
+                        <optgroup label="Standard">
+                            {DEFAULT_TEMPLATES.map(t => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
                             ))}
                         </optgroup>
-                    )}
-                </select>
-             </div>
+                        {customTemplates.length > 0 && (
+                            <optgroup label="My Templates">
+                                {customTemplates.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
+                    </select>
+                 </div>
 
-             <button 
-                onClick={() => navigate('/templates')}
-                className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
-                title="Manage Templates"
-             >
-                <Cog6ToothIcon className="h-5 w-5" />
-             </button>
+                 <button 
+                    onClick={() => navigate('/templates')}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
+                    title="Manage Templates"
+                 >
+                    <Cog6ToothIcon className="h-5 w-5" />
+                 </button>
+             </div>
         </div>
         
         <form onSubmit={handleSave} className="p-4 space-y-4">
@@ -260,8 +297,10 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             />
           )}
 
+          {/* FOOTER: Mood (Left) | Save Button (Right) */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             
+            {/* Mood Slider */}
             <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
                <span className="text-sm font-medium text-gray-500">Mood:</span>
                <input 
@@ -277,37 +316,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {/* --- WEATHER WIDGET (UPDATED: Removed 'hidden' class for Mobile) --- */}
-            {weather ? (
-               <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100">
-                  <span>{weather.condition}</span>
-                  <span className="font-bold">{weather.temp}°C</span>
-                  {/* Button to Refresh Weather */}
-                  {!initialEntry && (
-                      <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
-                          <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
-                      </button>
-                  )}
-               </div>
-            ) : (
-                /* Manual Add Weather Button (Visible on Mobile) */
-                !initialEntry && (
-                    <button 
-                        type="button" 
-                        onClick={fetchLocalWeather} 
-                        disabled={weatherLoading}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors"
-                    >
-                        {weatherLoading ? (
-                            <ArrowPathIcon className="h-3 w-3 animate-spin" />
-                        ) : (
-                            <MapPinIcon className="h-3 w-3" />
-                        )}
-                        <span>Add Weather</span>
-                    </button>
-                )
-            )}
-
+            {/* Save Button (Moved to Right) */}
             <button
               type="submit"
               disabled={saving}
