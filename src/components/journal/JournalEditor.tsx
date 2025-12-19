@@ -5,8 +5,8 @@ import { collection, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestor
 import { 
     PlusIcon, 
     Cog6ToothIcon,
-    MapPinIcon,      // NEW
-    ArrowPathIcon    // NEW
+    MapPinIcon,
+    ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { getCurrentWeather } from '../../lib/weather';
@@ -44,7 +44,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   const [mood, setMood] = useState(5);
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
   const [saving, setSaving] = useState(false);
-  const [weatherLoading, setWeatherLoading] = useState(false); // NEW
+  const [weatherLoading, setWeatherLoading] = useState(false);
   
   // Template State
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
@@ -277,7 +277,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {/* --- WEATHER WIDGET --- */}
+            {/* --- WEATHER WIDGET (UPDATED: Removed 'hidden' class for Mobile) --- */}
             {weather ? (
                <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100">
                   <span>{weather.condition}</span>
@@ -290,7 +290,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                   )}
                </div>
             ) : (
-                /* Manual Add Weather Button */
+                /* Manual Add Weather Button (Visible on Mobile) */
                 !initialEntry && (
                     <button 
                         type="button" 

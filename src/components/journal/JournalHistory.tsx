@@ -253,14 +253,15 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           filteredEntries.map(entry => (
             <div key={entry.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors group">
               <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
+                {/* UPDATED: Added flex-wrap to handle small screens */}
+                <div className="flex flex-wrap items-center gap-2">
                    <span className="text-sm font-medium text-gray-400">
                      {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                    </span>
                    
-                   {/* FIXED: Showing Condition + Temp */}
+                   {/* UPDATED: Removed 'hidden' class to force visibility */}
                    {entry.weather && (
-                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 whitespace-nowrap">
                           {entry.weather.condition}, {entry.weather.temp}°C
                       </span>
                    )}
@@ -300,7 +301,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                  </div>
                  
-                 {/* FIXED: Hides 'Pending' sentiment */}
+                 {/* Hides 'Pending' sentiment */}
                  {entry.sentiment && entry.sentiment !== 'Pending' && (
                     <span className={`text-xs px-2 py-1 rounded-full ${
                         entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 
