@@ -10,11 +10,11 @@ import {
     FunnelIcon,
     MagnifyingGlassIcon,
     XMarkIcon,
-    ShareIcon // NEW IMPORT
+    ShareIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
-import type { JournalEntry } from './JournalEditor'; // Shared interface
+import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
   onEdit: (entry: JournalEntry) => void;
@@ -113,14 +113,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     }
   };
 
-  // --- NEW: SHARE HANDLER ---
+  // Share Handler
   const handleShare = async (entry: JournalEntry) => {
     const dateStr = entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
-    // Format text: Date then Content
     const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}`;
 
     if (navigator.share) {
-        // Native Share (Mobile)
         try {
             await navigator.share({
                 title: `Journal Entry ${dateStr}`,
@@ -130,10 +128,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             console.error('Error sharing:', err);
         }
     } else {
-        // Fallback: Clipboard (Desktop)
         try {
             await navigator.clipboard.writeText(textToShare);
-            // Simple feedback
             alert('Journal entry copied to clipboard!'); 
         } catch (err) {
             console.error('Failed to copy:', err);
@@ -261,8 +257,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                    <span className="text-sm font-medium text-gray-400">
                      {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                    </span>
+                   
+                   {/* FIXED: Removed 'hidden sm:inline' so weather shows on mobile */}
                    {entry.weather && (
-                      <span className="text-xs text-gray-300 hidden sm:inline">• {entry.weather.temp}°C</span>
+                      <span className="text-xs text-gray-300 whitespace-nowrap">• {entry.weather.temp}°C</span>
                    )}
                 </div>
                 
@@ -270,7 +268,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                    <button onClick={() => onEdit(entry)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
                       <PencilSquareIcon className="h-4 w-4" />
                    </button>
-                   {/* NEW SHARE BUTTON */}
                    <button onClick={() => handleShare(entry)} className="p-1 text-gray-400 hover:text-green-600" title="Share">
                       <ShareIcon className="h-4 w-4" />
                    </button>
@@ -301,7 +298,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                  </div>
                  
-                 {entry.sentiment && (
+                 {/* FIXED: Only show sentiment if it exists AND is not 'Pending' */}
+                 {entry.sentiment && entry.sentiment !== 'Pending' && (
                     <span className={`text-xs px-2 py-1 rounded-full ${
                         entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 
                         entry.sentiment === 'Negative' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
