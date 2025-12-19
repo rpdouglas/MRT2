@@ -1,468 +1,530 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, addDoc, query, where, orderBy, getDocs, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { 
-  addJournalEntry, 
-  getUserJournals, 
-  deleteJournalEntry, 
-  updateJournalEntry, 
-  type JournalEntry 
-} from '../lib/journal';
-import { getCurrentWeather, type WeatherData } from '../lib/weather';
-import { analyzeJournalEntries, type AnalysisResult } from '../lib/gemini';
-import { saveInsight } from '../lib/insights';
-import { getCompletedTasksForToday } from '../lib/tasks'; // <--- IMPORT
-import { 
-  SunIcon, 
-  PencilSquareIcon, 
-  TrashIcon, 
-  XCircleIcon,
-  SparklesIcon, 
-  XMarkIcon,
-  DocumentPlusIcon,
-  ChevronDownIcon,
-  ClipboardDocumentCheckIcon // <--- IMPORT ICON
+    PlusIcon, 
+    SparklesIcon, 
+    TrashIcon,
+    PencilSquareIcon,
+    ArrowPathIcon,
+    Cog6ToothIcon
 } from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
+import { analyzeJournalEntries, type AnalysisResult } from '../lib/gemini';
+import { getUserTemplates, type JournalTemplate } from '../lib/db'; // FIX 1: Type-only import
+import { useNavigate } from 'react-router-dom';
 
-// --- TEMPLATES CONFIGURATION ---
-const TEMPLATES = [
-  {
-    id: "morning",
-    name: "Morning Check-in",
-    content: `☀️ MORNING CHECK-IN #morning_checkin
+// --- Types ---
+interface JournalEntry {
+  id: string;
+  content: string;
+  moodScore: number;
+  sentiment?: string;
+  createdAt: any;
+  tags?: string[];
+  weather?: { temp: number; condition: string } | null;
+}
 
-1. Three things I am grateful for today:
--
--
--
-
-2. My main intention/focus for today is:
-(e.g., Patience, Honesty, Service, Self-Care)
-
-3. One action I will take for my recovery today:
-
-4. How am I feeling right now? (Physically/Emotionally):`
-  },
-  {
-    id: "nightly",
-    name: "Nightly Inventory",
-    content: `🌙 NIGHTLY INVENTORY #nightly_review
-
-1. What went well today? (Wins & Successes):
-
-2. Did I experience any strong cravings or triggers? How did I handle them?
-
-3. Reviewing my interactions: Was I resentful, selfish, dishonest, or afraid?
-(If yes, do I need to make amends?)
-
-4. What is one thing I want to do better tomorrow?`
-  },
-  {
-    id: "urge",
-    name: "Urge Log / SOS",
-    content: `🌊 URGE LOG #urge_log
-
-1. Trigger: What happened right before I felt this urge?
-(A thought, a feeling, an event?)
-
-2. The Lie: What is my addiction telling me right now?
-(e.g., "Just one won't hurt," "I deserve this")
-
-3. The Reality: If I use, what will happen? (Play the tape forward):
-
-4. My Plan: Who can I call, or what distraction can I use right now?`
-  },
-  {
-    id: "meeting",
-    name: "Meeting Reflection",
-    content: `🤝 MEETING REFLECTION #meeting_reflection
-
-1. Meeting Name/Topic:
-
-2. Key Takeaway: What was the most important thing I heard?
-
-3. Identification: How does this apply to my own story or struggle?
-
-4. Action: Is there something from this meeting I want to practice?`
-  }
+// Default Hardcoded Templates
+const DEFAULT_TEMPLATES = [
+  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['#morning'] },
+  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['#nightly'] },
+  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['#urge', '#sos'] },
+  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['#meeting'] },
 ];
 
 export default function Journal() {
   const { user } = useAuth();
-  
-  // Form State
-  const [content, setContent] = useState('');
-  const [mood, setMood] = useState(5);
-  const [loading, setLoading] = useState(false);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  
-  // Edit Mode State
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  // List State
+  const navigate = useNavigate();
+
+  // --- State ---
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  
-  // AI Insight State
+  const [loading, setLoading] = useState(true);
+  const [newEntry, setNewEntry] = useState('');
+  const [mood, setMood] = useState(5);
+  const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // AI State
   const [analyzing, setAnalyzing] = useState(false);
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
+  const [showInsightModal, setShowInsightModal] = useState(false);
 
-  // Load Data
+  // Template State
+  const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
+  const [formAnswers, setFormAnswers] = useState<string[]>([]);
+
   useEffect(() => {
-    if (user) loadEntries();
+    if (!user) return;
+    loadEntries();
+    loadCustomTemplates();
+    fetchWeather();
   }, [user]);
 
-  // Load Weather
-  useEffect(() => {
-    async function fetchLocalWeather() {
-      const data = await getCurrentWeather();
-      if (data) setWeather(data);
-    }
-    fetchLocalWeather();
-  }, []);
-
-  async function loadEntries() {
-    if (!user) return;
-    const data = await getUserJournals(user.uid);
-    setEntries(data);
-  }
-
-  // --- TEMPLATE HANDLER ---
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
+  // --- LOADERS ---
+  const loadEntries = async () => {
+    // FIX 2: Guard clause for DB
+    if (!user || !db) return;
     
-    // Handle "Clear / New"
-    if (selectedId === "clear") {
-       if (content.length > 10 && !window.confirm("Clear current text?")) return;
-       setContent("");
-       return;
-    }
-
-    const template = TEMPLATES.find(t => t.id === selectedId);
-    if (!template) return;
-
-    if (content.length > 10 && !window.confirm("This will replace your current text. Are you sure?")) {
-      e.target.value = ""; 
-      return;
-    }
-    
-    setContent(template.content);
-  };
-
-  // --- IMPORT TASKS HANDLER ---
-  const handleImportTasks = async () => {
-    if (!user) return;
     try {
-        const completed = await getCompletedTasksForToday(user.uid);
-        if (completed.length === 0) {
-            alert("No completed tasks found for today.");
-            return;
-        }
-
-        const taskList = completed.map(t => `- [x] ${t.title}`).join('\n');
-        const importText = `\n\n✅ TODAY'S ACHIEVEMENTS:\n${taskList}\n\nReflection:\n`;
-        
-        setContent(prev => prev + importText);
-    } catch (err) {
-        console.error("Failed to import tasks", err);
-    }
-  };
-
-  // --- ACTIONS ---
-
-  const handleEditClick = (entry: JournalEntry) => {
-    setContent(entry.content);
-    setMood(entry.moodScore);
-    setEditingId(entry.id!);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleCancelEdit = () => {
-    setContent('');
-    setMood(5);
-    setEditingId(null);
-  };
-
-  const handleDeleteClick = async (id: string) => {
-    if (!window.confirm("Delete this entry?")) return;
-    try {
-      await deleteJournalEntry(id);
-      await loadEntries();
-      if (editingId === id) handleCancelEdit();
+      const q = query(
+        collection(db, 'journals'), 
+        where('uid', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      setEntries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry)));
     } catch (error) {
-      console.error("Delete failed", error);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!user || entries.length === 0) return;
-    setAnalyzing(true);
-    try {
-      const recentTexts = entries.slice(0, 5).map(e => e.content);
-      const result = await analyzeJournalEntries(recentTexts);
-      setInsight(result); 
-      await saveInsight(user.uid, result);
-    } catch (error) {
-      console.error("Analysis failed", error);
-      alert("AI Analysis failed. Check console.");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !content.trim()) return;
-
-    setLoading(true);
-    try {
-      const tags = content.match(/#[a-z0-9_]+/gi) || [];
-      
-      if (editingId) {
-        await updateJournalEntry(editingId, content, mood, tags as string[]);
-      } else {
-        await addJournalEntry(user.uid, content, mood, tags as string[], weather);
-      }
-      
-      handleCancelEdit();
-      await loadEntries();
-    } catch (error) {
-      console.error("Failed to save journal", error);
+      console.error("Error loading entries:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadCustomTemplates = async () => {
+    if (!user) return;
+    const t = await getUserTemplates(user.uid);
+    setCustomTemplates(t);
+  };
+
+  const fetchWeather = async () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`);
+          const data = await res.json();
+          
+          const code = data.current.weather_code;
+          let condition = "Clear";
+          if (code > 0 && code < 50) condition = "Cloudy";
+          if (code >= 50 && code < 70) condition = "Rainy";
+          if (code >= 70) condition = "Snowy";
+
+          setWeather({
+             temp: Math.round(data.current.temperature_2m),
+             condition
+          });
+        } catch (e) {
+          console.warn("Weather fetch failed", e);
+        }
+      });
+    }
+  };
+
+  // --- ACTIONS ---
+
+  const handleTemplateSelect = (tId: string) => {
+    const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
+    if (defTemplate) {
+        setNewEntry(defTemplate.text);
+        setActiveTemplate(null);
+        return;
+    }
+
+    const custTemplate = customTemplates.find(t => t.id === tId);
+    if (custTemplate) {
+        setActiveTemplate(custTemplate);
+        setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
+        setNewEntry('');
+    } else {
+        setActiveTemplate(null);
+        setNewEntry('');
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // FIX 2: Guard clause for DB
+    if (!user || !db) return;
+
+    const isFormValid = activeTemplate && formAnswers.some(a => a.trim() !== '');
+    const isTextValid = !activeTemplate && newEntry.trim() !== '';
+
+    if (!isFormValid && !isTextValid) return;
+
+    setSaving(true);
+
+    let finalContent = newEntry;
+    let finalTags: string[] = [];
+
+    if (activeTemplate) {
+        finalContent = `**${activeTemplate.name}**\n\n`;
+        activeTemplate.prompts.forEach((prompt, idx) => {
+            finalContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
+        });
+        finalTags = [...activeTemplate.defaultTags];
+    } else {
+        const textTags = newEntry.match(/#[a-z0-9]+/gi) || [];
+        finalTags = textTags as string[];
+        
+        const matchedDef = DEFAULT_TEMPLATES.find(t => newEntry.startsWith(t.text.split('\n')[0]));
+        if (matchedDef) {
+            finalTags = [...new Set([...finalTags, ...matchedDef.tags])];
+        }
+    }
+
+    try {
+      const entryData = {
+        uid: user.uid,
+        content: finalContent,
+        moodScore: mood,
+        sentiment: 'Pending', 
+        weather,
+        tags: finalTags,
+        createdAt: Timestamp.now()
+      };
+
+      if (editingId) {
+        await updateDoc(doc(db, 'journals', editingId), { 
+            content: finalContent, 
+            moodScore: mood,
+            tags: finalTags
+        });
+        setEditingId(null);
+      } else {
+        await addDoc(collection(db, 'journals'), entryData);
+      }
+
+      setNewEntry('');
+      setFormAnswers([]);
+      setActiveTemplate(null);
+      setMood(5);
+      await loadEntries();
+    } catch (error) {
+      console.error("Error saving entry:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    // FIX 2: Guard clause for DB
+    if (!db) return;
+    if (!confirm('Are you sure?')) return;
+    
+    try {
+      await deleteDoc(doc(db, 'journals', id));
+      await loadEntries();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleEdit = (entry: JournalEntry) => {
+    setNewEntry(entry.content);
+    setMood(entry.moodScore);
+    setEditingId(entry.id);
+    setActiveTemplate(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAiAnalysis = async () => {
+    if (entries.length === 0) return;
+    setAnalyzing(true);
+    setShowInsightModal(true);
+    
+    const recentTexts = entries.slice(0, 5).map(e => e.content);
+    
+    const result = await analyzeJournalEntries(recentTexts);
+    setInsight(result);
+    setAnalyzing(false);
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 relative">
+    <div className="max-w-4xl mx-auto space-y-8">
       
-      {/* --- AI INSIGHT MODAL --- */}
-      {insight && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 flex justify-between items-start">
-               <div>
-                 <h3 className="text-white text-lg font-bold flex items-center gap-2">
-                   <SparklesIcon className="h-5 w-5 text-yellow-300" />
-                   Recovery Insights
-                 </h3>
-                 <p className="text-purple-100 text-sm mt-1">Based on your recent entries</p>
-               </div>
-               <button onClick={() => setInsight(null)} className="text-purple-200 hover:text-white">
-                 <XMarkIcon className="h-6 w-6" />
-               </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                <p className="text-gray-800 italic">"{insight.analysis}"</p>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">Suggested Actions</h4>
-                <ul className="space-y-2">
-                  {insight.actionableSteps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
-                        {i + 1}
-                      </span>
-                      <span className="text-gray-700 text-sm">{step}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 flex justify-end">
-              <button 
-                onClick={() => setInsight(null)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- MAIN PAGE --- */}
-
-      <div className={`bg-white shadow sm:rounded-lg p-6 border-t-4 ${editingId ? 'border-orange-500' : 'border-blue-600'}`}>
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {editingId ? 'Editing Entry' : 'Daily Check-In'}
-            </h2>
-            
-            {weather ? (
-                <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                    <SunIcon className="h-4 w-4 mr-1" />
-                    <span>{weather.temp}°C, {weather.condition}</span>
-                </div>
-            ) : (
-                <span className="text-xs text-gray-400">Locating...</span>
-            )}
-        </div>
-
-        {/* --- TOOLBAR: TEMPLATES & IMPORT --- */}
-        {!editingId && (
-          <div className="mb-4 flex gap-2">
-             <div className="relative flex-1">
-                <DocumentPlusIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-                <select
-                  onChange={handleTemplateChange}
-                  defaultValue=""
-                  className="block w-full rounded-md border-gray-300 pl-10 pr-10 py-2 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-gray-50 hover:bg-white transition-colors cursor-pointer appearance-none border"
+      {/* --- ENTRY CREATOR CARD --- */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+           <h2 className="font-semibold text-gray-700">
+             {editingId ? 'Edit Entry' : 'New Journal Entry'}
+           </h2>
+           
+           <div className="flex items-center gap-2 w-full sm:w-auto">
+             <div className="relative flex-1 sm:flex-none">
+                <select 
+                    onChange={(e) => handleTemplateSelect(e.target.value)}
+                    className="w-full sm:w-48 pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    defaultValue=""
                 >
-                  <option value="" disabled>Select a Quick Template...</option>
-                  <option value="clear">✨ Clear / New Entry</option>
-                  <hr />
-                  {TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
+                    <option value="" disabled>Choose a Template...</option>
+                    <option value="none">Free Write (Blank)</option>
+                    <optgroup label="Standard">
+                        {DEFAULT_TEMPLATES.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </optgroup>
+                    {customTemplates.length > 0 && (
+                        <optgroup label="My Templates">
+                            {customTemplates.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                        </optgroup>
+                    )}
                 </select>
-                <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
+             </div>
 
-            {/* Smart Import Button */}
-            <button
-                type="button"
-                onClick={handleImportTasks}
-                title="Import completed tasks"
-                className="flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-                <ClipboardDocumentCheckIcon className="h-5 w-5 text-green-600" />
-            </button>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
+             <button 
+                onClick={() => navigate('/templates')}
+                className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
+                title="Manage Templates"
+             >
+                <Cog6ToothIcon className="h-5 w-5" />
+             </button>
+           </div>
+        </div>
+        
+        <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-4">
+          
+          {activeTemplate ? (
+             <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
+                    <button 
+                        type="button" 
+                        onClick={() => setActiveTemplate(null)}
+                        className="text-xs text-blue-500 hover:text-blue-700 underline"
+                    >
+                        Switch to Text Mode
+                    </button>
+                </div>
+                
+                {activeTemplate.prompts.map((prompt, idx) => (
+                    <div key={idx}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
+                        <textarea
+                            rows={2}
+                            value={formAnswers[idx] || ''}
+                            onChange={(e) => {
+                                const newAns = [...formAnswers];
+                                newAns[idx] = e.target.value;
+                                setFormAnswers(newAns);
+                            }}
+                            className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            placeholder="Type your answer..."
+                        />
+                    </div>
+                ))}
+             </div>
+          ) : (
             <textarea
-              rows={8}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border font-sans text-base"
-              placeholder="Write your thoughts here... Use #hashtags to tag topics."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+                value={newEntry}
+                onChange={(e) => setNewEntry(e.target.value)}
+                placeholder="How are you feeling today? (Type # to add tags)"
+                className="w-full h-40 p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
             />
-          </div>
+          )}
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mood Score: <span className="text-blue-600 font-bold">{mood}/10</span>
-            </label>
-            <input 
-              type="range" 
-              min="1" max="10" 
-              value={mood}
-              onChange={(e) => setMood(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
-              <span>Struggling</span>
-              <span>Neutral</span>
-              <span>Thriving</span>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            {editingId && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="inline-flex items-center text-gray-600 px-4 py-2 hover:text-gray-900"
-              >
-                <XCircleIcon className="h-5 w-5 mr-1" />
-                Cancel
-              </button>
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-4">
             
+            <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+               <span className="text-sm font-medium text-gray-500">Mood:</span>
+               <input 
+                 type="range" 
+                 min="1" 
+                 max="10" 
+                 value={mood}
+                 onChange={(e) => setMood(Number(e.target.value))}
+                 className="w-24 accent-blue-600 cursor-pointer"
+               />
+               <span className={`text-sm font-bold w-6 text-center ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`}>
+                 {mood}
+               </span>
+            </div>
+
+            {weather && (
+               <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                  <span>{weather.condition}</span>
+                  <span>•</span>
+                  <span>{weather.temp}°C</span>
+               </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
-              className={`text-white px-4 py-2 rounded-md transition disabled:opacity-50 ${
-                editingId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              disabled={saving}
+              className="ml-auto flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : (editingId ? 'Update Entry' : 'Save Entry')}
+              {saving ? (
+                <span>Saving...</span>
+              ) : (
+                <>
+                  <PlusIcon className="h-5 w-5" />
+                  <span>{editingId ? 'Update Entry' : 'Save Entry'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
 
-      <div className="flex items-center justify-between border-b pb-4 mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Recent Entries</h3>
-        
-        {entries.length > 0 && (
-          <button
-            onClick={handleAnalyze}
-            disabled={analyzing}
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all disabled:opacity-50"
-          >
-            {analyzing ? (
-               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-               <SparklesIcon className="h-4 w-4 text-yellow-300" />
-            )}
-            <span className="text-sm font-bold">
-              {analyzing ? 'Analyzing...' : 'Get AI Insights'}
-            </span>
-          </button>
-        )}
+      <div className="flex items-center justify-between pt-4">
+         <h3 className="text-xl font-bold text-gray-900">Recent Entries</h3>
+         
+         <button 
+           onClick={handleAiAnalysis}
+           disabled={analyzing || entries.length === 0}
+           className="flex items-center gap-2 text-purple-600 bg-purple-50 px-4 py-2 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50"
+         >
+           {analyzing ? (
+             <ArrowPathIcon className="h-5 w-5 animate-spin" />
+           ) : (
+             <SparklesIcon className="h-5 w-5" />
+           )}
+           <span className="font-medium text-sm">Analyze History</span>
+         </button>
       </div>
-      
-      <div className="space-y-4">
-        {entries.map((entry) => (
-          <div key={entry.id} className={`bg-white shadow rounded-lg p-6 relative group ${editingId === entry.id ? 'ring-2 ring-orange-400' : ''}`}>
-            
-            <div className="absolute top-4 right-4 flex space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleEditClick(entry)} className="text-gray-400 hover:text-blue-600 p-1">
-                <PencilSquareIcon className="h-5 w-5" />
-              </button>
-              <button onClick={() => handleDeleteClick(entry.id!)} className="text-gray-400 hover:text-red-600 p-1">
-                <TrashIcon className="h-5 w-5" />
-              </button>
-            </div>
 
-            <div className="flex justify-between items-start mb-2 pr-16">
-              <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-700">
-                    {entry.createdAt.toLocaleDateString()}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </span>
+      <div className="space-y-6">
+        {loading ? (
+          <div className="text-center py-10 text-gray-400">Loading your journey...</div>
+        ) : entries.length === 0 ? (
+          <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p className="text-gray-500">No entries yet. Start your recovery journal today.</p>
+          </div>
+        ) : (
+          entries.map(entry => (
+            <div key={entry.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors group">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-2">
+                   <span className="text-sm font-medium text-gray-400">
+                     {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                   </span>
+                   {entry.weather && (
+                      <span className="text-xs text-gray-300 hidden sm:inline">• {entry.weather.temp}°C</span>
+                   )}
+                </div>
+                
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button onClick={() => handleEdit(entry)} className="p-1 text-gray-400 hover:text-blue-600">
+                      <PencilSquareIcon className="h-4 w-4" />
+                   </button>
+                   <button onClick={() => handleDelete(entry.id)} className="p-1 text-gray-400 hover:text-red-500">
+                      <TrashIcon className="h-4 w-4" />
+                   </button>
+                </div>
               </div>
 
-              <div className="flex space-x-2">
-                 {entry.weather && (
-                    <span className="hidden sm:inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 border border-blue-100">
-                        {entry.weather.temp}°C {entry.weather.condition}
+              {entry.tags && entry.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                      {entry.tags.map((tag, i) => (
+                          <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                              {tag}
+                          </span>
+                      ))}
+                  </div>
+              )}
+              
+              <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                {entry.content}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Mood</span>
+                    <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                 </div>
+                 
+                 {entry.sentiment && (
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                        entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 
+                        entry.sentiment === 'Negative' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                        {entry.sentiment}
                     </span>
                  )}
-                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    entry.moodScore >= 7 ? 'bg-green-100 text-green-800' :
-                    entry.moodScore <= 3 ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    Mood: {entry.moodScore}
-                  </span>
               </div>
             </div>
-            
-            <p className="text-gray-800 whitespace-pre-wrap mt-2">{entry.content}</p>
-            
-            {entry.tags && entry.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {entry.tags.map(tag => (
-                  <span key={tag} className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      <Transition appear show={showInsightModal} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-bold leading-6 text-gray-900 flex items-center gap-2"
+                  >
+                    <SparklesIcon className="h-6 w-6 text-purple-500" />
+                    Gemini Analysis
+                  </Dialog.Title>
+                  
+                  {analyzing ? (
+                    <div className="mt-4 py-8 flex flex-col items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                        <p className="mt-2 text-sm text-gray-500">Reading your entries...</p>
+                    </div>
+                  ) : (
+                    insight && (
+                        <div className="mt-4 space-y-4">
+                            <div className="bg-purple-50 p-4 rounded-lg text-sm text-gray-700 leading-relaxed">
+                                {insight.analysis}
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <span>Mood: <span className="text-purple-700">{insight.mood}</span></span>
+                                <span>Sentiment: <span className="text-purple-700">{insight.sentiment}</span></span>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-900 mb-2">Suggested Actions:</h4>
+                                <ul className="space-y-2">
+                                    {insight.actionableSteps.map((step, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                                            <span className="text-purple-500 mt-1">•</span>
+                                            {step}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )
+                  )}
+
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-purple-100 px-4 py-2 text-sm font-medium text-purple-900 hover:bg-purple-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      onClick={() => setShowInsightModal(false)}
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
     </div>
   );
 }
