@@ -251,66 +251,80 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           </div>
       ) : (
           filteredEntries.map(entry => (
-            <div key={entry.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors group">
-              <div className="flex justify-between items-start mb-3">
-                {/* UPDATED: Added flex-wrap to handle small screens */}
-                <div className="flex flex-wrap items-center gap-2">
-                   <span className="text-sm font-medium text-gray-400">
+            <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
+              
+              {/* --- HEADER ROW (Light Blue) --- */}
+              <div className="bg-blue-50/50 p-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                
+                {/* Left: Date & Weather */}
+                <div className="flex items-center gap-3">
+                   <span className="text-sm font-semibold text-gray-700">
                      {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                    </span>
                    
-                   {/* UPDATED: Removed 'hidden' class to force visibility */}
                    {entry.weather && (
-                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 whitespace-nowrap">
+                      <span className="text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded-full border border-gray-200 whitespace-nowrap">
                           {entry.weather.condition}, {entry.weather.temp}°C
                       </span>
                    )}
                 </div>
-                
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button onClick={() => onEdit(entry)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
-                      <PencilSquareIcon className="h-4 w-4" />
-                   </button>
-                   <button onClick={() => handleShare(entry)} className="p-1 text-gray-400 hover:text-green-600" title="Share">
-                      <ShareIcon className="h-4 w-4" />
-                   </button>
-                   <button onClick={() => handleDelete(entry.id)} className="p-1 text-gray-400 hover:text-red-500" title="Delete">
-                      <TrashIcon className="h-4 w-4" />
-                   </button>
+
+                {/* Right: Mood & Actions */}
+                <div className="flex items-center gap-4">
+                    
+                    {/* MOOD INDICATOR (Moved here) */}
+                    <div className="flex items-center gap-2 bg-white/60 px-2 py-1 rounded-lg border border-blue-100/50">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mood</span>
+                        <div className={`h-2.5 w-2.5 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                        <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit">
+                          <PencilSquareIcon className="h-4 w-4" />
+                       </button>
+                       <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share">
+                          <ShareIcon className="h-4 w-4" />
+                       </button>
+                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete">
+                          <TrashIcon className="h-4 w-4" />
+                       </button>
+                    </div>
                 </div>
+
               </div>
 
-              {/* Tag Badges */}
-              {entry.tags && entry.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                      {entry.tags.map((tag, i) => (
-                          <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
-                              {tag}
-                          </span>
-                      ))}
+              {/* BODY CONTENT */}
+              <div className="p-5">
+                  {/* Tag Badges */}
+                  {entry.tags && entry.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                          {entry.tags.map((tag, i) => (
+                              <span key={i} className="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-full font-medium border border-gray-100">
+                                  {tag}
+                              </span>
+                          ))}
+                      </div>
+                  )}
+                  
+                  <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {entry.content}
                   </div>
-              )}
-              
-              <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                {entry.content}
+
+                  {/* Sentiment (Only if exists) */}
+                  {entry.sentiment && entry.sentiment !== 'Pending' && (
+                    <div className="mt-4 flex justify-end">
+                        <span className={`text-xs px-2 py-1 rounded-full border ${
+                            entry.sentiment === 'Positive' ? 'bg-green-50 text-green-700 border-green-100' : 
+                            entry.sentiment === 'Negative' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100'
+                        }`}>
+                            {entry.sentiment} Analysis
+                        </span>
+                    </div>
+                  )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Mood</span>
-                    <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                 </div>
-                 
-                 {/* Hides 'Pending' sentiment */}
-                 {entry.sentiment && entry.sentiment !== 'Pending' && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                        entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 
-                        entry.sentiment === 'Negative' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                        {entry.sentiment}
-                    </span>
-                 )}
-              </div>
             </div>
           ))
       )}
