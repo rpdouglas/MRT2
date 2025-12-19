@@ -1,80 +1,139 @@
-import { differenceInCalendarDays, startOfDay, isSameDay, subDays } from 'date-fns';
-import type { JournalEntry } from './journal';
-
 export interface GamificationStats {
-  journalStreak: number;
+  streakDays: number;
   totalEntries: number;
+  averageMood: number;
+  journalStreak: number;
+  consistencyRate: number; // entries per week
   totalWords: number;
-  consistencyRate: number; // Avg entries per week
-  averageMood: number; // Lifetime average
 }
 
-export function calculateJournalStats(entries: JournalEntry[]): GamificationStats {
-  if (entries.length === 0) {
-    return { 
-      journalStreak: 0, 
-      totalEntries: 0, 
-      totalWords: 0, 
-      consistencyRate: 0,
-      averageMood: 0 
-    };
-  }
+export interface TaskStats {
+    completionRate: number;
+    habitFire: number; // Current streak of completed recurring tasks
+}
 
-  // 1. Sort entries by date descending (Newest first)
-  const sorted = [...entries].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  
-  // 2. Calculate Streak
-  let streak = 0;
-  const today = startOfDay(new Date());
-  
-  // Check if we wrote today to start the count, or if the streak ended yesterday
-  const lastEntryDate = startOfDay(sorted[0].createdAt);
-  
-  // If the last entry was neither today nor yesterday, streak is 0.
-  if (!isSameDay(lastEntryDate, today) && !isSameDay(lastEntryDate, subDays(today, 1))) {
-      streak = 0;
-  } else {
-      // Start counting backwards
-      // We create a unique set of dates strings to handle multiple entries in one day
-      const uniqueDates = Array.from(new Set(sorted.map(e => startOfDay(e.createdAt).toISOString())));
-      
-      // Re-sort unique dates descending
-      uniqueDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+export interface WorkbookStats {
+    wisdomScore: number; // Total questions answered
+    masterCompletion: number; // % of total questions
+}
 
-      // Loop through unique dates to find consecutive days
-      streak = 1;
-      for (let i = 0; i < uniqueDates.length - 1; i++) {
-        const current = new Date(uniqueDates[i]);
-        const prev = new Date(uniqueDates[i+1]);
+// Helper to check if two dates are the same day
+const isSameDay = (d1: Date, d2: Date) => {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+};
+
+export const calculateJournalStats = (journals: any[]): GamificationStats => {
+    if (!journals || journals.length === 0) {
+        return { 
+            streakDays: 0, 
+            totalEntries: 0, 
+            averageMood: 0, 
+            journalStreak: 0, 
+            consistencyRate: 0,
+            totalWords: 0
+        };
+    }
+
+    // Sort descending (newest first)
+    const sorted = [...journals].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    const today = new Date();
+    
+    // 1. Total Entries
+    const totalEntries = journals.length;
+
+    // 2. Average Mood
+    const moodSum = journals.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
+    const averageMood = totalEntries > 0 ? parseFloat((moodSum / totalEntries).toFixed(1)) : 0;
+
+    // 3. Journal Streak
+    let currentStreak = 0;
+    
+    // Check if posted today
+    const lastPostDate = sorted[0].createdAt.toDate();
+    const postedToday = isSameDay(lastPostDate, today);
+    
+    // If not posted today, check if posted yesterday to maintain streak
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const postedYesterday = isSameDay(lastPostDate, yesterday);
+
+    if (postedToday || postedYesterday) {
+        currentStreak = 1;
+        // Iterate backwards to count consecutive days
+        // We compress entries to unique days first
+        const uniqueDays = new Set<string>();
+        journals.forEach(j => {
+            uniqueDays.add(j.createdAt.toDate().toDateString());
+        });
         
-        const diff = differenceInCalendarDays(current, prev);
+        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
-        if (diff === 1) {
-            streak++;
-        } else {
-            break; // Streak broken
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = sortedDates[i];
+            const next = sortedDates[i+1];
+            
+            // Difference in days
+            const diffTime = Math.abs(current.getTime() - next.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            if (diffDays === 1) {
+                currentStreak++;
+            } else {
+                break;
+            }
         }
-      }
-  }
+    }
 
-  // 3. Word Count
-  const totalWords = entries.reduce((acc, curr) => acc + (curr.content.trim().split(/\s+/).length || 0), 0);
+    // 4. Consistency (Entries / Week)
+    // Calc distinct weeks present
+    const firstDate = sorted[sorted.length - 1].createdAt.toDate();
+    const timeSpanDays = (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
+    const weeksActive = Math.max(1, Math.ceil(timeSpanDays / 7));
+    const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
 
-  // 4. Consistency (Entries / Weeks active)
-  const firstEntry = sorted[sorted.length - 1].createdAt;
-  const daysActive = differenceInCalendarDays(today, firstEntry) || 1; // Avoid divide by zero
-  const weeksActive = Math.max(daysActive / 7, 1);
-  const consistencyRate = parseFloat((entries.length / weeksActive).toFixed(1));
+    // 5. Total Words
+    const totalWords = journals.reduce((acc, curr) => {
+        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0;
+        return acc + words;
+    }, 0);
 
-  // 5. Average Mood (Lifetime)
-  const totalMood = entries.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
-  const averageMood = parseFloat((totalMood / entries.length).toFixed(1));
+    return {
+        streakDays: currentStreak,
+        totalEntries,
+        averageMood,
+        journalStreak: currentStreak,
+        consistencyRate,
+        totalWords
+    };
+};
 
-  return {
-    journalStreak: streak,
-    totalEntries: entries.length,
-    totalWords,
-    consistencyRate,
-    averageMood
-  };
-}
+export const calculateTaskStats = (tasks: any[]): TaskStats => {
+    if (!tasks || tasks.length === 0) {
+        return { completionRate: 0, habitFire: 0 };
+    }
+
+    const completed = tasks.filter(t => t.completed).length;
+    const completionRate = Math.round((completed / tasks.length) * 100);
+
+    // Habit Fire: Longest current streak among active recurring tasks
+    let maxStreak = 0;
+    tasks.forEach(t => {
+        if (t.currentStreak && t.currentStreak > maxStreak) {
+            maxStreak = t.currentStreak;
+        }
+    });
+
+    return { completionRate, habitFire: maxStreak };
+};
+
+export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
+    // Note: totalQuestionsAvailable is defaulted to 50 for now, 
+    // ideally passed from the Workbook definitions if available.
+    
+    return {
+        wisdomScore: answersSnapshotSize,
+        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
+    };
+};
