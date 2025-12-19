@@ -253,29 +253,39 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           filteredEntries.map(entry => (
             <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
               
-              {/* --- HEADER ROW (Updated: Compact & No-Wrap) --- */}
+              {/* --- HEADER ROW (Updated: Stacked Meta-Data) --- */}
               <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
                 
-                {/* Left: Date & Weather */}
-                <div className="flex items-center gap-2 min-w-0">
-                   <span className="text-sm font-semibold text-gray-700 truncate">
-                     {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                   </span>
-                   
-                   {entry.weather && (
-                      <span className="text-xs text-gray-500 bg-white/80 px-1.5 py-0.5 rounded-full border border-gray-200 whitespace-nowrap hidden sm:inline-block">
-                          {entry.weather.condition}, {entry.weather.temp}°C
-                      </span>
-                   )}
-                   {/* Mobile simplified weather (icon/temp only) if needed, but 'hidden sm:inline' handles overflow safety */}
+                {/* Left: Stacked Date / Time+Weather */}
+                <div className="flex flex-col items-start min-w-0">
+                    {/* Line 1: Date */}
+                    <span className="text-sm font-bold text-gray-800 truncate">
+                        {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unknown Date'}
+                    </span>
+                    
+                    {/* Line 2: Time + Weather */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>
+                            {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
+                        </span>
+                        
+                        {entry.weather && (
+                            <>
+                                <span className="text-gray-300">•</span>
+                                <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
+                                    {entry.weather.condition}, {entry.weather.temp}°C
+                                </span>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right: Mood & Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 self-center">
                     
                     {/* MOOD INDICATOR (Compact Pill) */}
                     <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Mood</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
                         <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                         <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
                     </div>
