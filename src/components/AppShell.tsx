@@ -45,7 +45,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-0 flex">
             <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 transform flex-col bg-blue-600 transition-all">
                <div className="flex h-16 shrink-0 items-center justify-between px-6">
-                  <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
+                  {/* Mobile Drawer Header */}
+                  <div className="flex items-center gap-2">
+                    <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
+                    <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
+                    <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
+                  </div>
                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white">
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
@@ -105,8 +110,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-blue-600 px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
+          <div className="flex h-16 shrink-0 items-center justify-center gap-2">
+            <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
             <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
+            <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -158,13 +165,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="lg:pl-72">
-        {/* MOBILE TOP BAR */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-700 bg-blue-600 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 lg:hidden">
-          <button type="button" className="-m-2.5 p-2.5 text-blue-200 hover:text-white lg:hidden" onClick={() => setSidebarOpen(true)}>
+        {/* MOBILE TOP BAR (UPDATED: Removed 'relative' to fix conflict) */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-center border-b border-blue-700 bg-blue-600 px-4 shadow-sm lg:hidden">
+          
+          {/* Hamburger Button - Positioned Absolutely to left */}
+          <button 
+            type="button" 
+            className="-m-2.5 p-2.5 text-blue-200 hover:text-white absolute left-4 z-50" 
+            onClick={() => setSidebarOpen(true)}
+          >
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
-          <div className="flex-1 text-sm font-bold leading-6 text-white">My Recovery Toolkit</div>
+
+          {/* Centered Title with Flanking Logos */}
+          <div className="flex items-center gap-2">
+            <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
+            <div className="text-sm font-bold leading-6 text-white">My Recovery Toolkit</div>
+            <img src="/favicon-16x16.png" alt="" className="h-4 w-4" />
+          </div>
+
         </div>
 
         <main className="py-10">
