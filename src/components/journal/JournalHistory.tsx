@@ -258,9 +258,11 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                      {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                    </span>
                    
-                   {/* FIXED: Removed 'hidden sm:inline' so weather shows on mobile */}
+                   {/* FIXED: Showing Condition + Temp */}
                    {entry.weather && (
-                      <span className="text-xs text-gray-300 whitespace-nowrap">• {entry.weather.temp}°C</span>
+                      <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                          {entry.weather.condition}, {entry.weather.temp}°C
+                      </span>
                    )}
                 </div>
                 
@@ -298,7 +300,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                  </div>
                  
-                 {/* FIXED: Only show sentiment if it exists AND is not 'Pending' */}
+                 {/* FIXED: Hides 'Pending' sentiment */}
                  {entry.sentiment && entry.sentiment !== 'Pending' && (
                     <span className={`text-xs px-2 py-1 rounded-full ${
                         entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 

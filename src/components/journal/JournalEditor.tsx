@@ -4,10 +4,12 @@ import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { 
     PlusIcon, 
-    Cog6ToothIcon
+    Cog6ToothIcon,
+    MapPinIcon,      // NEW
+    ArrowPathIcon    // NEW
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
-import { getCurrentWeather } from '../../lib/weather'; // NEW IMPORT
+import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 
 // --- Types ---
@@ -42,6 +44,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   const [mood, setMood] = useState(5);
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(false); // NEW
   
   // Template State
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
@@ -57,15 +60,16 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
       if (initialEntry.weather) {
         setWeather(initialEntry.weather);
       }
-      setActiveTemplate(null); // Edit mode defaults to text
+      setActiveTemplate(null);
     } else {
       // Reset if switching from edit back to new
       setNewEntry('');
       setMood(5);
       setActiveTemplate(null);
       setFormAnswers([]);
-      setWeather(null); // Clear old weather
-      fetchLocalWeather(); // Fetch NEW weather
+      setWeather(null);
+      // Try auto-fetch, but don't block if it fails
+      fetchLocalWeather(); 
     }
   }, [initialEntry]);
 
@@ -73,7 +77,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   useEffect(() => {
     if (!user) return;
     loadCustomTemplates();
-    // Only fetch weather on mount if it's a new entry (handled in the effect above mostly, but good for initial load)
     if (!initialEntry) fetchLocalWeather(); 
   }, [user]);
 
@@ -84,6 +87,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   };
 
   const fetchLocalWeather = async () => {
+    setWeatherLoading(true);
     try {
       const data = await getCurrentWeather();
       if (data) {
@@ -94,6 +98,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
       }
     } catch (e) {
       console.warn("Failed to auto-load weather", e);
+    } finally {
+      setWeatherLoading(false);
     }
   };
 
@@ -148,33 +154,27 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
     try {
       if (initialEntry) {
-        // UPDATE existing
-        // We do NOT update weather here, preserving the original historical data
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
             content: finalContent, 
             moodScore: mood,
             tags: finalTags
         });
       } else {
-        // CREATE new
         await addDoc(collection(db, 'journals'), {
           uid: user.uid,
           content: finalContent,
           moodScore: mood,
           sentiment: 'Pending', 
-          weather, // Saves the auto-fetched weather
+          weather, 
           tags: finalTags,
           createdAt: Timestamp.now()
         });
       }
 
-      // Reset form
       setNewEntry('');
       setFormAnswers([]);
       setActiveTemplate(null);
       setMood(5);
-      
-      // Notify parent
       onSaveComplete();
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -185,7 +185,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Compact Header: Just Controls */}
         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-end items-center gap-3">
              <div className="relative">
                 <select 
@@ -257,7 +256,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
                 placeholder="How are you feeling today? (Type # to add tags)"
-                // UPDATED: Reduced to 45vh to prevent scroll
                 className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
             />
           )}
@@ -279,16 +277,35 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {weather && (
-               <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100">
+            {/* --- WEATHER WIDGET --- */}
+            {weather ? (
+               <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100">
                   <span>{weather.condition}</span>
-                  <span>•</span>
-                  <span>{weather.temp}°C</span>
-                  {/* Visual indicator for historical vs current */}
-                  {initialEntry ? (
-                    <span className="text-[10px] text-gray-300 uppercase tracking-wide ml-1">(Recorded)</span>
-                  ) : null}
+                  <span className="font-bold">{weather.temp}°C</span>
+                  {/* Button to Refresh Weather */}
+                  {!initialEntry && (
+                      <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
+                          <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
+                      </button>
+                  )}
                </div>
+            ) : (
+                /* Manual Add Weather Button */
+                !initialEntry && (
+                    <button 
+                        type="button" 
+                        onClick={fetchLocalWeather} 
+                        disabled={weatherLoading}
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors"
+                    >
+                        {weatherLoading ? (
+                            <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                        ) : (
+                            <MapPinIcon className="h-3 w-3" />
+                        )}
+                        <span>Add Weather</span>
+                    </button>
+                )
             )}
 
             <button
