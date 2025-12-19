@@ -1,139 +1,207 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getUserJournals} from '../lib/journal';
+import { getInsightHistory } from '../lib/insights';
+import { getUserTasks, toggleTask, type Task } from '../lib/tasks';
+import { calculateJournalStats, type GamificationStats } from '../lib/gamification';
+import RecoveryHero from '../components/RecoveryHero';
+import { Link } from 'react-router-dom';
 import { 
-  TrophyIcon, 
-  FireIcon, 
-  CalendarDaysIcon, 
-  ChartBarIcon,
+  SparklesIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import { isSameDay, startOfDay } from 'date-fns';
 
 export default function Dashboard() {
   const { user } = useAuth();
   
   // State
+  const [sobrietyDate, setSobrietyDate] = useState<Date | null>(null);
+  const [latestInsight, setLatestInsight] = useState<any | null>(null);
+  
+  // Task State (Only top 5)
+  const [priorityTasks, setPriorityTasks] = useState<Task[]>([]);
+  
+  // Gamification State
+  const [stats, setStats] = useState<GamificationStats | null>(null);
+  const [taskStreak, setTaskStreak] = useState(0);
+
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    daysClean: 0,
-    entriesCount: 0,
-    streak: 0,
-    tasksDue: 0
-  });
-  const [recentTasks, setRecentTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    if (user) loadDashboardData();
+    async function loadDashboardData() {
+      if (!user || !db) return;
+
+      try {
+        // 1. Fetch User Profile
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().sobrietyDate) {
+          setSobrietyDate(userDoc.data().sobrietyDate.toDate());
+        }
+
+        // 2. Fetch Journals & Calc Gamification
+        const journals = await getUserJournals(user.uid);
+        const journalStats = calculateJournalStats(journals);
+        setStats(journalStats);
+
+        // 3. Fetch Latest Insight
+        try {
+            const insights = await getInsightHistory(user.uid);
+            if (insights.length > 0) setLatestInsight(insights[0]);
+        } catch (e) {
+            console.warn("Insight history fetch failed", e);
+        }
+
+        // 4. Fetch Tasks & Prioritize
+        const fetchedTasks = await getUserTasks(user.uid);
+        
+        // Calculate total positive task streak
+        const totalStreak = fetchedTasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
+        setTaskStreak(totalStreak);
+
+        // Filter: Not Completed OR Completed Today
+        const today = startOfDay(new Date());
+        const visibleTasks = fetchedTasks.filter(t => {
+            if (!t.lastCompletedAt) return true; // Not done yet
+            return isSameDay(t.lastCompletedAt, today); // Done today
+        });
+
+        // Sort: Overdue/Today first (Ascending Due Date)
+        visibleTasks.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+        
+        // Top 5
+        setPriorityTasks(visibleTasks.slice(0, 5));
+
+      } catch (error) {
+        console.error("Error loading dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
   }, [user]);
 
-  const loadDashboardData = async () => {
-    if (!user || !db) return;
+  // --- HANDLERS ---
+  const handleToggleTask = async (task: Task) => {
+    if (!user) return;
 
-    try {
-      // 1. Calculate Days Clean (Mock calculation based on sobrietyDate)
-      // In a real app, fetch user.sobrietyDate and diff with today
-      const daysClean = 12; // Placeholder or calculate from profile
+    const today = startOfDay(new Date());
+    const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+    const newState = !isCompletedToday;
 
-      // 2. Journal Stats
-      const journalQ = query(collection(db, 'journals'), where('uid', '==', user.uid));
-      const journalSnap = await getDocs(journalQ);
-      
-      // 3. Tasks Stats
-      const tasksQ = query(
-        collection(db, 'tasks'), 
-        where('uid', '==', user.uid),
-        where('completed', '==', false),
-        limit(5)
-      );
-      const tasksSnap = await getDocs(tasksQ);
-      
-      setStats({
-        daysClean,
-        entriesCount: journalSnap.size,
-        streak: 3, // Placeholder for gamification logic
-        tasksDue: tasksSnap.size
-      });
+    // Optimistic UI Update
+    const updatedTasks = priorityTasks.map(t => {
+        if (t.id === task.id) {
+            return { 
+                ...t, 
+                lastCompletedAt: newState ? new Date() : null 
+            }; 
+        }
+        return t;
+    });
+    setPriorityTasks(updatedTasks);
 
-      setRecentTasks(tasksSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-    } catch (error) {
-      console.error("Dashboard load failed:", error);
-    } finally {
-      setLoading(false);
-    }
+    await toggleTask(task, newState);
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
+  }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-6 max-w-5xl mx-auto">
       
-      {/* --- RECOVERY HERO --- */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-lg p-8 text-white flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-         <div className="relative z-10">
-            <h1 className="text-4xl font-bold mb-2">{stats.daysClean} Days</h1>
-            <p className="text-blue-100 text-lg">Clean & Sober. One day at a time.</p>
-         </div>
-         <TrophyIcon className="h-32 w-32 text-white opacity-10 absolute right-0 bottom-0 -mr-8 -mb-8 rotate-12" />
-      </div>
+      {/* 1. RECOVERY HERO (Unified Component) */}
+      <RecoveryHero 
+        sobrietyDate={sobrietyDate} 
+        journalStats={stats}
+        taskStreak={taskStreak}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         
-         {/* --- STATS DOCK --- */}
-         <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-2">
-                    <FireIcon className="h-6 w-6" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900">{stats.streak}</span>
-                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Day Streak</span>
+      {/* 2. MAIN GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* --- PRIORITIES WIDGET --- */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <CheckCircleIcon className="h-5 w-5 text-blue-500" />
+                    Priorities
+                </h3>
+                <Link to="/tasks" className="text-sm text-blue-600 hover:underline">Manage All &rarr;</Link>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                    <CalendarDaysIcon className="h-6 w-6" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900">{stats.entriesCount}</span>
-                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Entries</span>
-            </div>
+            <div className="space-y-3">
+                {priorityTasks.length === 0 && (
+                    <p className="text-center text-gray-400 text-sm py-4">All caught up! Great job.</p>
+                )}
+                
+                {priorityTasks.map(task => {
+                    const today = startOfDay(new Date());
+                    const isCompleted = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
 
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-2">
-                    <ChartBarIcon className="h-6 w-6" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900">8.5</span>
-                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Avg Mood</span>
+                    return (
+                        <div key={task.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100 cursor-pointer" onClick={() => handleToggleTask(task)}>
+                            <div className="flex items-center gap-3">
+                                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                        isCompleted 
+                                            ? 'bg-green-500 border-green-500 text-white' 
+                                            : 'border-gray-300'
+                                    }`}
+                                >
+                                    {isCompleted && <CheckCircleIcon className="h-3 w-3" />}
+                                </div>
+                                
+                                <span className={`block text-sm font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                    {task.title}
+                                </span>
+                            </div>
+                            
+                            {!isCompleted && task.isRecurring && (
+                                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-bold">
+                                    Due
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
+        </div>
 
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="h-10 w-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircleIcon className="h-6 w-6" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900">{stats.tasksDue}</span>
-                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">To-Do</span>
-            </div>
-         </div>
-
-         {/* --- PRIORITIES WIDGET --- */}
-         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <CheckCircleIcon className="h-5 w-5 text-blue-600" />
-                Priorities
+        {/* --- LATEST INSIGHT CARD (Moved up to replace Mood History) --- */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-purple-500" />
+                Latest Insight
             </h3>
-            {recentTasks.length === 0 ? (
-                <p className="text-sm text-gray-400">No active tasks.</p>
+            
+            {latestInsight ? (
+                <div className="space-y-3">
+                <p className="text-gray-600 italic">"{latestInsight.analysis}"</p>
+                
+                <div className="pt-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase mb-2">Suggested Action</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-800 bg-purple-50 p-2 rounded">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                    {latestInsight.actionableSteps?.[0] || "Keep coming back!"}
+                    </div>
+                </div>
+                </div>
             ) : (
-                <ul className="space-y-3">
-                    {recentTasks.map(task => (
-                        <li key={task.id} className="text-sm text-gray-700 flex items-start gap-2">
-                            <div className="h-5 w-5 rounded-full border border-gray-300 flex-shrink-0" />
-                            <span className="truncate">{task.title}</span>
-                        </li>
-                    ))}
-                </ul>
+                <div className="text-center py-8 text-gray-400 text-sm">
+                Use the "Sparkle Button" in your Journal to generate your first AI Insight.
+                </div>
             )}
-         </div>
+          </div>
+          
+          <div className="text-right mt-4 pt-4 border-t border-gray-50">
+             <Link to="/journal" className="text-sm text-blue-600 hover:underline">View all insights &rarr;</Link>
+          </div>
+        </div>
 
       </div>
     </div>
