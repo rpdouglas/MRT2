@@ -7,9 +7,10 @@ import {
     Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
+import { getCurrentWeather } from '../../lib/weather'; // NEW IMPORT
 import { useNavigate } from 'react-router-dom';
 
-// --- Types (Local definition to avoid circular deps) ---
+// --- Types ---
 export interface JournalEntry {
   id: string;
   content: string;
@@ -52,6 +53,10 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     if (initialEntry) {
       setNewEntry(initialEntry.content);
       setMood(initialEntry.moodScore);
+      // Load saved weather if it exists
+      if (initialEntry.weather) {
+        setWeather(initialEntry.weather);
+      }
       setActiveTemplate(null); // Edit mode defaults to text
     } else {
       // Reset if switching from edit back to new
@@ -59,6 +64,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
       setMood(5);
       setActiveTemplate(null);
       setFormAnswers([]);
+      setWeather(null); // Clear old weather
+      fetchLocalWeather(); // Fetch NEW weather
     }
   }, [initialEntry]);
 
@@ -66,7 +73,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   useEffect(() => {
     if (!user) return;
     loadCustomTemplates();
-    fetchWeather();
+    // Only fetch weather on mount if it's a new entry (handled in the effect above mostly, but good for initial load)
+    if (!initialEntry) fetchLocalWeather(); 
   }, [user]);
 
   const loadCustomTemplates = async () => {
@@ -75,28 +83,17 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setCustomTemplates(t);
   };
 
-  const fetchWeather = async () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`);
-          const data = await res.json();
-          
-          const code = data.current.weather_code;
-          let condition = "Clear";
-          if (code > 0 && code < 50) condition = "Cloudy";
-          if (code >= 50 && code < 70) condition = "Rainy";
-          if (code >= 70) condition = "Snowy";
-
-          setWeather({
-             temp: Math.round(data.current.temperature_2m),
-             condition
-          });
-        } catch (e) {
-          console.warn("Weather fetch failed", e);
-        }
-      });
+  const fetchLocalWeather = async () => {
+    try {
+      const data = await getCurrentWeather();
+      if (data) {
+        setWeather({
+          temp: Math.round(data.temp),
+          condition: data.condition
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to auto-load weather", e);
     }
   };
 
@@ -152,6 +149,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     try {
       if (initialEntry) {
         // UPDATE existing
+        // We do NOT update weather here, preserving the original historical data
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
             content: finalContent, 
             moodScore: mood,
@@ -164,7 +162,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
           content: finalContent,
           moodScore: mood,
           sentiment: 'Pending', 
-          weather,
+          weather, // Saves the auto-fetched weather
           tags: finalTags,
           createdAt: Timestamp.now()
         });
@@ -281,11 +279,15 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {weather && !initialEntry && (
+            {weather && (
                <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100">
                   <span>{weather.condition}</span>
                   <span>•</span>
                   <span>{weather.temp}°C</span>
+                  {/* Visual indicator for historical vs current */}
+                  {initialEntry ? (
+                    <span className="text-[10px] text-gray-300 uppercase tracking-wide ml-1">(Recorded)</span>
+                  ) : null}
                </div>
             )}
 
