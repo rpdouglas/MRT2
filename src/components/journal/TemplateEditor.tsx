@@ -9,18 +9,17 @@ import {
     PencilSquareIcon,
     XMarkIcon,
     ListBulletIcon,
-    H1Icon,
-    BoldIcon,
+    HashtagIcon, // Used for Header
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 
-// Local Type Definition (Extending what might be in db.ts)
+// Local Type Definition
 interface JournalTemplate {
     id: string;
     uid: string;
     name: string;
-    content?: string; // Markdown content
+    content?: string; 
     prompts?: string[]; // Legacy support
     defaultTags: string[];
     createdAt: any;
@@ -105,8 +104,7 @@ export default function TemplateEditor() {
     const handleEdit = (t: JournalTemplate) => {
         setEditId(t.id);
         setName(t.name);
-        // If it's a legacy template (prompts), convert to text for editing or handle gracefully
-        // For now, we prefer 'content'. If 'content' is missing, join prompts.
+        // Convert legacy templates to text if needed
         const textContent = t.content || (t.prompts ? t.prompts.map(p => `**${p}**\n\n`).join('') : '');
         setContent(textContent);
         setTags(t.defaultTags || []);
@@ -147,7 +145,7 @@ export default function TemplateEditor() {
                     ...templateData,
                     createdAt: Timestamp.now()
                 });
-                // FIXED: Explicitly add createdAt to the local state object so the cast succeeds
+                // Fix: Manually add createdAt to state to match type definition
                 setTemplates([...templates, { 
                     id: docRef.id, 
                     ...templateData, 
@@ -184,8 +182,8 @@ export default function TemplateEditor() {
             </div>
 
             {isEditing ? (
-                // --- EDITOR VIEW ---
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fadeIn">
+                // --- EDITOR VIEW (Free Text / Markdown) ---
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <form onSubmit={handleSave} className="space-y-6">
                         
                         {/* Name Input */}
@@ -210,10 +208,10 @@ export default function TemplateEditor() {
                             {/* Toolbar */}
                             <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
                                 <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
-                                    <H1Icon className="h-4 w-4" />
+                                    <HashtagIcon className="h-4 w-4" />
                                 </button>
-                                <button type="button" onClick={() => insertText('**', '**')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
-                                    <BoldIcon className="h-4 w-4" />
+                                <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
+                                    B
                                 </button>
                                 <div className="w-px h-4 bg-gray-300 mx-1"></div>
                                 <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
@@ -229,7 +227,7 @@ export default function TemplateEditor() {
                                 rows={12}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                placeholder="Design your template here..."
+                                placeholder="Design your template here using Markdown...&#10;- [ ] Checklist item&#10;**Bold text**"
                                 className="w-full font-mono text-sm rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 leading-relaxed"
                             />
                         </div>
