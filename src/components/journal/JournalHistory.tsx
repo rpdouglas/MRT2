@@ -253,10 +253,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           filteredEntries.map(entry => (
             <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
               
-              {/* --- HEADER ROW (Updated: Stacked Meta-Data) --- */}
+              {/* --- HEADER ROW (Updated: Meta Stack with Tags) --- */}
               <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
                 
-                {/* Left: Stacked Date / Time+Weather */}
+                {/* Left: Stacked Meta (Date / Time+Weather / Tags) */}
                 <div className="flex flex-col items-start min-w-0">
                     {/* Line 1: Date */}
                     <span className="text-sm font-bold text-gray-800 truncate">
@@ -264,7 +264,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     </span>
                     
                     {/* Line 2: Time + Weather */}
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                         <span>
                             {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
                         </span>
@@ -278,6 +278,20 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             </>
                         )}
                     </div>
+
+                    {/* Line 3: Tags (Limited to 3) */}
+                    {entry.tags && entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                             {entry.tags.slice(0, 3).map((tag, i) => (
+                                  <span key={i} className="text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">
+                                      {tag}
+                                  </span>
+                             ))}
+                             {entry.tags.length > 3 && (
+                                 <span className="text-[10px] text-gray-400 pl-1">+{entry.tags.length - 3}</span>
+                             )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right: Mood & Actions */}
@@ -308,17 +322,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
               {/* BODY CONTENT */}
               <div className="p-5">
-                  {/* Tag Badges */}
-                  {entry.tags && entry.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                          {entry.tags.map((tag, i) => (
-                              <span key={i} className="text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-full font-medium border border-gray-100">
-                                  {tag}
-                              </span>
-                          ))}
-                      </div>
-                  )}
-                  
                   <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                     {entry.content}
                   </div>
