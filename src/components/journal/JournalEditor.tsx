@@ -246,7 +246,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                     <div key={idx}>
                         <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
                         <textarea
-                            rows={2}
+                            rows={4} // Increased from 2 to 4
                             value={formAnswers[idx] || ''}
                             onChange={(e) => {
                                 const newAns = [...formAnswers];
@@ -264,7 +264,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
                 placeholder="How are you feeling today? (Type # to add tags)"
-                className="w-full h-40 p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
+                // UPDATED: Changed h-40 to h-[60vh] for maximum writing space
+                className="w-full h-[60vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
             />
           )}
 
