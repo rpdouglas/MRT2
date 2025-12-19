@@ -187,18 +187,14 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-           <h2 className="font-semibold text-gray-700">
-             {initialEntry ? 'Editing Entry' : 'New Journal Entry'}
-           </h2>
-           
-           <div className="flex items-center gap-2 w-full sm:w-auto">
-             <div className="relative flex-1 sm:flex-none">
+        {/* Compact Header: Just Controls */}
+        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-end items-center gap-3">
+             <div className="relative">
                 <select 
                     onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="w-full sm:w-48 pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
                     defaultValue=""
-                    disabled={!!initialEntry} // Disable template switching during edit
+                    disabled={!!initialEntry} 
                 >
                     <option value="" disabled>Choose a Template...</option>
                     <option value="none">Free Write (Blank)</option>
@@ -219,15 +215,14 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
              <button 
                 onClick={() => navigate('/templates')}
-                className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
+                className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
                 title="Manage Templates"
              >
                 <Cog6ToothIcon className="h-5 w-5" />
              </button>
-           </div>
         </div>
         
-        <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-4">
+        <form onSubmit={handleSave} className="p-4 space-y-4">
           
           {activeTemplate ? (
              <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
@@ -246,7 +241,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                     <div key={idx}>
                         <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
                         <textarea
-                            rows={4} // Increased from 2 to 4
+                            rows={4} 
                             value={formAnswers[idx] || ''}
                             onChange={(e) => {
                                 const newAns = [...formAnswers];
@@ -264,8 +259,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
                 placeholder="How are you feeling today? (Type # to add tags)"
-                // UPDATED: Changed h-40 to h-[60vh] for maximum writing space
-                className="w-full h-[60vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
+                // UPDATED: Reduced to 45vh to prevent scroll
+                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
             />
           )}
 
