@@ -8,7 +8,8 @@ import Profile from './pages/Profile';
 import Workbooks from './pages/Workbooks'; 
 import WorkbookDetail from './pages/WorkbookDetail'; 
 import WorkbookSession from './pages/WorkbookSession'; 
-import TemplateEditor from './pages/TemplateEditor'; // NEW IMPORT
+// CRITICAL FIX: Import from the component folder, not pages
+import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
 
-  // Your existing logic: AppShell wraps the protected content here
+  // AppShell is applied here, so we don't need to wrap it again in the Routes
   return <AppShell>{children}</AppShell>;
 }
 
@@ -82,7 +83,7 @@ export default function App() {
             }
           />
           
-          {/* --- NEW: TEMPLATES ROUTE --- */}
+          {/* --- TEMPLATES ROUTE --- */}
           <Route
             path="/templates"
             element={
@@ -101,7 +102,9 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          
           <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
     </AuthProvider>

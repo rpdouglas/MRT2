@@ -9,7 +9,7 @@ import {
     PencilSquareIcon,
     XMarkIcon,
     ListBulletIcon,
-    HashtagIcon, // Used for Header
+    HashtagIcon, 
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,7 @@ export default function TemplateEditor() {
     useEffect(() => {
         if (!user) return;
         loadTemplates();
+        console.log("Template Editor V2 Loaded"); // Debug check
     }, [user]);
 
     const loadTemplates = async () => {
@@ -177,7 +178,7 @@ export default function TemplateEditor() {
                     <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
                 </button>
                 <h1 className="text-2xl font-bold text-gray-900">
-                    {isEditing ? (editId ? 'Edit Template' : 'New Template') : 'My Templates'}
+                    {isEditing ? (editId ? 'Edit Template' : 'New Free-Text Template') : 'My Templates'}
                 </h1>
             </div>
 
