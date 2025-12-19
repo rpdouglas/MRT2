@@ -142,19 +142,28 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
         setNewEntry(defTemplate.text);
-        // Merge template tags
         setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
         setActiveTemplate(null);
         return;
     }
 
-    const custTemplate = customTemplates.find(t => t.id === tId);
+    // Extended Type Check: Use 'any' to safely access properties that might not be in the imported type yet
+    const custTemplate = customTemplates.find(t => t.id === tId) as any;
+    
     if (custTemplate) {
-        setActiveTemplate(custTemplate);
-        setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
-        setNewEntry('');
-        // Merge template tags
-        setTags(prev => [...new Set([...prev, ...custTemplate.defaultTags])]);
+        // CASE 1: Free Text Template (Markdown)
+        if (custTemplate.content) {
+            setNewEntry(custTemplate.content);
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+            setActiveTemplate(null); // Treat as free text, not form wizard
+        } 
+        // CASE 2: Legacy Form Template
+        else if (custTemplate.prompts) {
+            setActiveTemplate(custTemplate);
+            setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
+            setNewEntry('');
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+        }
     } else {
         setActiveTemplate(null);
         setNewEntry('');
@@ -215,7 +224,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
             content: finalContent, 
             moodScore: mood,
-            tags: tags // Save explicit tags
+            tags: tags 
         });
       } else {
         await addDoc(collection(db, 'journals'), {
@@ -224,7 +233,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
           moodScore: mood,
           sentiment: 'Pending', 
           weather, 
-          tags: tags, // Save explicit tags
+          tags: tags,
           createdAt: Timestamp.now()
         });
       }
@@ -352,7 +361,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
                 placeholder="How are you feeling today?"
-                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
+                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed font-mono"
             />
           )}
 
