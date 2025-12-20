@@ -1,173 +1,112 @@
-import { 
-  GoogleGenerativeAI, 
-  HarmCategory, 
-  HarmBlockThreshold,
-  type GenerationConfig,
-  type SafetySetting
-} from "@google/generative-ai";
+// src/lib/gemini.ts
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// --- Configuration ---
-// Ensure your VITE_GEMINI_API_KEY is set in .env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-if (!API_KEY) {
-  console.error("Missing VITE_GEMINI_API_KEY in environment variables");
-}
-
+// Initialize Gemini
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-// Master Build Guide v2.6 specifies Gemini 2.5 Flash
-const MODEL_NAME = "gemini-2.5-flash"; 
-
-const generationConfig: GenerationConfig = {
-  temperature: 0.7, // Balanced for creative but structured analysis
-  topP: 0.95,
-  topK: 40,
-  maxOutputTokens: 8192,
-  responseMimeType: "application/json", // Enforce JSON mode
-};
-
-// Safety Settings: Adjusted for Recovery Context
-const safetySettings: SafetySetting[] = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-];
-
-// --- 1. JOURNAL ANALYSIS (Recovery Compass) ---
+// --- Types ---
 
 export interface AnalysisResult {
-  sentiment: 'Positive' | 'Neutral' | 'Negative';
-  mood: string;
   summary: string;
+  mood: string;
+  sentiment: 'Positive' | 'Neutral' | 'Negative' | 'Mixed';
   risk_analysis: string;
   positive_reinforcement: string;
   tool_suggestions: string[];
 }
 
-/**
- * Analyzes journal entries using the "Recovery Compass" framework.
- */
-export async function analyzeJournalEntries(journalEntries: string[]): Promise<AnalysisResult> {
-  try {
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL_NAME,
-      generationConfig,
-      safetySettings
-    });
+export interface WorkbookAnalysisResult {
+  scope_context: string; // e.g., "Step 1 Review" or "Full Journey"
+  pillars: {
+    understanding: string; // How well they grasped the concept
+    emotional_resonance: string; // The emotional tone/barriers detected
+    blind_spots: string; // Things they might be missing
+  };
+  suggested_actions: string[]; // Concrete tasks for the habit tracker
+}
 
+// --- Journal Analysis ---
+
+export const analyzeJournalEntries = async (entries: string[]): Promise<AnalysisResult | null> => {
+  if (!API_KEY) {
+    console.warn("Gemini API Key missing.");
+    return null;
+  }
+
+  try {
     const prompt = `
-      You are an expert recovery sponsor and therapist proxy for a user in addiction recovery. 
-      Analyze the following journal entries and provide a structured "Recovery Compass" analysis.
+      Act as a compassionate, wise, and highly experienced addiction recovery sponsor and therapist.
+      Analyze the following journal entries from a user in recovery.
       
       Entries:
-      ${JSON.stringify(journalEntries)}
-
-      Return a JSON object with this EXACT structure (no Markdown):
-      {
-        "sentiment": "Positive" | "Neutral" | "Negative",
-        "mood": "Two word description of the emotional tone (e.g. Anxious Hope)",
-        "summary": "A brief, 2-3 sentence synthesis of the user's current headspace.",
-        "risk_analysis": "Identify potential relapse triggers, cognitive distortions, or HALT (Hungry, Angry, Lonely, Tired) signs. Be gentle but direct.",
-        "positive_reinforcement": "Highlight specific examples of resilience, gratitude, or good recovery work found in the text.",
-        "tool_suggestions": ["Tool 1", "Tool 2", "Tool 3"]
-      }
-
-      The tool_suggestions must be practical, recovery-focused actions.
+      ${entries.join('\n---\n')}
+      
+      Return a JSON object with the following fields:
+      - summary: A 2-3 sentence compassionate summary of the user's current state.
+      - mood: A 1-word descriptor of the overall mood (e.g., "Reflective", "Anxious", "Hopeful").
+      - sentiment: One of "Positive", "Neutral", "Negative", "Mixed".
+      - risk_analysis: Identify any potential relapse triggers or cognitive distortions present (be gentle but vigilant).
+      - positive_reinforcement: Highlight a strength or win demonstrated in the entries.
+      - tool_suggestions: A list of 3 specific, actionable recovery tools or short tasks they should try (e.g., "Call a friend", "5-min meditation", "Play the tape through").
+      
+      Output ONLY raw JSON. Do not use Markdown formatting.
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = result.response;
+    const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
     
-    // Clean up potential markdown code blocks
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    return JSON.parse(cleanText) as AnalysisResult;
-
+    return JSON.parse(text) as AnalysisResult;
   } catch (error) {
-    console.error("Gemini Journal Analysis Failed:", error);
-    // Fallback if API fails
-    return {
-      sentiment: 'Neutral',
-      mood: 'System Offline',
-      summary: "Unable to generate analysis. Keep writing!",
-      risk_analysis: 'None detected.',
-      positive_reinforcement: 'Your commitment to journaling is a strength.',
-      tool_suggestions: ['Check internet connection', 'Try again later']
-    };
+    console.error("Gemini Analysis Error:", error);
+    return null;
   }
-}
+};
 
-// --- 2. WORKBOOK ANALYSIS (Restored Original Structure) ---
+// --- Workbook Analysis [NEW] ---
 
-export interface WorkbookInsight {
-  feedback: string;
-  encouragement: string;
-}
+export const analyzeWorkbookContent = async (
+  content: string, 
+  scope: 'section' | 'workbook' | 'global',
+  contextTitle: string
+): Promise<WorkbookAnalysisResult | null> => {
+  if (!API_KEY) return null;
 
-export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string | Record<string, string>): Promise<WorkbookInsight> {
   try {
-    const model = genAI.getGenerativeModel({ 
-        model: MODEL_NAME,
-        generationConfig,
-        safetySettings
-    });
-
-    // Handle both string and Record input types for flexibility
-    const contentString = typeof fullContent === 'string' 
-        ? fullContent 
-        : Object.entries(fullContent).map(([k, v]) => `Q: ${k}\nA: ${v}`).join('\n');
+    // Tailor persona based on scope
+    let persona = "a supportive 12-step sponsor";
+    if (scope === 'workbook') persona = "a comprehensive recovery program director";
+    if (scope === 'global') persona = "a holistic spiritual guide reviewing the entire life journey";
 
     const prompt = `
-      You are a compassionate Recovery Sponsor reviewing a sponsee's entire workbook.
-      
-      Workbook: "${workbookTitle}"
-      
-      User's Answers:
-      ${contentString}
+      Act as ${persona}.
+      Review the following workbook Q&A content from a user in recovery.
+      Context: ${contextTitle} (${scope} level review).
 
-      Please analyze their work holistically. Look for patterns across different sections, emotional trajectory, and depth of honesty.
-      
-      Return a JSON object with this structure (no Markdown):
-      {
-        "feedback": "A deep, insightful paragraph (4-6 sentences) connecting the dots between their answers. Mention specific patterns you notice across the workbook.",
-        "encouragement": "A strong, motivating closing statement."
+      Content to Analyze:
+      ${content}
+
+      Return a JSON object with:
+      - scope_context: A short title for this analysis (e.g., "Review of Step 1").
+      - pillars: {
+          understanding: "Assessment of how well the user grasps the spiritual/recovery concepts.",
+          emotional_resonance: "Observation of the emotional honesty and any barriers (fear, shame, pride).",
+          blind_spots: "Gentle pointing out of areas they might be avoiding or rationalizing."
       }
+      - suggested_actions: A list of 3 specific, concrete, one-sentence tasks to integrate this learning into daily life (e.g., "Share this inventory with a mentor", "Practice 5 mins of silence").
+
+      Output ONLY raw JSON. Do not use Markdown formatting.
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const response = result.response;
+    const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return JSON.parse(cleanText) as WorkbookInsight;
-
+    return JSON.parse(text) as WorkbookAnalysisResult;
   } catch (error) {
-    console.error("Gemini Workbook Error:", error);
-    return {
-      feedback: "You have done a significant amount of work here. The consistency in your answers shows a real desire for change.",
-      encouragement: "Keep trusting the process!"
-    };
+    console.error("Workbook Analysis Error:", error);
+    return null;
   }
-}
-
-// --- 3. LEGACY SUPPORT ---
-
-// Deprecated single-section analyzer (kept for type safety if referenced elsewhere)
-export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
-  return analyzeFullWorkbook(sectionTitle, JSON.stringify(qaPairs));
-}
+};
