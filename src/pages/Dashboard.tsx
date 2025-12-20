@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-// REMOVED: unused 'limit'
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { 
-    FireIcon, 
     ClipboardDocumentCheckIcon,
-    ChartBarIcon, 
     SparklesIcon,
     ArrowRightIcon,
-    // REMOVED: unused 'PencilSquareIcon'
-    BoltIcon,
-    AcademicCapIcon,
-    BookOpenIcon
 } from '@heroicons/react/24/outline';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats } from '../lib/gamification';
+import RecoveryHero from '../components/RecoveryHero';
 
 // Estimated Total Questions across all workbooks for gamification calc
 const TOTAL_WORKBOOK_QUESTIONS = 45; 
@@ -25,7 +19,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   
   // Data State
-  const [journalStats, setJournalStats] = useState({ streak: 0, consistency: 0, words: 0 });
+  const [daysClean, setDaysClean] = useState<number>(0);
+  const [journalStats, setJournalStats] = useState({ streak: 0, consistency: 0 });
   const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   
@@ -36,10 +31,23 @@ export default function Dashboard() {
     if (!user) return;
 
     const loadDashboardData = async () => {
-        // ADDED: Safety check for db to satisfy TypeScript
         if (!db) return;
 
         try {
+            // 0. Fetch User Profile for Sobriety Date
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                if (userData.sobrietyDate) {
+                    const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
+                    const now = new Date();
+                    const diffTime = Math.abs(now.getTime() - start.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    setDaysClean(diffDays);
+                }
+            }
+
             // 1. Fetch Journals for Stats
             const journalQ = query(
                 collection(db, 'journals'), 
@@ -51,8 +59,7 @@ export default function Dashboard() {
             const jStats = calculateJournalStats(journals);
             setJournalStats({ 
                 streak: jStats.journalStreak, 
-                consistency: jStats.consistencyRate,
-                words: jStats.totalWords
+                consistency: jStats.consistencyRate
             });
 
             // 2. Fetch Tasks
@@ -66,7 +73,6 @@ export default function Dashboard() {
             const pendingTasks = taskSnap.docs
                 .map(d => ({ id: d.id, ...d.data() } as any))
                 .filter(t => !t.completed)
-                // FIXED: Removed unused 'a' argument or prefixed with _
                 .sort((_a, b) => (b.priority === 'High' ? 1 : -1)) 
                 .slice(0, 3);
             setRecentTasks(pendingTasks);
@@ -104,99 +110,14 @@ export default function Dashboard() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       
-      {/* 1. RECOVERY HERO (3-Column Matrix) */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-         {/* Background Decoration */}
-         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
-         
-         <div className="relative z-10">
-             <div className="mb-6">
-                 <h1 className="text-3xl font-bold">Welcome back, {user?.displayName?.split(' ')[0] || 'Friend'}</h1>
-                 <p className="text-blue-100 opacity-90">One day at a time. You are doing great.</p>
-             </div>
-
-             {/* THE MATRIX GRID */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-                 
-                 {/* COLUMN 1: JOURNAL */}
-                 <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm">
-                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider">
-                         <BookOpenIcon className="h-4 w-4" /> Journal
-                     </div>
-                     <div className="space-y-3">
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <FireIcon className="h-5 w-5 text-orange-400" />
-                                 <span className="text-sm font-medium">Streak</span>
-                             </div>
-                             <span className="text-xl font-bold">{journalStats.streak} Days</span>
-                         </div>
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <ChartBarIcon className="h-5 w-5 text-purple-400" />
-                                 <span className="text-sm font-medium">Consistency</span>
-                             </div>
-                             <span className="text-xl font-bold">{journalStats.consistency}/wk</span>
-                         </div>
-                     </div>
-                 </div>
-
-                 {/* COLUMN 2: TASKS */}
-                 <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm">
-                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider">
-                         <ClipboardDocumentCheckIcon className="h-4 w-4" /> Habits
-                     </div>
-                     <div className="space-y-3">
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <BoltIcon className="h-5 w-5 text-yellow-400" />
-                                 <span className="text-sm font-medium">Fire</span>
-                             </div>
-                             <span className="text-xl font-bold">{taskStats.fire} Days</span>
-                         </div>
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <div className="h-5 w-5 rounded-full border-2 border-green-400 flex items-center justify-center">
-                                    <div className="h-2 w-2 bg-green-400 rounded-full" />
-                                 </div>
-                                 <span className="text-sm font-medium">Completion</span>
-                             </div>
-                             <span className="text-xl font-bold">{taskStats.rate}%</span>
-                         </div>
-                     </div>
-                 </div>
-
-                 {/* COLUMN 3: WORKBOOKS (NEW) */}
-                 <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm">
-                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider">
-                         <AcademicCapIcon className="h-4 w-4" /> Wisdom
-                     </div>
-                     <div className="space-y-3">
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <SparklesIcon className="h-5 w-5 text-cyan-400" />
-                                 <span className="text-sm font-medium">Score</span>
-                             </div>
-                             <span className="text-xl font-bold">{workbookStats.wisdom} Ans</span>
-                         </div>
-                         <div className="flex justify-between items-center">
-                             <div className="flex items-center gap-2">
-                                 <div className="h-5 w-5 relative">
-                                     <svg className="w-full h-full transform -rotate-90">
-                                         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
-                                         <circle cx="10" cy="10" r="8" fill="none" stroke="#67e8f9" strokeWidth="3" strokeDasharray={`${workbookStats.completion * 0.5} 100`} />
-                                     </svg>
-                                 </div>
-                                 <span className="text-sm font-medium">Mastery</span>
-                             </div>
-                             <span className="text-xl font-bold">{workbookStats.completion}%</span>
-                         </div>
-                     </div>
-                 </div>
-
-             </div>
-         </div>
-      </div>
+      {/* 1. RECOVERY HERO COMPONENT */}
+      <RecoveryHero 
+         userName={user?.displayName?.split(' ')[0] || 'Friend'}
+         daysClean={daysClean}
+         journalStats={journalStats}
+         taskStats={taskStats}
+         workbookStats={workbookStats}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           

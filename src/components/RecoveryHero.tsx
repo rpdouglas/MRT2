@@ -1,151 +1,143 @@
+import { Link } from 'react-router-dom';
 import { 
-  TrophyIcon, 
-  FireIcon, 
-  PencilSquareIcon, 
-  ScaleIcon,
-  CalendarDaysIcon,
-  FaceSmileIcon
+    FireIcon, 
+    ClipboardDocumentCheckIcon,
+    ChartBarIcon, 
+    SparklesIcon,
+    BoltIcon,
+    AcademicCapIcon,
+    BookOpenIcon,
+    ShieldCheckIcon
 } from '@heroicons/react/24/outline';
-import { differenceInYears, differenceInMonths, differenceInDays, addYears, addMonths } from 'date-fns';
-import type { GamificationStats } from '../lib/gamification';
 
 interface RecoveryHeroProps {
-  sobrietyDate: Date | null;
-  journalStats: GamificationStats | null;
-  taskStreak: number;
+    userName: string;
+    daysClean: number;
+    journalStats: {
+        streak: number;
+        consistency: number;
+    };
+    taskStats: {
+        fire: number;
+        rate: number;
+    };
+    workbookStats: {
+        wisdom: number;
+        completion: number;
+    };
 }
 
-export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }: RecoveryHeroProps) {
-  
-  // --- SOBRIETY CALCULATION LOGIC ---
-  const calculateDuration = () => {
-    if (!sobrietyDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
-    
-    const now = new Date();
-    
-    // 1. Calculate Breakdown (Y/M/D)
-    const years = differenceInYears(now, sobrietyDate);
-    const dateAfterYears = addYears(sobrietyDate, years);
-    
-    const months = differenceInMonths(now, dateAfterYears);
-    const dateAfterMonths = addMonths(dateAfterYears, months);
-    
-    const days = differenceInDays(now, dateAfterMonths);
-
-    // 2. Calculate Total Days
-    const totalDays = differenceInDays(now, sobrietyDate);
-    
-    return { years, months, days, totalDays };
-  };
-
-  const duration = calculateDuration();
-
+export default function RecoveryHero({ 
+    userName, 
+    daysClean, 
+    journalStats, 
+    taskStats, 
+    workbookStats 
+}: RecoveryHeroProps) {
   return (
-    <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl shadow-lg p-4 text-white overflow-hidden relative">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
+      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+         {/* Background Decoration */}
+         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+         
+         <div className="relative z-10">
+             {/* Header Row: Greeting & Clean Time Badge */}
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                 <div>
+                     <h1 className="text-3xl font-bold">Welcome back, {userName}</h1>
+                     <p className="text-blue-100 opacity-90">One day at a time. You are doing great.</p>
+                 </div>
 
-      {/* LAYOUT: Flex Row (Side-by-Side) */}
-      <div className="relative z-10 flex flex-row items-stretch gap-3 sm:gap-6 h-full">
-        
-        {/* --- SECTION 1: TIME (Left Side - Centered & Larger) --- */}
-        <div className="flex-1 flex flex-col justify-center items-center text-center min-w-0">
-          <div className="flex items-center gap-2 mb-2 opacity-80">
-            <TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">Recovery Time</span>
-          </div>
-          
-          {sobrietyDate ? (
-            <div className="flex flex-col justify-center items-center h-full">
-               {/* Big Total Number - Flexbox added for vertical centering */}
-               <div className="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
-                 <span>{duration.totalDays}</span>
-                 <span className="text-xl sm:text-3xl font-medium ml-3 sm:ml-4 opacity-80">Days</span>
-               </div>
-               
-               {/* Breakdown Subtext */}
-               <div className="flex flex-wrap items-center justify-center gap-1 text-lg sm:text-2xl font-medium text-blue-50 opacity-90">
-                  <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-2 rounded-lg truncate max-w-full">
-                     <CalendarDaysIcon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
-                     <span className="truncate">
-                        {duration.years}y, {duration.months}m, {duration.days}d
-                     </span>
-                  </div>
-               </div>
-            </div>
-          ) : (
-            <div className="bg-white/10 rounded-lg p-3 text-blue-100 text-sm">
-              Set sobriety date in Profile.
-            </div>
-          )}
-        </div>
+                 {/* CLEAN TIME BADGE OF HONOR */}
+                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
+                     <ShieldCheckIcon className="h-8 w-8 text-cyan-300" />
+                     <div className="text-right">
+                         <div className="text-2xl font-bold leading-none">{daysClean}</div>
+                         <div className="text-[10px] uppercase tracking-wider text-blue-100 font-semibold">Days Clean</div>
+                     </div>
+                 </div>
+             </div>
 
-        {/* --- VERTICAL DIVIDER --- */}
-        <div className="w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0"></div>
+             {/* THE MATRIX GRID (Linked Tiles) */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+                 
+                 {/* COLUMN 1: JOURNAL (Link) */}
+                 <Link to="/journal" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <BookOpenIcon className="h-4 w-4" /> Journal
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <FireIcon className="h-5 w-5 text-orange-400" />
+                                 <span className="text-sm font-medium">Streak</span>
+                             </div>
+                             <span className="text-xl font-bold">{journalStats.streak} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <ChartBarIcon className="h-5 w-5 text-purple-400" />
+                                 <span className="text-sm font-medium">Consistency</span>
+                             </div>
+                             <span className="text-xl font-bold">{journalStats.consistency}/wk</span>
+                         </div>
+                     </div>
+                 </Link>
 
-        {/* --- SECTION 2: STATS GRID (Right Side - 2x2) --- */}
-        <div className="flex-shrink-0 w-[45%] sm:w-auto flex flex-col justify-center">
-           
-           <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                
-                {/* 1. Journal Streak */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-purple-500/30 rounded-md text-white">
-                        <PencilSquareIcon className="h-4 w-4" />
-                    </div>
-                    {/* Mobile Icon */}
-                    <PencilSquareIcon className="h-4 w-4 sm:hidden mb-1 text-purple-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.journalStreak || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Journal</span>
-                    </div>
-                </div>
+                 {/* COLUMN 2: TASKS (Link) */}
+                 <Link to="/tasks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <ClipboardDocumentCheckIcon className="h-4 w-4" /> Habits
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <BoltIcon className="h-5 w-5 text-yellow-400" />
+                                 <span className="text-sm font-medium">Fire</span>
+                             </div>
+                             <span className="text-xl font-bold">{taskStats.fire} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <div className="h-5 w-5 rounded-full border-2 border-green-400 flex items-center justify-center">
+                                    <div className="h-2 w-2 bg-green-400 rounded-full" />
+                                 </div>
+                                 <span className="text-sm font-medium">Completion</span>
+                             </div>
+                             <span className="text-xl font-bold">{taskStats.rate}%</span>
+                         </div>
+                     </div>
+                 </Link>
 
-                {/* 2. Consistency */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-green-500/30 rounded-md text-white">
-                        <ScaleIcon className="h-4 w-4" />
-                    </div>
-                    <ScaleIcon className="h-4 w-4 sm:hidden mb-1 text-green-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg/Wk</span>
-                    </div>
-                </div>
+                 {/* COLUMN 3: WORKBOOKS (Link) */}
+                 <Link to="/workbooks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <AcademicCapIcon className="h-4 w-4" /> Wisdom
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <SparklesIcon className="h-5 w-5 text-cyan-400" />
+                                 <span className="text-sm font-medium">Score</span>
+                             </div>
+                             <span className="text-xl font-bold">{workbookStats.wisdom} Ans</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <div className="h-5 w-5 relative">
+                                     <svg className="w-full h-full transform -rotate-90">
+                                         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+                                         <circle cx="10" cy="10" r="8" fill="none" stroke="#67e8f9" strokeWidth="3" strokeDasharray={`${workbookStats.completion * 0.5} 100`} />
+                                     </svg>
+                                 </div>
+                                 <span className="text-sm font-medium">Mastery</span>
+                             </div>
+                             <span className="text-xl font-bold">{workbookStats.completion}%</span>
+                         </div>
+                     </div>
+                 </Link>
 
-                {/* 3. Habit Fire */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-orange-500/30 rounded-md text-white">
-                        <FireIcon className="h-4 w-4" />
-                    </div>
-                    <FireIcon className="h-4 w-4 sm:hidden mb-1 text-orange-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{taskStreak}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Streak</span>
-                    </div>
-                </div>
-
-                {/* 4. Average Mood (Pink) */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-pink-500/30 rounded-md text-white">
-                        <FaceSmileIcon className="h-4 w-4" />
-                    </div>
-                    <FaceSmileIcon className="h-4 w-4 sm:hidden mb-1 text-pink-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.averageMood || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg Mood</span>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
+             </div>
+         </div>
       </div>
-    </div>
   );
 }
