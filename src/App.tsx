@@ -8,7 +8,7 @@ import Profile from './pages/Profile';
 import Workbooks from './pages/Workbooks'; 
 import WorkbookDetail from './pages/WorkbookDetail'; 
 import WorkbookSession from './pages/WorkbookSession'; 
-// CRITICAL FIX: Import from the component folder, not pages
+import Vitality from './pages/Vitality'; // NEW IMPORT
 import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
 
@@ -21,7 +21,6 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
 
-  // AppShell is applied here, so we don't need to wrap it again in the Routes
   return <AppShell>{children}</AppShell>;
 }
 
@@ -83,6 +82,16 @@ export default function App() {
             }
           />
           
+          {/* --- VITALITY ROUTE (NEW) --- */}
+          <Route
+            path="/vitality"
+            element={
+              <PrivateRoute>
+                <Vitality />
+              </PrivateRoute>
+            }
+          />
+
           {/* --- TEMPLATES ROUTE --- */}
           <Route
             path="/templates"

@@ -8,7 +8,8 @@ import {
   UserCircleIcon,
   ArrowLeftOnRectangleIcon,
   ClipboardDocumentListIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  HeartIcon // NEW IMPORT
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,6 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'Vitality', href: '/vitality', icon: HeartIcon }, // NEW LINK
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
