@@ -23,13 +23,13 @@ export interface Workbook {
 }
 
 // Helper to generate generic questions for sections we don't fully populate in this snippet
-const generateQuestions = (count: number, prefix: string): Question[] => {
-  return Array.from({ length: count }).map((_, i) => ({
-    id: `${prefix}_q${i + 1}`,
-    text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
-    type: 'input'
-  }));
-};
+//const generateQuestions = (count: number, prefix: string): Question[] => {
+//  return Array.from({ length: count }).map((_, i) => ({
+//    id: `${prefix}_q${i + 1}`,
+//    text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
+//    type: 'input'
+//  }));
+//};
 
 // --- 1. GENERAL RECOVERY WORKBOOK (25 Questions) ---
 const generalQuestions: Question[] = [
@@ -60,43 +60,148 @@ const generalQuestions: Question[] = [
   { id: 'gen_25', text: "Why is recovery worth it for you?" },
 ];
 
-// --- 2. 12-STEP WORKBOOK (12 Steps, ~15 Qs each) ---
+// --- 2. 12-STEP WORKBOOK (Unified Steps Approach) ---
+
+// Helper to build the 16-slide structure for Steps 2-11 (Standardized Template)
+const createStepStructure = (
+  stepNum: number,
+  introText: string,
+  insight1: string,
+  insight2: string,
+  insight3: string
+): Question[] => {
+  const q: Question[] = [];
+  
+  // 1. Intro Slide
+  q.push({
+    id: `s${stepNum}_intro`,
+    type: 'read_only',
+    text: introText
+  });
+
+  // 2. Section 1 (5 Qs)
+  for (let i = 1; i <= 5; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: How does the concept of this section apply to your life today?`,
+      context: insight1
+    });
+  }
+
+  // 3. Section 2 (5 Qs)
+  for (let i = 6; i <= 10; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: What barriers do you face regarding this principle?`,
+      context: insight2
+    });
+  }
+
+  // 4. Section 3 (5 Qs)
+  for (let i = 11; i <= 15; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: How can you put this into practice immediately?`,
+      context: insight3
+    });
+  }
+
+  return q;
+};
+
+// -- STEP 1 (Fully Populated from User Doc) --
 const step1Questions: Question[] = [
-  { id: 's1_q1', text: "Do you accept that you have a disease of addiction?", context: "We admitted we were powerless over our addiction..." },
-  { id: 's1_q2', text: "How has the disease of addiction manifested in your life?" },
-  { id: 's1_q3', text: "Have you ever tried to stop on your own and found you couldn't?" },
-  { id: 's1_q4', text: "What specific incidents indicate you have lost control over your usage?" },
-  { id: 's1_q5', text: "How has your thinking been distorted by addiction (denial, rationalization)?" },
-  { id: 's1_q6', text: "In what ways have you been powerless over your behavior?" },
-  { id: 's1_q7', text: "Have you lost self-respect due to your addiction?" },
-  { id: 's1_q8', text: "How has your addiction affected you physically?" },
-  { id: 's1_q9', text: "How has your addiction affected you mentally?" },
-  { id: 's1_q10', text: "How has your addiction affected you spiritually?" },
-  { id: 's1_q11', text: "How has your addiction affected you emotionally?" },
-  { id: 's1_q12', text: "What is unmanageability to you?" },
-  { id: 's1_q13', text: "What are some examples of unmanageability in your life?" },
-  { id: 's1_q14', text: "Are you ready to admit you are an addict?" },
-  { id: 's1_q15', text: "What reservations do you still have about staying clean?" },
+  // Intro
+  {
+    id: 's1_intro',
+    type: 'read_only',
+    text: `Step 1: "We admitted we were powerless over our addiction—that our lives had become unmanageable."\n\nIntroduction:\nStep 1 is the foundation of recovery. It is about surrendering the illusion of control. It asks us to honestly admit that our best thinking has failed us and that our compulsive behaviors have consequences we can no longer manage alone.`
+  },
+  // Section 1: The Nature of Powerlessness
+  { id: 's1_q1', type: 'input', text: "Can you describe a specific time when you sincerely tried to stop or control your behavior but failed?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q2', type: 'input', text: "How does the obsession manifest in your mind before you even take the first action/drink/drug?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q3', type: 'input', text: "In what ways have you tried to bargain with your addiction (e.g., \"I'll only do it on weekends\")?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q4', type: 'input', text: "Do you feel a physical or mental shift when you engage in your addictive behavior that makes it hard to stop?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q5', type: 'input', text: "What does the word \"defeat\" mean to you in the context of your recovery?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  
+  // Section 2: Unmanageability in Daily Life
+  { id: 's1_q6', type: 'input', text: "How has your addiction affected your financial stability or career/school performance?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q7', type: 'input', text: "Have you missed important events or obligations due to using or recovering from using?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q8', type: 'input', text: "In what ways has your home life or living environment become chaotic?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q9', type: 'input', text: "How do you manage your emotions when things don't go your way? Is it manageable?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q10', type: 'input', text: "Do you feel like you are driving the car of your life, or are you a passenger in a runaway vehicle?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+
+  // Section 3: The Emotional Toll
+  { id: 's1_q11', type: 'input', text: "How has isolation played a role in your addiction?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q12', type: 'input', text: "What relationships have been damaged or lost because of your behavior?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q13', type: 'input', text: "Do you struggle with self-worth or self-esteem? How does using affect that?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q14', type: 'input', text: "What lies do you tell yourself to justify the pain you are in?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q15', type: 'input', text: "Are you ready to let go of the control you never really had?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+];
+
+// -- STEPS 2-11 (Generated Structure - Ready for Text Content) --
+const step2Questions = createStepStructure(2, "Step 2: Came to believe that a Power greater than ourselves could restore us to sanity.", "Sanity vs Insanity in addiction.", "Defining a Higher Power.", "The process of coming to believe.");
+const step3Questions = createStepStructure(3, "Step 3: Made a decision to turn our will and our lives over to the care of God as we understood Him.", "The decision vs the action.", "Letting go of self-will.", "Moving from fear to faith.");
+const step4Questions = createStepStructure(4, "Step 4: Made a searching and fearless moral inventory of ourselves.", "The purpose of inventory.", "Resentments and fears.", "Assets and liabilities.");
+const step5Questions = createStepStructure(5, "Step 5: Admitted to God, to ourselves, and to another human being the exact nature of our wrongs.", "The value of confession.", "Overcoming shame.", "Building trust.");
+const step6Questions = createStepStructure(6, "Step 6: Were entirely ready to have God remove all these defects of character.", "The difference between Step 6 and 7.", "Becoming ready.", "Letting go of old survival mechanisms.");
+const step7Questions = createStepStructure(7, "Step 7: Humbly asked Him to remove our shortcomings.", "Defining humility.", "The practice of asking.", "Changing our behavior.");
+const step8Questions = createStepStructure(8, "Step 8: Made a list of all persons we had harmed, and became willing to make amends to them all.", "Identifying harm done.", "Willingness vs action.", "Forgiveness of self and others.");
+const step9Questions = createStepStructure(9, "Step 9: Made direct amends to such people wherever possible, except when to do so would injure them or others.", "Direct amends vs apologies.", "Living amends.", "Cleaning up the wreckage.");
+const step10Questions = createStepStructure(10, "Step 10: Continued to take personal inventory and when we were wrong promptly admitted it.", "Daily inventory practice.", "Spot-check inventory.", "Keeping the side of the street clean.");
+const step11Questions = createStepStructure(11, "Step 11: Sought through prayer and meditation to improve our conscious contact with God...", "Prayer (talking) vs Meditation (listening).", "Seeking knowledge of His will.", "The power to carry that out.");
+
+// -- STEP 12 (Fully Populated from User Doc) --
+const step12Questions: Question[] = [
+  // Intro
+  {
+    id: 's12_intro',
+    type: 'read_only',
+    text: `Step 12: "Having had a spiritual awakening as the result of these steps, we tried to carry this message to addicts, and to practice these principles in all our affairs."\n\nIntroduction:\nStep 12 is the culmination of the program. It is about service, gratitude, and consistency. It asks us to take what we have been given—freedom—and share it with others, while living a life of integrity in all areas, not just recovery meetings.`
+  },
+  // Section 1: The Spiritual Awakening
+  { id: 's12_q1', type: 'input', text: "How would you describe your spiritual awakening?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q2', type: 'input', text: "How are you different now compared to when you started Step 1?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q3', type: 'input', text: "What does \"emotional sobriety\" mean to you now?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q4', type: 'input', text: "Do you feel a sense of purpose that was missing before?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q5', type: 'input', text: "How do you define your spirituality today?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+
+  // Section 2: Carrying the Message
+  { id: 's12_q6', type: 'input', text: "How can you be of service to others in recovery?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q7', type: 'input', text: "What is the difference between \"attraction\" and \"promotion\"?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q8', type: 'input', text: "How do you handle it when someone you are trying to help doesn't want help?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q9', type: 'input', text: "Why is working with others essential for your own sobriety?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q10', type: 'input', text: "What is the \"message\" you are trying to carry?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+
+  // Section 3: Practicing Principles in All Affairs
+  { id: 's12_q11', type: 'input', text: "How do you apply the steps in your workplace or school?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q12', type: 'input', text: "How do you practice these principles in your romantic relationships?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q13', type: 'input', text: "What does it mean to be a \"good citizen\" in the context of Step 12?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q14', type: 'input', text: "How do you handle success or failure using spiritual principles?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q15', type: 'input', text: "Are you ready to continue this way of life, one day at a time?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
 ];
 
 const twelveStepSections: WorkbookSection[] = [
   { id: 'step_1', title: 'Step 1', description: 'Powerlessness & Unmanageability', questions: step1Questions },
-  { id: 'step_2', title: 'Step 2', description: 'Came to believe', questions: generateQuestions(15, 'step_2') },
-  { id: 'step_3', title: 'Step 3', description: 'Turning it over', questions: generateQuestions(15, 'step_3') },
-  { id: 'step_4', title: 'Step 4', description: 'Searching and fearless moral inventory', questions: generateQuestions(15, 'step_4') },
-  { id: 'step_5', title: 'Step 5', description: 'Admitted to God, ourselves, and another', questions: generateQuestions(15, 'step_5') },
-  { id: 'step_6', title: 'Step 6', description: 'Entirely ready', questions: generateQuestions(15, 'step_6') },
-  { id: 'step_7', title: 'Step 7', description: 'Humbly asked Him', questions: generateQuestions(15, 'step_7') },
-  { id: 'step_8', title: 'Step 8', description: 'List of persons we had harmed', questions: generateQuestions(15, 'step_8') },
-  { id: 'step_9', title: 'Step 9', description: 'Direct amends', questions: generateQuestions(15, 'step_9') },
-  { id: 'step_10', title: 'Step 10', description: 'Continued to take personal inventory', questions: generateQuestions(15, 'step_10') },
-  { id: 'step_11', title: 'Step 11', description: 'Sought through prayer and meditation', questions: generateQuestions(15, 'step_11') },
-  { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: generateQuestions(15, 'step_12') },
+  { id: 'step_2', title: 'Step 2', description: 'Came to believe', questions: step2Questions },
+  { id: 'step_3', title: 'Step 3', description: 'Turning it over', questions: step3Questions },
+  { id: 'step_4', title: 'Step 4', description: 'Moral inventory', questions: step4Questions },
+  { id: 'step_5', title: 'Step 5', description: 'Admitting our wrongs', questions: step5Questions },
+  { id: 'step_6', title: 'Step 6', description: 'Entirely ready', questions: step6Questions },
+  { id: 'step_7', title: 'Step 7', description: 'Humbly asked Him', questions: step7Questions },
+  { id: 'step_8', title: 'Step 8', description: 'List of harms', questions: step8Questions },
+  { id: 'step_9', title: 'Step 9', description: 'Making amends', questions: step9Questions },
+  { id: 'step_10', title: 'Step 10', description: 'Personal inventory', questions: step10Questions },
+  { id: 'step_11', title: 'Step 11', description: 'Conscious contact', questions: step11Questions },
+  { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: step12Questions },
 ];
 
-// --- 3. RECOVERY DHARMA WORKBOOK ---
+// --- 3. RECOVERY DHARMA WORKBOOK (The Four Noble Truths) ---
 
-// -- The Four Noble Truths --
+// 1. First Noble Truth
 const dharmaTruth1: Question[] = [
   { 
     id: 'rd_t1_intro', 
@@ -135,6 +240,7 @@ const dharmaTruth1: Question[] = [
   }
 ];
 
+// 2. Second Noble Truth
 const dharmaTruth2: Question[] = [
   { 
     id: 'rd_t2_intro', 
@@ -173,6 +279,7 @@ const dharmaTruth2: Question[] = [
   }
 ];
 
+// 3. Third Noble Truth
 const dharmaTruth3: Question[] = [
   { 
     id: 'rd_t3_intro', 
@@ -211,6 +318,7 @@ const dharmaTruth3: Question[] = [
   }
 ];
 
+// 4. Fourth Noble Truth
 const dharmaTruth4: Question[] = [
   { 
     id: 'rd_t4_intro', 
@@ -249,7 +357,7 @@ const dharmaTruth4: Question[] = [
   }
 ];
 
-// -- The Eightfold Path (New) --
+// -- The Eightfold Path --
 
 const eightfoldPart1: Question[] = [
   // 1. Right View
@@ -318,7 +426,7 @@ const eightfoldPart2: Question[] = [
   {
     id: 'rd_path_q8',
     type: 'input',
-    text: "How do I speak to myself? Is my internal monologue harsh and abusive? How can I apply Right Speech internally?",
+    text: "How do you speak to myself? Is my internal monologue harsh and abusive? How can I apply Right Speech internally?",
     context: "If we spoke to our friends the way we speak to ourselves, we would have no friends. Mindfulness catches the inner critic in the act."
   },
   {
@@ -457,7 +565,6 @@ const dharmaSections: WorkbookSection[] = [
   { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: dharmaTruth2 },
   { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: dharmaTruth3 },
   { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: dharmaTruth4 },
-  // Eightfold Path Sections
   { id: 'rd_path_1', title: 'Part I: Wisdom', description: 'Right View & Right Intention', questions: eightfoldPart1 },
   { id: 'rd_path_2', title: 'Part II: Ethics', description: 'Right Speech, Action, & Livelihood', questions: eightfoldPart2 },
   { id: 'rd_path_3', title: 'Part III: Discipline', description: 'Right Effort, Mindfulness, & Concentration', questions: eightfoldPart3 },
@@ -475,7 +582,7 @@ export const WORKBOOKS: Workbook[] = [
   {
     id: '12_steps',
     title: '12-Step Workbook',
-    description: 'A rigorous journey through the 12 Steps. 15 questions per step to prepare for sponsor work.',
+    description: 'A comprehensive 12-Step program. Each step includes an introduction and 3 guided sections.',
     type: 'steps',
     sections: twelveStepSections
   },
