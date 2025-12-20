@@ -94,9 +94,9 @@ const twelveStepSections: WorkbookSection[] = [
   { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: generateQuestions(15, 'step_12') },
 ];
 
-// --- 3. RECOVERY DHARMA WORKBOOK (The Four Noble Truths) ---
+// --- 3. RECOVERY DHARMA WORKBOOK ---
 
-// 1. First Noble Truth
+// -- The Four Noble Truths --
 const dharmaTruth1: Question[] = [
   { 
     id: 'rd_t1_intro', 
@@ -135,7 +135,6 @@ const dharmaTruth1: Question[] = [
   }
 ];
 
-// 2. Second Noble Truth
 const dharmaTruth2: Question[] = [
   { 
     id: 'rd_t2_intro', 
@@ -174,7 +173,6 @@ const dharmaTruth2: Question[] = [
   }
 ];
 
-// 3. Third Noble Truth
 const dharmaTruth3: Question[] = [
   { 
     id: 'rd_t3_intro', 
@@ -213,7 +211,6 @@ const dharmaTruth3: Question[] = [
   }
 ];
 
-// 4. Fourth Noble Truth
 const dharmaTruth4: Question[] = [
   { 
     id: 'rd_t4_intro', 
@@ -252,11 +249,218 @@ const dharmaTruth4: Question[] = [
   }
 ];
 
+// -- The Eightfold Path (New) --
+
+const eightfoldPart1: Question[] = [
+  // 1. Right View
+  { 
+    id: 'rd_path_right_view_intro', 
+    type: 'read_only', 
+    text: `1. Right View (Understanding)\n\nRight View is the beginning of the path. In recovery, it means understanding the law of Karma (Cause and Effect). It is the deep realization that our actions have consequences.\n\nIt is accepting that unskillful actions (addiction) lead to suffering, and skillful actions (recovery) lead to freedom. It is seeing things as they truly are—impermanent and interconnected—rather than how our addiction wants us to see them.` 
+  },
+  {
+    id: 'rd_path_q1',
+    type: 'input',
+    text: "Do I truly accept that I am the owner of my actions and their consequences, without blaming others or my circumstances?",
+    context: "We stop looking for a scapegoat. When we realize that our choices shape our reality, we reclaim the power to change that reality."
+  },
+  {
+    id: 'rd_path_q2',
+    type: 'input',
+    text: "Can I see the cycle of 'cause and effect' in my last relapse or emotional outburst? What specific belief led to that action?",
+    context: "Ignorance is the root of suffering. When we see the link between our beliefs and our pain, we can begin to break the chain."
+  },
+  {
+    id: 'rd_path_q3',
+    type: 'input',
+    text: "How does viewing my thoughts as 'impermanent weather' change the way I react to a strong craving?",
+    context: "Right View teaches us that no feeling is final. We don't have to obey a command that will disappear in ten minutes."
+  },
+  // 2. Right Intention
+  { 
+    id: 'rd_path_right_intention_intro', 
+    type: 'read_only', 
+    text: `2. Right Intention (Wise Resolve)\n\nIf Right View is the map, Right Intention is the steering wheel. It involves three specific resolves: Renunciation (letting go of craving), Good Will (loving-kindness), and Harmlessness (compassion).\n\nIt is the commitment to move away from cruelty and toward kindness, for ourselves and others.` 
+  },
+  {
+    id: 'rd_path_q4',
+    type: 'input',
+    text: "Am I viewing 'renunciation' (giving up my addiction) as a punishment, or as a liberating gift I am giving myself?",
+    context: "Renunciation is not deprivation. It is the joyous letting go of a heavy burden we have been carrying for too long."
+  },
+  {
+    id: 'rd_path_q5',
+    type: 'input',
+    text: "In what situation today can I replace a thought of judgment (ill will) with a thought of understanding (good will)?",
+    context: "We cannot hate ourselves into recovery. Intention shifts our internal dialogue from a prosecutor to a gentle guide."
+  },
+  {
+    id: 'rd_path_q6',
+    type: 'input',
+    text: "How can I practice 'harmlessness' toward my own body today, considering the damage I may have done in the past?",
+    context: "Compassion starts at home. Treating our bodies with respect is a direct act of defiance against the self-destruction of addiction."
+  }
+];
+
+const eightfoldPart2: Question[] = [
+  // 3. Right Speech
+  { 
+    id: 'rd_path_right_speech_intro', 
+    type: 'read_only', 
+    text: `3. Right Speech\n\nWords have power. Right Speech means abstaining from lying, divisive speech (gossip/talking behind backs), harsh/abusive speech, and idle chatter (mindless talking to avoid feelings).\n\nIn recovery, this is synonymous with "getting honest." We stop hiding behind deceptions and learn to speak our truth with care.` 
+  },
+  {
+    id: 'rd_path_q7',
+    type: 'input',
+    text: "Is there a specific lie or half-truth I am currently protecting? What fear creates the need for this lie?",
+    context: "Secrets keep us sick. Rigorous honesty is the antidote to the isolation of addiction."
+  },
+  {
+    id: 'rd_path_q8',
+    type: 'input',
+    text: "How do I speak to myself? Is my internal monologue harsh and abusive? How can I apply Right Speech internally?",
+    context: "If we spoke to our friends the way we speak to ourselves, we would have no friends. Mindfulness catches the inner critic in the act."
+  },
+  {
+    id: 'rd_path_q9',
+    type: 'input',
+    text: "Can I practice 'noble silence' today—listening more than I speak—to avoid the trap of idle chatter or gossip?",
+    context: "Silence allows us to hear the truth. Sometimes the most skillful thing to say is nothing at all."
+  },
+  // 4. Right Action
+  { 
+    id: 'rd_path_right_action_intro', 
+    type: 'read_only', 
+    text: `4. Right Action\n\nThis factor corresponds to the Five Precepts: refraining from killing/harming, stealing, sexual misconduct, lying, and intoxication. Right Action is about living in a way that does not cause regret.\n\nIt creates a foundation of safety and trust in our lives.` 
+  },
+  {
+    id: 'rd_path_q10',
+    type: 'input',
+    text: "Looking at the precept of 'not taking what is not given' (stealing), are there subtle ways I take things (time, energy, credit) from others?",
+    context: "Generosity is the practice of letting go. We counter the taker mentality of addiction by asking, 'What can I give?'"
+  },
+  {
+    id: 'rd_path_q11',
+    type: 'input',
+    text: "Regarding sexual misconduct/harm: Am I using relationships or sex to numb out, seek validation, or manipulate, rather than to connect?",
+    context: "Intimacy requires presence. We learn to connect with others authentically, rather than using them as objects to fix our loneliness."
+  },
+  {
+    id: 'rd_path_q12',
+    type: 'input',
+    text: "What is one ethical boundary I need to set today to protect my sobriety (e.g., not going to a certain place, not seeing a certain person)?",
+    context: "Right Action is proactive. We don't just resist temptation; we build a life where temptation has no foothold."
+  },
+  // 5. Right Livelihood
+  { 
+    id: 'rd_path_right_livelihood_intro', 
+    type: 'read_only', 
+    text: `5. Right Livelihood\n\nWe spend a vast amount of our lives working. Right Livelihood asks us to earn our living in a way that doesn't violate our ethical principles or cause harm to others.\n\nIn a broader sense, it asks if our daily "hustle" supports our recovery or hinders it.` 
+  },
+  {
+    id: 'rd_path_q13',
+    type: 'input',
+    text: "Does my current job or way of making money require me to compromise my integrity or values?",
+    context: "Peace of mind is more valuable than a paycheck. We cannot maintain spiritual balance if we spend 40 hours a week violating our conscience."
+  },
+  {
+    id: 'rd_path_q14',
+    type: 'input',
+    text: "How can I bring the spirit of service into my daily work, regardless of what my job title is?",
+    context: "Every task can be a practice. When we work with mindfulness and care, our labor becomes an offering rather than a burden."
+  },
+  {
+    id: 'rd_path_q15',
+    type: 'input',
+    text: "Am I using work as a new addiction (workaholism) to avoid facing other areas of my life?",
+    context: "Balance is key. Right Livelihood supports life; it does not consume it."
+  }
+];
+
+const eightfoldPart3: Question[] = [
+  // 6. Right Effort
+  { 
+    id: 'rd_path_right_effort_intro', 
+    type: 'read_only', 
+    text: `6. Right Effort\n\nRight Effort is not about "white-knuckling" it. It is the balanced energy we apply to the practice.\n\nIt consists of four great efforts: (1) Preventing unwholesome states (cravings) from arising, (2) Abandoning unwholesome states that have arisen, (3) Cultivating wholesome states (joy, gratitude), and (4) Maintaining those wholesome states.` 
+  },
+  {
+    id: 'rd_path_q16',
+    type: 'input',
+    text: "Am I trying too hard (perfectionism) or not hard enough (complacency)? Where is the 'Middle Way' for me right now?",
+    context: "We tune the strings of our instrument not too tight, not too loose. Consistency beats intensity."
+  },
+  {
+    id: 'rd_path_q17',
+    type: 'input',
+    text: "When a negative state arises (anger/fear), do I feed it with more thought, or do I apply the effort to let it go?",
+    context: "What we water grows. Right Effort is the choice to stop watering the weeds and start watering the flowers."
+  },
+  {
+    id: 'rd_path_q18',
+    type: 'input',
+    text: "What is one positive quality (e.g., patience, generosity) I want to actively cultivate and strengthen this week?",
+    context: "Recovery is not just removing the bad; it is actively building the good. We fill the void with light."
+  },
+  // 7. Right Mindfulness
+  { 
+    id: 'rd_path_right_mindfulness_intro', 
+    type: 'read_only', 
+    text: `7. Right Mindfulness\n\nMindfulness is the core of the practice. It is the ability to see clearly what is happening right now.\n\nIt is the "Four Foundations of Mindfulness": Awareness of the body, feelings (pleasant/unpleasant/neutral), mind states (emotions), and phenomena (reality). It prevents us from living on autopilot.` 
+  },
+  {
+    id: 'rd_path_q19',
+    type: 'input',
+    text: "Can I detect the physical warning signs of a resentment or craving before it becomes a mental obsession?",
+    context: "The body always knows first. Mindfulness allows us to catch the spark before it becomes a forest fire."
+  },
+  {
+    id: 'rd_path_q20',
+    type: 'input',
+    text: "Am I able to observe an uncomfortable emotion (like anxiety) without judging it as 'bad' or trying to fix it immediately?",
+    context: "This is the practice of 'being with.' We learn to surf the waves of emotion rather than drowning in them."
+  },
+  {
+    id: 'rd_path_q21',
+    type: 'input',
+    text: "How often during the day do I actually 'arrive' in the present moment, rather than living in the past or future?",
+    context: "Life only happens now. When we are present, we are safe, because in this exact second, we are okay."
+  },
+  // 8. Right Concentration
+  { 
+    id: 'rd_path_right_concentration_intro', 
+    type: 'read_only', 
+    text: `8. Right Concentration\n\nWhile Mindfulness is broad awareness, Concentration is focused awareness. It is the ability to rest the mind on a single object (like the breath or a mantra).\n\nThis steadiness brings a deep sense of calm and joy, giving us a sanctuary from the chaos of the addicted mind.` 
+  },
+  {
+    id: 'rd_path_q22',
+    type: 'input',
+    text: "When I sit to meditate, can I treat my wandering mind with gentleness, simply returning to the breath without self-criticism?",
+    context: "The 'return' is the practice. Every time we realize we drifted and come back, we are strengthening the muscle of concentration."
+  },
+  {
+    id: 'rd_path_q23',
+    type: 'input',
+    text: "How does the ability to focus on one thing help me when I am overwhelmed by life's problems?",
+    context: "A scattered mind is a stressed mind. Concentration gathers our energy so we can face difficulties with stability."
+  },
+  {
+    id: 'rd_path_q24',
+    type: 'input',
+    text: "Do I use distractions (phone, TV, food) to prevent myself from ever being truly quiet? What specific fear makes me avoid the silence?",
+    context: "In the silence, we meet ourselves. We learn that we don't need constant noise to be okay."
+  }
+];
+
 const dharmaSections: WorkbookSection[] = [
   { id: 'rd_truth_1', title: 'First Noble Truth', description: 'There is suffering', questions: dharmaTruth1 },
   { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: dharmaTruth2 },
   { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: dharmaTruth3 },
   { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: dharmaTruth4 },
+  // Eightfold Path Sections
+  { id: 'rd_path_1', title: 'Part I: Wisdom', description: 'Right View & Right Intention', questions: eightfoldPart1 },
+  { id: 'rd_path_2', title: 'Part II: Ethics', description: 'Right Speech, Action, & Livelihood', questions: eightfoldPart2 },
+  { id: 'rd_path_3', title: 'Part III: Discipline', description: 'Right Effort, Mindfulness, & Concentration', questions: eightfoldPart3 },
 ];
 
 // --- MASTER REGISTRY ---
