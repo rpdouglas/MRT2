@@ -6,10 +6,16 @@ import {
   collection, 
   getDocs, 
   deleteDoc, 
+  addDoc,
+  query,
+  where,
+  orderBy,
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { type User } from "firebase/auth";
+
+// --- INTERFACES ---
 
 export interface UserProfile {
   uid: string;
@@ -18,15 +24,46 @@ export interface UserProfile {
   photoURL: string | null;
   sobrietyDate: Timestamp | null;
   createdAt: Timestamp;
+  lastLogin?: Timestamp;
 }
 
-// --- NEW: Template Interface ---
 export interface JournalTemplate {
   id: string;
   name: string;
-  prompts: string[]; // List of questions (e.g., "What was the trigger?")
-  defaultTags: string[]; // List of tags (e.g., "#step10")
+  prompts: string[]; 
+  defaultTags: string[]; 
 }
+
+// [ADDED] Required for Journal features
+export interface JournalEntry {
+  id?: string;
+  uid: string;
+  content: string;
+  moodScore: number;
+  tags: string[];
+  createdAt: Timestamp;
+  weather?: {
+    temp_c: number;
+    condition: string;
+    icon: string;
+  };
+}
+
+// [ADDED] Required for Task features (Approach 3)
+export interface Task {
+  id?: string;
+  uid: string;
+  text: string;
+  completed: boolean;
+  isRecurring: boolean;
+  frequency: 'Daily' | 'Weekly' | 'Monthly' | null;
+  currentStreak: number;
+  priority: 'High' | 'Medium' | 'Low';
+  createdAt: Timestamp;
+  dueDate?: Timestamp; // The new field for "Smart Reset"
+}
+
+// --- PROFILE FUNCTIONS ---
 
 // 1. Fetch a simple profile (Read-Only)
 export async function getProfile(uid: string): Promise<UserProfile | null> {
@@ -49,6 +86,8 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
+    // Optional: Update lastLogin here if you want to track activity
+    await updateDoc(userRef, { lastLogin: Timestamp.now() });
     return userSnap.data() as UserProfile;
   } else {
     // Initialize new profile
@@ -59,6 +98,7 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       photoURL: user.photoURL,
       sobrietyDate: null, 
       createdAt: Timestamp.now(),
+      lastLogin: Timestamp.now()
     };
     await setDoc(userRef, newProfile);
     return newProfile;
@@ -70,8 +110,8 @@ export async function updateProfileData(uid: string, data: Partial<UserProfile> 
   if (!db) throw new Error("Database not initialized");
 
   const userRef = doc(db, "users", uid);
-  const { ...updateFields } = data;
-  await setDoc(userRef, { ...updateFields }, { merge: true });
+  // Spread data to safely handle the partial update
+  await setDoc(userRef, { ...data }, { merge: true });
 }
 
 // 4. Update Sobriety Date (Legacy helper)
@@ -84,9 +124,8 @@ export async function updateSobrietyDate(uid: string, date: Date) {
   });
 }
 
-// --- NEW: Template CRUD Operations ---
+// --- TEMPLATE FUNCTIONS (Preserved) ---
 
-// Get all templates for a user
 export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
   if (!db) throw new Error("Database not initialized");
 
@@ -99,28 +138,48 @@ export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> 
   } as JournalTemplate));
 }
 
-// Save (Create or Update) a template
 export async function saveUserTemplate(uid: string, template: JournalTemplate) {
   if (!db) throw new Error("Database not initialized");
 
-  // Use the provided ID or generate a new one if empty
   const docRef = template.id 
     ? doc(db, 'users', uid, 'templates', template.id)
     : doc(collection(db, 'users', uid, 'templates'));
 
-  // Ensure we save the ID inside the doc too (optional but helpful)
   const dataToSave = {
     ...template,
-    id: docRef.id // Ensure ID matches doc ref
+    id: docRef.id 
   };
 
   await setDoc(docRef, dataToSave);
 }
 
-// Delete a template
 export async function deleteUserTemplate(uid: string, templateId: string) {
   if (!db) throw new Error("Database not initialized");
 
   const docRef = doc(db, 'users', uid, 'templates', templateId);
   await deleteDoc(docRef);
 }
+
+// --- [ADDED] JOURNAL FUNCTIONS ---
+
+export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
+  if (!db) throw new Error("Database not initialized");
+  
+  await addDoc(collection(db, 'journals'), {
+    uid,
+    ...entry,
+    createdAt: Timestamp.now(),
+  });
+};
+
+export const getJournalHistory = async (uid: string) => {
+  if (!db) throw new Error("Database not initialized");
+
+  const q = query(
+    collection(db, 'journals'),
+    where('uid', '==', uid),
+    orderBy('createdAt', 'desc')
+  );
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
+};
