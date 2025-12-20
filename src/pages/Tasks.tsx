@@ -14,7 +14,7 @@ import {
   FireIcon,
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
-  //ExclamationCircleIcon
+ // ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import Confetti from 'react-confetti';
 import { isSameDay, startOfDay, isBefore } from 'date-fns';
@@ -118,9 +118,9 @@ export default function Tasks() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
-                Hero's Ledger
+                Habits & Tasks
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Manage your daily quests and habits.</p>
+            <p className="text-sm text-gray-500 mt-1">Manage your daily habits and tasks.</p>
           </div>
           
           <button
