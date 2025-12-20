@@ -1,5 +1,5 @@
 // src/pages/WorkbookDetail.tsx
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -20,6 +20,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 
+// Define a proper interface for workbook answer data to avoid 'any'
+interface WorkbookAnswer {
+  workbookId: string;
+  sectionId: string;
+  questionId: string;
+  answer: string;
+  uid: string;
+}
+
 export default function WorkbookDetail() {
   const { workbookId } = useParams();
   const navigate = useNavigate();
@@ -39,33 +48,37 @@ export default function WorkbookDetail() {
   const [insight, setInsight] = useState<WorkbookAnalysisResult | null>(null);
   const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!user || !workbook) return;
-    loadProgress();
-  }, [user, workbook]);
-
-  const loadProgress = async () => {
+  // loadProgress wrapped in useCallback to stabilize the dependency for useEffect
+  const loadProgress = useCallback(async () => {
     if (!user || !workbook || !db) return;
     
-    // Fetch all answers for this workbook to calc progress
-    const q = query(
-        collection(db, 'users', user.uid, 'workbook_answers'),
-        where('workbookId', '==', workbook.id)
-    );
-    
-    const snapshot = await getDocs(q);
-    const counts: Record<string, number> = {};
+    try {
+        const q = query(
+            collection(db, 'users', user.uid, 'workbook_answers'),
+            where('workbookId', '==', workbook.id)
+        );
+        
+        const snapshot = await getDocs(q);
+        const counts: Record<string, number> = {};
 
-    snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.sectionId) {
-            counts[data.sectionId] = (counts[data.sectionId] || 0) + 1;
-        }
-    });
+        snapshot.docs.forEach(docSnap => {
+            const data = docSnap.data();
+            if (data.sectionId) {
+                counts[data.sectionId] = (counts[data.sectionId] || 0) + 1;
+            }
+        });
 
-    setCompletedCounts(counts);
-    setLoading(false);
-  };
+        setCompletedCounts(counts);
+    } catch (error) {
+        console.error("Error loading progress:", error);
+    } finally {
+        setLoading(false);
+    }
+  }, [user, workbook]);
+
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
 
   // --- AI ANALYSIS LOGIC ---
 
@@ -77,37 +90,33 @@ export default function WorkbookDetail() {
     setAddedActions(new Set());
 
     try {
-        let docsToAnalyze: any[] = [];
+        let docsToAnalyze: WorkbookAnswer[] = [];
         let contextTitle = "";
 
         if (analysisScope === 'section') {
-            // Fetch only specific section
             const q = query(
                 collection(db, 'users', user.uid, 'workbook_answers'),
                 where('workbookId', '==', workbook.id),
                 where('sectionId', '==', selectedSectionId)
             );
             const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data());
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
             const sec = workbook.sections.find(s => s.id === selectedSectionId);
             contextTitle = sec ? sec.title : "Section Review";
 
         } else if (analysisScope === 'workbook') {
-            // Fetch entire workbook
             const q = query(
                 collection(db, 'users', user.uid, 'workbook_answers'),
                 where('workbookId', '==', workbook.id)
             );
             const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data());
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
             contextTitle = workbook.title;
 
         } else {
-            // Global (Fetch everything for user) - simplistic approach
-            // In a real app with huge data, this might need limits or Cloud Function
             const q = collection(db, 'users', user.uid, 'workbook_answers');
             const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data());
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
             contextTitle = "Global Recovery Review";
         }
 
@@ -117,7 +126,6 @@ export default function WorkbookDetail() {
             return;
         }
 
-        // Format content for AI
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
         
         const result = await analyzeWorkbookContent(textContent, analysisScope, contextTitle);
@@ -142,7 +150,7 @@ export default function WorkbookDetail() {
     if (!user) return;
     try {
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 3); // Due in 3 days
+        dueDate.setDate(dueDate.getDate() + 3); 
 
         await addTask(user.uid, action, 'once', 'High', dueDate);
         setAddedActions(prev => new Set(prev).add(action));
@@ -168,7 +176,6 @@ export default function WorkbookDetail() {
                  <p className="text-gray-600 mt-2 max-w-2xl">{workbook.description}</p>
              </div>
 
-             {/* ANALYSIS BUTTON */}
              <button 
                 onClick={() => setShowWizard(true)}
                 className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-105"
@@ -183,7 +190,6 @@ export default function WorkbookDetail() {
       <div className="grid gap-4">
           {workbook.sections.map((section: WorkbookSection) => {
               const answeredCount = completedCounts[section.id] || 0;
-              // Only count input questions for total
               const totalQuestions = section.questions.filter(q => q.type !== 'read_only').length;
               const isComplete = totalQuestions > 0 && answeredCount >= totalQuestions;
               const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
@@ -198,7 +204,6 @@ export default function WorkbookDetail() {
                               </h3>
                               <p className="text-sm text-gray-500">{section.description}</p>
                               
-                              {/* Progress Bar */}
                               <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                   <div className="bg-blue-600 h-full transition-all" style={{ width: `${progressPercent}%` }} />
                               </div>
@@ -229,93 +234,52 @@ export default function WorkbookDetail() {
               </Dialog.Title>
 
               <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                      I can analyze your answers to help you find patterns, identify blind spots, and suggest actionable next steps. What should we review?
-                  </p>
-
                   <RadioGroup value={analysisScope} onChange={setAnalysisScope} className="space-y-3">
-                      
-                      {/* Option 1: Section */}
                       <RadioGroup.Option value="section" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="flex items-center">
-                                      <div className="text-sm">
-                                          <RadioGroup.Label as="p" className={`font-medium  ${checked ? 'text-white' : 'text-gray-900'}`}>
-                                              Specific Section
-                                          </RadioGroup.Label>
-                                          <RadioGroup.Description as="span" className={`inline ${checked ? 'text-purple-100' : 'text-gray-500'}`}>
-                                              Deep dive into a specific step or topic.
-                                          </RadioGroup.Description>
-                                      </div>
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Specific Section</RadioGroup.Label>
                                   </div>
                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
 
-                      {/* Dropdown for Sections (Only if 'section' is selected) */}
                       {analysisScope === 'section' && (
                           <div className="ml-4 pl-4 border-l-2 border-gray-100">
-                              <select 
-                                value={selectedSectionId} 
-                                onChange={(e) => setSelectedSectionId(e.target.value)}
-                                className="w-full text-sm border-gray-300 rounded-lg"
-                              >
-                                  {workbook.sections.map(s => (
-                                      <option key={s.id} value={s.id}>{s.title}</option>
-                                  ))}
+                              <select value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)} className="w-full text-sm border-gray-300 rounded-lg">
+                                  {workbook.sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                               </select>
                           </div>
                       )}
 
-                      {/* Option 2: Workbook */}
                       <RadioGroup.Option value="workbook" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="flex items-center">
-                                      <div className="text-sm">
-                                          <RadioGroup.Label as="p" className={`font-medium  ${checked ? 'text-white' : 'text-gray-900'}`}>
-                                              Full Workbook
-                                          </RadioGroup.Label>
-                                          <RadioGroup.Description as="span" className={`inline ${checked ? 'text-purple-100' : 'text-gray-500'}`}>
-                                              Review your journey through this entire guide.
-                                          </RadioGroup.Description>
-                                      </div>
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Full Workbook</RadioGroup.Label>
                                   </div>
                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
 
-                      {/* Option 3: Global */}
                       <RadioGroup.Option value="global" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="flex items-center">
-                                      <div className="text-sm">
-                                          <RadioGroup.Label as="p" className={`font-medium  ${checked ? 'text-white' : 'text-gray-900'}`}>
-                                              Global Review
-                                          </RadioGroup.Label>
-                                          <RadioGroup.Description as="span" className={`inline ${checked ? 'text-purple-100' : 'text-gray-500'}`}>
-                                              Connect the dots across all your workbooks.
-                                          </RadioGroup.Description>
-                                      </div>
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Global Review</RadioGroup.Label>
                                   </div>
                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
-
                   </RadioGroup>
 
                   <div className="mt-6 flex justify-end gap-3">
                       <button onClick={() => setShowWizard(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
-                      <button 
-                        onClick={handleAnalyze} 
-                        disabled={analyzing}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
-                      >
+                      <button onClick={handleAnalyze} disabled={analyzing} className="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2">
                           {analyzing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <SparklesIcon className="h-4 w-4" />}
                           Analyze Now
                       </button>
@@ -333,24 +297,15 @@ export default function WorkbookDetail() {
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-                  
                   {insight && (
                       <div className="space-y-6">
                           <div className="flex justify-between items-start border-b border-gray-100 pb-4">
-                              <div>
-                                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                      <SparklesIcon className="h-6 w-6 text-purple-600" />
-                                      {insight.scope_context}
-                                  </h2>
-                                  <p className="text-sm text-gray-500">Analysis generated by Recovery Compass</p>
-                              </div>
-                              <button onClick={() => setShowResult(false)} className="text-gray-400 hover:text-gray-600">
-                                  <span className="sr-only">Close</span>
-                                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
+                              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                  <SparklesIcon className="h-6 w-6 text-purple-600" />
+                                  {insight.scope_context}
+                              </h2>
                           </div>
 
-                          {/* 1. PILLARS OF ANALYSIS */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                                   <div className="flex items-center gap-2 mb-2 text-blue-800 font-bold text-xs uppercase tracking-wide">
@@ -372,7 +327,6 @@ export default function WorkbookDetail() {
                               </div>
                           </div>
 
-                          {/* 2. SUGGESTED ACTIONS */}
                           <div className="bg-purple-50 p-5 rounded-xl border border-purple-100">
                               <h3 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
                                   <CheckCircleIcon className="h-5 w-5" /> Suggested Action Steps
@@ -386,8 +340,7 @@ export default function WorkbookDetail() {
                                               <button 
                                                   onClick={() => !isAdded && handleAddToHabits(action)}
                                                   disabled={isAdded}
-                                                  className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50 cursor-default' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-50'}`}
-                                                  title={isAdded ? "Added to habits" : "Add to habits"}
+                                                  className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-50'}`}
                                               >
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
                                               </button>
@@ -396,10 +349,8 @@ export default function WorkbookDetail() {
                                   })}
                               </ul>
                           </div>
-
                       </div>
                   )}
-
               </Dialog.Panel>
             </div>
           </div>
