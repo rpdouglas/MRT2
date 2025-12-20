@@ -14,18 +14,27 @@ const COLLECTION = 'insights';
 
 /**
  * Saves a new AI Insight to Firestore.
- * @param uid - The User ID (e.g., "user_123")
- * @param result - The structured result from Gemini (analysis, sentiment, actions)
+ * Updated to support the new "Recovery Compass" data structure.
+ * @param uid - The User ID
+ * @param result - The structured result from Gemini
  */
 export async function saveInsight(uid: string, result: AnalysisResult) {
   if (!db) throw new Error("Database not initialized");
 
   await addDoc(collection(db, COLLECTION), {
     uid,
-    analysis: result.analysis,
+    createdAt: Timestamp.now(),
+    
+    // --- New Recovery Compass Fields ---
     sentiment: result.sentiment,
-    actionableSteps: result.actionableSteps,
-    createdAt: Timestamp.now()
+    mood: result.mood,
+    summary: result.summary,                 // Replaces old 'analysis'
+    risk_analysis: result.risk_analysis,
+    positive_reinforcement: result.positive_reinforcement,
+    tool_suggestions: result.tool_suggestions, // Replaces old 'actionableSteps'
+    
+    // Note: We no longer save 'analysis' or 'actionableSteps' because 
+    // they don't exist on the new result object.
   });
 }
 
