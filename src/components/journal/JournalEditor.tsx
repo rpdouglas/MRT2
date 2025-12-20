@@ -149,7 +149,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
     // Extended Type Check: Use 'any' to safely access properties that might not be in the imported type yet
     const custTemplate = customTemplates.find(t => t.id === tId) as any;
-    
     if (custTemplate) {
         // CASE 1: Free Text Template (Markdown)
         if (custTemplate.content) {
@@ -211,7 +210,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setSaving(true);
 
     let finalContent = newEntry;
-
     if (activeTemplate) {
         finalContent = `**${activeTemplate.name}**\n\n`;
         activeTemplate.prompts.forEach((prompt, idx) => {
@@ -259,7 +257,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
              
              {/* LEFT: Weather Widget */}
              <div>
-                {weather ? (
+                 {weather ? (
                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
                       <span>{weather.condition}</span>
                       <span className="font-bold">{weather.temp}°C</span>
@@ -326,6 +324,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         
         <form onSubmit={handleSave} className="p-4 space-y-4">
           
+          {/* EDITOR AREA */}
           {activeTemplate ? (
              <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                 <div className="flex justify-between items-center mb-2">
@@ -365,77 +364,84 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             />
           )}
 
-          {/* --- TAG INPUT BAR --- */}
-          <div className="relative group">
-              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                  <TagIcon className="h-4 w-4 text-gray-400" />
-                  
-                  {/* Selected Tags Chips */}
-                  {tags.map(tag => (
-                      <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
-                          {tag}
-                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                              <XMarkIcon className="h-3 w-3" />
-                          </button>
-                      </span>
-                  ))}
-
-                  {/* Input Field */}
-                  <input 
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => {
-                          setTagInput(e.target.value);
-                          setShowSuggestions(true);
-                      }}
-                      onKeyDown={handleAddTag}
-                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay so click registers
-                      placeholder={tags.length === 0 ? "Add tags (e.g. Grateful, Morning)..." : ""}
-                      className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
-                  />
-              </div>
-
-              {/* Autocomplete Suggestions */}
-              {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
-                  <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-10">
-                      {filteredSuggestions.map(tag => (
-                          <button
-                            key={tag}
-                            type="button"
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                            onClick={() => addTag(tag)}
-                          >
-                              {tag}
-                          </button>
-                      ))}
-                  </div>
-              )}
-          </div>
-
-          {/* FOOTER: Mood (Left) | Save Button (Right) */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            
-            {/* Mood Slider */}
-            <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-               <span className="text-sm font-medium text-gray-500">Mood:</span>
-               <input 
+          {/* MOOD SLIDER (Moved to Full Width) */}
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+             <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">Mood Score</label>
+                <span className={`text-sm font-bold px-2 py-0.5 rounded ${mood >= 7 ? 'text-green-700 bg-green-100' : mood <= 4 ? 'text-red-700 bg-red-100' : 'text-yellow-700 bg-yellow-100'}`}>
+                    {mood}/10
+                </span>
+             </div>
+             <input 
                  type="range" 
                  min="1" 
                  max="10" 
                  value={mood}
                  onChange={(e) => setMood(Number(e.target.value))}
-                 className="w-24 accent-blue-600 cursor-pointer"
-               />
-               <span className={`text-sm font-bold w-6 text-center ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`}>
-                 {mood}
-               </span>
+                 className="w-full accent-blue-600 cursor-pointer"
+             />
+             <div className="flex justify-between text-xs text-gray-400 mt-1">
+                 <span>Struggling</span>
+                 <span>Neutral</span>
+                 <span>Thriving</span>
+             </div>
+          </div>
+
+          {/* FOOTER: Tags (Left) | Save Button (Right) */}
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            
+            {/* TAG INPUT (Moved to Footer) */}
+            <div className="relative group w-full sm:flex-1">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                    <TagIcon className="h-4 w-4 text-gray-400" />
+                    
+                    {/* Selected Tags Chips */}
+                    {tags.map(tag => (
+                        <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                            {tag}
+                            <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                <XMarkIcon className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+
+                    {/* Input Field */}
+                    <input 
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => {
+                            setTagInput(e.target.value);
+                            setShowSuggestions(true);
+                        }}
+                        onKeyDown={handleAddTag}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        placeholder={tags.length === 0 ? "Add tags (e.g. Grateful)..." : ""}
+                        className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
+                    />
+                </div>
+
+                {/* Autocomplete Suggestions (Positioned Bottom-Up from footer) */}
+                {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                    <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
+                        {filteredSuggestions.map(tag => (
+                            <button
+                                key={tag}
+                                type="button"
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                onClick={() => addTag(tag)}
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Save Button */}
             <button
               type="submit"
               disabled={saving}
-              className="ml-auto flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
             >
               {saving ? (
                 <span>Saving...</span>
