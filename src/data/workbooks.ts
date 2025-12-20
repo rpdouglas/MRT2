@@ -1,7 +1,10 @@
+// src/data/workbooks.ts
+
 export interface Question {
   id: string;
   text: string;
-  context?: string; // Optional context/quote from literature
+  context?: string; // Optional context/quote from literature (The Insight)
+  type?: 'input' | 'read_only'; // Defaults to 'input' if undefined
 }
 
 export interface WorkbookSection {
@@ -24,6 +27,7 @@ const generateQuestions = (count: number, prefix: string): Question[] => {
   return Array.from({ length: count }).map((_, i) => ({
     id: `${prefix}_q${i + 1}`,
     text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
+    type: 'input'
   }));
 };
 
@@ -90,12 +94,169 @@ const twelveStepSections: WorkbookSection[] = [
   { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: generateQuestions(15, 'step_12') },
 ];
 
-// --- 3. RECOVERY DHARMA WORKBOOK ---
+// --- 3. RECOVERY DHARMA WORKBOOK (The Four Noble Truths) ---
+
+// 1. First Noble Truth
+const dharmaTruth1: Question[] = [
+  { 
+    id: 'rd_t1_intro', 
+    type: 'read_only', 
+    text: `The First Noble Truth is not a pessimistic claim that "life is miserable." rather, it is a realistic assessment that dissatisfaction, stress, and pain are part of the human experience.\n\nIn the context of addiction, this truth is the acknowledgment of our struggle. It is the realization that our compulsive behaviors—whether to substances, people, or processes—have become a source of suffering rather than a solution to it.\n\nWe admit that despite our best efforts to control it, the cycle has become unmanageable and painful.` 
+  },
+  { 
+    id: 'rd_t1_q1', 
+    type: 'input',
+    text: "In what specific ways has my main coping mechanism (my addiction) stopped working for me?", 
+    context: "We acknowledge that the things we used to cope with our pain have turned on us. What once provided relief now creates more suffering." 
+  },
+  { 
+    id: 'rd_t1_q2', 
+    type: 'input',
+    text: "Can I identify the difference between 'pain' (the inevitable events of life) and 'suffering' (my reaction and resistance to those events)?", 
+    context: "Pain is inevitable; suffering is optional. We suffer when we cling to how we want things to be, rather than accepting how they are." 
+  },
+  { 
+    id: 'rd_t1_q3', 
+    type: 'input',
+    text: "Where in my body do I feel the physical sensation of 'unsatisfactoriness' or restlessness when I am not using/acting out?", 
+    context: "Mindfulness begins with the body. The First Truth asks us to turn toward the discomfort we have been running from, rather than away from it." 
+  },
+  { 
+    id: 'rd_t1_q4', 
+    type: 'input',
+    text: "How has my refusal to accept the reality of my situation prolonged my cycle of addiction?", 
+    context: "Denial is a form of protection, but eventually, it becomes a prison. Acceptance is the first step toward unlocking the door." 
+  },
+  { 
+    id: 'rd_t1_q5', 
+    type: 'input',
+    text: "Looking back, can I see how my 'solution' eventually became the primary problem in my life?", 
+    context: "We realize that we have been trying to fill a spiritual void with material things, substances, or validation, and it simply does not work." 
+  }
+];
+
+// 2. Second Noble Truth
+const dharmaTruth2: Question[] = [
+  { 
+    id: 'rd_t2_intro', 
+    type: 'read_only', 
+    text: `The Second Truth teaches us that the root cause of our suffering is craving (thirst) and clinging.\n\nIt isn't just the drugs, the alcohol, or the behavior that is the problem; it is the underlying drive to fix the way we feel instantly. It is the deep-seated belief that "this moment is not enough" and that we need something external to make us whole.\n\nWe suffer because we cling to pleasure and push away pain, creating a constant tug-of-war in our minds.` 
+  },
+  { 
+    id: 'rd_t2_q1', 
+    type: 'input',
+    text: "What is the specific feeling or emotion I am usually trying to escape when the craving arises?", 
+    context: "Craving often arises as a response to an underlying discomfort—loneliness, fear, boredom, or shame. We use addiction to numb these feelings." 
+  },
+  { 
+    id: 'rd_t2_q2', 
+    type: 'input',
+    text: "Can I identify a time recently when I clung to a pleasant experience so tightly that I ruined it when it naturally ended?", 
+    context: "Impermanence is a law of nature. Suffering arises when we demand that temporary pleasure lasts forever." 
+  },
+  { 
+    id: 'rd_t2_q3', 
+    type: 'input',
+    text: "What \"stories\" does my mind tell me about what will happen if I don't give in to the craving?", 
+    context: "The mind creates catastrophic narratives to justify acting on impulse. We learn to observe these thoughts without believing them." 
+  },
+  { 
+    id: 'rd_t2_q4', 
+    type: 'input',
+    text: "How does my attachment to a specific identity (e.g., 'the victim,' 'the addict,' 'the tough one') keep me stuck in old patterns?", 
+    context: "We often cling to our suffering because it is familiar. Letting go of who we think we are allows us to become who we can be." 
+  },
+  { 
+    id: 'rd_t2_q5', 
+    type: 'input',
+    text: "In what ways do I demand that the world conform to my expectations, and how does that lead to anger or resentment?", 
+    context: "Expectations are resentments waiting to happen. When we stop fighting reality, the craving to escape reality diminishes." 
+  }
+];
+
+// 3. Third Noble Truth
+const dharmaTruth3: Question[] = [
+  { 
+    id: 'rd_t3_intro', 
+    type: 'read_only', 
+    text: `The Third Truth is the good news: Recovery is possible.\n\nSuffering is not permanent, and because it has a cause (craving), it can end. This is the truth of Cessation. It doesn’t mean we will never feel pain again, but it means we don't have to be enslaved by our reactions to it.\n\nWe can find a freedom that isn't dependent on external circumstances. We can experience peace right now, even in the midst of difficulty, by letting go of the demand for things to be different.` 
+  },
+  { 
+    id: 'rd_t3_q1', 
+    type: 'input',
+    text: "Can I recall a moment in my recovery (or life) where I felt a sense of peace without needing to change anything?", 
+    context: "Freedom is available in any moment where we stop fighting. This is the glimpse of Nirvana—the cooling of the flames of desire." 
+  },
+  { 
+    id: 'rd_t3_q2', 
+    type: 'input',
+    text: "What would my life look like if I believed, truly, that I am already 'whole' and don't need to be 'fixed'?", 
+    context: "Our true nature is wise and compassionate. Recovery is not about building a new you, but uncovering the you that was there all along." 
+  },
+  { 
+    id: 'rd_t3_q3', 
+    type: 'input',
+    text: "If I let go of the need to control the outcome of my current situation, what specific burden would be lifted off my shoulders?", 
+    context: "Surrender is not giving up; it is giving over. We let go of the illusion of control and find safety in the present moment." 
+  },
+  { 
+    id: 'rd_t3_q4', 
+    type: 'input',
+    text: "How does the idea of 'impermanence' give me hope regarding my current struggles or cravings?", 
+    context: "This too shall pass. Knowing that cravings are like weather—storms that come and go—helps us ride them out without drowning." 
+  },
+  { 
+    id: 'rd_t3_q5', 
+    type: 'input',
+    text: "Who in my life (or in my Sangha/community) represents the possibility of freedom to me, and what qualities do they embody?", 
+    context: "We take refuge in the Sangha. Seeing the recovery of others proves that the Third Noble Truth is a reality, not just a theory." 
+  }
+];
+
+// 4. Fourth Noble Truth
+const dharmaTruth4: Question[] = [
+  { 
+    id: 'rd_t4_intro', 
+    type: 'read_only', 
+    text: `The Fourth Truth is the Eightfold Path—the practical "how-to" guide for recovery.\n\nIt is a set of practices that helps us live ethically, train our minds, and cultivate wisdom. It covers Wisdom (Right View, Intention), Ethics (Right Speech, Action, Livelihood), and Meditation (Right Effort, Mindfulness, Concentration).\n\nThis is not a linear set of steps but a wheel of practice where each part supports the others. It is the daily discipline of recovery.` 
+  },
+  { 
+    id: 'rd_t4_q1', 
+    type: 'input',
+    text: "Right Intention: Am I approaching my recovery today with an intention of kindness toward myself, or am I being harsh and critical?", 
+    context: "Renunciation is not about punishment; it is an act of love. We let go of harmful behaviors because we care about our own well-being." 
+  },
+  { 
+    id: 'rd_t4_q2', 
+    type: 'input',
+    text: "Right Speech: How have I used my words (to others or myself) to cause harm recently, and how can I practice honesty without cruelty?", 
+    context: "Truthfulness is the foundation of trust. We cannot recover while hiding behind lies, but our truth must be spoken with compassion." 
+  },
+  { 
+    id: 'rd_t4_q3', 
+    type: 'input',
+    text: "Right Action: What is one small, ethical action I can take today that aligns with the person I want to become?", 
+    context: "Recovery is lived in the small moments. Every time we choose not to harm, we are strengthening our path to freedom." 
+  },
+  { 
+    id: 'rd_t4_q4', 
+    type: 'input',
+    text: "Right Mindfulness: specific situations trigger me to go on 'autopilot,' and how can I bring more awareness to those moments?", 
+    context: "Mindfulness is the pause between the trigger and the reaction. In that pause lies our freedom to choose a different response." 
+  },
+  { 
+    id: 'rd_t4_q5', 
+    type: 'input',
+    text: "Right Effort: Am I striving too hard (restlessness) or not hard enough (complacency)? How can I find the 'Middle Way' in my recovery today?", 
+    context: "The Middle Way is the path of balance. We avoid the extremes of indulgence and severe asceticism. We practice with gentle persistence." 
+  }
+];
+
 const dharmaSections: WorkbookSection[] = [
-  { id: 'rd_truth_1', title: 'First Noble Truth', description: 'There is suffering', questions: generateQuestions(10, 'dharma_1') },
-  { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: generateQuestions(10, 'dharma_2') },
-  { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: generateQuestions(10, 'dharma_3') },
-  { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: generateQuestions(10, 'dharma_4') },
+  { id: 'rd_truth_1', title: 'First Noble Truth', description: 'There is suffering', questions: dharmaTruth1 },
+  { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: dharmaTruth2 },
+  { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: dharmaTruth3 },
+  { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: dharmaTruth4 },
 ];
 
 // --- MASTER REGISTRY ---

@@ -1,3 +1,4 @@
+// src/pages/WorkbookSession.tsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWorkbook } from '../data/workbooks';
@@ -18,7 +19,7 @@ export default function WorkbookSession() {
   
   const workbook = getWorkbook(workbookId || '');
   const section = workbook?.sections.find(s => s.id === sectionId);
-  
+
   // State
   const [answers, setAnswers] = useState<WorkbookProgress>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,7 +37,11 @@ export default function WorkbookSession() {
       setAnswers(saved);
       
       // Find first unanswered question to jump to
-      const firstEmptyIndex = section.questions.findIndex(q => !saved[q.id]);
+      // Filter out read_only questions from this logic if preferred, 
+      // but jumping to the first step is usually safe.
+      const firstEmptyIndex = section.questions.findIndex(q => 
+        q.type !== 'read_only' && !saved[q.id]
+      );
       if (firstEmptyIndex !== -1) setCurrentIndex(firstEmptyIndex);
       
       setLoading(false);
@@ -46,6 +51,7 @@ export default function WorkbookSession() {
 
   // Handlers
   const currentQuestion = section?.questions[currentIndex];
+  // Default to '' if no answer found
   const currentAnswer = currentQuestion ? (answers[currentQuestion.id] || '') : '';
 
   const handleTextChange = (val: string) => {
@@ -55,6 +61,10 @@ export default function WorkbookSession() {
 
   const saveCurrent = async () => {
     if (!user || !workbook || !section || !currentQuestion) return;
+    
+    // Do not save for read_only slides
+    if (currentQuestion.type === 'read_only') return;
+
     setSaving(true);
     await saveAnswer(user.uid, workbook.id, section.id, currentQuestion.id, currentAnswer);
     setSaving(false);
@@ -113,16 +123,28 @@ export default function WorkbookSession() {
             <h2 className="text-xl text-gray-600 mb-8 border-b pb-4">{section.title}: {section.description}</h2>
 
             <div className="space-y-8">
-                {section.questions.map((q, idx) => (
-                    <div key={q.id} className="break-inside-avoid">
-                        <p className="font-bold text-lg mb-2">
-                            {idx + 1}. {q.text}
-                        </p>
-                        <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-800 whitespace-pre-wrap">
-                            {answers[q.id] || "No answer provided."}
+                {section.questions.map((q, idx) => {
+                    // Skip read_only slides in print mode? Or include them?
+                    // Let's include them as context blocks.
+                    if (q.type === 'read_only') {
+                        return (
+                            <div key={q.id} className="break-inside-avoid bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                <p className="text-gray-800 whitespace-pre-wrap font-medium">{q.text}</p>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={q.id} className="break-inside-avoid">
+                            <p className="font-bold text-lg mb-2">
+                                {idx + 1}. {q.text}
+                            </p>
+                            <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-800 whitespace-pre-wrap">
+                                {answers[q.id] || "No answer provided."}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             
             <div className="mt-12 pt-4 border-t text-sm text-gray-400 text-center">
@@ -151,7 +173,6 @@ export default function WorkbookSession() {
          </div>
          
          <div className="flex items-center gap-3">
-            {/* Export Only - Sparkle Button Removed */}
             <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
                 <DocumentArrowDownIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
@@ -167,33 +188,60 @@ export default function WorkbookSession() {
         />
       </div>
 
-      {/* 3. The Question Area */}
+      {/* 3. The Content Area */}
       <div className="flex-1 overflow-y-auto pb-20">
-         <div className="prose prose-lg max-w-none mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-                {currentQuestion.text}
-            </h2>
-            {currentQuestion.context && (
-                <div className="flex gap-3 bg-blue-50 p-4 rounded-lg mt-4 text-blue-800 text-sm">
-                    <InformationCircleIcon className="h-5 w-5 flex-shrink-0" />
-                    <p className="italic">"{currentQuestion.context}"</p>
-                </div>
-            )}
-         </div>
+         
+         {/* --- RENDER LOGIC BASED ON TYPE --- */}
+         {currentQuestion.type === 'read_only' ? (
+             // --- READING SLIDE ---
+             <div className="prose prose-lg max-w-none">
+                 <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                     <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+                        <InformationCircleIcon className="h-6 w-6" />
+                        Explanation
+                     </h2>
+                     <div className="text-blue-900 whitespace-pre-wrap leading-relaxed">
+                        {currentQuestion.text}
+                     </div>
+                 </div>
+             </div>
+         ) : (
+             // --- INPUT SLIDE ---
+             <div className="space-y-6">
+                
+                {/* A. Insight/Context (Shown FIRST as requested) */}
+                {currentQuestion.context && (
+                    <div className="flex gap-3 bg-purple-50 p-5 rounded-xl text-purple-900 border border-purple-100 shadow-sm">
+                        <InformationCircleIcon className="h-6 w-6 flex-shrink-0 text-purple-600" />
+                        <div className="space-y-1">
+                            <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Insight</span>
+                            <p className="italic font-medium leading-relaxed">"{currentQuestion.context}"</p>
+                        </div>
+                    </div>
+                )}
 
-         <textarea
-            className="w-full min-h-[300px] p-4 text-lg border-0 bg-transparent focus:ring-0 placeholder-gray-300 resize-none"
-            placeholder="Type your answer here..."
-            value={currentAnswer}
-            onChange={(e) => handleTextChange(e.target.value)}
-            autoFocus
-         />
+                {/* B. Question Text (Shown SECOND) */}
+                <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+                    {currentQuestion.text}
+                </h2>
+
+                {/* C. Input Textarea (Shown THIRD) */}
+                <textarea
+                    className="w-full min-h-[300px] p-4 text-lg border-2 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-300 resize-none transition-all"
+                    placeholder="Type your answer here..."
+                    value={currentAnswer}
+                    onChange={(e) => handleTextChange(e.target.value)}
+                    autoFocus
+                />
+             </div>
+         )}
+
       </div>
 
       {/* 4. Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 lg:static lg:bg-transparent lg:border-0">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-             <button 
+            <button 
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
                 className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
@@ -207,7 +255,7 @@ export default function WorkbookSession() {
              </button>
 
              <div className="text-xs text-gray-400 italic">
-                {saving ? 'Saving...' : 'Auto-saved'}
+                {currentQuestion.type === 'read_only' ? '' : (saving ? 'Saving...' : 'Auto-saved')}
              </div>
 
              <button 
