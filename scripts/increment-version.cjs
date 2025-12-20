@@ -1,5 +1,6 @@
-// scripts/increment-version.js
+// scripts/increment-version.cjs
 const https = require('https');
+const fs = require('fs');
 
 // --- Configuration ---
 const GITHUB_TOKEN = process.env.GH_PAT || process.env.GITHUB_TOKEN;
@@ -31,7 +32,6 @@ function ghRequest(method, path, body = null) {
             res.on('data', (chunk) => data += chunk);
             res.on('end', () => {
                 if (res.statusCode >= 200 && res.statusCode < 300) {
-                    // 204 No Content handling
                     if (res.statusCode === 204) return resolve({});
                     try {
                         resolve(JSON.parse(data));
@@ -55,7 +55,6 @@ async function main() {
         console.log(`🔍 Branch detected: ${BRANCH}`);
 
         // 1. Fetch current counter values
-        // Note: We fetch individually because listing variables requires distinct parsing
         const getVar = async (name) => {
             try {
                 const res = await ghRequest('GET', `/actions/variables/${name}`);
@@ -92,9 +91,6 @@ async function main() {
         // 3. Update the variable in GitHub
         if (targetVar) {
             try {
-                // If variable exists, we PATCH it. If logic allowed creation, we'd POST, 
-                // but Variables must exist via UI first usually or use POST to create. 
-                // We assume they exist as per instructions.
                 await ghRequest('PATCH', `/actions/variables/${targetVar}`, {
                     name: targetVar,
                     value: String(targetVar === 'COUNT_PROD' ? prod : targetVar === 'COUNT_UAT' ? uat : dev)
@@ -102,13 +98,11 @@ async function main() {
                 console.log(`✅ GitHub Variable ${targetVar} updated.`);
             } catch (e) {
                 console.error(`❌ Failed to update variable ${targetVar}. Ensure GITHUB_TOKEN has 'variables:write' permission or use a PAT.`);
-                console.error(e.message);
-                // We don't fail the build, just warn, so the version string is locally valid for this build at least
+                // We allow the build to proceed even if update fails
             }
         }
 
-        // 4. Export to GITHUB_ENV for the next steps in workflow
-        const fs = require('fs');
+        // 4. Export to GITHUB_ENV
         if (process.env.GITHUB_ENV) {
             fs.appendFileSync(process.env.GITHUB_ENV, `VITE_APP_VERSION=${newVersion}\n`);
             console.log(`📤 VITE_APP_VERSION set to ${newVersion}`);
