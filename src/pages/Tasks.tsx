@@ -14,7 +14,6 @@ import {
   FireIcon,
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
- // ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import Confetti from 'react-confetti';
 import { isSameDay, startOfDay, isBefore } from 'date-fns';
@@ -114,7 +113,7 @@ export default function Tasks() {
       {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
 
       {/* --- HEADER & MINI HERO --- */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
@@ -123,12 +122,13 @@ export default function Tasks() {
             <p className="text-sm text-gray-500 mt-1">Manage your daily habits and tasks.</p>
           </div>
           
+          {/* COMPACT ADD BUTTON */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md"
+            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md flex items-center justify-center"
+            title="Create New Quest"
           >
-            <PlusIcon className="h-5 w-5" />
-            <span>New Quest</span>
+            <PlusIcon className="h-6 w-6" />
           </button>
       </div>
 
