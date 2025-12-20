@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   getUserTasks, 
-  addTask, 
   toggleTask, 
   deleteTask, 
-  type Task, 
-  type Frequency,
-  type Priority 
+  type Task
 } from '../lib/tasks';
 import { 
   PlusIcon, 
@@ -15,23 +12,25 @@ import {
   ArrowPathIcon, 
   CheckCircleIcon,
   FireIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  //ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import Confetti from 'react-confetti';
 import { isSameDay, startOfDay, isBefore } from 'date-fns';
+import CreateTaskModal from '../components/CreateTaskModal';
 
 export default function Tasks() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form State
-  const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState<Priority>('Medium');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState<Frequency>('daily');
-  const [dueDateStr, setDueDateStr] = useState(''); // YYYY-MM-DD
+  // --- STATS CALCULATION ---
+  const totalTasks = tasks.filter(t => !t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date())).length;
+  const dueToday = tasks.filter(t => isSameDay(t.dueDate, new Date()) && (!t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date()))).length;
+  const totalFire = tasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
 
   // Fetch Tasks
   const refreshTasks = async () => {
@@ -39,11 +38,6 @@ export default function Tasks() {
     try {
       const data = await getUserTasks(user.uid);
       
-      // --- SORTING (Approach 3) ---
-      // 1. Incomplete/Overdue first
-      // 2. Incomplete/Today next
-      // 3. Future
-      // 4. Completed
       const today = startOfDay(new Date());
       
       const sorted = data.sort((a, b) => {
@@ -51,8 +45,6 @@ export default function Tasks() {
         const bCompleted = b.lastCompletedAt && isSameDay(b.lastCompletedAt, today);
         
         if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
-        
-        // Sort by Due Date
         return a.dueDate.getTime() - b.dueDate.getTime();
       });
 
@@ -65,31 +57,8 @@ export default function Tasks() {
   };
 
   useEffect(() => {
-    setDueDateStr(new Date().toISOString().split('T')[0]);
     refreshTasks();
   }, [user]);
-
-  // Handlers
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !title.trim()) return;
-
-    // Convert input string to Date (noon to avoid TZ issues)
-    const [y, m, d] = dueDateStr.split('-').map(Number);
-    const dateObj = new Date(y, m - 1, d, 12, 0, 0);
-
-    await addTask(
-        user.uid, 
-        title, 
-        isRecurring ? frequency : 'once', 
-        priority, 
-        dateObj
-    );
-    
-    setTitle('');
-    setIsRecurring(false);
-    refreshTasks();
-  };
 
   const handleToggle = async (task: Task) => {
     const today = startOfDay(new Date());
@@ -111,16 +80,25 @@ export default function Tasks() {
     }
   };
 
-  // Helpers
-  const getPriorityColor = (p: Priority) => {
-    switch (p) {
-      case 'High': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
-    }
+  const getUrgencyStyles = (task: Task) => {
+      const today = startOfDay(new Date());
+      const target = startOfDay(task.dueDate);
+      const isDone = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+
+      if (isDone) return 'border-l-gray-300 bg-gray-50 opacity-60';
+      if (isBefore(target, today)) return 'border-l-red-500 bg-white shadow-sm ring-1 ring-red-100'; // Overdue
+      if (isSameDay(target, today)) return 'border-l-orange-500 bg-white shadow-sm ring-1 ring-orange-100'; // Today
+      
+      // Future / Standard Priority Colors
+      switch (task.priority) {
+          case 'High': return 'border-l-blue-600 bg-white shadow-sm';
+          case 'Medium': return 'border-l-blue-400 bg-white shadow-sm';
+          case 'Low': return 'border-l-blue-200 bg-white shadow-sm';
+          default: return 'border-l-gray-200 bg-white shadow-sm';
+      }
   };
 
-  const getDateStatus = (date: Date) => {
+  const getDateLabel = (date: Date) => {
     const today = startOfDay(new Date());
     const target = startOfDay(date);
     
@@ -129,143 +107,150 @@ export default function Tasks() {
     return { text: date.toLocaleDateString(), color: 'text-gray-500' };
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading habits...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading your ledger...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-20">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
       {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
-      
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <CheckCircleIcon className="h-8 w-8 text-blue-600" />
-            Habits & Tasks
-        </h1>
+
+      {/* --- HEADER & MINI HERO --- */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
+                Hero's Ledger
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Manage your daily quests and habits.</p>
+          </div>
+          
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span>New Quest</span>
+          </button>
       </div>
 
-      {/* FORM */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <form onSubmit={handleAdd} className="space-y-4">
-            <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Task Name</label>
-                <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 focus:ring-blue-500"
-                    placeholder="e.g. Call Sponsor"
-                />
-            </div>
-            
-            <div className="flex gap-4">
-                <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
-                    <input 
-                        type="date"
-                        value={dueDateStr}
-                        onChange={(e) => setDueDateStr(e.target.value)}
-                        className="w-full rounded-lg border-gray-300 text-sm"
-                    />
-                </div>
-                <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
-                    <select
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value as Priority)}
-                        className="w-full rounded-lg border-gray-300 text-sm"
-                    >
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-                <input
-                    type="checkbox"
-                    id="recurring"
-                    checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
-                    className="rounded text-blue-600"
-                />
-                <label htmlFor="recurring" className="text-sm text-gray-700 font-medium">Recurring?</label>
-                
-                {isRecurring && (
-                    <select
-                        value={frequency}
-                        onChange={(e) => setFrequency(e.target.value as Frequency)}
-                        className="ml-2 rounded-lg border-gray-300 text-sm py-1"
-                    >
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                )}
-            </div>
-
-            <button
-                type="submit"
-                disabled={!title.trim()}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
-            >
-                <PlusIcon className="h-5 w-5" />
-                Add Task
-            </button>
-        </form>
+      {/* MINI STATS GRID */}
+      <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
+              <span className="text-2xl font-bold text-gray-900">{totalTasks}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Due Today</span>
+              <span className={`text-2xl font-bold ${dueToday > 0 ? 'text-orange-500' : 'text-gray-900'}`}>{dueToday}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Fire</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-orange-600">
+                  <FireIcon className="h-6 w-6" />
+                  {totalFire}
+              </div>
+          </div>
       </div>
 
-      {/* LIST */}
+      {/* --- TASK LIST (Quest Cards) --- */}
       <div className="space-y-3">
-        {tasks.map(task => {
-            const dateStatus = getDateStatus(task.dueDate);
-            const isDoneToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, new Date());
+        {tasks.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                <ClipboardDocumentListIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900">Your Ledger is Empty</h3>
+                <p className="text-gray-500">Start a new quest to build your streak.</p>
+            </div>
+        ) : (
+            tasks.map(task => {
+                const dateLabel = getDateLabel(task.dueDate);
+                const isDoneToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, new Date());
+                const urgencyClass = getUrgencyStyles(task);
 
-            return (
-                <div key={task.id} className={`bg-white rounded-xl p-4 border transition-all ${isDoneToday ? 'opacity-60 border-gray-100' : 'border-gray-200 shadow-sm'}`}>
-                    <div className="flex items-start gap-3">
-                        <button
-                            onClick={() => handleToggle(task)}
-                            className={`mt-1 h-6 w-6 rounded-full border-2 flex items-center justify-center ${isDoneToday ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-blue-500'}`}
-                        >
-                            {isDoneToday && <CheckCircleIcon className="h-4 w-4" />}
-                        </button>
-
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-sm font-medium ${isDoneToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border ${getPriorityColor(task.priority)}`}>
-                                    {task.priority}
-                                </span>
-                            </div>
+                return (
+                    <div 
+                        key={task.id} 
+                        className={`relative group rounded-xl p-4 border-l-[6px] transition-all duration-200 ${urgencyClass}`}
+                    >
+                        <div className="flex items-start gap-4">
                             
-                            <div className="flex flex-wrap items-center gap-4 text-xs">
-                                <div className={`flex items-center gap-1 ${dateStatus.color}`}>
-                                    <CalendarDaysIcon className="h-3.5 w-3.5" />
-                                    {dateStatus.text}
-                                </div>
-                                {task.isRecurring && (
-                                    <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                                        <ArrowPathIcon className="h-3 w-3" />
-                                        <span>{task.frequency}</span>
-                                    </div>
-                                )}
-                                {task.currentStreak !== 0 && (
-                                    <div className={`flex items-center gap-1 font-medium ${task.currentStreak > 0 ? 'text-orange-600' : 'text-red-500'}`}>
-                                        <FireIcon className="h-3.5 w-3.5" />
-                                        <span>{task.currentStreak} streak</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                            {/* Check Button */}
+                            <button
+                                onClick={() => handleToggle(task)}
+                                className={`mt-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                    isDoneToday 
+                                    ? 'bg-green-500 border-green-500 text-white scale-110' 
+                                    : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-500'
+                                }`}
+                            >
+                                <CheckCircleIcon className="h-4 w-4" />
+                            </button>
 
-                        <button onClick={() => task.id && handleDelete(task.id)} className="text-gray-300 hover:text-red-500">
-                            <TrashIcon className="h-5 w-5" />
-                        </button>
+                            {/* Main Content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className={`text-base font-semibold ${isDoneToday ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                        {task.title}
+                                    </span>
+                                    
+                                    {/* Action Menu (Delete) */}
+                                    <button 
+                                        onClick={() => task.id && handleDelete(task.id)} 
+                                        className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                
+                                {/* Metadata Row */}
+                                <div className="flex flex-wrap items-center gap-4 text-xs">
+                                    <div className={`flex items-center gap-1.5 ${dateLabel.color}`}>
+                                        <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                        {dateLabel.text}
+                                    </div>
+
+                                    {task.isRecurring && (
+                                        <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                                            <ArrowPathIcon className="h-3 w-3" />
+                                            <span className="capitalize">{task.frequency}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Priority Badge (only if not done) */}
+                                    {!isDoneToday && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                            task.priority === 'High' ? 'text-red-700 bg-red-50 border-red-100' :
+                                            task.priority === 'Medium' ? 'text-yellow-700 bg-yellow-50 border-yellow-100' :
+                                            'text-green-700 bg-green-50 border-green-100'
+                                        }`}>
+                                            {task.priority}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Streak Micro-Badge (Right Aligned) */}
+                            {(task.currentStreak > 0 || task.currentStreak < 0) && (
+                                <div className={`flex flex-col items-center justify-center h-10 w-10 rounded-lg border ${
+                                    task.currentStreak > 0 
+                                    ? 'bg-orange-50 border-orange-100 text-orange-600' 
+                                    : 'bg-red-50 border-red-100 text-red-600'
+                                }`}>
+                                    <FireIcon className="h-4 w-4 mb-0.5" />
+                                    <span className="text-[10px] font-bold leading-none">{Math.abs(task.currentStreak)}</span>
+                                </div>
+                            )}
+
+                        </div>
                     </div>
-                </div>
-            );
-        })}
+                );
+            })
+        )}
       </div>
+
+      <CreateTaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onTaskAdded={refreshTasks} 
+      />
     </div>
   );
 }
