@@ -1,3 +1,4 @@
+// src/components/journal/JournalHistory.tsx
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
@@ -14,10 +15,13 @@ import {
     ShieldExclamationIcon,
     TrophyIcon,
     WrenchScrewdriverIcon,
-    LightBulbIcon
+    LightBulbIcon,
+    PlusCircleIcon,   // NEW: For Add Action
+    CheckCircleIcon   // NEW: For Success State
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
+import { addTask } from '../../lib/tasks'; // NEW: Task creation logic
 import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
@@ -44,6 +48,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  
+  // NEW: Track which AI suggestions have been added to tasks
+  const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
@@ -109,6 +116,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const handleDelete = async (id: string) => {
     if (!db) return;
     if (!confirm('Are you sure you want to delete this entry?')) return;
+
     try {
       await deleteDoc(doc(db, 'journals', id));
       await loadEntries(); // Reload to refresh list
@@ -143,15 +151,43 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleAiAnalysis = async () => {
     if (filteredEntries.length === 0) return;
+    
     setAnalyzing(true);
     setShowInsightModal(true);
+    setAddedTools(new Set()); // Reset added state for new analysis
     
     // Analyze filtered results (up to 10 to avoid token limits)
     const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
-    
     const result = await analyzeJournalEntries(textsToAnalyze);
+    
     setInsight(result);
     setAnalyzing(false);
+  };
+
+  // NEW: Handle adding a suggestion to tasks
+  const handleAddToTasks = async (toolSuggestion: string) => {
+    if (!user) return;
+
+    try {
+        // Calculate due date (Today + 7 days)
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 7);
+
+        await addTask(
+            user.uid,
+            toolSuggestion,
+            'once',      // Frequency
+            'Medium',    // Priority
+            dueDate      // Due Date
+        );
+
+        // Update local state to show success checkmark
+        setAddedTools(prev => new Set(prev).add(toolSuggestion));
+
+    } catch (error) {
+        console.error("Failed to add task from suggestion:", error);
+        alert("Could not add task. Please try again.");
+    }
   };
 
   const clearFilters = () => {
@@ -277,7 +313,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             <>
                                 <span className="text-gray-300">•</span>
                                 <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
-                                    {entry.weather.condition}, {entry.weather.temp}°C
+                                   {entry.weather.condition}, {entry.weather.temp}°C
                                 </span>
                             </>
                         )}
@@ -419,15 +455,34 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                                 <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
                                     <WrenchScrewdriverIcon className="h-5 w-5" />
-                                    Suggested Toolkit
+                                    Suggested Toolkit (Quick Add)
                                 </div>
                                 <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    {insight.tool_suggestions.map((tool, i) => (
-                                        <li key={i} className="bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border border-blue-100 flex items-start gap-2">
-                                            <span className="text-blue-400 font-bold">•</span>
-                                            {tool}
-                                        </li>
-                                    ))}
+                                    {insight.tool_suggestions.map((tool, i) => {
+                                        const isAdded = addedTools.has(tool);
+                                        return (
+                                            <li key={i} className={`bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border ${isAdded ? 'border-green-200 bg-green-50' : 'border-blue-100'} flex items-start gap-2 justify-between group`}>
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-blue-400 font-bold mt-0.5">•</span>
+                                                    <span className={isAdded ? 'text-green-700' : ''}>{tool}</span>
+                                                </div>
+                                                
+                                                {/* QUICK ADD BUTTON */}
+                                                <button 
+                                                    onClick={() => !isAdded && handleAddToTasks(tool)}
+                                                    disabled={isAdded}
+                                                    className={`flex-shrink-0 transition-all ${isAdded ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
+                                                    title={isAdded ? "Added to tasks" : "Add to tasks"}
+                                                >
+                                                    {isAdded ? (
+                                                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                                                    ) : (
+                                                        <PlusCircleIcon className="h-5 w-5 text-blue-300 group-hover:text-blue-600" />
+                                                    )}
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
 

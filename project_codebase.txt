@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2025-12-19T17:52:29.722Z
+PROJECT EXPORT - 2025-12-20T06:16:13.404Z
 
 
 ================================================================================
@@ -23,6 +23,7 @@ FILE: package.json
     "firebase": "^12.6.0",
     "lucide-react": "^0.561.0",
     "react": "^19.2.0",
+    "react-confetti": "^6.4.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.1",
     "recharts": "^3.6.0"
@@ -280,7 +281,8 @@ import Profile from './pages/Profile';
 import Workbooks from './pages/Workbooks'; 
 import WorkbookDetail from './pages/WorkbookDetail'; 
 import WorkbookSession from './pages/WorkbookSession'; 
-import TemplateEditor from './pages/TemplateEditor'; // NEW IMPORT
+import Vitality from './pages/Vitality'; // NEW IMPORT
+import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -292,7 +294,6 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" />;
   }
 
-  // Your existing logic: AppShell wraps the protected content here
   return <AppShell>{children}</AppShell>;
 }
 
@@ -354,7 +355,17 @@ export default function App() {
             }
           />
           
-          {/* --- NEW: TEMPLATES ROUTE --- */}
+          {/* --- VITALITY ROUTE (NEW) --- */}
+          <Route
+            path="/vitality"
+            element={
+              <PrivateRoute>
+                <Vitality />
+              </PrivateRoute>
+            }
+          />
+
+          {/* --- TEMPLATES ROUTE --- */}
           <Route
             path="/templates"
             element={
@@ -373,7 +384,9 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          
           <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
     </AuthProvider>
@@ -393,7 +406,8 @@ import {
   UserCircleIcon,
   ArrowLeftOnRectangleIcon,
   ClipboardDocumentListIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  HeartIcon // NEW IMPORT
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -407,6 +421,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'Vitality', href: '/vitality', icon: HeartIcon }, // NEW LINK
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
@@ -430,7 +445,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-0 flex">
             <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 transform flex-col bg-blue-600 transition-all">
                <div className="flex h-16 shrink-0 items-center justify-between px-6">
-                  <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
+                  {/* Mobile Drawer Header */}
+                  <div className="flex items-center gap-2">
+                    <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+                    <span className="text-white font-bold text-2xl">My Recovery Toolkit</span>
+                    <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+                  </div>
                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white">
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
@@ -490,8 +510,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-blue-600 px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
-            <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
+          <div className="flex h-16 shrink-0 items-center justify-center gap-2">
+            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+            <span className="text-white font-bold text-2xl">My Recovery Toolkit</span>
+            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -543,13 +565,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="lg:pl-72">
-        {/* MOBILE TOP BAR */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-700 bg-blue-600 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 lg:hidden">
-          <button type="button" className="-m-2.5 p-2.5 text-blue-200 hover:text-white lg:hidden" onClick={() => setSidebarOpen(true)}>
+        {/* MOBILE TOP BAR (UPDATED) */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-center border-b border-blue-700 bg-blue-600 px-4 shadow-sm lg:hidden">
+          
+          {/* Hamburger Button - Positioned Absolutely to left */}
+          <button 
+            type="button" 
+            className="-m-2.5 p-2.5 text-blue-200 hover:text-white absolute left-4 z-50" 
+            onClick={() => setSidebarOpen(true)}
+          >
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
-          <div className="flex-1 text-sm font-bold leading-6 text-white">My Recovery Toolkit</div>
+
+          {/* Centered Title with Flanking Logos */}
+          <div className="flex items-center gap-2">
+            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+            <div className="text-xl font-bold leading-6 text-white">My Recovery Toolkit</div>
+            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+          </div>
+
         </div>
 
         <main className="py-10">
@@ -563,157 +598,376 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 ================================================================================
-FILE: src/components/RecoveryHero.tsx
+FILE: src/components/CreateTaskModal.tsx
 ================================================================================
+import { Fragment, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
-  TrophyIcon, 
-  FireIcon, 
-  PencilSquareIcon, 
-  ScaleIcon,
+  XMarkIcon, 
+  PlusIcon,
   CalendarDaysIcon,
-  FaceSmileIcon
+  ArrowPathIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
-import { differenceInYears, differenceInMonths, differenceInDays, addYears, addMonths } from 'date-fns';
-import type { GamificationStats } from '../lib/gamification';
+import { addTask, type Frequency, type Priority } from '../lib/tasks';
+import { useAuth } from '../contexts/AuthContext';
 
-interface RecoveryHeroProps {
-  sobrietyDate: Date | null;
-  journalStats: GamificationStats | null;
-  taskStreak: number;
+interface CreateTaskModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onTaskAdded: () => void;
 }
 
-export default function RecoveryHero({ sobrietyDate, journalStats, taskStreak }: RecoveryHeroProps) {
-  
-  // --- SOBRIETY CALCULATION LOGIC ---
-  const calculateDuration = () => {
-    if (!sobrietyDate) return { years: 0, months: 0, days: 0, totalDays: 0 };
-    
-    const now = new Date();
-    
-    // 1. Calculate Breakdown (Y/M/D)
-    const years = differenceInYears(now, sobrietyDate);
-    const dateAfterYears = addYears(sobrietyDate, years);
-    
-    const months = differenceInMonths(now, dateAfterYears);
-    const dateAfterMonths = addMonths(dateAfterYears, months);
-    
-    const days = differenceInDays(now, dateAfterMonths);
+export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: CreateTaskModalProps) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-    // 2. Calculate Total Days
-    const totalDays = differenceInDays(now, sobrietyDate);
-    
-    return { years, months, days, totalDays };
+  // Form State
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<Priority>('Medium');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [dueDateStr, setDueDateStr] = useState(new Date().toISOString().split('T')[0]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !title.trim()) return;
+
+    setLoading(true);
+    try {
+      // Convert input string to Date (noon to avoid TZ issues)
+      const [y, m, d] = dueDateStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d, 12, 0, 0);
+
+      await addTask(
+          user.uid, 
+          title, 
+          isRecurring ? frequency : 'once', 
+          priority, 
+          dateObj
+      );
+      
+      // Reset & Close
+      setTitle('');
+      setIsRecurring(false);
+      setPriority('Medium');
+      setDueDateStr(new Date().toISOString().split('T')[0]);
+      onTaskAdded();
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const duration = calculateDuration();
-
   return (
-    <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl shadow-lg p-4 text-white overflow-hidden relative">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
 
-      {/* LAYOUT: Flex Row (Side-by-Side) */}
-      <div className="relative z-10 flex flex-row items-stretch gap-3 sm:gap-6 h-full">
-        
-        {/* --- SECTION 1: TIME (Left Side - Centered & Larger) --- */}
-        <div className="flex-1 flex flex-col justify-center items-center text-center min-w-0">
-          <div className="flex items-center gap-2 mb-2 opacity-80">
-            <TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider truncate">Recovery Time</span>
-          </div>
-          
-          {sobrietyDate ? (
-            <div className="flex flex-col justify-center items-center h-full">
-               {/* Big Total Number - Flexbox added for vertical centering */}
-               <div className="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold tracking-tight leading-none mb-3">
-                 <span>{duration.totalDays}</span>
-                 <span className="text-xl sm:text-3xl font-medium ml-3 sm:ml-4 opacity-80">Days</span>
-               </div>
-               
-               {/* Breakdown Subtext */}
-               <div className="flex flex-wrap items-center justify-center gap-1 text-lg sm:text-2xl font-medium text-blue-50 opacity-90">
-                  <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-2 rounded-lg truncate max-w-full">
-                     <CalendarDaysIcon className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
-                     <span className="truncate">
-                        {duration.years}y, {duration.months}m, {duration.days}d
-                     </span>
-                  </div>
-               </div>
-            </div>
-          ) : (
-            <div className="bg-white/10 rounded-lg p-3 text-blue-100 text-sm">
-              Set sobriety date in Profile.
-            </div>
-          )}
-        </div>
-
-        {/* --- VERTICAL DIVIDER --- */}
-        <div className="w-px bg-gradient-to-b from-transparent via-white/30 to-transparent flex-shrink-0"></div>
-
-        {/* --- SECTION 2: STATS GRID (Right Side - 2x2) --- */}
-        <div className="flex-shrink-0 w-[45%] sm:w-auto flex flex-col justify-center">
-           
-           <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                 
-                {/* 1. Journal Streak */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-purple-500/30 rounded-md text-white">
-                        <PencilSquareIcon className="h-4 w-4" />
-                    </div>
-                    {/* Mobile Icon */}
-                    <PencilSquareIcon className="h-4 w-4 sm:hidden mb-1 text-purple-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.journalStreak || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Journal</span>
-                    </div>
+                {/* Close Button */}
+                <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={onClose}
+                  >
+                    <span className="sr-only">Close</span>
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                  </button>
                 </div>
 
-                {/* 2. Consistency */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-green-500/30 rounded-md text-white">
-                        <ScaleIcon className="h-4 w-4" />
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <PlusIcon className="h-6 w-6 text-blue-600" aria-hidden="true" />
+                  </div>
+                  <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                    <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                      Create New Quest
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Add a new habit or task to your recovery ledger.
+                      </p>
                     </div>
-                    <ScaleIcon className="h-4 w-4 sm:hidden mb-1 text-green-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.consistencyRate || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg/Wk</span>
-                    </div>
-                </div>
 
-                {/* 3. Habit Fire */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-orange-500/30 rounded-md text-white">
-                        <FireIcon className="h-4 w-4" />
-                    </div>
-                    <FireIcon className="h-4 w-4 sm:hidden mb-1 text-orange-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{taskStreak}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Streak</span>
-                    </div>
-                </div>
+                    {/* FORM */}
+                    <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+                        
+                        {/* Title */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Task Name</label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder="e.g. Call Sponsor, Gym, Meditate"
+                                autoFocus
+                            />
+                        </div>
 
-                {/* 4. Average Mood (Pink) */}
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 backdrop-blur-sm flex flex-col sm:flex-row items-center sm:gap-3 border border-white/5 text-center sm:text-left">
-                    <div className="hidden sm:block p-1.5 bg-pink-500/30 rounded-md text-white">
-                        <FaceSmileIcon className="h-4 w-4" />
-                    </div>
-                    <FaceSmileIcon className="h-4 w-4 sm:hidden mb-1 text-pink-200" />
-                    
-                    <div>
-                        <span className="block text-lg sm:text-xl font-bold leading-none">{journalStats?.averageMood || 0}</span>
-                        <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-blue-200 block mt-0.5">Avg Mood</span>
-                    </div>
-                </div>
+                        {/* Date & Priority Row */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                {/* FIXED: Removed 'block' class, keeping 'flex' */}
+                                <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+                                    <CalendarDaysIcon className="h-3 w-3" /> Due Date
+                                </label>
+                                <input 
+                                    type="date"
+                                    value={dueDateStr}
+                                    onChange={(e) => setDueDateStr(e.target.value)}
+                                    className="w-full rounded-lg border-gray-300 text-sm"
+                                />
+                            </div>
+                            <div>
+                                {/* FIXED: Removed 'block' class, keeping 'flex' */}
+                                <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
+                                    <FlagIcon className="h-3 w-3" /> Priority
+                                </label>
+                                <select
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value as Priority)}
+                                    className="w-full rounded-lg border-gray-300 text-sm"
+                                >
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                        </div>
 
-            </div>
+                        {/* Recurring Toggle */}
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="recurring"
+                                    checked={isRecurring}
+                                    onChange={(e) => setIsRecurring(e.target.checked)}
+                                    className="rounded text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="recurring" className="text-sm text-gray-700 font-medium flex items-center gap-2">
+                                    <ArrowPathIcon className="h-4 w-4 text-gray-400" />
+                                    Make this a Recurring Habit?
+                                </label>
+                            </div>
+                            
+                            {isRecurring && (
+                                <div className="mt-3 pl-6 animate-fadeIn">
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Frequency</label>
+                                    <div className="flex gap-2">
+                                        {(['daily', 'weekly', 'monthly'] as Frequency[]).map((freq) => (
+                                            <button
+                                                key={freq}
+                                                type="button"
+                                                onClick={() => setFrequency(freq)}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize border transition-colors ${
+                                                    frequency === freq 
+                                                    ? 'bg-blue-100 text-blue-700 border-blue-200' 
+                                                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {freq}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="mt-5 sm:mt-6">
+                            <button
+                                type="submit"
+                                disabled={!title.trim() || loading}
+                                className="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+                            >
+                                {loading ? 'Creating...' : 'Create Task'}
+                            </button>
+                        </div>
+                    </form>
+
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
         </div>
+      </Dialog>
+    </Transition.Root>
+  );
+}
 
+================================================================================
+FILE: src/components/RecoveryHero.tsx
+================================================================================
+import { Link } from 'react-router-dom';
+import { 
+    FireIcon, 
+    ClipboardDocumentCheckIcon,
+    ChartBarIcon, 
+    SparklesIcon,
+    BoltIcon,
+    AcademicCapIcon,
+    BookOpenIcon,
+    ShieldCheckIcon
+} from '@heroicons/react/24/outline';
+
+interface RecoveryHeroProps {
+    userName: string;
+    daysClean: number;
+    journalStats: {
+        streak: number;
+        consistency: number;
+    };
+    taskStats: {
+        fire: number;
+        rate: number;
+    };
+    workbookStats: {
+        wisdom: number;
+        completion: number;
+    };
+}
+
+export default function RecoveryHero({ 
+    userName, 
+    daysClean, 
+    journalStats, 
+    taskStats, 
+    workbookStats 
+}: RecoveryHeroProps) {
+  return (
+      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+         {/* Background Decoration */}
+         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+         
+         <div className="relative z-10">
+             {/* Header Row: Greeting & Clean Time Badge */}
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                 <div>
+                     <h1 className="text-3xl font-bold">Welcome back, {userName}</h1>
+                     <p className="text-blue-100 opacity-90">One day at a time. You are doing great.</p>
+                 </div>
+
+                 {/* CLEAN TIME BADGE OF HONOR */}
+                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
+                     <ShieldCheckIcon className="h-8 w-8 text-cyan-300" />
+                     <div className="text-right">
+                         <div className="text-2xl font-bold leading-none">{daysClean}</div>
+                         <div className="text-[10px] uppercase tracking-wider text-blue-100 font-semibold">Days Clean</div>
+                     </div>
+                 </div>
+             </div>
+
+             {/* THE MATRIX GRID (Linked Tiles) */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+                 
+                 {/* COLUMN 1: JOURNAL (Link) */}
+                 <Link to="/journal" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <BookOpenIcon className="h-4 w-4" /> Journal
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <FireIcon className="h-5 w-5 text-orange-400" />
+                                 <span className="text-sm font-medium">Streak</span>
+                             </div>
+                             <span className="text-xl font-bold">{journalStats.streak} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <ChartBarIcon className="h-5 w-5 text-purple-400" />
+                                 <span className="text-sm font-medium">Consistency</span>
+                             </div>
+                             <span className="text-xl font-bold">{journalStats.consistency}/wk</span>
+                         </div>
+                     </div>
+                 </Link>
+
+                 {/* COLUMN 2: TASKS (Link) */}
+                 <Link to="/tasks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <ClipboardDocumentCheckIcon className="h-4 w-4" /> Habits
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <BoltIcon className="h-5 w-5 text-yellow-400" />
+                                 <span className="text-sm font-medium">Fire</span>
+                             </div>
+                             <span className="text-xl font-bold">{taskStats.fire} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <div className="h-5 w-5 rounded-full border-2 border-green-400 flex items-center justify-center">
+                                    <div className="h-2 w-2 bg-green-400 rounded-full" />
+                                 </div>
+                                 <span className="text-sm font-medium">Completion</span>
+                             </div>
+                             <span className="text-xl font-bold">{taskStats.rate}%</span>
+                         </div>
+                     </div>
+                 </Link>
+
+                 {/* COLUMN 3: WORKBOOKS (Link) */}
+                 <Link to="/workbooks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <AcademicCapIcon className="h-4 w-4" /> Wisdom
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <SparklesIcon className="h-5 w-5 text-cyan-400" />
+                                 <span className="text-sm font-medium">Score</span>
+                             </div>
+                             <span className="text-xl font-bold">{workbookStats.wisdom} Ans</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <div className="h-5 w-5 relative">
+                                     <svg className="w-full h-full transform -rotate-90">
+                                         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+                                         <circle cx="10" cy="10" r="8" fill="none" stroke="#67e8f9" strokeWidth="3" strokeDasharray={`${workbookStats.completion * 0.5} 100`} />
+                                     </svg>
+                                 </div>
+                                 <span className="text-sm font-medium">Mastery</span>
+                             </div>
+                             <span className="text-xl font-bold">{workbookStats.completion}%</span>
+                         </div>
+                     </div>
+                 </Link>
+
+             </div>
+         </div>
       </div>
-    </div>
   );
 }
 
@@ -793,15 +1047,20 @@ FILE: src/components/journal/JournalEditor.tsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
     PlusIcon, 
-    Cog6ToothIcon
+    Cog6ToothIcon,
+    MapPinIcon,
+    ArrowPathIcon,
+    TagIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
+import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 
-// --- Types (Local definition to avoid circular deps) ---
+// --- Types ---
 export interface JournalEntry {
   id: string;
   content: string;
@@ -818,10 +1077,10 @@ interface JournalEditorProps {
 }
 
 const DEFAULT_TEMPLATES = [
-  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['#morning'] },
-  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['#nightly'] },
-  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['#urge', '#sos'] },
-  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['#meeting'] },
+  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['Morning'] },
+  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['Nightly'] },
+  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['Urge', 'SOS'] },
+  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['Meeting'] },
 ];
 
 export default function JournalEditor({ initialEntry, onSaveComplete }: JournalEditorProps) {
@@ -833,6 +1092,13 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   const [mood, setMood] = useState(5);
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  
+  // Tag State
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   // Template State
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
@@ -844,13 +1110,22 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     if (initialEntry) {
       setNewEntry(initialEntry.content);
       setMood(initialEntry.moodScore);
-      setActiveTemplate(null); // Edit mode defaults to text
+      setTags(initialEntry.tags || []);
+      // Load saved weather if it exists
+      if (initialEntry.weather) {
+        setWeather(initialEntry.weather);
+      }
+      setActiveTemplate(null);
     } else {
       // Reset if switching from edit back to new
       setNewEntry('');
       setMood(5);
+      setTags([]);
       setActiveTemplate(null);
       setFormAnswers([]);
+      setWeather(null);
+      // Try auto-fetch, but don't block if it fails
+      fetchLocalWeather(); 
     }
   }, [initialEntry]);
 
@@ -858,7 +1133,8 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   useEffect(() => {
     if (!user) return;
     loadCustomTemplates();
-    fetchWeather();
+    loadUserTags();
+    if (!initialEntry) fetchLocalWeather(); 
   }, [user]);
 
   const loadCustomTemplates = async () => {
@@ -867,28 +1143,44 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setCustomTemplates(t);
   };
 
-  const fetchWeather = async () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`);
-          const data = await res.json();
-          
-          const code = data.current.weather_code;
-          let condition = "Clear";
-          if (code > 0 && code < 50) condition = "Cloudy";
-          if (code >= 50 && code < 70) condition = "Rainy";
-          if (code >= 70) condition = "Snowy";
+  const loadUserTags = async () => {
+    if (!user || !db) return;
+    try {
+        // Fetch last 50 entries to gather recent tags
+        const q = query(
+            collection(db, 'journals'),
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        const snapshot = await getDocs(q);
+        const tagSet = new Set<string>();
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.tags && Array.isArray(data.tags)) {
+                data.tags.forEach((t: string) => tagSet.add(t));
+            }
+        });
+        setAvailableTags(Array.from(tagSet).sort());
+    } catch (e) {
+        console.warn("Failed to load user tags", e);
+    }
+  };
 
-          setWeather({
-             temp: Math.round(data.current.temperature_2m),
-             condition
-          });
-        } catch (e) {
-          console.warn("Weather fetch failed", e);
-        }
-      });
+  const fetchLocalWeather = async () => {
+    setWeatherLoading(true);
+    try {
+      const data = await getCurrentWeather();
+      if (data) {
+        setWeather({
+          temp: Math.round(data.temp),
+          condition: data.condition
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to auto-load weather", e);
+    } finally {
+      setWeatherLoading(false);
     }
   };
 
@@ -896,20 +1188,62 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
         setNewEntry(defTemplate.text);
+        setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
         setActiveTemplate(null);
         return;
     }
 
-    const custTemplate = customTemplates.find(t => t.id === tId);
+    // Extended Type Check: Use 'any' to safely access properties that might not be in the imported type yet
+    const custTemplate = customTemplates.find(t => t.id === tId) as any;
+    
     if (custTemplate) {
-        setActiveTemplate(custTemplate);
-        setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
-        setNewEntry('');
+        // CASE 1: Free Text Template (Markdown)
+        if (custTemplate.content) {
+            setNewEntry(custTemplate.content);
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+            setActiveTemplate(null); // Treat as free text, not form wizard
+        } 
+        // CASE 2: Legacy Form Template
+        else if (custTemplate.prompts) {
+            setActiveTemplate(custTemplate);
+            setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
+            setNewEntry('');
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+        }
     } else {
         setActiveTemplate(null);
         setNewEntry('');
+        setTags([]);
     }
   };
+
+  // Tag Handling Functions
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(tagInput);
+    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+        // Remove last tag if input is empty
+        setTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const addTag = (tagName: string) => {
+    const cleanTag = tagName.trim().replace(/^#/, ''); // Remove # if user typed it
+    if (cleanTag && !tags.includes(cleanTag)) {
+        setTags([...tags, cleanTag]);
+    }
+    setTagInput('');
+    setShowSuggestions(false);
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const filteredSuggestions = availableTags.filter(t => 
+    t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
+  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -923,52 +1257,38 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setSaving(true);
 
     let finalContent = newEntry;
-    let finalTags: string[] = [];
 
     if (activeTemplate) {
         finalContent = `**${activeTemplate.name}**\n\n`;
         activeTemplate.prompts.forEach((prompt, idx) => {
             finalContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
         });
-        finalTags = [...activeTemplate.defaultTags];
-    } else {
-        const textTags = newEntry.match(/#[a-z0-9]+/gi) || [];
-        finalTags = textTags as string[];
-        
-        const matchedDef = DEFAULT_TEMPLATES.find(t => newEntry.startsWith(t.text.split('\n')[0]));
-        if (matchedDef) {
-            finalTags = [...new Set([...finalTags, ...matchedDef.tags])];
-        }
     }
 
     try {
       if (initialEntry) {
-        // UPDATE existing
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
             content: finalContent, 
             moodScore: mood,
-            tags: finalTags
+            tags: tags 
         });
       } else {
-        // CREATE new
         await addDoc(collection(db, 'journals'), {
           uid: user.uid,
           content: finalContent,
           moodScore: mood,
           sentiment: 'Pending', 
-          weather,
-          tags: finalTags,
+          weather, 
+          tags: tags,
           createdAt: Timestamp.now()
         });
       }
 
-      // Reset form
       setNewEntry('');
       setFormAnswers([]);
       setActiveTemplate(null);
       setMood(5);
-      
-      // Notify parent
+      setTags([]);
       onSaveComplete();
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -978,40 +1298,76 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Compact Header: Just Controls */}
-        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-end items-center gap-3">
-             <div className="relative">
-                <select 
-                    onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
-                    defaultValue=""
-                    disabled={!!initialEntry} 
-                >
-                    <option value="" disabled>Choose a Template...</option>
-                    <option value="none">Free Write (Blank)</option>
-                    <optgroup label="Standard">
-                        {DEFAULT_TEMPLATES.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                    </optgroup>
-                    {customTemplates.length > 0 && (
-                        <optgroup label="My Templates">
-                            {customTemplates.map(t => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible relative">
+        
+        {/* HEADER: Weather (Left) | Templates (Right) */}
+        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3">
+             
+             {/* LEFT: Weather Widget */}
+             <div>
+                {weather ? (
+                   <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                      <span>{weather.condition}</span>
+                      <span className="font-bold">{weather.temp}°C</span>
+                      {!initialEntry && (
+                          <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
+                              <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
+                          </button>
+                      )}
+                   </div>
+                ) : (
+                    !initialEntry && (
+                        <button 
+                            type="button" 
+                            onClick={fetchLocalWeather} 
+                            disabled={weatherLoading}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-white hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
+                        >
+                            {weatherLoading ? (
+                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                            ) : (
+                                <MapPinIcon className="h-3 w-3" />
+                            )}
+                            <span>Add Weather</span>
+                        </button>
+                    )
+                )}
+             </div>
+
+             {/* RIGHT: Template Controls */}
+             <div className="flex items-center gap-2">
+                 <div className="relative">
+                    <select 
+                        onChange={(e) => handleTemplateSelect(e.target.value)}
+                        className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        defaultValue=""
+                        disabled={!!initialEntry} 
+                    >
+                        <option value="" disabled>Choose a Template...</option>
+                        <option value="none">Free Write (Blank)</option>
+                        <optgroup label="Standard">
+                            {DEFAULT_TEMPLATES.map(t => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
                             ))}
                         </optgroup>
-                    )}
-                </select>
-             </div>
+                        {customTemplates.length > 0 && (
+                            <optgroup label="My Templates">
+                                {customTemplates.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
+                    </select>
+                 </div>
 
-             <button 
-                onClick={() => navigate('/templates')}
-                className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
-                title="Manage Templates"
-             >
-                <Cog6ToothIcon className="h-5 w-5" />
-             </button>
+                 <button 
+                    onClick={() => navigate('/templates')}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
+                    title="Manage Templates"
+                 >
+                    <Cog6ToothIcon className="h-5 w-5" />
+                 </button>
+             </div>
         </div>
         
         <form onSubmit={handleSave} className="p-4 space-y-4">
@@ -1050,14 +1406,62 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             <textarea
                 value={newEntry}
                 onChange={(e) => setNewEntry(e.target.value)}
-                placeholder="How are you feeling today? (Type # to add tags)"
-                // UPDATED: Reduced to 45vh to prevent scroll
-                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed"
+                placeholder="How are you feeling today?"
+                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed font-mono"
             />
           )}
 
+          {/* --- TAG INPUT BAR --- */}
+          <div className="relative group">
+              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                  <TagIcon className="h-4 w-4 text-gray-400" />
+                  
+                  {/* Selected Tags Chips */}
+                  {tags.map(tag => (
+                      <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                              <XMarkIcon className="h-3 w-3" />
+                          </button>
+                      </span>
+                  ))}
+
+                  {/* Input Field */}
+                  <input 
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => {
+                          setTagInput(e.target.value);
+                          setShowSuggestions(true);
+                      }}
+                      onKeyDown={handleAddTag}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay so click registers
+                      placeholder={tags.length === 0 ? "Add tags (e.g. Grateful, Morning)..." : ""}
+                      className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
+                  />
+              </div>
+
+              {/* Autocomplete Suggestions */}
+              {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-10">
+                      {filteredSuggestions.map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                            onClick={() => addTag(tag)}
+                          >
+                              {tag}
+                          </button>
+                      ))}
+                  </div>
+              )}
+          </div>
+
+          {/* FOOTER: Mood (Left) | Save Button (Right) */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             
+            {/* Mood Slider */}
             <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
                <span className="text-sm font-medium text-gray-500">Mood:</span>
                <input 
@@ -1073,14 +1477,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                </span>
             </div>
 
-            {weather && !initialEntry && (
-               <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                  <span>{weather.condition}</span>
-                  <span>•</span>
-                  <span>{weather.temp}°C</span>
-               </div>
-            )}
-
+            {/* Save Button */}
             <button
               type="submit"
               disabled={saving}
@@ -1115,11 +1512,16 @@ import {
     SparklesIcon,
     FunnelIcon,
     MagnifyingGlassIcon,
-    XMarkIcon
+    XMarkIcon,
+    ShareIcon,
+    ShieldExclamationIcon,
+    TrophyIcon,
+    WrenchScrewdriverIcon,
+    LightBulbIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
-import type { JournalEntry } from './JournalEditor'; // Shared interface
+import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
   onEdit: (entry: JournalEntry) => void;
@@ -1215,6 +1617,30 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       await loadEntries(); // Reload to refresh list
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // Share Handler
+  const handleShare = async (entry: JournalEntry) => {
+    const dateStr = entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
+    const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}`;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: `Journal Entry ${dateStr}`,
+                text: textToShare,
+            });
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    } else {
+        try {
+            await navigator.clipboard.writeText(textToShare);
+            alert('Journal entry copied to clipboard!'); 
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
     }
   };
 
@@ -1332,112 +1758,189 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           </div>
       ) : (
           filteredEntries.map(entry => (
-            <div key={entry.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                   <span className="text-sm font-medium text-gray-400">
-                     {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                   </span>
-                   {entry.weather && (
-                      <span className="text-xs text-gray-300 hidden sm:inline">• {entry.weather.temp}°C</span>
-                   )}
-                </div>
-                
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button onClick={() => onEdit(entry)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
-                      <PencilSquareIcon className="h-4 w-4" />
-                   </button>
-                   <button onClick={() => handleDelete(entry.id)} className="p-1 text-gray-400 hover:text-red-500" title="Delete">
-                      <TrashIcon className="h-4 w-4" />
-                   </button>
-                </div>
-              </div>
-
-              {/* Tag Badges */}
-              {entry.tags && entry.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                      {entry.tags.map((tag, i) => (
-                          <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
-                              {tag}
-                          </span>
-                      ))}
-                  </div>
-              )}
+            <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
               
-              <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                {entry.content}
+              {/* --- HEADER ROW (Stacked Meta) --- */}
+              <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
+                
+                {/* Left: Stacked Meta (Date / Time+Weather / Tags) */}
+                <div className="flex flex-col items-start min-w-0">
+                    {/* Line 1: Date */}
+                    <span className="text-sm font-bold text-gray-800 truncate">
+                        {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unknown Date'}
+                    </span>
+                    
+                    {/* Line 2: Time + Weather */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        <span>
+                            {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
+                        </span>
+                        
+                        {entry.weather && (
+                            <>
+                                <span className="text-gray-300">•</span>
+                                <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
+                                    {entry.weather.condition}, {entry.weather.temp}°C
+                                </span>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Line 3: Tags (Limited to 3) */}
+                    {entry.tags && entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                             {entry.tags.slice(0, 3).map((tag, i) => (
+                                  <span key={i} className="text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">
+                                      {tag}
+                                  </span>
+                             ))}
+                             {entry.tags.length > 3 && (
+                                 <span className="text-[10px] text-gray-400 pl-1">+{entry.tags.length - 3}</span>
+                             )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Mood & Actions */}
+                <div className="flex items-center gap-2 flex-shrink-0 self-center">
+                    
+                    {/* MOOD INDICATOR (Compact Pill) */}
+                    <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
+                        <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                        <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit">
+                          <PencilSquareIcon className="h-4 w-4" />
+                       </button>
+                       <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share">
+                          <ShareIcon className="h-4 w-4" />
+                       </button>
+                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete">
+                          <TrashIcon className="h-4 w-4" />
+                       </button>
+                    </div>
+                </div>
+
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Mood</span>
-                    <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                 </div>
-                 
-                 {entry.sentiment && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                        entry.sentiment === 'Positive' ? 'bg-green-100 text-green-700' : 
-                        entry.sentiment === 'Negative' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                        {entry.sentiment}
-                    </span>
-                 )}
+              {/* BODY CONTENT */}
+              <div className="p-5">
+                  <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {entry.content}
+                  </div>
+
+                  {/* Sentiment (Only if exists) */}
+                  {entry.sentiment && entry.sentiment !== 'Pending' && (
+                    <div className="mt-4 flex justify-end">
+                        <span className={`text-xs px-2 py-1 rounded-full border ${
+                            entry.sentiment === 'Positive' ? 'bg-green-50 text-green-700 border-green-100' : 
+                            entry.sentiment === 'Negative' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100'
+                        }`}>
+                            {entry.sentiment} Analysis
+                        </span>
+                    </div>
+                  )}
               </div>
+
             </div>
           ))
       )}
 
-      {/* --- AI MODAL --- */}
+      {/* --- AI MODAL (RECOVERY COMPASS) --- */}
       <Transition appear show={showInsightModal} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
           <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900 flex items-center gap-2">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-4 mb-4">
                     <SparklesIcon className="h-6 w-6 text-purple-500" />
-                    Filtered Insights
+                    Recovery Compass Analysis
                   </Dialog.Title>
                   
                   {analyzing ? (
-                    <div className="mt-4 py-8 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                        <p className="mt-2 text-sm text-gray-500">Analyzing your {filteredEntries.length} selected entries...</p>
+                    <div className="py-12 flex flex-col items-center justify-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mb-4"></div>
+                        <p className="text-gray-500 font-medium">Consulting your AI Sponsor...</p>
                     </div>
                   ) : (
                     insight && (
-                        <div className="mt-4 space-y-4">
-                            <div className="bg-purple-50 p-4 rounded-lg text-sm text-gray-700 leading-relaxed">
-                                {insight.analysis}
-                            </div>
+                        <div className="space-y-6">
                             
-                            <div className="flex justify-between items-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                <span>Mood: <span className="text-purple-700">{insight.mood}</span></span>
-                                <span>Sentiment: <span className="text-purple-700">{insight.sentiment}</span></span>
+                            {/* 1. TOP SUMMARY ROW */}
+                            <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex gap-4">
+                                <div className="flex-shrink-0 p-2 bg-purple-100 rounded-lg h-fit">
+                                    <LightBulbIcon className="h-6 w-6 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-purple-900 text-sm uppercase tracking-wide mb-1">The Insight</h4>
+                                    <p className="text-purple-800 text-sm leading-relaxed">{insight.summary}</p>
+                                    <div className="flex gap-3 mt-3">
+                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
+                                            Mood: {insight.mood}
+                                        </span>
+                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
+                                            Sentiment: {insight.sentiment}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-900 mb-2">Suggested Actions:</h4>
-                                <ul className="space-y-2">
-                                    {insight.actionableSteps.map((step, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                                            <span className="text-purple-500 mt-1">•</span>
-                                            {step}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* 2. RISK ANALYSIS (The Shield) */}
+                                <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                                    <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
+                                        <ShieldExclamationIcon className="h-5 w-5" />
+                                        Risk Detection
+                                    </div>
+                                    <p className="text-sm text-orange-900 leading-relaxed">
+                                        {insight.risk_analysis}
+                                    </p>
+                                </div>
+
+                                {/* 3. POSITIVE REINFORCEMENT (The Spark) */}
+                                <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                                    <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm uppercase tracking-wide">
+                                        <TrophyIcon className="h-5 w-5" />
+                                        Strengths & Wins
+                                    </div>
+                                    <p className="text-sm text-green-900 leading-relaxed">
+                                        {insight.positive_reinforcement}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 4. TOOL SUGGESTIONS (The Toolkit) */}
+                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
+                                    <WrenchScrewdriverIcon className="h-5 w-5" />
+                                    Suggested Toolkit
+                                </div>
+                                <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {insight.tool_suggestions.map((tool, i) => (
+                                        <li key={i} className="bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border border-blue-100 flex items-start gap-2">
+                                            <span className="text-blue-400 font-bold">•</span>
+                                            {tool}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
+
                         </div>
                     )
                   )}
 
-                  <div className="mt-6">
-                    <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-purple-100 px-4 py-2 text-sm font-medium text-purple-900 hover:bg-purple-200 focus:outline-none w-full" onClick={() => setShowInsightModal(false)}>
-                      Close
+                  <div className="mt-6 flex justify-end">
+                    <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
+                      Close Analysis
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -1736,6 +2239,339 @@ export default function JournalTabs({ activeTab, onChange }: JournalTabsProps) {
 }
 
 ================================================================================
+FILE: src/components/journal/TemplateEditor.tsx
+================================================================================
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../lib/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, getDocs, Timestamp } from 'firebase/firestore';
+import { 
+    ArrowLeftIcon, 
+    PlusIcon, 
+    TrashIcon, 
+    PencilSquareIcon,
+    XMarkIcon,
+    ListBulletIcon,
+    HashtagIcon, 
+    CheckCircleIcon
+} from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
+
+// Local Type Definition
+interface JournalTemplate {
+    id: string;
+    uid: string;
+    name: string;
+    content?: string; 
+    prompts?: string[]; // Legacy support
+    defaultTags: string[];
+    createdAt: any;
+}
+
+export default function TemplateEditor() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [templates, setTemplates] = useState<JournalTemplate[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Editor State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [name, setName] = useState('');
+    const [content, setContent] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (!user) return;
+        loadTemplates();
+        console.log("Template Editor V2 Loaded"); // Debug check
+    }, [user]);
+
+    const loadTemplates = async () => {
+        if (!user || !db) return;
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'users', user.uid, 'templates'));
+            const snapshot = await getDocs(q);
+            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as JournalTemplate));
+            setTemplates(data);
+        } catch (error) {
+            console.error("Failed to load templates", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- Toolbar Helpers ---
+    const insertText = (before: string, after: string = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const previousText = textarea.value;
+        const selection = previousText.substring(start, end);
+        
+        const newText = previousText.substring(0, start) + 
+                        before + selection + after + 
+                        previousText.substring(end);
+        
+        setContent(newText);
+        
+        // Reset focus and cursor
+        setTimeout(() => {
+            textarea.focus();
+            const newCursorPos = start + before.length + selection.length + after.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    };
+
+    // --- Tag Helpers ---
+    const handleAddTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const clean = tagInput.trim().replace(/^#/, '');
+            if (clean && !tags.includes(clean)) {
+                setTags([...tags, clean]);
+                setTagInput('');
+            }
+        }
+    };
+
+    const removeTag = (t: string) => setTags(tags.filter(tag => tag !== t));
+
+    // --- CRUD Operations ---
+    const handleEdit = (t: JournalTemplate) => {
+        setEditId(t.id);
+        setName(t.name);
+        // Convert legacy templates to text if needed
+        const textContent = t.content || (t.prompts ? t.prompts.map(p => `**${p}**\n\n`).join('') : '');
+        setContent(textContent);
+        setTags(t.defaultTags || []);
+        setIsEditing(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Delete this template?")) return;
+        if (!user || !db) return;
+        try {
+            await deleteDoc(doc(db, 'users', user.uid, 'templates', id));
+            setTemplates(templates.filter(t => t.id !== id));
+        } catch (e) {
+            console.error("Error deleting", e);
+        }
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !db) return;
+        if (!name.trim()) return alert("Please name your template");
+
+        setSaving(true);
+        const templateData = {
+            uid: user.uid,
+            name,
+            content, // Saving as Free Text
+            defaultTags: tags,
+            updatedAt: Timestamp.now()
+        };
+
+        try {
+            if (editId) {
+                await updateDoc(doc(db, 'users', user.uid, 'templates', editId), templateData);
+                setTemplates(prev => prev.map(t => t.id === editId ? { ...t, ...templateData } : t));
+            } else {
+                const docRef = await addDoc(collection(db, 'users', user.uid, 'templates'), {
+                    ...templateData,
+                    createdAt: Timestamp.now()
+                });
+                // Fix: Manually add createdAt to state to match type definition
+                setTemplates([...templates, { 
+                    id: docRef.id, 
+                    ...templateData, 
+                    createdAt: Timestamp.now() 
+                } as JournalTemplate]);
+            }
+            setIsEditing(false);
+            resetForm();
+        } catch (error) {
+            console.error("Error saving template", error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const resetForm = () => {
+        setEditId(null);
+        setName('');
+        setContent('');
+        setTags([]);
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+            
+            {/* Header / Nav */}
+            <div className="flex items-center gap-4">
+                <button onClick={() => navigate('/journal')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                </button>
+                <h1 className="text-2xl font-bold text-gray-900">
+                    {isEditing ? (editId ? 'Edit Template' : 'New Free-Text Template') : 'My Templates'}
+                </h1>
+            </div>
+
+            {isEditing ? (
+                // --- EDITOR VIEW (Free Text / Markdown) ---
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <form onSubmit={handleSave} className="space-y-6">
+                        
+                        {/* Name Input */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                            <input 
+                                type="text" 
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="e.g. Daily Gratitude List"
+                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+
+                        {/* Content Editor */}
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-medium text-gray-700">Template Structure</label>
+                                <span className="text-xs text-gray-400">Markdown Supported</span>
+                            </div>
+                            
+                            {/* Toolbar */}
+                            <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
+                                    <HashtagIcon className="h-4 w-4" />
+                                </button>
+                                <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
+                                    B
+                                </button>
+                                <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                                <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
+                                    <CheckCircleIcon className="h-4 w-4" />
+                                </button>
+                                <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List">
+                                    <ListBulletIcon className="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            <textarea 
+                                ref={textareaRef}
+                                rows={12}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="Design your template here using Markdown...&#10;- [ ] Checklist item&#10;**Bold text**"
+                                className="w-full font-mono text-sm rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 leading-relaxed"
+                            />
+                        </div>
+
+                        {/* Default Tags */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
+                            <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white">
+                                {tags.map(tag => (
+                                    <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                                        {tag}
+                                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                            <XMarkIcon className="h-3 w-3" />
+                                        </button>
+                                    </span>
+                                ))}
+                                <input 
+                                    type="text"
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={handleAddTag}
+                                    placeholder={tags.length === 0 ? "Add tags..." : ""}
+                                    className="flex-1 min-w-[100px] text-sm border-none focus:ring-0 p-0 text-gray-700"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button 
+                                type="button"
+                                onClick={() => { setIsEditing(false); resetForm(); }}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="submit"
+                                disabled={saving}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
+                            >
+                                {saving ? 'Saving...' : 'Save Template'}
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            ) : (
+                // --- LIST VIEW ---
+                <div className="space-y-4">
+                    <button 
+                        onClick={() => { resetForm(); setIsEditing(true); }}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium"
+                    >
+                        <PlusIcon className="h-5 w-5" />
+                        Create New Template
+                    </button>
+
+                    {loading ? (
+                        <div className="text-center py-8 text-gray-400">Loading templates...</div>
+                    ) : templates.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
+                            You haven't created any custom templates yet.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {templates.map(t => (
+                                <div key={t.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="font-bold text-gray-900">{t.name}</h3>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleEdit(t)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded">
+                                                <PencilSquareIcon className="h-4 w-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(t.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded">
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 line-clamp-2 mb-3 h-8">
+                                        {t.content || (t.prompts ? "Structured Form Template" : "Empty Template")}
+                                    </p>
+                                    <div className="flex gap-2">
+                                        {t.defaultTags?.slice(0, 3).map(tag => (
+                                            <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+================================================================================
 FILE: src/contexts/AuthContext.tsx
 ================================================================================
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -2000,10 +2836,16 @@ import {
   collection, 
   getDocs, 
   deleteDoc, 
+  addDoc,
+  query,
+  where,
+  orderBy,
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { type User } from "firebase/auth";
+
+// --- INTERFACES ---
 
 export interface UserProfile {
   uid: string;
@@ -2012,15 +2854,46 @@ export interface UserProfile {
   photoURL: string | null;
   sobrietyDate: Timestamp | null;
   createdAt: Timestamp;
+  lastLogin?: Timestamp;
 }
 
-// --- NEW: Template Interface ---
 export interface JournalTemplate {
   id: string;
   name: string;
-  prompts: string[]; // List of questions (e.g., "What was the trigger?")
-  defaultTags: string[]; // List of tags (e.g., "#step10")
+  prompts: string[]; 
+  defaultTags: string[]; 
 }
+
+// [ADDED] Required for Journal features
+export interface JournalEntry {
+  id?: string;
+  uid: string;
+  content: string;
+  moodScore: number;
+  tags: string[];
+  createdAt: Timestamp;
+  weather?: {
+    temp_c: number;
+    condition: string;
+    icon: string;
+  };
+}
+
+// [ADDED] Required for Task features (Approach 3)
+export interface Task {
+  id?: string;
+  uid: string;
+  text: string;
+  completed: boolean;
+  isRecurring: boolean;
+  frequency: 'Daily' | 'Weekly' | 'Monthly' | null;
+  currentStreak: number;
+  priority: 'High' | 'Medium' | 'Low';
+  createdAt: Timestamp;
+  dueDate?: Timestamp; // The new field for "Smart Reset"
+}
+
+// --- PROFILE FUNCTIONS ---
 
 // 1. Fetch a simple profile (Read-Only)
 export async function getProfile(uid: string): Promise<UserProfile | null> {
@@ -2043,6 +2916,8 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
+    // Optional: Update lastLogin here if you want to track activity
+    await updateDoc(userRef, { lastLogin: Timestamp.now() });
     return userSnap.data() as UserProfile;
   } else {
     // Initialize new profile
@@ -2053,6 +2928,7 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       photoURL: user.photoURL,
       sobrietyDate: null, 
       createdAt: Timestamp.now(),
+      lastLogin: Timestamp.now()
     };
     await setDoc(userRef, newProfile);
     return newProfile;
@@ -2064,8 +2940,8 @@ export async function updateProfileData(uid: string, data: Partial<UserProfile> 
   if (!db) throw new Error("Database not initialized");
 
   const userRef = doc(db, "users", uid);
-  const { ...updateFields } = data;
-  await setDoc(userRef, { ...updateFields }, { merge: true });
+  // Spread data to safely handle the partial update
+  await setDoc(userRef, { ...data }, { merge: true });
 }
 
 // 4. Update Sobriety Date (Legacy helper)
@@ -2078,9 +2954,8 @@ export async function updateSobrietyDate(uid: string, date: Date) {
   });
 }
 
-// --- NEW: Template CRUD Operations ---
+// --- TEMPLATE FUNCTIONS (Preserved) ---
 
-// Get all templates for a user
 export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
   if (!db) throw new Error("Database not initialized");
 
@@ -2093,31 +2968,51 @@ export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> 
   } as JournalTemplate));
 }
 
-// Save (Create or Update) a template
 export async function saveUserTemplate(uid: string, template: JournalTemplate) {
   if (!db) throw new Error("Database not initialized");
 
-  // Use the provided ID or generate a new one if empty
   const docRef = template.id 
     ? doc(db, 'users', uid, 'templates', template.id)
     : doc(collection(db, 'users', uid, 'templates'));
 
-  // Ensure we save the ID inside the doc too (optional but helpful)
   const dataToSave = {
     ...template,
-    id: docRef.id // Ensure ID matches doc ref
+    id: docRef.id 
   };
 
   await setDoc(docRef, dataToSave);
 }
 
-// Delete a template
 export async function deleteUserTemplate(uid: string, templateId: string) {
   if (!db) throw new Error("Database not initialized");
 
   const docRef = doc(db, 'users', uid, 'templates', templateId);
   await deleteDoc(docRef);
 }
+
+// --- [ADDED] JOURNAL FUNCTIONS ---
+
+export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
+  if (!db) throw new Error("Database not initialized");
+  
+  await addDoc(collection(db, 'journals'), {
+    uid,
+    ...entry,
+    createdAt: Timestamp.now(),
+  });
+};
+
+export const getJournalHistory = async (uid: string) => {
+  if (!db) throw new Error("Database not initialized");
+
+  const q = query(
+    collection(db, 'journals'),
+    where('uid', '==', uid),
+    orderBy('createdAt', 'desc')
+  );
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
+};
 
 ================================================================================
 FILE: src/lib/firebase.ts
@@ -2155,169 +3050,289 @@ export default app;
 ================================================================================
 FILE: src/lib/gamification.ts
 ================================================================================
-import { differenceInCalendarDays, startOfDay, isSameDay, subDays } from 'date-fns';
-import type { JournalEntry } from './journal';
-
 export interface GamificationStats {
-  journalStreak: number;
+  streakDays: number;
   totalEntries: number;
+  averageMood: number;
+  journalStreak: number;
+  consistencyRate: number; // entries per week
   totalWords: number;
-  consistencyRate: number; // Avg entries per week
-  averageMood: number; // Lifetime average
 }
 
-export function calculateJournalStats(entries: JournalEntry[]): GamificationStats {
-  if (entries.length === 0) {
-    return { 
-      journalStreak: 0, 
-      totalEntries: 0, 
-      totalWords: 0, 
-      consistencyRate: 0,
-      averageMood: 0 
-    };
-  }
+export interface TaskStats {
+    completionRate: number;
+    habitFire: number; // Current streak of completed recurring tasks
+}
 
-  // 1. Sort entries by date descending (Newest first)
-  const sorted = [...entries].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  
-  // 2. Calculate Streak
-  let streak = 0;
-  const today = startOfDay(new Date());
-  
-  // Check if we wrote today to start the count, or if the streak ended yesterday
-  const lastEntryDate = startOfDay(sorted[0].createdAt);
-  
-  // If the last entry was neither today nor yesterday, streak is 0.
-  if (!isSameDay(lastEntryDate, today) && !isSameDay(lastEntryDate, subDays(today, 1))) {
-      streak = 0;
-  } else {
-      // Start counting backwards
-      // We create a unique set of dates strings to handle multiple entries in one day
-      const uniqueDates = Array.from(new Set(sorted.map(e => startOfDay(e.createdAt).toISOString())));
-      
-      // Re-sort unique dates descending
-      uniqueDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+export interface WorkbookStats {
+    wisdomScore: number; // Total questions answered
+    masterCompletion: number; // % of total questions
+}
 
-      // Loop through unique dates to find consecutive days
-      streak = 1;
-      for (let i = 0; i < uniqueDates.length - 1; i++) {
-        const current = new Date(uniqueDates[i]);
-        const prev = new Date(uniqueDates[i+1]);
+// Helper to check if two dates are the same day
+const isSameDay = (d1: Date, d2: Date) => {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+};
+
+export const calculateJournalStats = (journals: any[]): GamificationStats => {
+    if (!journals || journals.length === 0) {
+        return { 
+            streakDays: 0, 
+            totalEntries: 0, 
+            averageMood: 0, 
+            journalStreak: 0, 
+            consistencyRate: 0,
+            totalWords: 0
+        };
+    }
+
+    // Sort descending (newest first)
+    const sorted = [...journals].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    const today = new Date();
+    
+    // 1. Total Entries
+    const totalEntries = journals.length;
+
+    // 2. Average Mood
+    const moodSum = journals.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
+    const averageMood = totalEntries > 0 ? parseFloat((moodSum / totalEntries).toFixed(1)) : 0;
+
+    // 3. Journal Streak
+    let currentStreak = 0;
+    
+    // Check if posted today
+    const lastPostDate = sorted[0].createdAt.toDate();
+    const postedToday = isSameDay(lastPostDate, today);
+    
+    // If not posted today, check if posted yesterday to maintain streak
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const postedYesterday = isSameDay(lastPostDate, yesterday);
+
+    if (postedToday || postedYesterday) {
+        currentStreak = 1;
+        // Iterate backwards to count consecutive days
+        // We compress entries to unique days first
+        const uniqueDays = new Set<string>();
+        journals.forEach(j => {
+            uniqueDays.add(j.createdAt.toDate().toDateString());
+        });
         
-        const diff = differenceInCalendarDays(current, prev);
+        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
-        if (diff === 1) {
-            streak++;
-        } else {
-            break; // Streak broken
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = sortedDates[i];
+            const next = sortedDates[i+1];
+            
+            // Difference in days
+            const diffTime = Math.abs(current.getTime() - next.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            if (diffDays === 1) {
+                currentStreak++;
+            } else {
+                break;
+            }
         }
-      }
-  }
+    }
 
-  // 3. Word Count
-  const totalWords = entries.reduce((acc, curr) => acc + (curr.content.trim().split(/\s+/).length || 0), 0);
+    // 4. Consistency (Entries / Week)
+    // Calc distinct weeks present
+    const firstDate = sorted[sorted.length - 1].createdAt.toDate();
+    const timeSpanDays = (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
+    const weeksActive = Math.max(1, Math.ceil(timeSpanDays / 7));
+    const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
 
-  // 4. Consistency (Entries / Weeks active)
-  const firstEntry = sorted[sorted.length - 1].createdAt;
-  const daysActive = differenceInCalendarDays(today, firstEntry) || 1; // Avoid divide by zero
-  const weeksActive = Math.max(daysActive / 7, 1);
-  const consistencyRate = parseFloat((entries.length / weeksActive).toFixed(1));
+    // 5. Total Words
+    const totalWords = journals.reduce((acc, curr) => {
+        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0;
+        return acc + words;
+    }, 0);
 
-  // 5. Average Mood (Lifetime)
-  const totalMood = entries.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
-  const averageMood = parseFloat((totalMood / entries.length).toFixed(1));
+    return {
+        streakDays: currentStreak,
+        totalEntries,
+        averageMood,
+        journalStreak: currentStreak,
+        consistencyRate,
+        totalWords
+    };
+};
 
-  return {
-    journalStreak: streak,
-    totalEntries: entries.length,
-    totalWords,
-    consistencyRate,
-    averageMood
-  };
-}
+export const calculateTaskStats = (tasks: any[]): TaskStats => {
+    if (!tasks || tasks.length === 0) {
+        return { completionRate: 0, habitFire: 0 };
+    }
+
+    const completed = tasks.filter(t => t.completed).length;
+    const completionRate = Math.round((completed / tasks.length) * 100);
+
+    // Habit Fire: Longest current streak among active recurring tasks
+    let maxStreak = 0;
+    tasks.forEach(t => {
+        if (t.currentStreak && t.currentStreak > maxStreak) {
+            maxStreak = t.currentStreak;
+        }
+    });
+
+    return { completionRate, habitFire: maxStreak };
+};
+
+export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
+    // Note: totalQuestionsAvailable is defaulted to 50 for now, 
+    // ideally passed from the Workbook definitions if available.
+    
+    return {
+        wisdomScore: answersSnapshotSize,
+        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
+    };
+};
 
 ================================================================================
 FILE: src/lib/gemini.ts
 ================================================================================
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { 
+  GoogleGenerativeAI, 
+  HarmCategory, 
+  HarmBlockThreshold,
+  type GenerationConfig,
+  type SafetySetting
+} from "@google/generative-ai";
 
-// Initialize Gemini
+// --- Configuration ---
 // Ensure your VITE_GEMINI_API_KEY is set in .env
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-
-// --- 1. JOURNAL ANALYSIS ---
-
-export interface AnalysisResult {
-  analysis: string;
-  mood: string;
-  sentiment: string;
-  actionableSteps: string[];
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+if (!API_KEY) {
+  console.error("Missing VITE_GEMINI_API_KEY in environment variables");
 }
 
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+// Master Build Guide v2.6 specifies Gemini 2.5 Flash
+const MODEL_NAME = "gemini-2.5-flash"; 
+
+const generationConfig: GenerationConfig = {
+  temperature: 0.7, // Balanced for creative but structured analysis
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json", // Enforce JSON mode
+};
+
+// Safety Settings: Adjusted for Recovery Context
+const safetySettings: SafetySetting[] = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+];
+
+// --- 1. JOURNAL ANALYSIS (Recovery Compass) ---
+
+export interface AnalysisResult {
+  sentiment: 'Positive' | 'Neutral' | 'Negative';
+  mood: string;
+  summary: string;
+  risk_analysis: string;
+  positive_reinforcement: string;
+  tool_suggestions: string[];
+}
+
+/**
+ * Analyzes journal entries using the "Recovery Compass" framework.
+ */
 export async function analyzeJournalEntries(journalEntries: string[]): Promise<AnalysisResult> {
   try {
-    // UPDATED: Using 'gemini-2.5-flash' which is the stable release as of Dec 2025
-    //
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      generationConfig,
+      safetySettings
+    });
 
     const prompt = `
-      You are a compassionate, wise, and experienced Recovery Coach and Sponsor. 
-      Analyze the following journal entries from a user in recovery from addiction.
+      You are an expert recovery sponsor and therapist proxy for a user in addiction recovery. 
+      Analyze the following journal entries and provide a structured "Recovery Compass" analysis.
       
       Entries:
       ${JSON.stringify(journalEntries)}
 
-      Return a JSON object with the following structure (do NOT use Markdown formatting, just raw JSON):
+      Return a JSON object with this EXACT structure (no Markdown):
       {
-        "analysis": "A 2-3 sentence summary of their emotional state and progress.",
-        "mood": "One word summary (e.g., Hopeful, Struggling, Determined)",
-        "sentiment": "Positive, Neutral, or Negative", 
-        "actionableSteps": ["Step 1", "Step 2", "Step 3"]
+        "sentiment": "Positive" | "Neutral" | "Negative",
+        "mood": "Two word description of the emotional tone (e.g. Anxious Hope)",
+        "summary": "A brief, 2-3 sentence synthesis of the user's current headspace.",
+        "risk_analysis": "Identify potential relapse triggers, cognitive distortions, or HALT (Hungry, Angry, Lonely, Tired) signs. Be gentle but direct.",
+        "positive_reinforcement": "Highlight specific examples of resilience, gratitude, or good recovery work found in the text.",
+        "tool_suggestions": ["Tool 1", "Tool 2", "Tool 3"]
       }
 
-      The actionable steps should be practical, recovery-focused suggestions (e.g., "Call your sponsor", "Go to a meeting", "Practice self-care").
+      The tool_suggestions must be practical, recovery-focused actions.
     `;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
-    // Clean up potential markdown code blocks if the model adds them
+    // Clean up potential markdown code blocks
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return JSON.parse(cleanText) as AnalysisResult;
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    // Fallback if API fails or key is missing
+    console.error("Gemini Journal Analysis Failed:", error);
+    // Fallback if API fails
     return {
-      analysis: "Great job keeping up with your journaling. Keep coming back!",
-      mood: "Stable",
-      sentiment: "Positive",
-      actionableSteps: ["Attend a meeting", "Call a friend", "Meditate for 5 mins"]
+      sentiment: 'Neutral',
+      mood: 'System Offline',
+      summary: "Unable to generate analysis. Keep writing!",
+      risk_analysis: 'None detected.',
+      positive_reinforcement: 'Your commitment to journaling is a strength.',
+      tool_suggestions: ['Check internet connection', 'Try again later']
     };
   }
 }
 
-// --- 2. WORKBOOK ANALYSIS ---
+// --- 2. WORKBOOK ANALYSIS (Restored Original Structure) ---
 
 export interface WorkbookInsight {
   feedback: string;
   encouragement: string;
 }
 
-export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string): Promise<WorkbookInsight> {
+export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string | Record<string, string>): Promise<WorkbookInsight> {
   try {
-    // UPDATED: Using 'gemini-2.5-flash'
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+        model: MODEL_NAME,
+        generationConfig,
+        safetySettings
+    });
+
+    // Handle both string and Record input types for flexibility
+    const contentString = typeof fullContent === 'string' 
+        ? fullContent 
+        : Object.entries(fullContent).map(([k, v]) => `Q: ${k}\nA: ${v}`).join('\n');
 
     const prompt = `
       You are a compassionate Recovery Sponsor reviewing a sponsee's entire workbook.
       
       Workbook: "${workbookTitle}"
       
-      User's Answers (grouped by section):
-      ${fullContent}
+      User's Answers:
+      ${contentString}
 
       Please analyze their work holistically. Look for patterns across different sections, emotional trajectory, and depth of honesty.
       
@@ -2344,6 +3359,8 @@ export async function analyzeFullWorkbook(workbookTitle: string, fullContent: st
     };
   }
 }
+
+// --- 3. LEGACY SUPPORT ---
 
 // Deprecated single-section analyzer (kept for type safety if referenced elsewhere)
 export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
@@ -2516,18 +3533,27 @@ const COLLECTION = 'insights';
 
 /**
  * Saves a new AI Insight to Firestore.
- * @param uid - The User ID (e.g., "user_123")
- * @param result - The structured result from Gemini (analysis, sentiment, actions)
+ * Updated to support the new "Recovery Compass" data structure.
+ * @param uid - The User ID
+ * @param result - The structured result from Gemini
  */
 export async function saveInsight(uid: string, result: AnalysisResult) {
   if (!db) throw new Error("Database not initialized");
 
   await addDoc(collection(db, COLLECTION), {
     uid,
-    analysis: result.analysis,
+    createdAt: Timestamp.now(),
+    
+    // --- New Recovery Compass Fields ---
     sentiment: result.sentiment,
-    actionableSteps: result.actionableSteps,
-    createdAt: Timestamp.now()
+    mood: result.mood,
+    summary: result.summary,                 // Replaces old 'analysis'
+    risk_analysis: result.risk_analysis,
+    positive_reinforcement: result.positive_reinforcement,
+    tool_suggestions: result.tool_suggestions, // Replaces old 'actionableSteps'
+    
+    // Note: We no longer save 'analysis' or 'actionableSteps' because 
+    // they don't exist on the new result object.
   });
 }
 
@@ -2673,13 +3699,15 @@ import { db } from "./firebase";
 import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
 
 export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
+export type Priority = 'High' | 'Medium' | 'Low';
 
 export interface Task {
   id?: string;
   uid: string;
   title: string;
   isRecurring: boolean;
-  frequency: Frequency; 
+  frequency: Frequency;
+  priority: Priority; // ADDED
   currentStreak: number;
   lastCompletedAt: Date | null;
   dueDate: Date;
@@ -2689,20 +3717,28 @@ export interface Task {
 const COLLECTION = 'tasks';
 
 // 1. CREATE
-export async function addTask(uid: string, title: string, frequency: Frequency) {
+export async function addTask(
+  uid: string, 
+  title: string, 
+  frequency: Frequency, 
+  priority: Priority, // ADDED
+  startDate: Date // ADDED for Approach 3
+) {
   if (!db) throw new Error("Database not initialized");
   
-  const today = startOfDay(new Date());
   const isRecurring = frequency !== 'once';
+  // Ensure date is start of day to avoid time zone drift
+  const due = startOfDay(startDate);
 
   await addDoc(collection(db, COLLECTION), {
     uid,
     title,
     isRecurring,
     frequency,
+    priority,
     currentStreak: 0,
     lastCompletedAt: null,
-    dueDate: Timestamp.fromDate(today),
+    dueDate: Timestamp.fromDate(due),
     createdAt: Timestamp.now()
   });
 }
@@ -2722,6 +3758,7 @@ export async function getUserTasks(uid: string) {
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
+    // Safely convert Timestamps to Dates
     const task = { 
       id: docSnap.id, 
       ...data,
@@ -2730,7 +3767,7 @@ export async function getUserTasks(uid: string) {
       createdAt: data.createdAt?.toDate()
     } as Task;
 
-    // --- LAZY EVALUATION LOGIC ---
+    // --- LAZY EVALUATION LOGIC (Preserved from your code) ---
     // If it's recurring, overdue, and NOT completed today:
     if (task.isRecurring && isBefore(task.dueDate, today)) {
         
@@ -2746,7 +3783,7 @@ export async function getUserTasks(uid: string) {
                 newStreak -= 1; // Deepen negative streak
             }
 
-            // Reset due date to Today so they can get back on track
+            // Reset due date to Today so they can get back on track (Smart Reset)
             const taskRef = doc(db, COLLECTION, task.id!);
             await updateDoc(taskRef, {
                 currentStreak: newStreak,
@@ -2779,26 +3816,31 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
         newStreak += 1;
     }
 
-    // Calculate next due date based on Frequency
+    // Calculate next due date (Smart Reset Approach)
+    // We calculate from TODAY, ensuring users don't get stuck in the past
     let nextDue = task.dueDate;
     if (task.frequency === 'daily') nextDue = addDays(today, 1);
     else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
     else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
-    // If 'once', date doesn't strictly matter as it won't recur, but we keep it valid.
+    
+    // If 'once', we don't change the due date, it just gets marked done.
 
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: Timestamp.fromDate(new Date()),
-        dueDate: Timestamp.fromDate(nextDue)
+        // Only update due date if recurring
+        ...(task.isRecurring && { dueDate: Timestamp.fromDate(nextDue) })
     });
 
   } else {
-    // UNCHECKING
+    // UNCHECKING (Undo)
     const newStreak = task.currentStreak > 0 ? task.currentStreak - 1 : task.currentStreak;
     
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: null,
+        // If unchecking, we usually want to reset the due date to "Today" or the original due date.
+        // For simplicity in recovery, if you uncheck it, it becomes due today.
         dueDate: Timestamp.fromDate(today)
     });
   }
@@ -2979,211 +4021,187 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ================================================================================
 FILE: src/pages/Dashboard.tsx
 ================================================================================
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { getUserJournals} from '../lib/journal';
-import { getInsightHistory } from '../lib/insights';
-import { getUserTasks, toggleTask, type Task } from '../lib/tasks';
-import { calculateJournalStats, type GamificationStats } from '../lib/gamification';
-import RecoveryHero from '../components/RecoveryHero';
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import { 
-  SparklesIcon,
-  CheckCircleIcon
+    ClipboardDocumentCheckIcon,
+    SparklesIcon,
+    ArrowRightIcon,
 } from '@heroicons/react/24/outline';
-import { isSameDay, startOfDay } from 'date-fns';
+import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats } from '../lib/gamification';
+import RecoveryHero from '../components/RecoveryHero';
+
+// Estimated Total Questions across all workbooks for gamification calc
+const TOTAL_WORKBOOK_QUESTIONS = 45; 
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
-  // State
-  const [sobrietyDate, setSobrietyDate] = useState<Date | null>(null);
-  const [latestInsight, setLatestInsight] = useState<any | null>(null);
-  
-  // Task State (Only top 5)
-  const [priorityTasks, setPriorityTasks] = useState<Task[]>([]);
-  
-  // Gamification State
-  const [stats, setStats] = useState<GamificationStats | null>(null);
-  const [taskStreak, setTaskStreak] = useState(0);
-
   const [loading, setLoading] = useState(true);
+  
+  // Data State
+  const [daysClean, setDaysClean] = useState<number>(0);
+  const [journalStats, setJournalStats] = useState({ streak: 0, consistency: 0 });
+  const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
+  const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
+  
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [latestInsight, setLatestInsight] = useState<any>(null);
 
   useEffect(() => {
-    async function loadDashboardData() {
-      if (!user || !db) return;
+    if (!user) return;
 
-      try {
-        // 1. Fetch User Profile
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().sobrietyDate) {
-          setSobrietyDate(userDoc.data().sobrietyDate.toDate());
-        }
+    const loadDashboardData = async () => {
+        if (!db) return;
 
-        // 2. Fetch Journals & Calc Gamification
-        const journals = await getUserJournals(user.uid);
-        const journalStats = calculateJournalStats(journals);
-        setStats(journalStats);
-
-        // 3. Fetch Latest Insight
         try {
-            const insights = await getInsightHistory(user.uid);
-            if (insights.length > 0) setLatestInsight(insights[0]);
-        } catch (e) {
-            console.warn("Insight history fetch failed", e);
+            // 0. Fetch User Profile for Sobriety Date
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                if (userData.sobrietyDate) {
+                    const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
+                    const now = new Date();
+                    const diffTime = Math.abs(now.getTime() - start.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    setDaysClean(diffDays);
+                }
+            }
+
+            // 1. Fetch Journals for Stats
+            const journalQ = query(
+                collection(db, 'journals'), 
+                where('uid', '==', user.uid),
+                orderBy('createdAt', 'desc')
+            );
+            const journalSnap = await getDocs(journalQ);
+            const journals = journalSnap.docs.map(d => ({...d.data(), createdAt: d.data().createdAt}));
+            const jStats = calculateJournalStats(journals);
+            setJournalStats({ 
+                streak: jStats.journalStreak, 
+                consistency: jStats.consistencyRate
+            });
+
+            // 2. Fetch Tasks
+            const taskQ = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+            const taskSnap = await getDocs(taskQ);
+            const tasks = taskSnap.docs.map(d => d.data());
+            const tStats = calculateTaskStats(tasks);
+            setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
+
+            // Get top 3 pending tasks
+            const pendingTasks = taskSnap.docs
+                .map(d => ({ id: d.id, ...d.data() } as any))
+                .filter(t => !t.completed)
+                .sort((_a, b) => (b.priority === 'High' ? 1 : -1)) 
+                .slice(0, 3);
+            setRecentTasks(pendingTasks);
+
+            // 3. Fetch Workbook Answers
+            const wbQ = query(collection(db, 'users', user.uid, 'workbook_answers'));
+            const wbSnap = await getDocs(wbQ);
+            const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
+            setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
+
+            // 4. Fetch Latest Insight
+            if (journals.length > 0) {
+                const last = journals[0] as any;
+                if (last.sentiment) {
+                    setLatestInsight({
+                        date: last.createdAt.toDate(),
+                        sentiment: last.sentiment,
+                        snippet: last.content.substring(0, 80) + "..."
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error("Dashboard load error:", error);
+        } finally {
+            setLoading(false);
         }
-
-        // 4. Fetch Tasks & Prioritize
-        const fetchedTasks = await getUserTasks(user.uid);
-        
-        // Calculate total positive task streak
-        const totalStreak = fetchedTasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
-        setTaskStreak(totalStreak);
-
-        // Filter: Not Completed OR Completed Today
-        const today = startOfDay(new Date());
-        const visibleTasks = fetchedTasks.filter(t => {
-            if (!t.lastCompletedAt) return true; // Not done yet
-            return isSameDay(t.lastCompletedAt, today); // Done today
-        });
-
-        // Sort: Overdue/Today first (Ascending Due Date)
-        visibleTasks.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-        
-        // Top 5
-        setPriorityTasks(visibleTasks.slice(0, 5));
-
-      } catch (error) {
-        console.error("Error loading dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+    };
 
     loadDashboardData();
   }, [user]);
 
-  // --- HANDLERS ---
-  const handleToggleTask = async (task: Task) => {
-    if (!user) return;
-
-    const today = startOfDay(new Date());
-    const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
-    const newState = !isCompletedToday;
-
-    // Optimistic UI Update
-    const updatedTasks = priorityTasks.map(t => {
-        if (t.id === task.id) {
-            return { 
-                ...t, 
-                lastCompletedAt: newState ? new Date() : null 
-            }; 
-        }
-        return t;
-    });
-    setPriorityTasks(updatedTasks);
-
-    await toggleTask(task, newState);
-  };
-
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading Dashboard...</div>;
-  }
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto space-y-6">
       
-      {/* 1. RECOVERY HERO (Unified Component) */}
+      {/* 1. RECOVERY HERO COMPONENT */}
       <RecoveryHero 
-        sobrietyDate={sobrietyDate} 
-        journalStats={stats}
-        taskStreak={taskStreak}
+         userName={user?.displayName?.split(' ')[0] || 'Friend'}
+         daysClean={daysClean}
+         journalStats={journalStats}
+         taskStats={taskStats}
+         workbookStats={workbookStats}
       />
 
-      {/* 2. MAIN GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* --- PRIORITIES WIDGET --- */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <CheckCircleIcon className="h-5 w-5 text-blue-500" />
-                    Priorities
-                </h3>
-                <Link to="/tasks" className="text-sm text-blue-600 hover:underline">Manage All &rarr;</Link>
-            </div>
-
-            <div className="space-y-3">
-                {priorityTasks.length === 0 && (
-                    <p className="text-center text-gray-400 text-sm py-4">All caught up! Great job.</p>
-                )}
-                
-                {priorityTasks.map(task => {
-                    const today = startOfDay(new Date());
-                    const isCompleted = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
-
-                    return (
-                        <div key={task.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100 cursor-pointer" onClick={() => handleToggleTask(task)}>
-                            <div className="flex items-center gap-3">
-                                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                        isCompleted 
-                                            ? 'bg-green-500 border-green-500 text-white' 
-                                            : 'border-gray-300'
-                                    }`}
-                                >
-                                    {isCompleted && <CheckCircleIcon className="h-3 w-3" />}
-                                </div>
-                                
-                                <span className={`block text-sm font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                    {task.title}
-                                </span>
-                            </div>
-                            
-                            {!isCompleted && task.isRecurring && (
-                                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-bold">
-                                    Due
-                                </span>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-
-        {/* --- LATEST INSIGHT CARD (Moved up to replace Mood History) --- */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <SparklesIcon className="h-5 w-5 text-purple-500" />
-                Latest Insight
-            </h3>
-            
-            {latestInsight ? (
-                <div className="space-y-3">
-                <p className="text-gray-600 italic">"{latestInsight.analysis}"</p>
-                
-                <div className="pt-2">
-                    <p className="text-xs font-bold text-gray-400 uppercase mb-2">Suggested Action</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-800 bg-purple-50 p-2 rounded">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                    {latestInsight.actionableSteps?.[0] || "Keep coming back!"}
-                    </div>
-                </div>
-                </div>
-            ) : (
-                <div className="text-center py-8 text-gray-400 text-sm">
-                Use the "Sparkle Button" in your Journal to generate your first AI Insight.
-                </div>
-            )}
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          <div className="text-right mt-4 pt-4 border-t border-gray-50">
-             <Link to="/journal" className="text-sm text-blue-600 hover:underline">View all insights &rarr;</Link>
+          {/* 2. PRIORITIES WIDGET */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                      <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600" />
+                      Priority Focus
+                  </h3>
+                  <Link to="/tasks" className="text-sm text-blue-600 hover:underline">View All</Link>
+              </div>
+              
+              {recentTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg">
+                      <p>All clear! No pending tasks.</p>
+                      <Link to="/tasks" className="text-sm text-blue-600 font-medium mt-2 inline-block">Add a Habit +</Link>
+                  </div>
+              ) : (
+                  <div className="space-y-3">
+                      {recentTasks.map(task => (
+                          <div key={task.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <div className={`h-3 w-3 rounded-full ${task.priority === 'High' ? 'bg-red-500' : 'bg-blue-400'}`} />
+                              <span className="flex-1 font-medium text-gray-700 truncate">{task.title}</span>
+                              <Link to="/tasks" className="text-gray-400 hover:text-blue-600">
+                                  <ArrowRightIcon className="h-4 w-4" />
+                              </Link>
+                          </div>
+                      ))}
+                  </div>
+              )}
           </div>
-        </div>
 
+          {/* 3. LATEST INSIGHT */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                      <SparklesIcon className="h-5 w-5 text-purple-600" />
+                      Latest Insight
+                  </h3>
+                  <Link to="/journal" className="text-sm text-purple-600 hover:underline">View Journal</Link>
+              </div>
+
+              {latestInsight ? (
+                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                      <div className="flex items-center justify-between mb-2">
+                           <span className="text-xs font-bold text-purple-700 uppercase tracking-wider">{latestInsight.sentiment} Sentiment</span>
+                           <span className="text-xs text-purple-400">{latestInsight.date.toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 italic mb-3">"{latestInsight.snippet}"</p>
+                      <Link to="/journal" className="w-full block text-center bg-white text-purple-600 text-sm font-bold py-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">
+                          Analyze Deeply
+                      </Link>
+                  </div>
+              ) : (
+                  <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg">
+                      <p>No recent analysis found.</p>
+                      <Link to="/journal" className="text-sm text-purple-600 font-medium mt-2 inline-block">Write Entry +</Link>
+                  </div>
+              )}
+          </div>
       </div>
     </div>
   );
@@ -3192,15 +4210,75 @@ export default function Dashboard() {
 ================================================================================
 FILE: src/pages/Journal.tsx
 ================================================================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { getUserJournals } from '../lib/journal';
+import { calculateJournalStats } from '../lib/gamification';
+import { 
+    FireIcon, 
+    ChartBarIcon, 
+    PencilSquareIcon 
+} from '@heroicons/react/24/outline';
 import JournalTabs from '../components/journal/JournalTabs';
 import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
-import JournalInsights from '../components/journal/JournalInsights'; // NEW Import
+import JournalInsights from '../components/journal/JournalInsights';
+
+const MANTRAS = [
+  "One day at a time.",
+  "Progress, not perfection.",
+  "This too shall pass.",
+  "Serenity, Courage, Wisdom.",
+  "Keep coming back.",
+  "Easy does it.",
+  "First things first.",
+  "Let go and let God.",
+  "To thine own self be true.",
+  "Just for today.",
+  "Feelings are not facts.",
+  "Nothing changes if nothing changes."
+];
 
 export default function Journal() {
+  const { user } = useAuth();
+  
+  // Navigation State
   const [activeTab, setActiveTab] = useState<'write' | 'history' | 'insights'>('write');
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+
+  // Header Data State
+  const [greeting, setGreeting] = useState('Welcome');
+  const [streak, setStreak] = useState(0);
+  const [consistency, setConsistency] = useState(0);
+  const [totalWords, setTotalWords] = useState(0);
+  const [mantra, setMantra] = useState('');
+
+  // Initial Load Logic (Greeting, Mantra, Streak)
+  useEffect(() => {
+    // 1. Set Greeting based on time
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good Morning');
+    else if (hour < 18) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
+
+    // 2. Pick Random Mantra
+    setMantra(MANTRAS[Math.floor(Math.random() * MANTRAS.length)]);
+
+    // 3. Calculate Stats
+    const loadStats = async () => {
+        if (!user) return;
+        try {
+            const journals = await getUserJournals(user.uid);
+            const stats = calculateJournalStats(journals);
+            setStreak(stats.journalStreak);
+            setConsistency(stats.consistencyRate);
+            setTotalWords(stats.totalWords);
+        } catch (error) {
+            console.error("Failed to load journal stats", error);
+        }
+    };
+    loadStats();
+  }, [user]);
 
   // Called when user clicks "Edit" in History tab
   const handleEditRequest = (entry: JournalEntry) => {
@@ -3216,10 +4294,43 @@ export default function Journal() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Recovery Journal</h1>
-        <p className="text-gray-500">Track your journey, moods, and daily reflections.</p>
+    <div className="max-w-5xl mx-auto -mt-6">
+      
+      {/* --- SMART HEADER --- */}
+      <div className="mb-8 p-6 bg-gradient-to-r from-white to-blue-50/30 rounded-2xl border border-blue-50 shadow-sm animate-fadeIn">
+         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+             <div className="text-center md:text-left">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                    {greeting}, <span className="text-blue-700">{user?.displayName ? user.displayName.split(' ')[0] : 'Friend'}</span>
+                </h1>
+                <p className="text-gray-500 font-medium mt-1 italic text-sm">
+                    "{mantra}"
+                </p>
+             </div>
+             
+             {/* GAMIFICATION BADGES ROW (Reduced size for mobile fit) */}
+             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
+                 
+                 {/* 1. Streak Badge */}
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
+                    <FireIcon className={`h-3.5 w-3.5 ${streak > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
+                    <span className="text-xs font-bold text-gray-700">{streak} Day Streak</span>
+                 </div>
+
+                 {/* 2. Consistency Badge */}
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Average entries per week">
+                    <ChartBarIcon className="h-3.5 w-3.5 text-blue-500" />
+                    <span className="text-xs font-bold text-gray-700">{consistency} / wk</span>
+                 </div>
+
+                 {/* 3. Word Count Badge */}
+                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Total words journaled">
+                    <PencilSquareIcon className="h-3.5 w-3.5 text-purple-500" />
+                    <span className="text-xs font-bold text-gray-700">{totalWords.toLocaleString()} Words</span>
+                 </div>
+
+             </div>
+         </div>
       </div>
 
       <JournalTabs activeTab={activeTab} onChange={setActiveTab} />
@@ -3452,7 +4563,6 @@ FILE: src/pages/Profile.tsx
 ================================================================================
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-// REMOVED 'type UserProfile' from the import below
 import { getProfile, updateProfileData } from '../lib/db';
 import { importLegacyJournals } from '../lib/importer';
 import { 
@@ -3467,6 +4577,9 @@ import { useNavigate } from 'react-router-dom';
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // --- VERSIONING ---
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
   
   const [displayName, setDisplayName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState('');
@@ -3517,6 +4630,7 @@ export default function Profile() {
       let dateObj: Date | null = null;
       if (sobrietyDate) {
          const [y, m, d] = sobrietyDate.split('-').map(Number);
+         // Note: Month is 0-indexed in JS Date
          dateObj = new Date(y, m - 1, d);
       }
       
@@ -3564,7 +4678,7 @@ export default function Profile() {
   if (loading) return <div>Loading profile...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8 pb-10">
       <div className="flex items-center gap-4 border-b border-gray-200 pb-6">
         <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
            {user?.photoURL ? (
@@ -3579,6 +4693,7 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* --- PROFILE FORM --- */}
       <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Display Name</label>
@@ -3598,7 +4713,7 @@ export default function Profile() {
             onChange={(e) => setSobrietyDate(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
           />
-          <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats.</p>
+          <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
         </div>
 
         {message && (
@@ -3674,6 +4789,11 @@ export default function Profile() {
           Log Out
         </button>
       </div>
+
+      {/* --- VERSION INFO --- */}
+      <div className="text-center text-xs text-gray-400 font-mono">
+          App Version: v{appVersion}
+      </div>
     </div>
   );
 }
@@ -3681,209 +4801,259 @@ export default function Profile() {
 ================================================================================
 FILE: src/pages/Tasks.tsx
 ================================================================================
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   getUserTasks, 
-  addTask, 
   toggleTask, 
   deleteTask, 
-  type Task, 
-  type Frequency 
+  type Task
 } from '../lib/tasks';
 import { 
-  CheckCircleIcon, 
   PlusIcon, 
-  FireIcon, 
-  NoSymbolIcon, 
-  TrashIcon,
+  TrashIcon, 
+  ArrowPathIcon, 
+  CheckCircleIcon,
+  FireIcon,
   CalendarDaysIcon,
-  ClockIcon
+  ClipboardDocumentListIcon,
+ // ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
-import { isSameDay, startOfDay } from 'date-fns';
+import Confetti from 'react-confetti';
+import { isSameDay, startOfDay, isBefore } from 'date-fns';
+import CreateTaskModal from '../components/CreateTaskModal';
 
 export default function Tasks() {
   const { user } = useAuth();
-  
-  // State
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newFrequency, setNewFrequency] = useState<Frequency>('once');
   const [loading, setLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load Data
-  useEffect(() => {
-    async function loadTasks() {
-      if (!user) return;
-      try {
-        const fetchedTasks = await getUserTasks(user.uid);
-        setTasks(fetchedTasks);
-      } catch (error) {
-        console.error("Error loading tasks:", error);
-      } finally {
-        setLoading(false);
-      }
+  // --- STATS CALCULATION ---
+  const totalTasks = tasks.filter(t => !t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date())).length;
+  const dueToday = tasks.filter(t => isSameDay(t.dueDate, new Date()) && (!t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date()))).length;
+  const totalFire = tasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
+
+  // Fetch Tasks
+  const refreshTasks = async () => {
+    if (!user) return;
+    try {
+      const data = await getUserTasks(user.uid);
+      
+      const today = startOfDay(new Date());
+      
+      const sorted = data.sort((a, b) => {
+        const aCompleted = a.lastCompletedAt && isSameDay(a.lastCompletedAt, today);
+        const bCompleted = b.lastCompletedAt && isSameDay(b.lastCompletedAt, today);
+        
+        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+        return a.dueDate.getTime() - b.dueDate.getTime();
+      });
+
+      setTasks(sorted);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-    loadTasks();
+  };
+
+  useEffect(() => {
+    refreshTasks();
   }, [user]);
 
-  // Handlers
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    if (!user || !newTaskTitle.trim()) return;
+  const handleToggle = async (task: Task) => {
+    const today = startOfDay(new Date());
+    const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
     
-    try {
-        await addTask(user.uid, newTaskTitle, newFrequency);
-        setNewTaskTitle('');
-        setNewFrequency('once');
-        const updated = await getUserTasks(user.uid);
-        setTasks(updated);
-    } catch (err) {
-        console.error("Failed to create task", err);
+    if (!isCompletedToday) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+    }
+
+    await toggleTask(task, !isCompletedToday);
+    refreshTasks();
+  };
+
+  const handleDelete = async (id: string) => {
+    if(confirm('Delete this task?')) {
+        await deleteTask(id);
+        refreshTasks();
     }
   };
 
-  const handleToggleTask = async (task: Task) => {
-    if (!user) return;
+  const getUrgencyStyles = (task: Task) => {
+      const today = startOfDay(new Date());
+      const target = startOfDay(task.dueDate);
+      const isDone = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
 
+      if (isDone) return 'border-l-gray-300 bg-gray-50 opacity-60';
+      if (isBefore(target, today)) return 'border-l-red-500 bg-white shadow-sm ring-1 ring-red-100'; // Overdue
+      if (isSameDay(target, today)) return 'border-l-orange-500 bg-white shadow-sm ring-1 ring-orange-100'; // Today
+      
+      // Future / Standard Priority Colors
+      switch (task.priority) {
+          case 'High': return 'border-l-blue-600 bg-white shadow-sm';
+          case 'Medium': return 'border-l-blue-400 bg-white shadow-sm';
+          case 'Low': return 'border-l-blue-200 bg-white shadow-sm';
+          default: return 'border-l-gray-200 bg-white shadow-sm';
+      }
+  };
+
+  const getDateLabel = (date: Date) => {
     const today = startOfDay(new Date());
-    const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
-    const newState = !isCompletedToday;
-
-    // Optimistic UI Update
-    const updatedTasks = tasks.map(t => {
-        if (t.id === task.id) {
-            return { 
-                ...t, 
-                lastCompletedAt: newState ? new Date() : null 
-            }; 
-        }
-        return t;
-    });
-    setTasks(updatedTasks);
-
-    await toggleTask(task, newState);
-    const confirmedTasks = await getUserTasks(user.uid);
-    setTasks(confirmedTasks);
+    const target = startOfDay(date);
+    
+    if (isBefore(target, today)) return { text: 'Overdue', color: 'text-red-600 font-bold' };
+    if (isSameDay(target, today)) return { text: 'Today', color: 'text-orange-600 font-bold' };
+    return { text: date.toLocaleDateString(), color: 'text-gray-500' };
   };
 
-  const handleDeleteTask = async (id: string) => {
-    if(!window.confirm("Delete this task?")) return;
-    await deleteTask(id);
-    setTasks(tasks.filter(t => t.id !== id));
-  };
-
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading Tasks...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading your ledger...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-        <div>
-           <h1 className="text-2xl font-bold text-gray-900">Task Workspace</h1>
-           <p className="text-gray-500">Manage your daily habits and to-do lists.</p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
+      {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
+
+      {/* --- HEADER & MINI HERO --- */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
+                Habits & Tasks
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Manage your daily habits and tasks.</p>
+          </div>
+          
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span>New Quest</span>
+          </button>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            {/* Input Form */}
-            <form onSubmit={handleCreateTask} className="flex flex-col sm:flex-row gap-2 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <input 
-                    type="text" 
-                    placeholder="Add a new habit or task..." 
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                />
-                
-                <div className="flex gap-2">
-                    <select
-                        value={newFrequency}
-                        onChange={(e) => setNewFrequency(e.target.value as Frequency)}
-                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white text-sm p-2 border"
+      {/* MINI STATS GRID */}
+      <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
+              <span className="text-2xl font-bold text-gray-900">{totalTasks}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Due Today</span>
+              <span className={`text-2xl font-bold ${dueToday > 0 ? 'text-orange-500' : 'text-gray-900'}`}>{dueToday}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Fire</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-orange-600">
+                  <FireIcon className="h-6 w-6" />
+                  {totalFire}
+              </div>
+          </div>
+      </div>
+
+      {/* --- TASK LIST (Quest Cards) --- */}
+      <div className="space-y-3">
+        {tasks.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                <ClipboardDocumentListIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900">Your Ledger is Empty</h3>
+                <p className="text-gray-500">Start a new quest to build your streak.</p>
+            </div>
+        ) : (
+            tasks.map(task => {
+                const dateLabel = getDateLabel(task.dueDate);
+                const isDoneToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, new Date());
+                const urgencyClass = getUrgencyStyles(task);
+
+                return (
+                    <div 
+                        key={task.id} 
+                        className={`relative group rounded-xl p-4 border-l-[6px] transition-all duration-200 ${urgencyClass}`}
                     >
-                        <option value="once">Once</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
+                        <div className="flex items-start gap-4">
+                            
+                            {/* Check Button */}
+                            <button
+                                onClick={() => handleToggle(task)}
+                                className={`mt-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                    isDoneToday 
+                                    ? 'bg-green-500 border-green-500 text-white scale-110' 
+                                    : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-500'
+                                }`}
+                            >
+                                <CheckCircleIcon className="h-4 w-4" />
+                            </button>
 
-                    <button 
-                        type="submit"
-                        disabled={!newTaskTitle.trim()}
-                        className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center w-10 sm:w-auto"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                    </button>
-                </div>
-            </form>
-
-            {/* Full List */}
-            <div className="space-y-3">
-                {tasks.length === 0 && (
-                    <p className="text-center text-gray-400 text-sm py-8">No tasks found. Start by adding one above!</p>
-                )}
-                
-                {tasks.map(task => {
-                    const today = startOfDay(new Date());
-                    const isCompleted = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
-
-                    return (
-                        <div key={task.id} className="flex items-center justify-between group p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <button 
-                                    onClick={() => handleToggleTask(task)}
-                                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                        isCompleted 
-                                            ? 'bg-green-500 border-green-500 text-white' 
-                                            : 'border-gray-300 hover:border-blue-500'
-                                    }`}
-                                >
-                                    {isCompleted && <CheckCircleIcon className="h-4 w-4" />}
-                                </button>
-                                
-                                <div>
-                                    <span className={`block font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            {/* Main Content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className={`text-base font-semibold ${isDoneToday ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                                         {task.title}
                                     </span>
+                                    
+                                    {/* Action Menu (Delete) */}
+                                    <button 
+                                        onClick={() => task.id && handleDelete(task.id)} 
+                                        className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                
+                                {/* Metadata Row */}
+                                <div className="flex flex-wrap items-center gap-4 text-xs">
+                                    <div className={`flex items-center gap-1.5 ${dateLabel.color}`}>
+                                        <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                        {dateLabel.text}
+                                    </div>
+
                                     {task.isRecurring && (
-                                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                                            {task.frequency === 'daily' && <ClockIcon className="h-3 w-3" />}
-                                            {task.frequency === 'weekly' && <CalendarDaysIcon className="h-3 w-3" />}
-                                            {task.frequency === 'monthly' && <CalendarDaysIcon className="h-3 w-3" />}
+                                        <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                                            <ArrowPathIcon className="h-3 w-3" />
                                             <span className="capitalize">{task.frequency}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Priority Badge (only if not done) */}
+                                    {!isDoneToday && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                            task.priority === 'High' ? 'text-red-700 bg-red-50 border-red-100' :
+                                            task.priority === 'Medium' ? 'text-yellow-700 bg-yellow-50 border-yellow-100' :
+                                            'text-green-700 bg-green-50 border-green-100'
+                                        }`}>
+                                            {task.priority}
                                         </span>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                {/* Streak Badge */}
-                                {task.isRecurring && (
-                                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                                        task.currentStreak > 0 ? 'bg-orange-100 text-orange-700' : 
-                                        task.currentStreak < 0 ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-400'
-                                    }`}>
-                                        {task.currentStreak > 0 ? (
-                                            <FireIcon className="h-3 w-3" />
-                                        ) : (
-                                            <NoSymbolIcon className="h-3 w-3" />
-                                        )}
-                                        {Math.abs(task.currentStreak)} Streak
-                                    </div>
-                                )}
+                            {/* Streak Micro-Badge (Right Aligned) */}
+                            {(task.currentStreak > 0 || task.currentStreak < 0) && (
+                                <div className={`flex flex-col items-center justify-center h-10 w-10 rounded-lg border ${
+                                    task.currentStreak > 0 
+                                    ? 'bg-orange-50 border-orange-100 text-orange-600' 
+                                    : 'bg-red-50 border-red-100 text-red-600'
+                                }`}>
+                                    <FireIcon className="h-4 w-4 mb-0.5" />
+                                    <span className="text-[10px] font-bold leading-none">{Math.abs(task.currentStreak)}</span>
+                                </div>
+                            )}
 
-                                <button 
-                                    onClick={() => handleDeleteTask(task.id!)}
-                                    className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <TrashIcon className="h-5 w-5" />
-                                </button>
-                            </div>
                         </div>
-                    );
-                })}
-            </div>
+                    </div>
+                );
+            })
+        )}
       </div>
+
+      <CreateTaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onTaskAdded={refreshTasks} 
+      />
     </div>
   );
 }
@@ -4140,6 +5310,339 @@ export default function TemplateEditor() {
     </div>
   );
 }
+
+================================================================================
+FILE: src/pages/Vitality.tsx
+================================================================================
+import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { 
+    HeartIcon, 
+    FireIcon, 
+    BeakerIcon, // For Nutrition/Water
+    BoltIcon,   // For Energy
+    //ClockIcon,
+    CheckCircleIcon,
+    PlayIcon,
+    PauseIcon,
+    ArrowPathIcon
+} from '@heroicons/react/24/outline';
+
+export default function Vitality() {
+    const { user } = useAuth();
+    const [saving, setSaving] = useState(false);
+    
+    // --- MOVEMENT STATE ---
+    const [moveActivity, setMoveActivity] = useState('');
+    const [moveDuration, setMoveDuration] = useState('');
+    const [moveIntensity, setMoveIntensity] = useState('Moderate');
+    const [moveNote, setMoveNote] = useState('');
+
+    // --- NUTRITION STATE ---
+    const [mealType, setMealType] = useState('Lunch');
+    const [hungerType, setHungerType] = useState('Physical'); // vs Emotional
+    const [waterCount, setWaterCount] = useState(0); // Just a daily counter visual
+    const [nutriNote, setNutriNote] = useState('');
+
+    // --- BREATHWORK STATE ---
+    const [breathActive, setBreathActive] = useState(false);
+    const [breathPhase, setBreathPhase] = useState('Idle'); // Inhale, Hold, Exhale
+    const [breathTime, setBreathTime] = useState(0); // Seconds elapsed
+    const [breathNote, setBreathNote] = useState('');
+
+    // --- ACTIONS ---
+
+    const saveVitalityEntry = async (category: string, title: string, contentDetails: string, note: string, tags: string[]) => {
+        if (!user || !db) return;
+        setSaving(true);
+
+        const fullContent = `**${title}**\n${contentDetails}\n\n**Somatic Check-in:**\n${note || "No specific notes recorded."}`;
+
+        try {
+            await addDoc(collection(db, 'journals'), {
+                uid: user.uid,
+                content: fullContent,
+                moodScore: 5, // Default neutral, or we could add a slider
+                tags: ['Vitality', category, ...tags],
+                sentiment: 'Pending',
+                createdAt: Timestamp.now()
+            });
+            alert(`${category} Log Saved to Journal!`);
+            // Reset specific fields handled by callers
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save entry.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleLogMovement = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!moveActivity) return;
+        
+        const details = `*Activity:* ${moveActivity}\n*Duration:* ${moveDuration} mins\n*Intensity:* ${moveIntensity}`;
+        await saveVitalityEntry('Movement', 'Movement Log 🏃', details, moveNote, [moveActivity]);
+        
+        setMoveActivity('');
+        setMoveDuration('');
+        setMoveNote('');
+    };
+
+    const handleLogNutrition = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        const details = `*Meal:* ${mealType}\n*Hunger Type:* ${hungerType}`;
+        await saveVitalityEntry('Nutrition', 'Fuel Log 🍎', details, nutriNote, [mealType]);
+        
+        setNutriNote('');
+    };
+
+    // --- BREATHWORK TIMER LOGIC ---
+    useEffect(() => {
+        let interval: any;
+        if (breathActive) {
+            interval = setInterval(() => {
+                setBreathTime(prev => {
+                    const next = prev + 1;
+                    // Simple 4-7-8 Cycle (19s total) for visual phase
+                    const cycle = next % 19; 
+                    if (cycle < 4) setBreathPhase('Inhale (4s)');
+                    else if (cycle < 11) setBreathPhase('Hold (7s)');
+                    else setBreathPhase('Exhale (8s)');
+                    return next;
+                });
+            }, 1000);
+        } else {
+            setBreathPhase('Idle');
+        }
+        return () => clearInterval(interval);
+    }, [breathActive]);
+
+    const toggleBreath = () => setBreathActive(!breathActive);
+    
+    const handleLogBreath = async () => {
+        const mins = Math.floor(breathTime / 60);
+        const secs = breathTime % 60;
+        const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* 4-7-8 Relaxing Breath`;
+        
+        await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Meditation']);
+        
+        setBreathTime(0);
+        setBreathNote('');
+        setBreathActive(false);
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-6 pb-20">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <HeartIcon className="h-8 w-8 text-rose-500" />
+                Vitality & Somatic Health
+            </h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* 1. MOVEMENT CARD */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center gap-2 mb-4 text-orange-600 font-bold uppercase tracking-wide text-sm">
+                        <FireIcon className="h-5 w-5" /> Movement
+                    </div>
+                    <form onSubmit={handleLogMovement} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Activity</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="e.g. Gym, Walk" 
+                                    value={moveActivity}
+                                    onChange={(e) => setMoveActivity(e.target.value)}
+                                    className="w-full text-sm rounded-lg border-gray-300"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Duration (min)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="30" 
+                                    value={moveDuration}
+                                    onChange={(e) => setMoveDuration(e.target.value)}
+                                    className="w-full text-sm rounded-lg border-gray-300"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Intensity</label>
+                            <select 
+                                value={moveIntensity}
+                                onChange={(e) => setMoveIntensity(e.target.value)}
+                                className="w-full text-sm rounded-lg border-gray-300"
+                            >
+                                <option>Low (Restorative)</option>
+                                <option>Moderate (Steady)</option>
+                                <option>High (Intense)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Somatic Check-In</label>
+                            <textarea 
+                                rows={2}
+                                placeholder="How did this feel in your body? Did it shift your mood?"
+                                value={moveNote}
+                                onChange={(e) => setMoveNote(e.target.value)}
+                                className="w-full text-sm rounded-lg border-gray-300"
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            disabled={saving}
+                            className="w-full py-2 bg-orange-50 text-orange-600 hover:bg-orange-100 font-semibold rounded-lg transition-colors flex justify-center items-center gap-2"
+                        >
+                            <CheckCircleIcon className="h-5 w-5" />
+                            Log Movement
+                        </button>
+                    </form>
+                </div>
+
+                {/* 2. NUTRITION CARD */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center gap-2 mb-4 text-green-600 font-bold uppercase tracking-wide text-sm">
+                        <BeakerIcon className="h-5 w-5" /> Fuel & Hydration
+                    </div>
+                    
+                    {/* Water Widget */}
+                    <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg mb-4 border border-blue-100">
+                        <span className="text-sm font-medium text-blue-800">Hydration</span>
+                        <div className="flex items-center gap-2">
+                             <button onClick={() => setWaterCount(Math.max(0, waterCount - 1))} className="p-1 hover:bg-blue-100 rounded">-</button>
+                             <span className="text-xl font-bold text-blue-600">{waterCount}</span>
+                             <button onClick={() => setWaterCount(waterCount + 1)} className="p-1 hover:bg-blue-100 rounded">+</button>
+                             <span className="text-xs text-blue-400">glasses</span>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleLogNutrition} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Meal</label>
+                                <select 
+                                    value={mealType}
+                                    onChange={(e) => setMealType(e.target.value)}
+                                    className="w-full text-sm rounded-lg border-gray-300"
+                                >
+                                    <option>Breakfast</option>
+                                    <option>Lunch</option>
+                                    <option>Dinner</option>
+                                    <option>Snack</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Hunger Source</label>
+                                <select 
+                                    value={hungerType}
+                                    onChange={(e) => setHungerType(e.target.value)}
+                                    className="w-full text-sm rounded-lg border-gray-300"
+                                >
+                                    <option>Physical (Need Fuel)</option>
+                                    <option>Emotional (Comfort)</option>
+                                    <option>Boredom</option>
+                                    <option>Clock (Habit)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Mindful Eating Note</label>
+                            <textarea 
+                                rows={2}
+                                placeholder="Did you eat mindfully? How satisfied are you?"
+                                value={nutriNote}
+                                onChange={(e) => setNutriNote(e.target.value)}
+                                className="w-full text-sm rounded-lg border-gray-300"
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            disabled={saving}
+                            className="w-full py-2 bg-green-50 text-green-600 hover:bg-green-100 font-semibold rounded-lg transition-colors flex justify-center items-center gap-2"
+                        >
+                            <CheckCircleIcon className="h-5 w-5" />
+                            Log Fuel
+                        </button>
+                    </form>
+                </div>
+
+                {/* 3. BREATHWORK CARD */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-2">
+                    <div className="flex items-center gap-2 mb-4 text-sky-600 font-bold uppercase tracking-wide text-sm">
+                        <BoltIcon className="h-5 w-5" /> Breath & Regulation
+                    </div>
+                    
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                        {/* Visualizer */}
+                        <div className="relative flex items-center justify-center w-40 h-40">
+                             <div className={`absolute inset-0 bg-sky-100 rounded-full transition-all duration-[4000ms] ease-in-out ${breathPhase.includes('Inhale') ? 'scale-100 opacity-100' : breathPhase.includes('Hold') ? 'scale-100 opacity-80' : 'scale-50 opacity-50'}`}></div>
+                             <div className="relative z-10 text-center">
+                                 <div className="text-2xl font-bold text-sky-800">
+                                     {Math.floor(breathTime / 60)}:{(breathTime % 60).toString().padStart(2, '0')}
+                                 </div>
+                                 <div className="text-xs font-medium text-sky-600 uppercase tracking-wider mt-1">{breathPhase}</div>
+                             </div>
+                        </div>
+
+                        {/* Controls & Note */}
+                        <div className="flex-1 w-full space-y-4">
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={toggleBreath}
+                                    className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${breathActive ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
+                                >
+                                    {breathActive ? <><PauseIcon className="h-5 w-5" /> Pause</> : <><PlayIcon className="h-5 w-5" /> Start Breathing</>}
+                                </button>
+                                <button 
+                                    onClick={() => { setBreathActive(false); setBreathTime(0); setBreathPhase('Idle'); }}
+                                    className="px-4 rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50"
+                                >
+                                    <ArrowPathIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Post-Session Reflection</label>
+                                <textarea 
+                                    rows={2}
+                                    placeholder="What is the quality of your mind right now?"
+                                    value={breathNote}
+                                    onChange={(e) => setBreathNote(e.target.value)}
+                                    className="w-full text-sm rounded-lg border-gray-300"
+                                />
+                            </div>
+
+                            <button 
+                                onClick={handleLogBreath}
+                                disabled={breathTime < 5 || saving}
+                                className="w-full py-2 bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold rounded-lg transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+                            >
+                                <CheckCircleIcon className="h-5 w-5" />
+                                Log Session to Journal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+}
+
+// ---
 
 ================================================================================
 FILE: src/pages/WorkbookDetail.tsx
@@ -4651,6 +6154,26 @@ export default function Workbooks() {
       </div>
     </div>
   );
+}
+
+================================================================================
+FILE: src/vite-env.d.ts
+================================================================================
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_GEMINI_API_KEY: string;
+  readonly VITE_FIREBASE_API_KEY: string;
+  readonly VITE_FIREBASE_AUTH_DOMAIN: string;
+  readonly VITE_FIREBASE_PROJECT_ID: string;
+  readonly VITE_FIREBASE_STORAGE_BUCKET: string;
+  readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
+  readonly VITE_FIREBASE_APP_ID: string;
+  readonly VITE_APP_VERSION: string; // NEW
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }
 
 ================================================================================
