@@ -7,7 +7,8 @@ import {
     BoltIcon,
     AcademicCapIcon,
     BookOpenIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    HeartIcon
 } from '@heroicons/react/24/outline';
 
 interface RecoveryHeroProps {
@@ -25,6 +26,10 @@ interface RecoveryHeroProps {
         wisdom: number;
         completion: number;
     };
+    vitalityStats: { // [NEW]
+        bioStreak: number;
+        totalLogs: number;
+    };
 }
 
 export default function RecoveryHero({ 
@@ -32,7 +37,8 @@ export default function RecoveryHero({
     daysClean, 
     journalStats, 
     taskStats, 
-    workbookStats 
+    workbookStats,
+    vitalityStats 
 }: RecoveryHeroProps) {
   return (
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -58,9 +64,10 @@ export default function RecoveryHero({
              </div>
 
              {/* THE MATRIX GRID (Linked Tiles) */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+             {/* UPDATED: grid-cols-1 (Mobile Stack) -> md:grid-cols-4 (Desktop Row) */}
+             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                  
-                 {/* COLUMN 1: JOURNAL (Link) */}
+                 {/* COLUMN 1: JOURNAL */}
                  <Link to="/journal" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <BookOpenIcon className="h-4 w-4" /> Journal
@@ -83,7 +90,7 @@ export default function RecoveryHero({
                      </div>
                  </Link>
 
-                 {/* COLUMN 2: TASKS (Link) */}
+                 {/* COLUMN 2: TASKS */}
                  <Link to="/tasks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <ClipboardDocumentCheckIcon className="h-4 w-4" /> Habits
@@ -99,7 +106,7 @@ export default function RecoveryHero({
                          <div className="flex justify-between items-center">
                              <div className="flex items-center gap-2">
                                  <div className="h-5 w-5 rounded-full border-2 border-green-400 flex items-center justify-center">
-                                    <div className="h-2 w-2 bg-green-400 rounded-full" />
+                                     <div className="h-2 w-2 bg-green-400 rounded-full" />
                                  </div>
                                  <span className="text-sm font-medium">Completion</span>
                              </div>
@@ -108,7 +115,7 @@ export default function RecoveryHero({
                      </div>
                  </Link>
 
-                 {/* COLUMN 3: WORKBOOKS (Link) */}
+                 {/* COLUMN 3: WORKBOOKS */}
                  <Link to="/workbooks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <AcademicCapIcon className="h-4 w-4" /> Wisdom
@@ -132,6 +139,29 @@ export default function RecoveryHero({
                                  <span className="text-sm font-medium">Mastery</span>
                              </div>
                              <span className="text-xl font-bold">{workbookStats.completion}%</span>
+                         </div>
+                     </div>
+                 </Link>
+
+                 {/* COLUMN 4: VITALITY [NEW] */}
+                 <Link to="/vitality" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <HeartIcon className="h-4 w-4" /> Vitality
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <FireIcon className="h-5 w-5 text-rose-400" />
+                                 <span className="text-sm font-medium">Bio-Streak</span>
+                             </div>
+                             <span className="text-xl font-bold">{vitalityStats.bioStreak} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <BoltIcon className="h-5 w-5 text-green-400" />
+                                 <span className="text-sm font-medium">Total Logs</span>
+                             </div>
+                             <span className="text-xl font-bold">{vitalityStats.totalLogs}</span>
                          </div>
                      </div>
                  </Link>

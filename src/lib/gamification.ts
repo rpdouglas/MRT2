@@ -1,3 +1,5 @@
+//import { Timestamp } from 'firebase/firestore';
+
 export interface GamificationStats {
   streakDays: number;
   totalEntries: number;
@@ -17,6 +19,11 @@ export interface WorkbookStats {
     masterCompletion: number; // % of total questions
 }
 
+export interface VitalityStats {
+    bioStreak: number;
+    totalLogs: number;
+}
+
 // Helper to check if two dates are the same day
 const isSameDay = (d1: Date, d2: Date) => {
   return d1.getFullYear() === d2.getFullYear() &&
@@ -31,7 +38,7 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
             totalEntries: 0, 
             averageMood: 0, 
             journalStreak: 0, 
-            consistencyRate: 0,
+            consistencyRate: 0, 
             totalWords: 0
         };
     }
@@ -49,11 +56,9 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
 
     // 3. Journal Streak
     let currentStreak = 0;
-    
     // Check if posted today
     const lastPostDate = sorted[0].createdAt.toDate();
     const postedToday = isSameDay(lastPostDate, today);
-    
     // If not posted today, check if posted yesterday to maintain streak
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -67,7 +72,6 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
         journals.forEach(j => {
             uniqueDays.add(j.createdAt.toDate().toDateString());
         });
-        
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
         for (let i = 0; i < sortedDates.length - 1; i++) {
@@ -76,8 +80,8 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
             
             // Difference in days
             const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
             if (diffDays === 1) {
                 currentStreak++;
             } else {
@@ -131,9 +135,53 @@ export const calculateTaskStats = (tasks: any[]): TaskStats => {
 export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
     // Note: totalQuestionsAvailable is defaulted to 50 for now, 
     // ideally passed from the Workbook definitions if available.
-    
     return {
         wisdomScore: answersSnapshotSize,
         masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
     };
+};
+
+// [NEW] Calculate stats for Vitality Module
+export const calculateVitalityStats = (journals: any[]): VitalityStats => {
+    if (!journals) return { bioStreak: 0, totalLogs: 0 };
+
+    // Filter for entries tagged 'Vitality'
+    const vitalityLogs = journals.filter(j => j.tags && j.tags.includes('Vitality'));
+    
+    if (vitalityLogs.length === 0) return { bioStreak: 0, totalLogs: 0 };
+
+    // 1. Total Logs
+    const totalLogs = vitalityLogs.length;
+
+    // 2. Bio Streak (Same logic as Journal Streak)
+    const sorted = [...vitalityLogs].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    const today = new Date();
+    
+    let currentStreak = 0;
+    const lastPostDate = sorted[0].createdAt.toDate();
+    const postedToday = isSameDay(lastPostDate, today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const postedYesterday = isSameDay(lastPostDate, yesterday);
+
+    if (postedToday || postedYesterday) {
+        currentStreak = 1;
+        const uniqueDays = new Set<string>();
+        vitalityLogs.forEach(j => {
+            uniqueDays.add(j.createdAt.toDate().toDateString());
+        });
+        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
+        
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = sortedDates[i];
+            const next = sortedDates[i+1];
+            const diffTime = Math.abs(current.getTime() - next.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) currentStreak++;
+            else break;
+        }
+    }
+
+    return { bioStreak: currentStreak, totalLogs };
 };
