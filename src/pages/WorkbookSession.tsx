@@ -1,4 +1,3 @@
-// src/pages/WorkbookSession.tsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getWorkbook } from '../data/workbooks';
@@ -36,13 +35,29 @@ export default function WorkbookSession() {
       const saved = await getSectionAnswers(user.uid, workbook.id, section.id);
       setAnswers(saved);
       
-      // Find first unanswered question to jump to
-      // Filter out read_only questions from this logic if preferred, 
-      // but jumping to the first step is usually safe.
-      const firstEmptyIndex = section.questions.findIndex(q => 
-        q.type !== 'read_only' && !saved[q.id]
-      );
-      if (firstEmptyIndex !== -1) setCurrentIndex(firstEmptyIndex);
+      // --- SMART RESUME LOGIC ---
+      // Find the index of the first actual 'input' question in the array
+      const firstInputIndex = section.questions.findIndex(q => q.type !== 'read_only');
+      
+      // Find the index of the first question that hasn't been answered yet
+      const firstMissingAnswerIndex = section.questions.findIndex(q => q.type !== 'read_only' && !saved[q.id]);
+
+      // CASE 1: No input questions exist (Read only section) -> Start at 0
+      if (firstInputIndex === -1) {
+          setCurrentIndex(0);
+      }
+      // CASE 2: The user hasn't answered the FIRST input question yet -> Start at 0 (Show Intro)
+      else if (firstMissingAnswerIndex === firstInputIndex) {
+          setCurrentIndex(0);
+      }
+      // CASE 3: The user has answered some questions -> Resume at the first missing one
+      else if (firstMissingAnswerIndex !== -1) {
+          setCurrentIndex(firstMissingAnswerIndex);
+      }
+      // CASE 4: Section is complete -> Start at 0 (Review mode)
+      else {
+          setCurrentIndex(0);
+      }
       
       setLoading(false);
     }
@@ -124,8 +139,7 @@ export default function WorkbookSession() {
 
             <div className="space-y-8">
                 {section.questions.map((q, idx) => {
-                    // Skip read_only slides in print mode? Or include them?
-                    // Let's include them as context blocks.
+                    // Include read_only slides as context blocks
                     if (q.type === 'read_only') {
                         return (
                             <div key={q.id} className="break-inside-avoid bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -168,7 +182,10 @@ export default function WorkbookSession() {
                 <XMarkIcon className="h-6 w-6" />
             </button>
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Question {currentIndex + 1} of {section.questions.length}
+                {currentQuestion.type === 'read_only' 
+                    ? 'Introduction'
+                    : `Question ${currentIndex + 1} of ${section.questions.length}`
+                }
             </div>
          </div>
          
@@ -209,7 +226,7 @@ export default function WorkbookSession() {
              // --- INPUT SLIDE ---
              <div className="space-y-6">
                 
-                {/* A. Insight/Context (Shown FIRST as requested) */}
+                {/* A. Insight/Context (Shown FIRST) */}
                 {currentQuestion.context && (
                     <div className="flex gap-3 bg-purple-50 p-5 rounded-xl text-purple-900 border border-purple-100 shadow-sm">
                         <InformationCircleIcon className="h-6 w-6 flex-shrink-0 text-purple-600" />
