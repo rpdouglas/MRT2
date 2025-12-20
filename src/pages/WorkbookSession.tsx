@@ -237,10 +237,12 @@ export default function WorkbookSession() {
                     </div>
                 )}
 
-                {/* B. Question Text (Shown SECOND) */}
-                <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-                    {currentQuestion.text}
-                </h2>
+                {/* B. Question Text (Shown SECOND - Styled as Focus Card) */}
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-900 leading-relaxed">
+                        {currentQuestion.text}
+                    </h2>
+                </div>
 
                 {/* C. Input Textarea (Shown THIRD) */}
                 <textarea
