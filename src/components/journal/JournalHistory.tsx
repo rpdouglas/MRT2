@@ -10,7 +10,11 @@ import {
     FunnelIcon,
     MagnifyingGlassIcon,
     XMarkIcon,
-    ShareIcon
+    ShareIcon,
+    ShieldExclamationIcon,
+    TrophyIcon,
+    WrenchScrewdriverIcon,
+    LightBulbIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
@@ -253,7 +257,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           filteredEntries.map(entry => (
             <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
               
-              {/* --- HEADER ROW (Updated: Meta Stack with Tags) --- */}
+              {/* --- HEADER ROW (Stacked Meta) --- */}
               <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
                 
                 {/* Left: Stacked Meta (Date / Time+Weather / Tags) */}
@@ -343,57 +347,97 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           ))
       )}
 
-      {/* --- AI MODAL --- */}
+      {/* --- AI MODAL (RECOVERY COMPASS) --- */}
       <Transition appear show={showInsightModal} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
           <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900 flex items-center gap-2">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-4 mb-4">
                     <SparklesIcon className="h-6 w-6 text-purple-500" />
-                    Filtered Insights
+                    Recovery Compass Analysis
                   </Dialog.Title>
                   
                   {analyzing ? (
-                    <div className="mt-4 py-8 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                        <p className="mt-2 text-sm text-gray-500">Analyzing your {filteredEntries.length} selected entries...</p>
+                    <div className="py-12 flex flex-col items-center justify-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mb-4"></div>
+                        <p className="text-gray-500 font-medium">Consulting your AI Sponsor...</p>
                     </div>
                   ) : (
                     insight && (
-                        <div className="mt-4 space-y-4">
-                            <div className="bg-purple-50 p-4 rounded-lg text-sm text-gray-700 leading-relaxed">
-                                {insight.analysis}
-                            </div>
+                        <div className="space-y-6">
                             
-                            <div className="flex justify-between items-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                <span>Mood: <span className="text-purple-700">{insight.mood}</span></span>
-                                <span>Sentiment: <span className="text-purple-700">{insight.sentiment}</span></span>
+                            {/* 1. TOP SUMMARY ROW */}
+                            <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex gap-4">
+                                <div className="flex-shrink-0 p-2 bg-purple-100 rounded-lg h-fit">
+                                    <LightBulbIcon className="h-6 w-6 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-purple-900 text-sm uppercase tracking-wide mb-1">The Insight</h4>
+                                    <p className="text-purple-800 text-sm leading-relaxed">{insight.summary}</p>
+                                    <div className="flex gap-3 mt-3">
+                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
+                                            Mood: {insight.mood}
+                                        </span>
+                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
+                                            Sentiment: {insight.sentiment}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-900 mb-2">Suggested Actions:</h4>
-                                <ul className="space-y-2">
-                                    {insight.actionableSteps.map((step, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                                            <span className="text-purple-500 mt-1">•</span>
-                                            {step}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* 2. RISK ANALYSIS (The Shield) */}
+                                <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                                    <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
+                                        <ShieldExclamationIcon className="h-5 w-5" />
+                                        Risk Detection
+                                    </div>
+                                    <p className="text-sm text-orange-900 leading-relaxed">
+                                        {insight.risk_analysis}
+                                    </p>
+                                </div>
+
+                                {/* 3. POSITIVE REINFORCEMENT (The Spark) */}
+                                <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                                    <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm uppercase tracking-wide">
+                                        <TrophyIcon className="h-5 w-5" />
+                                        Strengths & Wins
+                                    </div>
+                                    <p className="text-sm text-green-900 leading-relaxed">
+                                        {insight.positive_reinforcement}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 4. TOOL SUGGESTIONS (The Toolkit) */}
+                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
+                                    <WrenchScrewdriverIcon className="h-5 w-5" />
+                                    Suggested Toolkit
+                                </div>
+                                <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {insight.tool_suggestions.map((tool, i) => (
+                                        <li key={i} className="bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border border-blue-100 flex items-start gap-2">
+                                            <span className="text-blue-400 font-bold">•</span>
+                                            {tool}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
+
                         </div>
                     )
                   )}
 
-                  <div className="mt-6">
-                    <button type="button" className="inline-flex justify-center rounded-md border border-transparent bg-purple-100 px-4 py-2 text-sm font-medium text-purple-900 hover:bg-purple-200 focus:outline-none w-full" onClick={() => setShowInsightModal(false)}>
-                      Close
+                  <div className="mt-6 flex justify-end">
+                    <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
+                      Close Analysis
                     </button>
                   </div>
                 </Dialog.Panel>
