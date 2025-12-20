@@ -10,6 +10,22 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    # --- LINTER FIX: Initialize empty vars so VS Code doesn't complain ---
+    env:
+      FIREBASE_PROJECT_ID: ""
+      SERVICE_ACCOUNT_JSON: ""
+      VITE_FIREBASE_API_KEY: ""
+      VITE_FIREBASE_AUTH_DOMAIN: ""
+      VITE_FIREBASE_PROJECT_ID: ""
+      VITE_FIREBASE_STORAGE_BUCKET: ""
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ""
+      VITE_FIREBASE_APP_ID: ""
+      VITE_FIREBASE_MEASUREMENT_ID: ""
+      VITE_APP_VERSION: ""
 
     steps:
       - name: Checkout Repo
@@ -23,6 +39,16 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      # --- VERSIONING STEP ---
+      - name: Increment Version
+        id: versioning
+        run: node scripts/increment-version.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          # GH_PAT: ${{ secrets.GH_PAT }} 
 
       # --- 1. SET ENVIRONMENT VARIABLES ---
       
@@ -41,7 +67,6 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_DEV }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_DEV }}" >> $GITHUB_ENV
           
-          # Decode Service Account
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV_BASE64 }}" | base64 -d > ./service-account.json
 
       # UAT Environment
@@ -88,7 +113,6 @@ jobs:
       - name: Build Application
         run: npm run build
         env:
-          # Pass the Individual Keys to the Build Process
           VITE_FIREBASE_API_KEY: ${{ env.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ env.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ env.VITE_FIREBASE_PROJECT_ID }}
@@ -97,6 +121,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ env.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ env.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_APP_VERSION: ${{ env.VITE_APP_VERSION }}
 
       # --- 3. DEPLOY TO FIREBASE HOSTING ---
 
@@ -104,6 +129,6 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ env.SERVICE_ACCOUNT_JSON }}
-          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+          firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
+          projectId: "${{ env.FIREBASE_PROJECT_ID }}"
           channelId: live

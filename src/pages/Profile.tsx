@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-// REMOVED 'type UserProfile' from the import below
 import { getProfile, updateProfileData } from '../lib/db';
 import { importLegacyJournals } from '../lib/importer';
 import { 
@@ -15,6 +14,9 @@ import { useNavigate } from 'react-router-dom';
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // --- VERSIONING ---
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
   
   const [displayName, setDisplayName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState('');
@@ -65,6 +67,7 @@ export default function Profile() {
       let dateObj: Date | null = null;
       if (sobrietyDate) {
          const [y, m, d] = sobrietyDate.split('-').map(Number);
+         // Note: Month is 0-indexed in JS Date
          dateObj = new Date(y, m - 1, d);
       }
       
@@ -112,7 +115,7 @@ export default function Profile() {
   if (loading) return <div>Loading profile...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8 pb-10">
       <div className="flex items-center gap-4 border-b border-gray-200 pb-6">
         <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
            {user?.photoURL ? (
@@ -127,6 +130,7 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* --- PROFILE FORM --- */}
       <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Display Name</label>
@@ -146,7 +150,7 @@ export default function Profile() {
             onChange={(e) => setSobrietyDate(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
           />
-          <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats.</p>
+          <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
         </div>
 
         {message && (
@@ -221,6 +225,11 @@ export default function Profile() {
           <ArrowLeftOnRectangleIcon className="h-5 w-5" />
           Log Out
         </button>
+      </div>
+
+      {/* --- VERSION INFO --- */}
+      <div className="text-center text-xs text-gray-400 font-mono">
+          App Version: v{appVersion}
       </div>
     </div>
   );
