@@ -12,18 +12,39 @@ import JournalTabs from '../components/journal/JournalTabs';
 import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Journal() {
   const { user } = useAuth();
-
+  
+  // URL Param Logic (Deep Linking)
+  const [searchParams] = useSearchParams();
+  const initialTemplateId = searchParams.get('template'); // e.g., 'urge_log'
+  
   // Navigation State
+  // Initialize to 'write' (default)
   const [activeTab, setActiveTab] = useState<'write' | 'history' | 'insights'>('write');
+  
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
   // Stats Data State
   const [streak, setStreak] = useState(0);
   const [consistency, setConsistency] = useState(0);
   const [totalWords, setTotalWords] = useState(0);
+
+  // Handle URL Params for SOS Deep Link
+  useEffect(() => {
+      if (initialTemplateId) {
+          // FIX: Use setTimeout to push state update to the next tick.
+          // This resolves the "synchronous setState in effect" error.
+          setTimeout(() => {
+              setActiveTab('write');
+          }, 0);
+      }
+      // Note: We deliberately exclude 'activeTab' from dependencies.
+      // We only want to auto-switch when the URL param *changes* or on mount,
+      // not every time the user clicks a tab while the param happens to be there.
+  }, [initialTemplateId]);
 
   // Initial Load Logic (Stats)
   useEffect(() => {
@@ -58,7 +79,7 @@ export default function Journal() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
       
-      {/* --- NEW HEADER (Tasks Style) --- */}
+      {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -102,6 +123,7 @@ export default function Journal() {
         {activeTab === 'write' ? (
           <JournalEditor 
             initialEntry={editingEntry} 
+            initialTemplateId={initialTemplateId} // Passing URL Param
             onSaveComplete={handleSaveComplete} 
           />
         ) : activeTab === 'history' ? (

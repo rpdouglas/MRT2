@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
 import RecoveryHero from '../components/RecoveryHero';
+import SOSModal from '../components/SOSModal'; // NEW
 
 // Estimated Total Questions across all workbooks for gamification calc
 const TOTAL_WORKBOOK_QUESTIONS = 45;
@@ -19,6 +20,9 @@ export default function Dashboard() {
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
 
+  // SOS State
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
+
   useEffect(() => {
     if (!user) return;
 
@@ -29,6 +33,7 @@ export default function Dashboard() {
             // 0. Fetch User Profile for Sobriety Date
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
+            
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 if (userData.sobrietyDate) {
@@ -48,7 +53,7 @@ export default function Dashboard() {
             );
             const journalSnap = await getDocs(journalQ);
             const journals = journalSnap.docs.map(d => ({...d.data(), createdAt: d.data().createdAt}));
-            
+
             // Calc Journal Stats
             const jStats = calculateJournalStats(journals);
             setJournalStats({ 
@@ -96,6 +101,13 @@ export default function Dashboard() {
          taskStats={taskStats}
          workbookStats={workbookStats}
          vitalityStats={vitalityStats}
+         onSOSClick={() => setIsSOSOpen(true)}
+      />
+
+      {/* SOS MODAL */}
+      <SOSModal 
+        isOpen={isSOSOpen} 
+        onClose={() => setIsSOSOpen(false)} 
       />
 
     </div>

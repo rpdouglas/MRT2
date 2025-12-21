@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2025-12-20T06:16:13.404Z
+PROJECT EXPORT - 2025-12-21T15:45:41.952Z
 
 
 ================================================================================
@@ -12,8 +12,18 @@ FILE: package.json
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "preview": "vite preview",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+  "src/**/*.{ts,tsx}": [
+    "eslint --fix",
+    "vitest related --run"
+  ]
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -30,23 +40,33 @@ FILE: package.json
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
     "clsx": "^2.1.1",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
+    "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.3.0",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "3.4",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.0.16"
   }
 }
 
@@ -54,13 +74,26 @@ FILE: package.json
 ================================================================================
 FILE: vite.config.ts
 ================================================================================
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa';
+import react from '@vitejs/plugin-react';
+// We remove the standard 'defineConfig' from 'vite' and use the vitest-augmented version 
+// to satisfy both the TypeScript compiler and ESLint rules.
+import { defineConfig as defineVitestConfig } from 'vitest/config';
 
-icons: [
+export default defineVitestConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      manifest: {
+        name: 'My Recovery Toolkit',
+        short_name: 'MRT',
+        description: 'A Buddhist-inspired and 12-step recovery companion toolkit.',
+        theme_color: '#2563eb',
+        icons: [
           {
-            // Note: The generator usually names them like this
-            src: 'pwa-192x192.png', 
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
@@ -68,15 +101,67 @@ icons: [
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable' // 'maskable' ensures it fills the circle on Android
+            purpose: 'any maskable'
           }
         ]
+      }
+    })
+  ],
+  test: {
+    // Enable global APIs like 'describe', 'it', and 'expect'
+    globals: true,
+    // Simulate a browser environment using jsdom for React component testing
+    environment: 'jsdom',
+    // Path to the setup file that extends DOM matchers
+    setupFiles: './src/test/setup.ts',
+    // Ensure CSS is processed so tests can verify styles or visibility
+    css: true,
+  },
+});
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
-
+================================================================================
+FILE: .eslintrc.json
+================================================================================
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2020": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["react-refresh", "@typescript-eslint"],
+  "rules": {
+    "react-refresh/only-export-components": [
+      "warn",
+      { "allowConstantExport": true }
+    ],
+    "react/prop-types": "off", 
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error"] }]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}
 
 ================================================================================
 FILE: check_models.js
@@ -407,7 +492,7 @@ import {
   ArrowLeftOnRectangleIcon,
   ClipboardDocumentListIcon,
   AcademicCapIcon,
-  HeartIcon // NEW IMPORT
+  HeartIcon 
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -421,7 +506,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Journal', href: '/journal', icon: BookOpenIcon },
-    { name: 'Vitality', href: '/vitality', icon: HeartIcon }, // NEW LINK
+    { name: 'Vitality', href: '/vitality', icon: HeartIcon },
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
@@ -429,7 +514,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      setSidebarOpen(false); // Ensure menu closes on logout too
+      setSidebarOpen(false); 
       await logout();
       navigate('/login');
     } catch (error) {
@@ -444,17 +529,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-0 bg-gray-900/80" />
           <div className="fixed inset-0 flex">
             <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 transform flex-col bg-blue-600 transition-all">
-               <div className="flex h-16 shrink-0 items-center justify-between px-6">
-                  {/* Mobile Drawer Header */}
-                  <div className="flex items-center gap-2">
-                    <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
-                    <span className="text-white font-bold text-2xl">My Recovery Toolkit</span>
-                    <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
-                  </div>
+               
+               {/* UPDATED: Clean header with only Close Button */}
+               <div className="flex h-16 shrink-0 items-center justify-end px-6">
                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white">
+                    <span className="sr-only">Close sidebar</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                </div>
+
                <nav className="flex flex-1 flex-col px-6 pb-4">
                  <ul role="list" className="flex flex-1 flex-col gap-y-7">
                    <li>
@@ -463,7 +546,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                          <li key={item.name}>
                            <Link
                              to={item.href}
-                             onClick={() => setSidebarOpen(false)} // <--- CLOSE SIDEBAR ON CLICK
+                             onClick={() => setSidebarOpen(false)}
                              className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 ${
                                location.pathname === item.href
                                  ? 'bg-blue-700 text-white'
@@ -482,7 +565,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                      <div className="flex flex-col gap-2">
                         {user && (
                             <div className="flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white bg-blue-700/50">
-                                {user.photoURL ? (
+                               {user.photoURL ? (
                                     <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700" />
                                 ) : (
                                     <UserCircleIcon className="h-8 w-8 text-blue-200" />
@@ -543,7 +626,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <div className="flex items-center gap-x-3 rounded-md px-2 py-2 text-sm font-semibold leading-6 text-white">
                             {user.photoURL ? (
                                 <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700" />
-                            ) : (
+                             ) : (
                                 <UserCircleIcon className="h-8 w-8 text-blue-200" />
                             )}
                             <span className="sr-only">Your profile</span>
@@ -565,7 +648,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="lg:pl-72">
-        {/* MOBILE TOP BAR (UPDATED) */}
+        {/* MOBILE TOP BAR */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-center border-b border-blue-700 bg-blue-600 px-4 shadow-sm lg:hidden">
           
           {/* Hamburger Button - Positioned Absolutely to left */}
@@ -836,7 +919,8 @@ import {
     BoltIcon,
     AcademicCapIcon,
     BookOpenIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    HeartIcon
 } from '@heroicons/react/24/outline';
 
 interface RecoveryHeroProps {
@@ -854,6 +938,10 @@ interface RecoveryHeroProps {
         wisdom: number;
         completion: number;
     };
+    vitalityStats: { // [NEW]
+        bioStreak: number;
+        totalLogs: number;
+    };
 }
 
 export default function RecoveryHero({ 
@@ -861,7 +949,8 @@ export default function RecoveryHero({
     daysClean, 
     journalStats, 
     taskStats, 
-    workbookStats 
+    workbookStats,
+    vitalityStats 
 }: RecoveryHeroProps) {
   return (
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -887,9 +976,10 @@ export default function RecoveryHero({
              </div>
 
              {/* THE MATRIX GRID (Linked Tiles) */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+             {/* UPDATED: grid-cols-1 (Mobile Stack) -> md:grid-cols-4 (Desktop Row) */}
+             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                  
-                 {/* COLUMN 1: JOURNAL (Link) */}
+                 {/* COLUMN 1: JOURNAL */}
                  <Link to="/journal" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <BookOpenIcon className="h-4 w-4" /> Journal
@@ -912,7 +1002,7 @@ export default function RecoveryHero({
                      </div>
                  </Link>
 
-                 {/* COLUMN 2: TASKS (Link) */}
+                 {/* COLUMN 2: TASKS */}
                  <Link to="/tasks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <ClipboardDocumentCheckIcon className="h-4 w-4" /> Habits
@@ -928,7 +1018,7 @@ export default function RecoveryHero({
                          <div className="flex justify-between items-center">
                              <div className="flex items-center gap-2">
                                  <div className="h-5 w-5 rounded-full border-2 border-green-400 flex items-center justify-center">
-                                    <div className="h-2 w-2 bg-green-400 rounded-full" />
+                                     <div className="h-2 w-2 bg-green-400 rounded-full" />
                                  </div>
                                  <span className="text-sm font-medium">Completion</span>
                              </div>
@@ -937,7 +1027,7 @@ export default function RecoveryHero({
                      </div>
                  </Link>
 
-                 {/* COLUMN 3: WORKBOOKS (Link) */}
+                 {/* COLUMN 3: WORKBOOKS */}
                  <Link to="/workbooks" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <AcademicCapIcon className="h-4 w-4" /> Wisdom
@@ -961,6 +1051,29 @@ export default function RecoveryHero({
                                  <span className="text-sm font-medium">Mastery</span>
                              </div>
                              <span className="text-xl font-bold">{workbookStats.completion}%</span>
+                         </div>
+                     </div>
+                 </Link>
+
+                 {/* COLUMN 4: VITALITY [NEW] */}
+                 <Link to="/vitality" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
+                     <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
+                         <HeartIcon className="h-4 w-4" /> Vitality
+                     </div>
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <FireIcon className="h-5 w-5 text-rose-400" />
+                                 <span className="text-sm font-medium">Bio-Streak</span>
+                             </div>
+                             <span className="text-xl font-bold">{vitalityStats.bioStreak} Days</span>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-2">
+                                 <BoltIcon className="h-5 w-5 text-green-400" />
+                                 <span className="text-sm font-medium">Total Logs</span>
+                             </div>
+                             <span className="text-xl font-bold">{vitalityStats.totalLogs}</span>
                          </div>
                      </div>
                  </Link>
@@ -1195,7 +1308,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 
     // Extended Type Check: Use 'any' to safely access properties that might not be in the imported type yet
     const custTemplate = customTemplates.find(t => t.id === tId) as any;
-    
     if (custTemplate) {
         // CASE 1: Free Text Template (Markdown)
         if (custTemplate.content) {
@@ -1257,7 +1369,6 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     setSaving(true);
 
     let finalContent = newEntry;
-
     if (activeTemplate) {
         finalContent = `**${activeTemplate.name}**\n\n`;
         activeTemplate.prompts.forEach((prompt, idx) => {
@@ -1305,7 +1416,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
              
              {/* LEFT: Weather Widget */}
              <div>
-                {weather ? (
+                 {weather ? (
                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
                       <span>{weather.condition}</span>
                       <span className="font-bold">{weather.temp}°C</span>
@@ -1372,6 +1483,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         
         <form onSubmit={handleSave} className="p-4 space-y-4">
           
+          {/* EDITOR AREA */}
           {activeTemplate ? (
              <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                 <div className="flex justify-between items-center mb-2">
@@ -1411,77 +1523,84 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             />
           )}
 
-          {/* --- TAG INPUT BAR --- */}
-          <div className="relative group">
-              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                  <TagIcon className="h-4 w-4 text-gray-400" />
-                  
-                  {/* Selected Tags Chips */}
-                  {tags.map(tag => (
-                      <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
-                          {tag}
-                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                              <XMarkIcon className="h-3 w-3" />
-                          </button>
-                      </span>
-                  ))}
-
-                  {/* Input Field */}
-                  <input 
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => {
-                          setTagInput(e.target.value);
-                          setShowSuggestions(true);
-                      }}
-                      onKeyDown={handleAddTag}
-                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay so click registers
-                      placeholder={tags.length === 0 ? "Add tags (e.g. Grateful, Morning)..." : ""}
-                      className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
-                  />
-              </div>
-
-              {/* Autocomplete Suggestions */}
-              {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
-                  <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-10">
-                      {filteredSuggestions.map(tag => (
-                          <button
-                            key={tag}
-                            type="button"
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                            onClick={() => addTag(tag)}
-                          >
-                              {tag}
-                          </button>
-                      ))}
-                  </div>
-              )}
-          </div>
-
-          {/* FOOTER: Mood (Left) | Save Button (Right) */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            
-            {/* Mood Slider */}
-            <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-               <span className="text-sm font-medium text-gray-500">Mood:</span>
-               <input 
+          {/* MOOD SLIDER (Moved to Full Width) */}
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+             <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">Mood Score</label>
+                <span className={`text-sm font-bold px-2 py-0.5 rounded ${mood >= 7 ? 'text-green-700 bg-green-100' : mood <= 4 ? 'text-red-700 bg-red-100' : 'text-yellow-700 bg-yellow-100'}`}>
+                    {mood}/10
+                </span>
+             </div>
+             <input 
                  type="range" 
                  min="1" 
                  max="10" 
                  value={mood}
                  onChange={(e) => setMood(Number(e.target.value))}
-                 className="w-24 accent-blue-600 cursor-pointer"
-               />
-               <span className={`text-sm font-bold w-6 text-center ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`}>
-                 {mood}
-               </span>
+                 className="w-full accent-blue-600 cursor-pointer"
+             />
+             <div className="flex justify-between text-xs text-gray-400 mt-1">
+                 <span>Struggling</span>
+                 <span>Neutral</span>
+                 <span>Thriving</span>
+             </div>
+          </div>
+
+          {/* FOOTER: Tags (Left) | Save Button (Right) */}
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            
+            {/* TAG INPUT (Moved to Footer) */}
+            <div className="relative group w-full sm:flex-1">
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                    <TagIcon className="h-4 w-4 text-gray-400" />
+                    
+                    {/* Selected Tags Chips */}
+                    {tags.map(tag => (
+                        <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                            {tag}
+                            <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                <XMarkIcon className="h-3 w-3" />
+                            </button>
+                        </span>
+                    ))}
+
+                    {/* Input Field */}
+                    <input 
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => {
+                            setTagInput(e.target.value);
+                            setShowSuggestions(true);
+                        }}
+                        onKeyDown={handleAddTag}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        placeholder={tags.length === 0 ? "Add tags (e.g. Grateful)..." : ""}
+                        className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
+                    />
+                </div>
+
+                {/* Autocomplete Suggestions (Positioned Bottom-Up from footer) */}
+                {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                    <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
+                        {filteredSuggestions.map(tag => (
+                            <button
+                                key={tag}
+                                type="button"
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                onClick={() => addTag(tag)}
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Save Button */}
             <button
               type="submit"
               disabled={saving}
-              className="ml-auto flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
             >
               {saving ? (
                 <span>Saving...</span>
@@ -1501,6 +1620,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
 ================================================================================
 FILE: src/components/journal/JournalHistory.tsx
 ================================================================================
+// src/components/journal/JournalHistory.tsx
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
@@ -1517,10 +1637,13 @@ import {
     ShieldExclamationIcon,
     TrophyIcon,
     WrenchScrewdriverIcon,
-    LightBulbIcon
+    LightBulbIcon,
+    PlusCircleIcon,   // NEW: For Add Action
+    CheckCircleIcon   // NEW: For Success State
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
+import { addTask } from '../../lib/tasks'; // NEW: Task creation logic
 import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
@@ -1547,6 +1670,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  
+  // NEW: Track which AI suggestions have been added to tasks
+  const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
@@ -1612,6 +1738,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const handleDelete = async (id: string) => {
     if (!db) return;
     if (!confirm('Are you sure you want to delete this entry?')) return;
+
     try {
       await deleteDoc(doc(db, 'journals', id));
       await loadEntries(); // Reload to refresh list
@@ -1646,15 +1773,43 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleAiAnalysis = async () => {
     if (filteredEntries.length === 0) return;
+    
     setAnalyzing(true);
     setShowInsightModal(true);
+    setAddedTools(new Set()); // Reset added state for new analysis
     
     // Analyze filtered results (up to 10 to avoid token limits)
     const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
-    
     const result = await analyzeJournalEntries(textsToAnalyze);
+    
     setInsight(result);
     setAnalyzing(false);
+  };
+
+  // NEW: Handle adding a suggestion to tasks
+  const handleAddToTasks = async (toolSuggestion: string) => {
+    if (!user) return;
+
+    try {
+        // Calculate due date (Today + 7 days)
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 7);
+
+        await addTask(
+            user.uid,
+            toolSuggestion,
+            'once',      // Frequency
+            'Medium',    // Priority
+            dueDate      // Due Date
+        );
+
+        // Update local state to show success checkmark
+        setAddedTools(prev => new Set(prev).add(toolSuggestion));
+
+    } catch (error) {
+        console.error("Failed to add task from suggestion:", error);
+        alert("Could not add task. Please try again.");
+    }
   };
 
   const clearFilters = () => {
@@ -1780,7 +1935,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             <>
                                 <span className="text-gray-300">•</span>
                                 <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
-                                    {entry.weather.condition}, {entry.weather.temp}°C
+                                   {entry.weather.condition}, {entry.weather.temp}°C
                                 </span>
                             </>
                         )}
@@ -1922,15 +2077,34 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                                 <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
                                     <WrenchScrewdriverIcon className="h-5 w-5" />
-                                    Suggested Toolkit
+                                    Suggested Toolkit (Quick Add)
                                 </div>
                                 <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    {insight.tool_suggestions.map((tool, i) => (
-                                        <li key={i} className="bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border border-blue-100 flex items-start gap-2">
-                                            <span className="text-blue-400 font-bold">•</span>
-                                            {tool}
-                                        </li>
-                                    ))}
+                                    {insight.tool_suggestions.map((tool, i) => {
+                                        const isAdded = addedTools.has(tool);
+                                        return (
+                                            <li key={i} className={`bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border ${isAdded ? 'border-green-200 bg-green-50' : 'border-blue-100'} flex items-start gap-2 justify-between group`}>
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-blue-400 font-bold mt-0.5">•</span>
+                                                    <span className={isAdded ? 'text-green-700' : ''}>{tool}</span>
+                                                </div>
+                                                
+                                                {/* QUICK ADD BUTTON */}
+                                                <button 
+                                                    onClick={() => !isAdded && handleAddToTasks(tool)}
+                                                    disabled={isAdded}
+                                                    className={`flex-shrink-0 transition-all ${isAdded ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
+                                                    title={isAdded ? "Added to tasks" : "Add to tasks"}
+                                                >
+                                                    {isAdded ? (
+                                                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                                                    ) : (
+                                                        <PlusCircleIcon className="h-5 w-5 text-blue-300 group-hover:text-blue-600" />
+                                                    )}
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
 
@@ -2677,10 +2851,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 ================================================================================
 FILE: src/data/workbooks.ts
 ================================================================================
+// src/data/workbooks.ts
+
 export interface Question {
   id: string;
   text: string;
-  context?: string; // Optional context/quote from literature
+  context?: string; // Optional context/quote from literature (The Insight)
+  type?: 'input' | 'read_only'; // Defaults to 'input' if undefined
 }
 
 export interface WorkbookSection {
@@ -2699,12 +2876,13 @@ export interface Workbook {
 }
 
 // Helper to generate generic questions for sections we don't fully populate in this snippet
-const generateQuestions = (count: number, prefix: string): Question[] => {
-  return Array.from({ length: count }).map((_, i) => ({
-    id: `${prefix}_q${i + 1}`,
-    text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
-  }));
-};
+//const generateQuestions = (count: number, prefix: string): Question[] => {
+//  return Array.from({ length: count }).map((_, i) => ({
+//    id: `${prefix}_q${i + 1}`,
+//    text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
+//    type: 'input'
+//  }));
+//};
 
 // --- 1. GENERAL RECOVERY WORKBOOK (25 Questions) ---
 const generalQuestions: Question[] = [
@@ -2735,46 +2913,514 @@ const generalQuestions: Question[] = [
   { id: 'gen_25', text: "Why is recovery worth it for you?" },
 ];
 
-// --- 2. 12-STEP WORKBOOK (12 Steps, ~15 Qs each) ---
+// --- 2. 12-STEP WORKBOOK (Unified Steps Approach) ---
+
+// Helper to build the 16-slide structure for Steps 2-11 (Standardized Template)
+const createStepStructure = (
+  stepNum: number,
+  introText: string,
+  insight1: string,
+  insight2: string,
+  insight3: string
+): Question[] => {
+  const q: Question[] = [];
+  
+  // 1. Intro Slide
+  q.push({
+    id: `s${stepNum}_intro`,
+    type: 'read_only',
+    text: introText
+  });
+
+  // 2. Section 1 (5 Qs)
+  for (let i = 1; i <= 5; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: How does the concept of this section apply to your life today?`,
+      context: insight1
+    });
+  }
+
+  // 3. Section 2 (5 Qs)
+  for (let i = 6; i <= 10; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: What barriers do you face regarding this principle?`,
+      context: insight2
+    });
+  }
+
+  // 4. Section 3 (5 Qs)
+  for (let i = 11; i <= 15; i++) {
+    q.push({
+      id: `s${stepNum}_q${i}`,
+      type: 'input',
+      text: `Step ${stepNum} Reflection Q${i}: How can you put this into practice immediately?`,
+      context: insight3
+    });
+  }
+
+  return q;
+};
+
+// -- STEP 1 (Fully Populated from User Doc) --
 const step1Questions: Question[] = [
-  { id: 's1_q1', text: "Do you accept that you have a disease of addiction?", context: "We admitted we were powerless over our addiction..." },
-  { id: 's1_q2', text: "How has the disease of addiction manifested in your life?" },
-  { id: 's1_q3', text: "Have you ever tried to stop on your own and found you couldn't?" },
-  { id: 's1_q4', text: "What specific incidents indicate you have lost control over your usage?" },
-  { id: 's1_q5', text: "How has your thinking been distorted by addiction (denial, rationalization)?" },
-  { id: 's1_q6', text: "In what ways have you been powerless over your behavior?" },
-  { id: 's1_q7', text: "Have you lost self-respect due to your addiction?" },
-  { id: 's1_q8', text: "How has your addiction affected you physically?" },
-  { id: 's1_q9', text: "How has your addiction affected you mentally?" },
-  { id: 's1_q10', text: "How has your addiction affected you spiritually?" },
-  { id: 's1_q11', text: "How has your addiction affected you emotionally?" },
-  { id: 's1_q12', text: "What is unmanageability to you?" },
-  { id: 's1_q13', text: "What are some examples of unmanageability in your life?" },
-  { id: 's1_q14', text: "Are you ready to admit you are an addict?" },
-  { id: 's1_q15', text: "What reservations do you still have about staying clean?" },
+  // Intro
+  {
+    id: 's1_intro',
+    type: 'read_only',
+    text: `Step 1: "We admitted we were powerless over our addiction—that our lives had become unmanageable."\n\nIntroduction:\nStep 1 is the foundation of recovery. It is about surrendering the illusion of control. It asks us to honestly admit that our best thinking has failed us and that our compulsive behaviors have consequences we can no longer manage alone.`
+  },
+  // Section 1: The Nature of Powerlessness
+  { id: 's1_q1', type: 'input', text: "Can you describe a specific time when you sincerely tried to stop or control your behavior but failed?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q2', type: 'input', text: "How does the obsession manifest in your mind before you even take the first action/drink/drug?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q3', type: 'input', text: "In what ways have you tried to bargain with your addiction (e.g., \"I'll only do it on weekends\")?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q4', type: 'input', text: "Do you feel a physical or mental shift when you engage in your addictive behavior that makes it hard to stop?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  { id: 's1_q5', type: 'input', text: "What does the word \"defeat\" mean to you in the context of your recovery?", context: "Powerlessness isn't weakness; it is the realization that your willpower alone is insufficient against the disease of addiction. It is accepting that once you start, you lose the ability to stop." },
+  
+  // Section 2: Unmanageability in Daily Life
+  { id: 's1_q6', type: 'input', text: "How has your addiction affected your financial stability or career/school performance?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q7', type: 'input', text: "Have you missed important events or obligations due to using or recovering from using?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q8', type: 'input', text: "In what ways has your home life or living environment become chaotic?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q9', type: 'input', text: "How do you manage your emotions when things don't go your way? Is it manageable?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+  { id: 's1_q10', type: 'input', text: "Do you feel like you are driving the car of your life, or are you a passenger in a runaway vehicle?", context: "Unmanageability doesn't always look like a car crash. It is the internal chaos, the missed commitments, the financial stress, and the emotional volatility that addiction brings into our daily existence." },
+
+  // Section 3: The Emotional Toll
+  { id: 's1_q11', type: 'input', text: "How has isolation played a role in your addiction?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q12', type: 'input', text: "What relationships have been damaged or lost because of your behavior?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q13', type: 'input', text: "Do you struggle with self-worth or self-esteem? How does using affect that?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q14', type: 'input', text: "What lies do you tell yourself to justify the pain you are in?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+  { id: 's1_q15', type: 'input', text: "Are you ready to let go of the control you never really had?", context: "Addiction is isolating. It convinces us we are alone and that no one understands. Breaking through this denial involves looking at the emotional wreckage—the guilt, shame, and fear—that we have been carrying." },
+];
+
+// -- STEPS 2-11 (Generated Structure - Ready for Text Content) --
+const step2Questions = createStepStructure(2, "Step 2: Came to believe that a Power greater than ourselves could restore us to sanity.", "Sanity vs Insanity in addiction.", "Defining a Higher Power.", "The process of coming to believe.");
+const step3Questions = createStepStructure(3, "Step 3: Made a decision to turn our will and our lives over to the care of God as we understood Him.", "The decision vs the action.", "Letting go of self-will.", "Moving from fear to faith.");
+const step4Questions = createStepStructure(4, "Step 4: Made a searching and fearless moral inventory of ourselves.", "The purpose of inventory.", "Resentments and fears.", "Assets and liabilities.");
+const step5Questions = createStepStructure(5, "Step 5: Admitted to God, to ourselves, and to another human being the exact nature of our wrongs.", "The value of confession.", "Overcoming shame.", "Building trust.");
+const step6Questions = createStepStructure(6, "Step 6: Were entirely ready to have God remove all these defects of character.", "The difference between Step 6 and 7.", "Becoming ready.", "Letting go of old survival mechanisms.");
+const step7Questions = createStepStructure(7, "Step 7: Humbly asked Him to remove our shortcomings.", "Defining humility.", "The practice of asking.", "Changing our behavior.");
+const step8Questions = createStepStructure(8, "Step 8: Made a list of all persons we had harmed, and became willing to make amends to them all.", "Identifying harm done.", "Willingness vs action.", "Forgiveness of self and others.");
+const step9Questions = createStepStructure(9, "Step 9: Made direct amends to such people wherever possible, except when to do so would injure them or others.", "Direct amends vs apologies.", "Living amends.", "Cleaning up the wreckage.");
+const step10Questions = createStepStructure(10, "Step 10: Continued to take personal inventory and when we were wrong promptly admitted it.", "Daily inventory practice.", "Spot-check inventory.", "Keeping the side of the street clean.");
+const step11Questions = createStepStructure(11, "Step 11: Sought through prayer and meditation to improve our conscious contact with God...", "Prayer (talking) vs Meditation (listening).", "Seeking knowledge of His will.", "The power to carry that out.");
+
+// -- STEP 12 (Fully Populated from User Doc) --
+const step12Questions: Question[] = [
+  // Intro
+  {
+    id: 's12_intro',
+    type: 'read_only',
+    text: `Step 12: "Having had a spiritual awakening as the result of these steps, we tried to carry this message to addicts, and to practice these principles in all our affairs."\n\nIntroduction:\nStep 12 is the culmination of the program. It is about service, gratitude, and consistency. It asks us to take what we have been given—freedom—and share it with others, while living a life of integrity in all areas, not just recovery meetings.`
+  },
+  // Section 1: The Spiritual Awakening
+  { id: 's12_q1', type: 'input', text: "How would you describe your spiritual awakening?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q2', type: 'input', text: "How are you different now compared to when you started Step 1?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q3', type: 'input', text: "What does \"emotional sobriety\" mean to you now?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q4', type: 'input', text: "Do you feel a sense of purpose that was missing before?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+  { id: 's12_q5', type: 'input', text: "How do you define your spirituality today?", context: "An awakening can be a sudden \"white light\" experience or, more commonly, a slow educational variety. It is simply a personality change sufficient to bring about recovery." },
+
+  // Section 2: Carrying the Message
+  { id: 's12_q6', type: 'input', text: "How can you be of service to others in recovery?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q7', type: 'input', text: "What is the difference between \"attraction\" and \"promotion\"?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q8', type: 'input', text: "How do you handle it when someone you are trying to help doesn't want help?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q9', type: 'input', text: "Why is working with others essential for your own sobriety?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+  { id: 's12_q10', type: 'input', text: "What is the \"message\" you are trying to carry?", context: "We help others not to be \"gurus,\" but to insure our own recovery. Sharing our experience, strength, and hope helps us remember where we came from." },
+
+  // Section 3: Practicing Principles in All Affairs
+  { id: 's12_q11', type: 'input', text: "How do you apply the steps in your workplace or school?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q12', type: 'input', text: "How do you practice these principles in your romantic relationships?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q13', type: 'input', text: "What does it mean to be a \"good citizen\" in the context of Step 12?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q14', type: 'input', text: "How do you handle success or failure using spiritual principles?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
+  { id: 's12_q15', type: 'input', text: "Are you ready to continue this way of life, one day at a time?", context: "We are not just \"sober\" people; we are people of integrity. We bring patience to our families, honesty to our jobs, and kindness to strangers." },
 ];
 
 const twelveStepSections: WorkbookSection[] = [
   { id: 'step_1', title: 'Step 1', description: 'Powerlessness & Unmanageability', questions: step1Questions },
-  { id: 'step_2', title: 'Step 2', description: 'Came to believe', questions: generateQuestions(15, 'step_2') },
-  { id: 'step_3', title: 'Step 3', description: 'Turning it over', questions: generateQuestions(15, 'step_3') },
-  { id: 'step_4', title: 'Step 4', description: 'Searching and fearless moral inventory', questions: generateQuestions(15, 'step_4') },
-  { id: 'step_5', title: 'Step 5', description: 'Admitted to God, ourselves, and another', questions: generateQuestions(15, 'step_5') },
-  { id: 'step_6', title: 'Step 6', description: 'Entirely ready', questions: generateQuestions(15, 'step_6') },
-  { id: 'step_7', title: 'Step 7', description: 'Humbly asked Him', questions: generateQuestions(15, 'step_7') },
-  { id: 'step_8', title: 'Step 8', description: 'List of persons we had harmed', questions: generateQuestions(15, 'step_8') },
-  { id: 'step_9', title: 'Step 9', description: 'Direct amends', questions: generateQuestions(15, 'step_9') },
-  { id: 'step_10', title: 'Step 10', description: 'Continued to take personal inventory', questions: generateQuestions(15, 'step_10') },
-  { id: 'step_11', title: 'Step 11', description: 'Sought through prayer and meditation', questions: generateQuestions(15, 'step_11') },
-  { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: generateQuestions(15, 'step_12') },
+  { id: 'step_2', title: 'Step 2', description: 'Came to believe', questions: step2Questions },
+  { id: 'step_3', title: 'Step 3', description: 'Turning it over', questions: step3Questions },
+  { id: 'step_4', title: 'Step 4', description: 'Moral inventory', questions: step4Questions },
+  { id: 'step_5', title: 'Step 5', description: 'Admitting our wrongs', questions: step5Questions },
+  { id: 'step_6', title: 'Step 6', description: 'Entirely ready', questions: step6Questions },
+  { id: 'step_7', title: 'Step 7', description: 'Humbly asked Him', questions: step7Questions },
+  { id: 'step_8', title: 'Step 8', description: 'List of harms', questions: step8Questions },
+  { id: 'step_9', title: 'Step 9', description: 'Making amends', questions: step9Questions },
+  { id: 'step_10', title: 'Step 10', description: 'Personal inventory', questions: step10Questions },
+  { id: 'step_11', title: 'Step 11', description: 'Conscious contact', questions: step11Questions },
+  { id: 'step_12', title: 'Step 12', description: 'Spiritual awakening', questions: step12Questions },
 ];
 
-// --- 3. RECOVERY DHARMA WORKBOOK ---
+// --- 3. RECOVERY DHARMA WORKBOOK (The Four Noble Truths) ---
+
+// 1. First Noble Truth
+const dharmaTruth1: Question[] = [
+  { 
+    id: 'rd_t1_intro', 
+    type: 'read_only', 
+    text: `The First Noble Truth is not a pessimistic claim that "life is miserable." rather, it is a realistic assessment that dissatisfaction, stress, and pain are part of the human experience.\n\nIn the context of addiction, this truth is the acknowledgment of our struggle. It is the realization that our compulsive behaviors—whether to substances, people, or processes—have become a source of suffering rather than a solution to it.\n\nWe admit that despite our best efforts to control it, the cycle has become unmanageable and painful.` 
+  },
+  { 
+    id: 'rd_t1_q1', 
+    type: 'input',
+    text: "In what specific ways has my main coping mechanism (my addiction) stopped working for me?", 
+    context: "We acknowledge that the things we used to cope with our pain have turned on us. What once provided relief now creates more suffering." 
+  },
+  { 
+    id: 'rd_t1_q2', 
+    type: 'input',
+    text: "Can I identify the difference between 'pain' (the inevitable events of life) and 'suffering' (my reaction and resistance to those events)?", 
+    context: "Pain is inevitable; suffering is optional. We suffer when we cling to how we want things to be, rather than accepting how they are." 
+  },
+  { 
+    id: 'rd_t1_q3', 
+    type: 'input',
+    text: "Where in my body do I feel the physical sensation of 'unsatisfactoriness' or restlessness when I am not using/acting out?", 
+    context: "Mindfulness begins with the body. The First Truth asks us to turn toward the discomfort we have been running from, rather than away from it." 
+  },
+  { 
+    id: 'rd_t1_q4', 
+    type: 'input',
+    text: "How has my refusal to accept the reality of my situation prolonged my cycle of addiction?", 
+    context: "Denial is a form of protection, but eventually, it becomes a prison. Acceptance is the first step toward unlocking the door." 
+  },
+  { 
+    id: 'rd_t1_q5', 
+    type: 'input',
+    text: "Looking back, can I see how my 'solution' eventually became the primary problem in my life?", 
+    context: "We realize that we have been trying to fill a spiritual void with material things, substances, or validation, and it simply does not work." 
+  }
+];
+
+// 2. Second Noble Truth
+const dharmaTruth2: Question[] = [
+  { 
+    id: 'rd_t2_intro', 
+    type: 'read_only', 
+    text: `The Second Truth teaches us that the root cause of our suffering is craving (thirst) and clinging.\n\nIt isn't just the drugs, the alcohol, or the behavior that is the problem; it is the underlying drive to fix the way we feel instantly. It is the deep-seated belief that "this moment is not enough" and that we need something external to make us whole.\n\nWe suffer because we cling to pleasure and push away pain, creating a constant tug-of-war in our minds.` 
+  },
+  { 
+    id: 'rd_t2_q1', 
+    type: 'input',
+    text: "What is the specific feeling or emotion I am usually trying to escape when the craving arises?", 
+    context: "Craving often arises as a response to an underlying discomfort—loneliness, fear, boredom, or shame. We use addiction to numb these feelings." 
+  },
+  { 
+    id: 'rd_t2_q2', 
+    type: 'input',
+    text: "Can I identify a time recently when I clung to a pleasant experience so tightly that I ruined it when it naturally ended?", 
+    context: "Impermanence is a law of nature. Suffering arises when we demand that temporary pleasure lasts forever." 
+  },
+  { 
+    id: 'rd_t2_q3', 
+    type: 'input',
+    text: "What \"stories\" does my mind tell me about what will happen if I don't give in to the craving?", 
+    context: "The mind creates catastrophic narratives to justify acting on impulse. We learn to observe these thoughts without believing them." 
+  },
+  { 
+    id: 'rd_t2_q4', 
+    type: 'input',
+    text: "How does my attachment to a specific identity (e.g., 'the victim,' 'the addict,' 'the tough one') keep me stuck in old patterns?", 
+    context: "We often cling to our suffering because it is familiar. Letting go of who we think we are allows us to become who we can be." 
+  },
+  { 
+    id: 'rd_t2_q5', 
+    type: 'input',
+    text: "In what ways do I demand that the world conform to my expectations, and how does that lead to anger or resentment?", 
+    context: "Expectations are resentments waiting to happen. When we stop fighting reality, the craving to escape reality diminishes." 
+  }
+];
+
+// 3. Third Noble Truth
+const dharmaTruth3: Question[] = [
+  { 
+    id: 'rd_t3_intro', 
+    type: 'read_only', 
+    text: `The Third Truth is the good news: Recovery is possible.\n\nSuffering is not permanent, and because it has a cause (craving), it can end. This is the truth of Cessation. It doesn’t mean we will never feel pain again, but it means we don't have to be enslaved by our reactions to it.\n\nWe can find a freedom that isn't dependent on external circumstances. We can experience peace right now, even in the midst of difficulty, by letting go of the demand for things to be different.` 
+  },
+  { 
+    id: 'rd_t3_q1', 
+    type: 'input',
+    text: "Can I recall a moment in my recovery (or life) where I felt a sense of peace without needing to change anything?", 
+    context: "Freedom is available in any moment where we stop fighting. This is the glimpse of Nirvana—the cooling of the flames of desire." 
+  },
+  { 
+    id: 'rd_t3_q2', 
+    type: 'input',
+    text: "What would my life look like if I believed, truly, that I am already 'whole' and don't need to be 'fixed'?", 
+    context: "Our true nature is wise and compassionate. Recovery is not about building a new you, but uncovering the you that was there all along." 
+  },
+  { 
+    id: 'rd_t3_q3', 
+    type: 'input',
+    text: "If I let go of the need to control the outcome of my current situation, what specific burden would be lifted off my shoulders?", 
+    context: "Surrender is not giving up; it is giving over. We let go of the illusion of control and find safety in the present moment." 
+  },
+  { 
+    id: 'rd_t3_q4', 
+    type: 'input',
+    text: "How does the idea of 'impermanence' give me hope regarding my current struggles or cravings?", 
+    context: "This too shall pass. Knowing that cravings are like weather—storms that come and go—helps us ride them out without drowning." 
+  },
+  { 
+    id: 'rd_t3_q5', 
+    type: 'input',
+    text: "Who in my life (or in my Sangha/community) represents the possibility of freedom to me, and what qualities do they embody?", 
+    context: "We take refuge in the Sangha. Seeing the recovery of others proves that the Third Noble Truth is a reality, not just a theory." 
+  }
+];
+
+// 4. Fourth Noble Truth
+const dharmaTruth4: Question[] = [
+  { 
+    id: 'rd_t4_intro', 
+    type: 'read_only', 
+    text: `The Fourth Truth is the Eightfold Path—the practical "how-to" guide for recovery.\n\nIt is a set of practices that helps us live ethically, train our minds, and cultivate wisdom. It covers Wisdom (Right View, Intention), Ethics (Right Speech, Action, Livelihood), and Meditation (Right Effort, Mindfulness, Concentration).\n\nThis is not a linear set of steps but a wheel of practice where each part supports the others. It is the daily discipline of recovery.` 
+  },
+  { 
+    id: 'rd_t4_q1', 
+    type: 'input',
+    text: "Right Intention: Am I approaching my recovery today with an intention of kindness toward myself, or am I being harsh and critical?", 
+    context: "Renunciation is not about punishment; it is an act of love. We let go of harmful behaviors because we care about our own well-being." 
+  },
+  { 
+    id: 'rd_t4_q2', 
+    type: 'input',
+    text: "Right Speech: How have I used my words (to others or myself) to cause harm recently, and how can I practice honesty without cruelty?", 
+    context: "Truthfulness is the foundation of trust. We cannot recover while hiding behind lies, but our truth must be spoken with compassion." 
+  },
+  { 
+    id: 'rd_t4_q3', 
+    type: 'input',
+    text: "Right Action: What is one small, ethical action I can take today that aligns with the person I want to become?", 
+    context: "Recovery is lived in the small moments. Every time we choose not to harm, we are strengthening our path to freedom." 
+  },
+  { 
+    id: 'rd_t4_q4', 
+    type: 'input',
+    text: "Right Mindfulness: specific situations trigger me to go on 'autopilot,' and how can I bring more awareness to those moments?", 
+    context: "Mindfulness is the pause between the trigger and the reaction. In that pause lies our freedom to choose a different response." 
+  },
+  { 
+    id: 'rd_t4_q5', 
+    type: 'input',
+    text: "Right Effort: Am I striving too hard (restlessness) or not hard enough (complacency)? How can I find the 'Middle Way' in my recovery today?", 
+    context: "The Middle Way is the path of balance. We avoid the extremes of indulgence and severe asceticism. We practice with gentle persistence." 
+  }
+];
+
+// -- The Eightfold Path --
+
+const eightfoldPart1: Question[] = [
+  // 1. Right View
+  { 
+    id: 'rd_path_right_view_intro', 
+    type: 'read_only', 
+    text: `1. Right View (Understanding)\n\nRight View is the beginning of the path. In recovery, it means understanding the law of Karma (Cause and Effect). It is the deep realization that our actions have consequences.\n\nIt is accepting that unskillful actions (addiction) lead to suffering, and skillful actions (recovery) lead to freedom. It is seeing things as they truly are—impermanent and interconnected—rather than how our addiction wants us to see them.` 
+  },
+  {
+    id: 'rd_path_q1',
+    type: 'input',
+    text: "Do I truly accept that I am the owner of my actions and their consequences, without blaming others or my circumstances?",
+    context: "We stop looking for a scapegoat. When we realize that our choices shape our reality, we reclaim the power to change that reality."
+  },
+  {
+    id: 'rd_path_q2',
+    type: 'input',
+    text: "Can I see the cycle of 'cause and effect' in my last relapse or emotional outburst? What specific belief led to that action?",
+    context: "Ignorance is the root of suffering. When we see the link between our beliefs and our pain, we can begin to break the chain."
+  },
+  {
+    id: 'rd_path_q3',
+    type: 'input',
+    text: "How does viewing my thoughts as 'impermanent weather' change the way I react to a strong craving?",
+    context: "Right View teaches us that no feeling is final. We don't have to obey a command that will disappear in ten minutes."
+  },
+  // 2. Right Intention
+  { 
+    id: 'rd_path_right_intention_intro', 
+    type: 'read_only', 
+    text: `2. Right Intention (Wise Resolve)\n\nIf Right View is the map, Right Intention is the steering wheel. It involves three specific resolves: Renunciation (letting go of craving), Good Will (loving-kindness), and Harmlessness (compassion).\n\nIt is the commitment to move away from cruelty and toward kindness, for ourselves and others.` 
+  },
+  {
+    id: 'rd_path_q4',
+    type: 'input',
+    text: "Am I viewing 'renunciation' (giving up my addiction) as a punishment, or as a liberating gift I am giving myself?",
+    context: "Renunciation is not deprivation. It is the joyous letting go of a heavy burden we have been carrying for too long."
+  },
+  {
+    id: 'rd_path_q5',
+    type: 'input',
+    text: "In what situation today can I replace a thought of judgment (ill will) with a thought of understanding (good will)?",
+    context: "We cannot hate ourselves into recovery. Intention shifts our internal dialogue from a prosecutor to a gentle guide."
+  },
+  {
+    id: 'rd_path_q6',
+    type: 'input',
+    text: "How can I practice 'harmlessness' toward my own body today, considering the damage I may have done in the past?",
+    context: "Compassion starts at home. Treating our bodies with respect is a direct act of defiance against the self-destruction of addiction."
+  }
+];
+
+const eightfoldPart2: Question[] = [
+  // 3. Right Speech
+  { 
+    id: 'rd_path_right_speech_intro', 
+    type: 'read_only', 
+    text: `3. Right Speech\n\nWords have power. Right Speech means abstaining from lying, divisive speech (gossip/talking behind backs), harsh/abusive speech, and idle chatter (mindless talking to avoid feelings).\n\nIn recovery, this is synonymous with "getting honest." We stop hiding behind deceptions and learn to speak our truth with care.` 
+  },
+  {
+    id: 'rd_path_q7',
+    type: 'input',
+    text: "Is there a specific lie or half-truth I am currently protecting? What fear creates the need for this lie?",
+    context: "Secrets keep us sick. Rigorous honesty is the antidote to the isolation of addiction."
+  },
+  {
+    id: 'rd_path_q8',
+    type: 'input',
+    text: "How do you speak to myself? Is my internal monologue harsh and abusive? How can I apply Right Speech internally?",
+    context: "If we spoke to our friends the way we speak to ourselves, we would have no friends. Mindfulness catches the inner critic in the act."
+  },
+  {
+    id: 'rd_path_q9',
+    type: 'input',
+    text: "Can I practice 'noble silence' today—listening more than I speak—to avoid the trap of idle chatter or gossip?",
+    context: "Silence allows us to hear the truth. Sometimes the most skillful thing to say is nothing at all."
+  },
+  // 4. Right Action
+  { 
+    id: 'rd_path_right_action_intro', 
+    type: 'read_only', 
+    text: `4. Right Action\n\nThis factor corresponds to the Five Precepts: refraining from killing/harming, stealing, sexual misconduct, lying, and intoxication. Right Action is about living in a way that does not cause regret.\n\nIt creates a foundation of safety and trust in our lives.` 
+  },
+  {
+    id: 'rd_path_q10',
+    type: 'input',
+    text: "Looking at the precept of 'not taking what is not given' (stealing), are there subtle ways I take things (time, energy, credit) from others?",
+    context: "Generosity is the practice of letting go. We counter the taker mentality of addiction by asking, 'What can I give?'"
+  },
+  {
+    id: 'rd_path_q11',
+    type: 'input',
+    text: "Regarding sexual misconduct/harm: Am I using relationships or sex to numb out, seek validation, or manipulate, rather than to connect?",
+    context: "Intimacy requires presence. We learn to connect with others authentically, rather than using them as objects to fix our loneliness."
+  },
+  {
+    id: 'rd_path_q12',
+    type: 'input',
+    text: "What is one ethical boundary I need to set today to protect my sobriety (e.g., not going to a certain place, not seeing a certain person)?",
+    context: "Right Action is proactive. We don't just resist temptation; we build a life where temptation has no foothold."
+  },
+  // 5. Right Livelihood
+  { 
+    id: 'rd_path_right_livelihood_intro', 
+    type: 'read_only', 
+    text: `5. Right Livelihood\n\nWe spend a vast amount of our lives working. Right Livelihood asks us to earn our living in a way that doesn't violate our ethical principles or cause harm to others.\n\nIn a broader sense, it asks if our daily "hustle" supports our recovery or hinders it.` 
+  },
+  {
+    id: 'rd_path_q13',
+    type: 'input',
+    text: "Does my current job or way of making money require me to compromise my integrity or values?",
+    context: "Peace of mind is more valuable than a paycheck. We cannot maintain spiritual balance if we spend 40 hours a week violating our conscience."
+  },
+  {
+    id: 'rd_path_q14',
+    type: 'input',
+    text: "How can I bring the spirit of service into my daily work, regardless of what my job title is?",
+    context: "Every task can be a practice. When we work with mindfulness and care, our labor becomes an offering rather than a burden."
+  },
+  {
+    id: 'rd_path_q15',
+    type: 'input',
+    text: "Am I using work as a new addiction (workaholism) to avoid facing other areas of my life?",
+    context: "Balance is key. Right Livelihood supports life; it does not consume it."
+  }
+];
+
+const eightfoldPart3: Question[] = [
+  // 6. Right Effort
+  { 
+    id: 'rd_path_right_effort_intro', 
+    type: 'read_only', 
+    text: `6. Right Effort\n\nRight Effort is not about "white-knuckling" it. It is the balanced energy we apply to the practice.\n\nIt consists of four great efforts: (1) Preventing unwholesome states (cravings) from arising, (2) Abandoning unwholesome states that have arisen, (3) Cultivating wholesome states (joy, gratitude), and (4) Maintaining those wholesome states.` 
+  },
+  {
+    id: 'rd_path_q16',
+    type: 'input',
+    text: "Am I trying too hard (perfectionism) or not hard enough (complacency)? Where is the 'Middle Way' for me right now?",
+    context: "We tune the strings of our instrument not too tight, not too loose. Consistency beats intensity."
+  },
+  {
+    id: 'rd_path_q17',
+    type: 'input',
+    text: "When a negative state arises (anger/fear), do I feed it with more thought, or do I apply the effort to let it go?",
+    context: "What we water grows. Right Effort is the choice to stop watering the weeds and start watering the flowers."
+  },
+  {
+    id: 'rd_path_q18',
+    type: 'input',
+    text: "What is one positive quality (e.g., patience, generosity) I want to actively cultivate and strengthen this week?",
+    context: "Recovery is not just removing the bad; it is actively building the good. We fill the void with light."
+  },
+  // 7. Right Mindfulness
+  { 
+    id: 'rd_path_right_mindfulness_intro', 
+    type: 'read_only', 
+    text: `7. Right Mindfulness\n\nMindfulness is the core of the practice. It is the ability to see clearly what is happening right now.\n\nIt is the "Four Foundations of Mindfulness": Awareness of the body, feelings (pleasant/unpleasant/neutral), mind states (emotions), and phenomena (reality). It prevents us from living on autopilot.` 
+  },
+  {
+    id: 'rd_path_q19',
+    type: 'input',
+    text: "Can I detect the physical warning signs of a resentment or craving before it becomes a mental obsession?",
+    context: "The body always knows first. Mindfulness allows us to catch the spark before it becomes a forest fire."
+  },
+  {
+    id: 'rd_path_q20',
+    type: 'input',
+    text: "Am I able to observe an uncomfortable emotion (like anxiety) without judging it as 'bad' or trying to fix it immediately?",
+    context: "This is the practice of 'being with.' We learn to surf the waves of emotion rather than drowning in them."
+  },
+  {
+    id: 'rd_path_q21',
+    type: 'input',
+    text: "How often during the day do I actually 'arrive' in the present moment, rather than living in the past or future?",
+    context: "Life only happens now. When we are present, we are safe, because in this exact second, we are okay."
+  },
+  // 8. Right Concentration
+  { 
+    id: 'rd_path_right_concentration_intro', 
+    type: 'read_only', 
+    text: `8. Right Concentration\n\nWhile Mindfulness is broad awareness, Concentration is focused awareness. It is the ability to rest the mind on a single object (like the breath or a mantra).\n\nThis steadiness brings a deep sense of calm and joy, giving us a sanctuary from the chaos of the addicted mind.` 
+  },
+  {
+    id: 'rd_path_q22',
+    type: 'input',
+    text: "When I sit to meditate, can I treat my wandering mind with gentleness, simply returning to the breath without self-criticism?",
+    context: "The 'return' is the practice. Every time we realize we drifted and come back, we are strengthening the muscle of concentration."
+  },
+  {
+    id: 'rd_path_q23',
+    type: 'input',
+    text: "How does the ability to focus on one thing help me when I am overwhelmed by life's problems?",
+    context: "A scattered mind is a stressed mind. Concentration gathers our energy so we can face difficulties with stability."
+  },
+  {
+    id: 'rd_path_q24',
+    type: 'input',
+    text: "Do I use distractions (phone, TV, food) to prevent myself from ever being truly quiet? What specific fear makes me avoid the silence?",
+    context: "In the silence, we meet ourselves. We learn that we don't need constant noise to be okay."
+  }
+];
+
 const dharmaSections: WorkbookSection[] = [
-  { id: 'rd_truth_1', title: 'First Noble Truth', description: 'There is suffering', questions: generateQuestions(10, 'dharma_1') },
-  { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: generateQuestions(10, 'dharma_2') },
-  { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: generateQuestions(10, 'dharma_3') },
-  { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: generateQuestions(10, 'dharma_4') },
+  { id: 'rd_truth_1', title: 'First Noble Truth', description: 'There is suffering', questions: dharmaTruth1 },
+  { id: 'rd_truth_2', title: 'Second Noble Truth', description: 'The cause of suffering', questions: dharmaTruth2 },
+  { id: 'rd_truth_3', title: 'Third Noble Truth', description: 'The end of suffering', questions: dharmaTruth3 },
+  { id: 'rd_truth_4', title: 'Fourth Noble Truth', description: 'The path', questions: dharmaTruth4 },
+  { id: 'rd_path_1', title: 'Part I: Wisdom', description: 'Right View & Right Intention', questions: eightfoldPart1 },
+  { id: 'rd_path_2', title: 'Part II: Ethics', description: 'Right Speech, Action, & Livelihood', questions: eightfoldPart2 },
+  { id: 'rd_path_3', title: 'Part III: Discipline', description: 'Right Effort, Mindfulness, & Concentration', questions: eightfoldPart3 },
 ];
 
 // --- MASTER REGISTRY ---
@@ -2789,7 +3435,7 @@ export const WORKBOOKS: Workbook[] = [
   {
     id: '12_steps',
     title: '12-Step Workbook',
-    description: 'A rigorous journey through the 12 Steps. 15 questions per step to prepare for sponsor work.',
+    description: 'A comprehensive 12-Step program. Each step includes an introduction and 3 guided sections.',
     type: 'steps',
     sections: twelveStepSections
   },
@@ -3048,8 +3694,48 @@ export const googleProvider = new GoogleAuthProvider();
 export default app;
 
 ================================================================================
+FILE: src/lib/gamification.test.ts
+================================================================================
+import { describe, it, expect } from 'vitest';
+import { calculateTaskStats } from './gamification';
+import type { Task } from './tasks';
+
+describe('Gamification Logic', () => {
+  it('calculates completion rate correctly', () => {
+    // We use a mock array cast to Task[] to avoid 'any' and satisfy strict linting
+    const mockTasks = [
+      { id: '1', completed: true, currentStreak: 0 },
+      { id: '2', completed: false, currentStreak: 0 },
+      { id: '3', completed: true, currentStreak: 0 },
+      { id: '4', completed: true, currentStreak: 0 },
+    ] as unknown as Task[]; 
+
+    const result = calculateTaskStats(mockTasks); 
+    expect(result.completionRate).toBe(75);
+  });
+
+  it('returns 0 for empty task list', () => {
+    const result = calculateTaskStats([]);
+    expect(result.completionRate).toBe(0);
+  });
+
+  it('calculates highest fire streak correctly', () => {
+    const mockTasks = [
+        { id: '1', completed: true, currentStreak: 5 },
+        { id: '2', completed: true, currentStreak: 12 }, 
+        { id: '3', completed: false, currentStreak: 0 },
+    ] as unknown as Task[];
+
+    const result = calculateTaskStats(mockTasks);
+    expect(result.habitFire).toBe(12);
+  });
+});
+
+================================================================================
 FILE: src/lib/gamification.ts
 ================================================================================
+//import { Timestamp } from 'firebase/firestore';
+
 export interface GamificationStats {
   streakDays: number;
   totalEntries: number;
@@ -3069,6 +3755,11 @@ export interface WorkbookStats {
     masterCompletion: number; // % of total questions
 }
 
+export interface VitalityStats {
+    bioStreak: number;
+    totalLogs: number;
+}
+
 // Helper to check if two dates are the same day
 const isSameDay = (d1: Date, d2: Date) => {
   return d1.getFullYear() === d2.getFullYear() &&
@@ -3083,7 +3774,7 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
             totalEntries: 0, 
             averageMood: 0, 
             journalStreak: 0, 
-            consistencyRate: 0,
+            consistencyRate: 0, 
             totalWords: 0
         };
     }
@@ -3101,11 +3792,9 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
 
     // 3. Journal Streak
     let currentStreak = 0;
-    
     // Check if posted today
     const lastPostDate = sorted[0].createdAt.toDate();
     const postedToday = isSameDay(lastPostDate, today);
-    
     // If not posted today, check if posted yesterday to maintain streak
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -3119,7 +3808,6 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
         journals.forEach(j => {
             uniqueDays.add(j.createdAt.toDate().toDateString());
         });
-        
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
         for (let i = 0; i < sortedDates.length - 1; i++) {
@@ -3128,8 +3816,8 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
             
             // Difference in days
             const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
             if (diffDays === 1) {
                 currentStreak++;
             } else {
@@ -3183,189 +3871,172 @@ export const calculateTaskStats = (tasks: any[]): TaskStats => {
 export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
     // Note: totalQuestionsAvailable is defaulted to 50 for now, 
     // ideally passed from the Workbook definitions if available.
-    
     return {
         wisdomScore: answersSnapshotSize,
         masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
     };
 };
 
+// [NEW] Calculate stats for Vitality Module
+export const calculateVitalityStats = (journals: any[]): VitalityStats => {
+    if (!journals) return { bioStreak: 0, totalLogs: 0 };
+
+    // Filter for entries tagged 'Vitality'
+    const vitalityLogs = journals.filter(j => j.tags && j.tags.includes('Vitality'));
+    
+    if (vitalityLogs.length === 0) return { bioStreak: 0, totalLogs: 0 };
+
+    // 1. Total Logs
+    const totalLogs = vitalityLogs.length;
+
+    // 2. Bio Streak (Same logic as Journal Streak)
+    const sorted = [...vitalityLogs].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    const today = new Date();
+    
+    let currentStreak = 0;
+    const lastPostDate = sorted[0].createdAt.toDate();
+    const postedToday = isSameDay(lastPostDate, today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const postedYesterday = isSameDay(lastPostDate, yesterday);
+
+    if (postedToday || postedYesterday) {
+        currentStreak = 1;
+        const uniqueDays = new Set<string>();
+        vitalityLogs.forEach(j => {
+            uniqueDays.add(j.createdAt.toDate().toDateString());
+        });
+        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
+        
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = sortedDates[i];
+            const next = sortedDates[i+1];
+            const diffTime = Math.abs(current.getTime() - next.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) currentStreak++;
+            else break;
+        }
+    }
+
+    return { bioStreak: currentStreak, totalLogs };
+};
+
 ================================================================================
 FILE: src/lib/gemini.ts
 ================================================================================
-import { 
-  GoogleGenerativeAI, 
-  HarmCategory, 
-  HarmBlockThreshold,
-  type GenerationConfig,
-  type SafetySetting
-} from "@google/generative-ai";
+// src/lib/gemini.ts
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// --- Configuration ---
-// Ensure your VITE_GEMINI_API_KEY is set in .env
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-if (!API_KEY) {
-  console.error("Missing VITE_GEMINI_API_KEY in environment variables");
-}
-
+// Initialize Gemini
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-// Master Build Guide v2.6 specifies Gemini 2.5 Flash
-const MODEL_NAME = "gemini-2.5-flash"; 
-
-const generationConfig: GenerationConfig = {
-  temperature: 0.7, // Balanced for creative but structured analysis
-  topP: 0.95,
-  topK: 40,
-  maxOutputTokens: 8192,
-  responseMimeType: "application/json", // Enforce JSON mode
-};
-
-// Safety Settings: Adjusted for Recovery Context
-const safetySettings: SafetySetting[] = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-];
-
-// --- 1. JOURNAL ANALYSIS (Recovery Compass) ---
+// --- Types ---
 
 export interface AnalysisResult {
-  sentiment: 'Positive' | 'Neutral' | 'Negative';
-  mood: string;
   summary: string;
+  mood: string;
+  sentiment: 'Positive' | 'Neutral' | 'Negative' | 'Mixed';
   risk_analysis: string;
   positive_reinforcement: string;
   tool_suggestions: string[];
 }
 
-/**
- * Analyzes journal entries using the "Recovery Compass" framework.
- */
-export async function analyzeJournalEntries(journalEntries: string[]): Promise<AnalysisResult> {
-  try {
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL_NAME,
-      generationConfig,
-      safetySettings
-    });
+export interface WorkbookAnalysisResult {
+  scope_context: string; // e.g., "Step 1 Review" or "Full Journey"
+  pillars: {
+    understanding: string; // How well they grasped the concept
+    emotional_resonance: string; // The emotional tone/barriers detected
+    blind_spots: string; // Things they might be missing
+  };
+  suggested_actions: string[]; // Concrete tasks for the habit tracker
+}
 
+// --- Journal Analysis ---
+
+export const analyzeJournalEntries = async (entries: string[]): Promise<AnalysisResult | null> => {
+  if (!API_KEY) {
+    console.warn("Gemini API Key missing.");
+    return null;
+  }
+
+  try {
     const prompt = `
-      You are an expert recovery sponsor and therapist proxy for a user in addiction recovery. 
-      Analyze the following journal entries and provide a structured "Recovery Compass" analysis.
+      Act as a compassionate, wise, and highly experienced addiction recovery sponsor and therapist.
+      Analyze the following journal entries from a user in recovery.
       
       Entries:
-      ${JSON.stringify(journalEntries)}
-
-      Return a JSON object with this EXACT structure (no Markdown):
-      {
-        "sentiment": "Positive" | "Neutral" | "Negative",
-        "mood": "Two word description of the emotional tone (e.g. Anxious Hope)",
-        "summary": "A brief, 2-3 sentence synthesis of the user's current headspace.",
-        "risk_analysis": "Identify potential relapse triggers, cognitive distortions, or HALT (Hungry, Angry, Lonely, Tired) signs. Be gentle but direct.",
-        "positive_reinforcement": "Highlight specific examples of resilience, gratitude, or good recovery work found in the text.",
-        "tool_suggestions": ["Tool 1", "Tool 2", "Tool 3"]
-      }
-
-      The tool_suggestions must be practical, recovery-focused actions.
+      ${entries.join('\n---\n')}
+      
+      Return a JSON object with the following fields:
+      - summary: A 2-3 sentence compassionate summary of the user's current state.
+      - mood: A 1-word descriptor of the overall mood (e.g., "Reflective", "Anxious", "Hopeful").
+      - sentiment: One of "Positive", "Neutral", "Negative", "Mixed".
+      - risk_analysis: Identify any potential relapse triggers or cognitive distortions present (be gentle but vigilant).
+      - positive_reinforcement: Highlight a strength or win demonstrated in the entries.
+      - tool_suggestions: A list of 3 specific, actionable recovery tools or short tasks they should try (e.g., "Call a friend", "5-min meditation", "Play the tape through").
+      
+      Output ONLY raw JSON. Do not use Markdown formatting.
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = result.response;
+    const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
     
-    // Clean up potential markdown code blocks
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    return JSON.parse(cleanText) as AnalysisResult;
-
+    return JSON.parse(text) as AnalysisResult;
   } catch (error) {
-    console.error("Gemini Journal Analysis Failed:", error);
-    // Fallback if API fails
-    return {
-      sentiment: 'Neutral',
-      mood: 'System Offline',
-      summary: "Unable to generate analysis. Keep writing!",
-      risk_analysis: 'None detected.',
-      positive_reinforcement: 'Your commitment to journaling is a strength.',
-      tool_suggestions: ['Check internet connection', 'Try again later']
-    };
+    console.error("Gemini Analysis Error:", error);
+    return null;
   }
-}
+};
 
-// --- 2. WORKBOOK ANALYSIS (Restored Original Structure) ---
+// --- Workbook Analysis [NEW] ---
 
-export interface WorkbookInsight {
-  feedback: string;
-  encouragement: string;
-}
+export const analyzeWorkbookContent = async (
+  content: string, 
+  scope: 'section' | 'workbook' | 'global',
+  contextTitle: string
+): Promise<WorkbookAnalysisResult | null> => {
+  if (!API_KEY) return null;
 
-export async function analyzeFullWorkbook(workbookTitle: string, fullContent: string | Record<string, string>): Promise<WorkbookInsight> {
   try {
-    const model = genAI.getGenerativeModel({ 
-        model: MODEL_NAME,
-        generationConfig,
-        safetySettings
-    });
-
-    // Handle both string and Record input types for flexibility
-    const contentString = typeof fullContent === 'string' 
-        ? fullContent 
-        : Object.entries(fullContent).map(([k, v]) => `Q: ${k}\nA: ${v}`).join('\n');
+    // Tailor persona based on scope
+    let persona = "a supportive 12-step sponsor";
+    if (scope === 'workbook') persona = "a comprehensive recovery program director";
+    if (scope === 'global') persona = "a holistic spiritual guide reviewing the entire life journey";
 
     const prompt = `
-      You are a compassionate Recovery Sponsor reviewing a sponsee's entire workbook.
-      
-      Workbook: "${workbookTitle}"
-      
-      User's Answers:
-      ${contentString}
+      Act as ${persona}.
+      Review the following workbook Q&A content from a user in recovery.
+      Context: ${contextTitle} (${scope} level review).
 
-      Please analyze their work holistically. Look for patterns across different sections, emotional trajectory, and depth of honesty.
-      
-      Return a JSON object with this structure (no Markdown):
-      {
-        "feedback": "A deep, insightful paragraph (4-6 sentences) connecting the dots between their answers. Mention specific patterns you notice across the workbook.",
-        "encouragement": "A strong, motivating closing statement."
+      Content to Analyze:
+      ${content}
+
+      Return a JSON object with:
+      - scope_context: A short title for this analysis (e.g., "Review of Step 1").
+      - pillars: {
+          understanding: "Assessment of how well the user grasps the spiritual/recovery concepts.",
+          emotional_resonance: "Observation of the emotional honesty and any barriers (fear, shame, pride).",
+          blind_spots: "Gentle pointing out of areas they might be avoiding or rationalizing."
       }
+      - suggested_actions: A list of 3 specific, concrete, one-sentence tasks to integrate this learning into daily life (e.g., "Share this inventory with a mentor", "Practice 5 mins of silence").
+
+      Output ONLY raw JSON. Do not use Markdown formatting.
     `;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const response = result.response;
+    const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return JSON.parse(cleanText) as WorkbookInsight;
-
+    return JSON.parse(text) as WorkbookAnalysisResult;
   } catch (error) {
-    console.error("Gemini Workbook Error:", error);
-    return {
-      feedback: "You have done a significant amount of work here. The consistency in your answers shows a real desire for change.",
-      encouragement: "Keep trusting the process!"
-    };
+    console.error("Workbook Analysis Error:", error);
+    return null;
   }
-}
-
-// --- 3. LEGACY SUPPORT ---
-
-// Deprecated single-section analyzer (kept for type safety if referenced elsewhere)
-export async function analyzeWorkbook(sectionTitle: string, qaPairs: { question: string, answer: string }[]): Promise<WorkbookInsight> {
-  return analyzeFullWorkbook(sectionTitle, JSON.stringify(qaPairs));
-}
+};
 
 ================================================================================
 FILE: src/lib/importer.ts
@@ -4025,30 +4696,22 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
-import { Link } from 'react-router-dom';
-import { 
-    ClipboardDocumentCheckIcon,
-    SparklesIcon,
-    ArrowRightIcon,
-} from '@heroicons/react/24/outline';
-import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats } from '../lib/gamification';
+import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
 import RecoveryHero from '../components/RecoveryHero';
 
 // Estimated Total Questions across all workbooks for gamification calc
-const TOTAL_WORKBOOK_QUESTIONS = 45; 
+const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  
+
   // Data State
   const [daysClean, setDaysClean] = useState<number>(0);
   const [journalStats, setJournalStats] = useState({ streak: 0, consistency: 0 });
   const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
-  
-  const [recentTasks, setRecentTasks] = useState<any[]>([]);
-  const [latestInsight, setLatestInsight] = useState<any>(null);
+  const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -4071,7 +4734,7 @@ export default function Dashboard() {
                 }
             }
 
-            // 1. Fetch Journals for Stats
+            // 1. Fetch Journals for Stats (Shared by Journal & Vitality)
             const journalQ = query(
                 collection(db, 'journals'), 
                 where('uid', '==', user.uid),
@@ -4079,11 +4742,17 @@ export default function Dashboard() {
             );
             const journalSnap = await getDocs(journalQ);
             const journals = journalSnap.docs.map(d => ({...d.data(), createdAt: d.data().createdAt}));
+            
+            // Calc Journal Stats
             const jStats = calculateJournalStats(journals);
             setJournalStats({ 
                 streak: jStats.journalStreak, 
                 consistency: jStats.consistencyRate
             });
+
+            // Calc Vitality Stats
+            const vStats = calculateVitalityStats(journals);
+            setVitalityStats(vStats);
 
             // 2. Fetch Tasks
             const taskQ = query(collection(db, 'tasks'), where('uid', '==', user.uid));
@@ -4092,31 +4761,11 @@ export default function Dashboard() {
             const tStats = calculateTaskStats(tasks);
             setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
 
-            // Get top 3 pending tasks
-            const pendingTasks = taskSnap.docs
-                .map(d => ({ id: d.id, ...d.data() } as any))
-                .filter(t => !t.completed)
-                .sort((_a, b) => (b.priority === 'High' ? 1 : -1)) 
-                .slice(0, 3);
-            setRecentTasks(pendingTasks);
-
             // 3. Fetch Workbook Answers
             const wbQ = query(collection(db, 'users', user.uid, 'workbook_answers'));
             const wbSnap = await getDocs(wbQ);
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
-
-            // 4. Fetch Latest Insight
-            if (journals.length > 0) {
-                const last = journals[0] as any;
-                if (last.sentiment) {
-                    setLatestInsight({
-                        date: last.createdAt.toDate(),
-                        sentiment: last.sentiment,
-                        snippet: last.content.substring(0, 80) + "..."
-                    });
-                }
-            }
 
         } catch (error) {
             console.error("Dashboard load error:", error);
@@ -4131,78 +4780,18 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       
-      {/* 1. RECOVERY HERO COMPONENT */}
+      {/* RECOVERY HERO - The Main Command Center */}
       <RecoveryHero 
          userName={user?.displayName?.split(' ')[0] || 'Friend'}
          daysClean={daysClean}
          journalStats={journalStats}
          taskStats={taskStats}
          workbookStats={workbookStats}
+         vitalityStats={vitalityStats}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* 2. PRIORITIES WIDGET */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                      <ClipboardDocumentCheckIcon className="h-5 w-5 text-blue-600" />
-                      Priority Focus
-                  </h3>
-                  <Link to="/tasks" className="text-sm text-blue-600 hover:underline">View All</Link>
-              </div>
-              
-              {recentTasks.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg">
-                      <p>All clear! No pending tasks.</p>
-                      <Link to="/tasks" className="text-sm text-blue-600 font-medium mt-2 inline-block">Add a Habit +</Link>
-                  </div>
-              ) : (
-                  <div className="space-y-3">
-                      {recentTasks.map(task => (
-                          <div key={task.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                              <div className={`h-3 w-3 rounded-full ${task.priority === 'High' ? 'bg-red-500' : 'bg-blue-400'}`} />
-                              <span className="flex-1 font-medium text-gray-700 truncate">{task.title}</span>
-                              <Link to="/tasks" className="text-gray-400 hover:text-blue-600">
-                                  <ArrowRightIcon className="h-4 w-4" />
-                              </Link>
-                          </div>
-                      ))}
-                  </div>
-              )}
-          </div>
-
-          {/* 3. LATEST INSIGHT */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                      <SparklesIcon className="h-5 w-5 text-purple-600" />
-                      Latest Insight
-                  </h3>
-                  <Link to="/journal" className="text-sm text-purple-600 hover:underline">View Journal</Link>
-              </div>
-
-              {latestInsight ? (
-                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                      <div className="flex items-center justify-between mb-2">
-                           <span className="text-xs font-bold text-purple-700 uppercase tracking-wider">{latestInsight.sentiment} Sentiment</span>
-                           <span className="text-xs text-purple-400">{latestInsight.date.toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-sm text-gray-700 italic mb-3">"{latestInsight.snippet}"</p>
-                      <Link to="/journal" className="w-full block text-center bg-white text-purple-600 text-sm font-bold py-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">
-                          Analyze Deeply
-                      </Link>
-                  </div>
-              ) : (
-                  <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg">
-                      <p>No recent analysis found.</p>
-                      <Link to="/journal" className="text-sm text-purple-600 font-medium mt-2 inline-block">Write Entry +</Link>
-                  </div>
-              )}
-          </div>
-      </div>
     </div>
   );
 }
@@ -4217,54 +4806,28 @@ import { calculateJournalStats } from '../lib/gamification';
 import { 
     FireIcon, 
     ChartBarIcon, 
-    PencilSquareIcon 
+    PencilSquareIcon,
+    BookOpenIcon
 } from '@heroicons/react/24/outline';
 import JournalTabs from '../components/journal/JournalTabs';
 import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
 
-const MANTRAS = [
-  "One day at a time.",
-  "Progress, not perfection.",
-  "This too shall pass.",
-  "Serenity, Courage, Wisdom.",
-  "Keep coming back.",
-  "Easy does it.",
-  "First things first.",
-  "Let go and let God.",
-  "To thine own self be true.",
-  "Just for today.",
-  "Feelings are not facts.",
-  "Nothing changes if nothing changes."
-];
-
 export default function Journal() {
   const { user } = useAuth();
-  
+
   // Navigation State
   const [activeTab, setActiveTab] = useState<'write' | 'history' | 'insights'>('write');
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
-  // Header Data State
-  const [greeting, setGreeting] = useState('Welcome');
+  // Stats Data State
   const [streak, setStreak] = useState(0);
   const [consistency, setConsistency] = useState(0);
   const [totalWords, setTotalWords] = useState(0);
-  const [mantra, setMantra] = useState('');
 
-  // Initial Load Logic (Greeting, Mantra, Streak)
+  // Initial Load Logic (Stats)
   useEffect(() => {
-    // 1. Set Greeting based on time
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good Morning');
-    else if (hour < 18) setGreeting('Good Afternoon');
-    else setGreeting('Good Evening');
-
-    // 2. Pick Random Mantra
-    setMantra(MANTRAS[Math.floor(Math.random() * MANTRAS.length)]);
-
-    // 3. Calculate Stats
     const loadStats = async () => {
         if (!user) return;
         try {
@@ -4294,47 +4857,48 @@ export default function Journal() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto -mt-6">
+    <div className="max-w-5xl mx-auto space-y-6 pb-20">
       
-      {/* --- SMART HEADER --- */}
-      <div className="mb-8 p-6 bg-gradient-to-r from-white to-blue-50/30 rounded-2xl border border-blue-50 shadow-sm animate-fadeIn">
-         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-             <div className="text-center md:text-left">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                    {greeting}, <span className="text-blue-700">{user?.displayName ? user.displayName.split(' ')[0] : 'Friend'}</span>
-                </h1>
-                <p className="text-gray-500 font-medium mt-1 italic text-sm">
-                    "{mantra}"
-                </p>
-             </div>
-             
-             {/* GAMIFICATION BADGES ROW (Reduced size for mobile fit) */}
-             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
-                 
-                 {/* 1. Streak Badge */}
-                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Your current daily journaling streak">
-                    <FireIcon className={`h-3.5 w-3.5 ${streak > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
-                    <span className="text-xs font-bold text-gray-700">{streak} Day Streak</span>
-                 </div>
-
-                 {/* 2. Consistency Badge */}
-                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Average entries per week">
-                    <ChartBarIcon className="h-3.5 w-3.5 text-blue-500" />
-                    <span className="text-xs font-bold text-gray-700">{consistency} / wk</span>
-                 </div>
-
-                 {/* 3. Word Count Badge */}
-                 <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full shadow-sm border border-blue-100 transition-transform hover:scale-105 cursor-default" title="Total words journaled">
-                    <PencilSquareIcon className="h-3.5 w-3.5 text-purple-500" />
-                    <span className="text-xs font-bold text-gray-700">{totalWords.toLocaleString()} Words</span>
-                 </div>
-
-             </div>
-         </div>
+      {/* --- NEW HEADER (Tasks Style) --- */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <BookOpenIcon className="h-8 w-8 text-blue-600" />
+                Daily Journal
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Reflect, release, and recover. One day at a time.</p>
+          </div>
       </div>
 
+      {/* --- MINI STATS GRID --- */}
+      <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Streak</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-orange-600">
+                  <FireIcon className="h-6 w-6" />
+                  {streak}
+              </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Consistency</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-blue-600">
+                  <ChartBarIcon className="h-6 w-6" />
+                  {consistency}<span className="text-xs text-gray-400 self-end mb-1">/wk</span>
+              </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Words</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-purple-600">
+                  <PencilSquareIcon className="h-6 w-6" />
+                  {totalWords > 1000 ? `${(totalWords/1000).toFixed(1)}k` : totalWords}
+              </div>
+          </div>
+      </div>
+
+      {/* --- TABS --- */}
       <JournalTabs activeTab={activeTab} onChange={setActiveTab} />
 
+      {/* --- CONTENT --- */}
       <div className="transition-opacity duration-200">
         {activeTab === 'write' ? (
           <JournalEditor 
@@ -4817,7 +5381,6 @@ import {
   FireIcon,
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
- // ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import Confetti from 'react-confetti';
 import { isSameDay, startOfDay, isBefore } from 'date-fns';
@@ -4917,7 +5480,7 @@ export default function Tasks() {
       {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
 
       {/* --- HEADER & MINI HERO --- */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
@@ -4926,12 +5489,13 @@ export default function Tasks() {
             <p className="text-sm text-gray-500 mt-1">Manage your daily habits and tasks.</p>
           </div>
           
+          {/* COMPACT ADD BUTTON */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md"
+            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md flex items-center justify-center"
+            title="Create New Quest"
           >
-            <PlusIcon className="h-5 w-5" />
-            <span>New Quest</span>
+            <PlusIcon className="h-6 w-6" />
           </button>
       </div>
 
@@ -5647,220 +6211,360 @@ export default function Vitality() {
 ================================================================================
 FILE: src/pages/WorkbookDetail.tsx
 ================================================================================
-import { useEffect, useState, Fragment } from 'react';
+// src/pages/WorkbookDetail.tsx
+import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getWorkbook } from '../data/workbooks';
-import { getSectionCompletion, getAllWorkbookAnswers } from '../lib/workbooks'; // Updated Import
-import { analyzeFullWorkbook, type WorkbookInsight } from '../lib/gemini'; // Updated Import
 import { useAuth } from '../contexts/AuthContext';
-import { Dialog, Transition } from '@headlessui/react';
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getWorkbook, type WorkbookSection } from '../data/workbooks';
+import { analyzeWorkbookContent, type WorkbookAnalysisResult } from '../lib/gemini';
+import { addTask } from '../lib/tasks';
 import { 
-  ChevronRightIcon, 
-  CheckCircleIcon, 
-  ArrowLeftIcon,
-  SparklesIcon
+    ArrowLeftIcon, 
+    PlayCircleIcon, 
+    CheckCircleIcon, 
+    SparklesIcon,
+    ArrowPathIcon,
+    PlusCircleIcon,
+    LightBulbIcon,
+    ShieldExclamationIcon,
+    AcademicCapIcon
 } from '@heroicons/react/24/outline';
+import { Dialog, Transition, RadioGroup } from '@headlessui/react';
+
+// Define a proper interface for workbook answer data to avoid 'any'
+interface WorkbookAnswer {
+  workbookId: string;
+  sectionId: string;
+  questionId: string;
+  answer: string;
+  uid: string;
+}
 
 export default function WorkbookDetail() {
   const { workbookId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const workbook = getWorkbook(workbookId || '');
-  
-  const [progressMap, setProgressMap] = useState<{[sectionId: string]: number}>({});
-  
-  // AI State
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiResult, setAiResult] = useState<WorkbookInsight | null>(null);
-  const [showAiModal, setShowAiModal] = useState(false);
 
-  useEffect(() => {
-    async function loadProgress() {
-      if (!user || !workbook) return;
-      
-      const newMap: {[key: string]: number} = {};
-      
-      for (const section of workbook.sections) {
-        const pct = await getSectionCompletion(user.uid, workbook.id, section.id, section.questions.length);
-        newMap[section.id] = pct;
-      }
-      
-      setProgressMap(newMap);
+  // Data State
+  const [completedCounts, setCompletedCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  // Analysis State
+  const [showWizard, setShowWizard] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisScope, setAnalysisScope] = useState<'section' | 'workbook' | 'global'>('section');
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(workbook?.sections[0]?.id || '');
+  const [insight, setInsight] = useState<WorkbookAnalysisResult | null>(null);
+  const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
+
+  // loadProgress wrapped in useCallback to stabilize the dependency for useEffect
+  const loadProgress = useCallback(async () => {
+    if (!user || !workbook || !db) return;
+    
+    try {
+        const q = query(
+            collection(db, 'users', user.uid, 'workbook_answers'),
+            where('workbookId', '==', workbook.id)
+        );
+        
+        const snapshot = await getDocs(q);
+        const counts: Record<string, number> = {};
+
+        snapshot.docs.forEach(docSnap => {
+            const data = docSnap.data();
+            if (data.sectionId) {
+                counts[data.sectionId] = (counts[data.sectionId] || 0) + 1;
+            }
+        });
+
+        setCompletedCounts(counts);
+    } catch (error) {
+        console.error("Error loading progress:", error);
+    } finally {
+        setLoading(false);
     }
-
-    loadProgress();
   }, [user, workbook]);
 
-  // --- HANDLER: Holistic Analysis ---
-  const handleAiAnalysis = async () => {
-    if (!user || !workbook) return;
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
 
-    setIsAnalyzing(true);
-    setShowAiModal(true);
-    setAiResult(null); // Reset previous result
+  // --- AI ANALYSIS LOGIC ---
+
+  const handleAnalyze = async () => {
+    if (!user || !workbook || !db) return;
+    
+    setAnalyzing(true);
+    setInsight(null);
+    setAddedActions(new Set());
 
     try {
-      // 1. Fetch ALL answers from ALL sections
-      const fullContent = await getAllWorkbookAnswers(
-        user.uid, 
-        workbook.id, 
-        workbook.sections.map(s => ({ id: s.id, title: s.title }))
-      );
+        let docsToAnalyze: WorkbookAnswer[] = [];
+        let contextTitle = "";
 
-      if (!fullContent) {
-        setAiResult({
-          feedback: "It looks like you haven't started this workbook yet. Complete a few questions first!",
-          encouragement: "Every journey begins with a single step."
-        });
-        setIsAnalyzing(false);
-        return;
-      }
+        if (analysisScope === 'section') {
+            const q = query(
+                collection(db, 'users', user.uid, 'workbook_answers'),
+                where('workbookId', '==', workbook.id),
+                where('sectionId', '==', selectedSectionId)
+            );
+            const snap = await getDocs(q);
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            const sec = workbook.sections.find(s => s.id === selectedSectionId);
+            contextTitle = sec ? sec.title : "Section Review";
 
-      // 2. Send to Gemini
-      const result = await analyzeFullWorkbook(workbook.title, fullContent);
-      setAiResult(result);
-      
+        } else if (analysisScope === 'workbook') {
+            const q = query(
+                collection(db, 'users', user.uid, 'workbook_answers'),
+                where('workbookId', '==', workbook.id)
+            );
+            const snap = await getDocs(q);
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            contextTitle = workbook.title;
+
+        } else {
+            const q = collection(db, 'users', user.uid, 'workbook_answers');
+            const snap = await getDocs(q);
+            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            contextTitle = "Global Recovery Review";
+        }
+
+        if (docsToAnalyze.length === 0) {
+            alert("No entries found for this selection. Try completing some questions first.");
+            setAnalyzing(false);
+            return;
+        }
+
+        const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
+        
+        const result = await analyzeWorkbookContent(textContent, analysisScope, contextTitle);
+        
+        if (result) {
+            setInsight(result);
+            setShowWizard(false);
+            setShowResult(true);
+        } else {
+            alert("Analysis failed. Please try again.");
+        }
+
     } catch (error) {
-      console.error("Analysis failed", error);
-      setAiResult({
-        feedback: "We couldn't generate an analysis at this moment. Please check your connection and try again.",
-        encouragement: "Keep going."
-      });
+        console.error(error);
+        alert("An error occurred during analysis.");
     } finally {
-      setIsAnalyzing(false);
+        setAnalyzing(false);
     }
   };
 
-  if (!workbook) return <div>Workbook not found</div>;
+  const handleAddToHabits = async (action: string) => {
+    if (!user) return;
+    try {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 3); 
+
+        await addTask(user.uid, action, 'once', 'High', dueDate);
+        setAddedActions(prev => new Set(prev).add(action));
+    } catch (e) {
+        console.error(e);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading workbook...</div>;
+  if (!workbook) return <div className="p-8 text-center text-gray-500">Workbook not found.</div>;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
       
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/workbooks')} className="text-gray-500 hover:text-gray-900">
-             <ArrowLeftIcon className="h-5 w-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900">{workbook.title}</h1>
-        </div>
-        
-        {/* SPARKLE BUTTON (Moved Here) */}
-        <button 
-          onClick={handleAiAnalysis}
-          className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all active:scale-95"
-        >
-          <SparklesIcon className="h-5 w-5" />
-          <span>Analyze Progress</span>
-        </button>
+      {/* HEADER */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+             <div>
+                 <Link to="/workbooks" className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-2">
+                     <ArrowLeftIcon className="h-4 w-4" /> Back to Library
+                 </Link>
+                 <h1 className="text-3xl font-bold text-gray-900">{workbook.title}</h1>
+                 <p className="text-gray-600 mt-2 max-w-2xl">{workbook.description}</p>
+             </div>
+
+             <button 
+                onClick={() => setShowWizard(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-105"
+             >
+                <SparklesIcon className="h-5 w-5" />
+                <span className="font-semibold">Consult Compass</span>
+             </button>
+         </div>
       </div>
 
-      <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
-        <ul className="divide-y divide-gray-100">
-          {workbook.sections.map((section) => {
-            const progress = progressMap[section.id] || 0;
-            const isComplete = progress === 100;
+      {/* SECTIONS LIST */}
+      <div className="grid gap-4">
+          {workbook.sections.map((section: WorkbookSection) => {
+              const answeredCount = completedCounts[section.id] || 0;
+              const totalQuestions = section.questions.filter(q => q.type !== 'read_only').length;
+              const isComplete = totalQuestions > 0 && answeredCount >= totalQuestions;
+              const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
-            return (
-              <li key={section.id}>
-                <Link 
-                  to={`/workbooks/${workbook.id}/session/${section.id}`}
-                  className="block hover:bg-gray-50 transition p-4 sm:p-6"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 pr-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{section.title}</h3>
-                        {isComplete && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
+              return (
+                  <div key={section.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 transition-all group">
+                      <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                  {section.title}
+                                  {isComplete && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
+                              </h3>
+                              <p className="text-sm text-gray-500">{section.description}</p>
+                              
+                              <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                  <div className="bg-blue-600 h-full transition-all" style={{ width: `${progressPercent}%` }} />
+                              </div>
+                              <p className="text-xs text-gray-400 mt-1">{answeredCount} / {totalQuestions} completed</p>
+                          </div>
+
+                          <button 
+                             onClick={() => navigate(`/workbooks/${workbook.id}/session/${section.id}`)}
+                             className={`p-3 rounded-full transition-all ${isComplete ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                          >
+                              {isComplete ? <ArrowPathIcon className="h-6 w-6" /> : <PlayCircleIcon className="h-6 w-6" />}
+                          </button>
                       </div>
-                      <p className="text-sm text-gray-500">{section.description}</p>
-                      
-                      {/* Progress Bar */}
-                      <div className="mt-2 w-full max-w-[200px] bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                        <div 
-                          className={`h-full ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`} 
-                          style={{ width: `${progress}%` }} 
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400 mt-1 block">{progress}% Complete</span>
-                    </div>
-                    
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
                   </div>
-                </Link>
-              </li>
-            );
+              );
           })}
-        </ul>
       </div>
 
-      {/* --- AI INSIGHT MODAL --- */}
-      <Transition appear show={showAiModal} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setShowAiModal(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
-          </Transition.Child>
+      {/* --- WIZARD MODAL (Scope Selection) --- */}
+      <Transition appear show={showWizard} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowWizard(false)}>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+              <Dialog.Title className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                  <SparklesIcon className="h-6 w-6 text-purple-600" />
+                  Ask the Recovery Compass
+              </Dialog.Title>
 
+              <div className="space-y-4">
+                  <RadioGroup value={analysisScope} onChange={setAnalysisScope} className="space-y-3">
+                      <RadioGroup.Option value="section" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
+                          {({ checked }) => (
+                              <div className="flex w-full items-center justify-between">
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Specific Section</RadioGroup.Label>
+                                  </div>
+                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                              </div>
+                          )}
+                      </RadioGroup.Option>
+
+                      {analysisScope === 'section' && (
+                          <div className="ml-4 pl-4 border-l-2 border-gray-100">
+                              <select value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)} className="w-full text-sm border-gray-300 rounded-lg">
+                                  {workbook.sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                              </select>
+                          </div>
+                      )}
+
+                      <RadioGroup.Option value="workbook" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
+                          {({ checked }) => (
+                              <div className="flex w-full items-center justify-between">
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Full Workbook</RadioGroup.Label>
+                                  </div>
+                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                              </div>
+                          )}
+                      </RadioGroup.Option>
+
+                      <RadioGroup.Option value="global" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
+                          {({ checked }) => (
+                              <div className="flex w-full items-center justify-between">
+                                  <div className="text-sm">
+                                      <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Global Review</RadioGroup.Label>
+                                  </div>
+                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                              </div>
+                          )}
+                      </RadioGroup.Option>
+                  </RadioGroup>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                      <button onClick={() => setShowWizard(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
+                      <button onClick={handleAnalyze} disabled={analyzing} className="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2">
+                          {analyzing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <SparklesIcon className="h-4 w-4" />}
+                          Analyze Now
+                      </button>
+                  </div>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* --- RESULT MODAL --- */}
+      <Transition appear show={showResult} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setShowResult(false)}>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                    <SparklesIcon className="h-6 w-6 text-purple-500" />
-                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900">
-                      Holistic Workbook Analysis
-                    </Dialog.Title>
-                  </div>
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                  {insight && (
+                      <div className="space-y-6">
+                          <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+                              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                  <SparklesIcon className="h-6 w-6 text-purple-600" />
+                                  {insight.scope_context}
+                              </h2>
+                          </div>
 
-                  {isAnalyzing ? (
-                    <div className="py-12 text-center">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                        <p className="text-gray-500 font-medium">Reviewing your entire journey...</p>
-                        <p className="text-xs text-gray-400 mt-2">Connecting dots between sections</p>
-                    </div>
-                  ) : (
-                    aiResult && (
-                        <div className="space-y-6">
-                            <div className="bg-purple-50 p-5 rounded-xl text-gray-800 leading-relaxed border border-purple-100 text-base">
-                                {aiResult.feedback}
-                            </div>
-                            
-                            <div className="text-center">
-                                <span className="block text-xs uppercase tracking-widest text-gray-400 mb-1">Encouragement</span>
-                                <span className="font-bold text-purple-700 text-lg">"{aiResult.encouragement}"</span>
-                            </div>
-                        </div>
-                    )
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                  <div className="flex items-center gap-2 mb-2 text-blue-800 font-bold text-xs uppercase tracking-wide">
+                                      <AcademicCapIcon className="h-4 w-4" /> Understanding
+                                  </div>
+                                  <p className="text-sm text-blue-900 leading-relaxed">{insight.pillars.understanding}</p>
+                              </div>
+                              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                                  <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-xs uppercase tracking-wide">
+                                      <ShieldExclamationIcon className="h-4 w-4" /> Blind Spots
+                                  </div>
+                                  <p className="text-sm text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p>
+                              </div>
+                              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                                  <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-xs uppercase tracking-wide">
+                                      <LightBulbIcon className="h-4 w-4" /> Growth
+                                  </div>
+                                  <p className="text-sm text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p>
+                              </div>
+                          </div>
+
+                          <div className="bg-purple-50 p-5 rounded-xl border border-purple-100">
+                              <h3 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                                  <CheckCircleIcon className="h-5 w-5" /> Suggested Action Steps
+                              </h3>
+                              <ul className="space-y-2">
+                                  {insight.suggested_actions.map((action, idx) => {
+                                      const isAdded = addedActions.has(action);
+                                      return (
+                                          <li key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-purple-100">
+                                              <span className="text-sm text-gray-700 font-medium">{action}</span>
+                                              <button 
+                                                  onClick={() => !isAdded && handleAddToHabits(action)}
+                                                  disabled={isAdded}
+                                                  className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-50'}`}
+                                              >
+                                                  {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
+                                              </button>
+                                          </li>
+                                      );
+                                  })}
+                              </ul>
+                          </div>
+                      </div>
                   )}
-
-                  <div className="mt-8">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-lg border border-transparent bg-purple-100 px-4 py-3 text-sm font-semibold text-purple-900 hover:bg-purple-200 focus:outline-none w-full transition-colors"
-                      onClick={() => setShowAiModal(false)}
-                    >
-                      Close Analysis
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+              </Dialog.Panel>
             </div>
           </div>
         </Dialog>
@@ -5893,7 +6597,7 @@ export default function WorkbookSession() {
   
   const workbook = getWorkbook(workbookId || '');
   const section = workbook?.sections.find(s => s.id === sectionId);
-  
+
   // State
   const [answers, setAnswers] = useState<WorkbookProgress>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -5910,9 +6614,29 @@ export default function WorkbookSession() {
       const saved = await getSectionAnswers(user.uid, workbook.id, section.id);
       setAnswers(saved);
       
-      // Find first unanswered question to jump to
-      const firstEmptyIndex = section.questions.findIndex(q => !saved[q.id]);
-      if (firstEmptyIndex !== -1) setCurrentIndex(firstEmptyIndex);
+      // --- SMART RESUME LOGIC ---
+      // Find the index of the first actual 'input' question in the array
+      const firstInputIndex = section.questions.findIndex(q => q.type !== 'read_only');
+      
+      // Find the index of the first question that hasn't been answered yet
+      const firstMissingAnswerIndex = section.questions.findIndex(q => q.type !== 'read_only' && !saved[q.id]);
+
+      // CASE 1: No input questions exist (Read only section) -> Start at 0
+      if (firstInputIndex === -1) {
+          setCurrentIndex(0);
+      }
+      // CASE 2: The user hasn't answered the FIRST input question yet -> Start at 0 (Show Intro)
+      else if (firstMissingAnswerIndex === firstInputIndex) {
+          setCurrentIndex(0);
+      }
+      // CASE 3: The user has answered some questions -> Resume at the first missing one
+      else if (firstMissingAnswerIndex !== -1) {
+          setCurrentIndex(firstMissingAnswerIndex);
+      }
+      // CASE 4: Section is complete -> Start at 0 (Review mode)
+      else {
+          setCurrentIndex(0);
+      }
       
       setLoading(false);
     }
@@ -5921,6 +6645,7 @@ export default function WorkbookSession() {
 
   // Handlers
   const currentQuestion = section?.questions[currentIndex];
+  // Default to '' if no answer found
   const currentAnswer = currentQuestion ? (answers[currentQuestion.id] || '') : '';
 
   const handleTextChange = (val: string) => {
@@ -5930,6 +6655,10 @@ export default function WorkbookSession() {
 
   const saveCurrent = async () => {
     if (!user || !workbook || !section || !currentQuestion) return;
+    
+    // Do not save for read_only slides
+    if (currentQuestion.type === 'read_only') return;
+
     setSaving(true);
     await saveAnswer(user.uid, workbook.id, section.id, currentQuestion.id, currentAnswer);
     setSaving(false);
@@ -5988,16 +6717,27 @@ export default function WorkbookSession() {
             <h2 className="text-xl text-gray-600 mb-8 border-b pb-4">{section.title}: {section.description}</h2>
 
             <div className="space-y-8">
-                {section.questions.map((q, idx) => (
-                    <div key={q.id} className="break-inside-avoid">
-                        <p className="font-bold text-lg mb-2">
-                            {idx + 1}. {q.text}
-                        </p>
-                        <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-800 whitespace-pre-wrap">
-                            {answers[q.id] || "No answer provided."}
+                {section.questions.map((q, idx) => {
+                    // Include read_only slides as context blocks
+                    if (q.type === 'read_only') {
+                        return (
+                            <div key={q.id} className="break-inside-avoid bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                <p className="text-gray-800 whitespace-pre-wrap font-medium">{q.text}</p>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={q.id} className="break-inside-avoid">
+                            <p className="font-bold text-lg mb-2">
+                                {idx + 1}. {q.text}
+                            </p>
+                            <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-800 whitespace-pre-wrap">
+                                {answers[q.id] || "No answer provided."}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             
             <div className="mt-12 pt-4 border-t text-sm text-gray-400 text-center">
@@ -6021,12 +6761,14 @@ export default function WorkbookSession() {
                 <XMarkIcon className="h-6 w-6" />
             </button>
             <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Question {currentIndex + 1} of {section.questions.length}
+                {currentQuestion.type === 'read_only' 
+                    ? 'Introduction'
+                    : `Question ${currentIndex + 1} of ${section.questions.length}`
+                }
             </div>
          </div>
          
          <div className="flex items-center gap-3">
-            {/* Export Only - Sparkle Button Removed */}
             <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
                 <DocumentArrowDownIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Export</span>
@@ -6042,33 +6784,62 @@ export default function WorkbookSession() {
         />
       </div>
 
-      {/* 3. The Question Area */}
+      {/* 3. The Content Area */}
       <div className="flex-1 overflow-y-auto pb-20">
-         <div className="prose prose-lg max-w-none mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-                {currentQuestion.text}
-            </h2>
-            {currentQuestion.context && (
-                <div className="flex gap-3 bg-blue-50 p-4 rounded-lg mt-4 text-blue-800 text-sm">
-                    <InformationCircleIcon className="h-5 w-5 flex-shrink-0" />
-                    <p className="italic">"{currentQuestion.context}"</p>
-                </div>
-            )}
-         </div>
+         
+         {/* --- RENDER LOGIC BASED ON TYPE --- */}
+         {currentQuestion.type === 'read_only' ? (
+             // --- READING SLIDE ---
+             <div className="prose prose-lg max-w-none">
+                 <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                     <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+                        <InformationCircleIcon className="h-6 w-6" />
+                        Explanation
+                     </h2>
+                     <div className="text-blue-900 whitespace-pre-wrap leading-relaxed">
+                        {currentQuestion.text}
+                     </div>
+                 </div>
+             </div>
+         ) : (
+             // --- INPUT SLIDE ---
+             <div className="space-y-6">
+                
+                {/* A. Insight/Context (Shown FIRST) */}
+                {currentQuestion.context && (
+                    <div className="flex gap-3 bg-purple-50 p-5 rounded-xl text-purple-900 border border-purple-100 shadow-sm">
+                        <InformationCircleIcon className="h-6 w-6 flex-shrink-0 text-purple-600" />
+                        <div className="space-y-1">
+                            <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Insight</span>
+                            <p className="italic font-medium leading-relaxed">"{currentQuestion.context}"</p>
+                        </div>
+                    </div>
+                )}
 
-         <textarea
-            className="w-full min-h-[300px] p-4 text-lg border-0 bg-transparent focus:ring-0 placeholder-gray-300 resize-none"
-            placeholder="Type your answer here..."
-            value={currentAnswer}
-            onChange={(e) => handleTextChange(e.target.value)}
-            autoFocus
-         />
+                {/* B. Question Text (Shown SECOND - Styled as Focus Card) */}
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-900 leading-relaxed">
+                        {currentQuestion.text}
+                    </h2>
+                </div>
+
+                {/* C. Input Textarea (Shown THIRD) */}
+                <textarea
+                    className="w-full min-h-[300px] p-4 text-lg border-2 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-300 resize-none transition-all"
+                    placeholder="Type your answer here..."
+                    value={currentAnswer}
+                    onChange={(e) => handleTextChange(e.target.value)}
+                    autoFocus
+                />
+             </div>
+         )}
+
       </div>
 
       {/* 4. Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 lg:static lg:bg-transparent lg:border-0">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-             <button 
+            <button 
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
                 className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
@@ -6082,7 +6853,7 @@ export default function WorkbookSession() {
              </button>
 
              <div className="text-xs text-gray-400 italic">
-                {saving ? 'Saving...' : 'Auto-saved'}
+                {currentQuestion.type === 'read_only' ? '' : (saving ? 'Saving...' : 'Auto-saved')}
              </div>
 
              <button 
@@ -6101,60 +6872,176 @@ export default function WorkbookSession() {
 ================================================================================
 FILE: src/pages/Workbooks.tsx
 ================================================================================
-    import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { WORKBOOKS } from '../data/workbooks';
-import { BookOpenIcon, StarIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { 
+    BookOpenIcon, 
+    StarIcon, 
+    HeartIcon, 
+    AcademicCapIcon,
+    SparklesIcon,
+    FireIcon,
+    ChevronRightIcon
+} from '@heroicons/react/24/outline';
 
 export default function Workbooks() {
-  
-  const getIcon = (type: string) => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+      activeCount: 0,
+      wisdomScore: 0,
+      mastery: 0
+  });
+
+  useEffect(() => {
+    async function loadStats() {
+        if (!user || !db) return;
+        
+        try {
+            // Fetch all answers to calculate stats
+            const colRef = collection(db, 'users', user.uid, 'workbook_answers');
+            const snapshot = await getDocs(colRef);
+            
+            // 1. Wisdom Score (Total Answers)
+            const wisdomScore = snapshot.size;
+
+            // 2. Active Workbooks (Count unique workbook IDs from doc IDs "workbookId_sectionId")
+            const uniqueWorkbooks = new Set<string>();
+            snapshot.docs.forEach(doc => {
+                const [wbId] = doc.id.split('_');
+                if (wbId) uniqueWorkbooks.add(wbId);
+            });
+            const activeCount = uniqueWorkbooks.size;
+
+            // 3. Mastery (Approximate % based on a fixed total for now, or dynamic)
+            // Assuming ~45 questions total across current workbooks as a baseline for 100% mastery visually
+            // In a real app, you'd calculate total available questions dynamically.
+            const TOTAL_ESTIMATED_QUESTIONS = 45; 
+            const mastery = Math.min(100, Math.round((wisdomScore / TOTAL_ESTIMATED_QUESTIONS) * 100));
+
+            setStats({ activeCount, wisdomScore, mastery });
+        } catch (error) {
+            console.error("Failed to load workbook stats", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    loadStats();
+  }, [user]);
+
+  const getTheme = (type: string) => {
     switch (type) {
-      case 'general': return <StarIcon className="h-6 w-6 text-yellow-500" />;
-      case 'steps': return <BookOpenIcon className="h-6 w-6 text-blue-500" />;
-      default: return <HeartIcon className="h-6 w-6 text-purple-500" />;
+      case 'general': return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-l-yellow-500', icon: StarIcon };
+      case 'steps': return { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-l-blue-600', icon: BookOpenIcon };
+      default: return { color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-l-purple-500', icon: HeartIcon };
     }
   };
 
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="border-b border-gray-200 pb-5">
-        <h3 className="text-2xl font-bold leading-6 text-gray-900">Recovery Workbooks</h3>
-        <p className="mt-2 max-w-4xl text-sm text-gray-500">
-          Structured guides to help you process your journey. Select a workbook to begin.
-        </p>
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
+      
+      {/* --- HEADER (Matches Tasks Style) --- */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+                Recovery Library
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Structured guides to process your journey.</p>
+          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {WORKBOOKS.map((workbook) => (
-          <div key={workbook.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                {getIcon(workbook.type)}
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-gray-900">{workbook.title}</h4>
-                <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                  {workbook.sections.length} Sections
-                </span>
-              </div>
-            </div>
-            
-            <p className="text-gray-600 text-sm flex-grow mb-6">
-              {workbook.description}
-            </p>
-
-            <Link 
-              to={`/workbooks/${workbook.id}`}
-              className="w-full bg-blue-600 text-white text-center py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Start Workbook
-            </Link>
+      {/* --- MINI STATS GRID --- */}
+      <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
+              <span className="text-2xl font-bold text-gray-900">{stats.activeCount}</span>
           </div>
-        ))}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Wisdom Score</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-cyan-600">
+                  <SparklesIcon className="h-6 w-6" />
+                  {stats.wisdomScore}
+              </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Mastery</span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-indigo-600">
+                  <FireIcon className="h-6 w-6" />
+                  {stats.mastery}%
+              </div>
+          </div>
+      </div>
+
+      {/* --- WORKBOOK LIST (Quest Card Style) --- */}
+      <div className="space-y-4">
+        {WORKBOOKS.map((workbook) => {
+            const theme = getTheme(workbook.type);
+            
+            return (
+                <Link 
+                    key={workbook.id} 
+                    to={`/workbooks/${workbook.id}`}
+                    className={`block relative group bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md ${theme.border} border-l-[6px]`}
+                >
+                    <div className="flex items-start gap-4">
+                        
+                        {/* Icon Badge */}
+                        <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
+                            <theme.icon className="h-6 w-6" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                    {workbook.title}
+                                </h3>
+                                <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                {workbook.description}
+                            </p>
+
+                            {/* Metadata Chips */}
+                            <div className="flex items-center gap-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
+                                    {workbook.sections.length} Sections
+                                </span>
+                                {workbook.type === 'steps' && (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                        12-Step Compatible
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </Link>
+            );
+        })}
       </div>
     </div>
   );
 }
+
+================================================================================
+FILE: src/test/setup.ts
+================================================================================
+import '@testing-library/jest-dom';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+// Runs a cleanup after each test case (e.g. clearing jsdom)
+afterEach(() => {
+  cleanup();
+});
 
 ================================================================================
 FILE: src/vite-env.d.ts
@@ -6248,7 +7135,11 @@ FILE: tsconfig.json
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    // ... existing options
+  }
 }
 
 

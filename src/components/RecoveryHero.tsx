@@ -8,7 +8,8 @@ import {
     AcademicCapIcon,
     BookOpenIcon,
     ShieldCheckIcon,
-    HeartIcon
+    HeartIcon,
+    ExclamationTriangleIcon // NEW
 } from '@heroicons/react/24/outline';
 
 interface RecoveryHeroProps {
@@ -26,10 +27,11 @@ interface RecoveryHeroProps {
         wisdom: number;
         completion: number;
     };
-    vitalityStats: { // [NEW]
+    vitalityStats: { 
         bioStreak: number;
         totalLogs: number;
     };
+    onSOSClick: () => void; // NEW
 }
 
 export default function RecoveryHero({ 
@@ -38,7 +40,8 @@ export default function RecoveryHero({
     journalStats, 
     taskStats, 
     workbookStats,
-    vitalityStats 
+    vitalityStats,
+    onSOSClick 
 }: RecoveryHeroProps) {
   return (
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -46,25 +49,37 @@ export default function RecoveryHero({
          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
          
          <div className="relative z-10">
-             {/* Header Row: Greeting & Clean Time Badge */}
+             {/* Header Row: Greeting, Clean Time, SOS */}
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                  <div>
                      <h1 className="text-3xl font-bold">Welcome back, {userName}</h1>
                      <p className="text-blue-100 opacity-90">One day at a time. You are doing great.</p>
                  </div>
 
-                 {/* CLEAN TIME BADGE OF HONOR */}
-                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
-                     <ShieldCheckIcon className="h-8 w-8 text-cyan-300" />
-                     <div className="text-right">
-                         <div className="text-2xl font-bold leading-none">{daysClean}</div>
-                         <div className="text-[10px] uppercase tracking-wider text-blue-100 font-semibold">Days Clean</div>
+                 <div className="flex items-center gap-3">
+                     
+                     {/* SOS BUTTON (New) */}
+                     <button 
+                        onClick={onSOSClick}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg border border-red-400 transition-all active:scale-95 animate-pulse"
+                        title="Emergency Support"
+                     >
+                        <ExclamationTriangleIcon className="h-5 w-5" />
+                        <span className="font-bold text-sm">SOS</span>
+                     </button>
+
+                     {/* CLEAN TIME BADGE */}
+                     <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
+                         <ShieldCheckIcon className="h-8 w-8 text-cyan-300" />
+                         <div className="text-right">
+                             <div className="text-2xl font-bold leading-none">{daysClean}</div>
+                             <div className="text-[10px] uppercase tracking-wider text-blue-100 font-semibold">Days Clean</div>
+                         </div>
                      </div>
                  </div>
              </div>
 
              {/* THE MATRIX GRID (Linked Tiles) */}
-             {/* UPDATED: grid-cols-1 (Mobile Stack) -> md:grid-cols-4 (Desktop Row) */}
              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                  
                  {/* COLUMN 1: JOURNAL */}
@@ -143,7 +158,7 @@ export default function RecoveryHero({
                      </div>
                  </Link>
 
-                 {/* COLUMN 4: VITALITY [NEW] */}
+                 {/* COLUMN 4: VITALITY */}
                  <Link to="/vitality" className="group bg-blue-900/30 rounded-xl p-4 border border-blue-400/30 backdrop-blur-sm hover:bg-blue-900/50 hover:border-blue-400/50 transition-all cursor-pointer">
                      <div className="flex items-center gap-2 mb-3 text-blue-200 text-sm font-semibold uppercase tracking-wider group-hover:text-white transition-colors">
                          <HeartIcon className="h-4 w-4" /> Vitality

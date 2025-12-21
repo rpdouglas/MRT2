@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -15,18 +15,35 @@ import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 
 // --- Types ---
+
+// 1. Strict definition for Firestore Data to avoid 'doc.data()' implicit any
+interface JournalDocData {
+    tags?: string[];
+    [key: string]: unknown; // Allow other fields without breaking strictness
+}
+
+// 2. Main Entry Interface
 export interface JournalEntry {
   id: string;
   content: string;
   moodScore: number;
   sentiment?: string;
-  createdAt: any;
+  // We allow Timestamp or an object with seconds to be safe, but prioritize Timestamp
+  createdAt: Timestamp; 
   tags?: string[];
   weather?: { temp: number; condition: string } | null;
 }
 
+// 3. Extended Template
+// FIX: We do not redefine 'defaultTags' here. We let it inherit strictly from JournalTemplate.
+// We only add 'content' which is specific to our text-mode logic.
+interface ExtendedJournalTemplate extends JournalTemplate {
+    content?: string;
+}
+
 interface JournalEditorProps {
   initialEntry: JournalEntry | null;
+  initialTemplateId?: string | null;
   onSaveComplete: () => void;
 }
 
@@ -37,7 +54,7 @@ const DEFAULT_TEMPLATES = [
   { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['Meeting'] },
 ];
 
-export default function JournalEditor({ initialEntry, onSaveComplete }: JournalEditorProps) {
+export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -59,69 +76,9 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
 
-  // Load Initial Data (Editing Mode)
-  useEffect(() => {
-    if (initialEntry) {
-      setNewEntry(initialEntry.content);
-      setMood(initialEntry.moodScore);
-      setTags(initialEntry.tags || []);
-      // Load saved weather if it exists
-      if (initialEntry.weather) {
-        setWeather(initialEntry.weather);
-      }
-      setActiveTemplate(null);
-    } else {
-      // Reset if switching from edit back to new
-      setNewEntry('');
-      setMood(5);
-      setTags([]);
-      setActiveTemplate(null);
-      setFormAnswers([]);
-      setWeather(null);
-      // Try auto-fetch, but don't block if it fails
-      fetchLocalWeather(); 
-    }
-  }, [initialEntry]);
+  // --- Helper Functions (Wrapped in useCallback) ---
 
-  // Load Resources
-  useEffect(() => {
-    if (!user) return;
-    loadCustomTemplates();
-    loadUserTags();
-    if (!initialEntry) fetchLocalWeather(); 
-  }, [user]);
-
-  const loadCustomTemplates = async () => {
-    if (!user) return;
-    const t = await getUserTemplates(user.uid);
-    setCustomTemplates(t);
-  };
-
-  const loadUserTags = async () => {
-    if (!user || !db) return;
-    try {
-        // Fetch last 50 entries to gather recent tags
-        const q = query(
-            collection(db, 'journals'),
-            where('uid', '==', user.uid),
-            orderBy('createdAt', 'desc'),
-            limit(50)
-        );
-        const snapshot = await getDocs(q);
-        const tagSet = new Set<string>();
-        snapshot.docs.forEach(doc => {
-            const data = doc.data();
-            if (data.tags && Array.isArray(data.tags)) {
-                data.tags.forEach((t: string) => tagSet.add(t));
-            }
-        });
-        setAvailableTags(Array.from(tagSet).sort());
-    } catch (e) {
-        console.warn("Failed to load user tags", e);
-    }
-  };
-
-  const fetchLocalWeather = async () => {
+  const fetchLocalWeather = useCallback(async () => {
     setWeatherLoading(true);
     try {
       const data = await getCurrentWeather();
@@ -136,9 +93,43 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
     } finally {
       setWeatherLoading(false);
     }
-  };
+  }, []);
 
-  const handleTemplateSelect = (tId: string) => {
+  const loadCustomTemplates = useCallback(async () => {
+    if (!user) return;
+    try {
+        const t = await getUserTemplates(user.uid);
+        setCustomTemplates(t);
+    } catch (e) {
+        console.error("Failed to load templates", e);
+    }
+  }, [user]);
+
+  const loadUserTags = useCallback(async () => {
+    if (!user || !db) return;
+    try {
+        const q = query(
+            collection(db, 'journals'),
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        const snapshot = await getDocs(q);
+        const tagSet = new Set<string>();
+        snapshot.docs.forEach(doc => {
+            // CAST: Avoid implicit 'any' by telling TS this data matches our interface structure
+            const data = doc.data() as JournalDocData; 
+            if (data.tags && Array.isArray(data.tags)) {
+                data.tags.forEach((t: string) => tagSet.add(t));
+            }
+        });
+        setAvailableTags(Array.from(tagSet).sort());
+    } catch (e) {
+        console.warn("Failed to load user tags", e);
+    }
+  }, [user]);
+
+  const handleTemplateSelect = useCallback((tId: string) => {
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
         setNewEntry(defTemplate.text);
@@ -147,17 +138,20 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         return;
     }
 
-    // Extended Type Check: Use 'any' to safely access properties that might not be in the imported type yet
-    const custTemplate = customTemplates.find(t => t.id === tId) as any;
+    // CAST: Use intersection type to avoid 'any' safely
+    const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
+    
     if (custTemplate) {
         // CASE 1: Free Text Template (Markdown)
+        // We check 'content' which comes from our local extension
         if (custTemplate.content) {
             setNewEntry(custTemplate.content);
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
-            setActiveTemplate(null); // Treat as free text, not form wizard
+            setActiveTemplate(null); 
         } 
         // CASE 2: Legacy Form Template
         else if (custTemplate.prompts) {
+            // Because ExtendedJournalTemplate extends JournalTemplate, it is valid to pass here now
             setActiveTemplate(custTemplate);
             setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
             setNewEntry('');
@@ -168,7 +162,47 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         setNewEntry('');
         setTags([]);
     }
-  };
+  }, [customTemplates]); 
+
+  // --- Effects ---
+
+  // 1. Load Resources on Mount
+  useEffect(() => {
+    if (!user) return;
+    loadCustomTemplates();
+    loadUserTags();
+    if (!initialEntry) fetchLocalWeather(); 
+  }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
+
+  // 2. Handle Entry Selection or Deep Linking
+  useEffect(() => {
+    if (initialEntry) {
+      setNewEntry(initialEntry.content);
+      setMood(initialEntry.moodScore);
+      setTags(initialEntry.tags || []);
+      if (initialEntry.weather) {
+        setWeather(initialEntry.weather);
+      }
+      setActiveTemplate(null);
+    } else {
+      // Reset logic for new entry
+      setNewEntry('');
+      setMood(5);
+      setTags([]);
+      setActiveTemplate(null);
+      setFormAnswers([]);
+      setWeather(null);
+      
+      // We only auto-fetch weather if switching to NEW mode
+      fetchLocalWeather(); 
+
+      // Apply Deep Linked Template (if provided via URL params)
+      if (initialTemplateId) {
+          handleTemplateSelect(initialTemplateId);
+      }
+    }
+  }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
+
 
   // Tag Handling Functions
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -176,13 +210,12 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
         e.preventDefault();
         addTag(tagInput);
     } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
-        // Remove last tag if input is empty
         setTags(prev => prev.slice(0, -1));
     }
   };
 
   const addTag = (tagName: string) => {
-    const cleanTag = tagName.trim().replace(/^#/, ''); // Remove # if user typed it
+    const cleanTag = tagName.trim().replace(/^#/, '');
     if (cleanTag && !tags.includes(cleanTag)) {
         setTags([...tags, cleanTag]);
     }
@@ -289,7 +322,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
              {/* RIGHT: Template Controls */}
              <div className="flex items-center gap-2">
                  <div className="relative">
-                    <select 
+                     <select 
                         onChange={(e) => handleTemplateSelect(e.target.value)}
                         className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
                         defaultValue=""
@@ -364,7 +397,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
             />
           )}
 
-          {/* MOOD SLIDER (Moved to Full Width) */}
+          {/* MOOD SLIDER */}
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
              <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-gray-700">Mood Score</label>
@@ -390,7 +423,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
           {/* FOOTER: Tags (Left) | Save Button (Right) */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
             
-            {/* TAG INPUT (Moved to Footer) */}
+            {/* TAG INPUT */}
             <div className="relative group w-full sm:flex-1">
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
                     <TagIcon className="h-4 w-4 text-gray-400" />
@@ -420,7 +453,7 @@ export default function JournalEditor({ initialEntry, onSaveComplete }: JournalE
                     />
                 </div>
 
-                {/* Autocomplete Suggestions (Positioned Bottom-Up from footer) */}
+                {/* Autocomplete Suggestions */}
                 {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
                     <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
                         {filteredSuggestions.map(tag => (
