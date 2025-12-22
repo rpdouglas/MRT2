@@ -1,31 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheckIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
 export default function Login() {
-  const { loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signupWithEmail, user, loading } = useAuth();
   const navigate = useNavigate();
   
-  const [isLogin, setIsLogin] = useState(true); // Toggle state
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Auto-Redirect when User is Detected ---
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/'); 
+    }
+  }, [user, loading, navigate]);
 
   // Handle Google Login
   const handleGoogleLogin = async () => {
     try {
       setError('');
-      setLoading(true);
+      setIsSubmitting(true);
       await loginWithGoogle();
-      navigate('/dashboard');
     } catch (error) {
       console.error(error);
       setError('Failed to sign in with Google.');
-    } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -33,24 +38,24 @@ export default function Login() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsSubmitting(true);
 
     // Basic Validation
     if (!email || !password) {
         setError("Please fill in all fields.");
-        setLoading(false);
+        setIsSubmitting(false);
         return;
     }
     
     if (!isLogin && password !== confirmPass) {
         setError("Passwords do not match.");
-        setLoading(false);
+        setIsSubmitting(false);
         return;
     }
 
     if (password.length < 6) {
         setError("Password should be at least 6 characters.");
-        setLoading(false);
+        setIsSubmitting(false);
         return;
     }
 
@@ -60,19 +65,22 @@ export default function Login() {
       } else {
         await signupWithEmail(email, password);
       }
-      navigate('/dashboard');
-    } catch (err: any) {
+      navigate('/'); 
+    } catch (err: unknown) { // <--- FIXED: Changed to 'unknown' to satisfy TS1196
       console.error(err);
+      setIsSubmitting(false); 
+      
+      // Safe cast to access properties
+      const error = err as { code?: string }; 
+      
       // Firebase error mapping
-      if (err.code === 'auth/email-already-in-use') {
+      if (error.code === 'auth/email-already-in-use') {
         setError('That email is already in use.');
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         setError('Invalid email or password.');
       } else {
         setError('Failed to authenticate. Please try again.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -150,10 +158,10 @@ export default function Login() {
 
             <button
                 type="submit"
-                disabled={loading}
+                disabled={isSubmitting || loading}
                 className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
             >
-                {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
+                {isSubmitting ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
             </button>
         </form>
 
@@ -169,7 +177,7 @@ export default function Login() {
         {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={isSubmitting || loading}
           className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
         >
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5 mr-2" />
