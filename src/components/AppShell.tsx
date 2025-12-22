@@ -9,13 +9,16 @@ import {
   ArrowLeftOnRectangleIcon,
   ClipboardDocumentListIcon,
   AcademicCapIcon,
-  HeartIcon 
+  HeartIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import SOSModal from './SOSModal';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -41,13 +44,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      
+      {/* --- GLOBAL SOS MODAL --- */}
+      <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+
+      {/* --- DESKTOP SOS BUTTON (Right-Justified Fixed) --- */}
+      <div className="hidden lg:block fixed top-6 right-6 z-50">
+         <button 
+           onClick={() => setIsSOSOpen(true)}
+           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full shadow-lg border-2 border-white flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 animate-pulse"
+           title="Emergency Support"
+         >
+            <ExclamationTriangleIcon className="h-5 w-5" />
+            <span className="font-bold">SOS</span>
+         </button>
+      </div>
+
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
           <div className="fixed inset-0 bg-gray-900/80" />
           <div className="fixed inset-0 flex">
             <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 transform flex-col bg-blue-600 transition-all">
                
-               {/* UPDATED: Clean header with only Close Button */}
                <div className="flex h-16 shrink-0 items-center justify-end px-6">
                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white">
                     <span className="sr-only">Close sidebar</span>
@@ -70,7 +88,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                                  : 'text-blue-200 hover:text-white hover:bg-blue-700'
                              }`}
                            >
-                             <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                              <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
                              {item.name}
                            </Link>
                          </li>
@@ -82,7 +100,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                      <div className="flex flex-col gap-2">
                         {user && (
                             <div className="flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white bg-blue-700/50">
-                               {user.photoURL ? (
+                                {user.photoURL ? (
                                     <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700" />
                                 ) : (
                                     <UserCircleIcon className="h-8 w-8 text-blue-200" />
@@ -96,7 +114,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-blue-200 hover:bg-blue-700 hover:text-white w-full"
                         >
                           <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                          Log out
+                           Log out
                         </button>
                      </div>
                    </li>
@@ -113,7 +131,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex h-16 shrink-0 items-center justify-center gap-2">
             <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
             <span className="text-white font-bold text-2xl">My Recovery Toolkit</span>
-            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -143,7 +160,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         <div className="flex items-center gap-x-3 rounded-md px-2 py-2 text-sm font-semibold leading-6 text-white">
                             {user.photoURL ? (
                                 <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700" />
-                             ) : (
+                            ) : (
                                 <UserCircleIcon className="h-8 w-8 text-blue-200" />
                             )}
                             <span className="sr-only">Your profile</span>
@@ -166,9 +183,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-72">
         {/* MOBILE TOP BAR */}
+        {/* Fixed: Removed 'relative' to resolve conflict with 'sticky' */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-center border-b border-blue-700 bg-blue-600 px-4 shadow-sm lg:hidden">
           
-          {/* Hamburger Button - Positioned Absolutely to left */}
+          {/* Hamburger (Absolute Left) */}
           <button 
             type="button" 
             className="-m-2.5 p-2.5 text-blue-200 hover:text-white absolute left-4 z-50" 
@@ -178,12 +196,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
 
-          {/* Centered Title with Flanking Logos */}
+          {/* Centered Title */}
           <div className="flex items-center gap-2">
             <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
-            <div className="text-xl font-bold leading-6 text-white">My Recovery Toolkit</div>
-            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+            <div className="text-xl font-bold leading-6 text-white">MRT</div>
           </div>
+
+          {/* SOS Button (Absolute Right) */}
+          <button 
+            type="button"
+            onClick={() => setIsSOSOpen(true)}
+            className="absolute right-4 z-50 text-white bg-red-600 hover:bg-red-700 p-2 rounded-full shadow-sm animate-pulse"
+            title="SOS"
+          >
+            <ExclamationTriangleIcon className="h-6 w-6" />
+          </button>
 
         </div>
 
