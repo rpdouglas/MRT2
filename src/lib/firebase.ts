@@ -2,6 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+console.log("DEBUG: Current Auth Domain:", import.meta.env.VITE_FIREBASE_AUTH_DOMAIN); // <--- ADD THIS
+
 // 1. Construct config directly from individual environment variables
 // These will be injected by Vite during the build
 const firebaseConfig = {
