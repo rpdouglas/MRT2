@@ -30,7 +30,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { name: 'Vitality', href: '/vitality', icon: HeartIcon },
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
-    // RENAMED: 'Wisdom' -> 'Insights' per user request
     { name: 'Insights', href: '/insights', icon: LightBulbIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
@@ -133,7 +132,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-blue-600 px-6 pb-4">
           <div className="flex h-16 shrink-0 items-center justify-center gap-2">
             <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
-            <span className="text-white font-bold text-2xl">My Recovery Toolkit</span>
+            <span className="text-white font-bold text-xl">My Recovery Toolkit</span>
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -198,10 +197,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
 
-          {/* Centered Title */}
+          {/* Centered Title with Flanking Logos */}
           <div className="flex items-center gap-2">
             <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
-            <div className="text-xl font-bold leading-6 text-white">MRT</div>
+            <div className="text-lg font-bold leading-6 text-white whitespace-nowrap">My Recovery Toolkit</div>
+            <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
           </div>
 
           {/* SOS Button (Absolute Right) */}

@@ -8,8 +8,7 @@ import {
     AcademicCapIcon,
     BookOpenIcon,
     ShieldCheckIcon,
-    HeartIcon,
-    ExclamationTriangleIcon // NEW
+    HeartIcon
 } from '@heroicons/react/24/outline';
 
 interface RecoveryHeroProps {
@@ -31,7 +30,7 @@ interface RecoveryHeroProps {
         bioStreak: number;
         totalLogs: number;
     };
-    onSOSClick: () => void; // NEW
+    // Removed onSOSClick prop as button is removed
 }
 
 export default function RecoveryHero({ 
@@ -40,8 +39,7 @@ export default function RecoveryHero({
     journalStats, 
     taskStats, 
     workbookStats,
-    vitalityStats,
-    onSOSClick 
+    vitalityStats
 }: RecoveryHeroProps) {
   return (
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -49,7 +47,7 @@ export default function RecoveryHero({
          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
          
          <div className="relative z-10">
-             {/* Header Row: Greeting, Clean Time, SOS */}
+             {/* Header Row: Greeting & Clean Time */}
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                  <div>
                      <h1 className="text-3xl font-bold">Welcome back, {userName}</h1>
@@ -58,16 +56,6 @@ export default function RecoveryHero({
 
                  <div className="flex items-center gap-3">
                      
-                     {/* SOS BUTTON (New) */}
-                     <button 
-                        onClick={onSOSClick}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg border border-red-400 transition-all active:scale-95 animate-pulse"
-                        title="Emergency Support"
-                     >
-                        <ExclamationTriangleIcon className="h-5 w-5" />
-                        <span className="font-bold text-sm">SOS</span>
-                     </button>
-
                      {/* CLEAN TIME BADGE */}
                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-2 flex items-center gap-3 shadow-lg">
                          <ShieldCheckIcon className="h-8 w-8 text-cyan-300" />
