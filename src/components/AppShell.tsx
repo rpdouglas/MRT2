@@ -11,7 +11,7 @@ import {
   AcademicCapIcon,
   HeartIcon,
   ExclamationTriangleIcon,
-  LightBulbIcon // Added Icon
+  LightBulbIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,8 +30,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { name: 'Vitality', href: '/vitality', icon: HeartIcon },
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
-    // NEW: Insights Log
-    { name: 'Wisdom', href: '/insights', icon: LightBulbIcon },
+    // RENAMED: 'Wisdom' -> 'Insights' per user request
+    { name: 'Insights', href: '/insights', icon: LightBulbIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
