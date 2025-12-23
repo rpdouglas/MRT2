@@ -1,4 +1,3 @@
-// src/pages/WorkbookDetail.tsx
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +6,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
 import { analyzeWorkbookContent, type WorkbookAnalysisResult } from '../lib/gemini';
 import { addTask } from '../lib/tasks';
+import { saveInsight } from '../lib/insights'; // NEW
 import { 
     ArrowLeftIcon, 
     PlayCircleIcon, 
@@ -16,7 +16,8 @@ import {
     PlusCircleIcon,
     LightBulbIcon,
     ShieldExclamationIcon,
-    AcademicCapIcon
+    AcademicCapIcon,
+    BookmarkIcon // NEW
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 
@@ -47,6 +48,7 @@ export default function WorkbookDetail() {
   const [selectedSectionId, setSelectedSectionId] = useState<string>(workbook?.sections[0]?.id || '');
   const [insight, setInsight] = useState<WorkbookAnalysisResult | null>(null);
   const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
+  const [savingInsight, setSavingInsight] = useState(false); // NEW
 
   // loadProgress wrapped in useCallback to stabilize the dependency for useEffect
   const loadProgress = useCallback(async () => {
@@ -84,10 +86,11 @@ export default function WorkbookDetail() {
 
   const handleAnalyze = async () => {
     if (!user || !workbook || !db) return;
-    
+
     setAnalyzing(true);
     setInsight(null);
     setAddedActions(new Set());
+    setSavingInsight(false); // Reset saving
 
     try {
         let docsToAnalyze: WorkbookAnswer[] = [];
@@ -112,7 +115,6 @@ export default function WorkbookDetail() {
             const snap = await getDocs(q);
             docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
             contextTitle = workbook.title;
-
         } else {
             const q = collection(db, 'users', user.uid, 'workbook_answers');
             const snap = await getDocs(q);
@@ -127,7 +129,6 @@ export default function WorkbookDetail() {
         }
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
-        
         const result = await analyzeWorkbookContent(textContent, analysisScope, contextTitle);
         
         if (result) {
@@ -146,12 +147,25 @@ export default function WorkbookDetail() {
     }
   };
 
+  // NEW: Save Insight Log
+  const handleSaveLog = async () => {
+    if (!user || !insight) return;
+    setSavingInsight(true);
+    try {
+        await saveInsight(user.uid, { type: 'workbook', ...insight });
+        alert("Insight saved to Wisdom Log!");
+        setSavingInsight(false); 
+    } catch (error) {
+        console.error("Failed to save log", error);
+        setSavingInsight(false);
+    }
+  };
+
   const handleAddToHabits = async (action: string) => {
     if (!user) return;
     try {
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 3); 
-
+        dueDate.setDate(dueDate.getDate() + 3);
         await addTask(user.uid, action, 'once', 'High', dueDate);
         setAddedActions(prev => new Set(prev).add(action));
     } catch (e) {
@@ -170,7 +184,7 @@ export default function WorkbookDetail() {
          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
              <div>
                  <Link to="/workbooks" className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-2">
-                     <ArrowLeftIcon className="h-4 w-4" /> Back to Library
+                    <ArrowLeftIcon className="h-4 w-4" /> Back to Library
                  </Link>
                  <h1 className="text-3xl font-bold text-gray-900">{workbook.title}</h1>
                  <p className="text-gray-600 mt-2 max-w-2xl">{workbook.description}</p>
@@ -198,13 +212,13 @@ export default function WorkbookDetail() {
                   <div key={section.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 transition-all group">
                       <div className="flex items-center justify-between">
                           <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                   {section.title}
                                   {isComplete && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
-                              </h3>
+                             </h3>
                               <p className="text-sm text-gray-500">{section.description}</p>
                               
-                              <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                             <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                   <div className="bg-blue-600 h-full transition-all" style={{ width: `${progressPercent}%` }} />
                               </div>
                               <p className="text-xs text-gray-400 mt-1">{answeredCount} / {totalQuestions} completed</p>
@@ -228,20 +242,20 @@ export default function WorkbookDetail() {
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-              <Dialog.Title className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+               <Dialog.Title className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
                   <SparklesIcon className="h-6 w-6 text-purple-600" />
                   Ask the Recovery Compass
               </Dialog.Title>
 
               <div className="space-y-4">
-                  <RadioGroup value={analysisScope} onChange={setAnalysisScope} className="space-y-3">
+                   <RadioGroup value={analysisScope} onChange={setAnalysisScope} className="space-y-3">
                       <RadioGroup.Option value="section" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="text-sm">
+                                   <div className="text-sm">
                                       <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Specific Section</RadioGroup.Label>
                                   </div>
-                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
@@ -249,7 +263,7 @@ export default function WorkbookDetail() {
                       {analysisScope === 'section' && (
                           <div className="ml-4 pl-4 border-l-2 border-gray-100">
                               <select value={selectedSectionId} onChange={(e) => setSelectedSectionId(e.target.value)} className="w-full text-sm border-gray-300 rounded-lg">
-                                  {workbook.sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                                   {workbook.sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                               </select>
                           </div>
                       )}
@@ -257,10 +271,10 @@ export default function WorkbookDetail() {
                       <RadioGroup.Option value="workbook" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="text-sm">
+                                   <div className="text-sm">
                                       <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Full Workbook</RadioGroup.Label>
                                   </div>
-                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
@@ -268,10 +282,10 @@ export default function WorkbookDetail() {
                       <RadioGroup.Option value="global" className={({ checked }) => `relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md focus:outline-none ${checked ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200'}`}>
                           {({ checked }) => (
                               <div className="flex w-full items-center justify-between">
-                                  <div className="text-sm">
+                                   <div className="text-sm">
                                       <RadioGroup.Label as="p" className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}>Global Review</RadioGroup.Label>
                                   </div>
-                                  {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
+                                   {checked && <CheckCircleIcon className="h-6 w-6 text-white" />}
                               </div>
                           )}
                       </RadioGroup.Option>
@@ -285,7 +299,7 @@ export default function WorkbookDetail() {
                       </button>
                   </div>
               </div>
-            </Dialog.Panel>
+          </Dialog.Panel>
           </div>
         </Dialog>
       </Transition>
@@ -295,7 +309,8 @@ export default function WorkbookDetail() {
         <Dialog as="div" className="relative z-50" onClose={() => setShowResult(false)}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
+            
+             <div className="flex min-h-full items-center justify-center p-4">
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
                   {insight && (
                       <div className="space-y-6">
@@ -307,23 +322,23 @@ export default function WorkbookDetail() {
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                                   <div className="flex items-center gap-2 mb-2 text-blue-800 font-bold text-xs uppercase tracking-wide">
-                                      <AcademicCapIcon className="h-4 w-4" /> Understanding
+                                       <AcademicCapIcon className="h-4 w-4" /> Understanding
                                   </div>
                                   <p className="text-sm text-blue-900 leading-relaxed">{insight.pillars.understanding}</p>
                               </div>
                               <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
                                   <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-xs uppercase tracking-wide">
-                                      <ShieldExclamationIcon className="h-4 w-4" /> Blind Spots
+                                       <ShieldExclamationIcon className="h-4 w-4" /> Blind Spots
                                   </div>
-                                  <p className="text-sm text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p>
+                                   <p className="text-sm text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p>
                               </div>
                               <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                                   <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-xs uppercase tracking-wide">
                                       <LightBulbIcon className="h-4 w-4" /> Growth
                                   </div>
-                                  <p className="text-sm text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p>
+                                   <p className="text-sm text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p>
                               </div>
                           </div>
 
@@ -333,8 +348,8 @@ export default function WorkbookDetail() {
                               </h3>
                               <ul className="space-y-2">
                                   {insight.suggested_actions.map((action, idx) => {
-                                      const isAdded = addedActions.has(action);
-                                      return (
+                                       const isAdded = addedActions.has(action);
+                                       return (
                                           <li key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-purple-100">
                                               <span className="text-sm text-gray-700 font-medium">{action}</span>
                                               <button 
@@ -344,10 +359,28 @@ export default function WorkbookDetail() {
                                               >
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
                                               </button>
-                                          </li>
+                                           </li>
                                       );
                                   })}
                               </ul>
+                          </div>
+
+                          <div className="mt-6 flex justify-between pt-4 border-t border-gray-100">
+                                {/* LEFT: SAVE LOG */}
+                                <button 
+                                    type="button" 
+                                    disabled={savingInsight}
+                                    onClick={handleSaveLog}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                >
+                                    <BookmarkIcon className="h-4 w-4" />
+                                    {savingInsight ? "Saving..." : "Save to Wisdom Log"}
+                                </button>
+
+                                {/* RIGHT: CLOSE */}
+                                <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowResult(false)}>
+                                    Close
+                                </button>
                           </div>
                       </div>
                   )}

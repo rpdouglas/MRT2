@@ -8,41 +8,50 @@ import {
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { AnalysisResult } from "./gemini";
+import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
 
+// --- DEFINITIONS ---
+
+// Define a discriminated union for the two types of insights
+export type InsightType = 'journal' | 'workbook';
+
+// Combined type for what we save to Firestore
+export type InsightPayload = 
+  | ({ type: 'journal' } & AnalysisResult)
+  | ({ type: 'workbook' } & WorkbookAnalysisResult);
+
+// The hydrated object returned to the UI (includes ID and Dates)
+export type SavedInsight = InsightPayload & {
+  id: string;
+  uid: string;
+  createdAt: Date;
+};
+
 /**
  * Saves a new AI Insight to Firestore.
- * Updated to support the new "Recovery Compass" data structure.
- * @param uid - The User ID
- * @param result - The structured result from Gemini
+ * Supports both Journal Analysis and Workbook Analysis via discriminated union.
+ * * @param uid - The User ID
+ * @param payload - The structured result from Gemini + type ('journal' | 'workbook')
  */
-export async function saveInsight(uid: string, result: AnalysisResult) {
+export async function saveInsight(uid: string, payload: InsightPayload) {
   if (!db) throw new Error("Database not initialized");
 
+  // We spread the payload directly. 
+  // Firestore will store the 'type' field and all specific fields (mood vs pillars).
   await addDoc(collection(db, COLLECTION), {
     uid,
     createdAt: Timestamp.now(),
-    
-    // --- New Recovery Compass Fields ---
-    sentiment: result.sentiment,
-    mood: result.mood,
-    summary: result.summary,                 // Replaces old 'analysis'
-    risk_analysis: result.risk_analysis,
-    positive_reinforcement: result.positive_reinforcement,
-    tool_suggestions: result.tool_suggestions, // Replaces old 'actionableSteps'
-    
-    // Note: We no longer save 'analysis' or 'actionableSteps' because 
-    // they don't exist on the new result object.
+    ...payload
   });
 }
 
 /**
  * Fetches the history of AI Insights for a user, sorted by newest first.
- * Used by the Dashboard to show the "Latest Insight".
+ * Handles backward compatibility for old records (defaults to 'journal').
  */
-export async function getInsightHistory(uid: string) {
+export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
   if (!db) throw new Error("Database not initialized");
 
   try {
@@ -53,18 +62,29 @@ export async function getInsightHistory(uid: string) {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Safely convert Firestore Timestamp to JS Date
-      createdAt: doc.data().createdAt?.toDate() || new Date() 
-    }));
+    
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      // Backward Compatibility:
+      // If 'type' is missing, it's a legacy Journal Insight.
+      const type = data.type || 'journal';
 
-  } catch (e: any) {
+      return {
+        id: doc.id,
+        uid: data.uid,
+        type,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        ...data
+      } as SavedInsight;
+    });
+
+  } catch (e: unknown) {
     console.error("Error fetching insights:", e);
-    // If we hit a Missing Index error (common with new collections),
-    // warn the user to check the console.
-    if (e.message && e.message.includes("index")) {
+    
+    // Check for Missing Index error
+    const err = e as { message?: string };
+    if (err.message && err.message.includes("index")) {
         console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
     }
     return [];

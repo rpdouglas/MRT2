@@ -8,13 +8,14 @@ import Profile from './pages/Profile';
 import Workbooks from './pages/Workbooks'; 
 import WorkbookDetail from './pages/WorkbookDetail'; 
 import WorkbookSession from './pages/WorkbookSession'; 
-import Vitality from './pages/Vitality'; // NEW IMPORT
+import Vitality from './pages/Vitality';
 import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
+// NEW IMPORT
+import InsightsLog from './pages/InsightsLog';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
   if (loading) return <div>Loading...</div>;
   
   if (!user) {
@@ -35,7 +36,7 @@ export default function App() {
             path="/dashboard"
             element={
               <PrivateRoute>
-                <Dashboard />
+                 <Dashboard />
               </PrivateRoute>
             }
           />
@@ -43,7 +44,7 @@ export default function App() {
             path="/journal"
             element={
               <PrivateRoute>
-                <Journal />
+                 <Journal />
               </PrivateRoute>
             }
           />
@@ -82,7 +83,7 @@ export default function App() {
             }
           />
           
-          {/* --- VITALITY ROUTE (NEW) --- */}
+          {/* --- VITALITY ROUTE --- */}
           <Route
             path="/vitality"
             element={
@@ -90,7 +91,17 @@ export default function App() {
                 <Vitality />
               </PrivateRoute>
             }
-          />
+           />
+
+          {/* --- INSIGHTS ROUTE (NEW) --- */}
+          <Route
+            path="/insights"
+            element={
+              <PrivateRoute>
+                <InsightsLog />
+              </PrivateRoute>
+            }
+           />
 
           {/* --- TEMPLATES ROUTE --- */}
           <Route
@@ -107,7 +118,7 @@ export default function App() {
             path="/profile"
             element={
               <PrivateRoute>
-                <Profile />
+                 <Profile />
               </PrivateRoute>
             }
           />

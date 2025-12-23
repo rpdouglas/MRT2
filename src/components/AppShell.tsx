@@ -10,7 +10,8 @@ import {
   ClipboardDocumentListIcon,
   AcademicCapIcon,
   HeartIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  LightBulbIcon // Added Icon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +30,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { name: 'Vitality', href: '/vitality', icon: HeartIcon },
     { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
     { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
+    // NEW: Insights Log
+    { name: 'Wisdom', href: '/insights', icon: LightBulbIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
@@ -183,7 +186,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-72">
         {/* MOBILE TOP BAR */}
-        {/* Fixed: Removed 'relative' to resolve conflict with 'sticky' */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-center border-b border-blue-700 bg-blue-600 px-4 shadow-sm lg:hidden">
           
           {/* Hamburger (Absolute Left) */}

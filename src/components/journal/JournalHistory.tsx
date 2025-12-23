@@ -16,11 +16,13 @@ import {
     WrenchScrewdriverIcon,
     LightBulbIcon,
     PlusCircleIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    BookmarkIcon // NEW
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
 import { addTask } from '../../lib/tasks';
+import { saveInsight } from '../../lib/insights'; // NEW
 import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
@@ -47,11 +49,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  const [savingInsight, setSavingInsight] = useState(false); // NEW
   
   // Track which AI suggestions have been added to tasks
   const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
 
-  // --- DATA LOADING (Wrapped in useCallback for Anti-Regression) ---
+  // --- DATA LOADING ---
   const loadEntries = useCallback(async () => {
     if (!user || !db) return;
 
@@ -126,7 +129,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     }
   };
 
-  // --- SHARE HANDLER (Updated Logic) ---
+  // --- SHARE HANDLER ---
   const handleShare = async (entry: JournalEntry) => {
     const dateStr = entry.createdAt?.toDate ? 
       entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
@@ -145,7 +148,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             console.error('Error sharing:', err);
         }
     } else {
-        // Fallback for desktop/unsupported browsers
         try {
             await navigator.clipboard.writeText(textToShare);
             alert('Journal entry copied to clipboard! (Signature included)'); 
@@ -160,7 +162,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
     setAnalyzing(true);
     setShowInsightModal(true);
-    setAddedTools(new Set()); // Reset added state for new analysis
+    setAddedTools(new Set()); 
+    setSavingInsight(false); // Reset saving state
     
     // Analyze filtered results (up to 10 to avoid token limits)
     const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
@@ -168,6 +171,20 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     
     setInsight(result);
     setAnalyzing(false);
+  };
+
+  // NEW: Save Insight Log
+  const handleSaveLog = async () => {
+    if (!user || !insight) return;
+    setSavingInsight(true);
+    try {
+        await saveInsight(user.uid, { type: 'journal', ...insight });
+        alert("Insight saved to Wisdom Log!");
+        setSavingInsight(false); // Can optionally disable button here if desired
+    } catch (error) {
+        console.error("Failed to save log", error);
+        setSavingInsight(false);
+    }
   };
 
   const handleAddToTasks = async (toolSuggestion: string) => {
@@ -494,7 +511,19 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     )
                   )}
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-6 flex justify-between">
+                    {/* LEFT: SAVE TO LOG */}
+                    <button 
+                        type="button" 
+                        disabled={analyzing || !insight || savingInsight}
+                        onClick={handleSaveLog}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    >
+                        <BookmarkIcon className="h-4 w-4" />
+                        {savingInsight ? "Saving..." : "Save to Wisdom Log"}
+                    </button>
+
+                    {/* RIGHT: CLOSE */}
                     <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
                       Close Analysis
                     </button>
