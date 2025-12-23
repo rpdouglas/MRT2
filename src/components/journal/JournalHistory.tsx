@@ -1,5 +1,4 @@
-// src/components/journal/JournalHistory.tsx
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -16,12 +15,12 @@ import {
     TrophyIcon,
     WrenchScrewdriverIcon,
     LightBulbIcon,
-    PlusCircleIcon,   // NEW: For Add Action
-    CheckCircleIcon   // NEW: For Success State
+    PlusCircleIcon,
+    CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
-import { addTask } from '../../lib/tasks'; // NEW: Task creation logic
+import { addTask } from '../../lib/tasks';
 import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
@@ -49,23 +48,20 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
   const [showInsightModal, setShowInsightModal] = useState(false);
   
-  // NEW: Track which AI suggestions have been added to tasks
+  // Track which AI suggestions have been added to tasks
   const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!user) return;
-    loadEntries();
-  }, [user]);
-
-  // Load ALL entries initially (or limit to last 100 for performance)
-  const loadEntries = async () => {
+  // --- DATA LOADING (Wrapped in useCallback for Anti-Regression) ---
+  const loadEntries = useCallback(async () => {
     if (!user || !db) return;
+
     try {
       const q = query(
         collection(db, 'journals'), 
         where('uid', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
+
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
       setEntries(data);
@@ -81,7 +77,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Initial Load
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
 
   // Client-Side Filtering
   useEffect(() => {
@@ -125,10 +126,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     }
   };
 
-  // Share Handler
+  // --- SHARE HANDLER (Updated Logic) ---
   const handleShare = async (entry: JournalEntry) => {
-    const dateStr = entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
-    const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}`;
+    const dateStr = entry.createdAt?.toDate ? 
+      entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
+    
+    // Construct text with signature
+    const signature = "\n\nShared from My Recovery Toolkit";
+    const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}${signature}`;
 
     if (navigator.share) {
         try {
@@ -140,9 +145,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             console.error('Error sharing:', err);
         }
     } else {
+        // Fallback for desktop/unsupported browsers
         try {
             await navigator.clipboard.writeText(textToShare);
-            alert('Journal entry copied to clipboard!'); 
+            alert('Journal entry copied to clipboard! (Signature included)'); 
         } catch (err) {
             console.error('Failed to copy:', err);
         }
@@ -151,7 +157,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleAiAnalysis = async () => {
     if (filteredEntries.length === 0) return;
-    
+
     setAnalyzing(true);
     setShowInsightModal(true);
     setAddedTools(new Set()); // Reset added state for new analysis
@@ -164,7 +170,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     setAnalyzing(false);
   };
 
-  // NEW: Handle adding a suggestion to tasks
   const handleAddToTasks = async (toolSuggestion: string) => {
     if (!user) return;
 
@@ -183,7 +188,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
         // Update local state to show success checkmark
         setAddedTools(prev => new Set(prev).add(toolSuggestion));
-
     } catch (error) {
         console.error("Failed to add task from suggestion:", error);
         alert("Could not add task. Please try again.");
@@ -217,7 +221,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
              </div>
              
              <div className="flex items-center gap-2 w-full sm:w-auto">
-                 <button 
+                <button 
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                  >
@@ -313,7 +317,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             <>
                                 <span className="text-gray-300">•</span>
                                 <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
-                                   {entry.weather.condition}, {entry.weather.temp}°C
+                                    {entry.weather.condition}, {entry.weather.temp}°C
                                 </span>
                             </>
                         )}
@@ -336,7 +340,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
                 {/* Right: Mood & Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0 self-center">
-                    
+                   
                     {/* MOOD INDICATOR (Compact Pill) */}
                     <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
