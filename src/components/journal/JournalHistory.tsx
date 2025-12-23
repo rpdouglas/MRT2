@@ -1,4 +1,5 @@
 import { useState, useEffect, Fragment, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom'; // NEW
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -17,12 +18,12 @@ import {
     LightBulbIcon,
     PlusCircleIcon,
     CheckCircleIcon,
-    BookmarkIcon // NEW
+    BookmarkIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
 import { addTask } from '../../lib/tasks';
-import { saveInsight } from '../../lib/insights'; // NEW
+import { saveInsight } from '../../lib/insights';
 import type { JournalEntry } from './JournalEditor';
 
 interface JournalHistoryProps {
@@ -31,6 +32,7 @@ interface JournalHistoryProps {
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams(); // NEW
 
   // Data State
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -38,7 +40,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [loading, setLoading] = useState(true);
 
   // Filters State
-  const [searchQuery, setSearchQuery] = useState('');
+  // Initialize searchQuery from URL param if present
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filterTag, setFilterTag] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -49,7 +52,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insight, setInsight] = useState<AnalysisResult | null>(null);
   const [showInsightModal, setShowInsightModal] = useState(false);
-  const [savingInsight, setSavingInsight] = useState(false); // NEW
+  const [savingInsight, setSavingInsight] = useState(false);
   
   // Track which AI suggestions have been added to tasks
   const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
@@ -68,7 +71,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
       setEntries(data);
-      setFilteredEntries(data); // Init filtered list
+      // We don't setFilteredEntries here immediately because the useEffect below handles it based on filters
       
       // Extract unique tags
       const tags = new Set<string>();
@@ -86,6 +89,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
+
+  // Listen for URL param changes to update search (e.g. clicking word cloud)
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+        setSearchQuery(searchParam);
+    }
+  }, [searchParams]);
 
   // Client-Side Filtering
   useEffect(() => {
@@ -116,6 +127,22 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
     setFilteredEntries(result);
   }, [entries, searchQuery, filterTag, dateFrom, dateTo]);
+
+  // Sync Search Query back to URL (optional, keeps URL clean if user types)
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val) {
+        setSearchParams(prev => {
+            prev.set('search', val);
+            return prev;
+        });
+    } else {
+        setSearchParams(prev => {
+            prev.delete('search');
+            return prev;
+        });
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!db) return;
@@ -163,7 +190,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     setAnalyzing(true);
     setShowInsightModal(true);
     setAddedTools(new Set()); 
-    setSavingInsight(false); // Reset saving state
+    setSavingInsight(false);
     
     // Analyze filtered results (up to 10 to avoid token limits)
     const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
@@ -173,14 +200,13 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     setAnalyzing(false);
   };
 
-  // NEW: Save Insight Log
   const handleSaveLog = async () => {
     if (!user || !insight) return;
     setSavingInsight(true);
     try {
         await saveInsight(user.uid, { type: 'journal', ...insight });
         alert("Insight saved to Wisdom Log!");
-        setSavingInsight(false); // Can optionally disable button here if desired
+        setSavingInsight(false);
     } catch (error) {
         console.error("Failed to save log", error);
         setSavingInsight(false);
@@ -191,7 +217,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     if (!user) return;
 
     try {
-        // Calculate due date (Today + 7 days)
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 7);
 
@@ -202,8 +227,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             'Medium',    // Priority
             dueDate      // Due Date
         );
-
-        // Update local state to show success checkmark
         setAddedTools(prev => new Set(prev).add(toolSuggestion));
     } catch (error) {
         console.error("Failed to add task from suggestion:", error);
@@ -213,6 +236,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const clearFilters = () => {
       setSearchQuery('');
+      setSearchParams(prev => { prev.delete('search'); return prev; }); // Clear URL param
       setFilterTag('');
       setDateFrom('');
       setDateTo('');
@@ -232,7 +256,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     type="text"
                     placeholder="Search keywords..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 />
              </div>
@@ -317,14 +341,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
               {/* --- HEADER ROW (Stacked Meta) --- */}
               <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
                 
-                {/* Left: Stacked Meta (Date / Time+Weather / Tags) */}
+                {/* Left: Stacked Meta */}
                 <div className="flex flex-col items-start min-w-0">
-                    {/* Line 1: Date */}
                     <span className="text-sm font-bold text-gray-800 truncate">
                         {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unknown Date'}
                     </span>
                     
-                    {/* Line 2: Time + Weather */}
                     <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                         <span>
                             {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
@@ -340,7 +362,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                         )}
                     </div>
 
-                    {/* Line 3: Tags (Limited to 3) */}
                     {entry.tags && entry.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                              {entry.tags.slice(0, 3).map((tag, i) => (
@@ -358,14 +379,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 {/* Right: Mood & Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0 self-center">
                    
-                    {/* MOOD INDICATOR (Compact Pill) */}
                     <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
                         <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                         <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit">
                           <PencilSquareIcon className="h-4 w-4" />
@@ -387,7 +406,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     {entry.content}
                   </div>
 
-                  {/* Sentiment (Only if exists) */}
                   {entry.sentiment && entry.sentiment !== 'Pending' && (
                     <div className="mt-4 flex justify-end">
                         <span className={`text-xs px-2 py-1 rounded-full border ${
@@ -404,7 +422,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           ))
       )}
 
-      {/* --- AI MODAL (RECOVERY COMPASS) --- */}
+      {/* --- AI MODAL --- */}
       <Transition appear show={showInsightModal} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
           <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
@@ -429,7 +447,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     insight && (
                         <div className="space-y-6">
                             
-                            {/* 1. TOP SUMMARY ROW */}
                             <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex gap-4">
                                 <div className="flex-shrink-0 p-2 bg-purple-100 rounded-lg h-fit">
                                     <LightBulbIcon className="h-6 w-6 text-purple-600" />
@@ -449,7 +466,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* 2. RISK ANALYSIS (The Shield) */}
                                 <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
                                     <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
                                         <ShieldExclamationIcon className="h-5 w-5" />
@@ -460,7 +476,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                     </p>
                                 </div>
 
-                                {/* 3. POSITIVE REINFORCEMENT (The Spark) */}
                                 <div className="bg-green-50 rounded-xl p-4 border border-green-100">
                                     <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm uppercase tracking-wide">
                                         <TrophyIcon className="h-5 w-5" />
@@ -472,7 +487,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                 </div>
                             </div>
 
-                            {/* 4. TOOL SUGGESTIONS (The Toolkit) */}
                             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                                 <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
                                     <WrenchScrewdriverIcon className="h-5 w-5" />
@@ -488,7 +502,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                                     <span className={isAdded ? 'text-green-700' : ''}>{tool}</span>
                                                 </div>
                                                 
-                                                {/* QUICK ADD BUTTON */}
                                                 <button 
                                                     onClick={() => !isAdded && handleAddToTasks(tool)}
                                                     disabled={isAdded}
@@ -512,7 +525,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                   )}
 
                   <div className="mt-6 flex justify-between">
-                    {/* LEFT: SAVE TO LOG */}
                     <button 
                         type="button" 
                         disabled={analyzing || !insight || savingInsight}
@@ -523,7 +535,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                         {savingInsight ? "Saving..." : "Save to Wisdom Log"}
                     </button>
 
-                    {/* RIGHT: CLOSE */}
                     <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
                       Close Analysis
                     </button>
