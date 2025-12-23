@@ -4,9 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
 import RecoveryHero from '../components/RecoveryHero';
-import SOSModal from '../components/SOSModal'; // NEW
 
-// Estimated Total Questions across all workbooks for gamification calc
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
@@ -20,9 +18,6 @@ export default function Dashboard() {
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
 
-  // SOS State
-  const [isSOSOpen, setIsSOSOpen] = useState(false);
-
   useEffect(() => {
     if (!user) return;
 
@@ -33,11 +28,12 @@ export default function Dashboard() {
             // 0. Fetch User Profile for Sobriety Date
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
-            
+             
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 if (userData.sobrietyDate) {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
+                    
                     const now = new Date();
                     const diffTime = Math.abs(now.getTime() - start.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -45,7 +41,7 @@ export default function Dashboard() {
                 }
             }
 
-            // 1. Fetch Journals for Stats (Shared by Journal & Vitality)
+            // 1. Fetch Journals
             const journalQ = query(
                 collection(db, 'journals'), 
                 where('uid', '==', user.uid),
@@ -54,14 +50,12 @@ export default function Dashboard() {
             const journalSnap = await getDocs(journalQ);
             const journals = journalSnap.docs.map(d => ({...d.data(), createdAt: d.data().createdAt}));
 
-            // Calc Journal Stats
             const jStats = calculateJournalStats(journals);
             setJournalStats({ 
                 streak: jStats.journalStreak, 
                 consistency: jStats.consistencyRate
             });
 
-            // Calc Vitality Stats
             const vStats = calculateVitalityStats(journals);
             setVitalityStats(vStats);
 
@@ -93,7 +87,7 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       
-      {/* RECOVERY HERO - The Main Command Center */}
+      {/* RECOVERY HERO */}
       <RecoveryHero 
          userName={user?.displayName?.split(' ')[0] || 'Friend'}
          daysClean={daysClean}
@@ -101,13 +95,6 @@ export default function Dashboard() {
          taskStats={taskStats}
          workbookStats={workbookStats}
          vitalityStats={vitalityStats}
-         onSOSClick={() => setIsSOSOpen(true)}
-      />
-
-      {/* SOS MODAL */}
-      <SOSModal 
-        isOpen={isSOSOpen} 
-        onClose={() => setIsSOSOpen(false)} 
       />
 
     </div>
