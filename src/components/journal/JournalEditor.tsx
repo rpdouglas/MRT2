@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext'; // NEW: Import Encryption
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
@@ -16,27 +17,22 @@ import { useNavigate } from 'react-router-dom';
 
 // --- Types ---
 
-// 1. Strict definition for Firestore Data to avoid 'doc.data()' implicit any
 interface JournalDocData {
     tags?: string[];
-    [key: string]: unknown; // Allow other fields without breaking strictness
+    [key: string]: unknown;
 }
 
-// 2. Main Entry Interface
 export interface JournalEntry {
   id: string;
   content: string;
   moodScore: number;
   sentiment?: string;
-  // We allow Timestamp or an object with seconds to be safe, but prioritize Timestamp
   createdAt: Timestamp; 
   tags?: string[];
   weather?: { temp: number; condition: string } | null;
+  isEncrypted?: boolean; // NEW: Added encryption flag
 }
 
-// 3. Extended Template
-// FIX: We do not redefine 'defaultTags' here. We let it inherit strictly from JournalTemplate.
-// We only add 'content' which is specific to our text-mode logic.
 interface ExtendedJournalTemplate extends JournalTemplate {
     content?: string;
 }
@@ -56,6 +52,7 @@ const DEFAULT_TEMPLATES = [
 
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user } = useAuth();
+  const { encrypt } = useEncryption(); // NEW: Destructure encrypt function
   const navigate = useNavigate();
 
   // State
@@ -76,7 +73,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
 
-  // --- Helper Functions (Wrapped in useCallback) ---
+  // --- Helper Functions ---
 
   const fetchLocalWeather = useCallback(async () => {
     setWeatherLoading(true);
@@ -117,7 +114,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         const snapshot = await getDocs(q);
         const tagSet = new Set<string>();
         snapshot.docs.forEach(doc => {
-            // CAST: Avoid implicit 'any' by telling TS this data matches our interface structure
             const data = doc.data() as JournalDocData; 
             if (data.tags && Array.isArray(data.tags)) {
                 data.tags.forEach((t: string) => tagSet.add(t));
@@ -138,20 +134,17 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         return;
     }
 
-    // CAST: Use intersection type to avoid 'any' safely
     const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
     
     if (custTemplate) {
-        // CASE 1: Free Text Template (Markdown)
-        // We check 'content' which comes from our local extension
+        // Free Text Mode
         if (custTemplate.content) {
             setNewEntry(custTemplate.content);
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
             setActiveTemplate(null); 
         } 
-        // CASE 2: Legacy Form Template
+        // Form Mode
         else if (custTemplate.prompts) {
-            // Because ExtendedJournalTemplate extends JournalTemplate, it is valid to pass here now
             setActiveTemplate(custTemplate);
             setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
             setNewEntry('');
@@ -166,7 +159,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
   // --- Effects ---
 
-  // 1. Load Resources on Mount
   useEffect(() => {
     if (!user) return;
     loadCustomTemplates();
@@ -174,7 +166,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     if (!initialEntry) fetchLocalWeather(); 
   }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
 
-  // 2. Handle Entry Selection or Deep Linking
   useEffect(() => {
     if (initialEntry) {
       setNewEntry(initialEntry.content);
@@ -185,26 +176,21 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       }
       setActiveTemplate(null);
     } else {
-      // Reset logic for new entry
       setNewEntry('');
       setMood(5);
       setTags([]);
       setActiveTemplate(null);
       setFormAnswers([]);
       setWeather(null);
-      
-      // We only auto-fetch weather if switching to NEW mode
       fetchLocalWeather(); 
 
-      // Apply Deep Linked Template (if provided via URL params)
       if (initialTemplateId) {
           handleTemplateSelect(initialTemplateId);
       }
     }
   }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
 
-
-  // Tag Handling Functions
+  // Tag Handling
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -231,6 +217,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
   );
 
+  // --- SAVE HANDLER (With Encryption) ---
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !db) return;
@@ -242,33 +229,52 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
     setSaving(true);
 
-    let finalContent = newEntry;
+    // 1. Prepare Content
+    let plainContent = newEntry;
     if (activeTemplate) {
-        finalContent = `**${activeTemplate.name}**\n\n`;
+        plainContent = `**${activeTemplate.name}**\n\n`;
         activeTemplate.prompts.forEach((prompt, idx) => {
-            finalContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
+            plainContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
         });
     }
 
     try {
+      // 2. Encrypt Content
+      let contentToSave = plainContent;
+      let isEncrypted = false;
+
+      try {
+        contentToSave = await encrypt(plainContent);
+        isEncrypted = true;
+      } catch (err) {
+        console.error("Encryption failed", err);
+        alert("Security Error: Could not encrypt. Save aborted.");
+        setSaving(false);
+        return;
+      }
+
+      // 3. Save to Firestore
       if (initialEntry) {
         await updateDoc(doc(db, 'journals', initialEntry.id), { 
-            content: finalContent, 
+            content: contentToSave, 
             moodScore: mood,
-            tags: tags 
+            tags: tags,
+            isEncrypted: isEncrypted
         });
       } else {
         await addDoc(collection(db, 'journals'), {
           uid: user.uid,
-          content: finalContent,
+          content: contentToSave,
           moodScore: mood,
           sentiment: 'Pending', 
           weather, 
           tags: tags,
-          createdAt: Timestamp.now()
+          createdAt: Timestamp.now(),
+          isEncrypted: isEncrypted
         });
       }
 
+      // Reset
       setNewEntry('');
       setFormAnswers([]);
       setActiveTemplate(null);
@@ -277,6 +283,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       onSaveComplete();
     } catch (error) {
       console.error("Error saving entry:", error);
+      alert("Failed to save entry.");
     } finally {
       setSaving(false);
     }
@@ -285,7 +292,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible relative">
         
-        {/* HEADER: Weather (Left) | Templates (Right) */}
+        {/* HEADER */}
         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3">
              
              {/* LEFT: Weather Widget */}
@@ -420,7 +427,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
              </div>
           </div>
 
-          {/* FOOTER: Tags (Left) | Save Button (Right) */}
+          {/* FOOTER */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
             
             {/* TAG INPUT */}
@@ -428,7 +435,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
                     <TagIcon className="h-4 w-4 text-gray-400" />
                     
-                    {/* Selected Tags Chips */}
                     {tags.map(tag => (
                         <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
                             {tag}
@@ -438,7 +444,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                         </span>
                     ))}
 
-                    {/* Input Field */}
                     <input 
                         type="text"
                         value={tagInput}

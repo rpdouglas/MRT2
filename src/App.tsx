@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { EncryptionProvider } from './contexts/EncryptionContext'; // NEW
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
@@ -11,8 +12,8 @@ import WorkbookSession from './pages/WorkbookSession';
 import Vitality from './pages/Vitality';
 import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
-// NEW IMPORT
 import InsightsLog from './pages/InsightsLog';
+import VaultGate from './components/VaultGate'; // NEW
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -28,105 +29,120 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                 <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/journal"
-            element={
-              <PrivateRoute>
-                 <Journal />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tasks"
-            element={
-              <PrivateRoute>
-                <Tasks />
-              </PrivateRoute>
-            }
-          />
-          
-          {/* --- WORKBOOK ROUTES --- */}
-          <Route
-            path="/workbooks"
-            element={
-              <PrivateRoute>
-                <Workbooks />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/workbooks/:workbookId"
-            element={
-              <PrivateRoute>
-                <WorkbookDetail />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/workbooks/:workbookId/session/:sectionId"
-            element={
-              <PrivateRoute>
-                <WorkbookSession />
-              </PrivateRoute>
-            }
-          />
-          
-          {/* --- VITALITY ROUTE --- */}
-          <Route
-            path="/vitality"
-            element={
-              <PrivateRoute>
-                <Vitality />
-              </PrivateRoute>
-            }
-           />
+      <EncryptionProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* PROTECTED JOURNAL ROUTES */}
+            <Route
+              path="/journal"
+              element={
+                <PrivateRoute>
+                  <VaultGate>
+                    <Journal />
+                  </VaultGate>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/tasks"
+              element={
+                <PrivateRoute>
+                  <Tasks />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* --- WORKBOOK ROUTES (Protected) --- */}
+            <Route
+              path="/workbooks"
+              element={
+                <PrivateRoute>
+                   <VaultGate>
+                      <Workbooks />
+                   </VaultGate>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/workbooks/:workbookId"
+              element={
+                <PrivateRoute>
+                  <VaultGate>
+                    <WorkbookDetail />
+                  </VaultGate>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/workbooks/:workbookId/session/:sectionId"
+              element={
+                <PrivateRoute>
+                   <VaultGate>
+                     <WorkbookSession />
+                   </VaultGate>
+                </PrivateRoute>
+              }
+            />
+            
+            {/* --- VITALITY ROUTE --- */}
+            <Route
+              path="/vitality"
+              element={
+                <PrivateRoute>
+                  <Vitality />
+                </PrivateRoute>
+              }
+             />
 
-          {/* --- INSIGHTS ROUTE (NEW) --- */}
-          <Route
-            path="/insights"
-            element={
-              <PrivateRoute>
-                <InsightsLog />
-              </PrivateRoute>
-            }
-           />
+            {/* --- INSIGHTS ROUTE (Protected) --- */}
+            <Route
+              path="/insights"
+              element={
+                <PrivateRoute>
+                   <VaultGate>
+                      <InsightsLog />
+                   </VaultGate>
+                </PrivateRoute>
+              }
+             />
 
-          {/* --- TEMPLATES ROUTE --- */}
-          <Route
-            path="/templates"
-            element={
-              <PrivateRoute>
-                <TemplateEditor />
-              </PrivateRoute>
-            }
-          />
-          
-          {/* ----------------------- */}
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                 <Profile />
-              </PrivateRoute>
-            }
-          />
-          
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-        </Routes>
-      </Router>
+            {/* --- TEMPLATES ROUTE --- */}
+            <Route
+              path="/templates"
+              element={
+                <PrivateRoute>
+                  <TemplateEditor />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* ----------------------- */}
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                   <Profile />
+                </PrivateRoute>
+              }
+            />
+            
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </Router>
+      </EncryptionProvider>
     </AuthProvider>
   );
 }

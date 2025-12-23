@@ -1,8 +1,9 @@
 import { useState, useEffect, Fragment, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom'; // NEW
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore'; // Added Timestamp
 import { 
     TrashIcon,
     PencilSquareIcon,
@@ -32,7 +33,8 @@ interface JournalHistoryProps {
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams(); // NEW
+  const { decrypt } = useEncryption();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Data State
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -40,7 +42,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [loading, setLoading] = useState(true);
 
   // Filters State
-  // Initialize searchQuery from URL param if present
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filterTag, setFilterTag] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -54,10 +55,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [savingInsight, setSavingInsight] = useState(false);
   
-  // Track which AI suggestions have been added to tasks
   const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
 
-  // --- DATA LOADING ---
+  // --- DATA LOADING & DECRYPTION ---
   const loadEntries = useCallback(async () => {
     if (!user || !db) return;
 
@@ -69,13 +69,34 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       );
 
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
-      setEntries(data);
-      // We don't setFilteredEntries here immediately because the useEffect below handles it based on filters
+      
+      // Decrypt on the fly
+      const decryptedData = await Promise.all(snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          let content = data.content;
+
+          // If encrypted, try to decrypt
+          if (data.isEncrypted) {
+             try {
+                 content = await decrypt(data.content);
+             } catch {
+                 // FIX: Removed unused 'e' variable
+                 content = "[Locked Content]";
+             }
+          }
+
+          return { 
+              id: doc.id, 
+              ...data, 
+              content // Replace with decrypted content
+          } as JournalEntry;
+      }));
+
+      setEntries(decryptedData);
       
       // Extract unique tags
       const tags = new Set<string>();
-      data.forEach(e => e.tags?.forEach(t => tags.add(t)));
+      decryptedData.forEach(e => e.tags?.forEach(t => tags.add(t)));
       setAvailableTags(Array.from(tags));
 
     } catch (error) {
@@ -83,14 +104,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, decrypt]);
 
   // Initial Load
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
 
-  // Listen for URL param changes to update search (e.g. clicking word cloud)
+  // Listen for URL param changes
   useEffect(() => {
     const searchParam = searchParams.get('search');
     if (searchParam) {
@@ -102,45 +123,42 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   useEffect(() => {
     let result = entries;
 
-    // 1. Keyword Search
     if (searchQuery) {
         const lowerQ = searchQuery.toLowerCase();
         result = result.filter(e => e.content.toLowerCase().includes(lowerQ));
     }
 
-    // 2. Tag Filter
     if (filterTag) {
         result = result.filter(e => e.tags?.includes(filterTag));
     }
 
-    // 3. Date Range
     if (dateFrom) {
         const from = new Date(dateFrom);
-        result = result.filter(e => e.createdAt?.toDate() >= from);
+        result = result.filter(e => {
+            // FIX: Cast to Timestamp instead of any
+            const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
+            return date >= from;
+        });
     }
     if (dateTo) {
-        // Set 'To' date to end of day
         const to = new Date(dateTo);
         to.setHours(23, 59, 59, 999);
-        result = result.filter(e => e.createdAt?.toDate() <= to);
+        result = result.filter(e => {
+            // FIX: Cast to Timestamp instead of any
+            const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
+            return date <= to;
+        });
     }
 
     setFilteredEntries(result);
   }, [entries, searchQuery, filterTag, dateFrom, dateTo]);
 
-  // Sync Search Query back to URL (optional, keeps URL clean if user types)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val) {
-        setSearchParams(prev => {
-            prev.set('search', val);
-            return prev;
-        });
+        setSearchParams(prev => { prev.set('search', val); return prev; });
     } else {
-        setSearchParams(prev => {
-            prev.delete('search');
-            return prev;
-        });
+        setSearchParams(prev => { prev.delete('search'); return prev; });
     }
   };
 
@@ -150,49 +168,39 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
     try {
       await deleteDoc(doc(db, 'journals', id));
-      await loadEntries(); // Reload to refresh list
+      await loadEntries(); 
     } catch (error) {
       console.error(error);
     }
   };
 
-  // --- SHARE HANDLER ---
   const handleShare = async (entry: JournalEntry) => {
-    const dateStr = entry.createdAt?.toDate ? 
-      entry.createdAt.toDate().toLocaleDateString() : 'Unknown Date';
+    // FIX: Cast to Timestamp instead of any
+    const dateObj = entry.createdAt instanceof Date ? entry.createdAt : (entry.createdAt as Timestamp).toDate();
+    const dateStr = dateObj.toLocaleDateString();
     
-    // Construct text with signature
     const signature = "\n\nShared from My Recovery Toolkit";
     const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}${signature}`;
 
     if (navigator.share) {
         try {
-            await navigator.share({
-                title: `Journal Entry ${dateStr}`,
-                text: textToShare,
-            });
-        } catch (err) {
-            console.error('Error sharing:', err);
-        }
+            await navigator.share({ title: `Journal Entry ${dateStr}`, text: textToShare });
+        } catch (err) { console.error('Error sharing:', err); }
     } else {
         try {
             await navigator.clipboard.writeText(textToShare);
-            alert('Journal entry copied to clipboard! (Signature included)'); 
-        } catch (err) {
-            console.error('Failed to copy:', err);
-        }
+            alert('Journal entry copied to clipboard!'); 
+        } catch (err) { console.error('Failed to copy:', err); }
     }
   };
 
   const handleAiAnalysis = async () => {
     if (filteredEntries.length === 0) return;
-
     setAnalyzing(true);
     setShowInsightModal(true);
     setAddedTools(new Set()); 
     setSavingInsight(false);
     
-    // Analyze filtered results (up to 10 to avoid token limits)
     const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
     const result = await analyzeJournalEntries(textsToAnalyze);
     
@@ -215,39 +223,30 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleAddToTasks = async (toolSuggestion: string) => {
     if (!user) return;
-
     try {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 7);
-
-        await addTask(
-            user.uid,
-            toolSuggestion,
-            'once',      // Frequency
-            'Medium',    // Priority
-            dueDate      // Due Date
-        );
+        await addTask(user.uid, toolSuggestion, 'once', 'Medium', dueDate);
         setAddedTools(prev => new Set(prev).add(toolSuggestion));
     } catch (error) {
-        console.error("Failed to add task from suggestion:", error);
-        alert("Could not add task. Please try again.");
+        console.error("Failed to add task:", error);
     }
   };
 
   const clearFilters = () => {
       setSearchQuery('');
-      setSearchParams(prev => { prev.delete('search'); return prev; }); // Clear URL param
+      setSearchParams(prev => { prev.delete('search'); return prev; });
       setFilterTag('');
       setDateFrom('');
       setDateTo('');
   };
 
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading history...</div>;
+  if (loading) return <div className="text-center py-10 text-gray-400">Loading & Decrypting History...</div>;
 
   return (
     <div className="space-y-6">
       
-      {/* --- HEADER & FILTERS --- */}
+      {/* HEADER & FILTERS */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
              <div className="relative flex-1 w-full sm:w-auto">
@@ -260,7 +259,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     className="w-full pl-9 pr-3 py-2 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 />
              </div>
-             
              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button 
                     onClick={() => setShowFilters(!showFilters)}
@@ -269,7 +267,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     <FunnelIcon className="h-4 w-4" />
                     Filters
                  </button>
-                 
                  <button 
                     onClick={handleAiAnalysis}
                     disabled={analyzing || filteredEntries.length === 0}
@@ -285,32 +282,18 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
               <div className="pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
                   <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Tag</label>
-                      <select 
-                        value={filterTag} 
-                        onChange={(e) => setFilterTag(e.target.value)}
-                        className="w-full text-sm border-gray-300 rounded-md"
-                      >
+                      <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="w-full text-sm border-gray-300 rounded-md">
                           <option value="">All Tags</option>
                           {availableTags.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                   </div>
                   <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">From Date</label>
-                      <input 
-                        type="date" 
-                        value={dateFrom} 
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="w-full text-sm border-gray-300 rounded-md"
-                      />
+                      <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full text-sm border-gray-300 rounded-md" />
                   </div>
                   <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">To Date</label>
-                      <input 
-                        type="date" 
-                        value={dateTo} 
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="w-full text-sm border-gray-300 rounded-md"
-                      />
+                      <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full text-sm border-gray-300 rounded-md" />
                   </div>
                   <div className="sm:col-span-3 flex justify-end">
                       <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
@@ -321,7 +304,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           )}
       </div>
 
-      {/* --- RESULTS INFO --- */}
       <div className="flex justify-between items-center px-2">
           <p className="text-sm text-gray-500">
              Showing {filteredEntries.length} entries 
@@ -329,7 +311,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
           </p>
       </div>
 
-      {/* --- ENTRIES LIST --- */}
       {filteredEntries.length === 0 ? (
           <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
             <p className="text-gray-500">No entries match your filters.</p>
@@ -337,21 +318,25 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       ) : (
           filteredEntries.map(entry => (
             <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
-              
-              {/* --- HEADER ROW (Stacked Meta) --- */}
               <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
                 
-                {/* Left: Stacked Meta */}
+                {/* Meta Column */}
                 <div className="flex flex-col items-start min-w-0">
                     <span className="text-sm font-bold text-gray-800 truncate">
-                        {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : 'Unknown Date'}
+                        {/* FIX: Cast to Timestamp instead of any */}
+                        {entry.createdAt instanceof Date 
+                            ? entry.createdAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+                            : (entry.createdAt as Timestamp).toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+                        }
                     </span>
-                    
                     <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                         <span>
-                            {entry.createdAt?.toDate ? entry.createdAt.toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}
+                            {/* FIX: Cast to Timestamp instead of any */}
+                            {entry.createdAt instanceof Date 
+                                ? entry.createdAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) 
+                                : (entry.createdAt as Timestamp).toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                            }
                         </span>
-                        
                         {entry.weather && (
                             <>
                                 <span className="text-gray-300">•</span>
@@ -360,52 +345,42 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                 </span>
                             </>
                         )}
+                        {entry.isEncrypted && (
+                             <span className="flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+                                 <ShieldExclamationIcon className="h-3 w-3" /> Encrypted
+                             </span>
+                        )}
                     </div>
-
                     {entry.tags && entry.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                              {entry.tags.slice(0, 3).map((tag, i) => (
-                                  <span key={i} className="text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">
-                                      {tag}
-                                  </span>
+                                  <span key={i} className="text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">{tag}</span>
                              ))}
-                             {entry.tags.length > 3 && (
-                                 <span className="text-[10px] text-gray-400 pl-1">+{entry.tags.length - 3}</span>
-                             )}
+                             {entry.tags.length > 3 && <span className="text-[10px] text-gray-400 pl-1">+{entry.tags.length - 3}</span>}
                         </div>
                     )}
                 </div>
 
-                {/* Right: Mood & Actions */}
+                {/* Action Column */}
                 <div className="flex items-center gap-2 flex-shrink-0 self-center">
-                   
                     <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
                         <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                         <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
                     </div>
-
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit">
-                          <PencilSquareIcon className="h-4 w-4" />
-                       </button>
-                       <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share">
-                          <ShareIcon className="h-4 w-4" />
-                       </button>
-                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete">
-                          <TrashIcon className="h-4 w-4" />
-                       </button>
+                       <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit"><PencilSquareIcon className="h-4 w-4" /></button>
+                       <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share"><ShareIcon className="h-4 w-4" /></button>
+                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete"><TrashIcon className="h-4 w-4" /></button>
                     </div>
                 </div>
-
               </div>
 
-              {/* BODY CONTENT */}
+              {/* Body */}
               <div className="p-5">
                   <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                     {entry.content}
                   </div>
-
                   {entry.sentiment && entry.sentiment !== 'Pending' && (
                     <div className="mt-4 flex justify-end">
                         <span className={`text-xs px-2 py-1 rounded-full border ${
@@ -417,18 +392,16 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     </div>
                   )}
               </div>
-
             </div>
           ))
       )}
 
-      {/* --- AI MODAL --- */}
+      {/* INSIGHT MODAL */}
       <Transition appear show={showInsightModal} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
           <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           </Transition.Child>
-
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
@@ -446,7 +419,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                   ) : (
                     insight && (
                         <div className="space-y-6">
-                            
                             <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex gap-4">
                                 <div className="flex-shrink-0 p-2 bg-purple-100 rounded-lg h-fit">
                                     <LightBulbIcon className="h-6 w-6 text-purple-600" />
@@ -464,7 +436,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
                                     <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
@@ -475,7 +446,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                         {insight.risk_analysis}
                                     </p>
                                 </div>
-
                                 <div className="bg-green-50 rounded-xl p-4 border border-green-100">
                                     <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm uppercase tracking-wide">
                                         <TrophyIcon className="h-5 w-5" />
@@ -486,7 +456,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                     </p>
                                 </div>
                             </div>
-
                             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                                 <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
                                     <WrenchScrewdriverIcon className="h-5 w-5" />
@@ -501,12 +470,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                                     <span className="text-blue-400 font-bold mt-0.5">•</span>
                                                     <span className={isAdded ? 'text-green-700' : ''}>{tool}</span>
                                                 </div>
-                                                
                                                 <button 
                                                     onClick={() => !isAdded && handleAddToTasks(tool)}
                                                     disabled={isAdded}
                                                     className={`flex-shrink-0 transition-all ${isAdded ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
-                                                    title={isAdded ? "Added to tasks" : "Add to tasks"}
                                                 >
                                                     {isAdded ? (
                                                         <CheckCircleIcon className="h-5 w-5 text-green-500" />
@@ -519,7 +486,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                     })}
                                 </ul>
                             </div>
-
                         </div>
                     )
                   )}
@@ -534,7 +500,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                         <BookmarkIcon className="h-4 w-4" />
                         {savingInsight ? "Saving..." : "Save to Wisdom Log"}
                     </button>
-
                     <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
                       Close Analysis
                     </button>
