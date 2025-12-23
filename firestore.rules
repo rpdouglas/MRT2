@@ -2,27 +2,47 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. User Profiles
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // --- HELPER FUNCTIONS ---
+    
+    // Checks if the authenticated user's ID matches the requested ID
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // 2. Journal Entries
+    // Checks if the document being accessed belongs to the user (for existing docs)
+    function isResourceOwner() {
+      return request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Checks if the document being created is tagged with the user's ID
+    function isCreatingOwnedResource() {
+      return request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // 1. User Profiles & Subcollections 
+    // Covers: /users/{uid} AND /users/{uid}/workbook_answers/{answerId}
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // 2. Journals (Root Collection)
     match /journals/{entryId} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if isCreatingOwnedResource();
+      allow read, update, delete: if isResourceOwner();
     }
 
-    // 3. AI Insights
-    match /insights/{insightId} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
-    }
-
-    // 4. Tasks (NEW)
+    // 3. Tasks (Root Collection)
     match /tasks/{taskId} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if isCreatingOwnedResource();
+      allow read, update, delete: if isResourceOwner();
+    }
+
+    // 4. Insights / Wisdom Log (Root Collection) - NEW in v3.3
+    match /insights/{insightId} {
+      allow create: if isCreatingOwnedResource();
+      allow read, update, delete: if isResourceOwner();
     }
   }
 }
