@@ -71,11 +71,12 @@ export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
       const type = data.type || 'journal';
 
       return {
+        ...data, // <--- FIXED: Spread data FIRST so we can override fields below
         id: doc.id,
         uid: data.uid,
         type,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        ...data
+        // Ensure createdAt is a real JS Date object (overriding the Timestamp from ...data)
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
       } as SavedInsight;
     });
 
