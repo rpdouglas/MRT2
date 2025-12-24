@@ -1,291 +1,309 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getWorkbook } from '../data/workbooks';
-import { getSectionAnswers, saveAnswer, type WorkbookProgress } from '../lib/workbooks';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext'; 
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import { 
-  ArrowLeftIcon, 
-  ArrowRightIcon, 
-  DocumentArrowDownIcon,
-  InformationCircleIcon,
-  XMarkIcon
+  ChevronLeftIcon, 
+  CheckCircleIcon, 
+  ArrowRightIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
+import { getWorkbookById, type Workbook, type Section } from '../lib/workbooks';
+import { getGeminiCoaching } from '../lib/gemini';
+
+// Type definition for stored answers
+type AnswerValue = string | { text: string; isEncrypted: boolean; updatedAt?: Timestamp };
 
 export default function WorkbookSession() {
   const { workbookId, sectionId } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const workbook = getWorkbook(workbookId || '');
-  const section = workbook?.sections.find(s => s.id === sectionId);
+  const { encrypt, decrypt } = useEncryption(); 
+  const navigate = useNavigate();
 
-  // State
-  const [answers, setAnswers] = useState<WorkbookProgress>({});
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Content State
+  const [workbook, setWorkbook] = useState<Workbook | null>(null);
+  const [section, setSection] = useState<Section | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+
+  // User Progress State
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   
-  // Print Mode State
-  const [isPrintMode, setIsPrintMode] = useState(false);
+  // UI State
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [aiCoachLoading, setAiCoachLoading] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
+  // 1. Load Workbook Content & User Progress
   useEffect(() => {
-    async function init() {
-      if (!user || !workbook || !section) return;
-      
-      const saved = await getSectionAnswers(user.uid, workbook.id, section.id);
-      setAnswers(saved);
-      
-      // --- SMART RESUME LOGIC ---
-      // Find the index of the first actual 'input' question in the array
-      const firstInputIndex = section.questions.findIndex(q => q.type !== 'read_only');
-      
-      // Find the index of the first question that hasn't been answered yet
-      const firstMissingAnswerIndex = section.questions.findIndex(q => q.type !== 'read_only' && !saved[q.id]);
+    async function loadData() {
+      // FIX: Added !db check to satisfy TypeScript
+      if (!user || !workbookId || !sectionId || !db) return;
 
-      // CASE 1: No input questions exist (Read only section) -> Start at 0
-      if (firstInputIndex === -1) {
-          setCurrentIndex(0);
+      try {
+        // A. Load Static Workbook JSON
+        const wb = await getWorkbookById(workbookId);
+        if (!wb) {
+          navigate('/workbooks');
+          return;
+        }
+        setWorkbook(wb);
+
+        const sec = wb.sections.find(s => s.id === sectionId);
+        if (!sec) {
+           navigate(`/workbooks/${workbookId}`);
+           return;
+        }
+        setSection(sec);
+
+        // B. Load User Progress from Firestore
+        const progressRef = doc(db, 'users', user.uid, 'workbook_progress', workbookId);
+        const snap = await getDoc(progressRef);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          
+          // DECRYPTION LOGIC
+          const rawAnswers = data.answers || {};
+          const decryptedAnswers: Record<string, string> = {};
+
+          for (const [qId, val] of Object.entries(rawAnswers)) {
+             const answerVal = val as AnswerValue;
+             
+             if (typeof answerVal === 'object' && answerVal !== null && 'isEncrypted' in answerVal && answerVal.isEncrypted) {
+                 try {
+                     decryptedAnswers[qId] = await decrypt(answerVal.text);
+                 } catch (e) {
+                     console.error(`Failed to decrypt answer for ${qId}`, e);
+                     decryptedAnswers[qId] = "🔒 [Error Decrypting Data]";
+                 }
+             } else if (typeof answerVal === 'object' && answerVal !== null && 'text' in answerVal) {
+                 decryptedAnswers[qId] = answerVal.text;
+             } else if (typeof answerVal === 'string') {
+                 decryptedAnswers[qId] = answerVal;
+             }
+          }
+          setAnswers(decryptedAnswers);
+        }
+
+      } catch (error) {
+        console.error("Error loading session:", error);
+      } finally {
+        setLoading(false);
       }
-      // CASE 2: The user hasn't answered the FIRST input question yet -> Start at 0 (Show Intro)
-      else if (firstMissingAnswerIndex === firstInputIndex) {
-          setCurrentIndex(0);
-      }
-      // CASE 3: The user has answered some questions -> Resume at the first missing one
-      else if (firstMissingAnswerIndex !== -1) {
-          setCurrentIndex(firstMissingAnswerIndex);
-      }
-      // CASE 4: Section is complete -> Start at 0 (Review mode)
-      else {
-          setCurrentIndex(0);
-      }
-      
-      setLoading(false);
     }
-    init();
-  }, [user, workbook, section]);
+    loadData();
+  }, [user, workbookId, sectionId, navigate, decrypt]);
 
-  // Handlers
-  const currentQuestion = section?.questions[currentIndex];
-  // Default to '' if no answer found
-  const currentAnswer = currentQuestion ? (answers[currentQuestion.id] || '') : '';
-
-  const handleTextChange = (val: string) => {
-    if (!currentQuestion) return;
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+  // 2. Handle Answer Input
+  const handleAnswerChange = (text: string) => {
+    if (!section) return;
+    const qId = section.questions[activeQuestionIndex].id;
+    setAnswers(prev => ({
+      ...prev,
+      [qId]: text
+    }));
   };
 
-  const saveCurrent = async () => {
-    if (!user || !workbook || !section || !currentQuestion) return;
+  // 3. Save Answer (with Encryption)
+  const saveAnswer = async (qId: string, text: string) => {
+    // FIX: Added !db check
+    if (!user || !workbookId || !db) return;
     
-    // Do not save for read_only slides
-    if (currentQuestion.type === 'read_only') return;
+    try {
+        const progressRef = doc(db, 'users', user.uid, 'workbook_progress', workbookId);
+        
+        // ENCRYPTION LOGIC
+        let payloadValue: AnswerValue;
+        try {
+            const encryptedText = await encrypt(text);
+            payloadValue = {
+                text: encryptedText,
+                isEncrypted: true,
+                updatedAt: Timestamp.now()
+            };
+        } catch (e) {
+            console.error("Encryption failed", e);
+            alert("Security Error: Could not encrypt answer. Save aborted.");
+            return;
+        }
 
+        await setDoc(progressRef, {
+            answers: {
+                [qId]: payloadValue 
+            },
+            lastActive: Timestamp.now(),
+            lastSectionId: sectionId
+        }, { merge: true });
+
+    } catch (e) {
+        console.error("Failed to save answer:", e);
+    }
+  };
+
+  // 4. Navigation & Completion
+  const handleNext = async () => {
+    // FIX: Added !db check
+    if (!section || !workbookId || !user || !db) return;
+    
+    const currentQ = section.questions[activeQuestionIndex];
+    const currentAns = answers[currentQ.id];
+    
     setSaving(true);
-    await saveAnswer(user.uid, workbook.id, section.id, currentQuestion.id, currentAnswer);
+    if (currentAns) {
+        await saveAnswer(currentQ.id, currentAns);
+    }
+
+    if (activeQuestionIndex < section.questions.length - 1) {
+        setActiveQuestionIndex(prev => prev + 1);
+        setAiFeedback(null); 
+    } else {
+        await updateDoc(doc(db, 'users', user.uid, 'workbook_progress', workbookId), {
+            completedSections: arrayUnion(sectionId)
+        });
+        navigate(`/workbooks/${workbookId}`);
+    }
     setSaving(false);
   };
 
-  const handleNext = async () => {
-    await saveCurrent();
-    if (section && currentIndex < section.questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      // Finished section
-      navigate(`/workbooks/${workbookId}`);
+  const handlePrevious = () => {
+    if (activeQuestionIndex > 0) {
+        setActiveQuestionIndex(prev => prev - 1);
+        setAiFeedback(null);
     }
   };
 
-  const handlePrev = async () => {
-    await saveCurrent();
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+  const handleGetCoaching = async () => {
+      if (!section) return;
+      const q = section.questions[activeQuestionIndex];
+      const ans = answers[q.id];
+      if (!ans || ans.length < 10) return alert("Please write a bit more before asking for coaching.");
+
+      setAiCoachLoading(true);
+      try {
+          const feedback = await getGeminiCoaching(q.text, ans);
+          setAiFeedback(feedback);
+      } catch (error) {
+          console.error(error);
+          alert("Coach is currently unavailable.");
+      } finally {
+          setAiCoachLoading(false);
+      }
   };
 
-  const handlePrint = () => {
-    setIsPrintMode(true);
-    setTimeout(() => {
-      window.print();
-    }, 500);
-  };
 
-  if (!workbook || !section || loading) return <div className="p-8">Loading session...</div>;
+  if (loading || !section) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
 
-  // --- PRINT MODE VIEW ---
-  if (isPrintMode) {
-    return (
-      <div className="bg-white min-h-screen text-black p-8 max-w-4xl mx-auto print:p-0">
-        <div className="flex justify-between items-center mb-8 print:hidden">
-          <h2 className="text-xl font-bold text-gray-500">Preview Mode</h2>
-          <div className="flex gap-2">
-            <button 
-                onClick={() => window.print()} 
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-                Print PDF
-            </button>
-            <button 
-                onClick={() => setIsPrintMode(false)} 
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-            >
-                Close
-            </button>
-          </div>
-        </div>
-
-        <div className="print:block">
-            <h1 className="text-3xl font-bold mb-2">{workbook.title}</h1>
-            <h2 className="text-xl text-gray-600 mb-8 border-b pb-4">{section.title}: {section.description}</h2>
-
-            <div className="space-y-8">
-                {section.questions.map((q, idx) => {
-                    // Include read_only slides as context blocks
-                    if (q.type === 'read_only') {
-                        return (
-                            <div key={q.id} className="break-inside-avoid bg-gray-50 p-6 rounded-lg border border-gray-200">
-                                <p className="text-gray-800 whitespace-pre-wrap font-medium">{q.text}</p>
-                            </div>
-                        );
-                    }
-
-                    return (
-                        <div key={q.id} className="break-inside-avoid">
-                            <p className="font-bold text-lg mb-2">
-                                {idx + 1}. {q.text}
-                            </p>
-                            <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-800 whitespace-pre-wrap">
-                                {answers[q.id] || "No answer provided."}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-            
-            <div className="mt-12 pt-4 border-t text-sm text-gray-400 text-center">
-                Generated by My Recovery Toolkit • {new Date().toLocaleDateString()}
-            </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- WIZARD MODE VIEW ---
-  if (!currentQuestion) return <div>Error</div>;
+  const currentQuestion = section.questions[activeQuestionIndex];
+  const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto h-[calc(100vh-80px)] flex flex-col relative">
-      
-      {/* 1. Top Bar */}
-      <div className="flex items-center justify-between mb-4">
-         <div className="flex items-center gap-2">
-            <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="text-gray-400 hover:text-gray-900">
-                <XMarkIcon className="h-6 w-6" />
+    <div className="max-w-3xl mx-auto px-4 pb-20">
+        
+        {/* NAV HEADER */}
+        <div className="flex items-center gap-4 py-6">
+            <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
+                <ChevronLeftIcon className="h-6 w-6" />
             </button>
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                {currentQuestion.type === 'read_only' 
-                    ? 'Introduction'
-                    : `Question ${currentIndex + 1} of ${section.questions.length}`
-                }
+            <div className="flex-1">
+                <h1 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{workbook?.title}</h1>
+                <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
             </div>
-         </div>
-         
-         <div className="flex items-center gap-3">
-            <button onClick={handlePrint} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
-                <DocumentArrowDownIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Export</span>
-            </button>
-         </div>
-      </div>
+        </div>
 
-      {/* 2. Progress Line */}
-      <div className="w-full bg-gray-100 h-1 rounded-full mb-8">
-        <div 
-            className="bg-blue-600 h-1 rounded-full transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / section.questions.length) * 100}%` }}
-        />
-      </div>
+        {/* PROGRESS BAR */}
+        <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
+            <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out" 
+                style={{ width: `${progressPercent}%` }}
+            />
+        </div>
 
-      {/* 3. The Content Area */}
-      <div className="flex-1 overflow-y-auto pb-20">
-         
-         {/* --- RENDER LOGIC BASED ON TYPE --- */}
-         {currentQuestion.type === 'read_only' ? (
-             // --- READING SLIDE ---
-             <div className="prose prose-lg max-w-none">
-                 <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                     <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
-                        <InformationCircleIcon className="h-6 w-6" />
-                        Explanation
-                     </h2>
-                     <div className="text-blue-900 whitespace-pre-wrap leading-relaxed">
-                        {currentQuestion.text}
-                     </div>
-                 </div>
-             </div>
-         ) : (
-             // --- INPUT SLIDE ---
-             <div className="space-y-6">
+        {/* QUESTION CARD */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col">
+            
+            <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
+                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
+                    Question {activeQuestionIndex + 1} of {section.questions.length}
+                </span>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
+                    {currentQuestion.text}
+                </h3>
+                {currentQuestion.helperText && (
+                    <p className="mt-2 text-gray-500 text-sm">
+                        {currentQuestion.helperText}
+                    </p>
+                )}
+            </div>
+
+            <div className="flex-1 p-6 md:p-8 flex flex-col">
+                <textarea
+                    className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
+                    placeholder="Type your answer here..."
+                    value={answers[currentQuestion.id] || ''}
+                    onChange={(e) => handleAnswerChange(e.target.value)}
+                />
                 
-                {/* A. Insight/Context (Shown FIRST) */}
-                {currentQuestion.context && (
-                    <div className="flex gap-3 bg-purple-50 p-5 rounded-xl text-purple-900 border border-purple-100 shadow-sm">
-                        <InformationCircleIcon className="h-6 w-6 flex-shrink-0 text-purple-600" />
-                        <div className="space-y-1">
-                            <span className="text-xs font-bold uppercase tracking-wider text-purple-500">Insight</span>
-                            <p className="italic font-medium leading-relaxed">"{currentQuestion.context}"</p>
+                {/* AI COACHING AREA */}
+                {aiFeedback && (
+                    <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
+                        <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
+                            <SparklesIcon className="h-5 w-5" />
+                            <span>Coach's Insight</span>
+                        </div>
+                        {/* FIX: Replaced ReactMarkdown with simpler whitespace formatting to avoid dependency */}
+                        <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
+                            {aiFeedback}
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* B. Question Text (Shown SECOND - Styled as Focus Card) */}
-                <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 leading-relaxed">
-                        {currentQuestion.text}
-                    </h2>
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                <button
+                    onClick={handlePrevious}
+                    disabled={activeQuestionIndex === 0}
+                    className="px-6 py-3 rounded-xl text-gray-600 font-medium hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                >
+                    Back
+                </button>
+
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleGetCoaching}
+                        disabled={aiCoachLoading || !answers[currentQuestion.id]}
+                        className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
+                        title="Get AI feedback on your answer"
+                    >
+                        {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
+                        <span>AI Coach</span>
+                    </button>
+
+                    <button
+                        onClick={handleNext}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95"
+                    >
+                        {saving ? (
+                            <span>Saving...</span>
+                        ) : activeQuestionIndex === section.questions.length - 1 ? (
+                            <>
+                                <span>Complete</span>
+                                <CheckCircleIcon className="h-5 w-5" />
+                            </>
+                        ) : (
+                            <>
+                                <span>Next</span>
+                                <ArrowRightIcon className="h-5 w-5" />
+                            </>
+                        )}
+                    </button>
                 </div>
+            </div>
 
-                {/* C. Input Textarea (Shown THIRD) */}
-                <textarea
-                    className="w-full min-h-[300px] p-4 text-lg border-2 border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-300 resize-none transition-all"
-                    placeholder="Type your answer here..."
-                    value={currentAnswer}
-                    onChange={(e) => handleTextChange(e.target.value)}
-                    autoFocus
-                />
-             </div>
-         )}
-
-      </div>
-
-      {/* 4. Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 lg:static lg:bg-transparent lg:border-0">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            <button 
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
-                    currentIndex === 0 
-                    ? 'text-gray-300 cursor-not-allowed' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-             >
-                <ArrowLeftIcon className="h-5 w-5" />
-                Prev
-             </button>
-
-             <div className="text-xs text-gray-400 italic">
-                {currentQuestion.type === 'read_only' ? '' : (saving ? 'Saving...' : 'Auto-saved')}
-             </div>
-
-             <button 
-                onClick={handleNext}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-transform active:scale-95 flex items-center gap-2"
-             >
-                {currentIndex === section.questions.length - 1 ? 'Finish' : 'Next'}
-                <ArrowRightIcon className="h-5 w-5" />
-             </button>
-          </div>
-      </div>
+        </div>
     </div>
   );
 }
