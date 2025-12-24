@@ -1,256 +1,502 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
 import { 
-  getUserTasks, 
-  toggleTask, 
-  deleteTask, 
-  type Task
-} from '../lib/tasks';
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  serverTimestamp,
+  Timestamp 
+} from 'firebase/firestore';
 import { 
   PlusIcon, 
+  BookOpenIcon, 
   TrashIcon, 
-  ArrowPathIcon, 
-  CheckCircleIcon,
+  CalendarIcon,
   FireIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
+  TrophyIcon,
+  EllipsisHorizontalIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import Confetti from 'react-confetti';
-import { isSameDay, startOfDay, isBefore } from 'date-fns';
-import CreateTaskModal from '../components/CreateTaskModal';
+import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
+
+// --- Types ---
+
+type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
+type TaskPriority = 'High' | 'Medium' | 'Low';
+type TabOption = 'today' | 'upcoming' | 'history';
+
+export interface Task {
+  id: string;
+  uid: string;
+  title: string;
+  category: TaskCategory;
+  priority: TaskPriority;
+  status: 'pending' | 'completed';
+  frequency: 'once' | 'daily' | 'weekly';
+  dueDate: Timestamp | Date | null;
+  createdAt: Timestamp;
+  completedAt?: Timestamp | null;
+  stats?: {
+    xp: number;
+    attribute: 'Wisdom' | 'Vitality' | 'Willpower';
+  };
+}
+
+// --- Components ---
+
+const ProgressRing = ({ percentage }: { percentage: number }) => {
+  const radius = 30;
+  const stroke = 4;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg
+        height={radius * 2}
+        width={radius * 2}
+        className="transform -rotate-90 transition-all duration-500"
+      >
+        <circle
+          stroke="#e5e7eb"
+          strokeWidth={stroke}
+          fill="transparent"
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+        />
+        <circle
+          stroke={percentage === 100 ? "#10b981" : "#3b82f6"}
+          strokeWidth={stroke}
+          strokeDasharray={circumference + ' ' + circumference}
+          style={{ strokeDashoffset }}
+          strokeLinecap="round"
+          fill="transparent"
+          r={normalizedRadius}
+          cx={radius}
+          cy={radius}
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className={`text-xs font-bold ${percentage === 100 ? "text-green-600" : "text-blue-600"}`}>
+          {Math.round(percentage)}%
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export default function Tasks() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabOption>('today');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
-  // --- STATS CALCULATION ---
-  const totalTasks = tasks.filter(t => !t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date())).length;
-  const dueToday = tasks.filter(t => isSameDay(t.dueDate, new Date()) && (!t.lastCompletedAt || !isSameDay(t.lastCompletedAt, new Date()))).length;
-  const totalFire = tasks.reduce((acc, t) => acc + (t.currentStreak > 0 ? t.currentStreak : 0), 0);
+  // Form State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskCategory, setNewTaskCategory] = useState<TaskCategory>('Recovery');
+  const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('Medium');
+  const [newTaskDate, setNewTaskDate] = useState('');
 
-  // Fetch Tasks
-  const refreshTasks = async () => {
-    if (!user) return;
-    try {
-      const data = await getUserTasks(user.uid);
-      
-      const today = startOfDay(new Date());
-      
-      const sorted = data.sort((a, b) => {
-        const aCompleted = a.lastCompletedAt && isSameDay(a.lastCompletedAt, today);
-        const bCompleted = b.lastCompletedAt && isSameDay(b.lastCompletedAt, today);
-        
-        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
-        return a.dueDate.getTime() - b.dueDate.getTime();
-      });
-
-      setTasks(sorted);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 1. Data Loading
   useEffect(() => {
-    refreshTasks();
+    if (!user || !db) return;
+
+    const q = query(
+      collection(db, 'tasks'),
+      where('uid', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const taskData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Task));
+      setTasks(taskData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
-  const handleToggle = async (task: Task) => {
-    const today = startOfDay(new Date());
-    const isCompletedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+  // 2. Computed Lists & Stats
+  const { filteredTasks, progress } = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
     
-    if (!isCompletedToday) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
+    // Helper to normalize date
+    const getTaskDate = (t: Task) => {
+        if (!t.dueDate) return null;
+        return t.dueDate instanceof Date ? t.dueDate : (t.dueDate as Timestamp).toDate();
+    };
+
+    const todayTasks: Task[] = [];
+    const upcomingTasks: Task[] = [];
+    const historyTasks: Task[] = [];
+
+    let completedToday = 0;
+    let totalToday = 0;
+
+    tasks.forEach(t => {
+        const d = getTaskDate(t);
+        const isCompleted = t.status === 'completed';
+
+        // History Tab: Completed items older than today
+        if (isCompleted && (!d || d < now)) {
+            historyTasks.push(t);
+            return;
+        }
+
+        // Upcoming: Future dates
+        if (d && d > now && !isCompleted) {
+            upcomingTasks.push(t);
+            return;
+        }
+
+        // Today: Due today/past or completed today
+        todayTasks.push(t);
+        totalToday++;
+        if (isCompleted) completedToday++;
+    });
+
+    // Sort Today: Pending first, then Priority
+    todayTasks.sort((a, b) => {
+        if (a.status === b.status) {
+             const pMap = { High: 3, Medium: 2, Low: 1 };
+             return pMap[b.priority] - pMap[a.priority];
+        }
+        return a.status === 'completed' ? 1 : -1;
+    });
+
+    return {
+        filteredTasks: activeTab === 'today' ? todayTasks : activeTab === 'upcoming' ? upcomingTasks : historyTasks,
+        progress: totalToday === 0 ? 0 : (completedToday / totalToday) * 100
+    };
+  }, [tasks, activeTab]);
+
+  // 3. Actions
+  const handleToggleComplete = useCallback(async (task: Task) => {
+    if (!db) return;
+    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+    const completedAt = newStatus === 'completed' ? serverTimestamp() : null;
+
+    try {
+        await updateDoc(doc(db, 'tasks', task.id), {
+            status: newStatus,
+            completedAt
+        });
+        // Haptic feedback if available (mobile)
+        if (navigator.vibrate && newStatus === 'completed') navigator.vibrate(50);
+    } catch (e) {
+        console.error("Error toggling task", e);
     }
+  }, []);
 
-    await toggleTask(task, !isCompletedToday);
-    refreshTasks();
-  };
-
-  const handleDelete = async (id: string) => {
-    if(confirm('Delete this task?')) {
-        await deleteTask(id);
-        refreshTasks();
+  const handleDelete = useCallback(async (id: string) => {
+    if (!db) return;
+    if (confirm("Delete this quest?")) {
+        try {
+            await deleteDoc(doc(db, 'tasks', id));
+        } catch (e) {
+            console.error(e);
+        }
     }
-  };
+  }, []);
 
-  const getUrgencyStyles = (task: Task) => {
-      const today = startOfDay(new Date());
-      const target = startOfDay(task.dueDate);
-      const isDone = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+  const handleJournalReflect = useCallback((task: Task) => {
+    // Navigate to Journal with context (Title deep linking)
+    navigate('/journal', { 
+        state: { 
+            initialContent: `**Reflecting on Quest: ${task.title}**\n\nHow did completing this make me feel?\n` 
+        } 
+    }); 
+  }, [navigate]);
 
-      if (isDone) return 'border-l-gray-300 bg-gray-50 opacity-60';
-      if (isBefore(target, today)) return 'border-l-red-500 bg-white shadow-sm ring-1 ring-red-100'; // Overdue
-      if (isSameDay(target, today)) return 'border-l-orange-500 bg-white shadow-sm ring-1 ring-orange-100'; // Today
-      
-      // Future / Standard Priority Colors
-      switch (task.priority) {
-          case 'High': return 'border-l-blue-600 bg-white shadow-sm';
-          case 'Medium': return 'border-l-blue-400 bg-white shadow-sm';
-          case 'Low': return 'border-l-blue-200 bg-white shadow-sm';
-          default: return 'border-l-gray-200 bg-white shadow-sm';
+  const handleAddTask = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !db || !newTaskTitle.trim()) return;
+
+    try {
+        let dueDate: Date | null = null;
+        if (newTaskDate) {
+            dueDate = new Date(newTaskDate);
+            // Set to end of day to avoid timezone confusion "due today"
+            dueDate.setHours(23, 59, 59);
+        }
+
+        await addDoc(collection(db, 'tasks'), {
+            uid: user.uid,
+            title: newTaskTitle,
+            category: newTaskCategory,
+            priority: newTaskPriority,
+            status: 'pending',
+            frequency: 'once',
+            dueDate: dueDate || serverTimestamp(), // Default to today/now
+            createdAt: serverTimestamp(),
+            // Auto-assign stats based on category
+            stats: {
+                xp: newTaskPriority === 'High' ? 50 : 20,
+                attribute: newTaskCategory === 'Recovery' ? 'Wisdom' : newTaskCategory === 'Health' ? 'Vitality' : 'Willpower'
+            }
+        });
+
+        setShowAddModal(false);
+        setNewTaskTitle('');
+        setNewTaskPriority('Medium');
+        setNewTaskCategory('Recovery');
+    } catch (error) {
+        console.error("Error adding task", error);
+    }
+  }, [user, newTaskTitle, newTaskCategory, newTaskPriority, newTaskDate]);
+
+  // UI Helpers
+  const getCategoryColor = (cat: string) => {
+      switch(cat) {
+          case 'Recovery': return 'border-l-blue-500 text-blue-600 bg-blue-50';
+          case 'Health': return 'border-l-red-500 text-red-600 bg-red-50';
+          case 'Work': return 'border-l-purple-500 text-purple-600 bg-purple-50';
+          default: return 'border-l-gray-400 text-gray-600 bg-gray-50';
       }
   };
 
-  const getDateLabel = (date: Date) => {
-    const today = startOfDay(new Date());
-    const target = startOfDay(date);
-    
-    if (isBefore(target, today)) return { text: 'Overdue', color: 'text-red-600 font-bold' };
-    if (isSameDay(target, today)) return { text: 'Today', color: 'text-orange-600 font-bold' };
-    return { text: date.toLocaleDateString(), color: 'text-gray-500' };
+  const getPriorityBadge = (p: string) => {
+      switch(p) {
+          case 'High': return <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">HIGH</span>;
+          case 'Medium': return null; // Reduce noise
+          default: return <span className="text-[10px] text-gray-400">Low</span>;
+      }
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading your ledger...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading your quests...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      {showConfetti && <Confetti numberOfPieces={200} recycle={false} />}
-
-      {/* --- HEADER & MINI HERO --- */}
-      <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
-                Habits & Tasks
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">Manage your daily habits and tasks.</p>
-          </div>
-          
-          {/* COMPACT ADD BUTTON */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-shadow shadow-sm hover:shadow-md flex items-center justify-center"
-            title="Create New Quest"
-          >
-            <PlusIcon className="h-6 w-6" />
-          </button>
-      </div>
-
-      {/* MINI STATS GRID */}
-      <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
-              <span className="text-2xl font-bold text-gray-900">{totalTasks}</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Due Today</span>
-              <span className={`text-2xl font-bold ${dueToday > 0 ? 'text-orange-500' : 'text-gray-900'}`}>{dueToday}</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Fire</span>
-              <div className="flex items-center gap-1 text-2xl font-bold text-orange-600">
-                  <FireIcon className="h-6 w-6" />
-                  {totalFire}
-              </div>
-          </div>
-      </div>
-
-      {/* --- TASK LIST (Quest Cards) --- */}
-      <div className="space-y-3">
-        {tasks.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                <ClipboardDocumentListIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-gray-900">Your Ledger is Empty</h3>
-                <p className="text-gray-500">Start a new quest to build your streak.</p>
+    <div className="pb-24 relative min-h-screen bg-gray-50">
+        
+        {/* --- HEADER: Progress & Summary --- */}
+        <div className="bg-white p-4 shadow-sm border-b border-gray-100 sticky top-0 z-10">
+            <div className="flex items-center justify-between mb-4">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        Today's Quests
+                        <FireIcon className="h-5 w-5 text-orange-500" />
+                    </h1>
+                    <p className="text-xs text-gray-500">
+                        {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </p>
+                </div>
+                <ProgressRing percentage={progress} />
             </div>
-        ) : (
-            tasks.map(task => {
-                const dateLabel = getDateLabel(task.dueDate);
-                const isDoneToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, new Date());
-                const urgencyClass = getUrgencyStyles(task);
 
-                return (
+            {/* Tabs */}
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+                {['today', 'upcoming', 'history'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as TabOption)}
+                        className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all capitalize ${
+                            activeTab === tab 
+                            ? 'bg-white text-blue-600 shadow-sm' 
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        {/* --- LIST AREA --- */}
+        <div className="p-4 space-y-3">
+            {filteredTasks.length === 0 ? (
+                <div className="text-center py-12 opacity-50">
+                    <TrophyIcon className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-500">No quests found for {activeTab}.</p>
+                    {activeTab === 'today' && <p className="text-xs text-blue-500 mt-2">Enjoy your free time!</p>}
+                </div>
+            ) : (
+                filteredTasks.map(task => (
                     <div 
                         key={task.id} 
-                        className={`relative group rounded-xl p-4 border-l-[6px] transition-all duration-200 ${urgencyClass}`}
+                        className={`relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all ${
+                            task.status === 'completed' ? 'opacity-75' : ''
+                        }`}
+                        onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                     >
-                        <div className="flex items-start gap-4">
-                            
-                            {/* Check Button */}
+                        {/* Status Stripe */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${getCategoryColor(task.category).split(' ')[0]}`} />
+                        
+                        <div className="p-4 pl-5 flex items-start gap-3">
+                            {/* Checkbox */}
                             <button
-                                onClick={() => handleToggle(task)}
-                                className={`mt-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                    isDoneToday 
-                                    ? 'bg-green-500 border-green-500 text-white scale-110' 
-                                    : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-500'
-                                }`}
+                                onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
+                                className="mt-0.5 flex-shrink-0"
                             >
-                                <CheckCircleIcon className="h-4 w-4" />
+                                {task.status === 'completed' ? (
+                                    <CheckCircleSolidIcon className="h-6 w-6 text-green-500 transition-transform hover:scale-110" />
+                                ) : (
+                                    <div className="h-6 w-6 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors" />
+                                )}
                             </button>
 
-                            {/* Main Content */}
+                            {/* Content */}
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className={`text-base font-semibold ${isDoneToday ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <span className={`text-sm font-medium truncate ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                                         {task.title}
                                     </span>
-                                    
-                                    {/* Action Menu (Delete) */}
-                                    <button 
-                                        onClick={() => task.id && handleDelete(task.id)} 
-                                        className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
+                                    {getPriorityBadge(task.priority)}
                                 </div>
-                                
-                                {/* Metadata Row */}
-                                <div className="flex flex-wrap items-center gap-4 text-xs">
-                                    <div className={`flex items-center gap-1.5 ${dateLabel.color}`}>
-                                        <CalendarDaysIcon className="h-3.5 w-3.5" />
-                                        {dateLabel.text}
-                                    </div>
-
-                                    {task.isRecurring && (
-                                        <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                                            <ArrowPathIcon className="h-3 w-3" />
-                                            <span className="capitalize">{task.frequency}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Priority Badge (only if not done) */}
-                                    {!isDoneToday && (
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                            task.priority === 'High' ? 'text-red-700 bg-red-50 border-red-100' :
-                                            task.priority === 'Medium' ? 'text-yellow-700 bg-yellow-50 border-yellow-100' :
-                                            'text-green-700 bg-green-50 border-green-100'
-                                        }`}>
-                                            {task.priority}
+                                <div className="flex items-center gap-3 text-xs text-gray-400">
+                                    <span className="flex items-center gap-1">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${task.category === 'Recovery' ? 'bg-blue-400' : 'bg-gray-400'}`} />
+                                        {task.category}
+                                    </span>
+                                    {task.dueDate && (
+                                        <span className="flex items-center gap-1">
+                                            <CalendarIcon className="h-3 w-3" />
+                                            {new Date(
+                                                task.dueDate instanceof Date 
+                                                ? task.dueDate 
+                                                : (task.dueDate as Timestamp).toDate()
+                                            ).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </span>
+                                    )}
+                                    {task.stats && (
+                                        <span className="text-blue-500 font-bold">+{task.stats.xp} XP</span>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Streak Micro-Badge (Right Aligned) */}
-                            {(task.currentStreak > 0 || task.currentStreak < 0) && (
-                                <div className={`flex flex-col items-center justify-center h-10 w-10 rounded-lg border ${
-                                    task.currentStreak > 0 
-                                    ? 'bg-orange-50 border-orange-100 text-orange-600' 
-                                    : 'bg-red-50 border-red-100 text-red-600'
-                                }`}>
-                                    <FireIcon className="h-4 w-4 mb-0.5" />
-                                    <span className="text-[10px] font-bold leading-none">{Math.abs(task.currentStreak)}</span>
-                                </div>
-                            )}
-
+                            {/* Expand Icon */}
+                            <EllipsisHorizontalIcon className="h-5 w-5 text-gray-300" />
                         </div>
-                    </div>
-                );
-            })
-        )}
-      </div>
 
-      <CreateTaskModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onTaskAdded={refreshTasks} 
-      />
+                        {/* Action Drawer (Visible when Expanded) */}
+                        {expandedTaskId === task.id && (
+                            <div className="bg-gray-50 border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
+                                {task.status === 'completed' && (
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleJournalReflect(task); }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50"
+                                    >
+                                        <BookOpenIcon className="h-3.5 w-3.5" />
+                                        Reflect
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-red-600 shadow-sm hover:bg-red-50"
+                                >
+                                    <TrashIcon className="h-3.5 w-3.5" />
+                                    Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ))
+            )}
+        </div>
+
+        {/* --- FLOATING ADD BUTTON --- */}
+        <button
+            onClick={() => setShowAddModal(true)}
+            className="fixed bottom-24 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all active:scale-90 z-20"
+        >
+            <PlusIcon className="h-6 w-6" />
+        </button>
+
+        {/* --- ADD MODAL --- */}
+        {showAddModal && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+                <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slideUp sm:animate-fadeIn">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-bold text-gray-900">New Quest</h2>
+                        <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                            <XMarkIcon className="h-6 w-6 text-gray-400" />
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleAddTask} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Quest Title</label>
+                            <input
+                                type="text"
+                                placeholder="e.g., Call Sponsor, Gym, Meditate..."
+                                value={newTaskTitle}
+                                onChange={(e) => setNewTaskTitle(e.target.value)}
+                                className="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 p-3"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
+                                <select 
+                                    value={newTaskCategory}
+                                    onChange={(e) => setNewTaskCategory(e.target.value as TaskCategory)}
+                                    className="w-full rounded-xl border-gray-300 text-sm py-2.5"
+                                >
+                                    <option value="Recovery">Recovery</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Life">Life</option>
+                                    <option value="Work">Work</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+                                <select 
+                                    value={newTaskPriority}
+                                    onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
+                                    className="w-full rounded-xl border-gray-300 text-sm py-2.5"
+                                >
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                             <label className="block text-xs font-medium text-gray-500 mb-1">Due Date (Optional)</label>
+                             <div className="relative">
+                                <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                                <input 
+                                    type="date" 
+                                    value={newTaskDate}
+                                    onChange={(e) => setNewTaskDate(e.target.value)}
+                                    className="w-full pl-10 rounded-xl border-gray-300 text-sm py-2.5" 
+                                />
+                             </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={!newTaskTitle.trim()}
+                            className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors shadow-md mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Accept Quest
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )}
     </div>
   );
 }
