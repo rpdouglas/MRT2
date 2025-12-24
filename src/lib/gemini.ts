@@ -33,7 +33,7 @@ export interface WorkbookAnalysisResult {
  * Robust JSON parser that strips Markdown code blocks (```json ... ```)
  * to prevent JSON.parse() from crashing.
  */
-function cleanAndParseJSON(text: string): any {
+function cleanAndParseJSON(text: string): unknown {
   try {
     // 1. Remove markdown code fences
     let cleanText = text.replace(/```json/g, '').replace(/```/g, '');

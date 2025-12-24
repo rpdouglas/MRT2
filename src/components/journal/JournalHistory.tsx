@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore'; // Added Timestamp
+import { collection, query, where, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { 
     TrashIcon,
     PencilSquareIcon,
@@ -80,7 +80,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
              try {
                  content = await decrypt(data.content);
              } catch {
-                 // FIX: Removed unused 'e' variable
                  content = "[Locked Content]";
              }
           }
@@ -135,7 +134,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     if (dateFrom) {
         const from = new Date(dateFrom);
         result = result.filter(e => {
-            // FIX: Cast to Timestamp instead of any
             const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
             return date >= from;
         });
@@ -144,7 +142,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         const to = new Date(dateTo);
         to.setHours(23, 59, 59, 999);
         result = result.filter(e => {
-            // FIX: Cast to Timestamp instead of any
             const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
             return date <= to;
         });
@@ -175,7 +172,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   };
 
   const handleShare = async (entry: JournalEntry) => {
-    // FIX: Cast to Timestamp instead of any
     const dateObj = entry.createdAt instanceof Date ? entry.createdAt : (entry.createdAt as Timestamp).toDate();
     const dateStr = dateObj.toLocaleDateString();
     
@@ -323,7 +319,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 {/* Meta Column */}
                 <div className="flex flex-col items-start min-w-0">
                     <span className="text-sm font-bold text-gray-800 truncate">
-                        {/* FIX: Cast to Timestamp instead of any */}
                         {entry.createdAt instanceof Date 
                             ? entry.createdAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
                             : (entry.createdAt as Timestamp).toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
@@ -331,7 +326,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     </span>
                     <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                         <span>
-                            {/* FIX: Cast to Timestamp instead of any */}
                             {entry.createdAt instanceof Date 
                                 ? entry.createdAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) 
                                 : (entry.createdAt as Timestamp).toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
@@ -361,14 +355,15 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                     )}
                 </div>
 
-                {/* Action Column */}
+                {/* Action Column - Buttons are now ALWAYS visible */}
                 <div className="flex items-center gap-2 flex-shrink-0 self-center">
                     <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
                         <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
                         <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Removed 'opacity-0 group-hover:opacity-100' so icons are always visible */}
+                    <div className="flex items-center gap-1 transition-opacity">
                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit"><PencilSquareIcon className="h-4 w-4" /></button>
                        <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share"><ShareIcon className="h-4 w-4" /></button>
                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete"><TrashIcon className="h-4 w-4" /></button>
