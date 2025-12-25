@@ -23,16 +23,19 @@ import {
   FireIcon,
   TrophyIcon,
   EllipsisHorizontalIcon,
-  XMarkIcon
+  PencilSquareIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
+import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
+import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 
 // --- Types ---
 
 type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
 type TaskPriority = 'High' | 'Medium' | 'Low';
 type TabOption = 'today' | 'upcoming' | 'history';
-// NOTHING //
+
 export interface Task {
   id: string;
   uid: string;
@@ -40,7 +43,8 @@ export interface Task {
   category: TaskCategory;
   priority: TaskPriority;
   status: 'pending' | 'completed';
-  frequency: 'once' | 'daily' | 'weekly';
+  frequency?: string; // Legacy support
+  recurrence?: RecurrenceConfig; // New robust config
   dueDate: Timestamp | Date | null;
   createdAt: Timestamp;
   completedAt?: Timestamp | null;
@@ -106,12 +110,9 @@ export default function Tasks() {
   const [activeTab, setActiveTab] = useState<TabOption>('today');
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
-  // Form State
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskCategory, setNewTaskCategory] = useState<TaskCategory>('Recovery');
-  const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('Medium');
-  const [newTaskDate, setNewTaskDate] = useState('');
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // 1. Data Loading
   useEffect(() => {
@@ -192,21 +193,51 @@ export default function Tasks() {
 
   // 3. Actions
   const handleToggleComplete = useCallback(async (task: Task) => {
-    if (!db) return;
-    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    const completedAt = newStatus === 'completed' ? serverTimestamp() : null;
-
-    try {
-        await updateDoc(doc(db, 'tasks', task.id), {
-            status: newStatus,
-            completedAt
+    if (!db || !user) return;
+    
+    // If we are unchecking a completed task, just revert it
+    if (task.status === 'completed') {
+         await updateDoc(doc(db, 'tasks', task.id), {
+            status: 'pending',
+            completedAt: null
         });
-        // Haptic feedback if available (mobile)
-        if (navigator.vibrate && newStatus === 'completed') navigator.vibrate(50);
-    } catch (e) {
-        console.error("Error toggling task", e);
+        return;
     }
-  }, []);
+
+    // Completing a task
+    try {
+        // 1. Mark current as complete
+        await updateDoc(doc(db, 'tasks', task.id), {
+            status: 'completed',
+            completedAt: serverTimestamp()
+        });
+
+        // 2. Check for recurrence to spawn next task
+        if (task.recurrence && task.recurrence.type !== 'once') {
+            const currentDueDate = task.dueDate instanceof Date 
+                ? task.dueDate 
+                : (task.dueDate as Timestamp).toDate();
+            
+            const nextDate = calculateNextDueDate(currentDueDate, task.recurrence);
+            
+            if (nextDate) {
+                // Create the next instance
+                await addDoc(collection(db, 'tasks'), {
+                    ...task, // Copy all props
+                    id: undefined, // Let Firebase generate new ID
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                    dueDate: nextDate,
+                    completedAt: null
+                });
+            }
+        }
+
+        if (navigator.vibrate) navigator.vibrate(50);
+    } catch (e) {
+        console.error("Error completing task", e);
+    }
+  }, [user]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!db) return;
@@ -219,6 +250,12 @@ export default function Tasks() {
     }
   }, []);
 
+  const handleEdit = useCallback((task: Task) => {
+      setEditingTask(task);
+      setIsModalOpen(true);
+      setExpandedTaskId(null); // Close drawer
+  }, []);
+
   const handleJournalReflect = useCallback((task: Task) => {
     navigate('/journal', { 
         state: { 
@@ -227,41 +264,44 @@ export default function Tasks() {
     }); 
   }, [navigate]);
 
-  const handleAddTask = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !db || !newTaskTitle.trim()) return;
+  const handleSaveTask = useCallback(async (data: TaskFormData) => {
+    if (!user || !db) return;
+
+    let dueDateObj: Date | null = null;
+    if (data.dueDate) {
+        dueDateObj = new Date(data.dueDate);
+        dueDateObj.setHours(23, 59, 59);
+    }
+
+    const payload = {
+        uid: user.uid,
+        title: data.title,
+        category: data.category,
+        priority: data.priority,
+        dueDate: dueDateObj || serverTimestamp(),
+        recurrence: data.recurrence,
+        stats: {
+             xp: data.priority === 'High' ? 50 : 20,
+             attribute: data.category === 'Recovery' ? 'Wisdom' : data.category === 'Health' ? 'Vitality' : 'Willpower'
+        }
+    };
 
     try {
-        let dueDate: Date | null = null;
-        if (newTaskDate) {
-            dueDate = new Date(newTaskDate);
-            // Set to end of day to avoid timezone confusion "due today"
-            dueDate.setHours(23, 59, 59);
+        if (data.id) {
+            // Update existing
+            await updateDoc(doc(db, 'tasks', data.id), payload);
+        } else {
+            // Create new
+            await addDoc(collection(db, 'tasks'), {
+                ...payload,
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
         }
-
-        await addDoc(collection(db, 'tasks'), {
-            uid: user.uid,
-            title: newTaskTitle,
-            category: newTaskCategory,
-            priority: newTaskPriority,
-            status: 'pending',
-            frequency: 'once',
-            dueDate: dueDate || serverTimestamp(), // Default to today/now
-            createdAt: serverTimestamp(),
-            stats: {
-                xp: newTaskPriority === 'High' ? 50 : 20,
-                attribute: newTaskCategory === 'Recovery' ? 'Wisdom' : newTaskCategory === 'Health' ? 'Vitality' : 'Willpower'
-            }
-        });
-
-        setShowAddModal(false);
-        setNewTaskTitle('');
-        setNewTaskPriority('Medium');
-        setNewTaskCategory('Recovery');
     } catch (error) {
-        console.error("Error adding task", error);
+        console.error("Error saving task", error);
     }
-  }, [user, newTaskTitle, newTaskCategory, newTaskPriority, newTaskDate]);
+  }, [user]);
 
   // UI Helpers
   const getCategoryColor = (cat: string) => {
@@ -286,7 +326,7 @@ export default function Tasks() {
   return (
     <div className="pb-24 relative min-h-screen bg-gray-50">
         
-        {/* --- HEADER: Progress & Summary --- */}
+        {/* --- HEADER --- */}
         <div className="bg-white p-4 shadow-sm border-b border-gray-100 sticky top-0 z-10">
             <div className="flex items-center justify-between mb-4">
                 <div>
@@ -301,7 +341,6 @@ export default function Tasks() {
                 <ProgressRing percentage={progress} />
             </div>
 
-            {/* Tabs */}
             <div className="flex bg-gray-100 p-1 rounded-xl">
                 {['today', 'upcoming', 'history'].map((tab) => (
                     <button
@@ -325,7 +364,6 @@ export default function Tasks() {
                 <div className="text-center py-12 opacity-50">
                     <TrophyIcon className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p className="text-sm text-gray-500">No quests found for {activeTab}.</p>
-                    {activeTab === 'today' && <p className="text-xs text-blue-500 mt-2">Enjoy your free time!</p>}
                 </div>
             ) : (
                 filteredTasks.map(task => (
@@ -336,11 +374,9 @@ export default function Tasks() {
                         }`}
                         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                     >
-                        {/* Status Stripe */}
                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${getCategoryColor(task.category).split(' ')[0]}`} />
                         
                         <div className="p-4 pl-5 flex items-start gap-3">
-                            {/* Checkbox */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
                                 className="mt-0.5 flex-shrink-0"
@@ -352,7 +388,6 @@ export default function Tasks() {
                                 )}
                             </button>
 
-                            {/* Content (Accordion Logic) */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                     {getPriorityBadge(task.priority)}
@@ -360,6 +395,12 @@ export default function Tasks() {
                                         <span className={`w-1.5 h-1.5 rounded-full ${task.category === 'Recovery' ? 'bg-blue-400' : 'bg-gray-400'}`} />
                                         {task.category}
                                     </span>
+                                    {task.recurrence && task.recurrence.type !== 'once' && (
+                                        <span className="flex items-center gap-1 text-[10px] text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                                            <ArrowPathIcon className="h-3 w-3" />
+                                            {getRecurrenceLabel(task.recurrence)}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className={`text-sm font-medium transition-all duration-300 ${
@@ -387,13 +428,11 @@ export default function Tasks() {
                                 </div>
                             </div>
 
-                            {/* Expand Icon */}
                             <div className="flex-shrink-0 mt-1">
                                 <EllipsisHorizontalIcon className={`h-5 w-5 text-gray-300 transition-transform ${expandedTaskId === task.id ? 'rotate-90 text-blue-500' : ''}`} />
                             </div>
                         </div>
 
-                        {/* Action Drawer (Visible when Expanded) */}
                         {expandedTaskId === task.id && (
                             <div className="bg-gray-50 border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
                                 {task.status === 'completed' && (
@@ -405,6 +444,13 @@ export default function Tasks() {
                                         Reflect
                                     </button>
                                 )}
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                                >
+                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                    Edit
+                                </button>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-red-600 shadow-sm hover:bg-red-50"
@@ -421,88 +467,19 @@ export default function Tasks() {
 
         {/* --- FLOATING ADD BUTTON --- */}
         <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
             className="fixed bottom-24 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all active:scale-90 z-20"
         >
             <PlusIcon className="h-6 w-6" />
         </button>
 
-        {/* --- ADD MODAL --- */}
-        {showAddModal && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
-                <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slideUp sm:animate-fadeIn">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-bold text-gray-900">New Quest</h2>
-                        <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-gray-100 rounded-full">
-                            <XMarkIcon className="h-6 w-6 text-gray-400" />
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleAddTask} className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Quest Title</label>
-                            <input
-                                type="text"
-                                placeholder="e.g., Call Sponsor, Gym, Meditate..."
-                                value={newTaskTitle}
-                                onChange={(e) => setNewTaskTitle(e.target.value)}
-                                className="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 p-3"
-                                autoFocus
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-                                <select 
-                                    value={newTaskCategory}
-                                    onChange={(e) => setNewTaskCategory(e.target.value as TaskCategory)}
-                                    className="w-full rounded-xl border-gray-300 text-sm py-2.5"
-                                >
-                                    <option value="Recovery">Recovery</option>
-                                    <option value="Health">Health</option>
-                                    <option value="Life">Life</option>
-                                    <option value="Work">Work</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Priority</label>
-                                <select 
-                                    value={newTaskPriority}
-                                    onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
-                                    className="w-full rounded-xl border-gray-300 text-sm py-2.5"
-                                >
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                             <label className="block text-xs font-medium text-gray-500 mb-1">Due Date (Optional)</label>
-                             <div className="relative">
-                                <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                                <input 
-                                    type="date" 
-                                    value={newTaskDate}
-                                    onChange={(e) => setNewTaskDate(e.target.value)}
-                                    className="w-full pl-10 rounded-xl border-gray-300 text-sm py-2.5" 
-                                />
-                             </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={!newTaskTitle.trim()}
-                            className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors shadow-md mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Accept Quest
-                        </button>
-                    </form>
-                </div>
-            </div>
-        )}
+        {/* --- MODAL --- */}
+        <TaskFormModal 
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            initialTask={editingTask}
+            onSave={handleSaveTask}
+        />
     </div>
   );
 }
