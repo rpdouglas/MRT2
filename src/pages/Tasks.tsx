@@ -26,7 +26,7 @@ import {
   PencilSquareIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon as CheckCircleSolidIcon, FireIcon } from '@heroicons/react/24/solid';
 import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 
