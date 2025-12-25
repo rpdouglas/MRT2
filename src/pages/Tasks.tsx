@@ -220,7 +220,6 @@ export default function Tasks() {
   }, []);
 
   const handleJournalReflect = useCallback((task: Task) => {
-    // Navigate to Journal with context (Title deep linking)
     navigate('/journal', { 
         state: { 
             initialContent: `**Reflecting on Quest: ${task.title}**\n\nHow did completing this make me feel?\n` 
@@ -249,7 +248,6 @@ export default function Tasks() {
             frequency: 'once',
             dueDate: dueDate || serverTimestamp(), // Default to today/now
             createdAt: serverTimestamp(),
-            // Auto-assign stats based on category
             stats: {
                 xp: newTaskPriority === 'High' ? 50 : 20,
                 attribute: newTaskCategory === 'Recovery' ? 'Wisdom' : newTaskCategory === 'Health' ? 'Vitality' : 'Willpower'
@@ -278,7 +276,7 @@ export default function Tasks() {
   const getPriorityBadge = (p: string) => {
       switch(p) {
           case 'High': return <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">HIGH</span>;
-          case 'Medium': return null; // Reduce noise
+          case 'Medium': return null; 
           default: return <span className="text-[10px] text-gray-400">Low</span>;
       }
   };
@@ -354,19 +352,25 @@ export default function Tasks() {
                                 )}
                             </button>
 
-                            {/* Content */}
+                            {/* Content (Accordion Logic) */}
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                    <span className={`text-sm font-medium truncate ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                        {task.title}
-                                    </span>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
                                     {getPriorityBadge(task.priority)}
-                                </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-400">
-                                    <span className="flex items-center gap-1">
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
                                         <span className={`w-1.5 h-1.5 rounded-full ${task.category === 'Recovery' ? 'bg-blue-400' : 'bg-gray-400'}`} />
                                         {task.category}
                                     </span>
+                                </div>
+
+                                <div className={`text-sm font-medium transition-all duration-300 ${
+                                    task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'
+                                } ${
+                                    expandedTaskId === task.id ? 'whitespace-pre-wrap' : 'line-clamp-2'
+                                }`}>
+                                    {task.title}
+                                </div>
+
+                                <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
                                     {task.dueDate && (
                                         <span className="flex items-center gap-1">
                                             <CalendarIcon className="h-3 w-3" />
@@ -384,7 +388,9 @@ export default function Tasks() {
                             </div>
 
                             {/* Expand Icon */}
-                            <EllipsisHorizontalIcon className="h-5 w-5 text-gray-300" />
+                            <div className="flex-shrink-0 mt-1">
+                                <EllipsisHorizontalIcon className={`h-5 w-5 text-gray-300 transition-transform ${expandedTaskId === task.id ? 'rotate-90 text-blue-500' : ''}`} />
+                            </div>
                         </div>
 
                         {/* Action Drawer (Visible when Expanded) */}
