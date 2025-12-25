@@ -24,7 +24,8 @@ import {
   TrophyIcon,
   EllipsisHorizontalIcon,
   PencilSquareIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  FireIcon // Added this missing import
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
@@ -387,7 +388,9 @@ export default function Tasks() {
                 </div>
             ) : (
                 filteredTasks.map(task => {
-                    const theme = CATEGORY_THEME[task.category];
+                    // FIX: Safer Theme Lookup
+                    const theme = CATEGORY_THEME[task.category] || CATEGORY_THEME.Recovery;
+                    
                     return (
                         <div 
                             key={task.id} 
@@ -416,7 +419,7 @@ export default function Tasks() {
                                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
                                         {getPriorityBadge(task.priority)}
                                         <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.bg} ${theme.text} ${theme.border}`}>
-                                            {task.category}
+                                            {task.category || 'General'}
                                         </span>
                                         {task.recurrence && task.recurrence.type !== 'once' && (
                                             <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">
