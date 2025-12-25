@@ -20,7 +20,7 @@ import {
   BookOpenIcon, 
   TrashIcon, 
   CalendarIcon,
-  FireIcon,
+  SparklesIcon, 
   TrophyIcon,
   EllipsisHorizontalIcon,
   PencilSquareIcon,
@@ -44,7 +44,7 @@ export interface Task {
   priority: TaskPriority;
   status: 'pending' | 'completed';
   frequency?: string; // Legacy support
-  recurrence?: RecurrenceConfig; // New robust config
+  recurrence?: RecurrenceConfig;
   dueDate: Timestamp | Date | null;
   createdAt: Timestamp;
   completedAt?: Timestamp | null;
@@ -54,11 +54,20 @@ export interface Task {
   };
 }
 
+// --- Theme Constants ---
+
+const CATEGORY_THEME: Record<TaskCategory, { bg: string; text: string; border: string; ring: string }> = {
+    Recovery: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', ring: 'ring-cyan-500' },
+    Health:   { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', ring: 'ring-emerald-500' },
+    Life:     { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', ring: 'ring-violet-500' },
+    Work:     { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', ring: 'ring-amber-500' },
+};
+
 // --- Components ---
 
 const ProgressRing = ({ percentage }: { percentage: number }) => {
-  const radius = 30;
-  const stroke = 4;
+  const radius = 32;
+  const stroke = 5;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -68,31 +77,38 @@ const ProgressRing = ({ percentage }: { percentage: number }) => {
       <svg
         height={radius * 2}
         width={radius * 2}
-        className="transform -rotate-90 transition-all duration-500"
+        className="transform -rotate-90"
       >
+        <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#10b981" />
+            </linearGradient>
+        </defs>
+        {/* Track */}
         <circle
-          stroke="#e5e7eb"
+          stroke="rgba(255,255,255,0.3)"
           strokeWidth={stroke}
           fill="transparent"
           r={normalizedRadius}
           cx={radius}
           cy={radius}
         />
+        {/* Progress */}
         <circle
-          stroke={percentage === 100 ? "#10b981" : "#3b82f6"}
+          stroke="url(#progressGradient)"
           strokeWidth={stroke}
           strokeDasharray={circumference + ' ' + circumference}
-          style={{ strokeDashoffset }}
+          style={{ strokeDashoffset, transition: "stroke-dashoffset 1s ease-out" }}
           strokeLinecap="round"
           fill="transparent"
           r={normalizedRadius}
           cx={radius}
           cy={radius}
-          className="transition-all duration-1000 ease-out"
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className={`text-xs font-bold ${percentage === 100 ? "text-green-600" : "text-blue-600"}`}>
+        <span className="text-[10px] font-bold text-white drop-shadow-sm">
           {Math.round(percentage)}%
         </span>
       </div>
@@ -304,52 +320,53 @@ export default function Tasks() {
   }, [user]);
 
   // UI Helpers
-  const getCategoryColor = (cat: string) => {
-      switch(cat) {
-          case 'Recovery': return 'border-l-blue-500 text-blue-600 bg-blue-50';
-          case 'Health': return 'border-l-red-500 text-red-600 bg-red-50';
-          case 'Work': return 'border-l-purple-500 text-purple-600 bg-purple-50';
-          default: return 'border-l-gray-400 text-gray-600 bg-gray-50';
-      }
-  };
-
   const getPriorityBadge = (p: string) => {
       switch(p) {
-          case 'High': return <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">HIGH</span>;
+          case 'High': return (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                <FireIcon className="h-3 w-3" /> HIGH
+            </span>
+          );
           case 'Medium': return null; 
-          default: return <span className="text-[10px] text-gray-400">Low</span>;
+          default: return <span className="text-[10px] text-gray-400 font-medium">Low Priority</span>;
       }
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your quests...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-gray-50">
+    <div className="pb-24 relative min-h-screen bg-gray-50/50">
         
-        {/* --- HEADER --- */}
-        <div className="bg-white p-4 shadow-sm border-b border-gray-100 sticky top-0 z-10">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        {/* --- HEADER: "Vibrant Momentum" --- */}
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 pb-12 shadow-md relative overflow-hidden">
+             {/* Background Pattern */}
+             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+             
+             <div className="relative z-10 flex items-center justify-between">
+                <div className="text-white">
+                    <h1 className="text-2xl font-bold flex items-center gap-2 drop-shadow-md">
                         Today's Quests
-                        <FireIcon className="h-5 w-5 text-orange-500" />
+                        <SparklesIcon className="h-6 w-6 text-yellow-300 animate-pulse" />
                     </h1>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-blue-100 text-sm font-medium mt-1">
                         {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
                 <ProgressRing percentage={progress} />
-            </div>
+             </div>
+        </div>
 
-            <div className="flex bg-gray-100 p-1 rounded-xl">
+        {/* --- TABS --- */}
+        <div className="px-4 -mt-6 relative z-20">
+            <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 flex">
                 {['today', 'upcoming', 'history'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as TabOption)}
-                        className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all capitalize ${
+                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
                             activeTab === tab 
-                            ? 'bg-white text-blue-600 shadow-sm' 
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-md transform scale-105' 
+                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                         }`}
                     >
                         {tab}
@@ -359,118 +376,129 @@ export default function Tasks() {
         </div>
 
         {/* --- LIST AREA --- */}
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-4 mt-2">
             {filteredTasks.length === 0 ? (
-                <div className="text-center py-12 opacity-50">
-                    <TrophyIcon className="h-12 w-12 mx-auto text-gray-300 mb-2" />
-                    <p className="text-sm text-gray-500">No quests found for {activeTab}.</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
+                    <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+                        <TrophyIcon className="h-10 w-10 text-yellow-400" />
+                    </div>
+                    <p className="text-gray-900 font-medium">All caught up for {activeTab}!</p>
+                    <p className="text-sm text-gray-500 mt-1">Take a moment to breathe and reflect.</p>
                 </div>
             ) : (
-                filteredTasks.map(task => (
-                    <div 
-                        key={task.id} 
-                        className={`relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all ${
-                            task.status === 'completed' ? 'opacity-75' : ''
-                        }`}
-                        onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                    >
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${getCategoryColor(task.category).split(' ')[0]}`} />
-                        
-                        <div className="p-4 pl-5 flex items-start gap-3">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
-                                className="mt-0.5 flex-shrink-0"
-                            >
-                                {task.status === 'completed' ? (
-                                    <CheckCircleSolidIcon className="h-6 w-6 text-green-500 transition-transform hover:scale-110" />
-                                ) : (
-                                    <div className="h-6 w-6 rounded-full border-2 border-gray-300 hover:border-blue-500 transition-colors" />
-                                )}
-                            </button>
-
-                            <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                    {getPriorityBadge(task.priority)}
-                                    <span className="flex items-center gap-1 text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${task.category === 'Recovery' ? 'bg-blue-400' : 'bg-gray-400'}`} />
-                                        {task.category}
-                                    </span>
-                                    {task.recurrence && task.recurrence.type !== 'once' && (
-                                        <span className="flex items-center gap-1 text-[10px] text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
-                                            <ArrowPathIcon className="h-3 w-3" />
-                                            {getRecurrenceLabel(task.recurrence)}
-                                        </span>
+                filteredTasks.map(task => {
+                    const theme = CATEGORY_THEME[task.category];
+                    return (
+                        <div 
+                            key={task.id} 
+                            className={`relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md ${
+                                task.status === 'completed' ? 'opacity-60 grayscale-[0.5]' : ''
+                            }`}
+                            onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                        >
+                            {/* Accent Bar */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bg.replace('bg-', 'bg-gradient-to-b from-')}-400 to-${theme.bg.split('-')[1]}-600`} />
+                            
+                            <div className="p-4 pl-5 flex items-start gap-4">
+                                {/* Checkbox */}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
+                                    className="mt-0.5 flex-shrink-0 group"
+                                >
+                                    {task.status === 'completed' ? (
+                                        <CheckCircleSolidIcon className="h-7 w-7 text-green-500 drop-shadow-sm transition-transform group-hover:scale-110" />
+                                    ) : (
+                                        <div className={`h-7 w-7 rounded-full border-2 border-gray-300 group-hover:${theme.border.replace('border-', 'border-')} group-hover:bg-gray-50 transition-colors`} />
                                     )}
+                                </button>
+
+                                <div className="flex-1 min-w-0 pt-0.5">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                        {getPriorityBadge(task.priority)}
+                                        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.bg} ${theme.text} ${theme.border}`}>
+                                            {task.category}
+                                        </span>
+                                        {task.recurrence && task.recurrence.type !== 'once' && (
+                                            <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">
+                                                <ArrowPathIcon className="h-3 w-3" />
+                                                {getRecurrenceLabel(task.recurrence)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className={`text-sm font-medium leading-relaxed transition-all duration-300 ${
+                                        task.status === 'completed' ? 'text-gray-400 line-through decoration-gray-300' : 'text-gray-800'
+                                    } ${
+                                        expandedTaskId === task.id ? 'whitespace-pre-wrap' : 'line-clamp-2'
+                                    }`}>
+                                        {task.title}
+                                    </div>
+
+                                    <div className="flex items-center gap-3 text-xs font-medium text-gray-400 mt-2.5">
+                                        {task.dueDate && (
+                                            <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded text-gray-500">
+                                                <CalendarIcon className="h-3.5 w-3.5" />
+                                                {new Date(
+                                                    task.dueDate instanceof Date 
+                                                    ? task.dueDate 
+                                                    : (task.dueDate as Timestamp).toDate()
+                                                ).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        )}
+                                        {task.stats && (
+                                            <span className="text-blue-600 flex items-center gap-1">
+                                                <TrophyIcon className="h-3 w-3" />
+                                                +{task.stats.xp} XP
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className={`text-sm font-medium transition-all duration-300 ${
-                                    task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'
-                                } ${
-                                    expandedTaskId === task.id ? 'whitespace-pre-wrap' : 'line-clamp-2'
-                                }`}>
-                                    {task.title}
-                                </div>
-
-                                <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-                                    {task.dueDate && (
-                                        <span className="flex items-center gap-1">
-                                            <CalendarIcon className="h-3 w-3" />
-                                            {new Date(
-                                                task.dueDate instanceof Date 
-                                                ? task.dueDate 
-                                                : (task.dueDate as Timestamp).toDate()
-                                            ).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                        </span>
-                                    )}
-                                    {task.stats && (
-                                        <span className="text-blue-500 font-bold">+{task.stats.xp} XP</span>
-                                    )}
+                                <div className="flex-shrink-0 mt-1">
+                                    <EllipsisHorizontalIcon className={`h-6 w-6 text-gray-300 transition-transform ${expandedTaskId === task.id ? 'rotate-90 text-blue-600' : ''}`} />
                                 </div>
                             </div>
 
-                            <div className="flex-shrink-0 mt-1">
-                                <EllipsisHorizontalIcon className={`h-5 w-5 text-gray-300 transition-transform ${expandedTaskId === task.id ? 'rotate-90 text-blue-500' : ''}`} />
-                            </div>
-                        </div>
-
-                        {expandedTaskId === task.id && (
-                            <div className="bg-gray-50 border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
-                                {task.status === 'completed' && (
+                            {/* Action Drawer */}
+                            {expandedTaskId === task.id && (
+                                <div className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
+                                    {task.status === 'completed' && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleJournalReflect(task); }}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50 active:scale-95 transition-all"
+                                        >
+                                            <BookOpenIcon className="h-4 w-4" />
+                                            Reflect
+                                        </button>
+                                    )}
                                     <button 
-                                        onClick={(e) => { e.stopPropagation(); handleJournalReflect(task); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50"
+                                        onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-100 active:scale-95 transition-all"
                                     >
-                                        <BookOpenIcon className="h-3.5 w-3.5" />
-                                        Reflect
+                                        <PencilSquareIcon className="h-4 w-4" />
+                                        Edit
                                     </button>
-                                )}
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-                                >
-                                    <PencilSquareIcon className="h-3.5 w-3.5" />
-                                    Edit
-                                </button>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-red-600 shadow-sm hover:bg-red-50"
-                                >
-                                    <TrashIcon className="h-3.5 w-3.5" />
-                                    Delete
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                ))
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-red-600 shadow-sm hover:bg-red-50 active:scale-95 transition-all"
+                                    >
+                                        <TrashIcon className="h-4 w-4" />
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             )}
         </div>
 
         {/* --- FLOATING ADD BUTTON --- */}
         <button
             onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-            className="fixed bottom-24 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all active:scale-90 z-20"
+            className="fixed bottom-24 right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all active:scale-95 z-30"
         >
-            <PlusIcon className="h-6 w-6" />
+            <PlusIcon className="h-7 w-7" />
         </button>
 
         {/* --- MODAL --- */}
