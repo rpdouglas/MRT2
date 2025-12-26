@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import JournalEditor from '../components/journal/JournalEditor';
+import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
+import VibrantHeader from '../components/VibrantHeader'; // NEW
 import { 
   PencilSquareIcon, 
   ClockIcon, 
-  ChartBarIcon 
+  ChartBarIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
-import type { JournalEntry } from '../components/journal/JournalEditor';
 
 export default function Journal() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,22 +48,28 @@ export default function Journal() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+    <div className="pb-24 bg-gray-50 min-h-screen">
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-           <h1 className="text-3xl font-bold text-gray-900">Journal</h1>
-           <p className="text-gray-500 mt-1">Capture your thoughts, track your mood, and uncover patterns.</p>
-        </div>
+      {/* VIBRANT HEADER */}
+      <VibrantHeader 
+        title="Journal"
+        subtitle="Capture your thoughts and uncover patterns."
+        icon={BookOpenIcon}
+        fromColor="from-blue-600"
+        viaColor="via-cyan-600"
+        toColor="to-teal-500"
+      />
 
+      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-6 relative z-20">
+      
         {/* Tab Navigation */}
-        <div className="flex p-1 space-x-1 bg-blue-50/50 rounded-xl border border-blue-100">
+        <div className="flex p-1 space-x-1 bg-white rounded-xl border border-gray-200 shadow-sm">
            <button
              onClick={() => handleTabChange('write')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'write' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >
              <PencilSquareIcon className="h-4 w-4" />
@@ -70,10 +77,10 @@ export default function Journal() {
            </button>
            <button
              onClick={() => handleTabChange('history')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'history' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >
              <ClockIcon className="h-4 w-4" />
@@ -81,42 +88,42 @@ export default function Journal() {
            </button>
            <button
              onClick={() => handleTabChange('insights')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'insights' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >
              <ChartBarIcon className="h-4 w-4" />
              Insights
            </button>
         </div>
+
+        <div className="mt-6">
+            {activeTab === 'write' && (
+                <div className="animate-fadeIn">
+                    <JournalEditor 
+                        initialEntry={editingEntry}
+                        initialTemplateId={initialTemplateId}
+                        onSaveComplete={handleEntrySaved}
+                    />
+                </div>
+            )}
+            
+            {activeTab === 'history' && (
+                <div className="animate-fadeIn">
+                    <JournalHistory onEdit={handleEdit} />
+                </div>
+            )}
+
+            {activeTab === 'insights' && (
+                <div className="animate-fadeIn">
+                    <JournalInsights />
+                </div>
+            )}
+        </div>
+
       </div>
-
-      <div className="mt-6">
-        {activeTab === 'write' && (
-            <div className="animate-fadeIn">
-                <JournalEditor 
-                    initialEntry={editingEntry}
-                    initialTemplateId={initialTemplateId}
-                    onSaveComplete={handleEntrySaved}
-                />
-            </div>
-        )}
-        
-        {activeTab === 'history' && (
-            <div className="animate-fadeIn">
-                <JournalHistory onEdit={handleEdit} />
-            </div>
-        )}
-
-        {activeTab === 'insights' && (
-            <div className="animate-fadeIn">
-                <JournalInsights />
-            </div>
-        )}
-      </div>
-
     </div>
   );
 }

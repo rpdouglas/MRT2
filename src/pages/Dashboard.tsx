@@ -4,6 +4,8 @@ import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
 import RecoveryHero from '../components/RecoveryHero';
+import VibrantHeader from '../components/VibrantHeader'; // NEW
+import { HomeIcon } from '@heroicons/react/24/outline';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
@@ -28,7 +30,7 @@ export default function Dashboard() {
             // 0. Fetch User Profile for Sobriety Date
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
-             
+              
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 if (userData.sobrietyDate) {
@@ -85,18 +87,29 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="pb-24 bg-gray-50 min-h-screen">
       
-      {/* RECOVERY HERO */}
-      <RecoveryHero 
-         userName={user?.displayName?.split(' ')[0] || 'Friend'}
-         daysClean={daysClean}
-         journalStats={journalStats}
-         taskStats={taskStats}
-         workbookStats={workbookStats}
-         vitalityStats={vitalityStats}
+      {/* IMMERSIVE HEADER */}
+      <VibrantHeader 
+        title="Dashboard"
+        subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}
+        icon={HomeIcon}
+        fromColor="from-slate-700"
+        viaColor="via-slate-800"
+        toColor="to-slate-900"
+        // No percentage ring for dashboard
       />
 
+      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-6 relative z-20">
+        <RecoveryHero 
+           userName={user?.displayName?.split(' ')[0] || 'Friend'}
+           daysClean={daysClean}
+           journalStats={journalStats}
+           taskStats={taskStats}
+           workbookStats={workbookStats}
+           vitalityStats={vitalityStats}
+        />
+      </div>
     </div>
   );
 }
