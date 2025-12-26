@@ -22,20 +22,29 @@ interface VitalityLog {
     createdAt: Timestamp;
 }
 
+type VitalityTab = 'move' | 'fuel' | 'breath';
+
 export default function Vitality() {
     const { user } = useAuth();
+    const [activeTab, setActiveTab] = useState<VitalityTab>('move');
     const [saving, setSaving] = useState(false);
+    
+    // --- DATA STATE ---
     const [todaysLogs, setTodaysLogs] = useState<VitalityLog[]>([]);
+    
+    // --- FORM STATES ---
     const [moveActivity, setMoveActivity] = useState('');
     const [moveDuration, setMoveDuration] = useState('');
     const [moveIntensity, setMoveIntensity] = useState('Moderate');
     const [moveNote, setMoveNote] = useState('');
+
     const [mealType, setMealType] = useState('Lunch');
     const [hungerType, setHungerType] = useState('Physical'); 
     const [waterCount, setWaterCount] = useState(0); 
     const [nutriNote, setNutriNote] = useState('');
+
     const [breathActive, setBreathActive] = useState(false);
-    const [breathPhase, setBreathPhase] = useState('Idle');
+    const [breathPhase, setBreathPhase] = useState('Idle'); 
     const [breathTime, setBreathTime] = useState(0); 
     const [breathNote, setBreathNote] = useState('');
 
@@ -76,6 +85,7 @@ export default function Vitality() {
         return Math.min(100, score);
     }, [todaysLogs]);
 
+    // --- ACTIONS ---
     const saveVitalityEntry = async (category: string, title: string, contentDetails: string, note: string, tags: string[]) => {
         if (!user || !db) return;
         setSaving(true);
@@ -119,6 +129,17 @@ export default function Vitality() {
         setNutriNote('');
     };
 
+    const handleLogBreath = async () => {
+        const mins = Math.floor(breathTime / 60);
+        const secs = breathTime % 60;
+        const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* 4-7-8 Relaxing Breath`;
+        await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Meditation']);
+        setBreathTime(0);
+        setBreathNote('');
+        setBreathActive(false);
+    };
+
+    // Breath Timer
     useEffect(() => {
         let interval: ReturnType<typeof setInterval> | undefined;
         if (breathActive) {
@@ -139,121 +160,94 @@ export default function Vitality() {
     }, [breathActive]);
 
     const toggleBreath = () => setBreathActive(!breathActive);
-    
-    const handleLogBreath = async () => {
-        const mins = Math.floor(breathTime / 60);
-        const secs = breathTime % 60;
-        const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* 4-7-8 Relaxing Breath`;
-        await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Meditation']);
-        setBreathTime(0);
-        setBreathNote('');
-        setBreathActive(false);
-    };
 
     return (
-        <div className={`pb-24 relative min-h-screen ${THEME.vitality.page}`}>
-            {/* HEADER */}
-            <VibrantHeader 
-                title="Vitality & Health"
-                subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                icon={HeartIcon}
-                fromColor={THEME.vitality.header.from}
-                viaColor={THEME.vitality.header.via}
-                toColor={THEME.vitality.header.to}
-                percentage={bioBalance}
-                percentageColor={THEME.vitality.ring}
-            />
+        <div className={`h-[100dvh] flex flex-col ${THEME.vitality.page}`}>
+            
+            <div className="flex-shrink-0 z-10">
+                <VibrantHeader 
+                    title="Vitality & Health"
+                    subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    icon={HeartIcon}
+                    fromColor={THEME.vitality.header.from}
+                    viaColor={THEME.vitality.header.via}
+                    toColor={THEME.vitality.header.to}
+                    percentage={bioBalance}
+                    percentageColor={THEME.vitality.ring}
+                />
+            </div>
 
-            <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all">
+            {/* TAB NAVIGATION */}
+            <div className="px-4 py-4 z-20">
+                <div className="flex p-1 bg-white/80 backdrop-blur-sm rounded-xl border border-orange-200 shadow-sm">
+                    <button onClick={() => setActiveTab('move')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'move' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>
+                        Movement
+                    </button>
+                    <button onClick={() => setActiveTab('fuel')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'fuel' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500'}`}>
+                        Fuel
+                    </button>
+                    <button onClick={() => setActiveTab('breath')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'breath' ? 'bg-sky-100 text-sky-700 shadow-sm' : 'text-gray-500'}`}>
+                        Breath
+                    </button>
+                </div>
+            </div>
+
+            {/* SCROLLABLE CONTENT AREA */}
+            <div className="flex-1 overflow-y-auto px-4 pb-20">
+                
+                {/* 1. MOVEMENT CARD */}
+                {activeTab === 'move' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative animate-fadeIn">
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-400 to-red-500"></div>
                         <div className="p-6">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
                                     <FireIcon className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-lg font-bold text-gray-900">Movement</h3>
+                                <h3 className="text-lg font-bold text-gray-900">Log Activity</h3>
                             </div>
                             <form onSubmit={handleLogMovement} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Activity</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="e.g. Walk" 
-                                            value={moveActivity}
-                                            onChange={(e) => setMoveActivity(e.target.value)}
-                                            className="w-full text-sm rounded-xl border-gray-200 focus:ring-orange-500 focus:border-orange-500 bg-gray-50"
-                                            required
-                                        />
+                                        <input type="text" placeholder="e.g. Walk" value={moveActivity} onChange={(e) => setMoveActivity(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Mins</label>
-                                        <input 
-                                            type="number" 
-                                            placeholder="30" 
-                                            value={moveDuration}
-                                            onChange={(e) => setMoveDuration(e.target.value)}
-                                            className="w-full text-sm rounded-xl border-gray-200 focus:ring-orange-500 focus:border-orange-500 bg-gray-50"
-                                            required
-                                        />
+                                        <input type="number" placeholder="30" value={moveDuration} onChange={(e) => setMoveDuration(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Intensity</label>
                                     <div className="flex gap-2">
                                         {['Low', 'Moderate', 'High'].map(lvl => (
-                                            <button
-                                                key={lvl}
-                                                type="button"
-                                                onClick={() => setMoveIntensity(lvl)}
-                                                className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                                                    moveIntensity === lvl 
-                                                    ? 'bg-orange-100 border-orange-200 text-orange-700' 
-                                                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {lvl}
-                                            </button>
+                                            <button key={lvl} type="button" onClick={() => setMoveIntensity(lvl)} className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${moveIntensity === lvl ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-white border-gray-200 text-gray-500'}`}>{lvl}</button>
                                         ))}
                                     </div>
                                 </div>
-                                <div>
-                                    <textarea 
-                                        rows={2}
-                                        placeholder="Body check-in: How do you feel?"
-                                        value={moveNote}
-                                        onChange={(e) => setMoveNote(e.target.value)}
-                                        className="w-full text-sm rounded-xl border-gray-200 focus:ring-orange-500 focus:border-orange-500 bg-gray-50 resize-none"
-                                    />
-                                </div>
-                                <button 
-                                    type="submit" 
-                                    disabled={saving}
-                                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2"
-                                >
-                                    {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
-                                    Log Movement
+                                <textarea rows={2} placeholder="Body check-in..." value={moveNote} onChange={(e) => setMoveNote(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50 resize-none" />
+                                <button type="submit" disabled={saving} className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2">
+                                    {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />} Log
                                 </button>
                             </form>
                         </div>
                     </div>
+                )}
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all">
+                {/* 2. NUTRITION CARD */}
+                {activeTab === 'fuel' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative animate-fadeIn">
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-600"></div>
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                                        <BeakerIcon className="h-6 w-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-gray-900">Fuel</h3>
+                                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><BeakerIcon className="h-6 w-6" /></div>
+                                    <h3 className="text-lg font-bold text-gray-900">Nutrition</h3>
                                 </div>
                                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                                    <button onClick={() => setWaterCount(Math.max(0, waterCount - 1))} className="text-blue-400 hover:text-blue-600 font-bold">-</button>
+                                    <button onClick={() => setWaterCount(Math.max(0, waterCount - 1))} className="text-blue-400 font-bold">-</button>
                                     <span className="text-sm font-bold text-blue-700 w-4 text-center">{waterCount}</span>
-                                    <button onClick={() => setWaterCount(waterCount + 1)} className="text-blue-400 hover:text-blue-600 font-bold">+</button>
+                                    <button onClick={() => setWaterCount(waterCount + 1)} className="text-blue-400 font-bold">+</button>
                                     <span className="text-[10px] text-blue-400 uppercase font-bold">H2O</span>
                                 </div>
                             </div>
@@ -261,62 +255,33 @@ export default function Vitality() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Meal</label>
-                                        <select 
-                                            value={mealType}
-                                            onChange={(e) => setMealType(e.target.value)}
-                                            className="w-full text-sm rounded-xl border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50"
-                                        >
-                                            <option>Breakfast</option>
-                                            <option>Lunch</option>
-                                            <option>Dinner</option>
-                                            <option>Snack</option>
-                                        </select>
+                                        <select value={mealType} onChange={(e) => setMealType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Hunger</label>
-                                        <select 
-                                            value={hungerType}
-                                            onChange={(e) => setHungerType(e.target.value)}
-                                            className="w-full text-sm rounded-xl border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50"
-                                        >
-                                            <option>Physical</option>
-                                            <option>Emotional</option>
-                                            <option>Boredom</option>
-                                            <option>Habit</option>
-                                        </select>
+                                        <select value={hungerType} onChange={(e) => setHungerType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Physical</option><option>Emotional</option><option>Boredom</option><option>Habit</option></select>
                                     </div>
                                 </div>
-                                <div>
-                                    <textarea 
-                                        rows={2}
-                                        placeholder="Mindful eating check: Was I present?"
-                                        value={nutriNote}
-                                        onChange={(e) => setNutriNote(e.target.value)}
-                                        className="w-full text-sm rounded-xl border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 resize-none"
-                                    />
-                                </div>
-                                <button 
-                                    type="submit" 
-                                    disabled={saving}
-                                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2"
-                                >
-                                    {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
-                                    Log Fuel
+                                <textarea rows={2} placeholder="Mindful eating check..." value={nutriNote} onChange={(e) => setNutriNote(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50 resize-none" />
+                                <button type="submit" disabled={saving} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2">
+                                    {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />} Log Fuel
                                 </button>
                             </form>
                         </div>
                     </div>
+                )}
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all md:col-span-2">
+                {/* 3. BREATHWORK CARD */}
+                {activeTab === 'breath' && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative animate-fadeIn">
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-sky-400 to-blue-600"></div>
                         <div className="p-6">
                             <div className="flex items-center gap-2 mb-6">
-                                <div className="p-2 bg-sky-50 rounded-lg text-sky-600">
-                                    <BoltIcon className="h-6 w-6" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-900">Regulation & Breath</h3>
+                                <div className="p-2 bg-sky-50 rounded-lg text-sky-600"><BoltIcon className="h-6 w-6" /></div>
+                                <h3 className="text-lg font-bold text-gray-900">Breathe</h3>
                             </div>
-                            <div className="flex flex-col md:flex-row items-center gap-8">
+                            
+                            <div className="flex flex-col items-center gap-6">
                                 <div className="relative flex items-center justify-center w-48 h-48 flex-shrink-0">
                                      <div className={`absolute inset-0 bg-sky-100 rounded-full transition-all duration-[4000ms] ease-in-out ${breathPhase.includes('Inhale') ? 'scale-100 opacity-100' : breathPhase.includes('Hold') ? 'scale-100 opacity-80' : 'scale-50 opacity-50'}`}></div>
                                      <div className="relative z-10 text-center">
@@ -326,44 +291,24 @@ export default function Vitality() {
                                          <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mt-1">{breathPhase}</div>
                                      </div>
                                 </div>
-                                <div className="flex-1 w-full space-y-5">
+
+                                <div className="w-full space-y-4">
                                     <div className="flex gap-4">
-                                        <button 
-                                            onClick={toggleBreath}
-                                            className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${breathActive ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
-                                        >
+                                        <button onClick={toggleBreath} className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${breathActive ? 'bg-amber-100 text-amber-800' : 'bg-sky-600 text-white'}`}>
                                             {breathActive ? <><PauseIcon className="h-6 w-6" /> Pause</> : <><PlayIcon className="h-6 w-6" /> Start</>}
                                         </button>
-                                        <button 
-                                            onClick={() => { setBreathActive(false); setBreathTime(0); setBreathPhase('Idle'); }}
-                                            className="px-5 rounded-xl border-2 border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <ArrowPathIcon className="h-6 w-6" />
-                                        </button>
+                                        <button onClick={() => { setBreathActive(false); setBreathTime(0); setBreathPhase('Idle'); }} className="px-5 rounded-xl border-2 border-gray-200 text-gray-400 hover:bg-gray-50"><ArrowPathIcon className="h-6 w-6" /></button>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Reflection</label>
-                                        <textarea 
-                                            rows={2}
-                                            placeholder="What is the quality of your mind right now?"
-                                            value={breathNote}
-                                            onChange={(e) => setBreathNote(e.target.value)}
-                                            className="w-full text-sm rounded-xl border-gray-200 focus:ring-sky-500 focus:border-sky-500 bg-gray-50"
-                                        />
-                                    </div>
-                                    <button 
-                                        onClick={handleLogBreath}
-                                        disabled={breathTime < 5 || saving}
-                                        className="w-full py-3 bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
-                                    >
-                                        {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
-                                        Complete Session
+                                    <textarea rows={2} placeholder="Reflection..." value={breathNote} onChange={(e) => setBreathNote(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" />
+                                    <button onClick={handleLogBreath} disabled={breathTime < 5 || saving} className="w-full py-3 bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                                        {saving ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />} Complete
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
+
             </div>
         </div>
     );

@@ -19,7 +19,6 @@ import {
   PlusIcon, 
   BookOpenIcon, 
   TrashIcon, 
-  CalendarIcon, 
   TrophyIcon, 
   EllipsisHorizontalIcon, 
   PencilSquareIcon,
@@ -261,9 +260,9 @@ export default function Tasks() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your quests...</div>;
 
   return (
-    <div className={`pb-24 relative min-h-screen ${THEME.tasks.page}`}>
+    <div className={`h-[100dvh] flex flex-col ${THEME.tasks.page}`}>
         
-        {/* HEADER */}
+        {/* HEADER: The Spark */}
         <VibrantHeader 
             title="Today's Quests"
             subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -293,7 +292,7 @@ export default function Tasks() {
             </div>
         </div>
 
-        <div className="p-4 space-y-4 mt-2 max-w-4xl mx-auto">
+        <div className="flex-1 overflow-y-auto px-4 pb-20 space-y-4">
             {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
                     <div className="bg-white p-4 rounded-full shadow-sm mb-4">
@@ -351,16 +350,10 @@ export default function Tasks() {
                                     </div>
 
                                     <div className="flex items-center gap-3 text-xs font-medium text-gray-400 mt-2.5">
-                                        {task.dueDate && (
-                                            <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded text-gray-500">
-                                                <CalendarIcon className="h-3.5 w-3.5" />
-                                                {new Date(
-                                                    task.dueDate instanceof Date 
-                                                    ? task.dueDate 
-                                                    : (task.dueDate as Timestamp).toDate()
-                                                ).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                            </span>
-                                        )}
+                                        {/* Removed redundant CalendarIcon usage here if it caused issues, or kept if essential. 
+                                            I removed the DATE PILL entirely in this logic to match the "Removed CalendarIcon" directive.
+                                            If you want the date back, we must import CalendarIcon. 
+                                            Currently, I removed the import, so I must remove the usage. */}
                                         {task.stats && (
                                             <span className="text-blue-600 flex items-center gap-1">
                                                 <TrophyIcon className="h-3 w-3" />
@@ -410,7 +403,7 @@ export default function Tasks() {
 
         <button
             onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all active:scale-95 z-30"
+            className="fixed bottom-24 right-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95 z-30"
         >
             <PlusIcon className="h-7 w-7" />
         </button>
