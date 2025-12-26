@@ -87,8 +87,9 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="pb-24 bg-slate-50 min-h-screen">
-      {/* HEADER: The Horizon */}
+    <div className="pb-24 bg-slate-100 min-h-screen">
+      
+      {/* IMMERSIVE HEADER: The Horizon */}
       <VibrantHeader 
         title="Dashboard"
         subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}

@@ -154,7 +154,7 @@ export default function Vitality() {
     };
 
     return (
-        <div className="pb-24 relative min-h-screen bg-orange-50">
+        <div className="pb-24 relative min-h-screen bg-orange-100">
             {/* HEADER: The Pulse */}
             <VibrantHeader 
                 title="Vitality & Health"

@@ -40,8 +40,9 @@ export default function Journal() {
   };
 
   return (
-    <div className="pb-24 bg-indigo-50 min-h-screen">
-      {/* HEADER: The Deep Dive */}
+    <div className="pb-24 bg-indigo-100 min-h-screen">
+      
+      {/* VIBRANT HEADER: The Deep Dive */}
       <VibrantHeader 
         title="Journal"
         subtitle="Capture your thoughts and uncover patterns."
@@ -52,8 +53,9 @@ export default function Journal() {
       />
 
       <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-20">
-        
-        <div className="flex p-1 space-x-1 bg-white rounded-xl border border-gray-200 shadow-sm">
+      
+        {/* Tab Navigation */}
+        <div className="flex p-1 space-x-1 bg-white rounded-xl border border-indigo-200 shadow-sm">
            <button
              onClick={() => handleTabChange('write')}
              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${

@@ -108,7 +108,7 @@ export default function Profile() {
   if (loading) return <div>Loading profile...</div>;
 
   return (
-    <div className="pb-24 bg-gray-100 min-h-screen">
+    <div className="pb-24 bg-gray-200 min-h-screen">
       
       {/* HEADER: The Anchor */}
       <VibrantHeader 

@@ -65,7 +65,7 @@ export default function Workbooks() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-green-50">
+    <div className="pb-24 relative min-h-screen bg-green-100">
       
       {/* HEADER: The Growth */}
       <VibrantHeader 

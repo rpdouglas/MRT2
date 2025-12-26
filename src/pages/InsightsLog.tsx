@@ -40,7 +40,7 @@ export default function InsightsLog() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-fuchsia-50">
+    <div className="pb-24 relative min-h-screen bg-fuchsia-100">
       {/* HEADER: The Wisdom */}
       <VibrantHeader 
         title="Insights"
@@ -52,7 +52,7 @@ export default function InsightsLog() {
       />
 
       <div className="px-4 -mt-10 relative z-30">
-        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 flex max-w-md mx-auto">
+        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
             {(['all', 'journal', 'workbook'] as const).map((tab) => (
             <button
                 key={tab}
