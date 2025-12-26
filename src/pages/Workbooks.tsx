@@ -67,7 +67,7 @@ export default function Workbooks() {
   return (
     <div className="pb-24 relative min-h-screen bg-green-50">
       
-      {/* VIBRANT HEADER: The Growth */}
+      {/* HEADER: The Growth */}
       <VibrantHeader 
         title="Recovery Library"
         subtitle="Structured guides to process your journey."
@@ -76,12 +76,11 @@ export default function Workbooks() {
         viaColor="via-green-600"
         toColor="to-lime-600"
         percentage={stats.mastery}
-        percentageColor="#a3e635" // Lime-400
+        percentageColor="#a3e635"
       />
 
       <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
         
-        {/* --- MINI STATS GRID --- */}
         <div className="grid grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
@@ -103,7 +102,6 @@ export default function Workbooks() {
             </div>
         </div>
 
-        {/* --- WORKBOOK LIST --- */}
         <div className="space-y-4">
           {WORKBOOKS.map((workbook) => {
               const theme = getTheme(workbook.type);
@@ -116,12 +114,10 @@ export default function Workbooks() {
                   >
                       <div className="flex items-start gap-4">
                           
-                          {/* Icon Badge */}
                           <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
                               <theme.icon className="h-6 w-6" />
                           </div>
 
-                          {/* Content */}
                           <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between mb-1">
                                   <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
@@ -134,7 +130,6 @@ export default function Workbooks() {
                                   {workbook.description}
                               </p>
 
-                              {/* Metadata Chips */}
                               <div className="flex items-center gap-3">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
                                       {workbook.sections.length} Sections

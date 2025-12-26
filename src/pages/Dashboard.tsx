@@ -88,8 +88,7 @@ export default function Dashboard() {
 
   return (
     <div className="pb-24 bg-slate-50 min-h-screen">
-      
-      {/* IMMERSIVE HEADER: The Horizon */}
+      {/* HEADER: The Horizon */}
       <VibrantHeader 
         title="Dashboard"
         subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}

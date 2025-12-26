@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
@@ -16,7 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
 import SOSModal from './SOSModal';
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,7 +43,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
+      {/* Removed bg-gray-50 from parent div to allow pages to control background */}
       
       {/* --- GLOBAL SOS MODAL --- */}
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />

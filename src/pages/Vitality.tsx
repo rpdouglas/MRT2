@@ -24,29 +24,20 @@ interface VitalityLog {
 export default function Vitality() {
     const { user } = useAuth();
     const [saving, setSaving] = useState(false);
-    
-    // --- DATA STATE ---
     const [todaysLogs, setTodaysLogs] = useState<VitalityLog[]>([]);
-    
-    // --- MOVEMENT STATE ---
     const [moveActivity, setMoveActivity] = useState('');
     const [moveDuration, setMoveDuration] = useState('');
     const [moveIntensity, setMoveIntensity] = useState('Moderate');
     const [moveNote, setMoveNote] = useState('');
-
-    // --- NUTRITION STATE ---
     const [mealType, setMealType] = useState('Lunch');
     const [hungerType, setHungerType] = useState('Physical'); 
     const [waterCount, setWaterCount] = useState(0); 
     const [nutriNote, setNutriNote] = useState('');
-
-    // --- BREATHWORK STATE ---
     const [breathActive, setBreathActive] = useState(false);
-    const [breathPhase, setBreathPhase] = useState('Idle'); // Inhale, Hold, Exhale
+    const [breathPhase, setBreathPhase] = useState('Idle');
     const [breathTime, setBreathTime] = useState(0); 
     const [breathNote, setBreathNote] = useState('');
 
-    // --- 1. FETCH TODAY'S LOGS ---
     useEffect(() => {
         if (!user || !db) return;
 
@@ -83,9 +74,6 @@ export default function Vitality() {
         if (hasMind) score += 33.3;
         return Math.min(100, score);
     }, [todaysLogs]);
-
-
-    // --- 2. ACTIONS ---
 
     const saveVitalityEntry = async (category: string, title: string, contentDetails: string, note: string, tags: string[]) => {
         if (!user || !db) return;
@@ -132,7 +120,6 @@ export default function Vitality() {
         setNutriNote('');
     };
 
-    // --- BREATHWORK TIMER LOGIC ---
     useEffect(() => {
         let interval: ReturnType<typeof setInterval> | undefined;
         if (breathActive) {
@@ -168,8 +155,7 @@ export default function Vitality() {
 
     return (
         <div className="pb-24 relative min-h-screen bg-orange-50">
-            
-            {/* VIBRANT HEADER: The Pulse */}
+            {/* HEADER: The Pulse */}
             <VibrantHeader 
                 title="Vitality & Health"
                 subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -178,19 +164,14 @@ export default function Vitality() {
                 viaColor="via-orange-500"
                 toColor="to-amber-500"
                 percentage={bioBalance}
-                percentageColor="#fbbf24" // Amber for the ring
+                percentageColor="#fbbf24"
             />
 
-            {/* --- MAIN GRID --- */}
             <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* 1. MOVEMENT CARD */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all">
-                        {/* Accent Bar */}
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-400 to-red-500"></div>
-                        
                         <div className="p-6">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
@@ -198,7 +179,6 @@ export default function Vitality() {
                                 </div>
                                 <h3 className="text-lg font-bold text-gray-900">Movement</h3>
                             </div>
-
                             <form onSubmit={handleLogMovement} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -224,7 +204,6 @@ export default function Vitality() {
                                         />
                                     </div>
                                 </div>
-                                
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Intensity</label>
                                     <div className="flex gap-2">
@@ -244,7 +223,6 @@ export default function Vitality() {
                                         ))}
                                     </div>
                                 </div>
-
                                 <div>
                                     <textarea 
                                         rows={2}
@@ -254,7 +232,6 @@ export default function Vitality() {
                                         className="w-full text-sm rounded-xl border-gray-200 focus:ring-orange-500 focus:border-orange-500 bg-gray-50 resize-none"
                                     />
                                 </div>
-
                                 <button 
                                     type="submit" 
                                     disabled={saving}
@@ -267,11 +244,8 @@ export default function Vitality() {
                         </div>
                     </div>
 
-                    {/* 2. NUTRITION CARD */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all">
-                        {/* Accent Bar */}
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-600"></div>
-
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-2">
@@ -280,7 +254,6 @@ export default function Vitality() {
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-900">Fuel</h3>
                                 </div>
-                                {/* Water Widget */}
                                 <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
                                     <button onClick={() => setWaterCount(Math.max(0, waterCount - 1))} className="text-blue-400 hover:text-blue-600 font-bold">-</button>
                                     <span className="text-sm font-bold text-blue-700 w-4 text-center">{waterCount}</span>
@@ -288,7 +261,6 @@ export default function Vitality() {
                                     <span className="text-[10px] text-blue-400 uppercase font-bold">H2O</span>
                                 </div>
                             </div>
-
                             <form onSubmit={handleLogNutrition} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -318,7 +290,6 @@ export default function Vitality() {
                                         </select>
                                     </div>
                                 </div>
-
                                 <div>
                                     <textarea 
                                         rows={2}
@@ -328,7 +299,6 @@ export default function Vitality() {
                                         className="w-full text-sm rounded-xl border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 resize-none"
                                     />
                                 </div>
-
                                 <button 
                                     type="submit" 
                                     disabled={saving}
@@ -341,11 +311,8 @@ export default function Vitality() {
                         </div>
                     </div>
 
-                    {/* 3. BREATHWORK CARD */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all md:col-span-2">
-                        {/* Accent Bar */}
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-sky-400 to-blue-600"></div>
-
                         <div className="p-6">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="p-2 bg-sky-50 rounded-lg text-sky-600">
@@ -353,9 +320,7 @@ export default function Vitality() {
                                 </div>
                                 <h3 className="text-lg font-bold text-gray-900">Regulation & Breath</h3>
                             </div>
-                            
                             <div className="flex flex-col md:flex-row items-center gap-8">
-                                {/* Visualizer */}
                                 <div className="relative flex items-center justify-center w-48 h-48 flex-shrink-0">
                                      <div className={`absolute inset-0 bg-sky-100 rounded-full transition-all duration-[4000ms] ease-in-out ${breathPhase.includes('Inhale') ? 'scale-100 opacity-100' : breathPhase.includes('Hold') ? 'scale-100 opacity-80' : 'scale-50 opacity-50'}`}></div>
                                      <div className="relative z-10 text-center">
@@ -365,8 +330,6 @@ export default function Vitality() {
                                          <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mt-1">{breathPhase}</div>
                                      </div>
                                 </div>
-
-                                {/* Controls & Note */}
                                 <div className="flex-1 w-full space-y-5">
                                     <div className="flex gap-4">
                                         <button 
@@ -382,7 +345,6 @@ export default function Vitality() {
                                             <ArrowPathIcon className="h-6 w-6" />
                                         </button>
                                     </div>
-
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Reflection</label>
                                         <textarea 
@@ -393,7 +355,6 @@ export default function Vitality() {
                                             className="w-full text-sm rounded-xl border-gray-200 focus:ring-sky-500 focus:border-sky-500 bg-gray-50"
                                         />
                                     </div>
-
                                     <button 
                                         onClick={handleLogBreath}
                                         disabled={breathTime < 5 || saving}
@@ -406,7 +367,6 @@ export default function Vitality() {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

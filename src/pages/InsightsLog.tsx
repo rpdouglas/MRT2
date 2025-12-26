@@ -41,8 +41,7 @@ export default function InsightsLog() {
 
   return (
     <div className="pb-24 relative min-h-screen bg-fuchsia-50">
-      
-      {/* VIBRANT HEADER: The Wisdom */}
+      {/* HEADER: The Wisdom */}
       <VibrantHeader 
         title="Insights"
         subtitle="A timeline of your AI coaching sessions and breakthroughs."
@@ -52,7 +51,6 @@ export default function InsightsLog() {
         toColor="to-rose-500"
       />
 
-      {/* FLOATING FILTER TABS */}
       <div className="px-4 -mt-10 relative z-30">
         <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 flex max-w-md mx-auto">
             {(['all', 'journal', 'workbook'] as const).map((tab) => (
@@ -71,7 +69,6 @@ export default function InsightsLog() {
         </div>
       </div>
 
-      {/* TIMELINE LIST */}
       <div className="max-w-4xl mx-auto space-y-6 px-4 mt-6">
         {filteredInsights.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
@@ -87,7 +84,6 @@ export default function InsightsLog() {
             filteredInsights.map((insight) => (
                 <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                     
-                    {/* META HEADER */}
                     <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             {insight.type === 'journal' ? (
@@ -106,10 +102,7 @@ export default function InsightsLog() {
                         </div>
                     </div>
 
-                    {/* CONTENT BODY */}
                     <div className="p-5">
-                        
-                        {/* --- RENDER JOURNAL INSIGHT --- */}
                         {insight.type === 'journal' && (
                             <div className="space-y-5">
                                 <div>
@@ -143,7 +136,6 @@ export default function InsightsLog() {
                             </div>
                         )}
 
-                        {/* --- RENDER WORKBOOK INSIGHT --- */}
                         {insight.type === 'workbook' && (
                             <div className="space-y-5">
                                 <div>
@@ -181,7 +173,6 @@ export default function InsightsLog() {
                                 </div>
                             </div>
                         )}
-
                     </div>
                 </div>
             ))

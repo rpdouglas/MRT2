@@ -13,20 +13,13 @@ import {
 
 export default function Journal() {
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // DERIVED STATE: Single Source of Truth (The URL)
   const activeTab = searchParams.get('tab') || 'write';
-  
-  // EXTRACT TEMPLATE ID (for Deep Links like ?template=urge_log)
   const initialTemplateId = searchParams.get('template');
-  
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
-  // Update URL directly. React will re-render with the new derived activeTab.
   const handleTabChange = (tab: string) => {
     setSearchParams(prev => {
         prev.set('tab', tab);
-        // Clean up template param if leaving write tab so it doesn't persist unwantedly
         if (tab !== 'write') prev.delete('template');
         return prev;
     });
@@ -39,7 +32,6 @@ export default function Journal() {
 
   const handleEntrySaved = () => {
     setEditingEntry(null);
-    // Remove template param from URL after save to prevent it from reappearing
     setSearchParams(prev => {
         prev.delete('template');
         prev.set('tab', 'history');
@@ -49,8 +41,7 @@ export default function Journal() {
 
   return (
     <div className="pb-24 bg-indigo-50 min-h-screen">
-      
-      {/* VIBRANT HEADER: The Deep Dive */}
+      {/* HEADER: The Deep Dive */}
       <VibrantHeader 
         title="Journal"
         subtitle="Capture your thoughts and uncover patterns."
@@ -61,8 +52,7 @@ export default function Journal() {
       />
 
       <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-20">
-      
-        {/* Tab Navigation */}
+        
         <div className="flex p-1 space-x-1 bg-white rounded-xl border border-gray-200 shadow-sm">
            <button
              onClick={() => handleTabChange('write')}

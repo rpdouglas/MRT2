@@ -31,7 +31,6 @@ import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from 
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 import VibrantHeader from '../components/VibrantHeader';
 
-// --- Types ---
 type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
 type TaskPriority = 'High' | 'Medium' | 'Low';
 type TabOption = 'today' | 'upcoming' | 'history';
@@ -54,7 +53,6 @@ export interface Task {
   };
 }
 
-// --- Theme Constants ---
 const CATEGORY_THEME: Record<TaskCategory, { bg: string; text: string; border: string; ring: string }> = {
     Recovery: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', ring: 'ring-cyan-500' },
     Health:   { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', ring: 'ring-emerald-500' },
@@ -66,17 +64,13 @@ export default function Tasks() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabOption>('today');
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // 1. Data Loading
   useEffect(() => {
     if (!user || !db) return;
 
@@ -98,12 +92,10 @@ export default function Tasks() {
     return () => unsubscribe();
   }, [user]);
 
-  // 2. Computed Lists & Stats
   const { filteredTasks, progress } = useMemo(() => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
-    // Helper to normalize date
     const getTaskDate = (t: Task) => {
         if (!t.dueDate) return null;
         return t.dueDate instanceof Date ? t.dueDate : (t.dueDate as Timestamp).toDate();
@@ -120,25 +112,21 @@ export default function Tasks() {
         const d = getTaskDate(t);
         const isCompleted = t.status === 'completed';
 
-        // History Tab: Completed items older than today
         if (isCompleted && (!d || d < now)) {
             historyTasks.push(t);
             return;
         }
 
-        // Upcoming: Future dates
         if (d && d > now && !isCompleted) {
             upcomingTasks.push(t);
             return;
         }
 
-        // Today: Due today/past or completed today
         todayTasks.push(t);
         totalToday++;
         if (isCompleted) completedToday++;
     });
 
-    // Sort Today: Pending first, then Priority
     todayTasks.sort((a, b) => {
         if (a.status === b.status) {
              const pMap = { High: 3, Medium: 2, Low: 1 };
@@ -153,11 +141,9 @@ export default function Tasks() {
     };
   }, [tasks, activeTab]);
 
-  // 3. Actions
   const handleToggleComplete = useCallback(async (task: Task) => {
     if (!db || !user) return;
     
-    // If we are unchecking a completed task, just revert it
     if (task.status === 'completed') {
          await updateDoc(doc(db, 'tasks', task.id), {
             status: 'pending',
@@ -166,15 +152,12 @@ export default function Tasks() {
         return;
     }
 
-    // Completing a task
     try {
-        // 1. Mark current as complete
         await updateDoc(doc(db, 'tasks', task.id), {
             status: 'completed',
             completedAt: serverTimestamp()
         });
 
-        // 2. Check for recurrence to spawn next task
         if (task.recurrence && task.recurrence.type !== 'once') {
             const currentDueDate = task.dueDate instanceof Date 
                 ? task.dueDate 
@@ -183,10 +166,9 @@ export default function Tasks() {
             const nextDate = calculateNextDueDate(currentDueDate, task.recurrence);
             
             if (nextDate) {
-                // Create the next instance
                 await addDoc(collection(db, 'tasks'), {
-                    ...task, // Copy all props
-                    id: undefined, // Let Firebase generate new ID
+                    ...task, 
+                    id: undefined, 
                     status: 'pending',
                     createdAt: serverTimestamp(),
                     dueDate: nextDate,
@@ -215,7 +197,7 @@ export default function Tasks() {
   const handleEdit = useCallback((task: Task) => {
       setEditingTask(task);
       setIsModalOpen(true);
-      setExpandedTaskId(null); // Close drawer
+      setExpandedTaskId(null);
   }, []);
 
   const handleJournalReflect = useCallback((task: Task) => {
@@ -250,10 +232,8 @@ export default function Tasks() {
 
     try {
         if (data.id) {
-            // Update existing
             await updateDoc(doc(db, 'tasks', data.id), payload);
         } else {
-            // Create new
             await addDoc(collection(db, 'tasks'), {
                 ...payload,
                 status: 'pending',
@@ -265,7 +245,6 @@ export default function Tasks() {
     }
   }, [user]);
 
-  // UI Helpers
   const getPriorityBadge = (p: string) => {
       switch(p) {
           case 'High': return (
@@ -283,7 +262,7 @@ export default function Tasks() {
   return (
     <div className="pb-24 relative min-h-screen bg-cyan-50">
         
-        {/* VIBRANT HEADER: The Spark */}
+        {/* HEADER: The Spark */}
         <VibrantHeader 
             title="Today's Quests"
             subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -292,10 +271,9 @@ export default function Tasks() {
             viaColor="via-teal-500"
             toColor="to-emerald-500"
             percentage={progress}
-            percentageColor="#34d399" // Emerald-400
+            percentageColor="#34d399"
         />
 
-        {/* --- TABS --- */}
         <div className="px-4 -mt-10 relative z-30">
             <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 flex">
                 {['today', 'upcoming', 'history'].map((tab) => (
@@ -314,7 +292,6 @@ export default function Tasks() {
             </div>
         </div>
 
-        {/* --- LIST AREA --- */}
         <div className="p-4 space-y-4 mt-2 max-w-4xl mx-auto">
             {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
@@ -336,11 +313,9 @@ export default function Tasks() {
                             }`}
                             onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                         >
-                            {/* Accent Bar */}
                             <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bg.replace('bg-', 'bg-gradient-to-b from-')}-400 to-${theme.bg.split('-')[1]}-600`} />
                             
                             <div className="p-4 pl-5 flex items-start gap-4">
-                                {/* Checkbox */}
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
                                     className="mt-0.5 flex-shrink-0 group"
@@ -399,7 +374,6 @@ export default function Tasks() {
                                 </div>
                             </div>
 
-                            {/* Action Drawer */}
                             {expandedTaskId === task.id && (
                                 <div className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
                                     {task.status === 'completed' && (
@@ -433,7 +407,6 @@ export default function Tasks() {
             )}
         </div>
 
-        {/* --- FLOATING ADD BUTTON --- */}
         <button
             onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
             className="fixed bottom-24 right-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all active:scale-95 z-30"
@@ -441,7 +414,6 @@ export default function Tasks() {
             <PlusIcon className="h-7 w-7" />
         </button>
 
-        {/* --- MODAL --- */}
         <TaskFormModal 
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}

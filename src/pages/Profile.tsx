@@ -24,7 +24,6 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // Import State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -111,7 +110,7 @@ export default function Profile() {
   return (
     <div className="pb-24 bg-gray-100 min-h-screen">
       
-      {/* VIBRANT HEADER: The Anchor */}
+      {/* HEADER: The Anchor */}
       <VibrantHeader 
         title="My Profile"
         subtitle={user?.email || ''}
@@ -123,7 +122,6 @@ export default function Profile() {
 
       <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">
         
-        {/* --- PROFILE FORM --- */}
         <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
             <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Settings</h3>
             <div>
@@ -164,7 +162,6 @@ export default function Profile() {
             </div>
         </form>
 
-        {/* --- IMPORT SECTION --- */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <ArrowUpTrayIcon className="h-5 w-5 text-gray-500" />
@@ -221,7 +218,6 @@ export default function Profile() {
             </button>
         </div>
 
-        {/* --- VERSION INFO --- */}
         <div className="text-center text-xs text-gray-400 font-mono">
             App Version: v{appVersion}
         </div>
