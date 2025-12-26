@@ -35,6 +35,7 @@ export default function Dashboard() {
                 const userData = userDocSnap.data();
                 if (userData.sobrietyDate) {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
+                    
                     const now = new Date();
                     const diffTime = Math.abs(now.getTime() - start.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -86,17 +87,16 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="pb-24 bg-gray-50 min-h-screen">
+    <div className="pb-24 bg-slate-50 min-h-screen">
       
-      {/* IMMERSIVE HEADER */}
+      {/* IMMERSIVE HEADER: The Horizon */}
       <VibrantHeader 
         title="Dashboard"
         subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}
         icon={HomeIcon}
-        fromColor="from-slate-700"
-        viaColor="via-slate-800"
-        toColor="to-slate-900"
-        // No percentage ring for dashboard
+        fromColor="from-sky-500"
+        viaColor="via-blue-600"
+        toColor="to-indigo-600"
       />
 
       <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-30">

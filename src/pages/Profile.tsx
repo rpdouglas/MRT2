@@ -109,16 +109,16 @@ export default function Profile() {
   if (loading) return <div>Loading profile...</div>;
 
   return (
-    <div className="pb-24 bg-gray-50 min-h-screen">
+    <div className="pb-24 bg-gray-100 min-h-screen">
       
-      {/* VIBRANT HEADER (CENTERED) */}
+      {/* VIBRANT HEADER: The Anchor */}
       <VibrantHeader 
         title="My Profile"
         subtitle={user?.email || ''}
         icon={UserCircleIcon}
-        fromColor="from-gray-700"
+        fromColor="from-slate-700"
         viaColor="via-gray-800"
-        toColor="to-black"
+        toColor="to-zinc-900"
       />
 
       <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">

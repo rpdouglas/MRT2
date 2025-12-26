@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
-import VibrantHeader from '../components/VibrantHeader'; // NEW
+import VibrantHeader from '../components/VibrantHeader';
 import { 
   PencilSquareIcon, 
   ClockIcon, 
@@ -48,19 +48,19 @@ export default function Journal() {
   };
 
   return (
-    <div className="pb-24 bg-gray-50 min-h-screen">
+    <div className="pb-24 bg-indigo-50 min-h-screen">
       
-      {/* VIBRANT HEADER */}
+      {/* VIBRANT HEADER: The Deep Dive */}
       <VibrantHeader 
         title="Journal"
         subtitle="Capture your thoughts and uncover patterns."
         icon={BookOpenIcon}
-        fromColor="from-blue-600"
-        viaColor="via-cyan-600"
-        toColor="to-teal-500"
+        fromColor="from-indigo-600"
+        viaColor="via-purple-600"
+        toColor="to-violet-600"
       />
 
-      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-6 relative z-20">
+      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-20">
       
         {/* Tab Navigation */}
         <div className="flex p-1 space-x-1 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -68,7 +68,7 @@ export default function Journal() {
              onClick={() => handleTabChange('write')}
              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'write' 
-                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm' 
                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >
@@ -79,7 +79,7 @@ export default function Journal() {
              onClick={() => handleTabChange('history')}
              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'history' 
-                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm' 
                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >
@@ -90,7 +90,7 @@ export default function Journal() {
              onClick={() => handleTabChange('insights')}
              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
                activeTab === 'insights' 
-                 ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm' 
                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
              }`}
            >

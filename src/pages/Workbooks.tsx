@@ -65,18 +65,18 @@ export default function Workbooks() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-gray-50/50">
+    <div className="pb-24 relative min-h-screen bg-green-50">
       
-      {/* VIBRANT HEADER (CENTERED) */}
+      {/* VIBRANT HEADER: The Growth */}
       <VibrantHeader 
         title="Recovery Library"
         subtitle="Structured guides to process your journey."
         icon={AcademicCapIcon}
-        fromColor="from-cyan-600"
-        viaColor="via-blue-600"
-        toColor="to-indigo-600"
+        fromColor="from-emerald-600"
+        viaColor="via-green-600"
+        toColor="to-lime-600"
         percentage={stats.mastery}
-        percentageColor="#67e8f9" // Cyan for the ring
+        percentageColor="#a3e635" // Lime-400
       />
 
       <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">

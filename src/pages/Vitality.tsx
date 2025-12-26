@@ -167,18 +167,18 @@ export default function Vitality() {
     };
 
     return (
-        <div className="pb-24 relative min-h-screen bg-gray-50/50">
+        <div className="pb-24 relative min-h-screen bg-orange-50">
             
-            {/* VIBRANT HEADER (CENTERED) */}
+            {/* VIBRANT HEADER: The Pulse */}
             <VibrantHeader 
                 title="Vitality & Health"
                 subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                 icon={HeartIcon}
-                fromColor="from-rose-600"
-                viaColor="via-orange-600"
+                fromColor="from-rose-500"
+                viaColor="via-orange-500"
                 toColor="to-amber-500"
                 percentage={bioBalance}
-                percentageColor="#f59e0b" // Amber for the ring
+                percentageColor="#fbbf24" // Amber for the ring
             />
 
             {/* --- MAIN GRID --- */}

@@ -10,8 +10,7 @@ import {
   ShieldExclamationIcon, 
   CheckCircleIcon, 
   TrophyIcon, 
-  CalendarDaysIcon,
-  //BookmarkIcon
+  CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 
 export default function InsightsLog() {
@@ -41,16 +40,16 @@ export default function InsightsLog() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-gray-50/50">
+    <div className="pb-24 relative min-h-screen bg-fuchsia-50">
       
-      {/* VIBRANT HEADER */}
+      {/* VIBRANT HEADER: The Wisdom */}
       <VibrantHeader 
         title="Insights"
         subtitle="A timeline of your AI coaching sessions and breakthroughs."
         icon={LightBulbIcon}
-        fromColor="from-violet-600"
-        viaColor="via-purple-600"
-        toColor="to-fuchsia-600"
+        fromColor="from-fuchsia-600"
+        viaColor="via-pink-600"
+        toColor="to-rose-500"
       />
 
       {/* FLOATING FILTER TABS */}
@@ -62,7 +61,7 @@ export default function InsightsLog() {
                 onClick={() => setFilter(tab)}
                 className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
                 filter === tab 
-                    ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-md transform scale-105' 
+                    ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md transform scale-105' 
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >

@@ -281,18 +281,18 @@ export default function Tasks() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your quests...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-gray-50/50">
+    <div className="pb-24 relative min-h-screen bg-cyan-50">
         
-        {/* VIBRANT HEADER (CENTERED) */}
+        {/* VIBRANT HEADER: The Spark */}
         <VibrantHeader 
             title="Today's Quests"
             subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
             icon={FireIcon}
-            fromColor="from-blue-600"
-            viaColor="via-indigo-600"
-            toColor="to-purple-600"
+            fromColor="from-cyan-500"
+            viaColor="via-teal-500"
+            toColor="to-emerald-500"
             percentage={progress}
-            percentageColor="#fbbf24" // Amber-300
+            percentageColor="#34d399" // Emerald-400
         />
 
         {/* --- TABS --- */}
@@ -304,7 +304,7 @@ export default function Tasks() {
                         onClick={() => setActiveTab(tab as TabOption)}
                         className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
                             activeTab === tab 
-                            ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-md transform scale-105' 
+                            ? 'bg-gradient-to-br from-cyan-600 to-teal-600 text-white shadow-md transform scale-105' 
                             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                         }`}
                     >
@@ -436,7 +436,7 @@ export default function Tasks() {
         {/* --- FLOATING ADD BUTTON --- */}
         <button
             onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all active:scale-95 z-30"
+            className="fixed bottom-24 right-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all active:scale-95 z-30"
         >
             <PlusIcon className="h-7 w-7" />
         </button>
