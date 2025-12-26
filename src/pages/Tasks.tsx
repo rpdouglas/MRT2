@@ -12,28 +12,26 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
-  serverTimestamp,
+  serverTimestamp, 
   Timestamp 
 } from 'firebase/firestore';
 import { 
   PlusIcon, 
   BookOpenIcon, 
   TrashIcon, 
-  CalendarIcon,
-  SparklesIcon, 
-  TrophyIcon,
-  EllipsisHorizontalIcon,
+  CalendarIcon, 
+  TrophyIcon, 
+  EllipsisHorizontalIcon, 
   PencilSquareIcon,
   ArrowPathIcon,
-  FireIcon // Added this missing import
+  FireIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
+import VibrantHeader from '../components/VibrantHeader'; // IMPORTED
 
 // --- Types ---
-//
-
 type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
 type TaskPriority = 'High' | 'Medium' | 'Low';
 type TabOption = 'today' | 'upcoming' | 'history';
@@ -45,7 +43,7 @@ export interface Task {
   category: TaskCategory;
   priority: TaskPriority;
   status: 'pending' | 'completed';
-  frequency?: string; // Legacy support
+  frequency?: string; 
   recurrence?: RecurrenceConfig;
   dueDate: Timestamp | Date | null;
   createdAt: Timestamp;
@@ -57,65 +55,11 @@ export interface Task {
 }
 
 // --- Theme Constants ---
-
 const CATEGORY_THEME: Record<TaskCategory, { bg: string; text: string; border: string; ring: string }> = {
     Recovery: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', ring: 'ring-cyan-500' },
     Health:   { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', ring: 'ring-emerald-500' },
     Life:     { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', ring: 'ring-violet-500' },
     Work:     { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', ring: 'ring-amber-500' },
-};
-
-// --- Components ---
-
-const ProgressRing = ({ percentage }: { percentage: number }) => {
-  const radius = 32;
-  const stroke = 5;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="relative flex items-center justify-center">
-      <svg
-        height={radius * 2}
-        width={radius * 2}
-        className="transform -rotate-90"
-      >
-        <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#3b82f6" />
-                <stop offset="100%" stopColor="#10b981" />
-            </linearGradient>
-        </defs>
-        {/* Track */}
-        <circle
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth={stroke}
-          fill="transparent"
-          r={normalizedRadius}
-          cx={radius}
-          cy={radius}
-        />
-        {/* Progress */}
-        <circle
-          stroke="url(#progressGradient)"
-          strokeWidth={stroke}
-          strokeDasharray={circumference + ' ' + circumference}
-          style={{ strokeDashoffset, transition: "stroke-dashoffset 1s ease-out" }}
-          strokeLinecap="round"
-          fill="transparent"
-          r={normalizedRadius}
-          cx={radius}
-          cy={radius}
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center">
-        <span className="text-[10px] font-bold text-white drop-shadow-sm">
-          {Math.round(percentage)}%
-        </span>
-      </div>
-    </div>
-  );
 };
 
 export default function Tasks() {
@@ -339,24 +283,17 @@ export default function Tasks() {
   return (
     <div className="pb-24 relative min-h-screen bg-gray-50/50">
         
-        {/* --- HEADER: "Vibrant Momentum" --- */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 pb-12 shadow-md relative overflow-hidden">
-             {/* Background Pattern */}
-             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-             
-             <div className="relative z-10 flex items-center justify-between">
-                <div className="text-white">
-                    <h1 className="text-2xl font-bold flex items-center gap-2 drop-shadow-md">
-                        Today's Quests
-                        <SparklesIcon className="h-6 w-6 text-yellow-300 animate-pulse" />
-                    </h1>
-                    <p className="text-blue-100 text-sm font-medium mt-1">
-                        {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </p>
-                </div>
-                <ProgressRing percentage={progress} />
-             </div>
-        </div>
+        {/* VIBRANT HEADER */}
+        <VibrantHeader 
+            title="Today's Quests"
+            subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+            icon={FireIcon}
+            fromColor="from-blue-600"
+            viaColor="via-indigo-600"
+            toColor="to-purple-600"
+            percentage={progress}
+            percentageColor="#fbbf24" // Amber-300 for Gold Star feel
+        />
 
         {/* --- TABS --- */}
         <div className="px-4 -mt-6 relative z-20">
@@ -378,7 +315,7 @@ export default function Tasks() {
         </div>
 
         {/* --- LIST AREA --- */}
-        <div className="p-4 space-y-4 mt-2">
+        <div className="p-4 space-y-4 mt-2 max-w-4xl mx-auto">
             {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
                     <div className="bg-white p-4 rounded-full shadow-sm mb-4">
@@ -389,7 +326,6 @@ export default function Tasks() {
                 </div>
             ) : (
                 filteredTasks.map(task => {
-                    // FIX: Safer Theme Lookup
                     const theme = CATEGORY_THEME[task.category] || CATEGORY_THEME.Recovery;
                     
                     return (
