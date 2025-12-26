@@ -44,12 +44,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      {/* Removed bg-gray-50 from parent div to allow pages to control background */}
+      {/* Container is explicitly transparent to let Page backgrounds shine */}
       
-      {/* --- GLOBAL SOS MODAL --- */}
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
 
-      {/* --- SLIDE-OVER SIDEBAR (Mobile & Desktop Drawer) --- */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={setSidebarOpen}>
           <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" />
@@ -134,7 +132,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </Dialog>
       </Transition.Root>
 
-      {/* Main Content Area - Invisible Logic Shell */}
       <main className="min-h-screen">
           {children}
       </main>

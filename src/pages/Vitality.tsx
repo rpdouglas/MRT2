@@ -113,10 +113,8 @@ export default function Vitality() {
 
     const handleLogNutrition = async (e: React.FormEvent) => {
         e.preventDefault();
-        
         const details = `*Meal:* ${mealType}\n*Hunger Type:* ${hungerType}\n*Hydration at log:* ${waterCount} glasses`;
         await saveVitalityEntry('Nutrition', 'Fuel Log 🍎', details, nutriNote, [mealType]);
-        
         setNutriNote('');
     };
 
@@ -145,17 +143,14 @@ export default function Vitality() {
         const mins = Math.floor(breathTime / 60);
         const secs = breathTime % 60;
         const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* 4-7-8 Relaxing Breath`;
-        
         await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Meditation']);
-        
         setBreathTime(0);
         setBreathNote('');
         setBreathActive(false);
     };
 
     return (
-        <div className="pb-24 relative min-h-screen bg-orange-100">
-            {/* HEADER: The Pulse */}
+        <div className="pb-24 relative min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
             <VibrantHeader 
                 title="Vitality & Health"
                 subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -168,7 +163,6 @@ export default function Vitality() {
             />
 
             <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative group hover:shadow-md transition-all">
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-orange-400 to-red-500"></div>
