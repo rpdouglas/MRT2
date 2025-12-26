@@ -5,17 +5,17 @@ import type { ElementType } from 'react';
 interface VibrantHeaderProps {
   title: string;
   subtitle: string;
-  icon: ElementType;
-  fromColor: string;
-  viaColor: string;
-  toColor: string;
+  icon?: ElementType;
+  fromColor: string; // e.g. "from-blue-600"
+  viaColor: string;  // e.g. "via-indigo-600"
+  toColor: string;   // e.g. "to-purple-600"
   percentage?: number;
   percentageColor?: string;
 }
 
 const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
-  const radius = 32;
-  const stroke = 5;
+  const radius = 24; // Slightly smaller for the compact header
+  const stroke = 4;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -70,48 +70,52 @@ export default function VibrantHeader({
   const { toggleSidebar, toggleSOS } = useLayout();
 
   return (
-    <div className={`bg-gradient-to-r ${fromColor} ${viaColor} ${toColor} p-6 pb-12 shadow-md relative overflow-hidden`}>
+    <div className={`bg-gradient-to-r ${fromColor} ${viaColor} ${toColor} px-4 pt-4 pb-16 shadow-lg relative overflow-hidden`}>
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
       
-      {/* Top Navigation Row (Integrated) */}
-      <div className="relative z-20 flex justify-between items-start mb-4">
-        {/* Hamburger (Left) */}
+      {/* 3-Column Grid Layout: Menu | Title | Actions */}
+      <div className="relative z-20 grid grid-cols-[auto_1fr_auto] items-center gap-4">
+        
+        {/* Left: Hamburger */}
         <button 
           onClick={toggleSidebar}
-          className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors backdrop-blur-sm"
+          className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
           aria-label="Open Menu"
         >
           <Bars3Icon className="h-6 w-6" />
         </button>
 
-        {/* SOS (Right) */}
-        <button 
-          onClick={toggleSOS}
-          className="p-2 rounded-full bg-red-500/20 hover:bg-red-500/40 text-white border border-red-200/30 transition-colors backdrop-blur-sm animate-pulse"
-          aria-label="Emergency SOS"
-        >
-          <ExclamationTriangleIcon className="h-6 w-6" />
-        </button>
-      </div>
-
-      <div className="relative z-10 flex items-center justify-between">
-        <div className="text-white pr-4">
-          <h1 className="text-2xl font-bold flex items-center gap-2 drop-shadow-md">
+        {/* Center: Title & Subtitle */}
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
+            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
             {title}
-            <Icon className="h-6 w-6 text-white/80" />
           </h1>
-          <p className="text-white/90 text-sm font-medium mt-1 leading-snug">
+          <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide">
             {subtitle}
           </p>
         </div>
-        
-        {/* Optional Progress Ring */}
-        {percentage !== undefined && (
-          <div className="bg-white/10 backdrop-blur-md rounded-full p-1 shadow-inner flex-shrink-0">
-            <ProgressRing percentage={percentage} colorHex={percentageColor} />
-          </div>
-        )}
+
+        {/* Right: SOS & Stats */}
+        <div className="flex items-center gap-3">
+          {/* Progress Ring (Optional) */}
+          {percentage !== undefined && (
+             <div className="hidden sm:block bg-white/10 backdrop-blur-md rounded-full p-1 shadow-inner border border-white/5">
+                <ProgressRing percentage={percentage} colorHex={percentageColor} />
+             </div>
+          )}
+
+          {/* SOS Button */}
+          <button 
+            onClick={toggleSOS}
+            className="p-2.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white border border-red-400/50 transition-all backdrop-blur-md shadow-lg animate-pulse hover:animate-none active:scale-95"
+            aria-label="Emergency SOS"
+          >
+            <ExclamationTriangleIcon className="h-6 w-6" />
+          </button>
+        </div>
+
       </div>
     </div>
   );

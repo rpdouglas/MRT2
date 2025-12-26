@@ -12,10 +12,9 @@ import {
     PlayIcon,
     PauseIcon,
     ArrowPathIcon,
-    SparklesIcon // <-- Fixed: Added missing import
+    SparklesIcon 
 } from '@heroicons/react/24/outline';
 
-// --- TYPES ---
 interface VitalityLog {
     id: string;
     tags: string[];
@@ -47,11 +46,10 @@ export default function Vitality() {
     const [breathTime, setBreathTime] = useState(0); 
     const [breathNote, setBreathNote] = useState('');
 
-    // --- 1. FETCH TODAY'S LOGS (For Progress Ring) ---
+    // --- 1. FETCH TODAY'S LOGS ---
     useEffect(() => {
         if (!user || !db) return;
 
-        // Calculate start of today
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
@@ -74,8 +72,6 @@ export default function Vitality() {
         return () => unsubscribe();
     }, [user]);
 
-    // Calculate "Bio Balance" Score (0-100%)
-    // Logic: 33% for Movement, 33% for Nutrition, 33% for Mindfulness
     const bioBalance = useMemo(() => {
         const hasMove = todaysLogs.some(l => l.tags.includes('Movement'));
         const hasFood = todaysLogs.some(l => l.tags.includes('Nutrition'));
@@ -106,7 +102,6 @@ export default function Vitality() {
                 sentiment: 'Pending',
                 createdAt: Timestamp.now()
             });
-            // Haptic feedback if available
             if (navigator.vibrate) navigator.vibrate(50);
         } catch (e) {
             console.error(e);
@@ -139,14 +134,11 @@ export default function Vitality() {
 
     // --- BREATHWORK TIMER LOGIC ---
     useEffect(() => {
-        // Fixed: Typed interval correctly to avoid 'any'
         let interval: ReturnType<typeof setInterval> | undefined;
-        
         if (breathActive) {
             interval = setInterval(() => {
                 setBreathTime(prev => {
                     const next = prev + 1;
-                    // Simple 4-7-8 Cycle (19s total) for visual phase
                     const cycle = next % 19; 
                     if (cycle < 4) setBreathPhase('Inhale (4s)');
                     else if (cycle < 11) setBreathPhase('Hold (7s)');
@@ -177,7 +169,7 @@ export default function Vitality() {
     return (
         <div className="pb-24 relative min-h-screen bg-gray-50/50">
             
-            {/* VIBRANT HEADER */}
+            {/* VIBRANT HEADER (CENTERED) */}
             <VibrantHeader 
                 title="Vitality & Health"
                 subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -190,7 +182,7 @@ export default function Vitality() {
             />
 
             {/* --- MAIN GRID --- */}
-            <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-20 space-y-6">
+            <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     

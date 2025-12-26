@@ -62,14 +62,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-blue-600 transition-all shadow-2xl">
+              <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-gradient-to-b from-blue-700 to-blue-900 transition-all shadow-2xl">
                 
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
-                   <div className="flex items-center gap-2 text-white font-bold text-lg">
-                      <img src="/favicon-32x32.png" alt="" className="h-8 w-8" />
+                   <div className="flex items-center gap-3 text-white font-bold text-lg tracking-tight">
+                      <div className="bg-white/10 p-1.5 rounded-lg">
+                        <img src="/favicon-32x32.png" alt="" className="h-6 w-6" />
+                      </div>
                       Recovery Toolkit
                    </div>
-                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white">
+                   <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white transition-colors">
                     <span className="sr-only">Close sidebar</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
@@ -84,10 +86,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             <Link
                               to={item.href}
                               onClick={() => setSidebarOpen(false)}
-                              className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 ${
+                              className={`group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-all ${
                                 location.pathname === item.href
-                                  ? 'bg-blue-700 text-white'
-                                  : 'text-blue-200 hover:text-white hover:bg-blue-700'
+                                  ? 'bg-blue-600/50 text-white shadow-inner border border-blue-500/30'
+                                  : 'text-blue-100 hover:text-white hover:bg-blue-800'
                               }`}
                             >
                               <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
@@ -99,24 +101,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </li>
                     
                     <li className="mt-auto">
-                      <div className="flex flex-col gap-2 pt-6 border-t border-blue-500">
+                      <div className="flex flex-col gap-2 pt-6 border-t border-blue-500/30">
                          {user && (
-                             <div className="flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white bg-blue-700/50">
+                             <div className="flex items-center gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-white bg-blue-800/50 border border-blue-700/50">
                                  {user.photoURL ? (
-                                     <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700" />
+                                     <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700 border-2 border-white/20" />
                                  ) : (
                                      <UserCircleIcon className="h-8 w-8 text-blue-200" />
                                  )}
                                  <div className="flex flex-col truncate">
                                     <span className="sr-only">Your profile</span>
                                     <span aria-hidden="true">{user.displayName || 'User'}</span>
-                                    <span className="text-xs text-blue-300 font-normal truncate">{user.email}</span>
+                                    <span className="text-xs text-blue-300 font-normal truncate opacity-80">{user.email}</span>
                                  </div>
                              </div>
                          )}
                          <button
                            onClick={handleLogout}
-                           className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-blue-200 hover:bg-blue-700 hover:text-white w-full"
+                           className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
                          >
                            <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
                             Log out
@@ -131,7 +133,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Dialog>
       </Transition.Root>
 
-      {/* Main Content Area - NO HEADER HERE, controlled by pages */}
+      {/* Main Content Area - Invisible Logic Shell */}
       <main className="min-h-screen">
           {children}
       </main>

@@ -67,7 +67,7 @@ export default function Workbooks() {
   return (
     <div className="pb-24 relative min-h-screen bg-gray-50/50">
       
-      {/* VIBRANT HEADER */}
+      {/* VIBRANT HEADER (CENTERED) */}
       <VibrantHeader 
         title="Recovery Library"
         subtitle="Structured guides to process your journey."
@@ -79,7 +79,7 @@ export default function Workbooks() {
         percentageColor="#67e8f9" // Cyan for the ring
       />
 
-      <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-20 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
         
         {/* --- MINI STATS GRID --- */}
         <div className="grid grid-cols-3 gap-4">

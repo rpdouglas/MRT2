@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData } from '../lib/db';
 import { importLegacyJournals } from '../lib/importer';
-import VibrantHeader from '../components/VibrantHeader'; // NEW
+import VibrantHeader from '../components/VibrantHeader'; 
 import { 
   UserCircleIcon, 
   ArrowLeftOnRectangleIcon, 
@@ -16,7 +16,6 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
-  // --- VERSIONING ---
   const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
   
   const [displayName, setDisplayName] = useState('');
@@ -36,7 +35,6 @@ export default function Profile() {
         const data = await getProfile(user.uid);
         if (data) {
           setDisplayName(data.displayName || user.displayName || '');
-          // Format date for input field (YYYY-MM-DD)
           if (data.sobrietyDate) {
             setSobrietyDate(data.sobrietyDate.toDate().toISOString().split('T')[0]);
           }
@@ -64,15 +62,12 @@ export default function Profile() {
     setMessage(null);
 
     try {
-      // Create date object correctly
       let dateObj: Date | null = null;
       if (sobrietyDate) {
          const [y, m, d] = sobrietyDate.split('-').map(Number);
-         // Note: Month is 0-indexed in JS Date
          dateObj = new Date(y, m - 1, d);
       }
       
-      // Update in Firestore
       await updateProfileData(user.uid, {
         displayName,
         sobrietyDate: dateObj
@@ -87,7 +82,6 @@ export default function Profile() {
     }
   };
 
-  // --- IMPORT HANDLER ---
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -103,7 +97,6 @@ export default function Profile() {
     try {
       const result = await importLegacyJournals(user.uid, file);
       setImportStatus(`Success! Imported ${result.success} entries. (${result.errors} skipped)`);
-      // Clear input
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error("Import failed", error);
@@ -118,7 +111,7 @@ export default function Profile() {
   return (
     <div className="pb-24 bg-gray-50 min-h-screen">
       
-      {/* VIBRANT HEADER */}
+      {/* VIBRANT HEADER (CENTERED) */}
       <VibrantHeader 
         title="My Profile"
         subtitle={user?.email || ''}
@@ -128,7 +121,7 @@ export default function Profile() {
         toColor="to-black"
       />
 
-      <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-6 relative z-20">
+      <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">
         
         {/* --- PROFILE FORM --- */}
         <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">

@@ -29,7 +29,7 @@ import {
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
-import VibrantHeader from '../components/VibrantHeader'; // IMPORTED
+import VibrantHeader from '../components/VibrantHeader';
 
 // --- Types ---
 type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
@@ -283,7 +283,7 @@ export default function Tasks() {
   return (
     <div className="pb-24 relative min-h-screen bg-gray-50/50">
         
-        {/* VIBRANT HEADER */}
+        {/* VIBRANT HEADER (CENTERED) */}
         <VibrantHeader 
             title="Today's Quests"
             subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -292,11 +292,11 @@ export default function Tasks() {
             viaColor="via-indigo-600"
             toColor="to-purple-600"
             percentage={progress}
-            percentageColor="#fbbf24" // Amber-300 for Gold Star feel
+            percentageColor="#fbbf24" // Amber-300
         />
 
         {/* --- TABS --- */}
-        <div className="px-4 -mt-6 relative z-20">
+        <div className="px-4 -mt-10 relative z-30">
             <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 flex">
                 {['today', 'upcoming', 'history'].map((tab) => (
                     <button

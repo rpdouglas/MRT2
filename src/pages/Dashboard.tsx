@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
 import RecoveryHero from '../components/RecoveryHero';
-import VibrantHeader from '../components/VibrantHeader'; // NEW
+import VibrantHeader from '../components/VibrantHeader';
 import { HomeIcon } from '@heroicons/react/24/outline';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
@@ -35,7 +35,6 @@ export default function Dashboard() {
                 const userData = userDocSnap.data();
                 if (userData.sobrietyDate) {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
-                    
                     const now = new Date();
                     const diffTime = Math.abs(now.getTime() - start.getTime());
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -100,7 +99,7 @@ export default function Dashboard() {
         // No percentage ring for dashboard
       />
 
-      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-6 relative z-20">
+      <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-30">
         <RecoveryHero 
            userName={user?.displayName?.split(' ')[0] || 'Friend'}
            daysClean={daysClean}
