@@ -6,6 +6,7 @@ import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calc
 import RecoveryHero from '../components/RecoveryHero';
 import VibrantHeader from '../components/VibrantHeader';
 import { HomeIcon } from '@heroicons/react/24/outline';
+import { THEME } from '../lib/theme';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
@@ -87,16 +88,16 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className="pb-24 bg-slate-100 min-h-screen">
+    <div className={`pb-24 min-h-screen ${THEME.dashboard.page}`}>
       
-      {/* IMMERSIVE HEADER: The Horizon */}
+      {/* IMMERSIVE HEADER */}
       <VibrantHeader 
         title="Dashboard"
         subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}
         icon={HomeIcon}
-        fromColor="from-sky-500"
-        viaColor="via-blue-600"
-        toColor="to-indigo-600"
+        fromColor={THEME.dashboard.header.from}
+        viaColor={THEME.dashboard.header.via}
+        toColor={THEME.dashboard.header.to}
       />
 
       <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-30">

@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { WORKBOOKS } from '../data/workbooks';
 import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
     BookOpenIcon, 
     StarIcon, 
@@ -65,18 +66,18 @@ export default function Workbooks() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-green-100">
+    <div className={`pb-24 relative min-h-screen ${THEME.workbooks.page}`}>
       
-      {/* HEADER: The Growth */}
+      {/* HEADER */}
       <VibrantHeader 
         title="Recovery Library"
         subtitle="Structured guides to process your journey."
         icon={AcademicCapIcon}
-        fromColor="from-emerald-600"
-        viaColor="via-green-600"
-        toColor="to-lime-600"
+        fromColor={THEME.workbooks.header.from}
+        viaColor={THEME.workbooks.header.via}
+        toColor={THEME.workbooks.header.to}
         percentage={stats.mastery}
-        percentageColor="#a3e635"
+        percentageColor={THEME.workbooks.ring}
       />
 
       <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
@@ -113,11 +114,9 @@ export default function Workbooks() {
                       className={`block relative group bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md ${theme.border} border-l-[6px]`}
                   >
                       <div className="flex items-start gap-4">
-                          
                           <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
                               <theme.icon className="h-6 w-6" />
                           </div>
-
                           <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between mb-1">
                                   <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
@@ -125,11 +124,9 @@ export default function Workbooks() {
                                   </h3>
                                   <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                               </div>
-                              
                               <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                                   {workbook.description}
                               </p>
-
                               <div className="flex items-center gap-3">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
                                       {workbook.sections.length} Sections

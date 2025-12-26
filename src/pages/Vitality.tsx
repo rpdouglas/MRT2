@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
     HeartIcon, 
     FireIcon, 
@@ -150,16 +151,17 @@ export default function Vitality() {
     };
 
     return (
-        <div className="pb-24 relative min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
+        <div className={`pb-24 relative min-h-screen ${THEME.vitality.page}`}>
+            {/* HEADER */}
             <VibrantHeader 
                 title="Vitality & Health"
                 subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                 icon={HeartIcon}
-                fromColor="from-rose-500"
-                viaColor="via-orange-500"
-                toColor="to-amber-500"
+                fromColor={THEME.vitality.header.from}
+                viaColor={THEME.vitality.header.via}
+                toColor={THEME.vitality.header.to}
                 percentage={bioBalance}
-                percentageColor="#fbbf24"
+                percentageColor={THEME.vitality.ring}
             />
 
             <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">

@@ -11,6 +11,7 @@ import {
   ExclamationCircleIcon 
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { THEME } from '../lib/theme';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -108,16 +109,16 @@ export default function Profile() {
   if (loading) return <div>Loading profile...</div>;
 
   return (
-    <div className="pb-24 bg-gray-200 min-h-screen">
+    <div className={`pb-24 min-h-screen ${THEME.profile.page}`}>
       
-      {/* HEADER: The Anchor */}
+      {/* HEADER */}
       <VibrantHeader 
         title="My Profile"
         subtitle={user?.email || ''}
         icon={UserCircleIcon}
-        fromColor="from-slate-700"
-        viaColor="via-gray-800"
-        toColor="to-zinc-900"
+        fromColor={THEME.profile.header.from}
+        viaColor={THEME.profile.header.via}
+        toColor={THEME.profile.header.to}
       />
 
       <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">

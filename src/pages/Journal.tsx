@@ -4,6 +4,7 @@ import JournalEditor, { type JournalEntry } from '../components/journal/JournalE
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
 import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
   PencilSquareIcon, 
   ClockIcon, 
@@ -13,6 +14,7 @@ import {
 
 export default function Journal() {
   const [searchParams, setSearchParams] = useSearchParams();
+  
   const activeTab = searchParams.get('tab') || 'write';
   const initialTemplateId = searchParams.get('template');
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
@@ -40,16 +42,16 @@ export default function Journal() {
   };
 
   return (
-    <div className="pb-24 bg-indigo-100 min-h-screen">
+    <div className={`pb-24 min-h-screen ${THEME.journal.page}`}>
       
-      {/* VIBRANT HEADER: The Deep Dive */}
+      {/* VIBRANT HEADER */}
       <VibrantHeader 
         title="Journal"
         subtitle="Capture your thoughts and uncover patterns."
         icon={BookOpenIcon}
-        fromColor="from-indigo-600"
-        viaColor="via-purple-600"
-        toColor="to-violet-600"
+        fromColor={THEME.journal.header.from}
+        viaColor={THEME.journal.header.via}
+        toColor={THEME.journal.header.to}
       />
 
       <div className="max-w-7xl mx-auto space-y-6 px-4 -mt-10 relative z-20">

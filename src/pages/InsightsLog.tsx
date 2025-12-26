@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
   LightBulbIcon, 
   SparklesIcon, 
@@ -40,15 +41,15 @@ export default function InsightsLog() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
 
   return (
-    <div className="pb-24 relative min-h-screen bg-fuchsia-100">
-      {/* HEADER: The Wisdom */}
+    <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
+      {/* HEADER */}
       <VibrantHeader 
         title="Insights"
         subtitle="A timeline of your AI coaching sessions and breakthroughs."
         icon={LightBulbIcon}
-        fromColor="from-fuchsia-600"
-        viaColor="via-pink-600"
-        toColor="to-rose-500"
+        fromColor={THEME.insights.header.from}
+        viaColor={THEME.insights.header.via}
+        toColor={THEME.insights.header.to}
       />
 
       <div className="px-4 -mt-10 relative z-30">
@@ -109,7 +110,6 @@ export default function InsightsLog() {
                                     <h3 className="text-lg font-bold text-gray-900 mb-2">Daily Reflection</h3>
                                     <p className="text-gray-600 text-sm leading-relaxed">{insight.summary}</p>
                                 </div>
-                                
                                 <div className="flex flex-wrap gap-3 text-xs">
                                     <div className="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-blue-700">
                                         Mood: <span className="font-bold">{insight.mood}</span>
@@ -118,7 +118,6 @@ export default function InsightsLog() {
                                         Sentiment: <span className="font-bold">{insight.sentiment}</span>
                                     </div>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
                                         <div className="text-orange-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
@@ -135,7 +134,6 @@ export default function InsightsLog() {
                                 </div>
                             </div>
                         )}
-
                         {insight.type === 'workbook' && (
                             <div className="space-y-5">
                                 <div>
@@ -143,7 +141,6 @@ export default function InsightsLog() {
                                         {insight.scope_context}
                                     </h3>
                                 </div>
-                                
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
                                         <div className="text-blue-800 font-bold text-xs uppercase mb-1">Understanding</div>
@@ -158,7 +155,6 @@ export default function InsightsLog() {
                                         <p className="text-xs text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p>
                                     </div>
                                 </div>
-
                                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                     <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1">
                                         <CheckCircleIcon className="h-4 w-4" /> Action Plan
