@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { 
     generateSalt, 
     generateKey, 
@@ -117,22 +117,64 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   // 3. Unlock Vault (Enter PIN)
   const unlockVault = async (pin: string): Promise<boolean> => {
-    if (!salt) return false;
+    if (!salt || !user || !db) return false;
     
     try {
-      // Step A: If we have a stored verifier, check it first. (Strict Mode)
+      // --- STRATEGY A: Standard Strict Verification (New Users) ---
       if (verifier) {
           const checkHash = await computePinHash(pin, salt);
           if (checkHash !== verifier) {
               console.warn("Strict Verification Failed: Invalid PIN");
               return false; // REJECT
           }
+          await generateKey(pin, salt);
+          setIsVaultUnlocked(true);
+          return true;
       }
 
-      // Step B: Derive the key (If we are here, PIN is likely correct or we are in legacy mode)
+      // --- STRATEGY B: Legacy Fallback & Auto-Migration (Existing Users) ---
+      // We don't have a hash, so we must try to decrypt actual data to verify the PIN.
+      console.log("Legacy User detected: Attempting canary decryption...");
+      
+      // 1. Generate key tentatively
       await generateKey(pin, salt);
+
+      // 2. Fetch ONE encrypted journal entry to test the key
+      const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+          const testDoc = snapshot.docs[0].data();
+          if (testDoc.content && testDoc.isEncrypted) {
+              try {
+                  // 3. The Test: Try to decrypt
+                  // AES-GCM throws an error if the key is wrong (Authentication Tag mismatch)
+                  await decrypt(testDoc.content); 
+                  
+                  // 4. Success! We verified the PIN works. Now MIGRATING user to secure flow.
+                  console.log("Legacy Migration: Generating pinVerifier...");
+                  const newVerifier = await computePinHash(pin, salt);
+                  const userDocRef = doc(db, 'users', user.uid);
+                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                  setVerifier(newVerifier); // Update local state
+
+              } catch (e) {
+                  console.error("Legacy Verification Failed: Wrong PIN", e);
+                  clearKey(); // Wipe the bad key
+                  return false; // REJECT
+              }
+          }
+      } else {
+          // No data to verify against? Assume correct and migrate to lock it in.
+          const newVerifier = await computePinHash(pin, salt);
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+          setVerifier(newVerifier);
+      }
+
       setIsVaultUnlocked(true);
       return true;
+
     } catch (error) {
       console.error("Unlock failed", error);
       return false;
