@@ -1,9 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * FIXED: TypeScript Error 2769 (No overload matches this call) by using a non-nullable constant for the Firestore instance.
- * FIXED: Resolved issues where strict null-checks on 'db' were not correctly inferred by the compiler.
- * MAINTAINED: 7-day backup reminder logic and gamification calculations.
+ * CLEANUP: Removed unused 'no-console' eslint-disable directive.
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -52,25 +50,21 @@ export default function Dashboard() {
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
 
   useEffect(() => {
-    // 1. Guard against unauthenticated state or uninitialized DB
     if (!user || !db) {
         if (!user) setLoading(false);
         return;
     }
 
-    // 2. Create a local non-nullable reference to satisfy TypeScript's overloads
     const database: Firestore = db;
 
     const loadDashboardData = async () => {
         try {
-            // Firestore Profile check
             const userDocRef = doc(database, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
               
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 
-                // Sobriety Date Calculation
                 if (userData.sobrietyDate) {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
                     const now = new Date();
@@ -79,7 +73,6 @@ export default function Dashboard() {
                     setDaysClean(diffDays);
                 }
 
-                // BACKUP REMINDER LOGIC
                 const lastExport = userData.lastExportAt as Timestamp | undefined;
                 const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
                 if (!lastExport || lastExport.toMillis() < sevenDaysAgo) {
@@ -87,7 +80,6 @@ export default function Dashboard() {
                 }
             }
 
-            // Journal Stats
             const journalQ = query(
                 collection(database, 'journals'), 
                 where('uid', '==', user.uid),
@@ -105,21 +97,18 @@ export default function Dashboard() {
             const vStats = calculateVitalityStats(journals);
             setVitalityStats(vStats);
 
-            // Task Stats
             const taskQ = query(collection(database, 'tasks'), where('uid', '==', user.uid));
             const taskSnap = await getDocs(taskQ);
             const tasks = taskSnap.docs.map(d => d.data());
             const tStats = calculateTaskStats(tasks);
             setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
 
-            // Workbook Stats
             const wbQ = query(collection(database, 'users', user.uid, 'workbook_answers'));
             const wbSnap = await getDocs(wbQ);
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
 
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error("Dashboard load error:", error);
         } finally {
             setLoading(false);
@@ -145,7 +134,6 @@ export default function Dashboard() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20 space-y-6">
-        {/* BACKUP REMINDER BANNER */}
         {showBackupBanner && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
             <div className="flex items-center gap-3">
