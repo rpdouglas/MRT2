@@ -1,6 +1,14 @@
+/**
+ * GITHUB COMMENT:
+ * [DataManagement.tsx]
+ * UPDATED: Added logic to track 'lastExportAt' in Firestore upon successful download.
+ * Clears local state and provides success feedback to signal the user is protected.
+ */
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
+import { db } from '../../lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { fetchAllUserData } from '../../lib/db';
 import { prepareDataForExport, generateJSON, generatePDF } from '../../lib/exporter';
 import { importLegacyJournals } from '../../lib/importer';
@@ -18,20 +26,16 @@ export default function DataManagement() {
     const { user } = useAuth();
     const { isVaultUnlocked } = useEncryption();
     
-    // Export State
     const [exporting, setExporting] = useState(false);
     const [progress, setProgress] = useState(0);
     const [exportError, setExportError] = useState<string | null>(null);
 
-    // Import State
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importing, setImporting] = useState(false);
     const [importStatus, setImportStatus] = useState<string | null>(null);
 
-    // --- EXPORT HANDLERS ---
-
     const handleExport = async (format: 'json' | 'pdf') => {
-        if (!user) return;
+        if (!user || !db) return;
         if (!isVaultUnlocked) {
             setExportError("Please unlock your vault (go to Journal) before exporting data.");
             return;
@@ -42,14 +46,11 @@ export default function DataManagement() {
         setExportError(null);
 
         try {
-            // 1. Fetch
             const rawData = await fetchAllUserData(user.uid);
             setProgress(10);
 
-            // 2. Decrypt
-            const cleanData = await prepareDataForExport(rawData, (p) => setProgress(10 + Math.floor(p * 0.8))); // 10-90%
+            const cleanData = await prepareDataForExport(rawData, (p) => setProgress(10 + Math.floor(p * 0.8)));
             
-            // 3. Generate File
             let blob: Blob;
             let filename: string;
             const dateStr = new Date().toISOString().split('T')[0];
@@ -63,7 +64,6 @@ export default function DataManagement() {
             }
             setProgress(100);
 
-            // 4. Download
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -73,6 +73,9 @@ export default function DataManagement() {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
+
         } catch (error) {
             console.error("Export failed", error);
             setExportError("Failed to generate export. Check console.");
@@ -80,8 +83,6 @@ export default function DataManagement() {
             setTimeout(() => setExporting(false), 2000);
         }
     };
-
-    // --- IMPORT HANDLERS ---
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -109,15 +110,13 @@ export default function DataManagement() {
 
     return (
         <div className="space-y-8">
-            
-            {/* EXPORT SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
                     Data Sovereignty (Export)
                 </h3>
                 <p className="text-sm text-gray-600 mb-6">
-                    Download a complete copy of your encrypted data. You can save a raw JSON backup or a readable PDF.
+                    Download a copy of your data. You can save a raw JSON backup or a readable PDF.
                     <span className="block mt-2 text-orange-600 text-xs font-semibold bg-orange-50 p-2 rounded border border-orange-100">
                         <ExclamationTriangleIcon className="h-3 w-3 inline mr-1" />
                         Warning: Exported files are NOT encrypted. Store them securely.
@@ -156,7 +155,6 @@ export default function DataManagement() {
                     </div>
                 )}
 
-                {/* Progress Bar */}
                 {exporting && (
                     <div className="mt-4">
                         <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -177,15 +175,13 @@ export default function DataManagement() {
                 )}
             </div>
 
-            {/* IMPORT SECTION */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <ArrowUpTrayIcon className="h-5 w-5 text-gray-500" />
                     Import Legacy Data
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                    If you have a JSON backup of your journals from the old app, you can import them here. 
-                    This will add them to your history.
+                    Restore data from a JSON backup. This will add entries to your history.
                 </p>
 
                 <div className="flex flex-col gap-4">

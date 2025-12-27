@@ -1,8 +1,25 @@
-// src/contexts/EncryptionContext.tsx
+/**
+ * GITHUB COMMENT:
+ * [EncryptionContext.tsx]
+ * ADDED: 'resetVault' method to the context to enable the PIN recovery flow.
+ * FIXED: Included 'deleteField' in Firestore imports for clean removal of security metadata.
+ * MAINTAINED: Existing Legacy Fallback logic for users without verifiers.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  deleteField, 
+  collection, 
+  query, 
+  where, 
+  limit, 
+  getDocs 
+} from 'firebase/firestore';
 import { 
     generateSalt, 
     generateKey, 
@@ -19,6 +36,7 @@ interface EncryptionContextType {
   vaultLoading: boolean;
   unlockVault: (pin: string) => Promise<boolean>;
   setupVault: (pin: string) => Promise<void>;
+  resetVault: () => Promise<void>; // Added for PIN reset feature
   encrypt: (text: string) => Promise<string>;
   decrypt: (encryptedText: string) => Promise<string>;
   lockVault: () => void;
@@ -115,6 +133,33 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
+  // NEW: Reset Vault (PIN Recovery)
+  const resetVault = async () => {
+    if (!user || !db) return;
+    try {
+      setVaultLoading(true);
+      const userDocRef = doc(db, 'users', user.uid);
+      
+      // Physically remove the lock fields from Firestore
+      await setDoc(userDocRef, {
+        encryptionSalt: deleteField(),
+        pinVerifier: deleteField()
+      }, { merge: true });
+      
+      // Clear local memory
+      clearKey();
+      setIsVaultSet(false);
+      setIsVaultUnlocked(false);
+      setSalt(null);
+      setVerifier(null);
+    } catch (error) {
+      console.error("Vault reset failed:", error);
+      throw error;
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
   // 3. Unlock Vault (Enter PIN)
   const unlockVault = async (pin: string): Promise<boolean> => {
     // If no salt exists, we can't even try.
@@ -151,8 +196,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                   // 3. The Test: Try to decrypt
                   const result = await decrypt(testDoc.content);
                   
-                  // Check if result looks like garbage (optional extra safety, 
-                  // but usually AES-GCM throws on key mismatch anyway).
                   if (result.includes("Locked Content")) {
                       throw new Error("Decryption returned fallback string");
                   }
@@ -167,11 +210,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
               } catch (e) {
                   // 5. FAILURE CASE
                   console.warn("Legacy Verification Warning: Decryption failed or Key mismatch.", e);
-                  
-                  // CRITICAL CHANGE: For Legacy users, we CANNOT be 100% sure if the PIN is wrong
-                  // or if the crypto parameters changed.
-                  // To avoid permanent lockout, we ALLOW access but do NOT migrate.
-                  // The user will see "Encrypted" text in the UI if the PIN was actually wrong.
                   console.log("Legacy Fallback: Allowing access tentatively (Verifier NOT created).");
                   setIsVaultUnlocked(true); 
                   return true; 
@@ -216,6 +254,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     vaultLoading,
     unlockVault,
     setupVault,
+    resetVault, // Exporting the new reset method
     encrypt: handleEncrypt,
     decrypt: handleDecrypt,
     lockVault

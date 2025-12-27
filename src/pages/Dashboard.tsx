@@ -1,16 +1,40 @@
+/**
+ * GITHUB COMMENT:
+ * [Dashboard.tsx]
+ * FIXED: TypeScript Error 2769 (No overload matches this call) by using a non-nullable constant for the Firestore instance.
+ * FIXED: Resolved issues where strict null-checks on 'db' were not correctly inferred by the compiler.
+ * MAINTAINED: 7-day backup reminder logic and gamification calculations.
+ */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
-import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats } from '../lib/gamification';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
+  doc, 
+  getDoc,
+  type Timestamp,
+  type Firestore 
+} from 'firebase/firestore';
+import { 
+  calculateJournalStats, 
+  calculateTaskStats, 
+  calculateWorkbookStats, 
+  calculateVitalityStats 
+} from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
 import { 
   HomeIcon, 
   FireIcon, 
   ChartBarIcon, 
   SparklesIcon, 
-  HeartIcon 
+  HeartIcon,
+  ArrowDownTrayIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 
@@ -19,8 +43,8 @@ const TOTAL_WORKBOOK_QUESTIONS = 45;
 export default function Dashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [showBackupBanner, setShowBackupBanner] = useState(false);
 
-  // Data State
   const [daysClean, setDaysClean] = useState<number>(0);
   const [journalStats, setJournalStats] = useState({ streak: 0, consistency: 0 });
   const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
@@ -28,18 +52,25 @@ export default function Dashboard() {
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
 
   useEffect(() => {
-    if (!user) return;
+    // 1. Guard against unauthenticated state or uninitialized DB
+    if (!user || !db) {
+        if (!user) setLoading(false);
+        return;
+    }
+
+    // 2. Create a local non-nullable reference to satisfy TypeScript's overloads
+    const database: Firestore = db;
 
     const loadDashboardData = async () => {
-        if (!db) return;
-
         try {
-            // 0. Fetch User Profile for Sobriety Date
-            const userDocRef = doc(db, 'users', user.uid);
+            // Firestore Profile check
+            const userDocRef = doc(database, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
               
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
+                
+                // Sobriety Date Calculation
                 if (userData.sobrietyDate) {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
                     const now = new Date();
@@ -47,11 +78,18 @@ export default function Dashboard() {
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                     setDaysClean(diffDays);
                 }
+
+                // BACKUP REMINDER LOGIC
+                const lastExport = userData.lastExportAt as Timestamp | undefined;
+                const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                if (!lastExport || lastExport.toMillis() < sevenDaysAgo) {
+                    setShowBackupBanner(true);
+                }
             }
 
-            // 1. Fetch Journals
+            // Journal Stats
             const journalQ = query(
-                collection(db, 'journals'), 
+                collection(database, 'journals'), 
                 where('uid', '==', user.uid),
                 orderBy('createdAt', 'desc')
             );
@@ -67,20 +105,21 @@ export default function Dashboard() {
             const vStats = calculateVitalityStats(journals);
             setVitalityStats(vStats);
 
-            // 2. Fetch Tasks
-            const taskQ = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+            // Task Stats
+            const taskQ = query(collection(database, 'tasks'), where('uid', '==', user.uid));
             const taskSnap = await getDocs(taskQ);
             const tasks = taskSnap.docs.map(d => d.data());
             const tStats = calculateTaskStats(tasks);
             setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
 
-            // 3. Fetch Workbook Answers
-            const wbQ = query(collection(db, 'users', user.uid, 'workbook_answers'));
+            // Workbook Stats
+            const wbQ = query(collection(database, 'users', user.uid, 'workbook_answers'));
             const wbSnap = await getDocs(wbQ);
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
 
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error("Dashboard load error:", error);
         } finally {
             setLoading(false);
@@ -93,10 +132,7 @@ export default function Dashboard() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    // Fixed Viewport Layout
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
-      
-      {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard"
@@ -108,13 +144,30 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 2. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20 space-y-6">
-        
-        {/* --- HERO: Sobriety Counter --- */}
+        {/* BACKUP REMINDER BANNER */}
+        {showBackupBanner && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <div className="bg-amber-100 p-2 rounded-full text-amber-700">
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-900">Secure Your Progress</p>
+                <p className="text-xs text-amber-700">It's been a week since your last backup.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Backup</Link>
+              <button onClick={() => setShowBackupBanner(false)} className="text-amber-400 hover:text-amber-600">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center relative overflow-hidden group hover:shadow-md transition-all">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600"></div>
-            
             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Clean Time</div>
             <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 drop-shadow-sm mb-2">
                 {daysClean}
@@ -122,10 +175,7 @@ export default function Dashboard() {
             <div className="text-sm font-medium text-slate-500">Days of Freedom</div>
         </div>
 
-        {/* --- STATS GRID --- */}
         <div className="grid grid-cols-2 gap-4">
-            
-            {/* Journal Card */}
             <Link to="/journal" className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 active:scale-95 transition-all hover:border-indigo-300 relative overflow-hidden">
                 <div className="absolute right-0 top-0 p-3 opacity-10">
                     <ChartBarIcon className="h-12 w-12 text-indigo-600" />
@@ -140,7 +190,6 @@ export default function Dashboard() {
                 <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            {/* Habits Card */}
             <Link to="/tasks" className="bg-white p-5 rounded-2xl shadow-sm border border-cyan-100 active:scale-95 transition-all hover:border-cyan-300 relative overflow-hidden">
                 <div className="absolute right-0 top-0 p-3 opacity-10">
                     <FireIcon className="h-12 w-12 text-cyan-600" />
@@ -155,7 +204,6 @@ export default function Dashboard() {
                 <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            {/* Wisdom Card */}
             <Link to="/workbooks" className="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100 active:scale-95 transition-all hover:border-emerald-300 relative overflow-hidden">
                 <div className="absolute right-0 top-0 p-3 opacity-10">
                     <SparklesIcon className="h-12 w-12 text-emerald-600" />
@@ -170,7 +218,6 @@ export default function Dashboard() {
                 <div className="text-xs text-slate-400 font-medium mt-1">Mastery</div>
             </Link>
 
-            {/* Vitality Card */}
             <Link to="/vitality" className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100 active:scale-95 transition-all hover:border-orange-300 relative overflow-hidden">
                 <div className="absolute right-0 top-0 p-3 opacity-10">
                     <HeartIcon className="h-12 w-12 text-orange-600" />
@@ -184,7 +231,6 @@ export default function Dashboard() {
                 <div className="text-3xl font-bold text-slate-900">{vitalityStats.bioStreak}</div>
                 <div className="text-xs text-slate-400 font-medium mt-1">Bio Streak</div>
             </Link>
-
         </div>
       </div>
     </div>
