@@ -1,3 +1,4 @@
+// src/contexts/EncryptionContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
@@ -5,9 +6,10 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { 
     generateSalt, 
     generateKey, 
+    computePinHash,
     encrypt, 
     decrypt, 
-    clearKey,
+    clearKey, 
     isVaultUnlocked as checkLibUnlocked 
 } from '../lib/crypto';
 
@@ -39,9 +41,11 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [isVaultSet, setIsVaultSet] = useState(false);
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [vaultLoading, setVaultLoading] = useState(true);
+  
   const [salt, setSalt] = useState<string | null>(null);
+  const [verifier, setVerifier] = useState<string | null>(null); // Stored Hash of PIN
 
-  // 1. Check if user has a vault set up (fetch salt)
+  // 1. Check if user has a vault set up (fetch salt & verifier)
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -53,9 +57,18 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
         
-        if (userDoc.exists() && userDoc.data().encryptionSalt) {
-          setIsVaultSet(true);
-          setSalt(userDoc.data().encryptionSalt);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.encryptionSalt) {
+            setIsVaultSet(true);
+            setSalt(data.encryptionSalt);
+            // If verification hash exists (New Users), load it.
+            if (data.pinVerifier) {
+                setVerifier(data.pinVerifier);
+            }
+          } else {
+            setIsVaultSet(false);
+          }
         } else {
           setIsVaultSet(false);
         }
@@ -77,14 +90,21 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setVaultLoading(true);
       const newSalt = generateSalt();
       
-      // Update Lib: Generate and store key internally
+      // A. Generate Key for Memory
       await generateKey(pin, newSalt);
       
-      // Save Salt to Firestore
+      // B. Generate Verification Hash for Storage
+      const newVerifier = await computePinHash(pin, newSalt);
+      
+      // C. Save Salt & Verifier to Firestore
       const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { encryptionSalt: newSalt }, { merge: true });
+      await setDoc(userDocRef, { 
+          encryptionSalt: newSalt,
+          pinVerifier: newVerifier
+      }, { merge: true });
 
       setSalt(newSalt);
+      setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
     } catch (error) {
@@ -98,8 +118,18 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   // 3. Unlock Vault (Enter PIN)
   const unlockVault = async (pin: string): Promise<boolean> => {
     if (!salt) return false;
+    
     try {
-      // Update Lib: Generate and store key internally
+      // Step A: If we have a stored verifier, check it first. (Strict Mode)
+      if (verifier) {
+          const checkHash = await computePinHash(pin, salt);
+          if (checkHash !== verifier) {
+              console.warn("Strict Verification Failed: Invalid PIN");
+              return false; // REJECT
+          }
+      }
+
+      // Step B: Derive the key (If we are here, PIN is likely correct or we are in legacy mode)
       await generateKey(pin, salt);
       setIsVaultUnlocked(true);
       return true;

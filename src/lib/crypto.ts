@@ -44,6 +44,20 @@ export async function generateKey(pin: string, saltBase64: string): Promise<Cryp
 }
 
 /**
+ * Computes a secure hash of the PIN + Salt for identity verification.
+ * This allows us to validate the PIN before attempting to derive the encryption key.
+ * @param pin - The input PIN
+ * @param saltBase64 - The user's salt
+ */
+export async function computePinHash(pin: string, saltBase64: string): Promise<string> {
+  const enc = new TextEncoder();
+  const data = enc.encode(pin + saltBase64);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Encrypts a string using AES-GCM.
  * Returns format: "IV_HEX:CIPHERTEXT_HEX"
  */
