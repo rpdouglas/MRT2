@@ -1,206 +1,214 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-// UPDATED: Using 'gemini-1.5-flash' (standard) or your preferred 'gemini-2.5-flash' if available.
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+// using import.meta.env for Vite
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY || '');
 
-// --- Types ---
+// --- Configuration ---
+const GENERATION_CONFIG = {
+  temperature: 0.7,
+  topP: 0.8,
+  topK: 40,
+  maxOutputTokens: 8192, // Increased for full workbook/comparative analysis
+};
 
-export interface AnalysisResult {
-  summary: string;
-  mood: string;
-  sentiment: 'Positive' | 'Neutral' | 'Negative' | 'Mixed';
-  risk_analysis: string;
-  positive_reinforcement: string;
-  tool_suggestions: string[];
+// --- Interfaces ---
+
+// 1. Single/Short Journal Analysis
+export interface AIAnalysisResult {
+    sentiment: 'Positive' | 'Neutral' | 'Negative';
+    moodScore: number;
+    summary: string;
+    actionableSteps: string[];
+    risks: string[];
 }
 
+// 2. Comparative/Wizard Analysis (NEW)
+export interface ComparativeAnalysisResult {
+    trajectory: 'Improving' | 'Stable' | 'Declining' | 'Fluctuating';
+    key_themes: string[];
+    comparison_summary: string;
+    wins: string[];
+    blind_spots: string[];
+    actionable_advice: string[];
+}
+
+// 3. Workbook Holistic Analysis
 export interface WorkbookAnalysisResult {
-  scope_context: string; 
-  pillars: {
-    understanding: string; 
-    emotional_resonance: string; 
-    blind_spots: string; 
-  };
-  suggested_actions: string[]; 
+    summary: string;
+    emotional_state: string;
+    core_values: string[];
+    limiting_beliefs: string[];
+    recommended_focus: string;
+    action_plan: string[];
 }
 
-// --- Helpers ---
+// --- Helper: Robust Retry Logic ---
+// Implements the "AI Cascade": Flash -> Pro -> Lite
+async function generateWithRetry(modelName: string, prompt: string, retries = 2): Promise<string> {
+    const modelsToTry = [modelName, 'gemini-1.5-pro', 'gemini-1.5-flash']; // Fallback chain
+    
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const currentModelName = modelsToTry[i] || modelsToTry[modelsToTry.length - 1];
+            const model = genAI.getGenerativeModel({ 
+                model: currentModelName, 
+                generationConfig: GENERATION_CONFIG 
+            });
+            
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            
+            if (!text) throw new Error("Empty response from AI");
+            return text;
+        } catch (error) {
+            console.warn(`Attempt ${i + 1} with ${modelsToTry[i]} failed:`, error);
+            if (i === retries) throw error;
+            // Linear backoff: 1s, 2s...
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
+        }
+    }
+    throw new Error("All AI models failed to respond.");
+}
+
+// --- Helper: JSON Cleaner ---
+function cleanJSON(text: string): string {
+    // Removes Markdown code blocks (```json ... ```) to parse raw JSON
+    return text.replace(/```json\n?|```/g, '').trim();
+}
+
+// ============================================================================
+//  CORE FUNCTIONS
+// ============================================================================
 
 /**
- * Robust JSON parser that strips Markdown code blocks (```json ... ```)
- * to prevent JSON.parse() from crashing.
+ * 1. COMPARATIVE ANALYSIS (The New Wizard)
+ * Compares two sets of journal entries (e.g. Weekly vs Last Week)
  */
-function cleanAndParseJSON(text: string): unknown {
-  try {
-    // 1. Remove markdown code fences
-    let cleanText = text.replace(/```json/g, '').replace(/```/g, '');
+export async function generateComparativeAnalysis(
+    currentSet: string, 
+    previousSet: string | null, 
+    scope: 'weekly' | 'monthly' | 'all-time'
+): Promise<ComparativeAnalysisResult> {
     
-    // 2. Trim whitespace
-    cleanText = cleanText.trim();
-    
-    return JSON.parse(cleanText);
-  } catch (error) {
-    console.error("JSON Parsing Failed:", error);
-    console.log("Raw Text was:", text);
-    throw new Error("Failed to parse AI response.");
-  }
+    let promptContext = "";
+
+    if (scope === 'all-time') {
+        promptContext = `
+        Perform a Deep Holistic Review of this entire journal history.
+        Identify long-term patterns, core triggers, and the overall arc of recovery.
+        
+        JOURNAL DATA:
+        ${currentSet}
+        `;
+    } else {
+        promptContext = `
+        Perform a Comparative Review between two time periods (${scope}).
+        Compare the "Current Period" against the "Previous Period" to identify trajectory.
+
+        CURRENT PERIOD:
+        ${currentSet}
+
+        PREVIOUS PERIOD:
+        ${previousSet || "No data available for previous period."}
+        `;
+    }
+
+    const systemPrompt = `
+    You are a wise and empathetic Recovery Coach specialized in pattern recognition.
+    Analyze the provided journal entries and return a JSON object with this EXACT structure:
+    {
+        "trajectory": "Improving" | "Stable" | "Declining" | "Fluctuating",
+        "key_themes": ["Theme 1", "Theme 2", "Theme 3"],
+        "comparison_summary": "A 2-3 sentence narrative comparing the periods (or summarizing the journey).",
+        "wins": ["Specific win 1", "Specific win 2"],
+        "blind_spots": ["Potential risk or overlooked area 1", "Area 2"],
+        "actionable_advice": ["Concrete step 1", "Concrete step 2", "Concrete step 3"]
+    }
+    DO NOT use Markdown formatting. Return ONLY the raw JSON string.
+    `;
+
+    const text = await generateWithRetry('gemini-1.5-flash', systemPrompt + promptContext);
+    return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
 /**
- * Truncates text to a safe token limit (~12,000 characters) to prevent 429 errors.
+ * 2. SINGLE ENTRY / SHORT TERM ANALYSIS (Legacy Sparkle Button)
+ * Analyzes a small batch of entries for immediate sentiment/risk.
  */
-const truncatePayload = (text: string, limit: number = 12000): string => {
-  if (text.length <= limit) return text;
-  return text.substring(0, limit) + "...(truncated for analysis)";
-};
+export async function generateJournalAnalysis(content: string): Promise<AIAnalysisResult> {
+    const prompt = `
+      You are a Recovery AI Assistant. Analyze the following journal entries for emotional tone, risks, and actionable steps.
+      
+      ENTRIES:
+      ${content}
+
+      Return a JSON object with this structure:
+      {
+        "sentiment": "Positive" | "Neutral" | "Negative",
+        "moodScore": number (1-10 integer based on tone),
+        "summary": "1 sentence summary of the user's state",
+        "actionableSteps": ["Step 1", "Step 2", "Step 3"],
+        "risks": ["Risk 1", "Risk 2"] (If none, return empty array)
+      }
+      Return ONLY raw JSON.
+    `;
+    
+    const text = await generateWithRetry('gemini-1.5-flash', prompt);
+    return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
+}
 
 /**
- * Wraps the API call with a retry mechanism for 429 (Rate Limit) errors.
+ * 3. WORKBOOK WIZARD (Deep Dive)
+ * Analyzes a full workbook or section to generate the "Compass" report.
  */
-const generateWithRetry = async (prompt: string, retries = 2): Promise<string | null> => {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      const result = await model.generateContent(prompt);
-      const response = result.response;
-      return response.text();
-    } catch (err: unknown) {
-      const error = err as { message?: string; status?: number };
-      
-      const isRateLimit = error.message?.includes('429') || error.status === 429;
-      const isServerOverload = error.message?.includes('503') || error.status === 503;
-      
-      if ((isRateLimit || isServerOverload) && i < retries) {
-        const waitTime = 2000 * (i + 1);
-        console.warn(`Gemini API Busy (Attempt ${i + 1}). Retrying in ${waitTime}ms...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        continue;
-      }
-      
-      console.error("Gemini Generation Error:", error);
-      return null;
-    }
-  }
-  return null;
-};
-
-// --- Journal Analysis ---
-
-export const analyzeJournalEntries = async (entries: string[]): Promise<AnalysisResult | null> => {
-  if (!API_KEY) {
-    console.warn("Gemini API Key missing.");
-    return null;
-  }
-
-  const rawText = entries.join('\n---\n');
-  const safeText = truncatePayload(rawText);
-
-  try {
-    const prompt = `
-      Act as a compassionate, wise, and highly experienced addiction recovery sponsor.
-      Analyze the following journal entries from a user in recovery.
-      
-      Entries:
-      ${safeText}
-      
-      Return a JSON object with the following fields:
-      - summary: A 2-3 sentence compassionate summary of the user's current state.
-      - mood: A 1-word descriptor of the overall mood (e.g., "Reflective", "Anxious", "Hopeful").
-      - sentiment: One of "Positive", "Neutral", "Negative", "Mixed".
-      - risk_analysis: Identify any potential relapse triggers or cognitive distortions.
-      - positive_reinforcement: Highlight a strength or win demonstrated in the entries.
-      - tool_suggestions: A list of 3 specific, actionable recovery tools (e.g., "Call a friend", "5-min meditation").
-      
-      Output ONLY raw JSON. Do not use Markdown formatting.
-    `;
-
-    const textResponse = await generateWithRetry(prompt);
-    if (!textResponse) return null;
-
-    return cleanAndParseJSON(textResponse) as AnalysisResult;
-
-  } catch (error) {
-    console.error("Gemini Processing Error:", error);
-    return null;
-  }
-};
-
-// --- Workbook Analysis ---
-
-export const analyzeWorkbookContent = async (
-  content: string, 
-  scope: 'section' | 'workbook' | 'global',
-  contextTitle: string
-): Promise<WorkbookAnalysisResult | null> => {
-  if (!API_KEY) return null;
-
-  const safeContent = truncatePayload(content);
-
-  try {
-    let persona = "a supportive 12-step sponsor";
-    if (scope === 'workbook') persona = "a comprehensive recovery program director";
-    if (scope === 'global') persona = "a holistic spiritual guide reviewing the entire life journey";
-
-    const prompt = `
-      Act as ${persona}.
-      Review the following workbook Q&A content from a user in recovery.
-      Context: ${contextTitle} (${scope} level review).
-      
-      Content to Analyze:
-      ${safeContent}
-
-      Return a JSON object with:
-      - scope_context: A short title for this analysis (e.g., "Review of Step 1").
-      - pillars: {
-          understanding: "Assessment of how well the user grasps the concepts.",
-          emotional_resonance: "Observation of emotional honesty and barriers.",
-          blind_spots: "Gentle pointing out of areas they might be avoiding."
-      }
-      - suggested_actions: A list of 3 specific, concrete tasks to integrate this learning.
-      
-      Output ONLY raw JSON. Do not use Markdown formatting.
-    `;
-
-    const textResponse = await generateWithRetry(prompt);
-    if (!textResponse) return null;
-
-    return cleanAndParseJSON(textResponse) as WorkbookAnalysisResult;
-
-  } catch (error) {
-    console.error("Workbook Analysis Error:", error);
-    return null;
-  }
-};
-
-// --- NEW: AI Coaching (Single Question Feedback) ---
-
-export const getGeminiCoaching = async (question: string, answer: string): Promise<string> => {
-    if (!API_KEY) return "AI Coach Unavailable (Missing Key)";
+export async function analyzeFullWorkbook(
+    workbookTitle: string, 
+    qaPairs: { question: string; answer: string }[]
+): Promise<WorkbookAnalysisResult> {
     
-    // Truncate if answer is massive to save tokens
-    const safeAnswer = truncatePayload(answer, 2000); 
+    const formattedContent = qaPairs.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n');
 
     const prompt = `
-        You are a wise, compassionate recovery coach (like a 12-step sponsor or therapist).
-        A user is working on a workbook and just answered this question:
-        "${question}"
+    Analyze the following responses from the user's "${workbookTitle}" workbook.
+    Act as a compassionate but insightful Recovery Sponsor.
+    
+    USER RESPONSES:
+    ${formattedContent}
 
-        Their Answer:
-        "${safeAnswer}"
-
-        Provide a short (2-3 sentences), encouraging, and insightful response.
-        - Validate their honesty.
-        - Gently challenge them to go deeper if the answer seems surface-level.
-        - Do NOT just repeat what they said. Offer a new perspective or a follow-up reflection.
+    Generate a JSON object with this structure:
+    {
+        "summary": "A paragraph summarizing their understanding of this step/topic.",
+        "emotional_state": "Current emotional resonance (e.g. Resentful, Accepting, Hopeful)",
+        "core_values": ["Value 1", "Value 2"],
+        "limiting_beliefs": ["Belief 1", "Belief 2"],
+        "recommended_focus": "One specific area to meditate or focus on.",
+        "action_plan": ["Specific recovery action 1", "Specific recovery action 2", "Specific recovery action 3"]
+    }
+    Return ONLY raw JSON.
     `;
 
-    try {
-        const response = await generateWithRetry(prompt);
-        return response || "Coach is taking a moment to reflect. Try again.";
-    } catch (error) {
-        console.error("Coaching Error:", error);
-        return "Coach is currently offline.";
-    }
-};
+    const text = await generateWithRetry('gemini-1.5-pro', prompt); // Use PRO for deeper reasoning
+    return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
+}
+
+/**
+ * 4. REAL-TIME COACHING (Chat Helper)
+ * Provides immediate feedback on a specific workbook question.
+ */
+export async function getGeminiCoaching(
+    context: string, 
+    userAnswer: string
+): Promise<string> {
+    const prompt = `
+    Context: The user is working on a recovery workbook. 
+    Question Context: ${context}
+    User's Answer: "${userAnswer}"
+
+    Provide a brief, encouraging, and insightful comment (max 2 sentences). 
+    If the answer seems avoidant, gently probe deeper. If it's honest, validate it.
+    `;
+
+    return await generateWithRetry('gemini-1.5-flash', prompt);
+}
