@@ -1,14 +1,14 @@
 /**
  * GITHUB COMMENT:
  * [DataManagement.tsx]
- * UPDATED: Added logic to track 'lastExportAt' in Firestore upon successful download.
- * Clears local state and provides success feedback to signal the user is protected.
+ * UPDATED: Integrated Google Drive status indicator.
+ * Displays whether auto-sync is active based on the existence of the driveAccessToken.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, type Firestore } from 'firebase/firestore';
 import { fetchAllUserData } from '../../lib/db';
 import { prepareDataForExport, generateJSON, generatePDF } from '../../lib/exporter';
 import { importLegacyJournals } from '../../lib/importer';
@@ -19,20 +19,36 @@ import {
     CodeBracketSquareIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
-    LockClosedIcon
+    LockClosedIcon,
+    CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 export default function DataManagement() {
-    const { user } = useAuth();
+    const { user, driveAccessToken } = useAuth();
     const { isVaultUnlocked } = useEncryption();
     
     const [exporting, setExporting] = useState(false);
     const [progress, setProgress] = useState(0);
     const [exportError, setExportError] = useState<string | null>(null);
+    const [lastExportStr, setLastExportStr] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importing, setImporting] = useState(false);
     const [importStatus, setImportStatus] = useState<string | null>(null);
+
+    const loadLastExportDate = useCallback(async () => {
+        if (!user || !db) return;
+        const database: Firestore = db;
+        const snap = await getDoc(doc(database, 'users', user.uid));
+        if (snap.exists() && snap.data().lastExportAt) {
+            const date = snap.data().lastExportAt.toDate() as Date;
+            setLastExportStr(date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        }
+    }, [user]);
+
+    useEffect(() => {
+        loadLastExportDate();
+    }, [loadLastExportDate]);
 
     const handleExport = async (format: 'json' | 'pdf') => {
         if (!user || !db) return;
@@ -73,8 +89,10 @@ export default function DataManagement() {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            const userRef = doc(db, 'users', user.uid);
+            const database: Firestore = db;
+            const userRef = doc(database, 'users', user.uid);
             await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
+            loadLastExportDate();
 
         } catch (error) {
             console.error("Export failed", error);
@@ -110,10 +128,36 @@ export default function DataManagement() {
 
     return (
         <div className="space-y-8">
+            {/* GOOGLE DRIVE SYNC STATUS */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
+                        Cloud Auto-Sync
+                    </h3>
+                    {driveAccessToken ? (
+                        <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded border border-green-200">Active</span>
+                    ) : (
+                        <span className="px-2 py-1 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase rounded border border-gray-200">Inactive</span>
+                    )}
+                </div>
+                
+                {driveAccessToken ? (
+                    <div className="text-sm text-gray-600 space-y-2">
+                        <p>Linked to <strong>Google Drive</strong>. Your data is backed up automatically every 7 days when the vault is unlocked.</p>
+                        {lastExportStr && <p className="text-xs font-medium text-gray-400 italic">Last Cloud Sync: {lastExportStr}</p>}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-600">
+                        Automatic backups are only available for users who signed in with Google. Email users must perform manual exports.
+                    </p>
+                )}
+            </div>
+
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
-                    Data Sovereignty (Export)
+                    Data Sovereignty (Manual Export)
                 </h3>
                 <p className="text-sm text-gray-600 mb-6">
                     Download a copy of your data. You can save a raw JSON backup or a readable PDF.

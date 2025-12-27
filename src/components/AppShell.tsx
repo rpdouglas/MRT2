@@ -1,4 +1,10 @@
-import { Fragment, type ReactNode } from 'react';
+/**
+ * GITHUB COMMENT:
+ * [AppShell.tsx]
+ * ADDED: useAutoBackup background worker.
+ * - Triggers silent Google Drive sync when: Vault is unlocked, User has Drive token, and 7 days passed.
+ */
+import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
@@ -14,23 +20,20 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
+import { useEncryption } from '../contexts/EncryptionContext';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp, type Firestore, type Timestamp } from 'firebase/firestore';
+import { fetchAllUserData } from '../lib/db';
+import { prepareDataForExport, generateJSON } from '../lib/exporter';
+import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Journal', href: '/journal', icon: BookOpenIcon },
-    { name: 'Vitality', href: '/vitality', icon: HeartIcon },
-    { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
-    { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
-    { name: 'Insights', href: '/insights', icon: LightBulbIcon },
-    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
-  ];
+  const { user, logout, driveAccessToken } = useAuth();
+  const { isVaultUnlocked } = useEncryption();
 
   const handleLogout = async () => {
     try {
@@ -42,10 +45,63 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
   };
 
+  // --- BACKGROUND BACKUP WORKER ---
+  const performAutoBackup = useCallback(async () => {
+    if (!user || !db || !driveAccessToken || !isVaultUnlocked) return;
+    const database: Firestore = db;
+
+    try {
+      const userRef = doc(database, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return;
+
+      const userData = userSnap.data();
+      const lastExport = userData.lastExportAt as Timestamp | undefined;
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+      // Check if backup is needed
+      if (lastExport && lastExport.toMillis() > sevenDaysAgo) return;
+
+      // Prepare Data
+      const rawData = await fetchAllUserData(user.uid);
+      const cleanData = await prepareDataForExport(rawData, () => {});
+      const blob = generateJSON(cleanData);
+      const textData = await blob.text();
+
+      // Upload to Drive
+      const existingFileId = await findBackupFile(driveAccessToken);
+      const success = await uploadBackupToDrive(driveAccessToken, textData, existingFileId || undefined);
+
+      if (success) {
+        await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
+        console.log("Background Auto-Backup Successful");
+      }
+    } catch (e) {
+      console.error("Auto-backup failed silently:", e);
+    }
+  }, [user, driveAccessToken, isVaultUnlocked]);
+
+  useEffect(() => {
+    if (isVaultUnlocked && driveAccessToken) {
+      const timer = setTimeout(() => {
+        performAutoBackup();
+      }, 10000); // Wait 10s after unlock to avoid heavy lifting on load
+      return () => clearTimeout(timer);
+    }
+  }, [isVaultUnlocked, driveAccessToken, performAutoBackup]);
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'Vitality', href: '/vitality', icon: HeartIcon },
+    { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
+    { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
+    { name: 'Insights', href: '/insights', icon: LightBulbIcon },
+    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
+  ];
+
   return (
     <div className="min-h-screen">
-      {/* Container is explicitly transparent to let Page backgrounds shine */}
-      
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
 
       <Transition.Root show={sidebarOpen} as={Fragment}>
@@ -62,7 +118,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
               leaveTo="-translate-x-full"
             >
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-gradient-to-b from-blue-700 to-blue-900 transition-all shadow-2xl">
-                
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
                    <div className="flex items-center gap-3 text-white font-bold text-lg tracking-tight">
                       <div className="bg-white/10 p-1.5 rounded-lg">
