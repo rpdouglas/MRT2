@@ -1,5 +1,5 @@
 import { decrypt } from './crypto';
-import type { FullUserData, JournalEntry } from './db';
+import type { FullUserData, JournalEntry, Task } from './db';
 import type { jsPDF } from 'jspdf';
 import type { UserOptions } from 'jspdf-autotable';
 
@@ -182,14 +182,19 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
   doc.setFontSize(16);
   doc.text("Active Quests & Habits", 14, 20);
 
-  const taskRows = data.tasks.map(t => [
-    t.title,
-    // FIX: Cast to any to bypass missing 'category' property definition in Task type
-    (t as any).category,
-    t.priority,
-    t.isRecurring ? t.frequency : 'One-time',
-    t.status || 'Pending'
-  ]);
+  const taskRows = data.tasks.map(t => {
+    // FIX: Use intersection type to safely access 'category' without 'any'
+    // This handles the case where 'category' exists in DB data but is missing from strict Task interface
+    const category = (t as Task & { category?: string }).category || 'General';
+
+    return [
+      t.title,
+      category,
+      t.priority,
+      t.isRecurring ? t.frequency : 'One-time',
+      t.status || 'Pending'
+    ];
+  });
 
   autoTable(doc, {
     startY: 25,
