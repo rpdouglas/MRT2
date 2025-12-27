@@ -1,15 +1,25 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY || '');
+// Ensure your .env VITE_GEMINI_API_KEY is active
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
 // --- Configuration ---
+// Updated for Gemini 2.5 capabilities
 const GENERATION_CONFIG = {
   temperature: 0.7,
   topP: 0.8,
   topK: 40,
   maxOutputTokens: 8192,
 };
+
+// --- Model Cascade Configuration ---
+// Based on your available models: 2.5 Flash (Primary), 2.5 Pro (Reasoning), 2.0 Flash (Backup)
+const MODEL_CASCADE = [
+  'gemini-2.5-flash', 
+  'gemini-2.5-pro', 
+  'gemini-2.0-flash'
+];
 
 // --- Interfaces ---
 
@@ -21,7 +31,7 @@ export interface AIAnalysisResult {
     actionableSteps: string[];
     risks: string[];
 }
-// Alias for backward compatibility with insights.ts
+// Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
 // 2. Comparative/Wizard Analysis
@@ -34,7 +44,7 @@ export interface ComparativeAnalysisResult {
     actionable_advice: string[];
 }
 
-// 3. Workbook Holistic Analysis (UPDATED to match UI expectations)
+// 3. Workbook Holistic Analysis
 export interface WorkbookAnalysisResult {
     scope_context: string; 
     summary: string;
@@ -46,13 +56,29 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
-// --- Helper: Retry Logic ---
-async function generateWithRetry(modelName: string, prompt: string, retries = 2): Promise<string> {
-    const modelsToTry = [modelName, 'gemini-1.5-pro', 'gemini-1.5-flash'];
+// --- Core Helper: Smart Cascade Generation ---
+/**
+ * Attempts to generate content using the defined MODEL_CASCADE.
+ * If the primary model fails (rate limit/error), it automatically retries with the next model in the list.
+ */
+async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
+    // If a specific model is requested, try that first, then fall back to the cascade
+    // Otherwise, start with the defined cascade order
+    const modelsToTry = specificModel 
+        ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
+        : MODEL_CASCADE;
     
-    for (let i = 0; i <= retries; i++) {
+    let lastError: Error | null = null;
+
+    for (let i = 0; i < modelsToTry.length; i++) {
+        const currentModelName = modelsToTry[i];
+        
         try {
-            const currentModelName = modelsToTry[i] || modelsToTry[modelsToTry.length - 1];
+            // Optional: Log which model is being attempted in dev mode
+            if (import.meta.env.DEV) {
+                console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
+            }
+
             const model = genAI.getGenerativeModel({ 
                 model: currentModelName, 
                 generationConfig: GENERATION_CONFIG 
@@ -62,23 +88,29 @@ async function generateWithRetry(modelName: string, prompt: string, retries = 2)
             const response = await result.response;
             const text = response.text();
             
-            if (!text) throw new Error("Empty response from AI");
-            return text;
+            if (!text) throw new Error(`Empty response from ${currentModelName}`);
+            
+            return text; // Success! Return immediately.
+
         } catch (error) {
-            console.warn(`Attempt ${i + 1} with ${modelsToTry[i]} failed:`, error);
-            if (i === retries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
+            console.warn(`⚠️ Attempt failed with ${currentModelName}:`, error);
+            lastError = error as Error;
+            
+            // Wait slightly before retrying with the next model (Exponential Backoff)
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); 
         }
     }
-    throw new Error("All AI models failed to respond.");
+
+    throw new Error(`All AI models failed. Last error: ${lastError?.message}`);
 }
 
 function cleanJSON(text: string): string {
+    // Aggressively clean markdown code blocks
     return text.replace(/```json\n?|```/g, '').trim();
 }
 
 // ============================================================================
-//  CORE FUNCTIONS
+//  EXPOSED FUNCTIONS
 // ============================================================================
 
 export async function generateComparativeAnalysis(
@@ -124,7 +156,8 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithRetry('gemini-1.5-flash', systemPrompt + promptContext);
+    // Use Cascade (Starts with 2.5-Flash)
+    const text = await generateWithCascade(systemPrompt + promptContext);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
@@ -142,13 +175,16 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       }
       Return ONLY raw JSON.
     `;
-    const text = await generateWithRetry('gemini-1.5-flash', prompt);
+    
+    // Use Cascade (Starts with 2.5-Flash)
+    const text = await generateWithCascade(prompt);
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
 /**
  * 3. WORKBOOK WIZARD (Deep Dive)
  * Analyzes a full workbook or section to generate the "Compass" report.
+ * Uses 'gemini-2.5-pro' explicitly as primary preference for deeper reasoning.
  */
 export async function analyzeFullWorkbook(
     workbookTitle: string, 
@@ -178,7 +214,8 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithRetry('gemini-1.5-pro', prompt);
+    // We request 2.5-Pro specifically for this complex task, but it will fallback to Flash if Pro fails/is rate limited
+    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
@@ -195,5 +232,7 @@ export async function getGeminiCoaching(
     User's Answer: "${userAnswer}"
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
-    return await generateWithRetry('gemini-1.5-flash', prompt);
+    
+    // Use standard cascade
+    return await generateWithCascade(prompt);
 }
