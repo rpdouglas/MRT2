@@ -1,8 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [AuthContext.tsx]
- * FIXED: react-refresh/only-export-components warning by adding the required eslint-disable directive.
- * MAINTAINED: Google Drive OAuth scope logic and driveAccessToken state.
+ * UPDATED: Added 'isAdmin' flag derived from the Firestore UserProfile.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
@@ -20,6 +19,7 @@ import { getOrCreateUserProfile } from '../lib/db';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   driveAccessToken: string | null;
   loginWithGoogle: () => Promise<void>;
   signupWithEmail: (email: string, pass: string) => Promise<void>;
@@ -39,6 +39,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,10 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
         if (currentUser) {
-          await getOrCreateUserProfile(currentUser);
+          const profile = await getOrCreateUserProfile(currentUser);
           setUser(currentUser);
+          setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
         } else {
           setUser(null);
+          setIsAdmin(false);
           setDriveAccessToken(null);
         }
       } catch (error) {
@@ -70,8 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = async () => {
     if (!auth) throw new Error("Auth not initialized");
     const provider = new GoogleAuthProvider();
-    
-    // Request access to create/edit backup files in user's Drive
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     provider.setCustomParameters({ prompt: 'select_account' });
     
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    isAdmin,
     driveAccessToken,
     loginWithGoogle,
     signupWithEmail,

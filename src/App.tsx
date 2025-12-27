@@ -1,3 +1,9 @@
+/**
+ * GITHUB COMMENT:
+ * [App.tsx]
+ * TEMPORARY: Added AdminGrant component to the root of the application.
+ * TODO: REMOVE AdminGrant import and component once user role is updated in Firestore.
+ */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -15,8 +21,10 @@ import Vitality from './pages/Vitality';
 import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
 import InsightsLog from './pages/InsightsLog';
+import AdminDashboard from './pages/AdminDashboard'; 
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdminGrant from './components/AdminGrant'; // TEMPORARY IMPORT
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -93,9 +101,9 @@ export default function App() {
                   path="/workbooks/:workbookId/session/:sectionId"
                   element={
                       <PrivateRoute>
-                          <VaultGate>
+                      <VaultGate>
                           <WorkbookSession />
-                          </VaultGate>
+                      </VaultGate>
                       </PrivateRoute>
                   }
                   />
@@ -137,6 +145,16 @@ export default function App() {
                       </PrivateRoute>
                   }
                   />
+
+                  {/* ADMIN ROUTE */}
+                  <Route
+                  path="/admin"
+                  element={
+                      <PrivateRoute>
+                          <AdminDashboard />
+                      </PrivateRoute>
+                  }
+                  />
                   
                   <Route path="/" element={<Navigate to="/dashboard" />} />
                   <Route path="*" element={<Navigate to="/dashboard" />} />
@@ -145,6 +163,7 @@ export default function App() {
           </LayoutProvider>
         </EncryptionProvider>
       </AuthProvider>
+      <AdminGrant /> {/* TEMPORARY COMPONENT */}
     </ErrorBoundary>
   );
 }

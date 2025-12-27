@@ -1,8 +1,15 @@
+/**
+ * GITHUB COMMENT:
+ * [Profile.tsx]
+ * FIXED: TypeScript Error TS2322. Converted native Date object to Firestore Timestamp 
+ * before updating profile to match the UserProfile interface.
+ */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData } from '../lib/db';
+import { Timestamp } from 'firebase/firestore'; // Added import
 import VibrantHeader from '../components/VibrantHeader'; 
-import DataManagement from '../components/profile/DataManagement'; // NEW IMPORT
+import DataManagement from '../components/profile/DataManagement';
 import { 
   UserCircleIcon, 
   ArrowLeftOnRectangleIcon
@@ -55,15 +62,17 @@ export default function Profile() {
     setMessage(null);
 
     try {
-      let dateObj: Date | null = null;
+      // Convert the string input to a Firestore Timestamp
+      let sobrietyTimestamp: Timestamp | null = null;
       if (sobrietyDate) {
-         const [y, m, d] = sobrietyDate.split('-').map(Number);
-         dateObj = new Date(y, m - 1, d);
+          const [y, m, d] = sobrietyDate.split('-').map(Number);
+          const dateObj = new Date(y, m - 1, d);
+          sobrietyTimestamp = Timestamp.fromDate(dateObj); // FIXED: Convert to Timestamp
       }
       
       await updateProfileData(user.uid, {
         displayName,
-        sobrietyDate: dateObj
+        sobrietyDate: sobrietyTimestamp // Now matches strict interface
       });
 
       setMessage({ type: 'success', text: 'Profile updated successfully' });
@@ -75,12 +84,11 @@ export default function Profile() {
     }
   };
 
-  if (loading) return <div>Loading profile...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
 
   return (
     <div className={`pb-24 min-h-screen ${THEME.profile.page}`}>
       
-      {/* HEADER */}
       <VibrantHeader 
         title="My Profile"
         subtitle={user?.email || ''}
@@ -125,14 +133,13 @@ export default function Profile() {
             <button
                 type="submit"
                 disabled={saving}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
                 {saving ? 'Saving...' : 'Save Changes'}
             </button>
             </div>
         </form>
 
-        {/* DATA MANAGEMENT CARD (Export/Import) */}
         <DataManagement />
 
         <div className="border-t border-gray-200 pt-6">

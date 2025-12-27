@@ -1,8 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [AppShell.tsx]
- * ADDED: useAutoBackup background worker.
- * - Triggers silent Google Drive sync when: Vault is unlocked, User has Drive token, and 7 days passed.
+ * UPDATED: Added conditional 'Admin' menu item for users with the admin role.
  */
 import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -15,7 +14,8 @@ import {
   ClipboardDocumentListIcon, 
   AcademicCapIcon, 
   HeartIcon, 
-  LightBulbIcon
+  LightBulbIcon,
+  CommandLineIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, driveAccessToken } = useAuth();
+  const { user, logout, driveAccessToken, isAdmin } = useAuth();
   const { isVaultUnlocked } = useEncryption();
 
   const handleLogout = async () => {
@@ -45,7 +45,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
   };
 
-  // --- BACKGROUND BACKUP WORKER ---
   const performAutoBackup = useCallback(async () => {
     if (!user || !db || !driveAccessToken || !isVaultUnlocked) return;
     const database: Firestore = db;
@@ -59,16 +58,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
       const lastExport = userData.lastExportAt as Timestamp | undefined;
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
-      // Check if backup is needed
       if (lastExport && lastExport.toMillis() > sevenDaysAgo) return;
 
-      // Prepare Data
       const rawData = await fetchAllUserData(user.uid);
       const cleanData = await prepareDataForExport(rawData, () => {});
       const blob = generateJSON(cleanData);
       const textData = await blob.text();
 
-      // Upload to Drive
       const existingFileId = await findBackupFile(driveAccessToken);
       const success = await uploadBackupToDrive(driveAccessToken, textData, existingFileId || undefined);
 
@@ -85,7 +81,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     if (isVaultUnlocked && driveAccessToken) {
       const timer = setTimeout(() => {
         performAutoBackup();
-      }, 10000); // Wait 10s after unlock to avoid heavy lifting on load
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [isVaultUnlocked, driveAccessToken, performAutoBackup]);
@@ -99,6 +95,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
     { name: 'Insights', href: '/insights', icon: LightBulbIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
+
+  // ADDED: Conditional Admin Link
+  if (isAdmin) {
+    navigation.push({ name: 'Admin', href: '/admin', icon: CommandLineIcon });
+  }
 
   return (
     <div className="min-h-screen">
