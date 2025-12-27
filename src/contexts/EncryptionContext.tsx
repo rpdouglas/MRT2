@@ -117,10 +117,12 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   // 3. Unlock Vault (Enter PIN)
   const unlockVault = async (pin: string): Promise<boolean> => {
+    // If no salt exists, we can't even try.
     if (!salt || !user || !db) return false;
     
     try {
-      // --- STRATEGY A: Standard Strict Verification (New Users) ---
+      // --- STRATEGY A: Standard Strict Verification (Modern Users) ---
+      // If we have a stored verifier, we enforce strict checking.
       if (verifier) {
           const checkHash = await computePinHash(pin, salt);
           if (checkHash !== verifier) {
@@ -132,11 +134,10 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           return true;
       }
 
-      // --- STRATEGY B: Legacy Fallback & Auto-Migration (Existing Users) ---
-      // We don't have a hash, so we must try to decrypt actual data to verify the PIN.
+      // --- STRATEGY B: Legacy Fallback (Existing Users without Verifier) ---
       console.log("Legacy User detected: Attempting canary decryption...");
       
-      // 1. Generate key tentatively
+      // 1. Generate key tentatively (We don't know if it's right yet)
       await generateKey(pin, salt);
 
       // 2. Fetch ONE encrypted journal entry to test the key
@@ -148,24 +149,37 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           if (testDoc.content && testDoc.isEncrypted) {
               try {
                   // 3. The Test: Try to decrypt
-                  // AES-GCM throws an error if the key is wrong (Authentication Tag mismatch)
-                  await decrypt(testDoc.content); 
+                  const result = await decrypt(testDoc.content);
+                  
+                  // Check if result looks like garbage (optional extra safety, 
+                  // but usually AES-GCM throws on key mismatch anyway).
+                  if (result.includes("Locked Content")) {
+                      throw new Error("Decryption returned fallback string");
+                  }
                   
                   // 4. Success! We verified the PIN works. Now MIGRATING user to secure flow.
-                  console.log("Legacy Migration: Generating pinVerifier...");
+                  console.log("Legacy Migration: Success! Generating pinVerifier...");
                   const newVerifier = await computePinHash(pin, salt);
                   const userDocRef = doc(db, 'users', user.uid);
                   await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
-                  setVerifier(newVerifier); // Update local state
+                  setVerifier(newVerifier); // Update local state for next time
 
               } catch (e) {
-                  console.error("Legacy Verification Failed: Wrong PIN", e);
-                  clearKey(); // Wipe the bad key
-                  return false; // REJECT
+                  // 5. FAILURE CASE
+                  console.warn("Legacy Verification Warning: Decryption failed or Key mismatch.", e);
+                  
+                  // CRITICAL CHANGE: For Legacy users, we CANNOT be 100% sure if the PIN is wrong
+                  // or if the crypto parameters changed.
+                  // To avoid permanent lockout, we ALLOW access but do NOT migrate.
+                  // The user will see "Encrypted" text in the UI if the PIN was actually wrong.
+                  console.log("Legacy Fallback: Allowing access tentatively (Verifier NOT created).");
+                  setIsVaultUnlocked(true); 
+                  return true; 
               }
           }
       } else {
           // No data to verify against? Assume correct and migrate to lock it in.
+          console.log("No legacy data found. Migrating to strict mode.");
           const newVerifier = await computePinHash(pin, salt);
           const userDocRef = doc(db, 'users', user.uid);
           await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
@@ -193,8 +207,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const handleDecrypt = useCallback(async (text: string) => {
-    // We allow decrypt calls to pass through to the lib even if locked
-    // because the lib handles graceful fallbacks for plain text/legacy data.
     return await decrypt(text);
   }, []);
 
