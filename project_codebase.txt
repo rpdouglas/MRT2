@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2025-12-27T05:51:04.313Z
+PROJECT EXPORT - 2025-12-27T06:34:50.415Z
 
 
 ================================================================================
@@ -1616,9 +1616,11 @@ export default function SobrietyCounter({ sobrietyDate }: SobrietyCounterProps) 
 ================================================================================
 FILE: src/components/VaultGate.tsx
 ================================================================================
+// src/components/VaultGate.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useEncryption } from '../contexts/EncryptionContext';
-import { LockClosedIcon, KeyIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { LockClosedIcon, KeyIcon, ShieldCheckIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 interface VaultGateProps {
   children: React.ReactNode;
@@ -1626,9 +1628,12 @@ interface VaultGateProps {
 
 export default function VaultGate({ children }: VaultGateProps) {
   const { isVaultSet, isVaultUnlocked, vaultLoading, unlockVault, setupVault } = useEncryption();
+  const navigate = useNavigate();
+  
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // If loading, show spinner
   if (vaultLoading) {
@@ -1645,7 +1650,7 @@ export default function VaultGate({ children }: VaultGateProps) {
     return <>{children}</>;
   }
 
-  // HANDLE SETUP FLOW
+  // HANDLE SETUP FLOW (No changes to existing flow logic, just UI consistency)
   if (!isVaultSet) {
     const handleSetup = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -1657,11 +1662,13 @@ export default function VaultGate({ children }: VaultGateProps) {
         setError("PINs do not match.");
         return;
       }
+      setIsSubmitting(true);
       await setupVault(pin);
+      setIsSubmitting(false);
     };
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center animate-fadeIn">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
             <div className="bg-blue-100 p-3 rounded-full w-fit mx-auto mb-4">
                 <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
@@ -1680,6 +1687,7 @@ export default function VaultGate({ children }: VaultGateProps) {
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
                     className="w-full text-center text-2xl tracking-widest p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    disabled={isSubmitting}
                 />
                 <input
                     type="password"
@@ -1688,14 +1696,16 @@ export default function VaultGate({ children }: VaultGateProps) {
                     value={confirmPin}
                     onChange={(e) => setConfirmPin(e.target.value)}
                     className="w-full text-center text-2xl tracking-widest p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    disabled={isSubmitting}
                 />
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 
                 <button 
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-md"
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
                 >
-                    Secure My Journal
+                    {isSubmitting ? 'Securing...' : 'Secure My Journal'}
                 </button>
             </form>
         </div>
@@ -1703,20 +1713,45 @@ export default function VaultGate({ children }: VaultGateProps) {
     );
   }
 
-  // HANDLE UNLOCK FLOW
+  // HANDLE UNLOCK FLOW (Strict Check Implementation)
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pin) return;
+
+    setIsSubmitting(true);
+    setError('');
+
     const success = await unlockVault(pin);
+    
     if (!success) {
-        setError("Incorrect PIN.");
-        setPin('');
+      // 1. Show Error UI
+      setError("Improper PIN. Access Denied.");
+      
+      // 2. Clear input to prevent rapid retries/confusion
+      setPin('');
+      
+      // 3. Wait 1.5s then Redirect
+      setTimeout(() => {
+          navigate('/dashboard');
+      }, 1500);
+    } else {
+        setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
-            <div className="bg-gray-100 p-3 rounded-full w-fit mx-auto mb-4">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center animate-fadeIn">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100 relative overflow-hidden">
+            
+            {/* Transient Error Banner */}
+            {error && (
+                <div className="absolute top-0 left-0 w-full bg-red-500 text-white p-2 text-sm font-bold flex items-center justify-center gap-2 animate-slideDown">
+                    <ExclamationCircleIcon className="h-5 w-5" />
+                    {error}
+                </div>
+            )}
+
+            <div className="bg-gray-100 p-3 rounded-full w-fit mx-auto mb-4 mt-2">
                 <LockClosedIcon className="h-8 w-8 text-gray-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Vault Locked</h2>
@@ -1730,17 +1765,24 @@ export default function VaultGate({ children }: VaultGateProps) {
                     placeholder="Enter PIN"
                     value={pin}
                     onChange={(e) => { setPin(e.target.value); setError(''); }}
-                    className="w-full text-center text-2xl tracking-widest p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-500"
-                autoComplete="new-password" // <--- ADD THIS LINE
+                    className={`w-full text-center text-2xl tracking-widest p-3 border rounded-xl focus:ring-2 transition-all ${error ? 'border-red-300 ring-red-200 bg-red-50' : 'border-gray-300 focus:ring-gray-500'}`}
+                    autoComplete="new-password"
+                    disabled={isSubmitting || !!error} // Lock input on error or submit
                 />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
                 
                 <button 
                     type="submit"
-                    className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                    disabled={isSubmitting || !!error}
+                    className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <KeyIcon className="h-5 w-5" />
-                    Unlock
+                    {isSubmitting ? (
+                        <span>Verifying...</span>
+                    ) : (
+                        <>
+                            <KeyIcon className="h-5 w-5" />
+                            Unlock
+                        </>
+                    )}
                 </button>
             </form>
         </div>
@@ -4187,16 +4229,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 ================================================================================
 FILE: src/contexts/EncryptionContext.tsx
 ================================================================================
+// src/contexts/EncryptionContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { 
     generateSalt, 
     generateKey, 
+    computePinHash,
     encrypt, 
     decrypt, 
-    clearKey,
+    clearKey, 
     isVaultUnlocked as checkLibUnlocked 
 } from '../lib/crypto';
 
@@ -4228,9 +4272,11 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [isVaultSet, setIsVaultSet] = useState(false);
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [vaultLoading, setVaultLoading] = useState(true);
+  
   const [salt, setSalt] = useState<string | null>(null);
+  const [verifier, setVerifier] = useState<string | null>(null); // Stored Hash of PIN
 
-  // 1. Check if user has a vault set up (fetch salt)
+  // 1. Check if user has a vault set up (fetch salt & verifier)
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -4242,9 +4288,18 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
         
-        if (userDoc.exists() && userDoc.data().encryptionSalt) {
-          setIsVaultSet(true);
-          setSalt(userDoc.data().encryptionSalt);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.encryptionSalt) {
+            setIsVaultSet(true);
+            setSalt(data.encryptionSalt);
+            // If verification hash exists (New Users), load it.
+            if (data.pinVerifier) {
+                setVerifier(data.pinVerifier);
+            }
+          } else {
+            setIsVaultSet(false);
+          }
         } else {
           setIsVaultSet(false);
         }
@@ -4266,14 +4321,21 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setVaultLoading(true);
       const newSalt = generateSalt();
       
-      // Update Lib: Generate and store key internally
+      // A. Generate Key for Memory
       await generateKey(pin, newSalt);
       
-      // Save Salt to Firestore
+      // B. Generate Verification Hash for Storage
+      const newVerifier = await computePinHash(pin, newSalt);
+      
+      // C. Save Salt & Verifier to Firestore
       const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { encryptionSalt: newSalt }, { merge: true });
+      await setDoc(userDocRef, { 
+          encryptionSalt: newSalt,
+          pinVerifier: newVerifier
+      }, { merge: true });
 
       setSalt(newSalt);
+      setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
     } catch (error) {
@@ -4286,12 +4348,78 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   // 3. Unlock Vault (Enter PIN)
   const unlockVault = async (pin: string): Promise<boolean> => {
-    if (!salt) return false;
+    // If no salt exists, we can't even try.
+    if (!salt || !user || !db) return false;
+    
     try {
-      // Update Lib: Generate and store key internally
+      // --- STRATEGY A: Standard Strict Verification (Modern Users) ---
+      // If we have a stored verifier, we enforce strict checking.
+      if (verifier) {
+          const checkHash = await computePinHash(pin, salt);
+          if (checkHash !== verifier) {
+              console.warn("Strict Verification Failed: Invalid PIN");
+              return false; // REJECT
+          }
+          await generateKey(pin, salt);
+          setIsVaultUnlocked(true);
+          return true;
+      }
+
+      // --- STRATEGY B: Legacy Fallback (Existing Users without Verifier) ---
+      console.log("Legacy User detected: Attempting canary decryption...");
+      
+      // 1. Generate key tentatively (We don't know if it's right yet)
       await generateKey(pin, salt);
+
+      // 2. Fetch ONE encrypted journal entry to test the key
+      const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+          const testDoc = snapshot.docs[0].data();
+          if (testDoc.content && testDoc.isEncrypted) {
+              try {
+                  // 3. The Test: Try to decrypt
+                  const result = await decrypt(testDoc.content);
+                  
+                  // Check if result looks like garbage (optional extra safety, 
+                  // but usually AES-GCM throws on key mismatch anyway).
+                  if (result.includes("Locked Content")) {
+                      throw new Error("Decryption returned fallback string");
+                  }
+                  
+                  // 4. Success! We verified the PIN works. Now MIGRATING user to secure flow.
+                  console.log("Legacy Migration: Success! Generating pinVerifier...");
+                  const newVerifier = await computePinHash(pin, salt);
+                  const userDocRef = doc(db, 'users', user.uid);
+                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                  setVerifier(newVerifier); // Update local state for next time
+
+              } catch (e) {
+                  // 5. FAILURE CASE
+                  console.warn("Legacy Verification Warning: Decryption failed or Key mismatch.", e);
+                  
+                  // CRITICAL CHANGE: For Legacy users, we CANNOT be 100% sure if the PIN is wrong
+                  // or if the crypto parameters changed.
+                  // To avoid permanent lockout, we ALLOW access but do NOT migrate.
+                  // The user will see "Encrypted" text in the UI if the PIN was actually wrong.
+                  console.log("Legacy Fallback: Allowing access tentatively (Verifier NOT created).");
+                  setIsVaultUnlocked(true); 
+                  return true; 
+              }
+          }
+      } else {
+          // No data to verify against? Assume correct and migrate to lock it in.
+          console.log("No legacy data found. Migrating to strict mode.");
+          const newVerifier = await computePinHash(pin, salt);
+          const userDocRef = doc(db, 'users', user.uid);
+          await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+          setVerifier(newVerifier);
+      }
+
       setIsVaultUnlocked(true);
       return true;
+
     } catch (error) {
       console.error("Unlock failed", error);
       return false;
@@ -4310,8 +4438,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const handleDecrypt = useCallback(async (text: string) => {
-    // We allow decrypt calls to pass through to the lib even if locked
-    // because the lib handles graceful fallbacks for plain text/legacy data.
     return await decrypt(text);
   }, []);
 
@@ -5053,6 +5179,20 @@ export async function generateKey(pin: string, saltBase64: string): Promise<Cryp
 }
 
 /**
+ * Computes a secure hash of the PIN + Salt for identity verification.
+ * This allows us to validate the PIN before attempting to derive the encryption key.
+ * @param pin - The input PIN
+ * @param saltBase64 - The user's salt
+ */
+export async function computePinHash(pin: string, saltBase64: string): Promise<string> {
+  const enc = new TextEncoder();
+  const data = enc.encode(pin + saltBase64);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Encrypts a string using AES-GCM.
  * Returns format: "IV_HEX:CIPHERTEXT_HEX"
  */
@@ -5490,7 +5630,7 @@ export async function fetchAllUserData(uid: string): Promise<FullUserData> {
 FILE: src/lib/exporter.ts
 ================================================================================
 import { decrypt } from './crypto';
-import type { FullUserData, JournalEntry } from './db';
+import type { FullUserData, JournalEntry, Task } from './db';
 import type { jsPDF } from 'jspdf';
 import type { UserOptions } from 'jspdf-autotable';
 
@@ -5673,14 +5813,19 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
   doc.setFontSize(16);
   doc.text("Active Quests & Habits", 14, 20);
 
-  const taskRows = data.tasks.map(t => [
-    t.title,
-    // FIX: Cast to any to bypass missing 'category' property definition in Task type
-    (t as any).category,
-    t.priority,
-    t.isRecurring ? t.frequency : 'One-time',
-    t.status || 'Pending'
-  ]);
+  const taskRows = data.tasks.map(t => {
+    // FIX: Use intersection type to safely access 'category' without 'any'
+    // This handles the case where 'category' exists in DB data but is missing from strict Task interface
+    const category = (t as Task & { category?: string }).category || 'General';
+
+    return [
+      t.title,
+      category,
+      t.priority,
+      t.isRecurring ? t.frequency : 'One-time',
+      t.status || 'Pending'
+    ];
+  });
 
   autoTable(doc, {
     startY: 25,
@@ -5923,15 +6068,25 @@ FILE: src/lib/gemini.ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY || '');
+// Ensure your .env VITE_GEMINI_API_KEY is active
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
 // --- Configuration ---
+// Updated for Gemini 2.5 capabilities
 const GENERATION_CONFIG = {
   temperature: 0.7,
   topP: 0.8,
   topK: 40,
   maxOutputTokens: 8192,
 };
+
+// --- Model Cascade Configuration ---
+// Based on your available models: 2.5 Flash (Primary), 2.5 Pro (Reasoning), 2.0 Flash (Backup)
+const MODEL_CASCADE = [
+  'gemini-2.5-flash', 
+  'gemini-2.5-pro', 
+  'gemini-2.0-flash'
+];
 
 // --- Interfaces ---
 
@@ -5943,7 +6098,7 @@ export interface AIAnalysisResult {
     actionableSteps: string[];
     risks: string[];
 }
-// Alias for backward compatibility with insights.ts
+// Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
 // 2. Comparative/Wizard Analysis
@@ -5956,7 +6111,7 @@ export interface ComparativeAnalysisResult {
     actionable_advice: string[];
 }
 
-// 3. Workbook Holistic Analysis (UPDATED to match UI expectations)
+// 3. Workbook Holistic Analysis
 export interface WorkbookAnalysisResult {
     scope_context: string; 
     summary: string;
@@ -5968,13 +6123,29 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
-// --- Helper: Retry Logic ---
-async function generateWithRetry(modelName: string, prompt: string, retries = 2): Promise<string> {
-    const modelsToTry = [modelName, 'gemini-1.5-pro', 'gemini-1.5-flash'];
+// --- Core Helper: Smart Cascade Generation ---
+/**
+ * Attempts to generate content using the defined MODEL_CASCADE.
+ * If the primary model fails (rate limit/error), it automatically retries with the next model in the list.
+ */
+async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
+    // If a specific model is requested, try that first, then fall back to the cascade
+    // Otherwise, start with the defined cascade order
+    const modelsToTry = specificModel 
+        ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
+        : MODEL_CASCADE;
     
-    for (let i = 0; i <= retries; i++) {
+    let lastError: Error | null = null;
+
+    for (let i = 0; i < modelsToTry.length; i++) {
+        const currentModelName = modelsToTry[i];
+        
         try {
-            const currentModelName = modelsToTry[i] || modelsToTry[modelsToTry.length - 1];
+            // Optional: Log which model is being attempted in dev mode
+            if (import.meta.env.DEV) {
+                console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
+            }
+
             const model = genAI.getGenerativeModel({ 
                 model: currentModelName, 
                 generationConfig: GENERATION_CONFIG 
@@ -5984,23 +6155,29 @@ async function generateWithRetry(modelName: string, prompt: string, retries = 2)
             const response = await result.response;
             const text = response.text();
             
-            if (!text) throw new Error("Empty response from AI");
-            return text;
+            if (!text) throw new Error(`Empty response from ${currentModelName}`);
+            
+            return text; // Success! Return immediately.
+
         } catch (error) {
-            console.warn(`Attempt ${i + 1} with ${modelsToTry[i]} failed:`, error);
-            if (i === retries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
+            console.warn(`⚠️ Attempt failed with ${currentModelName}:`, error);
+            lastError = error as Error;
+            
+            // Wait slightly before retrying with the next model (Exponential Backoff)
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); 
         }
     }
-    throw new Error("All AI models failed to respond.");
+
+    throw new Error(`All AI models failed. Last error: ${lastError?.message}`);
 }
 
 function cleanJSON(text: string): string {
+    // Aggressively clean markdown code blocks
     return text.replace(/```json\n?|```/g, '').trim();
 }
 
 // ============================================================================
-//  CORE FUNCTIONS
+//  EXPOSED FUNCTIONS
 // ============================================================================
 
 export async function generateComparativeAnalysis(
@@ -6046,7 +6223,8 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithRetry('gemini-1.5-flash', systemPrompt + promptContext);
+    // Use Cascade (Starts with 2.5-Flash)
+    const text = await generateWithCascade(systemPrompt + promptContext);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
@@ -6064,13 +6242,16 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       }
       Return ONLY raw JSON.
     `;
-    const text = await generateWithRetry('gemini-1.5-flash', prompt);
+    
+    // Use Cascade (Starts with 2.5-Flash)
+    const text = await generateWithCascade(prompt);
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
 /**
  * 3. WORKBOOK WIZARD (Deep Dive)
  * Analyzes a full workbook or section to generate the "Compass" report.
+ * Uses 'gemini-2.5-pro' explicitly as primary preference for deeper reasoning.
  */
 export async function analyzeFullWorkbook(
     workbookTitle: string, 
@@ -6100,7 +6281,8 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithRetry('gemini-1.5-pro', prompt);
+    // We request 2.5-Pro specifically for this complex task, but it will fallback to Flash if Pro fails/is rate limited
+    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
@@ -6117,7 +6299,9 @@ export async function getGeminiCoaching(
     User's Answer: "${userAnswer}"
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
-    return await generateWithRetry('gemini-1.5-flash', prompt);
+    
+    // Use standard cascade
+    return await generateWithCascade(prompt);
 }
 
 ================================================================================

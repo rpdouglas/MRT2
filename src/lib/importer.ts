@@ -1,7 +1,7 @@
 import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
-// 1. Define the target format (Your current app schema)
+// 1. Define the Target Format (Our App's Schema)
 export interface NewJournalEntry {
   uid: string;
   content: string;
@@ -10,58 +10,81 @@ export interface NewJournalEntry {
   weather: { temp: number; condition: string } | null;
   createdAt: Timestamp;
   tags: string[];
+  isEncrypted: boolean;
 }
 
-// 2. Define the exact Legacy format based on your uploaded JSON
-interface LegacyEntry {
-  id: string;
-  text: string;
-  mood: number;
-  weather?: string;
-  tags?: string[];
-  timestamp: string;
+// 2. Define Inputs: A Union Interface for "Incoming Data"
+// This handles both the Old App (Legacy) and New App (Backup) structures safely.
+interface WeatherObject {
+    temp: number;
+    condition: string;
 }
 
-// 3. Helper to parse weather string "Partly Cloudy, -6°C" -> { condition, temp }
-const parseLegacyWeather = (weatherStr?: string): { temp: number; condition: string } | null => {
-  if (!weatherStr || typeof weatherStr !== 'string') return null;
+interface IncomingEntry {
+    // Legacy Fields
+    text?: string;
+    mood?: number;
+    timestamp?: string;
+    
+    // New Fields
+    content?: string;
+    moodScore?: number;
+    sentiment?: string;
+    createdAt?: string | { seconds: number }; // Handles ISO strings OR Firestore Timestamp objects
+    
+    // Shared / Mixed
+    weather?: string | WeatherObject;
+    tags?: string[];
+}
 
-  // Regex to capture "Condition" and "Temp" (e.g. "Partly Cloudy, -6°C")
-  // Matches: Group 1 (Condition), Group 2 (Number)
-  const match = weatherStr.match(/^(.*),\s*(-?\d+)°C$/);
-
-  if (match) {
-    return {
-      condition: match[1].trim(),
-      temp: parseInt(match[2], 10)
-    };
+// 3. Helper to parse weather
+// Now accepts a specific Union Type instead of 'any'
+const parseWeather = (weatherData: string | WeatherObject | null | undefined): { temp: number; condition: string } | null => {
+  if (!weatherData) return null;
+  
+  // Handle Legacy String format ("Cloudy, 20°C")
+  if (typeof weatherData === 'string') {
+      const match = weatherData.match(/^(.*),\s*(-?\d+)°C$/);
+      if (match) return { condition: match[1].trim(), temp: parseInt(match[2], 10) };
+      return { condition: weatherData, temp: 0 };
   }
-
-  // Fallback if format is different but not empty
-  if (weatherStr.trim().length > 0) {
-    return { condition: weatherStr, temp: 0 };
+  
+  // Handle New Object format
+  if (typeof weatherData === 'object' && 'temp' in weatherData) {
+      return weatherData;
   }
-
   return null;
 };
 
 // 4. The Mapper Function
-// Converts "LegacyEntry" -> "NewJournalEntry"
-const mapLegacyEntry = (uid: string, entry: LegacyEntry): NewJournalEntry => {
-  // Handle mood: Legacy app seems to use 0 for unset. New app uses 1-10.
-  // We map 0 to 5 (Neutral), and clamp others between 1-10.
-  let mood = entry.mood || 5;
-  if (mood === 0) mood = 5;
+const mapEntry = (uid: string, entry: IncomingEntry): NewJournalEntry => {
+  // Handle mood mapping (Old uses 0-10, New uses 1-10)
+  let mood = entry.moodScore ?? entry.mood ?? 5;
   mood = Math.max(1, Math.min(10, mood));
+
+  // Handle Date parsing (ISO string or Firestore Timestamp object)
+  let dateVal = new Date();
+  
+  if (entry.createdAt) {
+      if (typeof entry.createdAt === 'string') {
+          dateVal = new Date(entry.createdAt);
+      } else if (typeof entry.createdAt === 'object' && 'seconds' in entry.createdAt) {
+          dateVal = new Date(entry.createdAt.seconds * 1000); 
+      }
+  } else if (entry.timestamp) {
+      dateVal = new Date(entry.timestamp); // Legacy field
+  }
 
   return {
     uid,
-    content: entry.text || "", // Map 'text' to 'content'
+    // Checks 'content' (new) first, falls back to 'text' (old)
+    content: entry.content || entry.text || "", 
     moodScore: mood,
-    sentiment: 'Neutral', // Legacy data doesn't have sentiment, default to Neutral
-    weather: parseLegacyWeather(entry.weather),
-    createdAt: Timestamp.fromDate(new Date(entry.timestamp)), // Parse ISO string
-    tags: Array.isArray(entry.tags) ? entry.tags : [] // Carry over tags
+    sentiment: entry.sentiment || 'Neutral',
+    weather: parseWeather(entry.weather),
+    createdAt: Timestamp.fromDate(dateVal),
+    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    isEncrypted: false 
   };
 };
 
@@ -72,7 +95,6 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
 
     reader.onload = async (e) => {
       try {
-        // FIX: Guard clause to ensure db is initialized
         if (!db) {
             reject(new Error("Firestore database is not initialized"));
             return;
@@ -81,15 +103,27 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
         const text = e.target?.result as string;
         const json = JSON.parse(text);
 
-        // Ensure it's an array
-        const rawEntries = Array.isArray(json) ? json : [json];
+        // --- SMART DETECTION LOGIC ---
+        // Typed as IncomingEntry[] so TS knows what to expect
+        let rawEntries: IncomingEntry[] = [];
+        
+        if (Array.isArray(json)) {
+            // CASE A: Legacy Array (Old App)
+            rawEntries = json as IncomingEntry[];
+        } else if (json.journals && Array.isArray(json.journals)) {
+            // CASE B: New Full Backup Object
+            rawEntries = json.journals as IncomingEntry[];
+        } else {
+            // CASE C: Single Object wrapper
+            rawEntries = [json as IncomingEntry];
+        }
         
         if (rawEntries.length === 0) {
           resolve({ success: 0, errors: 0 });
           return;
         }
 
-        // Process in batches of 500 (Firestore limit)
+        // Process in batches
         let batch = writeBatch(db);
         let operationCount = 0;
         let successCount = 0;
@@ -97,35 +131,28 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
 
         for (const raw of rawEntries) {
           try {
-            // Validate essential fields before mapping
-            if (!raw.timestamp) {
-              console.warn("Skipping entry without timestamp:", raw.id);
-              errorCount++;
-              continue;
-            }
+            // Skip empty entries
+            if (!raw.content && !raw.text) continue;
 
-            const mappedData = mapLegacyEntry(uid, raw as LegacyEntry);
+            const mappedData = mapEntry(uid, raw);
             
-            // Generate a new ID for the document (ignoring legacy ID to avoid collision/format issues)
             const newDocRef = doc(collection(db, 'journals'));
             batch.set(newDocRef, mappedData);
             
             operationCount++;
             successCount++;
 
-            // If we hit 450 (safety buffer below 500), commit and restart batch
             if (operationCount >= 450) {
               await batch.commit();
-              batch = writeBatch(db); // New batch
+              batch = writeBatch(db);
               operationCount = 0;
             }
           } catch (err) {
-            console.warn("Skipping invalid entry:", raw.id, err);
+            console.warn("Skipping invalid entry:", err);
             errorCount++;
           }
         }
 
-        // Commit any remaining ops
         if (operationCount > 0) {
           await batch.commit();
         }
