@@ -112,7 +112,8 @@ export default function InsightsLog() {
                                 </div>
                                 <div className="flex flex-wrap gap-3 text-xs">
                                     <div className="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-blue-700">
-                                        Mood: <span className="font-bold">{insight.mood}</span>
+                                        {/* FIX: Use moodScore instead of mood */}
+                                        Mood: <span className="font-bold">{insight.moodScore}/10</span>
                                     </div>
                                     <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 text-indigo-700">
                                         Sentiment: <span className="font-bold">{insight.sentiment}</span>
@@ -123,13 +124,27 @@ export default function InsightsLog() {
                                         <div className="text-orange-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
                                             <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
                                         </div>
-                                        <p className="text-xs text-orange-900 leading-relaxed">{insight.risk_analysis}</p>
+                                        {/* FIX: Map over risks array instead of rendering string */}
+                                        <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
+                                            {insight.risks && insight.risks.length > 0 ? (
+                                                insight.risks.map((risk, idx) => <li key={idx}>{risk}</li>)
+                                            ) : (
+                                                <li>None detected.</li>
+                                            )}
+                                        </ul>
                                     </div>
                                     <div className="bg-green-50 p-3 rounded-xl border border-green-100">
                                         <div className="text-green-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
                                             <TrophyIcon className="h-4 w-4" /> Strength & Win
                                         </div>
-                                        <p className="text-xs text-green-900 leading-relaxed">{insight.positive_reinforcement}</p>
+                                        {/* FIX: Map over actionableSteps array instead of positive_reinforcement string */}
+                                        <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
+                                            {insight.actionableSteps && insight.actionableSteps.length > 0 ? (
+                                                insight.actionableSteps.map((step, idx) => <li key={idx}>{step}</li>)
+                                            ) : (
+                                                <li>Keep moving forward.</li>
+                                            )}
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -140,6 +155,8 @@ export default function InsightsLog() {
                                     <h3 className="text-lg font-bold text-purple-900 mb-1 flex items-center gap-2">
                                         {insight.scope_context}
                                     </h3>
+                                    {/* FIX: Added summary for workbook cards */}
+                                    <p className="text-gray-600 text-sm leading-relaxed mt-2">{insight.summary}</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
