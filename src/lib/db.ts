@@ -34,7 +34,6 @@ export interface JournalTemplate {
   defaultTags: string[]; 
 }
 
-// [ADDED] Required for Journal features
 export interface JournalEntry {
   id?: string;
   uid: string;
@@ -42,25 +41,26 @@ export interface JournalEntry {
   moodScore: number;
   tags: string[];
   createdAt: Timestamp;
+  isEncrypted?: boolean;
   weather?: {
-    temp_c: number;
+    temp: number;
     condition: string;
-    icon: string;
-  };
+    location?: string;
+  } | null;
 }
 
-// [ADDED] Required for Task features (Approach 3)
 export interface Task {
   id?: string;
   uid: string;
-  text: string;
-  completed: boolean;
+  title: string;
+  completed: boolean; // Legacy support
+  status?: 'pending' | 'completed';
   isRecurring: boolean;
-  frequency: 'Daily' | 'Weekly' | 'Monthly' | null;
+  frequency: 'once' | 'daily' | 'weekly' | 'monthly';
   currentStreak: number;
   priority: 'High' | 'Medium' | 'Low';
   createdAt: Timestamp;
-  dueDate?: Timestamp; // The new field for "Smart Reset"
+  dueDate?: Timestamp;
 }
 
 // --- PROFILE FUNCTIONS ---
@@ -124,7 +124,7 @@ export async function updateSobrietyDate(uid: string, date: Date) {
   });
 }
 
-// --- TEMPLATE FUNCTIONS (Preserved) ---
+// --- TEMPLATE FUNCTIONS ---
 
 export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
   if (!db) throw new Error("Database not initialized");
@@ -132,9 +132,9 @@ export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> 
   const templatesRef = collection(db, 'users', uid, 'templates');
   const snapshot = await getDocs(templatesRef);
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
   } as JournalTemplate));
 }
 
@@ -160,7 +160,7 @@ export async function deleteUserTemplate(uid: string, templateId: string) {
   await deleteDoc(docRef);
 }
 
-// --- [ADDED] JOURNAL FUNCTIONS ---
+// --- JOURNAL FUNCTIONS ---
 
 export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
   if (!db) throw new Error("Database not initialized");
@@ -181,5 +181,52 @@ export const getJournalHistory = async (uid: string) => {
     orderBy('createdAt', 'desc')
   );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JournalEntry));
+  return querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as JournalEntry));
 };
+
+// --- DATA SOVEREIGNTY (EXPORT) ---
+
+export interface FullUserData {
+  profile: UserProfile | null;
+  journals: JournalEntry[];
+  tasks: Task[];
+  templates: JournalTemplate[];
+  workbookAnswers: Record<string, unknown>[];
+}
+
+/**
+ * Fetches ALL user data across collections for export.
+ * NOTE: This does NOT decrypt data. Decryption happens in the Exporter service.
+ */
+export async function fetchAllUserData(uid: string): Promise<FullUserData> {
+  if (!db) throw new Error("Database not initialized");
+
+  // 1. Profile
+  const profile = await getProfile(uid);
+
+  // 2. Journals
+  const journalsQ = query(collection(db, 'journals'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+  const journalsSnap = await getDocs(journalsQ);
+  const journals = journalsSnap.docs.map(d => ({ id: d.id, ...d.data() } as JournalEntry));
+
+  // 3. Tasks
+  const tasksQ = query(collection(db, 'tasks'), where('uid', '==', uid));
+  const tasksSnap = await getDocs(tasksQ);
+  const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as Task));
+
+  // 4. Templates
+  const templates = await getUserTemplates(uid);
+
+  // 5. Workbook Answers
+  const wbQ = query(collection(db, 'users', uid, 'workbook_answers'));
+  const wbSnap = await getDocs(wbQ);
+  const workbookAnswers = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  return {
+    profile,
+    journals,
+    tasks,
+    templates,
+    workbookAnswers
+  };
+}
