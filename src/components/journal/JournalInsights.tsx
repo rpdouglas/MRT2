@@ -123,8 +123,9 @@ export default function JournalInsights() {
                 Mood Trajectory (Last 14)
             </h3>
             
-            <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+            {/* FIX: min-w-0 prevents flexbox collapse, debounce reduces CPU load */}
+            <div className="h-64 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
                     <AreaChart data={chartData}>
                         <defs>
                             <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
@@ -167,8 +168,9 @@ export default function JournalInsights() {
                 Emotional Balance
             </h3>
 
-            <div className="h-64 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
+            {/* FIX: min-w-0 prevents flexbox collapse, debounce reduces CPU load */}
+            <div className="h-64 w-full relative min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
                     <PieChart>
                         <Pie
                             data={sentimentData}
