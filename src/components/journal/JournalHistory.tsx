@@ -16,11 +16,14 @@ import {
     SparklesIcon
 } from '@heroicons/react/24/outline';
 
+// 1. EXTEND THE TYPE LOCALLY
+type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
+
 interface JournalHistoryProps {
   onEdit: (entry: JournalEntry) => void;
 }
 
-// Helper interface to handle Firestore Timestamp vs Date safely without 'any'
+// Helper interface to handle Firestore Timestamp vs Date safely
 interface FirestoreTimestamp {
     toDate: () => Date;
 }
@@ -30,9 +33,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { decrypt } = useEncryption();
   const [searchParams] = useSearchParams();
 
-  // Data State
-  const [allEntries, setAllEntries] = useState<JournalEntry[]>([]); // Full list for AI
-  const [groupedEntries, setGroupedEntries] = useState<Record<string, JournalEntry[]>>({});
+  // 2. UPDATE STATE TYPE
+  const [allEntries, setAllEntries] = useState<JournalEntryWithStatus[]>([]); 
+  const [groupedEntries, setGroupedEntries] = useState<Record<string, JournalEntryWithStatus[]>>({});
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
@@ -51,40 +54,58 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
       const snapshot = await getDocs(q);
       
-      const decryptedData = await Promise.all(snapshot.docs.map(async (doc) => {
-          const data = doc.data();
+      // FAIL-SAFE DATA LOADING
+      const processedData = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
           let content = data.content;
+          let isError = false;
 
+          // 1. Attempt Decryption
           if (data.isEncrypted) {
              try {
                  content = await decrypt(data.content);
-             } catch {
-                 content = "[Locked Content]";
+             } catch (err) {
+                 console.error(`Failed to decrypt entry ${docSnap.id}:`, err);
+                 content = "🔒 [Locked - Decryption Failed]";
+                 isError = true;
              }
           }
 
+          // 2. Safety check for dates
+          let createdDate = new Date();
+          try {
+              if (data.createdAt?.toDate) {
+                  createdDate = data.createdAt.toDate();
+              } else if (data.createdAt) {
+                  createdDate = new Date(data.createdAt);
+              }
+          } catch (e) {
+              console.warn("Date parse error", e);
+          }
+
+          // 3. Construct Object & Cast
+          // FIX: Cast to 'unknown' first to bypass strict property checks on raw DB data
           return { 
-              id: doc.id, 
-              ...data, 
-              content,
-              // Explicitly convert to Date for easier handling in UI and AI
-              createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
-          } as JournalEntry;
+              id: docSnap.id, 
+              ...data,        
+              content,        
+              createdAt: createdDate,
+              isError         
+          } as unknown as JournalEntryWithStatus;
       }));
 
-      // Store ALL entries for the Wizard to access later
-      setAllEntries(decryptedData);
+      setAllEntries(processedData);
 
-      // Apply Search Filter for the DISPLAY list
+      // Apply Search Filter
       const searchTerm = searchParams.get('search')?.toLowerCase();
       const filtered = searchTerm 
-        ? decryptedData.filter(e => e.content.toLowerCase().includes(searchTerm))
-        : decryptedData;
+        ? processedData.filter(e => e.content.toLowerCase().includes(searchTerm))
+        : processedData;
 
       setGroupedEntries(groupItemsByDate(filtered));
 
     } catch (error) {
-      console.error("Error loading entries:", error);
+      console.error("CRITICAL: Error loading journal history:", error);
     } finally {
       setLoading(false);
     }
@@ -105,9 +126,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     }
   };
 
-  const handleShare = async (entry: JournalEntry) => {
+  const handleShare = async (entry: JournalEntryWithStatus) => {
     let dateStr = 'Unknown Date';
-    
     if (entry.createdAt instanceof Date) {
         dateStr = entry.createdAt.toLocaleDateString();
     } else if (entry.createdAt && typeof (entry.createdAt as unknown as FirestoreTimestamp).toDate === 'function') {
@@ -117,24 +137,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}`;
 
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Journal Entry',
-                text: textToShare,
-            });
-            return;
-        } catch (err) {
-            console.log('Share dismissed', err);
-        }
+        try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
     }
 
     try {
         await navigator.clipboard.writeText(textToShare);
         setCopiedId(entry.id);
         setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-        console.error('Failed to copy', err);
-    }
+    } catch (err) { console.error('Failed to copy', err); }
   };
 
   if (loading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;
@@ -144,7 +154,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   return (
     <div className="relative min-h-full">
         {dates.length === 0 ? (
-            <div className="text-center py-10 text-gray-400">No entries found.</div>
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                <p className="text-gray-500">No entries found.</p>
+            </div>
         ) : (
             <div className="space-y-6 pb-24">
                 {dates.map(dateHeader => (
@@ -155,11 +167,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
                         <div className="space-y-3">
                             {groupedEntries[dateHeader].map(entry => (
-                                <div key={entry.id} className="bg-white rounded-xl p-4 shadow-sm border border-indigo-50 relative group">
+                                <div key={entry.id} className={`bg-white rounded-xl p-4 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-mono text-gray-400">
-                                                {/* Runtime Check for Rendering Date - Safe version */}
                                                 {entry.createdAt instanceof Date 
                                                     ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                                                     : (entry.createdAt as unknown as FirestoreTimestamp)?.toDate?.().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -169,39 +180,19 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                                     Mood: {entry.moodScore}
                                                 </span>
                                             )}
-                                            {entry.isEncrypted && <ShieldExclamationIcon className="h-3 w-3 text-green-500" />}
+                                            {/* Show Lock Icon if Encrypted */}
+                                            {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
                                         </div>
                                         
-                                        {/* Action Buttons */}
                                         <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => handleShare(entry)} 
-                                                className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors"
-                                                title="Share or Copy"
-                                            >
-                                                {copiedId === entry.id ? (
-                                                    <CheckIcon className="h-4 w-4 text-green-600" />
-                                                ) : (
-                                                    <ShareIcon className="h-4 w-4" />
-                                                )}
+                                            <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                                {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
                                             </button>
-                                            <button 
-                                                onClick={() => onEdit(entry)} 
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
-                                                title="Edit Entry"
-                                            >
-                                                <PencilSquareIcon className="h-4 w-4" />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(entry.id)} 
-                                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"
-                                                title="Delete Entry"
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
+                                            <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                            <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
                                         </div>
                                     </div>
-                                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer">
+                                    <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
                                         {entry.content}
                                     </p>
                                 </div>
@@ -223,7 +214,6 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             </button>
         )}
 
-        {/* AI WIZARD MODAL */}
         <JournalAnalysisWizard 
             isOpen={isWizardOpen} 
             onClose={() => setIsWizardOpen(false)} 
