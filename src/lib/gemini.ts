@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-// using import.meta.env for Vite
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_API_KEY || '');
 
 // --- Configuration ---
@@ -9,7 +8,7 @@ const GENERATION_CONFIG = {
   temperature: 0.7,
   topP: 0.8,
   topK: 40,
-  maxOutputTokens: 8192, // Increased for full workbook/comparative analysis
+  maxOutputTokens: 8192,
 };
 
 // --- Interfaces ---
@@ -22,8 +21,10 @@ export interface AIAnalysisResult {
     actionableSteps: string[];
     risks: string[];
 }
+// Alias for backward compatibility with insights.ts
+export type AnalysisResult = AIAnalysisResult;
 
-// 2. Comparative/Wizard Analysis (NEW)
+// 2. Comparative/Wizard Analysis
 export interface ComparativeAnalysisResult {
     trajectory: 'Improving' | 'Stable' | 'Declining' | 'Fluctuating';
     key_themes: string[];
@@ -33,20 +34,21 @@ export interface ComparativeAnalysisResult {
     actionable_advice: string[];
 }
 
-// 3. Workbook Holistic Analysis
+// 3. Workbook Holistic Analysis (UPDATED to match UI expectations)
 export interface WorkbookAnalysisResult {
+    scope_context: string; 
     summary: string;
-    emotional_state: string;
-    core_values: string[];
-    limiting_beliefs: string[];
-    recommended_focus: string;
-    action_plan: string[];
+    pillars: {
+        understanding: string;
+        emotional_resonance: string;
+        blind_spots: string;
+    };
+    suggested_actions: string[];
 }
 
-// --- Helper: Robust Retry Logic ---
-// Implements the "AI Cascade": Flash -> Pro -> Lite
+// --- Helper: Retry Logic ---
 async function generateWithRetry(modelName: string, prompt: string, retries = 2): Promise<string> {
-    const modelsToTry = [modelName, 'gemini-1.5-pro', 'gemini-1.5-flash']; // Fallback chain
+    const modelsToTry = [modelName, 'gemini-1.5-pro', 'gemini-1.5-flash'];
     
     for (let i = 0; i <= retries; i++) {
         try {
@@ -65,16 +67,13 @@ async function generateWithRetry(modelName: string, prompt: string, retries = 2)
         } catch (error) {
             console.warn(`Attempt ${i + 1} with ${modelsToTry[i]} failed:`, error);
             if (i === retries) throw error;
-            // Linear backoff: 1s, 2s...
             await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); 
         }
     }
     throw new Error("All AI models failed to respond.");
 }
 
-// --- Helper: JSON Cleaner ---
 function cleanJSON(text: string): string {
-    // Removes Markdown code blocks (```json ... ```) to parse raw JSON
     return text.replace(/```json\n?|```/g, '').trim();
 }
 
@@ -82,10 +81,6 @@ function cleanJSON(text: string): string {
 //  CORE FUNCTIONS
 // ============================================================================
 
-/**
- * 1. COMPARATIVE ANALYSIS (The New Wizard)
- * Compares two sets of journal entries (e.g. Weekly vs Last Week)
- */
 export async function generateComparativeAnalysis(
     currentSet: string, 
     previousSet: string | null, 
@@ -133,17 +128,10 @@ export async function generateComparativeAnalysis(
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
-/**
- * 2. SINGLE ENTRY / SHORT TERM ANALYSIS (Legacy Sparkle Button)
- * Analyzes a small batch of entries for immediate sentiment/risk.
- */
 export async function generateJournalAnalysis(content: string): Promise<AIAnalysisResult> {
     const prompt = `
       You are a Recovery AI Assistant. Analyze the following journal entries for emotional tone, risks, and actionable steps.
-      
-      ENTRIES:
-      ${content}
-
+      ENTRIES: ${content}
       Return a JSON object with this structure:
       {
         "sentiment": "Positive" | "Neutral" | "Negative",
@@ -154,7 +142,6 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       }
       Return ONLY raw JSON.
     `;
-    
     const text = await generateWithRetry('gemini-1.5-flash', prompt);
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
@@ -177,26 +164,27 @@ export async function analyzeFullWorkbook(
     USER RESPONSES:
     ${formattedContent}
 
-    Generate a JSON object with this structure:
+    Generate a JSON object with this EXACT structure:
     {
+        "scope_context": "A short label for this analysis (e.g., 'Step 4 Review')",
         "summary": "A paragraph summarizing their understanding of this step/topic.",
-        "emotional_state": "Current emotional resonance (e.g. Resentful, Accepting, Hopeful)",
-        "core_values": ["Value 1", "Value 2"],
-        "limiting_beliefs": ["Belief 1", "Belief 2"],
-        "recommended_focus": "One specific area to meditate or focus on.",
-        "action_plan": ["Specific recovery action 1", "Specific recovery action 2", "Specific recovery action 3"]
+        "pillars": {
+            "understanding": "Analysis of their cognitive grasp of the concept.",
+            "emotional_resonance": "Current emotional state (e.g. Resentful, Accepting).",
+            "blind_spots": "Potential risks or overlooked areas."
+        },
+        "suggested_actions": ["Specific recovery action 1", "Specific recovery action 2", "Specific recovery action 3"]
     }
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithRetry('gemini-1.5-pro', prompt); // Use PRO for deeper reasoning
+    const text = await generateWithRetry('gemini-1.5-pro', prompt);
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
-/**
- * 4. REAL-TIME COACHING (Chat Helper)
- * Provides immediate feedback on a specific workbook question.
- */
+// Alias for backward compatibility
+export const analyzeWorkbookContent = analyzeFullWorkbook;
+
 export async function getGeminiCoaching(
     context: string, 
     userAnswer: string
@@ -205,10 +193,7 @@ export async function getGeminiCoaching(
     Context: The user is working on a recovery workbook. 
     Question Context: ${context}
     User's Answer: "${userAnswer}"
-
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
-    If the answer seems avoidant, gently probe deeper. If it's honest, validate it.
     `;
-
     return await generateWithRetry('gemini-1.5-flash', prompt);
 }

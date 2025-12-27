@@ -8,6 +8,7 @@ import {
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
+// Ensure these match the exports in your new gemini.ts
 import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
@@ -18,6 +19,7 @@ const COLLECTION = 'insights';
 export type InsightType = 'journal' | 'workbook';
 
 // Combined type for what we save to Firestore
+// This ensures strict type safety based on the 'type' field
 export type InsightPayload = 
   | ({ type: 'journal' } & AnalysisResult)
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
@@ -32,14 +34,14 @@ export type SavedInsight = InsightPayload & {
 /**
  * Saves a new AI Insight to Firestore.
  * Supports both Journal Analysis and Workbook Analysis via discriminated union.
- * * @param uid - The User ID
+ * @param uid - The User ID
  * @param payload - The structured result from Gemini + type ('journal' | 'workbook')
  */
 export async function saveInsight(uid: string, payload: InsightPayload) {
   if (!db) throw new Error("Database not initialized");
 
   // We spread the payload directly. 
-  // Firestore will store the 'type' field and all specific fields (mood vs pillars).
+  // Firestore will store the 'type' field and all specific fields (mood vs pillars) automatically.
   await addDoc(collection(db, COLLECTION), {
     uid,
     createdAt: Timestamp.now(),
@@ -71,7 +73,7 @@ export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
       const type = data.type || 'journal';
 
       return {
-        ...data, // <--- FIXED: Spread data FIRST so we can override fields below
+        ...data, // Spread first to capture all fields
         id: doc.id,
         uid: data.uid,
         type,
@@ -83,7 +85,7 @@ export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
   } catch (e: unknown) {
     console.error("Error fetching insights:", e);
     
-    // Check for Missing Index error
+    // RESTORED: Critical Missing Index Check
     const err = e as { message?: string };
     if (err.message && err.message.includes("index")) {
         console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
