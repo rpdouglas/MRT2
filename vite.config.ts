@@ -1,7 +1,6 @@
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
-// We remove the standard 'defineConfig' from 'vite' and use the vitest-augmented version 
-// to satisfy both the TypeScript compiler and ESLint rules.
+// We use the vitest-augmented version to satisfy both the TypeScript compiler and ESLint rules.
 import { defineConfig as defineVitestConfig } from 'vitest/config';
 
 export default defineVitestConfig({
@@ -29,7 +28,7 @@ export default defineVitestConfig({
           }
         ]
       },
-      // --- NEW SECTION: THE FIX FOR FIREBASE AUTH ---
+      // --- PRESERVED: FIREBASE AUTH & CACHING FIXES ---
       workbox: {
         // 1. CRITICAL: Ignore Firebase Auth URLs so the popup works
         navigateFallbackDenylist: [
@@ -37,8 +36,7 @@ export default defineVitestConfig({
             /^\/__\/firebase/
         ],
         
-        // 2. Performance Caching (The extra lines you noticed)
-        // These cache fonts and images so the app looks good offline
+        // 2. Performance Caching
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
             {
@@ -70,14 +68,33 @@ export default defineVitestConfig({
       // ----------------------------------------------
     })
   ],
+  // --- PRESERVED: VITEST CONFIGURATION ---
   test: {
-    // Enable global APIs like 'describe', 'it', and 'expect'
     globals: true,
-    // Simulate a browser environment using jsdom for React component testing
     environment: 'jsdom',
-    // Path to the setup file that extends DOM matchers
     setupFiles: './src/test/setup.ts',
-    // Ensure CSS is processed so tests can verify styles or visibility
     css: true,
   },
+  // --- NEW ADDITION: CHUNK SIZE OPTIMIZATION ---
+  build: {
+    chunkSizeWarningLimit: 1000, 
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('recharts')) {
+              return 'recharts';
+            }
+            if (id.includes('@google/generative-ai')) {
+              return 'gemini';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 });

@@ -113,6 +113,7 @@ export default function VaultGate({ children }: VaultGateProps) {
                     value={pin}
                     onChange={(e) => { setPin(e.target.value); setError(''); }}
                     className="w-full text-center text-2xl tracking-widest p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-500"
+                autoComplete="new-password" // <--- ADD THIS LINE
                 />
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 

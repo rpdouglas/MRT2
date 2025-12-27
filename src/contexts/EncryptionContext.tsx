@@ -2,7 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { generateSalt, deriveKeyFromPin, encryptData, decryptData } from '../lib/crypto';
+import { 
+    generateSalt, 
+    generateKey, 
+    encrypt, 
+    decrypt, 
+    clearKey,
+    isVaultUnlocked as checkLibUnlocked 
+} from '../lib/crypto';
 
 interface EncryptionContextType {
   isVaultSet: boolean;       // Does the user have a PIN setup?
@@ -17,8 +24,6 @@ interface EncryptionContextType {
 
 const EncryptionContext = createContext<EncryptionContextType | undefined>(undefined);
 
-// FIX: validation error "Fast refresh only works when a file only exports components"
-// This pattern is standard for Contexts, so we disable the warning for this line.
 // eslint-disable-next-line react-refresh/only-export-components
 export function useEncryption() {
   const context = useContext(EncryptionContext);
@@ -34,13 +39,11 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [isVaultSet, setIsVaultSet] = useState(false);
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [vaultLoading, setVaultLoading] = useState(true);
-  const [cryptoKey, setCryptoKey] = useState<CryptoKey | null>(null);
   const [salt, setSalt] = useState<string | null>(null);
 
   // 1. Check if user has a vault set up (fetch salt)
   useEffect(() => {
     async function checkVaultStatus() {
-      // Check if db is initialized
       if (!user || !db) {
         setVaultLoading(false);
         return;
@@ -68,20 +71,20 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   // 2. Setup Vault (First time PIN creation)
   const setupVault = async (pin: string) => {
-    // Check if db is initialized
     if (!user || !db) return;
     
     try {
       setVaultLoading(true);
       const newSalt = generateSalt();
-      const key = await deriveKeyFromPin(pin, newSalt);
+      
+      // Update Lib: Generate and store key internally
+      await generateKey(pin, newSalt);
       
       // Save Salt to Firestore
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, { encryptionSalt: newSalt }, { merge: true });
 
       setSalt(newSalt);
-      setCryptoKey(key); // Keep key in memory
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
     } catch (error) {
@@ -96,8 +99,8 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const unlockVault = async (pin: string): Promise<boolean> => {
     if (!salt) return false;
     try {
-      const key = await deriveKeyFromPin(pin, salt);
-      setCryptoKey(key);
+      // Update Lib: Generate and store key internally
+      await generateKey(pin, salt);
       setIsVaultUnlocked(true);
       return true;
     } catch (error) {
@@ -106,21 +109,22 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const lockVault = () => {
-    setCryptoKey(null);
+  const lockVault = useCallback(() => {
+    clearKey(); // Clear internal lib key
     setIsVaultUnlocked(false);
-  };
+  }, []);
 
   // 4. Helper Wrappers
-  const encrypt = useCallback(async (text: string) => {
-    if (!cryptoKey) throw new Error("Vault is locked");
-    return await encryptData(text, cryptoKey);
-  }, [cryptoKey]);
+  const handleEncrypt = useCallback(async (text: string) => {
+    if (!checkLibUnlocked()) throw new Error("Vault is locked");
+    return await encrypt(text);
+  }, []);
 
-  const decrypt = useCallback(async (text: string) => {
-    if (!cryptoKey) throw new Error("Vault is locked");
-    return await decryptData(text, cryptoKey);
-  }, [cryptoKey]);
+  const handleDecrypt = useCallback(async (text: string) => {
+    // We allow decrypt calls to pass through to the lib even if locked
+    // because the lib handles graceful fallbacks for plain text/legacy data.
+    return await decrypt(text);
+  }, []);
 
   const value = {
     isVaultSet,
@@ -128,8 +132,8 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     vaultLoading,
     unlockVault,
     setupVault,
-    encrypt,
-    decrypt,
+    encrypt: handleEncrypt,
+    decrypt: handleDecrypt,
     lockVault
   };
 
