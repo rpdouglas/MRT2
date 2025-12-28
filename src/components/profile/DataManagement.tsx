@@ -1,10 +1,11 @@
 /**
  * GITHUB COMMENT:
  * [DataManagement.tsx]
- * UPDATED: Integrated Google Drive status indicator.
- * Displays whether auto-sync is active based on the existence of the driveAccessToken.
+ * UPDATED: Added a call-to-action button linking to the new User Guide.
+ * MAINTAINED: All export, import, and sync logic.
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
@@ -20,12 +21,14 @@ import {
     ExclamationTriangleIcon,
     CheckCircleIcon,
     LockClosedIcon,
-    CloudArrowUpIcon
+    CloudArrowUpIcon,
+    BookOpenIcon
 } from '@heroicons/react/24/outline';
 
 export default function DataManagement() {
     const { user, driveAccessToken } = useAuth();
     const { isVaultUnlocked } = useEncryption();
+    const navigate = useNavigate();
     
     const [exporting, setExporting] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -128,6 +131,25 @@ export default function DataManagement() {
 
     return (
         <div className="space-y-8">
+            {/* NEW: USER GUIDE CTA */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-lg text-white">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-white/20 rounded-xl">
+                        <BookOpenIcon className="h-7 w-7" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold">New to MRT?</h3>
+                        <p className="text-blue-100 text-sm">Explore our visual guide to master your recovery tools.</p>
+                    </div>
+                </div>
+                <button 
+                    onClick={() => navigate('/guide')}
+                    className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors active:scale-95 shadow-md"
+                >
+                    View User Guide
+                </button>
+            </div>
+
             {/* GOOGLE DRIVE SYNC STATUS */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between mb-4">

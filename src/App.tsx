@@ -1,8 +1,8 @@
 /**
  * GITHUB COMMENT:
  * [App.tsx]
- * FIXED: Moved AdminGrant component inside AuthProvider to resolve 
- * "useAuth must be used within an AuthProvider" runtime error.
+ * UPDATED: Registered the new UserGuide route.
+ * MAINTAINED: Strict routing and PrivateRoute protection.
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -22,13 +22,13 @@ import TemplateEditor from './components/journal/TemplateEditor';
 import AppShell from './components/AppShell';
 import InsightsLog from './pages/InsightsLog';
 import AdminDashboard from './pages/AdminDashboard'; 
+import UserGuide from './pages/UserGuide'; // NEW
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
-//import AdminGrant from './components/AdminGrant'; // TEMPORARY IMPORT
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
   
   if (!user) {
     return <Navigate to="/login" />;
@@ -56,7 +56,6 @@ export default function App() {
                   }
                   />
                   
-                  {/* PROTECTED ROUTES */}
                   <Route
                   path="/journal"
                   element={
@@ -146,7 +145,16 @@ export default function App() {
                   }
                   />
 
-                  {/* ADMIN ROUTE */}
+                  {/* USER GUIDE ROUTE */}
+                  <Route
+                  path="/guide"
+                  element={
+                      <PrivateRoute>
+                          <UserGuide />
+                      </PrivateRoute>
+                  }
+                  />
+
                   <Route
                   path="/admin"
                   element={
@@ -162,8 +170,6 @@ export default function App() {
               </Router>
           </LayoutProvider>
         </EncryptionProvider>
-        {/* FIXED: Moved inside AuthProvider so useAuth works */}
-     
       </AuthProvider>
     </ErrorBoundary>
   );
