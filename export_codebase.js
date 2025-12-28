@@ -1,3 +1,10 @@
+/**
+ * GITHUB COMMENT:
+ * [export_codebase.js]
+ * IMPROVED: Added directory tree generation for structural context.
+ * IMPROVED: Explicitly ignores auto-generated build manifests (build-info.json).
+ * IMPROVED: Enhanced LLM-friendly separators.
+ */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -5,6 +12,7 @@ import { fileURLToPath } from 'url';
 // Fix for __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname); 
 
 // --- CONFIGURATION ---
 const OUTPUT_FILE = 'project_codebase.txt';
@@ -15,7 +23,8 @@ const IGNORE_DIRS = [
   'build', 
   '.vscode', 
   'coverage', 
-  'public'
+  'public',
+  'assets'
 ];
 const INCLUDE_EXTS = [
   '.ts', 
@@ -24,14 +33,38 @@ const INCLUDE_EXTS = [
   '.jsx', 
   '.css', 
   '.json',
-  '.html' 
+  '.html',
+  '.rules' // Added for Firebase Security Rules
 ];
 const IGNORE_FILES = [
   'package-lock.json',
   'yarn.lock',
   'project_codebase.txt',
-  'export_codebase.js'
+  'export_codebase.js',
+  'build-info.json', // Ignore auto-generated hashes [cite: 147]
+  '.env',
+  '.env.local'
 ];
+
+function generateTree(dir, prefix = '') {
+  let tree = '';
+  const files = fs.readdirSync(dir);
+  
+  files.forEach((file, index) => {
+    const fullPath = path.join(dir, file);
+    const isLast = index === files.length - 1;
+    const stats = fs.statSync(fullPath);
+    
+    if (IGNORE_DIRS.includes(file) || IGNORE_FILES.includes(file)) return;
+
+    tree += `${prefix}${isLast ? '└── ' : '├── '}${file}\n`;
+    
+    if (stats.isDirectory()) {
+      tree += generateTree(fullPath, `${prefix}${isLast ? '    ' : '│   '}`);
+    }
+  });
+  return tree;
+}
 
 function getAllFiles(dirPath, arrayOfFiles) {
   const files = fs.readdirSync(dirPath);
@@ -56,23 +89,30 @@ function getAllFiles(dirPath, arrayOfFiles) {
 }
 
 function generateExport() {
-  console.log('🔍 Scanning project files...');
+  console.log('🔍 Architectural Scan starting...');
   
   try {
-    const allFiles = getAllFiles(__dirname);
-    let outputContent = `PROJECT EXPORT - ${new Date().toISOString()}\n\n`;
+    const allFiles = getAllFiles(rootDir);
+    let outputContent = `PROJECT EXPORT - ${new Date().toISOString()}\n`;
+    outputContent += `ENVIRONMENT: PRODUCTION_READY_V3.8\n\n`;
 
-    const priorityFiles = allFiles.filter(f => f.includes('package.json') || f.includes('vite.config'));
+    outputContent += `### DIRECTORY STRUCTURE ###\n`;
+    outputContent += generateTree(rootDir);
+    outputContent += `\n\n### SOURCE FILES ###\n`;
+
+    // Prioritize config files for context
+    const priorityFiles = allFiles.filter(f => 
+        f.includes('package.json') || 
+        f.includes('vite.config') || 
+        f.includes('firestore.rules') ||
+        f.includes('theme.ts')
+    );
     const otherFiles = allFiles.filter(f => !priorityFiles.includes(f));
     const sortedFiles = [...priorityFiles, ...otherFiles];
 
-    console.log(`📝 Found ${sortedFiles.length} files. Writing to ${OUTPUT_FILE}...`);
-
     sortedFiles.forEach(filePath => {
-      const relativePath = path.relative(__dirname, filePath);
-      outputContent += `\n================================================================================\n`;
-      outputContent += `FILE: ${relativePath}\n`;
-      outputContent += `================================================================================\n`;
+      const relativePath = path.relative(rootDir, filePath);
+      outputContent += `\n--- START_FILE: ${relativePath} ---\n`;
       
       try {
         const content = fs.readFileSync(filePath, 'utf8');
@@ -80,11 +120,11 @@ function generateExport() {
       } catch (err) {
         outputContent += `[Error reading file: ${err.message}]\n`;
       }
+      outputContent += `--- END_FILE: ${relativePath} ---\n`;
     });
 
-    fs.writeFileSync(OUTPUT_FILE, outputContent);
+    fs.writeFileSync(path.join(rootDir, OUTPUT_FILE), outputContent);
     console.log(`✅ Success! Codebase exported to: ${OUTPUT_FILE}`);
-    console.log(`👉 Please upload this file to the chat.`);
     
   } catch (e) {
     console.error('❌ Error generating exports:', e);
