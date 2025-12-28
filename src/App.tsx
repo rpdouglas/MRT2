@@ -24,7 +24,7 @@ import InsightsLog from './pages/InsightsLog';
 import AdminDashboard from './pages/AdminDashboard'; 
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
-import AdminGrant from './components/AdminGrant'; // TEMPORARY IMPORT
+//import AdminGrant from './components/AdminGrant'; // TEMPORARY IMPORT
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -163,7 +163,7 @@ export default function App() {
           </LayoutProvider>
         </EncryptionProvider>
         {/* FIXED: Moved inside AuthProvider so useAuth works */}
-        <AdminGrant /> 
+     
       </AuthProvider>
     </ErrorBoundary>
   );
