@@ -1,8 +1,8 @@
 /**
  * GITHUB COMMENT:
  * [App.tsx]
- * TEMPORARY: Added AdminGrant component to the root of the application.
- * TODO: REMOVE AdminGrant import and component once user role is updated in Firestore.
+ * FIXED: Moved AdminGrant component inside AuthProvider to resolve 
+ * "useAuth must be used within an AuthProvider" runtime error.
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -162,8 +162,9 @@ export default function App() {
               </Router>
           </LayoutProvider>
         </EncryptionProvider>
+        {/* FIXED: Moved inside AuthProvider so useAuth works */}
+        <AdminGrant /> 
       </AuthProvider>
-      <AdminGrant /> {/* TEMPORARY COMPONENT */}
     </ErrorBoundary>
   );
 }
