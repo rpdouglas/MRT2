@@ -8,9 +8,10 @@ import {
   ChevronLeftIcon, 
   CheckCircleIcon, 
   ArrowRightIcon,
-  SparklesIcon
+  SparklesIcon,
+  BookOpenIcon // Added for Intro Slide
 } from '@heroicons/react/24/outline';
-import { getWorkbookById, type Workbook, type Section } from '../lib/workbooks';
+import { getWorkbook, type Workbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 
 // Type definition for stored answers
@@ -24,7 +25,7 @@ export default function WorkbookSession() {
 
   // Content State
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
-  const [section, setSection] = useState<Section | null>(null);
+  const [section, setSection] = useState<WorkbookSection | null>(null);
   const [loading, setLoading] = useState(true);
 
   // User Progress State
@@ -39,13 +40,14 @@ export default function WorkbookSession() {
   // 1. Load Workbook Content & User Progress
   useEffect(() => {
     async function loadData() {
-      // FIX: Added !db check to satisfy TypeScript
       if (!user || !workbookId || !sectionId || !db) return;
 
       try {
         // A. Load Static Workbook JSON
-        const wb = await getWorkbookById(workbookId);
+        const wb = getWorkbook(workbookId || '');
+        
         if (!wb) {
+          console.warn(`Workbook not found: ${workbookId}`);
           navigate('/workbooks');
           return;
         }
@@ -53,6 +55,7 @@ export default function WorkbookSession() {
 
         const sec = wb.sections.find(s => s.id === sectionId);
         if (!sec) {
+           console.warn(`Section not found: ${sectionId}`);
            navigate(`/workbooks/${workbookId}`);
            return;
         }
@@ -109,7 +112,6 @@ export default function WorkbookSession() {
 
   // 3. Save Answer (with Encryption)
   const saveAnswer = async (qId: string, text: string) => {
-    // FIX: Added !db check
     if (!user || !workbookId || !db) return;
     
     try {
@@ -145,15 +147,17 @@ export default function WorkbookSession() {
 
   // 4. Navigation & Completion
   const handleNext = async () => {
-    // FIX: Added !db check
     if (!section || !workbookId || !user || !db) return;
     
     const currentQ = section.questions[activeQuestionIndex];
-    const currentAns = answers[currentQ.id];
     
-    setSaving(true);
-    if (currentAns) {
-        await saveAnswer(currentQ.id, currentAns);
+    // Only save if it's NOT a read-only slide
+    if (currentQ.type !== 'read_only') {
+        const currentAns = answers[currentQ.id];
+        setSaving(true);
+        if (currentAns) {
+            await saveAnswer(currentQ.id, currentAns);
+        }
     }
 
     if (activeQuestionIndex < section.questions.length - 1) {
@@ -183,7 +187,8 @@ export default function WorkbookSession() {
 
       setAiCoachLoading(true);
       try {
-          const feedback = await getGeminiCoaching(q.text, ans);
+          const qContext = q.context || q.text; 
+          const feedback = await getGeminiCoaching(qContext, ans);
           setAiFeedback(feedback);
       } catch (error) {
           console.error(error);
@@ -198,6 +203,9 @@ export default function WorkbookSession() {
 
   const currentQuestion = section.questions[activeQuestionIndex];
   const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+  
+  // Check if this is an Intro Slide
+  const isIntroSlide = currentQuestion.type === 'read_only';
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-20">
@@ -222,45 +230,68 @@ export default function WorkbookSession() {
         </div>
 
         {/* QUESTION CARD */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col transition-all">
             
-            <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
-                    Question {activeQuestionIndex + 1} of {section.questions.length}
-                </span>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
-                    {currentQuestion.text}
-                </h3>
-                {currentQuestion.helperText && (
-                    <p className="mt-2 text-gray-500 text-sm">
-                        {currentQuestion.helperText}
-                    </p>
-                )}
-            </div>
-
-            <div className="flex-1 p-6 md:p-8 flex flex-col">
-                <textarea
-                    className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
-                    placeholder="Type your answer here..."
-                    value={answers[currentQuestion.id] || ''}
-                    onChange={(e) => handleAnswerChange(e.target.value)}
-                />
-                
-                {/* AI COACHING AREA */}
-                {aiFeedback && (
-                    <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
-                        <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
-                            <SparklesIcon className="h-5 w-5" />
-                            <span>Coach's Insight</span>
-                        </div>
-                        {/* FIX: Replaced ReactMarkdown with simpler whitespace formatting to avoid dependency */}
-                        <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
-                            {aiFeedback}
+            {isIntroSlide ? (
+                // --- INTRO SLIDE LAYOUT ---
+                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-fadeIn">
+                    <div className="bg-blue-50 p-6 rounded-full mb-6">
+                        <BookOpenIcon className="h-16 w-16 text-blue-600" />
+                    </div>
+                    
+                    <div className="max-w-xl space-y-6">
+                        <h3 className="text-3xl font-black text-gray-900 leading-tight">
+                            {section.title}
+                        </h3>
+                        <div className="w-16 h-1 bg-blue-500 mx-auto rounded-full" />
+                        <div className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
+                            {currentQuestion.text}
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                // --- STANDARD QUESTION LAYOUT ---
+                <>
+                    <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
+                            Question {activeQuestionIndex} of {section.questions.length - 1} {/* Offset for intro */}
+                        </span>
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
+                            {currentQuestion.text}
+                        </h3>
+                        {currentQuestion.context && (
+                            <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100 text-sm text-blue-800 italic flex gap-3">
+                                <SparklesIcon className="h-5 w-5 shrink-0" />
+                                <span>{currentQuestion.context}</span>
+                            </div>
+                        )}
+                    </div>
 
+                    <div className="flex-1 p-6 md:p-8 flex flex-col">
+                        <textarea
+                            className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
+                            placeholder="Type your answer here..."
+                            value={answers[currentQuestion.id] || ''}
+                            onChange={(e) => handleAnswerChange(e.target.value)}
+                        />
+                        
+                        {/* AI COACHING AREA */}
+                        {aiFeedback && (
+                            <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
+                                <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
+                                    <SparklesIcon className="h-5 w-5" />
+                                    <span>Coach's Insight</span>
+                                </div>
+                                <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
+                                    {aiFeedback}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* FOOTER CONTROLS */}
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
                 <button
                     onClick={handlePrevious}
@@ -271,15 +302,17 @@ export default function WorkbookSession() {
                 </button>
 
                 <div className="flex gap-2">
-                    <button
-                        onClick={handleGetCoaching}
-                        disabled={aiCoachLoading || !answers[currentQuestion.id]}
-                        className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
-                        title="Get AI feedback on your answer"
-                    >
-                        {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
-                        <span>AI Coach</span>
-                    </button>
+                    {!isIntroSlide && (
+                        <button
+                            onClick={handleGetCoaching}
+                            disabled={aiCoachLoading || !answers[currentQuestion.id]}
+                            className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
+                            title="Get AI feedback on your answer"
+                        >
+                            {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
+                            <span>AI Coach</span>
+                        </button>
+                    )}
 
                     <button
                         onClick={handleNext}
@@ -292,6 +325,11 @@ export default function WorkbookSession() {
                             <>
                                 <span>Complete</span>
                                 <CheckCircleIcon className="h-5 w-5" />
+                            </>
+                        ) : isIntroSlide ? (
+                            <>
+                                <span>Begin Section</span>
+                                <ArrowRightIcon className="h-5 w-5" />
                             </>
                         ) : (
                             <>

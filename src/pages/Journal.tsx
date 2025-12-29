@@ -1,31 +1,30 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import JournalEditor from '../components/journal/JournalEditor';
+import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
+import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
   PencilSquareIcon, 
   ClockIcon, 
-  ChartBarIcon 
+  ChartBarIcon, 
+  BookOpenIcon 
 } from '@heroicons/react/24/outline';
-import type { JournalEntry } from '../components/journal/JournalEditor';
 
 export default function Journal() {
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // DERIVED STATE: Single Source of Truth (The URL)
+  // State
   const activeTab = searchParams.get('tab') || 'write';
-  
-  // EXTRACT TEMPLATE ID (for Deep Links like ?template=urge_log)
   const initialTemplateId = searchParams.get('template');
-  
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
-  // Update URL directly. React will re-render with the new derived activeTab.
+  // Handlers
   const handleTabChange = (tab: string) => {
     setSearchParams(prev => {
         prev.set('tab', tab);
-        // Clean up template param if leaving write tab so it doesn't persist unwantedly
+        // Clear template param if leaving write tab so it doesn't persist unwantedly
         if (tab !== 'write') prev.delete('template');
         return prev;
     });
@@ -38,7 +37,6 @@ export default function Journal() {
 
   const handleEntrySaved = () => {
     setEditingEntry(null);
-    // Remove template param from URL after save to prevent it from reappearing
     setSearchParams(prev => {
         prev.delete('template');
         prev.set('tab', 'history');
@@ -47,44 +45,51 @@ export default function Journal() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+    <div className={`h-[100dvh] flex flex-col ${THEME.journal.page}`}>
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-           <h1 className="text-3xl font-bold text-gray-900">Journal</h1>
-           <p className="text-gray-500 mt-1">Capture your thoughts, track your mood, and uncover patterns.</p>
-        </div>
+      {/* 1. FIXED HEADER */}
+      <div className="flex-shrink-0 z-10">
+        <VibrantHeader 
+            title="Journal"
+            subtitle="Capture your thoughts."
+            icon={BookOpenIcon}
+            fromColor={THEME.journal.header.from}
+            viaColor={THEME.journal.header.via}
+            toColor={THEME.journal.header.to}
+        />
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="flex p-1 space-x-1 bg-blue-50/50 rounded-xl border border-blue-100">
-           <button
-             onClick={() => handleTabChange('write')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+      {/* 2. FLOATING TABS (Overlaps Header) */}
+      <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
+        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-indigo-200 flex">
+           <button 
+             onClick={() => handleTabChange('write')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
                activeTab === 'write' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
              }`}
            >
              <PencilSquareIcon className="h-4 w-4" />
              Write
            </button>
-           <button
-             onClick={() => handleTabChange('history')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+           <button 
+             onClick={() => handleTabChange('history')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
                activeTab === 'history' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
              }`}
            >
              <ClockIcon className="h-4 w-4" />
              History
            </button>
-           <button
-             onClick={() => handleTabChange('insights')}
-             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+           <button 
+             onClick={() => handleTabChange('insights')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
                activeTab === 'insights' 
-                 ? 'bg-white text-blue-700 shadow-sm border border-gray-100' 
-                 : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
              }`}
            >
              <ChartBarIcon className="h-4 w-4" />
@@ -93,13 +98,16 @@ export default function Journal() {
         </div>
       </div>
 
-      <div className="mt-6">
+      {/* 3. SCROLLABLE CONTENT */}
+      {/* pt-6 ensures content doesn't butt up against the floating tabs immediately */}
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
+        
         {activeTab === 'write' && (
-            <div className="animate-fadeIn">
+            <div className="animate-fadeIn h-full flex flex-col">
                 <JournalEditor 
-                    initialEntry={editingEntry}
-                    initialTemplateId={initialTemplateId}
-                    onSaveComplete={handleEntrySaved}
+                    initialEntry={editingEntry} 
+                    initialTemplateId={initialTemplateId} 
+                    onSaveComplete={handleEntrySaved} 
                 />
             </div>
         )}
@@ -109,14 +117,14 @@ export default function Journal() {
                 <JournalHistory onEdit={handleEdit} />
             </div>
         )}
-
+        
         {activeTab === 'insights' && (
             <div className="animate-fadeIn">
                 <JournalInsights />
             </div>
         )}
-      </div>
 
+      </div>
     </div>
   );
 }

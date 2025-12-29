@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    /* The "Unified Blue" Theme from your Master Doc */
-    @apply bg-blue-50 text-slate-800 antialiased;
+    /* REMOVED: bg-blue-50 to allow individual pages to set their own atmosphere */
+    @apply text-slate-800 antialiased;
   }
   
   /* Reset headings to be bold and dark blue by default */

@@ -1,63 +1,47 @@
-import { useState, useEffect, Fragment, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
-import { 
-    TrashIcon,
-    PencilSquareIcon,
-    ArrowPathIcon,
-    SparklesIcon,
-    FunnelIcon,
-    MagnifyingGlassIcon,
-    XMarkIcon,
-    ShareIcon,
-    ShieldExclamationIcon,
-    TrophyIcon,
-    WrenchScrewdriverIcon,
-    LightBulbIcon,
-    PlusCircleIcon,
-    CheckCircleIcon,
-    BookmarkIcon
-} from '@heroicons/react/24/outline';
-import { Dialog, Transition } from '@headlessui/react';
-import { analyzeJournalEntries, type AnalysisResult } from '../../lib/gemini';
-import { addTask } from '../../lib/tasks';
-import { saveInsight } from '../../lib/insights';
+import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { groupItemsByDate } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
+import JournalAnalysisWizard from './JournalAnalysisWizard';
+import { 
+    TrashIcon, 
+    PencilSquareIcon, 
+    ShieldExclamationIcon,
+    ShareIcon,
+    CheckIcon,
+    SparklesIcon
+} from '@heroicons/react/24/outline';
+
+// 1. EXTEND THE TYPE LOCALLY
+type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
 interface JournalHistoryProps {
   onEdit: (entry: JournalEntry) => void;
 }
 
+// Helper interface to handle Firestore Timestamp vs Date safely
+interface FirestoreTimestamp {
+    toDate: () => Date;
+}
+
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
   const { decrypt } = useEncryption();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
-  // Data State
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
+  // 2. UPDATE STATE TYPE
+  const [allEntries, setAllEntries] = useState<JournalEntryWithStatus[]>([]); 
+  const [groupedEntries, setGroupedEntries] = useState<Record<string, JournalEntryWithStatus[]>>({});
   const [loading, setLoading] = useState(true);
-
-  // Filters State
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [filterTag, setFilterTag] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-
-  // AI State
-  const [analyzing, setAnalyzing] = useState(false);
-  const [insight, setInsight] = useState<AnalysisResult | null>(null);
-  const [showInsightModal, setShowInsightModal] = useState(false);
-  const [savingInsight, setSavingInsight] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  const [addedTools, setAddedTools] = useState<Set<string>>(new Set());
+  // Wizard State
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
-  // --- DATA LOADING & DECRYPTION ---
   const loadEntries = useCallback(async () => {
     if (!user || !db) return;
 
@@ -70,441 +54,171 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
       const snapshot = await getDocs(q);
       
-      // Decrypt on the fly
-      const decryptedData = await Promise.all(snapshot.docs.map(async (doc) => {
-          const data = doc.data();
+      // FAIL-SAFE DATA LOADING
+      const processedData = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
           let content = data.content;
+          let isError = false;
 
-          // If encrypted, try to decrypt
+          // 1. Attempt Decryption
           if (data.isEncrypted) {
              try {
                  content = await decrypt(data.content);
-             } catch {
-                 content = "[Locked Content]";
+             } catch (err) {
+                 console.error(`Failed to decrypt entry ${docSnap.id}:`, err);
+                 content = "🔒 [Locked - Decryption Failed]";
+                 isError = true;
              }
           }
 
+          // 2. Safety check for dates
+          let createdDate = new Date();
+          try {
+              if (data.createdAt?.toDate) {
+                  createdDate = data.createdAt.toDate();
+              } else if (data.createdAt) {
+                  createdDate = new Date(data.createdAt);
+              }
+          } catch (e) {
+              console.warn("Date parse error", e);
+          }
+
+          // 3. Construct Object & Cast
+          // FIX: Cast to 'unknown' first to bypass strict property checks on raw DB data
           return { 
-              id: doc.id, 
-              ...data, 
-              content // Replace with decrypted content
-          } as JournalEntry;
+              id: docSnap.id, 
+              ...data,        
+              content,        
+              createdAt: createdDate,
+              isError         
+          } as unknown as JournalEntryWithStatus;
       }));
 
-      setEntries(decryptedData);
-      
-      // Extract unique tags
-      const tags = new Set<string>();
-      decryptedData.forEach(e => e.tags?.forEach(t => tags.add(t)));
-      setAvailableTags(Array.from(tags));
+      setAllEntries(processedData);
+
+      // Apply Search Filter
+      const searchTerm = searchParams.get('search')?.toLowerCase();
+      const filtered = searchTerm 
+        ? processedData.filter(e => e.content.toLowerCase().includes(searchTerm))
+        : processedData;
+
+      setGroupedEntries(groupItemsByDate(filtered));
 
     } catch (error) {
-      console.error("Error loading entries:", error);
+      console.error("CRITICAL: Error loading journal history:", error);
     } finally {
       setLoading(false);
     }
-  }, [user, decrypt]);
+  }, [user, decrypt, searchParams]);
 
-  // Initial Load
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
 
-  // Listen for URL param changes
-  useEffect(() => {
-    const searchParam = searchParams.get('search');
-    if (searchParam) {
-        setSearchQuery(searchParam);
-    }
-  }, [searchParams]);
-
-  // Client-Side Filtering
-  useEffect(() => {
-    let result = entries;
-
-    if (searchQuery) {
-        const lowerQ = searchQuery.toLowerCase();
-        result = result.filter(e => e.content.toLowerCase().includes(lowerQ));
-    }
-
-    if (filterTag) {
-        result = result.filter(e => e.tags?.includes(filterTag));
-    }
-
-    if (dateFrom) {
-        const from = new Date(dateFrom);
-        result = result.filter(e => {
-            const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
-            return date >= from;
-        });
-    }
-    if (dateTo) {
-        const to = new Date(dateTo);
-        to.setHours(23, 59, 59, 999);
-        result = result.filter(e => {
-            const date = e.createdAt instanceof Date ? e.createdAt : (e.createdAt as Timestamp).toDate();
-            return date <= to;
-        });
-    }
-
-    setFilteredEntries(result);
-  }, [entries, searchQuery, filterTag, dateFrom, dateTo]);
-
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
-    if (val) {
-        setSearchParams(prev => { prev.set('search', val); return prev; });
-    } else {
-        setSearchParams(prev => { prev.delete('search'); return prev; });
-    }
-  };
-
   const handleDelete = async (id: string) => {
     if (!db) return;
-    if (!confirm('Are you sure you want to delete this entry?')) return;
-
+    if (!confirm('Delete this entry?')) return;
     try {
       await deleteDoc(doc(db, 'journals', id));
-      await loadEntries(); 
+      loadEntries(); 
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleShare = async (entry: JournalEntry) => {
-    const dateObj = entry.createdAt instanceof Date ? entry.createdAt : (entry.createdAt as Timestamp).toDate();
-    const dateStr = dateObj.toLocaleDateString();
-    
-    const signature = "\n\nShared from My Recovery Toolkit";
-    const textToShare = `Journal Entry - ${dateStr}\n\n${entry.content}${signature}`;
+  const handleShare = async (entry: JournalEntryWithStatus) => {
+    let dateStr = 'Unknown Date';
+    if (entry.createdAt instanceof Date) {
+        dateStr = entry.createdAt.toLocaleDateString();
+    } else if (entry.createdAt && typeof (entry.createdAt as unknown as FirestoreTimestamp).toDate === 'function') {
+        dateStr = (entry.createdAt as unknown as FirestoreTimestamp).toDate().toLocaleDateString();
+    }
+
+    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}`;
 
     if (navigator.share) {
-        try {
-            await navigator.share({ title: `Journal Entry ${dateStr}`, text: textToShare });
-        } catch (err) { console.error('Error sharing:', err); }
-    } else {
-        try {
-            await navigator.clipboard.writeText(textToShare);
-            alert('Journal entry copied to clipboard!'); 
-        } catch (err) { console.error('Failed to copy:', err); }
+        try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
     }
-  };
 
-  const handleAiAnalysis = async () => {
-    if (filteredEntries.length === 0) return;
-    setAnalyzing(true);
-    setShowInsightModal(true);
-    setAddedTools(new Set()); 
-    setSavingInsight(false);
-    
-    const textsToAnalyze = filteredEntries.slice(0, 10).map(e => e.content);
-    const result = await analyzeJournalEntries(textsToAnalyze);
-    
-    setInsight(result);
-    setAnalyzing(false);
-  };
-
-  const handleSaveLog = async () => {
-    if (!user || !insight) return;
-    setSavingInsight(true);
     try {
-        await saveInsight(user.uid, { type: 'journal', ...insight });
-        alert("Insight saved to Wisdom Log!");
-        setSavingInsight(false);
-    } catch (error) {
-        console.error("Failed to save log", error);
-        setSavingInsight(false);
-    }
+        await navigator.clipboard.writeText(textToShare);
+        setCopiedId(entry.id);
+        setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) { console.error('Failed to copy', err); }
   };
 
-  const handleAddToTasks = async (toolSuggestion: string) => {
-    if (!user) return;
-    try {
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 7);
-        await addTask(user.uid, toolSuggestion, 'once', 'Medium', dueDate);
-        setAddedTools(prev => new Set(prev).add(toolSuggestion));
-    } catch (error) {
-        console.error("Failed to add task:", error);
-    }
-  };
+  if (loading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;
 
-  const clearFilters = () => {
-      setSearchQuery('');
-      setSearchParams(prev => { prev.delete('search'); return prev; });
-      setFilterTag('');
-      setDateFrom('');
-      setDateTo('');
-  };
-
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading & Decrypting History...</div>;
+  const dates = Object.keys(groupedEntries);
 
   return (
-    <div className="space-y-6">
-      
-      {/* HEADER & FILTERS */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-             <div className="relative flex-1 w-full sm:w-auto">
-                <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <input 
-                    type="text"
-                    placeholder="Search keywords..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                />
-             </div>
-             <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-                 >
-                    <FunnelIcon className="h-4 w-4" />
-                    Filters
-                 </button>
-                 <button 
-                    onClick={handleAiAnalysis}
-                    disabled={analyzing || filteredEntries.length === 0}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 text-purple-600 bg-purple-50 px-4 py-2 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50"
-                 >
-                    {analyzing ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
-                    <span className="font-medium text-sm">Analyze Selection</span>
-                 </button>
-             </div>
-          </div>
-
-          {showFilters && (
-              <div className="pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
-                  <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Filter by Tag</label>
-                      <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="w-full text-sm border-gray-300 rounded-md">
-                          <option value="">All Tags</option>
-                          {availableTags.map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                  </div>
-                  <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">From Date</label>
-                      <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full text-sm border-gray-300 rounded-md" />
-                  </div>
-                  <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">To Date</label>
-                      <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full text-sm border-gray-300 rounded-md" />
-                  </div>
-                  <div className="sm:col-span-3 flex justify-end">
-                      <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
-                          <XMarkIcon className="h-3 w-3" /> Clear Filters
-                      </button>
-                  </div>
-              </div>
-          )}
-      </div>
-
-      <div className="flex justify-between items-center px-2">
-          <p className="text-sm text-gray-500">
-             Showing {filteredEntries.length} entries 
-             {(searchQuery || filterTag || dateFrom) && <span className="text-gray-400"> (Filtered)</span>}
-          </p>
-      </div>
-
-      {filteredEntries.length === 0 ? (
-          <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500">No entries match your filters.</p>
-          </div>
-      ) : (
-          filteredEntries.map(entry => (
-            <div key={entry.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all group overflow-hidden">
-              <div className="bg-blue-50/50 p-3 border-b border-gray-100 flex flex-nowrap justify-between items-center gap-2">
-                
-                {/* Meta Column */}
-                <div className="flex flex-col items-start min-w-0">
-                    <span className="text-sm font-bold text-gray-800 truncate">
-                        {entry.createdAt instanceof Date 
-                            ? entry.createdAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-                            : (entry.createdAt as Timestamp).toDate().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-                        }
-                    </span>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                        <span>
-                            {entry.createdAt instanceof Date 
-                                ? entry.createdAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) 
-                                : (entry.createdAt as Timestamp).toDate().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                            }
-                        </span>
-                        {entry.weather && (
-                            <>
-                                <span className="text-gray-300">•</span>
-                                <span className="bg-white/80 px-1.5 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
-                                    {entry.weather.condition}, {entry.weather.temp}°C
-                                </span>
-                            </>
-                        )}
-                        {entry.isEncrypted && (
-                             <span className="flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
-                                 <ShieldExclamationIcon className="h-3 w-3" /> Encrypted
-                             </span>
-                        )}
-                    </div>
-                    {entry.tags && entry.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                             {entry.tags.slice(0, 3).map((tag, i) => (
-                                  <span key={i} className="text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">{tag}</span>
-                             ))}
-                             {entry.tags.length > 3 && <span className="text-[10px] text-gray-400 pl-1">+{entry.tags.length - 3}</span>}
-                        </div>
-                    )}
-                </div>
-
-                {/* Action Column - Buttons are now ALWAYS visible */}
-                <div className="flex items-center gap-2 flex-shrink-0 self-center">
-                    <div className="flex items-center gap-1.5 bg-white/60 px-1.5 py-0.5 rounded-lg border border-blue-100/50 shadow-sm whitespace-nowrap">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">Mood</span>
-                        <div className={`h-2 w-2 rounded-full ${entry.moodScore >= 7 ? 'bg-green-500' : entry.moodScore <= 4 ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                        <span className="text-xs font-bold text-gray-700">{entry.moodScore}</span>
-                    </div>
-                    {/* Removed 'opacity-0 group-hover:opacity-100' so icons are always visible */}
-                    <div className="flex items-center gap-1 transition-opacity">
-                       <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-full transition-colors" title="Edit"><PencilSquareIcon className="h-4 w-4" /></button>
-                       <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-white rounded-full transition-colors" title="Share"><ShareIcon className="h-4 w-4" /></button>
-                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-colors" title="Delete"><TrashIcon className="h-4 w-4" /></button>
-                    </div>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-5">
-                  <div className="prose prose-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                    {entry.content}
-                  </div>
-                  {entry.sentiment && entry.sentiment !== 'Pending' && (
-                    <div className="mt-4 flex justify-end">
-                        <span className={`text-xs px-2 py-1 rounded-full border ${
-                            entry.sentiment === 'Positive' ? 'bg-green-50 text-green-700 border-green-100' : 
-                            entry.sentiment === 'Negative' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100'
-                        }`}>
-                            {entry.sentiment} Analysis
-                        </span>
-                    </div>
-                  )}
-              </div>
+    <div className="relative min-h-full">
+        {dates.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                <p className="text-gray-500">No entries found.</p>
             </div>
-          ))
-      )}
+        ) : (
+            <div className="space-y-6 pb-24">
+                {dates.map(dateHeader => (
+                    <div key={dateHeader}>
+                        <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 rounded-lg border-b border-indigo-300 shadow-sm">
+                            <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{dateHeader}</h3>
+                        </div>
 
-      {/* INSIGHT MODAL */}
-      <Transition appear show={showInsightModal} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setShowInsightModal(false)}>
-          <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-          </Transition.Child>
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-4 mb-4">
-                    <SparklesIcon className="h-6 w-6 text-purple-500" />
-                    Recovery Compass Analysis
-                  </Dialog.Title>
-                  
-                  {analyzing ? (
-                    <div className="py-12 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mb-4"></div>
-                        <p className="text-gray-500 font-medium">Consulting your AI Sponsor...</p>
-                    </div>
-                  ) : (
-                    insight && (
-                        <div className="space-y-6">
-                            <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 flex gap-4">
-                                <div className="flex-shrink-0 p-2 bg-purple-100 rounded-lg h-fit">
-                                    <LightBulbIcon className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-purple-900 text-sm uppercase tracking-wide mb-1">The Insight</h4>
-                                    <p className="text-purple-800 text-sm leading-relaxed">{insight.summary}</p>
-                                    <div className="flex gap-3 mt-3">
-                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
-                                            Mood: {insight.mood}
-                                        </span>
-                                        <span className="text-xs font-semibold bg-white/50 px-2 py-1 rounded text-purple-700 border border-purple-200">
-                                            Sentiment: {insight.sentiment}
-                                        </span>
+                        <div className="space-y-3">
+                            {groupedEntries[dateHeader].map(entry => (
+                                <div key={entry.id} className={`bg-white rounded-xl p-4 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-mono text-gray-400">
+                                                {entry.createdAt instanceof Date 
+                                                    ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                                                    : (entry.createdAt as unknown as FirestoreTimestamp)?.toDate?.().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                            </span>
+                                            {entry.moodScore && (
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${entry.moodScore >= 7 ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-700'}`}>
+                                                    Mood: {entry.moodScore}
+                                                </span>
+                                            )}
+                                            {/* Show Lock Icon if Encrypted */}
+                                            {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                        </div>
+                                        
+                                        <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                                {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
+                                            </button>
+                                            <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                            <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
-                                    <div className="flex items-center gap-2 mb-2 text-orange-800 font-bold text-sm uppercase tracking-wide">
-                                        <ShieldExclamationIcon className="h-5 w-5" />
-                                        Risk Detection
-                                    </div>
-                                    <p className="text-sm text-orange-900 leading-relaxed">
-                                        {insight.risk_analysis}
+                                    <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                        {entry.content}
                                     </p>
                                 </div>
-                                <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                                    <div className="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm uppercase tracking-wide">
-                                        <TrophyIcon className="h-5 w-5" />
-                                        Strengths & Wins
-                                    </div>
-                                    <p className="text-sm text-green-900 leading-relaxed">
-                                        {insight.positive_reinforcement}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                                <div className="flex items-center gap-2 mb-3 text-blue-800 font-bold text-sm uppercase tracking-wide">
-                                    <WrenchScrewdriverIcon className="h-5 w-5" />
-                                    Suggested Toolkit (Quick Add)
-                                </div>
-                                <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    {insight.tool_suggestions.map((tool, i) => {
-                                        const isAdded = addedTools.has(tool);
-                                        return (
-                                            <li key={i} className={`bg-white p-3 rounded-lg text-sm text-blue-900 shadow-sm border ${isAdded ? 'border-green-200 bg-green-50' : 'border-blue-100'} flex items-start gap-2 justify-between group`}>
-                                                <div className="flex items-start gap-2">
-                                                    <span className="text-blue-400 font-bold mt-0.5">•</span>
-                                                    <span className={isAdded ? 'text-green-700' : ''}>{tool}</span>
-                                                </div>
-                                                <button 
-                                                    onClick={() => !isAdded && handleAddToTasks(tool)}
-                                                    disabled={isAdded}
-                                                    className={`flex-shrink-0 transition-all ${isAdded ? 'cursor-default' : 'hover:scale-110 cursor-pointer'}`}
-                                                >
-                                                    {isAdded ? (
-                                                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                                                    ) : (
-                                                        <PlusCircleIcon className="h-5 w-5 text-blue-300 group-hover:text-blue-600" />
-                                                    )}
-                                                </button>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </div>
+                            ))}
                         </div>
-                    )
-                  )}
-
-                  <div className="mt-6 flex justify-between">
-                    <button 
-                        type="button" 
-                        disabled={analyzing || !insight || savingInsight}
-                        onClick={handleSaveLog}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    >
-                        <BookmarkIcon className="h-4 w-4" />
-                        {savingInsight ? "Saving..." : "Save to Wisdom Log"}
-                    </button>
-                    <button type="button" className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition-colors" onClick={() => setShowInsightModal(false)}>
-                      Close Analysis
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                    </div>
+                ))}
             </div>
-          </div>
-        </Dialog>
-      </Transition>
+        )}
+
+        {/* FLOATING ACTION BUTTON (FAB) FOR AI */}
+        {allEntries.length > 0 && (
+            <button
+                onClick={() => setIsWizardOpen(true)}
+                className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group"
+            >
+                <SparklesIcon className="h-6 w-6 group-hover:animate-pulse" />
+                <span className="hidden group-hover:inline text-sm font-bold pr-1">Analyze</span>
+            </button>
+        )}
+
+        <JournalAnalysisWizard 
+            isOpen={isWizardOpen} 
+            onClose={() => setIsWizardOpen(false)} 
+            entries={allEntries} 
+        />
     </div>
   );
 }

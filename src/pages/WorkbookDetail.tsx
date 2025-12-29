@@ -1,12 +1,14 @@
 import { useState, useEffect, Fragment, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
 import { analyzeWorkbookContent, type WorkbookAnalysisResult } from '../lib/gemini';
 import { addTask } from '../lib/tasks';
-import { saveInsight } from '../lib/insights'; // NEW
+import { saveInsight } from '../lib/insights';
+import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
 import { 
     ArrowLeftIcon, 
     PlayCircleIcon, 
@@ -17,7 +19,8 @@ import {
     LightBulbIcon,
     ShieldExclamationIcon,
     AcademicCapIcon,
-    BookmarkIcon // NEW
+    BookmarkIcon,
+    BookOpenIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 
@@ -48,7 +51,7 @@ export default function WorkbookDetail() {
   const [selectedSectionId, setSelectedSectionId] = useState<string>(workbook?.sections[0]?.id || '');
   const [insight, setInsight] = useState<WorkbookAnalysisResult | null>(null);
   const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
-  const [savingInsight, setSavingInsight] = useState(false); // NEW
+  const [savingInsight, setSavingInsight] = useState(false);
 
   // loadProgress wrapped in useCallback to stabilize the dependency for useEffect
   const loadProgress = useCallback(async () => {
@@ -90,7 +93,7 @@ export default function WorkbookDetail() {
     setAnalyzing(true);
     setInsight(null);
     setAddedActions(new Set());
-    setSavingInsight(false); // Reset saving
+    setSavingInsight(false);
 
     try {
         let docsToAnalyze: WorkbookAnswer[] = [];
@@ -116,6 +119,7 @@ export default function WorkbookDetail() {
             docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
             contextTitle = workbook.title;
         } else {
+            // Global (Careful with large datasets in production)
             const q = collection(db, 'users', user.uid, 'workbook_answers');
             const snap = await getDocs(q);
             docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
@@ -129,7 +133,9 @@ export default function WorkbookDetail() {
         }
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
-        const result = await analyzeWorkbookContent(textContent, analysisScope, contextTitle);
+        
+        // FIX 1: Pass contextTitle to the AI function so it's used
+        const result = await analyzeWorkbookContent(contextTitle, [{ question: "Combined Context", answer: textContent }]);
         
         if (result) {
             setInsight(result);
@@ -147,14 +153,14 @@ export default function WorkbookDetail() {
     }
   };
 
-  // NEW: Save Insight Log
   const handleSaveLog = async () => {
     if (!user || !insight) return;
     setSavingInsight(true);
     try {
+        // FIX 2: Explicitly add 'type: workbook' to match InsightPayload
         await saveInsight(user.uid, { type: 'workbook', ...insight });
-        alert("Insight saved to Wisdom Log!");
         setSavingInsight(false); 
+        // Optional: Add toast here
     } catch (error) {
         console.error("Failed to save log", error);
         setSavingInsight(false);
@@ -176,32 +182,42 @@ export default function WorkbookDetail() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading workbook...</div>;
   if (!workbook) return <div className="p-8 text-center text-gray-500">Workbook not found.</div>;
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      
-      {/* HEADER */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-             <div>
-                 <Link to="/workbooks" className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-2">
-                    <ArrowLeftIcon className="h-4 w-4" /> Back to Library
-                 </Link>
-                 <h1 className="text-3xl font-bold text-gray-900">{workbook.title}</h1>
-                 <p className="text-gray-600 mt-2 max-w-2xl">{workbook.description}</p>
-             </div>
+  // Calculate mastery for header
+  const totalWorkbookQuestions = workbook.sections.reduce((acc, sec) => acc + sec.questions.filter(q => q.type !== 'read_only').length, 0);
+  const totalAnswered = Object.values(completedCounts).reduce((a, b) => a + b, 0);
+  const mastery = totalWorkbookQuestions > 0 ? Math.round((totalAnswered / totalWorkbookQuestions) * 100) : 0;
 
-             <button 
-                onClick={() => setShowWizard(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-105"
-             >
-                <SparklesIcon className="h-5 w-5" />
-                <span className="font-semibold">Consult Compass</span>
-             </button>
-         </div>
+  return (
+    <div className={`h-[100dvh] flex flex-col ${THEME.workbooks.page}`}>
+      
+      {/* 1. FIXED HEADER */}
+      <div className="flex-shrink-0 z-10">
+        <VibrantHeader 
+            title={workbook.title}
+            subtitle="Guided Recovery Journey"
+            icon={BookOpenIcon}
+            fromColor={THEME.workbooks.header.from}
+            viaColor={THEME.workbooks.header.via}
+            toColor={THEME.workbooks.header.to}
+            percentage={mastery}
+            percentageColor={THEME.workbooks.ring}
+        />
+        
+        {/* Back Button (Floating on top of header) */}
+        <button 
+            onClick={() => navigate('/workbooks')}
+            className="absolute top-4 left-16 z-20 text-white/80 hover:text-white flex items-center gap-1 text-sm font-medium"
+        >
+            <ArrowLeftIcon className="h-4 w-4" /> Back
+        </button>
       </div>
 
-      {/* SECTIONS LIST */}
-      <div className="grid gap-4">
+      {/* 2. SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-24">
+          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-emerald-100 text-sm text-emerald-900 mb-6">
+              {workbook.description}
+          </div>
+
           {workbook.sections.map((section: WorkbookSection) => {
               const answeredCount = completedCounts[section.id] || 0;
               const totalQuestions = section.questions.filter(q => q.type !== 'read_only').length;
@@ -209,17 +225,17 @@ export default function WorkbookDetail() {
               const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
               return (
-                  <div key={section.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 transition-all group">
+                  <div key={section.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-300 transition-all group">
                       <div className="flex items-center justify-between">
                           <div className="flex-1">
                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                   {section.title}
                                   {isComplete && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
                              </h3>
-                              <p className="text-sm text-gray-500">{section.description}</p>
+                              <p className="text-sm text-gray-500 line-clamp-1">{section.description}</p>
                               
                              <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                  <div className="bg-blue-600 h-full transition-all" style={{ width: `${progressPercent}%` }} />
+                                  <div className={`h-full transition-all ${isComplete ? 'bg-emerald-500' : 'bg-blue-600'}`} style={{ width: `${progressPercent}%` }} />
                               </div>
                               <p className="text-xs text-gray-400 mt-1">{answeredCount} / {totalQuestions} completed</p>
                           </div>
@@ -235,6 +251,15 @@ export default function WorkbookDetail() {
               );
           })}
       </div>
+
+      {/* FAB: Consult Compass */}
+      <button
+        onClick={() => setShowWizard(true)}
+        className="fixed bottom-6 right-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-emerald-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group"
+      >
+        <SparklesIcon className="h-6 w-6 group-hover:animate-pulse" />
+        <span className="hidden group-hover:inline text-sm font-bold pr-1">Consult Compass</span>
+      </button>
 
       {/* --- WIZARD MODAL (Scope Selection) --- */}
       <Transition appear show={showWizard} as={Fragment}>
@@ -319,6 +344,11 @@ export default function WorkbookDetail() {
                                   <SparklesIcon className="h-6 w-6 text-purple-600" />
                                   {insight.scope_context}
                               </h2>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                              <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Summary</h5>
+                              <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
