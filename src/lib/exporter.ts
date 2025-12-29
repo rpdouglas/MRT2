@@ -1,5 +1,7 @@
+// src/lib/exporter.ts
 import { decrypt } from './crypto';
 import type { FullUserData, JournalEntry, Task } from './db';
+import { processInChunks } from './utils';
 import type { jsPDF } from 'jspdf';
 import type { UserOptions } from 'jspdf-autotable';
 
@@ -12,37 +14,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 }
 
 /**
- * Helper to process an array in chunks to prevent UI blocking.
- */
-async function processInChunks<T, R>(
-  items: T[],
-  chunkSize: number,
-  processor: (item: T) => Promise<R>,
-  onProgress?: (progress: number) => void
-): Promise<R[]> {
-  const results: R[] = [];
-  let processed = 0;
-
-  for (let i = 0; i < items.length; i += chunkSize) {
-    const chunk = items.slice(i, i + chunkSize);
-    // Process chunk in parallel
-    const chunkResults = await Promise.all(chunk.map(processor));
-    results.push(...chunkResults);
-    
-    processed += chunk.length;
-    if (onProgress) {
-      onProgress(Math.round((processed / items.length) * 100));
-    }
-    
-    // Yield to main thread
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
-
-  return results;
-}
-
-/**
- * Decrypts sensitive fields in the user data.
+ * Decrypts sensitive fields in the user data using the shared chunk processor.
  */
 export async function prepareDataForExport(
   data: FullUserData, 
@@ -69,20 +41,15 @@ export async function prepareDataForExport(
   );
 
   // Decrypt Workbook Answers
-  // (Workbook structure is complex, usually 'answer' field is encrypted)
   const decryptedWorkbooks = await processInChunks(
     data.workbookAnswers,
     20,
     async (ans) => {
       // Check if this answer record matches our encryption pattern
-      // Usually answer: { text: "...", isEncrypted: true }
       const anyAns = ans as Record<string, unknown>;
-      // We assume simple key-value structure where values might be encrypted objects
-      // For the export, we just iterate values
       const newAns = { ...anyAns };
       
-      // Need to handle specific schema structure from WorkbookSession
-      // If it's the 'answers' map:
+      // Handle specific schema structure from WorkbookSession
       if (newAns.answers && typeof newAns.answers === 'object') {
          const ansMap = newAns.answers as Record<string, unknown>;
          const decryptedMap: Record<string, unknown> = {};
@@ -90,7 +57,7 @@ export async function prepareDataForExport(
          for (const [key, val] of Object.entries(ansMap)) {
              if (val && typeof val === 'object' && 'isEncrypted' in val && (val as {isEncrypted: boolean}).isEncrypted) {
                  try {
-                     // FIX: Double cast via unknown to allow access to 'text' property safely
+                     // Access 'text' property safely via unknown cast
                      const text = await decrypt((val as unknown as {text: string}).text);
                      decryptedMap[key] = text;
                  } catch {
@@ -183,8 +150,7 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
   doc.text("Active Quests & Habits", 14, 20);
 
   const taskRows = data.tasks.map(t => {
-    // FIX: Use intersection type to safely access 'category' without 'any'
-    // This handles the case where 'category' exists in DB data but is missing from strict Task interface
+    // Safely access 'category'
     const category = (t as Task & { category?: string }).category || 'General';
 
     return [

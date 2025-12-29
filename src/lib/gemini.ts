@@ -1,11 +1,10 @@
+// src/lib/gemini.ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-// Ensure your .env VITE_GEMINI_API_KEY is active
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
 // --- Configuration ---
-// Updated for Gemini 2.5 capabilities
 const GENERATION_CONFIG = {
   temperature: 0.7,
   topP: 0.8,
@@ -14,7 +13,6 @@ const GENERATION_CONFIG = {
 };
 
 // --- Model Cascade Configuration ---
-// Based on your available models: 2.5 Flash (Primary), 2.5 Pro (Reasoning), 2.0 Flash (Backup)
 const MODEL_CASCADE = [
   'gemini-2.5-flash', 
   'gemini-2.5-pro', 
@@ -23,7 +21,6 @@ const MODEL_CASCADE = [
 
 // --- Interfaces ---
 
-// 1. Single/Short Journal Analysis
 export interface AIAnalysisResult {
     sentiment: 'Positive' | 'Neutral' | 'Negative';
     moodScore: number;
@@ -34,7 +31,6 @@ export interface AIAnalysisResult {
 // Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
-// 2. Comparative/Wizard Analysis
 export interface ComparativeAnalysisResult {
     trajectory: 'Improving' | 'Stable' | 'Declining' | 'Fluctuating';
     key_themes: string[];
@@ -44,7 +40,6 @@ export interface ComparativeAnalysisResult {
     actionable_advice: string[];
 }
 
-// 3. Workbook Holistic Analysis
 export interface WorkbookAnalysisResult {
     scope_context: string; 
     summary: string;
@@ -56,14 +51,18 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
+// [NEW] Deep Pattern Recognition Interface
+export interface DeepPatternResult {
+    core_triggers: string[];
+    emotional_velocity: string; // e.g. "Rapid cycling between anxiety and relief"
+    hidden_correlations: string[]; // e.g. "Work stress consistently precedes cravings by 2 days"
+    relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
+    long_term_advice: string[];
+    pattern_summary: string;
+}
+
 // --- Core Helper: Smart Cascade Generation ---
-/**
- * Attempts to generate content using the defined MODEL_CASCADE.
- * If the primary model fails (rate limit/error), it automatically retries with the next model in the list.
- */
 async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
-    // If a specific model is requested, try that first, then fall back to the cascade
-    // Otherwise, start with the defined cascade order
     const modelsToTry = specificModel 
         ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
         : MODEL_CASCADE;
@@ -74,8 +73,8 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         const currentModelName = modelsToTry[i];
         
         try {
-            // Optional: Log which model is being attempted in dev mode
             if (import.meta.env.DEV) {
+               
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -90,13 +89,11 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
             
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
             
-            return text; // Success! Return immediately.
+            return text;
 
         } catch (error) {
             console.warn(`⚠️ Attempt failed with ${currentModelName}:`, error);
             lastError = error as Error;
-            
-            // Wait slightly before retrying with the next model (Exponential Backoff)
             await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); 
         }
     }
@@ -105,13 +102,40 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
 }
 
 function cleanJSON(text: string): string {
-    // Aggressively clean markdown code blocks
     return text.replace(/```json\n?|```/g, '').trim();
 }
 
 // ============================================================================
 //  EXPOSED FUNCTIONS
 // ============================================================================
+
+// [NEW] Deep Pattern Recognition
+export async function generateDeepPatternAnalysis(
+    journalHistory: string
+): Promise<DeepPatternResult> {
+    const prompt = `
+    Perform a "Deep Pattern Recognition" analysis on the following 30 days of journal entries.
+    Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity that a human might miss.
+
+    JOURNAL DATA:
+    ${journalHistory}
+
+    Return a JSON object with this EXACT structure:
+    {
+        "pattern_summary": "A comprehensive paragraph describing the user's psychological landscape over this period.",
+        "core_triggers": ["Trigger 1", "Trigger 2", "Trigger 3"],
+        "emotional_velocity": "A brief description of how quickly their mood shifts (e.g. 'Stable but low', 'Volatile spikes').",
+        "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
+        "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
+        "long_term_advice": ["Strategic advice 1", "Strategic advice 2"]
+    }
+    Return ONLY raw JSON.
+    `;
+
+    // Force usage of Gemini 2.5 Pro for deep reasoning capabilities
+    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    return JSON.parse(cleanJSON(text)) as DeepPatternResult;
+}
 
 export async function generateComparativeAnalysis(
     currentSet: string, 
@@ -123,8 +147,8 @@ export async function generateComparativeAnalysis(
 
     if (scope === 'all-time') {
         promptContext = `
-        Perform a Deep Holistic Review of this entire journal history.
-        Identify long-term patterns, core triggers, and the overall arc of recovery.
+        Perform a holistic review of this entire journal history.
+        Identify long-term patterns and the overall arc of recovery.
         
         JOURNAL DATA:
         ${currentSet}
@@ -156,7 +180,6 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    // Use Cascade (Starts with 2.5-Flash)
     const text = await generateWithCascade(systemPrompt + promptContext);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
@@ -176,16 +199,10 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       Return ONLY raw JSON.
     `;
     
-    // Use Cascade (Starts with 2.5-Flash)
     const text = await generateWithCascade(prompt);
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
-/**
- * 3. WORKBOOK WIZARD (Deep Dive)
- * Analyzes a full workbook or section to generate the "Compass" report.
- * Uses 'gemini-2.5-pro' explicitly as primary preference for deeper reasoning.
- */
 export async function analyzeFullWorkbook(
     workbookTitle: string, 
     qaPairs: { question: string; answer: string }[]
@@ -214,7 +231,6 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    // We request 2.5-Pro specifically for this complex task, but it will fallback to Flash if Pro fails/is rate limited
     const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
@@ -233,6 +249,5 @@ export async function getGeminiCoaching(
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
     
-    // Use standard cascade
     return await generateWithCascade(prompt);
 }
