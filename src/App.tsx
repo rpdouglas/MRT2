@@ -1,8 +1,10 @@
+// src/App.tsx
 /**
  * GITHUB COMMENT:
  * [App.tsx]
- * UPDATED: Registered the new UserGuide route.
- * MAINTAINED: Strict routing and PrivateRoute protection.
+ * UPDATED: Route configuration.
+ * - Root path '/' now renders the public <Welcome /> splash page.
+ * - Authenticated users visiting '/' are auto-redirected to '/dashboard' by the Welcome component.
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -10,6 +12,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EncryptionProvider } from './contexts/EncryptionContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome'; // NEW IMPORT
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
 import Tasks from './pages/Tasks';
@@ -22,7 +25,7 @@ import TemplateEditor from './components/journal/TemplateEditor';
 import AppShell from './components/AppShell';
 import InsightsLog from './pages/InsightsLog';
 import AdminDashboard from './pages/AdminDashboard'; 
-import UserGuide from './pages/UserGuide'; // NEW
+import UserGuide from './pages/UserGuide'; 
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -45,8 +48,11 @@ export default function App() {
           <LayoutProvider>
               <Router>
               <Routes>
+                  {/* PUBLIC ROUTES */}
+                  <Route path="/" element={<Welcome />} />
                   <Route path="/login" element={<Login />} />
                   
+                  {/* PROTECTED ROUTES */}
                   <Route
                   path="/dashboard"
                   element={
@@ -164,8 +170,8 @@ export default function App() {
                   }
                   />
                   
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                  {/* FALLBACK */}
+                  <Route path="*" element={<Navigate to="/" />} />
               </Routes>
               </Router>
           </LayoutProvider>
