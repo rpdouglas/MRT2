@@ -1,4 +1,9 @@
-// src/components/journal/JournalAnalysisWizard.tsx
+/**
+ * GITHUB COMMENT:
+ * [JournalAnalysisWizard.tsx]
+ * UPDATED: Integrated 'Add to Quest' functionality for AI insights.
+ * FEATURE: Users can now directly convert AI advice into Tasks (Defaults: Recovery, Medium Priority, Due in 7 Days).
+ */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
@@ -11,15 +16,17 @@ import {
     ExclamationTriangleIcon,
     ArrowPathIcon,
     BoltIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    PlusCircleIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
 import type { JournalEntry } from './JournalEditor';
-import { subDays, isAfter, isBefore } from 'date-fns';
+import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
+import { addTask } from '../../lib/tasks';
 
 interface WizardProps {
     isOpen: boolean;
@@ -47,9 +54,11 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     } = useDeepPatternAnalysis();
 
     const [saving, setSaving] = useState(false);
+    const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
     const runStandardAnalysis = async () => {
         setStep('analyzing');
+        setAddedActions(new Set()); // Reset added actions on new run
         
         try {
             const now = new Date();
@@ -103,11 +112,30 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const handleStartAnalysis = () => {
         if (scope === 'all-time') {
             setStep('analyzing');
+            setAddedActions(new Set());
             runDeepAnalysis().then(() => {
                 setStep('results');
             });
         } else {
             runStandardAnalysis();
+        }
+    };
+
+    const handleAddToTasks = async (action: string) => {
+        if (!user) return;
+        try {
+            // Defaults: Recovery Category, Medium Priority, Due in 7 Days
+            const dueDate = addDays(new Date(), 7);
+            await addTask(
+                user.uid,
+                action,
+                'once',
+                'Medium',
+                dueDate
+            );
+            setAddedActions(prev => new Set(prev).add(action));
+        } catch (e) {
+            console.error("Failed to add task", e);
         }
     };
 
@@ -273,9 +301,24 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
                                                 <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy</h5>
-                                                <ul className="text-sm space-y-2">
-                                                    {deepResult.long_term_advice.map((adv, i) => <li key={i}>→ {adv}</li>)}
-                                                </ul>
+                                                <div className="space-y-2">
+                                                    {deepResult.long_term_advice.map((action, i) => (
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="font-bold text-gray-500">→</span>
+                                                                <span>{action}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
+                                                                disabled={addedActions.has(action)}
+                                                                className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-400 bg-green-900/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
+                                                            >
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </>
                                     )}
@@ -313,8 +356,19 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                                 <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions</h5>
                                                 <div className="space-y-2">
                                                     {standardResult.actionable_advice.map((action, i) => (
-                                                        <div key={i} className="flex items-start gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
-                                                            <span className="font-bold text-fuchsia-400">{i+1}.</span> {action}
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg group hover:bg-white/80 transition-colors">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="font-bold text-fuchsia-400">{i+1}.</span> 
+                                                                <span>{action}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
+                                                                disabled={addedActions.has(action)}
+                                                                className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}
+                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
+                                                            >
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>

@@ -1,12 +1,12 @@
-PROJECT EXPORT - 2025-12-29T02:10:14.079Z
-ENVIRONMENT: PRODUCTION_READY_V3.8
+PROJECT EXPORT - 2025-12-29T22:55:19.591Z
+ENVIRONMENT: PRODUCTION_READY_V4.8 (Architectural Edition)
+NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 
 ### DIRECTORY STRUCTURE ###
 ├── .eslintrc.json
 ├── .github
 │   └── workflows
-│       ├── deploy.yml
-│       └── firebase-hosting-merge.yml
+│       └── deploy.yml
 ├── .gitignore
 ├── .husky
 │   ├── _
@@ -30,15 +30,37 @@ ENVIRONMENT: PRODUCTION_READY_V3.8
 │   └── pre-commit
 ├── AI_Maintenance.md
 ├── AI_WORKFLOW.md
+├── Logo.png
+├── Logo.png:Zone.Identifier
 ├── README.md
 ├── check_models.js
 ├── eslint.config.js
 ├── firebase.json
 ├── firestore.indexes.json
 ├── firestore.rules
+├── generate_icons.py
 ├── index.html
 ├── package.json
 ├── postcss.config.js
+├── public
+│   ├── Marketing
+│   │   ├── 1000004496.jpg
+│   │   ├── David_The_Fresh_Start.jpg
+│   │   ├── Gemini_Generated_Image_esxn5fesxn5fesxn.png:Zone.Identifier
+│   │   ├── Lisa_The_Service_Pro.jpg
+│   │   ├── Ned_The_Pink_Cloud.jpg
+│   │   ├── Walt_The_Zen_Master.jpg
+│   │   └── slice_personas.py
+│   ├── apple-touch-icon-180x180.png
+│   ├── maskable-icon-512x512.png
+│   ├── personas
+│   │   ├── david.jpg
+│   │   ├── lisa.jpg
+│   │   ├── ned.jpg
+│   │   └── walt.jpg
+│   ├── pwa-192x192.png
+│   └── pwa-512x512.png
+├── pwa-assets
 ├── scripts
 │   ├── generate-build-info.js
 │   ├── increment-version.cjs
@@ -75,6 +97,8 @@ ENVIRONMENT: PRODUCTION_READY_V3.8
 │   │   └── LayoutContext.tsx
 │   ├── data
 │   │   └── workbooks.ts
+│   ├── hooks
+│   │   └── useDeepPatternAnalysis.ts
 │   ├── index.css
 │   ├── lib
 │   │   ├── crypto.ts
@@ -91,6 +115,7 @@ ENVIRONMENT: PRODUCTION_READY_V3.8
 │   │   ├── journal.ts
 │   │   ├── tasks.ts
 │   │   ├── theme.ts
+│   │   ├── utils.ts
 │   │   ├── versioning.ts
 │   │   ├── weather.ts
 │   │   └── workbooks.ts
@@ -106,6 +131,7 @@ ENVIRONMENT: PRODUCTION_READY_V3.8
 │   │   ├── TemplateEditor.tsx
 │   │   ├── UserGuide.tsx
 │   │   ├── Vitality.tsx
+│   │   ├── Welcome.tsx
 │   │   ├── WorkbookDetail.tsx
 │   │   ├── WorkbookSession.tsx
 │   │   └── Workbooks.tsx
@@ -120,6 +146,453 @@ ENVIRONMENT: PRODUCTION_READY_V3.8
 
 
 ### SOURCE FILES ###
+
+--- START_FILE: .github/workflows/deploy.yml ---
+name: Deploy to Firebase (Multi-Environment)
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+      - 'feature/*'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    # --- LINTER FIX: Initialize empty vars so VS Code doesn't complain ---
+    env:
+      FIREBASE_PROJECT_ID: ""
+      SERVICE_ACCOUNT_JSON: ""
+      VITE_FIREBASE_API_KEY: ""
+      VITE_FIREBASE_AUTH_DOMAIN: ""
+      VITE_FIREBASE_PROJECT_ID: ""
+      VITE_FIREBASE_STORAGE_BUCKET: ""
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ""
+      VITE_FIREBASE_APP_ID: ""
+      VITE_FIREBASE_MEASUREMENT_ID: ""
+      VITE_APP_VERSION: ""
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # --- VERSIONING STEP (Updated filename to .cjs) ---
+      - name: Increment Version
+        id: versioning
+        run: node scripts/increment-version.cjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          # GH_PAT: ${{ secrets.GH_PAT }} 
+
+      # --- 1. SET ENVIRONMENT VARIABLES ---
+      
+      # DEV Environment
+      - name: Set Env Vars (DEV)
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        run: |
+          echo "FIREBASE_PROJECT_ID=mrt2-app-dev" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_DEV }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_DEV }}" >> $GITHUB_ENV
+          
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV_BASE64 }}" | base64 -d > ./service-account.json
+
+      # UAT Environment
+      - name: Set Env Vars (UAT)
+        if: startsWith(github.ref, 'refs/heads/release/')
+        run: |
+          echo "FIREBASE_PROJECT_ID=mrt2-app-uat" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_UAT }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_UAT }}" >> $GITHUB_ENV
+
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_UAT_BASE64 }}" | base64 -d > ./service-account.json
+
+      # PROD Environment
+      - name: Set Env Vars (PROD)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "FIREBASE_PROJECT_ID=mrt2-app-prod" >> $GITHUB_ENV
+          
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_PROD }}" >> $GITHUB_ENV
+          echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_PROD }}" >> $GITHUB_ENV
+
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD_BASE64 }}" | base64 -d > ./service-account.json
+
+      # --- LOAD SERVICE ACCOUNT CONTENT ---
+      - name: Load Service Account JSON
+        run: |
+          echo "SERVICE_ACCOUNT_JSON<<EOF" >> $GITHUB_ENV
+          cat ./service-account.json >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # --- 2. BUILD APPLICATION ---
+
+      - name: Build Application
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ env.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ env.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ env.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ env.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ env.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ env.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ env.VITE_FIREBASE_MEASUREMENT_ID }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_APP_VERSION: ${{ env.VITE_APP_VERSION }}
+
+      # --- 3. DEPLOY TO FIREBASE HOSTING ---
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
+          projectId: "${{ env.FIREBASE_PROJECT_ID }}"
+          channelId: livex`
+--- END_FILE: .github/workflows/deploy.yml ---
+
+--- START_FILE: AI_Maintenance.md ---
+
+# 🛠️ The Maintenance Protocol (v1.0)
+
+**Project:** My Recovery Toolkit (MRT)
+**Objective:** Automate the "Shadow Processes" of documentation, data mapping, and debt reduction to prevent system rot.
+
+---
+
+## Protocol A: The Schema Sync (Data Dictionary)
+
+**Frequency:** Weekly, or after modifying `types.ts`.
+**Goal:** Keep a human-readable map of the database structure so we don't forget field names or types.
+
+**Prompt:**
+```text
+I am uploading `src/types/index.ts` (or relevant type definitions) and `src/lib/gemini.ts`.
+
+Task: Generate a "Data Dictionary" table for our Master Documentation.
+1. List every Firestore Collection (e.g., `users`, `journals`, `workbooks`).
+2. For each collection, list the Fields, their Data Types, and Description.
+3. Highlight any "Virtual Fields" (fields that exist in the App Type but not in the DB, e.g., derived state).
+4. Note any fields that are "Legacy/Optional" (marked with `?`).
+
+```
+
+---
+
+## Protocol B: The Debt Ledger (Technical Debt Sweep)
+
+**Frequency:** Bi-Weekly.
+**Goal:** Surface hidden TODOs, hacks, and loose typing before they cause bugs.
+
+**Prompt:**
+
+```text
+I am providing a full codebase dump.
+
+Task: Perform a "Technical Debt Audit".
+1. Scan for comments containing `TODO`, `FIXME`, or `HACK`.
+2. Scan for usage of `any` type or `@ts-ignore`.
+3. Scan for "Magic Numbers" or hardcoded strings that should be constants.
+
+Output a prioritized "Debt Ledger" table:
+- Severity (High/Med/Low)
+- File Path
+- Issue Description
+- Suggested Fix Strategy
+
+```
+
+---
+
+## Protocol C: The Release Scribe (Changelog)
+
+**Frequency:** Before pushing to Production.
+**Goal:** Translate technical git commits into a user-friendly update list.
+
+**Prompt:**
+
+```text
+I am providing the list of Git Commits since the last release (or a summary of features built).
+
+Task: Write the "What's New" release notes for the end users.
+1. Tone: Encouraging, professional, recovery-focused.
+2. Grouping: Group updates by "New Features," "Improvements," and "Fixes."
+3. Translation: Translate technical terms (e.g., "Refactored Recharts debounce") into user benefits (e.g., "Smoother charts that load faster").
+
+
+--- END_FILE: AI_Maintenance.md ---
+
+--- START_FILE: AI_WORKFLOW.md ---
+
+# 🚀 The Recursive Build Protocol (v1.2)
+
+**Project:** My Recovery Toolkit (MRT)
+**Objective:** Maintain high-velocity, error-free feature delivery by enforcing strict context ingestion, architectural planning, and anti-regression coding standards.
+
+---
+
+## 🔁 The Core Loop
+
+The workflow follows a 4-phase cycle. **Do not skip phases.**
+
+1. **Ingestion:** Loading the AI with the current state of reality.
+2. **Definition:** Stating the intent and asking for strategy.
+3. **Execution:** Authorizing the code generation with strict constraints.
+4. **Crystallization:** Updating the Master Guide and Decision Records.
+
+---
+
+## Phase 1: Ingestion (Start of Session)
+
+**Trigger:** Start of a new chat or after a massive code change.
+**Goal:** Ensure the AI creates code based on the *actual* file structure, not its training memory.
+
+**Action:** Upload `Master Build Guide v3.3.docx` and a full text dump of the codebase.
+
+**Prompt:**
+
+```text
+I am providing the updated Master Build Guide (v3.3) and a complete source code dump.
+
+The Goal:
+1. Internalize Architecture: Ingest the current file structure, contexts (Auth, Layout, Encryption), and libraries.
+2. Code Verification: Review the source code against the Master Guide to ensure the implementation matches the documentation.
+3. Readiness Check: Confirm strict typing and safety guards are present.
+
+Please confirm you have processed both the guide and the code, and provide a high-level summary of the "Source-to-Doc" integrity before we begin the next feature build.
+
+```
+
+---
+
+## Phase 2: Definition (The Strategy)
+
+**Trigger:** You want to build a new feature or refactor an existing one.
+**Goal:** Force the AI to think about *Architecture*, *Data Shapes*, and *Risks* before writing code.
+
+**Prompt Template (Feature Kickoff):**
+
+```text
+Subject: Feature Kickoff Request - [Feature Name]
+Context: [Brief description of what you want to achieve]
+
+Your Instructions:
+1. Architectural Analysis (Context First):
+   - Review the Master Build Guide and current file structure.
+   - Identify which existing components, hooks, or contexts will be impacted.
+   - Safety Check: Identify risks (e.g., PWA offline syncing, Auth state, Legacy Data compatibility).
+
+2. Data & Query Analysis:
+   - Will this require a new Firebase Query? If using complex filters (where + orderBy), explicitly state if a Composite Index is needed.
+   - Are we changing a data model? (e.g., `mood` vs `moodScore`). How will we handle old data that lacks this field?
+
+3. Modernization Scan:
+   - Check related code for "Tech Debt" (e.g., loose typing, unused imports).
+   - Are there newer React or Firebase patterns we should utilize?
+
+4. Strategy Proposal (The Rule of 3):
+   - Option A (Conservative): Quickest implementation, minimal impact.
+   - Option B (Refactored/Modern - RECOMMENDED): Best balance of clean code and maintenance.
+   - Option C (Robust/Scalable): High-performance/Over-engineered approach.
+
+5. The Recommendation:
+   - Select the best option.
+   - Explain why it fits our "Production Readiness" standard.
+
+6. STOP AND WAIT:
+   - DO NOT generate code yet.
+   - Present the analysis and wait for my formal approval.
+
+```
+
+---
+
+## Phase 3: Execution (The Build)
+
+**Trigger:** The AI has presented a plan, and you have chosen an option.
+**Goal:** Generate copy-paste safe code that passes Linting/TypeScript checks on the first try.
+
+**Prompt Template (The Approval Validator v2.2):**
+
+```text
+I formally approve the recommended approach. Please proceed with implementing the approved changes.
+
+Instructions for Code Generation:
+
+1. Alignment & Strategy:
+   - Briefly restate the core objective to confirm alignment.
+
+2. Full File Output (CRITICAL):
+   - No Snippets: Provide the entire content of every modified file from top to bottom.
+   - No Placeholders: Do NOT use "// ... rest of code" or "// ... imports".
+   - Context: I need the complete, copy-pasteable file state.
+
+3. Strict TypeScript & Linting Compliance (Zero-Tolerance):
+   - Type-Only Imports: You MUST use `import type { ... }` for interfaces/types (Fixes verbatimModuleSyntax).
+   - Discriminating Unions: If handling Union types (e.g., `Journal | Workbook`), check the `type` property BEFORE accessing unique fields.
+   - Intermediate Casting: If spreading raw DB data into a strict type, cast to `unknown` first (e.g., `as unknown as JournalEntry`) to avoid "insufficient overlap" errors.
+   - Icon Verification: Double-check that every Icon component used in JSX is actually imported.
+   - React Refresh: If exporting a Provider and Hook in the same file, append `// eslint-disable-next-line react-refresh/only-export-components`.
+
+4. Anti-Regression & Fail-Safe Protocol:
+   - Fail-Safe Lists: When mapping over external data (e.g., `snapshot.docs.map`), wrap the logic in a `try/catch` block or return a fallback object so one bad entry does not crash the whole list.
+   - Legacy Data Support: Always provide fallbacks for missing fields (e.g., `entry.moodScore || 0`) to support older data.
+   - Guard Clauses: Always include `if (!user)` or `if (!db)` guards before Firebase calls.
+
+5. Quality Assurance & Layout:
+   - Layout Stability: If using Flexbox with Graphs/Charts (Recharts), apply `min-w-0` to the container to prevent layout collapse.
+   - Syntax: Verify that all closing brackets `})` and XML tags are matched.
+   - Unused Code: Rigorously remove unused variables and imports.
+
+6. Deliverable:
+   - Include the file path/name at the top of each code block.
+   - Provide a relevant GitHub commit message at the end.
+
+Please generate the complete updated files now.
+
+```
+
+---
+
+## Phase 4: Crystallization (Documentation)
+
+**Trigger:** The code is implemented and tested.
+**Goal:** Update the "Source of Truth" and capture "Why" decisions.
+
+**Prompt:**
+
+```text
+The feature is now implemented and verified.
+
+1. Master Build Guide Update:
+   - Provide the exact text to insert/replace in the current Master Build Guide.
+   - Update the "Change Log" table.
+
+2. Architectural Decision Record (ADR):
+   - IF this feature involved a significant architectural choice (e.g., choosing a specific library, data structure, or pattern):
+   - Generate a short markdown entry titled "ADR-[00X]-[Decision Name]".
+   - Context: What was the problem?
+   - Decision: What Option did we choose?
+   - Consequences: What are the trade-offs?
+
+3. Status:
+   - Mark the item as "Done" in the Roadmap table if applicable.
+
+```
+
+```
+
+```
+--- END_FILE: AI_WORKFLOW.md ---
+
+--- START_FILE: README.md ---
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+--- END_FILE: README.md ---
 
 --- START_FILE: firestore.rules ---
 rules_version = '2';
@@ -243,70 +716,6 @@ service cloud.firestore {
 
 --- END_FILE: package.json ---
 
---- START_FILE: src/lib/theme.ts ---
-export const THEME = {
-  dashboard: {
-    page: 'bg-slate-200', // High contrast cool grey
-    header: {
-      from: 'from-sky-500',
-      via: 'via-blue-600',
-      to: 'to-indigo-600'
-    }
-  },
-  journal: {
-    page: 'bg-indigo-200', // Rich lavender
-    header: {
-      from: 'from-indigo-600',
-      via: 'via-purple-600',
-      to: 'to-violet-600'
-    }
-  },
-  tasks: {
-    page: 'bg-cyan-200', // Electric mint
-    header: {
-      from: 'from-cyan-500',
-      via: 'via-teal-500',
-      to: 'to-emerald-500'
-    },
-    ring: '#34d399' // Emerald-400
-  },
-  workbooks: {
-    page: 'bg-emerald-200', // Deep herbal green
-    header: {
-      from: 'from-emerald-600',
-      via: 'via-green-600',
-      to: 'to-lime-600'
-    },
-    ring: '#a3e635' // Lime-400
-  },
-  insights: {
-    page: 'bg-fuchsia-200', // Bold pink mist
-    header: {
-      from: 'from-fuchsia-600',
-      via: 'via-pink-600',
-      to: 'to-rose-500'
-    }
-  },
-  vitality: {
-    page: 'bg-orange-200', // Warm apricot
-    header: {
-      from: 'from-rose-500',
-      via: 'via-orange-500',
-      to: 'to-amber-500'
-    },
-    ring: '#fbbf24' // Amber-400
-  },
-  profile: {
-    page: 'bg-zinc-300', // Deep metallic grey
-    header: {
-      from: 'from-slate-700',
-      via: 'via-gray-800',
-      to: 'to-zinc-900'
-    }
-  }
-} as const;
---- END_FILE: src/lib/theme.ts ---
-
 --- START_FILE: vite.config.ts ---
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
@@ -318,7 +727,9 @@ export default defineVitestConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      // UPDATED: Matches the specific filenames generated by the python script
+      // Removed 'mask-icon.svg' as we didn't generate an SVG
+      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'maskable-icon-512x512.png'],
       manifest: {
         name: 'My Recovery Toolkit',
         short_name: 'MRT',
@@ -328,13 +739,21 @@ export default defineVitestConfig({
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any' // Explicitly set to 'any'
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any' // Standard large icon
+          },
+          {
+            // UPDATED: Added the specific maskable icon we generated
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable' // Crucial for Android Adaptive Icons
           }
         ]
       },
@@ -378,6 +797,15 @@ export default defineVitestConfig({
       // ----------------------------------------------
     })
   ],
+  // --- ADDED: SERVER CONFIG FOR DEV TUNNELS (PORT 5175) ---
+  server: {
+    host: true, // Binds to 0.0.0.0 so the tunnel can see it
+    port: 5175, // Forces port 5175 to match your current instance
+    strictPort: true, // Prevents it from jumping to 5176 if 5175 bumps
+    watch: {
+        usePolling: true, // Helps if you are in a Docker container or remote VM
+    }
+  },
   // --- PRESERVED: VITEST CONFIGURATION ---
   test: {
     globals: true,
@@ -880,11 +1308,13 @@ async function seedPersona(persona) {
 --- END_FILE: src/App.css ---
 
 --- START_FILE: src/App.tsx ---
+// src/App.tsx
 /**
  * GITHUB COMMENT:
  * [App.tsx]
- * UPDATED: Registered the new UserGuide route.
- * MAINTAINED: Strict routing and PrivateRoute protection.
+ * UPDATED: Route configuration.
+ * - Root path '/' now renders the public <Welcome /> splash page.
+ * - Authenticated users visiting '/' are auto-redirected to '/dashboard' by the Welcome component.
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -892,6 +1322,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EncryptionProvider } from './contexts/EncryptionContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome'; // NEW IMPORT
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
 import Tasks from './pages/Tasks';
@@ -904,7 +1335,7 @@ import TemplateEditor from './components/journal/TemplateEditor';
 import AppShell from './components/AppShell';
 import InsightsLog from './pages/InsightsLog';
 import AdminDashboard from './pages/AdminDashboard'; 
-import UserGuide from './pages/UserGuide'; // NEW
+import UserGuide from './pages/UserGuide'; 
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -927,8 +1358,11 @@ export default function App() {
           <LayoutProvider>
               <Router>
               <Routes>
+                  {/* PUBLIC ROUTES */}
+                  <Route path="/" element={<Welcome />} />
                   <Route path="/login" element={<Login />} />
                   
+                  {/* PROTECTED ROUTES */}
                   <Route
                   path="/dashboard"
                   element={
@@ -1046,8 +1480,8 @@ export default function App() {
                   }
                   />
                   
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                  {/* FALLBACK */}
+                  <Route path="*" element={<Navigate to="/" />} />
               </Routes>
               </Router>
           </LayoutProvider>
@@ -2499,28 +2933,33 @@ export default function VibrantHeader({
 --- END_FILE: src/components/VibrantHeader.tsx ---
 
 --- START_FILE: src/components/journal/JournalAnalysisWizard.tsx ---
+// src/components/journal/JournalAnalysisWizard.tsx
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
     SparklesIcon, 
     XMarkIcon, 
-    CalendarDaysIcon,
-    ChartBarIcon,
-    GlobeAmericasIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon
+    CalendarDaysIcon, 
+    ChartBarIcon, 
+    GlobeAmericasIcon, 
+    CheckCircleIcon, 
+    ExclamationTriangleIcon,
+    ArrowPathIcon,
+    BoltIcon,
+    ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
 import type { JournalEntry } from './JournalEditor';
 import { subDays, isAfter, isBefore } from 'date-fns';
+import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 
 interface WizardProps {
     isOpen: boolean;
     onClose: () => void;
-    entries: JournalEntry[]; // Should be ALL entries (decrypted) passed from parent
+    entries: JournalEntry[]; // Used for standard weekly/monthly analysis
 }
 
 type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
@@ -2529,10 +2968,22 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const { user } = useAuth();
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
-    const [result, setResult] = useState<ComparativeAnalysisResult | null>(null);
+    
+    // Standard Analysis State
+    const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
+    
+    // Deep Dive Hook
+    const { 
+        analyze: runDeepAnalysis, 
+        // FIXED: Removed unused 'loading' destructuring to satisfy linter
+        progress: deepProgress, 
+        result: deepResult,
+        error: deepError 
+    } = useDeepPatternAnalysis();
+
     const [saving, setSaving] = useState(false);
 
-    const runAnalysis = async () => {
+    const runStandardAnalysis = async () => {
         setStep('analyzing');
         
         try {
@@ -2540,12 +2991,10 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             let currentSet: JournalEntry[] = [];
             let previousSet: JournalEntry[] = [];
 
-            // 1. Partition Data
+            // 1. Partition Data (Client-Side for Standard)
             if (scope === 'weekly') {
                 const oneWeekAgo = subDays(now, 7);
                 const twoWeeksAgo = subDays(now, 14);
-                
-                // Helper to safely get date from entry
                 const getDate = (e: JournalEntry) => e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
 
                 currentSet = entries.filter(e => isAfter(getDate(e), oneWeekAgo));
@@ -2557,11 +3006,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                 currentSet = entries.filter(e => isAfter(getDate(e), oneMonthAgo));
                 previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
-            } else {
-                // All Time - Token Safety: Limit to most recent 200 entries to prevent context overflow
-                // Assuming entries are already sorted desc by parent
-                currentSet = entries.slice(0, 200); 
-                previousSet = [];
             }
 
             // 2. Format for AI
@@ -2581,7 +3025,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
             // 3. Call Gemini
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
-            setResult(analysis);
+            setStandardResult(analysis);
             setStep('results');
 
         } catch (error) {
@@ -2591,23 +3035,55 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         }
     };
 
-    const saveInsight = async () => {
-        if (!user || !result || !db) return;
-        setSaving(true);
-        try {
-            await addDoc(collection(db, 'insights'), {
-                uid: user.uid,
-                type: 'journal',
-                summary: result.comparison_summary,
-                pillars: {
-                    understanding: result.key_themes.join(', '),
-                    growth: result.wins.join(', '),
-                    blind_spots: result.blind_spots.join(', ')
-                },
-                suggested_actions: result.actionable_advice,
-                createdAt: Timestamp.now(),
-                scope_context: scope === 'all-time' ? 'Deep Holistic Review' : `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
+    const handleStartAnalysis = () => {
+        if (scope === 'all-time') {
+            setStep('analyzing');
+            runDeepAnalysis().then(() => {
+                setStep('results');
             });
+        } else {
+            runStandardAnalysis();
+        }
+    };
+
+    const saveInsight = async () => {
+        if (!user || !db) return;
+        setSaving(true);
+        const database: Firestore = db;
+
+        try {
+            if (scope === 'all-time' && deepResult) {
+                // Save Deep Result
+                await addDoc(collection(database, 'insights'), {
+                    uid: user.uid,
+                    type: 'journal',
+                    summary: deepResult.pattern_summary,
+                    pillars: {
+                        understanding: deepResult.core_triggers.join(', '),
+                        growth: deepResult.emotional_velocity,
+                        blind_spots: deepResult.hidden_correlations.join(', ')
+                    },
+                    suggested_actions: deepResult.long_term_advice,
+                    createdAt: Timestamp.now(),
+                    scope_context: 'Deep Pattern Recognition',
+                    risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
+                });
+            } else if (standardResult) {
+                // Save Standard Result
+                await addDoc(collection(database, 'insights'), {
+                    uid: user.uid,
+                    type: 'journal',
+                    summary: standardResult.comparison_summary,
+                    pillars: {
+                        understanding: standardResult.key_themes.join(', '),
+                        growth: standardResult.wins.join(', '),
+                        blind_spots: standardResult.blind_spots.join(', ')
+                    },
+                    suggested_actions: standardResult.actionable_advice,
+                    createdAt: Timestamp.now(),
+                    scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
+                });
+            }
             onClose();
         } catch (e) {
             console.error(e);
@@ -2621,19 +3097,21 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             <Dialog as="div" className="relative z-50" onClose={onClose}>
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" />
                 <div className="fixed inset-0 flex items-center justify-center p-4">
-                    <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                    <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
                         
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center">
+                        <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2 text-white">
                                 <SparklesIcon className="h-6 w-6" />
-                                <h3 className="font-bold text-lg">Analysis Wizard</h3>
+                                <h3 className="font-bold text-lg">
+                                    {scope === 'all-time' ? 'Deep Pattern Engine' : 'Analysis Wizard'}
+                                </h3>
                             </div>
                             <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
 
-                        {/* Content */}
-                        <div className="p-6">
+                        {/* Content (Scrollable) */}
+                        <div className="p-6 overflow-y-auto">
                             {step === 'select' && (
                                 <div className="space-y-4">
                                     <p className="text-gray-600 text-sm text-center mb-6">Select a timeframe to analyze. The AI will compare your current progress against previous patterns.</p>
@@ -2650,63 +3128,136 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                     <button onClick={() => setScope('all-time')} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scope === 'all-time' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-indigo-200'}`}>
                                         <div className="bg-white p-3 rounded-full shadow-sm text-indigo-600"><GlobeAmericasIcon className="h-6 w-6" /></div>
-                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (All Time)</div><div className="text-xs text-gray-500">Holistic analysis of your entire journey</div></div>
+                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (30 Days)</div><div className="text-xs text-gray-500">Identify relapse triggers & patterns</div></div>
                                     </button>
 
-                                    <button onClick={runAnalysis} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all">
+                                    <button onClick={handleStartAnalysis} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all">
                                         Begin Analysis
                                     </button>
                                 </div>
                             )}
 
                             {step === 'analyzing' && (
-                                <div className="py-12 flex flex-col items-center justify-center text-center">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-600 mb-4"></div>
-                                    <h4 className="text-lg font-bold text-gray-900">Consulting the Compass...</h4>
-                                    <p className="text-sm text-gray-500 mt-2">Comparing periods and identifying patterns.</p>
+                                <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                                    <div className="relative">
+                                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-fuchsia-600"></div>
+                                        {scope === 'all-time' && (
+                                            <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-fuchsia-600">
+                                                {deepProgress}%
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-gray-900">
+                                            {scope === 'all-time' ? 'Processing Vault...' : 'Consulting the Compass...'}
+                                        </h4>
+                                        <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
+                                            {scope === 'all-time' 
+                                                ? "Decrypting your history and finding hidden patterns." 
+                                                : "Comparing periods and identifying trajectory."}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
-                            {step === 'results' && result && (
+                            {step === 'results' && (deepError) && (
+                                <div className="text-center py-8">
+                                    <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                                    <h3 className="text-lg font-bold text-gray-900">Analysis Failed</h3>
+                                    <p className="text-gray-500 mb-4">{deepError}</p>
+                                    <button onClick={() => setStep('select')} className="text-indigo-600 font-bold hover:underline">Try Again</button>
+                                </div>
+                            )}
+
+                            {step === 'results' && !deepError && (
                                 <div className="space-y-6 animate-fadeIn">
-                                    <div className="flex items-center justify-between">
-                                        <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                                            result.trajectory === 'Improving' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                            result.trajectory === 'Declining' ? 'bg-red-100 text-red-700 border-red-200' :
-                                            'bg-blue-100 text-blue-700 border-blue-200'
-                                        }`}>
-                                            Trajectory: {result.trajectory}
-                                        </div>
-                                        <span className="text-xs text-gray-400 font-mono">AI Generated</span>
-                                    </div>
+                                    
+                                    {/* --- DEEP PATTERN RESULTS --- */}
+                                    {scope === 'all-time' && deepResult && (
+                                        <>
+                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                                                <h5 className="text-xs font-bold text-indigo-800 uppercase mb-2">Psychological Landscape</h5>
+                                                <p className="text-sm text-indigo-900 leading-relaxed">{deepResult.pattern_summary}</p>
+                                            </div>
 
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700 leading-relaxed">
-                                        {result.comparison_summary}
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Wins</h5>
-                                            <ul className="text-xs text-gray-600 space-y-1">{result.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1"><ExclamationTriangleIcon className="h-4 w-4" /> Blind Spots</h5>
-                                            <ul className="text-xs text-gray-600 space-y-1">{result.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                        <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions</h5>
-                                        <div className="space-y-2">
-                                            {result.actionable_advice.map((action, i) => (
-                                                <div key={i} className="flex items-start gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
-                                                    <span className="font-bold text-fuchsia-400">{i+1}.</span> {action}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                                    <h5 className="text-xs font-bold text-orange-800 uppercase flex items-center gap-1 mb-2">
+                                                        <BoltIcon className="h-4 w-4" /> Core Triggers
+                                                    </h5>
+                                                    <ul className="text-xs text-orange-900 space-y-1">
+                                                        {deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}
+                                                    </ul>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                    <h5 className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1 mb-2">
+                                                        <ArrowPathIcon className="h-4 w-4" /> Velocity
+                                                    </h5>
+                                                    <p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p>
+                                                </div>
+                                            </div>
 
-                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all">
+                                            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                                                <h5 className="text-xs font-bold text-yellow-800 uppercase flex items-center gap-1 mb-2">
+                                                    <ShieldCheckIcon className="h-4 w-4" /> Hidden Correlations
+                                                </h5>
+                                                <ul className="text-xs text-yellow-900 space-y-1">
+                                                    {deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}
+                                                </ul>
+                                            </div>
+
+                                            <div className="bg-gray-900 text-white p-4 rounded-xl">
+                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy</h5>
+                                                <ul className="text-sm space-y-2">
+                                                    {deepResult.long_term_advice.map((adv, i) => <li key={i}>→ {adv}</li>)}
+                                                </ul>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* --- STANDARD RESULTS --- */}
+                                    {scope !== 'all-time' && standardResult && (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
+                                                    standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700 border-green-200' : 
+                                                    standardResult.trajectory === 'Declining' ? 'bg-red-100 text-red-700 border-red-200' :
+                                                    'bg-blue-100 text-blue-700 border-blue-200'
+                                                }`}>
+                                                    Trajectory: {standardResult.trajectory}
+                                                </div>
+                                                <span className="text-xs text-gray-400 font-mono">AI Generated</span>
+                                            </div>
+
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700 leading-relaxed">
+                                                {standardResult.comparison_summary}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Wins</h5>
+                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1"><ExclamationTriangleIcon className="h-4 w-4" /> Blind Spots</h5>
+                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
+                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions</h5>
+                                                <div className="space-y-2">
+                                                    {standardResult.actionable_advice.map((action, i) => (
+                                                        <div key={i} className="flex items-start gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
+                                                            <span className="font-bold text-fuchsia-400">{i+1}.</span> {action}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">
                                         {saving ? 'Saving...' : 'Save to Insights Log'}
                                     </button>
                                 </div>
@@ -5663,6 +6214,123 @@ export function getWorkbook(id: string): Workbook | undefined {
 }
 --- END_FILE: src/data/workbooks.ts ---
 
+--- START_FILE: src/hooks/useDeepPatternAnalysis.ts ---
+// src/hooks/useDeepPatternAnalysis.ts
+import { useState, useCallback } from 'react';
+import { db } from '../lib/firebase';
+import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
+import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
+import { processInChunks } from '../lib/utils';
+import { generateDeepPatternAnalysis, type DeepPatternResult } from '../lib/gemini';
+
+interface UseDeepPatternAnalysisReturn {
+    analyze: () => Promise<void>;
+    loading: boolean;
+    progress: number;
+    result: DeepPatternResult | null;
+    error: string | null;
+    reset: () => void;
+}
+
+export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
+    const { user } = useAuth();
+    const { decrypt } = useEncryption();
+    
+    const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [result, setResult] = useState<DeepPatternResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const analyze = useCallback(async () => {
+        if (!user || !db) return;
+        
+        setLoading(true);
+        setError(null);
+        setProgress(5); // Started
+
+        try {
+            const database: Firestore = db;
+            
+            // 1. Fetch last 30 entries directly from Firestore
+            // We fetch specific fields to minimize bandwidth
+            const q = query(
+                collection(database, 'journals'),
+                where('uid', '==', user.uid),
+                orderBy('createdAt', 'desc'),
+                limit(30)
+            );
+
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.empty) {
+                setError("Not enough journal entries to analyze.");
+                setLoading(false);
+                return;
+            }
+
+            setProgress(20); // Fetched
+
+            // 2. Process & Decrypt in Chunks (Prevent UI Freezing)
+            const rawDocs = snapshot.docs.map(d => d.data());
+            
+            const decryptedEntries = await processInChunks(
+                rawDocs,
+                5, // Small chunk size for decryption safety
+                async (docData) => {
+                    let content = docData.content || "";
+                    if (docData.isEncrypted) {
+                        try {
+                            content = await decrypt(docData.content);
+                        } catch (e) {
+                            console.error("Decryption failed for an entry:", e);
+                            content = "[Skipped: Decryption Error]";
+                        }
+                    }
+                    const date = docData.createdAt?.toDate ? docData.createdAt.toDate() : new Date();
+                    return `Date: ${date.toLocaleDateString()}\nMood: ${docData.moodScore}\nContent: ${content}`;
+                },
+                (percent) => {
+                    // Map 0-100% of processing to 20-70% of total progress
+                    setProgress(20 + Math.floor(percent * 0.5));
+                }
+            );
+
+            const combinedText = decryptedEntries.join('\n\n---\n\n');
+            
+            setProgress(75); // Sending to AI
+
+            // 3. AI Analysis
+            const aiResult = await generateDeepPatternAnalysis(combinedText);
+            
+            setResult(aiResult);
+            setProgress(100);
+
+        } catch (err) {
+            console.error("Deep Pattern Analysis Failed:", err);
+            setError("Analysis failed. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, [user, decrypt]);
+
+    const reset = () => {
+        setResult(null);
+        setError(null);
+        setProgress(0);
+    };
+
+    return {
+        analyze,
+        loading,
+        progress,
+        result,
+        error,
+        reset
+    };
+}
+--- END_FILE: src/hooks/useDeepPatternAnalysis.ts ---
+
 --- START_FILE: src/index.css ---
 @tailwind base;
 @tailwind components;
@@ -5791,6 +6459,15 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
       const iv = new Uint8Array(ivHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const data = new Uint8Array(dataHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
+      // --- CRITICAL FIX START ---
+      // 4. Ensure data is large enough for the auth tag (16 bytes)
+      // Without this check, subtle.decrypt throws a DOMException on corrupted/empty data
+      if (data.byteLength < 16) {
+          console.warn("Skipping decryption: Data buffer too small (corrupted entry).");
+          return "[Error: Data Corrupted]";
+      }
+      // --- CRITICAL FIX END ---
+
       const decryptedBuffer = await window.crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
         globalKey,
@@ -5822,11 +6499,11 @@ export function clearKey() {
 }
 
 /**
- * Check if vault is currently unlocked.
+ * Check if vault is currently unlocked
  */
 export function isVaultUnlocked(): boolean {
     return !!globalKey;
-}
+}   
 --- END_FILE: src/lib/crypto.ts ---
 
 --- START_FILE: src/lib/dateUtils.ts ---
@@ -6185,8 +6862,10 @@ export async function fetchAllUserData(uid: string): Promise<FullUserData> {
 --- END_FILE: src/lib/db.ts ---
 
 --- START_FILE: src/lib/exporter.ts ---
+// src/lib/exporter.ts
 import { decrypt } from './crypto';
 import type { FullUserData, JournalEntry, Task } from './db';
+import { processInChunks } from './utils';
 import type { jsPDF } from 'jspdf';
 import type { UserOptions } from 'jspdf-autotable';
 
@@ -6199,37 +6878,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 }
 
 /**
- * Helper to process an array in chunks to prevent UI blocking.
- */
-async function processInChunks<T, R>(
-  items: T[],
-  chunkSize: number,
-  processor: (item: T) => Promise<R>,
-  onProgress?: (progress: number) => void
-): Promise<R[]> {
-  const results: R[] = [];
-  let processed = 0;
-
-  for (let i = 0; i < items.length; i += chunkSize) {
-    const chunk = items.slice(i, i + chunkSize);
-    // Process chunk in parallel
-    const chunkResults = await Promise.all(chunk.map(processor));
-    results.push(...chunkResults);
-    
-    processed += chunk.length;
-    if (onProgress) {
-      onProgress(Math.round((processed / items.length) * 100));
-    }
-    
-    // Yield to main thread
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
-
-  return results;
-}
-
-/**
- * Decrypts sensitive fields in the user data.
+ * Decrypts sensitive fields in the user data using the shared chunk processor.
  */
 export async function prepareDataForExport(
   data: FullUserData, 
@@ -6256,20 +6905,15 @@ export async function prepareDataForExport(
   );
 
   // Decrypt Workbook Answers
-  // (Workbook structure is complex, usually 'answer' field is encrypted)
   const decryptedWorkbooks = await processInChunks(
     data.workbookAnswers,
     20,
     async (ans) => {
       // Check if this answer record matches our encryption pattern
-      // Usually answer: { text: "...", isEncrypted: true }
       const anyAns = ans as Record<string, unknown>;
-      // We assume simple key-value structure where values might be encrypted objects
-      // For the export, we just iterate values
       const newAns = { ...anyAns };
       
-      // Need to handle specific schema structure from WorkbookSession
-      // If it's the 'answers' map:
+      // Handle specific schema structure from WorkbookSession
       if (newAns.answers && typeof newAns.answers === 'object') {
          const ansMap = newAns.answers as Record<string, unknown>;
          const decryptedMap: Record<string, unknown> = {};
@@ -6277,7 +6921,7 @@ export async function prepareDataForExport(
          for (const [key, val] of Object.entries(ansMap)) {
              if (val && typeof val === 'object' && 'isEncrypted' in val && (val as {isEncrypted: boolean}).isEncrypted) {
                  try {
-                     // FIX: Double cast via unknown to allow access to 'text' property safely
+                     // Access 'text' property safely via unknown cast
                      const text = await decrypt((val as unknown as {text: string}).text);
                      decryptedMap[key] = text;
                  } catch {
@@ -6370,8 +7014,7 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
   doc.text("Active Quests & Habits", 14, 20);
 
   const taskRows = data.tasks.map(t => {
-    // FIX: Use intersection type to safely access 'category' without 'any'
-    // This handles the case where 'category' exists in DB data but is missing from strict Task interface
+    // Safely access 'category'
     const category = (t as Task & { category?: string }).category || 'General';
 
     return [
@@ -6428,7 +7071,22 @@ export default app;
 --- END_FILE: src/lib/firebase.ts ---
 
 --- START_FILE: src/lib/gamification.ts ---
-//import { Timestamp } from 'firebase/firestore';
+// src/lib/gamification.ts
+import { Timestamp } from 'firebase/firestore';
+
+// --- CONFIGURATION ---
+const XP_VALUES = {
+    JOURNAL_ENTRY: 25,
+    JOURNAL_LONG_ENTRY: 10, // Bonus for depth
+    TASK_LOW: 10,
+    TASK_MEDIUM: 25,
+    TASK_HIGH: 50,
+    WORKBOOK_QUESTION: 15,
+    VITALITY_LOG: 15,
+    CLEAN_DAY_MILESTONE: 500 // XP per 30 days
+};
+
+// --- INTERFACES ---
 
 export interface GamificationStats {
   streakDays: number;
@@ -6454,6 +7112,37 @@ export interface VitalityStats {
     totalLogs: number;
 }
 
+export interface LevelData {
+    level: number;
+    title: string;
+    currentXP: number;
+    nextLevelXP: number;
+    progressPercent: number;
+}
+
+export interface UserStats {
+    totalXP: number;
+    levelData: LevelData;
+    archetype: string; // 'Scholar', 'Warrior', 'Monk', 'Philosopher', 'Balanced'
+}
+
+// Minimal interfaces for input data to avoid 'any'
+interface ScorableJournal {
+    tags?: string[];
+    content?: string;
+    moodScore?: number;
+    createdAt: { toDate: () => Date } | Date | Timestamp; 
+}
+
+interface ScorableTask {
+    status?: string;
+    priority?: 'High' | 'Medium' | 'Low';
+    completed?: boolean;
+    currentStreak?: number;
+}
+
+// --- HELPER FUNCTIONS ---
+
 // Helper to check if two dates are the same day
 const isSameDay = (d1: Date, d2: Date) => {
   return d1.getFullYear() === d2.getFullYear() &&
@@ -6461,7 +7150,121 @@ const isSameDay = (d1: Date, d2: Date) => {
          d1.getDate() === d2.getDate();
 };
 
-export const calculateJournalStats = (journals: any[]): GamificationStats => {
+const getTitle = (level: number): string => {
+    if (level >= 50) return "Elder / Sponsor";
+    if (level >= 40) return "Guide";
+    if (level >= 30) return "Architect";
+    if (level >= 20) return "Warrior";
+    if (level >= 10) return "Initiate";
+    return "Seeker";
+};
+
+// Standard RPG Curve: Level = Floor(Constant * Sqrt(XP))
+const calculateLevel = (xp: number): LevelData => {
+    const CONSTANT = 0.07; // 0.07 makes Lvl 10 approx 20k XP
+    // Level calculation (min level 1)
+    const level = Math.max(1, Math.floor(CONSTANT * Math.sqrt(xp)) + 1);
+    
+    // XP required for current and next levels
+    // Inverse formula: XP = (Level / CONSTANT)^2
+    const currentLevelBaseXP = Math.pow((level - 1) / CONSTANT, 2);
+    const nextLevelBaseXP = Math.pow(level / CONSTANT, 2);
+    
+    const neededForNext = nextLevelBaseXP - currentLevelBaseXP;
+    const progressInLevel = xp - currentLevelBaseXP;
+
+    // Safety check for divide by zero (shouldn't happen with level >= 1)
+    const progressPercent = neededForNext > 0 
+        ? Math.min(100, Math.round((progressInLevel / neededForNext) * 100))
+        : 0;
+
+    return {
+        level,
+        title: getTitle(level),
+        currentXP: xp,
+        nextLevelXP: Math.floor(nextLevelBaseXP),
+        progressPercent
+    };
+};
+
+// --- CORE CALCULATORS ---
+
+/**
+ * Calculates the holistic User Level and Archetype based on all recovery data.
+ */
+export const calculateUserLevel = (
+    journals: ScorableJournal[], 
+    tasks: ScorableTask[], 
+    workbookAnswersCount: number,
+    cleanDays: number
+): UserStats => {
+    let xp = 0;
+    const xpBreakdown = { wisdom: 0, action: 0, vitality: 0, reflection: 0 };
+
+    // 1. Calculate Journal XP
+    journals.forEach(j => {
+        let entryXP = XP_VALUES.JOURNAL_ENTRY;
+        
+        // Vitality Check (Different Bucket)
+        if (j.tags && j.tags.includes('Vitality')) {
+            // Vitality logs count towards vitality, not reflection
+            xpBreakdown.vitality += XP_VALUES.VITALITY_LOG;
+            xp += XP_VALUES.VITALITY_LOG;
+            return; 
+        }
+
+        // Depth Bonus
+        if (j.content && j.content.trim().split(/\s+/).length > 50) {
+            entryXP += XP_VALUES.JOURNAL_LONG_ENTRY;
+        }
+        
+        xpBreakdown.reflection += entryXP;
+        xp += entryXP;
+    });
+
+    // 2. Calculate Task XP
+    tasks.forEach(t => {
+        if (t.status === 'completed' || t.completed) {
+            let taskXP = 0;
+            switch(t.priority) {
+                case 'High': taskXP = XP_VALUES.TASK_HIGH; break;
+                case 'Medium': taskXP = XP_VALUES.TASK_MEDIUM; break;
+                default: taskXP = XP_VALUES.TASK_LOW;
+            }
+            xp += taskXP;
+            xpBreakdown.action += taskXP;
+        }
+    });
+
+    // 3. Calculate Workbook XP
+    const wbXP = workbookAnswersCount * XP_VALUES.WORKBOOK_QUESTION;
+    xp += wbXP;
+    xpBreakdown.wisdom += wbXP;
+
+    // 4. Clean Time Bonuses (Every 30 days)
+    const milestones = Math.floor(cleanDays / 30);
+    xp += (milestones * XP_VALUES.CLEAN_DAY_MILESTONE);
+
+    // 5. Determine Archetype
+    const maxVal = Math.max(xpBreakdown.wisdom, xpBreakdown.action, xpBreakdown.vitality, xpBreakdown.reflection);
+    let archetype = "Balanced";
+    
+    // Simple logic: if one category clearly dominates
+    if (maxVal > 0) {
+        if (maxVal === xpBreakdown.wisdom) archetype = "Scholar";
+        else if (maxVal === xpBreakdown.action) archetype = "Doer";
+        else if (maxVal === xpBreakdown.vitality) archetype = "Monk";
+        else if (maxVal === xpBreakdown.reflection) archetype = "Philosopher";
+    }
+
+    return {
+        totalXP: Math.floor(xp),
+        levelData: calculateLevel(xp),
+        archetype
+    };
+};
+
+export const calculateJournalStats = (journals: ScorableJournal[]): GamificationStats => {
     if (!journals || journals.length === 0) {
         return { 
             streakDays: 0, 
@@ -6469,12 +7272,18 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
             averageMood: 0, 
             journalStreak: 0, 
             consistencyRate: 0, 
-            totalWords: 0
+            totalWords: 0 
         };
     }
 
     // Sort descending (newest first)
-    const sorted = [...journals].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    // Safely handle Firestore Timestamps vs Date objects
+    const sorted = [...journals].sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
+        return dateB.getTime() - dateA.getTime();
+    });
+    
     const today = new Date();
     
     // 1. Total Entries
@@ -6486,8 +7295,11 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
 
     // 3. Journal Streak
     let currentStreak = 0;
+    
     // Check if posted today
-    const lastPostDate = sorted[0].createdAt.toDate();
+    const firstEntry = sorted[0];
+    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
+    
     const postedToday = isSameDay(lastPostDate, today);
     // If not posted today, check if posted yesterday to maintain streak
     const yesterday = new Date(today);
@@ -6497,10 +7309,10 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
     if (postedToday || postedYesterday) {
         currentStreak = 1;
         // Iterate backwards to count consecutive days
-        // We compress entries to unique days first
         const uniqueDays = new Set<string>();
         journals.forEach(j => {
-            uniqueDays.add(j.createdAt.toDate().toDateString());
+            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
+            uniqueDays.add(d.toDateString());
         });
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
@@ -6521,10 +7333,10 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
     }
 
     // 4. Consistency (Entries / Week)
-    // Calc distinct weeks present
-    const firstDate = sorted[sorted.length - 1].createdAt.toDate();
-    const timeSpanDays = (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24);
-    const weeksActive = Math.max(1, Math.ceil(timeSpanDays / 7));
+    const oldestEntry = sorted[sorted.length - 1];
+    const firstDate = oldestEntry.createdAt instanceof Date ? oldestEntry.createdAt : (oldestEntry.createdAt as Timestamp).toDate();
+    const timeSpanDays = Math.max(1, (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24));
+    const weeksActive = Math.ceil(timeSpanDays / 7);
     const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
 
     // 5. Total Words
@@ -6543,12 +7355,12 @@ export const calculateJournalStats = (journals: any[]): GamificationStats => {
     };
 };
 
-export const calculateTaskStats = (tasks: any[]): TaskStats => {
+export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
     if (!tasks || tasks.length === 0) {
         return { completionRate: 0, habitFire: 0 };
     }
 
-    const completed = tasks.filter(t => t.completed).length;
+    const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
     const completionRate = Math.round((completed / tasks.length) * 100);
 
     // Habit Fire: Longest current streak among active recurring tasks
@@ -6563,16 +7375,13 @@ export const calculateTaskStats = (tasks: any[]): TaskStats => {
 };
 
 export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
-    // Note: totalQuestionsAvailable is defaulted to 50 for now, 
-    // ideally passed from the Workbook definitions if available.
     return {
         wisdomScore: answersSnapshotSize,
         masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
     };
 };
 
-// [NEW] Calculate stats for Vitality Module
-export const calculateVitalityStats = (journals: any[]): VitalityStats => {
+export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {
     if (!journals) return { bioStreak: 0, totalLogs: 0 };
 
     // Filter for entries tagged 'Vitality'
@@ -6584,11 +7393,17 @@ export const calculateVitalityStats = (journals: any[]): VitalityStats => {
     const totalLogs = vitalityLogs.length;
 
     // 2. Bio Streak (Same logic as Journal Streak)
-    const sorted = [...vitalityLogs].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    const sorted = [...vitalityLogs].sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
+        return dateB.getTime() - dateA.getTime();
+    });
     const today = new Date();
     
     let currentStreak = 0;
-    const lastPostDate = sorted[0].createdAt.toDate();
+    const firstEntry = sorted[0];
+    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
+    
     const postedToday = isSameDay(lastPostDate, today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -6598,7 +7413,8 @@ export const calculateVitalityStats = (journals: any[]): VitalityStats => {
         currentStreak = 1;
         const uniqueDays = new Set<string>();
         vitalityLogs.forEach(j => {
-            uniqueDays.add(j.createdAt.toDate().toDateString());
+            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
+            uniqueDays.add(d.toDateString());
         });
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
         
@@ -6618,14 +7434,13 @@ export const calculateVitalityStats = (journals: any[]): VitalityStats => {
 --- END_FILE: src/lib/gamification.ts ---
 
 --- START_FILE: src/lib/gemini.ts ---
+// src/lib/gemini.ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
-// Ensure your .env VITE_GEMINI_API_KEY is active
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
 // --- Configuration ---
-// Updated for Gemini 2.5 capabilities
 const GENERATION_CONFIG = {
   temperature: 0.7,
   topP: 0.8,
@@ -6634,7 +7449,6 @@ const GENERATION_CONFIG = {
 };
 
 // --- Model Cascade Configuration ---
-// Based on your available models: 2.5 Flash (Primary), 2.5 Pro (Reasoning), 2.0 Flash (Backup)
 const MODEL_CASCADE = [
   'gemini-2.5-flash', 
   'gemini-2.5-pro', 
@@ -6643,7 +7457,6 @@ const MODEL_CASCADE = [
 
 // --- Interfaces ---
 
-// 1. Single/Short Journal Analysis
 export interface AIAnalysisResult {
     sentiment: 'Positive' | 'Neutral' | 'Negative';
     moodScore: number;
@@ -6654,7 +7467,6 @@ export interface AIAnalysisResult {
 // Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
-// 2. Comparative/Wizard Analysis
 export interface ComparativeAnalysisResult {
     trajectory: 'Improving' | 'Stable' | 'Declining' | 'Fluctuating';
     key_themes: string[];
@@ -6664,7 +7476,6 @@ export interface ComparativeAnalysisResult {
     actionable_advice: string[];
 }
 
-// 3. Workbook Holistic Analysis
 export interface WorkbookAnalysisResult {
     scope_context: string; 
     summary: string;
@@ -6676,14 +7487,18 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
+// [NEW] Deep Pattern Recognition Interface
+export interface DeepPatternResult {
+    core_triggers: string[];
+    emotional_velocity: string; // e.g. "Rapid cycling between anxiety and relief"
+    hidden_correlations: string[]; // e.g. "Work stress consistently precedes cravings by 2 days"
+    relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
+    long_term_advice: string[];
+    pattern_summary: string;
+}
+
 // --- Core Helper: Smart Cascade Generation ---
-/**
- * Attempts to generate content using the defined MODEL_CASCADE.
- * If the primary model fails (rate limit/error), it automatically retries with the next model in the list.
- */
 async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
-    // If a specific model is requested, try that first, then fall back to the cascade
-    // Otherwise, start with the defined cascade order
     const modelsToTry = specificModel 
         ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
         : MODEL_CASCADE;
@@ -6694,8 +7509,8 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         const currentModelName = modelsToTry[i];
         
         try {
-            // Optional: Log which model is being attempted in dev mode
             if (import.meta.env.DEV) {
+               
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -6710,13 +7525,11 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
             
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
             
-            return text; // Success! Return immediately.
+            return text;
 
         } catch (error) {
             console.warn(`⚠️ Attempt failed with ${currentModelName}:`, error);
             lastError = error as Error;
-            
-            // Wait slightly before retrying with the next model (Exponential Backoff)
             await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); 
         }
     }
@@ -6725,13 +7538,40 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
 }
 
 function cleanJSON(text: string): string {
-    // Aggressively clean markdown code blocks
     return text.replace(/```json\n?|```/g, '').trim();
 }
 
 // ============================================================================
 //  EXPOSED FUNCTIONS
 // ============================================================================
+
+// [NEW] Deep Pattern Recognition
+export async function generateDeepPatternAnalysis(
+    journalHistory: string
+): Promise<DeepPatternResult> {
+    const prompt = `
+    Perform a "Deep Pattern Recognition" analysis on the following 30 days of journal entries.
+    Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity that a human might miss.
+
+    JOURNAL DATA:
+    ${journalHistory}
+
+    Return a JSON object with this EXACT structure:
+    {
+        "pattern_summary": "A comprehensive paragraph describing the user's psychological landscape over this period.",
+        "core_triggers": ["Trigger 1", "Trigger 2", "Trigger 3"],
+        "emotional_velocity": "A brief description of how quickly their mood shifts (e.g. 'Stable but low', 'Volatile spikes').",
+        "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
+        "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
+        "long_term_advice": ["Strategic advice 1", "Strategic advice 2"]
+    }
+    Return ONLY raw JSON.
+    `;
+
+    // Force usage of Gemini 2.5 Pro for deep reasoning capabilities
+    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    return JSON.parse(cleanJSON(text)) as DeepPatternResult;
+}
 
 export async function generateComparativeAnalysis(
     currentSet: string, 
@@ -6743,8 +7583,8 @@ export async function generateComparativeAnalysis(
 
     if (scope === 'all-time') {
         promptContext = `
-        Perform a Deep Holistic Review of this entire journal history.
-        Identify long-term patterns, core triggers, and the overall arc of recovery.
+        Perform a holistic review of this entire journal history.
+        Identify long-term patterns and the overall arc of recovery.
         
         JOURNAL DATA:
         ${currentSet}
@@ -6776,7 +7616,6 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    // Use Cascade (Starts with 2.5-Flash)
     const text = await generateWithCascade(systemPrompt + promptContext);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
@@ -6796,16 +7635,10 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       Return ONLY raw JSON.
     `;
     
-    // Use Cascade (Starts with 2.5-Flash)
     const text = await generateWithCascade(prompt);
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
-/**
- * 3. WORKBOOK WIZARD (Deep Dive)
- * Analyzes a full workbook or section to generate the "Compass" report.
- * Uses 'gemini-2.5-pro' explicitly as primary preference for deeper reasoning.
- */
 export async function analyzeFullWorkbook(
     workbookTitle: string, 
     qaPairs: { question: string; answer: string }[]
@@ -6834,7 +7667,6 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    // We request 2.5-Pro specifically for this complex task, but it will fallback to Flash if Pro fails/is rate limited
     const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
@@ -6853,7 +7685,6 @@ export async function getGeminiCoaching(
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
     
-    // Use standard cascade
     return await generateWithCascade(prompt);
 }
 --- END_FILE: src/lib/gemini.ts ---
@@ -7487,6 +8318,110 @@ export async function getCompletedTasksForToday(uid: string) {
 }
 --- END_FILE: src/lib/tasks.ts ---
 
+--- START_FILE: src/lib/theme.ts ---
+export const THEME = {
+  dashboard: {
+    page: 'bg-slate-200', // High contrast cool grey
+    header: {
+      from: 'from-sky-500',
+      via: 'via-blue-600',
+      to: 'to-indigo-600'
+    }
+  },
+  journal: {
+    page: 'bg-indigo-200', // Rich lavender
+    header: {
+      from: 'from-indigo-600',
+      via: 'via-purple-600',
+      to: 'to-violet-600'
+    }
+  },
+  tasks: {
+    page: 'bg-cyan-200', // Electric mint
+    header: {
+      from: 'from-cyan-500',
+      via: 'via-teal-500',
+      to: 'to-emerald-500'
+    },
+    ring: '#34d399' // Emerald-400
+  },
+  workbooks: {
+    page: 'bg-emerald-200', // Deep herbal green
+    header: {
+      from: 'from-emerald-600',
+      via: 'via-green-600',
+      to: 'to-lime-600'
+    },
+    ring: '#a3e635' // Lime-400
+  },
+  insights: {
+    page: 'bg-fuchsia-200', // Bold pink mist
+    header: {
+      from: 'from-fuchsia-600',
+      via: 'via-pink-600',
+      to: 'to-rose-500'
+    }
+  },
+  vitality: {
+    page: 'bg-orange-200', // Warm apricot
+    header: {
+      from: 'from-rose-500',
+      via: 'via-orange-500',
+      to: 'to-amber-500'
+    },
+    ring: '#fbbf24' // Amber-400
+  },
+  profile: {
+    page: 'bg-zinc-300', // Deep metallic grey
+    header: {
+      from: 'from-slate-700',
+      via: 'via-gray-800',
+      to: 'to-zinc-900'
+    }
+  }
+} as const;
+--- END_FILE: src/lib/theme.ts ---
+
+--- START_FILE: src/lib/utils.ts ---
+// src/lib/utils.ts
+
+/**
+ * Processes an array of items in chunks to prevent blocking the main thread.
+ * Useful for CPU-intensive tasks like decryption or formatting large datasets.
+ * * @param items - The array of data to process.
+ * @param chunkSize - How many items to process per tick (e.g., 10).
+ * @param processor - The async function to run on each item.
+ * @param onProgress - Optional callback for percentage updates (0-100).
+ */
+export async function processInChunks<T, R>(
+  items: T[],
+  chunkSize: number,
+  processor: (item: T) => Promise<R>,
+  onProgress?: (progress: number) => void
+): Promise<R[]> {
+  const results: R[] = [];
+  let processed = 0;
+
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    
+    // Process chunk in parallel
+    const chunkResults = await Promise.all(chunk.map(processor));
+    results.push(...chunkResults);
+    
+    processed += chunk.length;
+    if (onProgress) {
+      onProgress(Math.round((processed / items.length) * 100));
+    }
+    
+    // Yield to main thread to allow UI updates
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  return results;
+}
+--- END_FILE: src/lib/utils.ts ---
+
 --- START_FILE: src/lib/versioning.ts ---
 // src/lib/versioning.ts
 import buildInfoRaw from '../build-info.json';
@@ -7879,11 +8814,7 @@ export default function AdminDashboard() {
 --- END_FILE: src/pages/AdminDashboard.tsx ---
 
 --- START_FILE: src/pages/Dashboard.tsx ---
-/**
- * GITHUB COMMENT:
- * [Dashboard.tsx]
- * CLEANUP: Removed unused 'no-console' eslint-disable directive.
- */
+// src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -7903,17 +8834,20 @@ import {
   calculateJournalStats, 
   calculateTaskStats, 
   calculateWorkbookStats, 
-  calculateVitalityStats 
+  calculateVitalityStats,
+  calculateUserLevel,
+  type UserStats
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
 import { 
   HomeIcon, 
   FireIcon, 
   ChartBarIcon, 
-  SparklesIcon, 
+  SparklesIcon,
   HeartIcon,
   ArrowDownTrayIcon,
-  XMarkIcon
+  //XMarkIcon,
+  TrophyIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 
@@ -7929,6 +8863,8 @@ export default function Dashboard() {
   const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
+  
+  const [userLevel, setUserLevel] = useState<UserStats | null>(null);
 
   useEffect(() => {
     if (!user || !db) {
@@ -7940,9 +8876,12 @@ export default function Dashboard() {
 
     const loadDashboardData = async () => {
         try {
+            // 1. Profile Data
             const userDocRef = doc(database, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
               
+            let currentCleanDays = 0;
+
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 
@@ -7950,8 +8889,8 @@ export default function Dashboard() {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
                     const now = new Date();
                     const diffTime = Math.abs(now.getTime() - start.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    setDaysClean(diffDays);
+                    currentCleanDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    setDaysClean(currentCleanDays);
                 }
 
                 const lastExport = userData.lastExportAt as Timestamp | undefined;
@@ -7961,6 +8900,7 @@ export default function Dashboard() {
                 }
             }
 
+            // 2. Journal Data
             const journalQ = query(
                 collection(database, 'journals'), 
                 where('uid', '==', user.uid),
@@ -7978,16 +8918,22 @@ export default function Dashboard() {
             const vStats = calculateVitalityStats(journals);
             setVitalityStats(vStats);
 
+            // 3. Task Data
             const taskQ = query(collection(database, 'tasks'), where('uid', '==', user.uid));
             const taskSnap = await getDocs(taskQ);
             const tasks = taskSnap.docs.map(d => d.data());
             const tStats = calculateTaskStats(tasks);
             setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
 
+            // 4. Workbook Data
             const wbQ = query(collection(database, 'users', user.uid, 'workbook_answers'));
             const wbSnap = await getDocs(wbQ);
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
+
+            // 5. XP Calculation
+            const levelStats = calculateUserLevel(journals, tasks, wbSnap.size, currentCleanDays);
+            setUserLevel(levelStats);
 
         } catch (error) {
             console.error("Dashboard load error:", error);
@@ -8003,6 +8949,8 @@ export default function Dashboard() {
 
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
+      
+      {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard"
@@ -8014,92 +8962,165 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20 space-y-6">
+      {/* 2. FLOATING XP BAR (The Rank Card) */}
+      {userLevel && (
+        <div className="px-4 -mt-10 relative z-30 flex-shrink-0 animate-slideUp">
+            <div className="bg-white rounded-3xl p-5 shadow-xl border border-white/50 backdrop-blur-sm relative overflow-hidden">
+                {/* Decorative background blur */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                
+                <div className="flex justify-between items-end mb-3 relative z-10">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full">Rank</span>
+                            <span className="text-[10px] font-bold text-gray-400">Archetype: {userLevel.archetype}</span>
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 leading-none">{userLevel.levelData.title}</h3>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                            {userLevel.levelData.level}
+                        </div>
+                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Current Level</div>
+                    </div>
+                </div>
+                
+                {/* XP Progress Bar */}
+                <div className="relative h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                    <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                        style={{ width: `${userLevel.levelData.progressPercent}%` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-900/50 mix-blend-overlay">
+                        {userLevel.levelData.currentXP} / {userLevel.levelData.nextLevelXP} XP
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* 3. SCROLLABLE CONTENT (BENTO GRID) */}
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+        
         {showBackupBanner && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
             <div className="flex items-center gap-3">
               <div className="bg-amber-100 p-2 rounded-full text-amber-700">
                 <ArrowDownTrayIcon className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-amber-900">Secure Your Progress</p>
-                <p className="text-xs text-amber-700">It's been a week since your last backup.</p>
+              <div className="text-xs text-amber-900">
+                <strong>Backup Needed:</strong> It's been a week since your last save.
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Backup</Link>
-              <button onClick={() => setShowBackupBanner(false)} className="text-amber-400 hover:text-amber-600">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
+            <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
           </div>
         )}
 
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center relative overflow-hidden group hover:shadow-md transition-all">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600"></div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Clean Time</div>
-            <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 drop-shadow-sm mb-2">
-                {daysClean}
+        {/* HERO CARD: Clean Time */}
+        <div className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-[2rem] p-8 text-center relative overflow-hidden shadow-xl border border-slate-700 group">
+            {/* Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center justify-center gap-2 mb-2 opacity-60">
+                    <TrophyIcon className="h-4 w-4 text-yellow-400" />
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">Freedom Count</span>
+                </div>
+                <div className="text-7xl font-black text-white tracking-tighter drop-shadow-2xl mb-1">
+                    {daysClean}
+                </div>
+                <div className="text-sm font-medium text-slate-400">Days of Sobriety</div>
             </div>
-            <div className="text-sm font-medium text-slate-500">Days of Freedom</div>
         </div>
 
+        {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
-            <Link to="/journal" className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 active:scale-95 transition-all hover:border-indigo-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <ChartBarIcon className="h-12 w-12 text-indigo-600" />
+            
+            {/* 1. JOURNAL (Indigo/Violet) */}
+            <Link to="/journal" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <ChartBarIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-indigo-600">
-                    <div className="p-1.5 bg-indigo-50 rounded-lg">
-                        <ChartBarIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <ChartBarIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Journal</span>
+                    <div className="text-3xl font-black mb-1">{journalStats.streak}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Day Streak</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Consistency</span>
+                        <span className="text-xs font-bold">{journalStats.consistency}/wk</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{journalStats.streak}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            <Link to="/tasks" className="bg-white p-5 rounded-2xl shadow-sm border border-cyan-100 active:scale-95 transition-all hover:border-cyan-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <FireIcon className="h-12 w-12 text-cyan-600" />
+            {/* 2. HABITS (Cyan/Teal) */}
+            <Link to="/tasks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <FireIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-cyan-600">
-                    <div className="p-1.5 bg-cyan-50 rounded-lg">
-                        <FireIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <FireIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Habits</span>
+                    <div className="text-3xl font-black mb-1">{taskStats.fire}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Quest Fire</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Rate</span>
+                        <span className="text-xs font-bold">{taskStats.rate}%</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{taskStats.fire}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            <Link to="/workbooks" className="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100 active:scale-95 transition-all hover:border-emerald-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <SparklesIcon className="h-12 w-12 text-emerald-600" />
+            {/* 3. VITALITY (Orange/Rose) */}
+            <Link to="/vitality" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <HeartIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-emerald-600">
-                    <div className="p-1.5 bg-emerald-50 rounded-lg">
-                        <SparklesIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <HeartIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Wisdom</span>
+                    <div className="text-3xl font-black mb-1">{vitalityStats.bioStreak}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Bio-Rhythm</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Total Logs</span>
+                        <span className="text-xs font-bold">{vitalityStats.totalLogs}</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{workbookStats.completion}%</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Mastery</div>
             </Link>
 
-            <Link to="/vitality" className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100 active:scale-95 transition-all hover:border-orange-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <HeartIcon className="h-12 w-12 text-orange-600" />
+            {/* 4. WISDOM (Emerald/Lime) */}
+            <Link to="/workbooks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <SparklesIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-orange-600">
-                    <div className="p-1.5 bg-orange-50 rounded-lg">
-                        <HeartIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <SparklesIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Vitality</span>
+                    <div className="text-3xl font-black mb-1">{workbookStats.completion}%</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Mastery</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Score</span>
+                        <span className="text-xs font-bold">{workbookStats.wisdom}</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{vitalityStats.bioStreak}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Bio Streak</div>
             </Link>
+
         </div>
       </div>
     </div>
@@ -9999,6 +11020,144 @@ export default function Vitality() {
 }
 --- END_FILE: src/pages/Vitality.tsx ---
 
+--- START_FILE: src/pages/Welcome.tsx ---
+// src/pages/Welcome.tsx
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { ShieldCheckIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+
+interface Persona {
+  id: string;
+  name: string;
+  title: string;
+  stage: string;
+  image: string;
+  color: string;
+}
+
+const PERSONAS: Persona[] = [
+  {
+    id: 'david',
+    name: 'David',
+    title: 'The Fresh Start',
+    stage: 'Day 1',
+    image: '/personas/david.jpg', // Assumes images are placed in public/personas/
+    color: 'bg-blue-600'
+  },
+  {
+    id: 'ned',
+    name: 'Ned',
+    title: 'The Pink Cloud',
+    stage: '90 Days',
+    image: '/personas/ned.jpg',
+    color: 'bg-green-500'
+  },
+  {
+    id: 'lisa',
+    name: 'Lisa',
+    title: 'Service Superstar',
+    stage: '7 Years',
+    image: '/personas/lisa.jpg',
+    color: 'bg-purple-600'
+  },
+  {
+    id: 'walt',
+    name: 'Walt',
+    title: 'The Zen Master',
+    stage: '35+ Years',
+    image: '/personas/walt.jpg',
+    color: 'bg-amber-600'
+  }
+];
+
+export default function Welcome() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Smart Redirect: If user is already logged in, skip the splash page
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) return null; // Avoid flicker
+
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-slate-50">
+      
+      {/* HEADER SECTION */}
+      <div className="bg-white px-6 pt-12 pb-8 rounded-b-[2.5rem] shadow-sm border-b border-slate-100 z-10">
+        <div className="max-w-md mx-auto text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <ShieldCheckIcon className="h-9 w-9 text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            My Recovery Toolkit
+          </h1>
+          <p className="text-slate-500 text-sm leading-relaxed font-medium">
+            Your digital companion for the journey home.<br />
+            From Day 1 to Year 35, we meet you where you are.
+          </p>
+        </div>
+      </div>
+
+      {/* PATHFINDER GRID (Bento Layout) */}
+      <div className="flex-1 overflow-y-auto px-4 py-8">
+        <div className="max-w-md mx-auto grid grid-cols-2 gap-4">
+          {PERSONAS.map((persona) => (
+            <div 
+              key={persona.id}
+              className="group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white"
+            >
+              {/* Image Placeholder / Fallback */}
+              <div className={`absolute inset-0 ${persona.color} opacity-10 group-hover:opacity-20 transition-opacity`} />
+              <img 
+                src={persona.image} 
+                alt={persona.name}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90"
+                onError={(e) => {
+                  // Fallback if image missing during dev
+                  (e.target as HTMLImageElement).style.display = 'none'; 
+                }}
+              />
+              
+              {/* Text Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent p-4 flex flex-col justify-end text-white">
+                <div className={`w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide mb-1 ${persona.color}`}>
+                  {persona.stage}
+                </div>
+                <h3 className="font-bold text-lg leading-none">{persona.name}</h3>
+                <p className="text-xs text-slate-300 font-medium truncate">{persona.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FOOTER CTA */}
+      <div className="bg-white p-4 border-t border-slate-100 safe-area-bottom">
+        <div className="max-w-md mx-auto flex flex-col gap-3">
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-xl shadow-slate-200 hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span>Begin Your Journey</span>
+            <ArrowRightIcon className="h-5 w-5" />
+          </button>
+          
+          <p className="text-center text-xs text-slate-400 font-medium">
+            Secure • Private • Encrypted
+          </p>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+--- END_FILE: src/pages/Welcome.tsx ---
+
 --- START_FILE: src/pages/WorkbookDetail.tsx ---
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -10438,9 +11597,10 @@ import {
   ChevronLeftIcon, 
   CheckCircleIcon, 
   ArrowRightIcon,
-  SparklesIcon
+  SparklesIcon,
+  BookOpenIcon // Added for Intro Slide
 } from '@heroicons/react/24/outline';
-import { getWorkbookById, type Workbook, type Section } from '../lib/workbooks';
+import { getWorkbook, type Workbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 
 // Type definition for stored answers
@@ -10454,7 +11614,7 @@ export default function WorkbookSession() {
 
   // Content State
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
-  const [section, setSection] = useState<Section | null>(null);
+  const [section, setSection] = useState<WorkbookSection | null>(null);
   const [loading, setLoading] = useState(true);
 
   // User Progress State
@@ -10469,13 +11629,14 @@ export default function WorkbookSession() {
   // 1. Load Workbook Content & User Progress
   useEffect(() => {
     async function loadData() {
-      // FIX: Added !db check to satisfy TypeScript
       if (!user || !workbookId || !sectionId || !db) return;
 
       try {
         // A. Load Static Workbook JSON
-        const wb = await getWorkbookById(workbookId);
+        const wb = getWorkbook(workbookId || '');
+        
         if (!wb) {
+          console.warn(`Workbook not found: ${workbookId}`);
           navigate('/workbooks');
           return;
         }
@@ -10483,6 +11644,7 @@ export default function WorkbookSession() {
 
         const sec = wb.sections.find(s => s.id === sectionId);
         if (!sec) {
+           console.warn(`Section not found: ${sectionId}`);
            navigate(`/workbooks/${workbookId}`);
            return;
         }
@@ -10539,7 +11701,6 @@ export default function WorkbookSession() {
 
   // 3. Save Answer (with Encryption)
   const saveAnswer = async (qId: string, text: string) => {
-    // FIX: Added !db check
     if (!user || !workbookId || !db) return;
     
     try {
@@ -10575,15 +11736,17 @@ export default function WorkbookSession() {
 
   // 4. Navigation & Completion
   const handleNext = async () => {
-    // FIX: Added !db check
     if (!section || !workbookId || !user || !db) return;
     
     const currentQ = section.questions[activeQuestionIndex];
-    const currentAns = answers[currentQ.id];
     
-    setSaving(true);
-    if (currentAns) {
-        await saveAnswer(currentQ.id, currentAns);
+    // Only save if it's NOT a read-only slide
+    if (currentQ.type !== 'read_only') {
+        const currentAns = answers[currentQ.id];
+        setSaving(true);
+        if (currentAns) {
+            await saveAnswer(currentQ.id, currentAns);
+        }
     }
 
     if (activeQuestionIndex < section.questions.length - 1) {
@@ -10613,7 +11776,8 @@ export default function WorkbookSession() {
 
       setAiCoachLoading(true);
       try {
-          const feedback = await getGeminiCoaching(q.text, ans);
+          const qContext = q.context || q.text; 
+          const feedback = await getGeminiCoaching(qContext, ans);
           setAiFeedback(feedback);
       } catch (error) {
           console.error(error);
@@ -10628,6 +11792,9 @@ export default function WorkbookSession() {
 
   const currentQuestion = section.questions[activeQuestionIndex];
   const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+  
+  // Check if this is an Intro Slide
+  const isIntroSlide = currentQuestion.type === 'read_only';
 
   return (
     <div className="max-w-3xl mx-auto px-4 pb-20">
@@ -10652,45 +11819,68 @@ export default function WorkbookSession() {
         </div>
 
         {/* QUESTION CARD */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col transition-all">
             
-            <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
-                    Question {activeQuestionIndex + 1} of {section.questions.length}
-                </span>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
-                    {currentQuestion.text}
-                </h3>
-                {currentQuestion.helperText && (
-                    <p className="mt-2 text-gray-500 text-sm">
-                        {currentQuestion.helperText}
-                    </p>
-                )}
-            </div>
-
-            <div className="flex-1 p-6 md:p-8 flex flex-col">
-                <textarea
-                    className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
-                    placeholder="Type your answer here..."
-                    value={answers[currentQuestion.id] || ''}
-                    onChange={(e) => handleAnswerChange(e.target.value)}
-                />
-                
-                {/* AI COACHING AREA */}
-                {aiFeedback && (
-                    <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
-                        <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
-                            <SparklesIcon className="h-5 w-5" />
-                            <span>Coach's Insight</span>
-                        </div>
-                        {/* FIX: Replaced ReactMarkdown with simpler whitespace formatting to avoid dependency */}
-                        <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
-                            {aiFeedback}
+            {isIntroSlide ? (
+                // --- INTRO SLIDE LAYOUT ---
+                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-fadeIn">
+                    <div className="bg-blue-50 p-6 rounded-full mb-6">
+                        <BookOpenIcon className="h-16 w-16 text-blue-600" />
+                    </div>
+                    
+                    <div className="max-w-xl space-y-6">
+                        <h3 className="text-3xl font-black text-gray-900 leading-tight">
+                            {section.title}
+                        </h3>
+                        <div className="w-16 h-1 bg-blue-500 mx-auto rounded-full" />
+                        <div className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
+                            {currentQuestion.text}
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                // --- STANDARD QUESTION LAYOUT ---
+                <>
+                    <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
+                        <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
+                            Question {activeQuestionIndex} of {section.questions.length - 1} {/* Offset for intro */}
+                        </span>
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
+                            {currentQuestion.text}
+                        </h3>
+                        {currentQuestion.context && (
+                            <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100 text-sm text-blue-800 italic flex gap-3">
+                                <SparklesIcon className="h-5 w-5 shrink-0" />
+                                <span>{currentQuestion.context}</span>
+                            </div>
+                        )}
+                    </div>
 
+                    <div className="flex-1 p-6 md:p-8 flex flex-col">
+                        <textarea
+                            className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
+                            placeholder="Type your answer here..."
+                            value={answers[currentQuestion.id] || ''}
+                            onChange={(e) => handleAnswerChange(e.target.value)}
+                        />
+                        
+                        {/* AI COACHING AREA */}
+                        {aiFeedback && (
+                            <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
+                                <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
+                                    <SparklesIcon className="h-5 w-5" />
+                                    <span>Coach's Insight</span>
+                                </div>
+                                <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
+                                    {aiFeedback}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* FOOTER CONTROLS */}
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
                 <button
                     onClick={handlePrevious}
@@ -10701,15 +11891,17 @@ export default function WorkbookSession() {
                 </button>
 
                 <div className="flex gap-2">
-                    <button
-                        onClick={handleGetCoaching}
-                        disabled={aiCoachLoading || !answers[currentQuestion.id]}
-                        className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
-                        title="Get AI feedback on your answer"
-                    >
-                        {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
-                        <span>AI Coach</span>
-                    </button>
+                    {!isIntroSlide && (
+                        <button
+                            onClick={handleGetCoaching}
+                            disabled={aiCoachLoading || !answers[currentQuestion.id]}
+                            className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
+                            title="Get AI feedback on your answer"
+                        >
+                            {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
+                            <span>AI Coach</span>
+                        </button>
+                    )}
 
                     <button
                         onClick={handleNext}
@@ -10722,6 +11914,11 @@ export default function WorkbookSession() {
                             <>
                                 <span>Complete</span>
                                 <CheckCircleIcon className="h-5 w-5" />
+                            </>
+                        ) : isIntroSlide ? (
+                            <>
+                                <span>Begin Section</span>
+                                <ArrowRightIcon className="h-5 w-5" />
                             </>
                         ) : (
                             <>
