@@ -2,78 +2,83 @@ import os
 from PIL import Image
 
 def generate_pwa_icons(source_file):
-    # 1. Verification
     if not os.path.exists(source_file):
-        print(f"❌ Error: Could not find '{source_file}' in this folder.")
-        print("   Make sure the file is named exactly 'Logo.png' and is in the same folder as this script.")
+        print(f"❌ Error: Could not find '{source_file}'.")
         return
 
     try:
-        # Open the source image
+        # 1. Open and convert to RGBA (Transparency support)
         img = Image.open(source_file).convert("RGBA")
-        print(f"ℹ️  Source Image Size: {img.size[0]}x{img.size[1]}")
+        
+        # 2. AUTO-TRIM: Remove transparent whitespace around the logo
+        # This gets the bounding box of the non-zero regions
+        bbox = img.getbbox()
+        if bbox:
+            img = img.crop(bbox)
+            print("✂️  Trimmed transparent whitespace from source image.")
+        
+        print(f"ℹ️  Focused Logo Size: {img.size[0]}x{img.size[1]}")
+
     except Exception as e:
-        print(f"❌ Error opening image: {e}")
+        print(f"❌ Error processing image: {e}")
         return
     
-    # 2. Define the required PWA sizes
+    # 3. Define sizes
+    # Format: (Filename, Size, Padding_Percentage)
+    # We use 0.0 (0%) padding for standard icons to make them HUGE.
+    # We use 0.1 (10%) for maskable to ensure it's "Safe Zone" compliant on Android.
     icons = [
-        ("favicon.ico", 64),                    
-        ("apple-touch-icon-180x180.png", 180), 
-        ("pwa-192x192.png", 192),              
-        ("pwa-512x512.png", 512),              
-        ("maskable-icon-512x512.png", 512)     
+        ("favicon.ico", 64, 0.0),                    
+        ("apple-touch-icon-180x180.png", 180, 0.0), 
+        ("pwa-192x192.png", 192, 0.0),              
+        ("pwa-512x512.png", 512, 0.0),              
+        ("maskable-icon-512x512.png", 512, 0.15) # Maskable needs ~15% padding to not be cut off
     ]
 
-    # 3. Create output directory
     output_dir = "pwa-assets"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    print(f"🚀 Generating Proportional Icons from {source_file}...")
+    print(f"🚀 Generating Maximized Icons...")
 
-    # 4. Loop, Resize, and Center
-    for filename, size in icons:
-        # A. Create a blank transparent square canvas
+    for filename, size, padding_pct in icons:
+        # Create clear canvas
         canvas = Image.new("RGBA", (size, size), (255, 255, 255, 0))
         
-        # B. Calculate aspect-safe resize dimensions
-        # We want the logo to fit within the square but keep its shape
+        # Calculate max allowable size inside the canvas (accounting for padding)
+        max_dim = int(size * (1 - padding_pct * 2))
+        
+        # Calculate aspect-safe resize
         img_ratio = img.width / img.height
         
         if img_ratio > 1:
-            # Width is bigger (Landscape) -> Fit to width
-            new_w = size
-            new_h = int(size / img_ratio)
+            # Width is bigger (Landscape)
+            new_w = max_dim
+            new_h = int(max_dim / img_ratio)
         else:
-            # Height is bigger (Portrait) -> Fit to height
-            new_h = size
-            new_w = int(size * img_ratio)
+            # Height is bigger (Portrait)
+            new_h = max_dim
+            new_w = int(max_dim * img_ratio)
             
-        # Resize the logo using high-quality sampling
+        # Resize trimmed logo
         resized_logo = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
-        # C. Calculate center position
-        # (Canvas Width - Logo Width) / 2
+        # Center Position
         x_pos = (size - new_w) // 2
         y_pos = (size - new_h) // 2
         
-        # D. Paste the resized logo onto the center of the canvas
+        # Paste
         canvas.paste(resized_logo, (x_pos, y_pos))
         
-        # Save
         save_path = os.path.join(output_dir, filename)
-        
         if filename.endswith(".ico"):
             canvas.save(save_path, format='ICO', sizes=[(size, size)])
         else:
             canvas.save(save_path, format='PNG', optimize=True)
             
-        print(f"✅ Created: {filename} (Canvas: {size}x{size}, Logo: {new_w}x{new_h})")
+        print(f"✅ Created: {filename}")
 
-    print("\n🎉 Done! The icons are now squares with your logo centered inside.")
-    print("👉 Move the files from 'pwa-assets' to your 'public/' folder.")
+    print("\n🎉 Done! Icons are now maximized (trimmed of whitespace).")
 
-# --- EXECUTION ---
 if __name__ == "__main__":
     generate_pwa_icons("Logo.png")
