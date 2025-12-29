@@ -10,7 +10,7 @@ import {
   ArrowRightIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
-import { getWorkbookById, type Workbook, type Section } from '../lib/workbooks';
+import { getWorkbook, type Workbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 
 // Type definition for stored answers
@@ -24,7 +24,7 @@ export default function WorkbookSession() {
 
   // Content State
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
-  const [section, setSection] = useState<Section | null>(null);
+  const [section, setSection] = useState<WorkbookSection | null>(null);
   const [loading, setLoading] = useState(true);
 
   // User Progress State
@@ -39,13 +39,14 @@ export default function WorkbookSession() {
   // 1. Load Workbook Content & User Progress
   useEffect(() => {
     async function loadData() {
-      // FIX: Added !db check to satisfy TypeScript
       if (!user || !workbookId || !sectionId || !db) return;
 
       try {
         // A. Load Static Workbook JSON
-        const wb = await getWorkbookById(workbookId);
+        const wb = getWorkbook(workbookId || '');
+        
         if (!wb) {
+          console.warn(`Workbook not found: ${workbookId}`);
           navigate('/workbooks');
           return;
         }
@@ -53,6 +54,7 @@ export default function WorkbookSession() {
 
         const sec = wb.sections.find(s => s.id === sectionId);
         if (!sec) {
+           console.warn(`Section not found: ${sectionId}`);
            navigate(`/workbooks/${workbookId}`);
            return;
         }
@@ -109,7 +111,6 @@ export default function WorkbookSession() {
 
   // 3. Save Answer (with Encryption)
   const saveAnswer = async (qId: string, text: string) => {
-    // FIX: Added !db check
     if (!user || !workbookId || !db) return;
     
     try {
@@ -145,7 +146,6 @@ export default function WorkbookSession() {
 
   // 4. Navigation & Completion
   const handleNext = async () => {
-    // FIX: Added !db check
     if (!section || !workbookId || !user || !db) return;
     
     const currentQ = section.questions[activeQuestionIndex];
@@ -183,7 +183,9 @@ export default function WorkbookSession() {
 
       setAiCoachLoading(true);
       try {
-          const feedback = await getGeminiCoaching(q.text, ans);
+          // FIX: Removed (q as any) cast. 'context' is part of the Question interface.
+          const qContext = q.context || q.text; 
+          const feedback = await getGeminiCoaching(qContext, ans);
           setAiFeedback(feedback);
       } catch (error) {
           console.error(error);
@@ -231,10 +233,12 @@ export default function WorkbookSession() {
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
                     {currentQuestion.text}
                 </h3>
-                {currentQuestion.helperText && (
-                    <p className="mt-2 text-gray-500 text-sm">
-                        {currentQuestion.helperText}
-                    </p>
+                {/* FIX: Removed (currentQuestion as any) cast */}
+                {currentQuestion.context && (
+                    <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100 text-sm text-blue-800 italic">
+                        <SparklesIcon className="h-4 w-4 inline mr-1 -mt-0.5" />
+                        "{currentQuestion.context}"
+                    </div>
                 )}
             </div>
 
@@ -253,7 +257,6 @@ export default function WorkbookSession() {
                             <SparklesIcon className="h-5 w-5" />
                             <span>Coach's Insight</span>
                         </div>
-                        {/* FIX: Replaced ReactMarkdown with simpler whitespace formatting to avoid dependency */}
                         <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
                             {aiFeedback}
                         </div>

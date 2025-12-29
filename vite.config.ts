@@ -68,6 +68,15 @@ export default defineVitestConfig({
       // ----------------------------------------------
     })
   ],
+  // --- ADDED: SERVER CONFIG FOR DEV TUNNELS (PORT 5175) ---
+  server: {
+    host: true, // Binds to 0.0.0.0 so the tunnel can see it
+    port: 5175, // Forces port 5175 to match your current instance
+    strictPort: true, // Prevents it from jumping to 5176 if 5175 bumps
+    watch: {
+        usePolling: true, // Helps if you are in a Docker container or remote VM
+    }
+  },
   // --- PRESERVED: VITEST CONFIGURATION ---
   test: {
     globals: true,
