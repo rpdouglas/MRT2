@@ -1,4 +1,5 @@
 // src/lib/gamification.ts
+import { Timestamp } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
 const XP_VALUES = {
@@ -57,7 +58,7 @@ interface ScorableJournal {
     tags?: string[];
     content?: string;
     moodScore?: number;
-    createdAt: { toDate: () => Date } | Date; // flexible for Firestore Timestamp
+    createdAt: { toDate: () => Date } | Date | Timestamp; 
 }
 
 interface ScorableTask {
@@ -205,8 +206,8 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
     // Sort descending (newest first)
     // Safely handle Firestore Timestamps vs Date objects
     const sorted = [...journals].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : a.createdAt.toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : b.createdAt.toDate();
+        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
         return dateB.getTime() - dateA.getTime();
     });
     
@@ -224,7 +225,7 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
     
     // Check if posted today
     const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : firstEntry.createdAt.toDate();
+    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
     
     const postedToday = isSameDay(lastPostDate, today);
     // If not posted today, check if posted yesterday to maintain streak
@@ -237,7 +238,7 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
         // Iterate backwards to count consecutive days
         const uniqueDays = new Set<string>();
         journals.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : j.createdAt.toDate();
+            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
             uniqueDays.add(d.toDateString());
         });
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
@@ -260,7 +261,7 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
 
     // 4. Consistency (Entries / Week)
     const oldestEntry = sorted[sorted.length - 1];
-    const firstDate = oldestEntry.createdAt instanceof Date ? oldestEntry.createdAt : oldestEntry.createdAt.toDate();
+    const firstDate = oldestEntry.createdAt instanceof Date ? oldestEntry.createdAt : (oldestEntry.createdAt as Timestamp).toDate();
     const timeSpanDays = Math.max(1, (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24));
     const weeksActive = Math.ceil(timeSpanDays / 7);
     const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
@@ -320,15 +321,15 @@ export const calculateVitalityStats = (journals: ScorableJournal[]): VitalitySta
 
     // 2. Bio Streak (Same logic as Journal Streak)
     const sorted = [...vitalityLogs].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : a.createdAt.toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : b.createdAt.toDate();
+        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
+        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
         return dateB.getTime() - dateA.getTime();
     });
     const today = new Date();
     
     let currentStreak = 0;
     const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : firstEntry.createdAt.toDate();
+    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
     
     const postedToday = isSameDay(lastPostDate, today);
     const yesterday = new Date(today);
@@ -339,7 +340,7 @@ export const calculateVitalityStats = (journals: ScorableJournal[]): VitalitySta
         currentStreak = 1;
         const uniqueDays = new Set<string>();
         vitalityLogs.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : j.createdAt.toDate();
+            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
             uniqueDays.add(d.toDateString());
         });
         const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());

@@ -30,7 +30,8 @@ import {
   SparklesIcon,
   HeartIcon,
   ArrowDownTrayIcon,
-  XMarkIcon
+  //XMarkIcon,
+  TrophyIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 
@@ -47,7 +48,6 @@ export default function Dashboard() {
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
   
-  // NEW: Leveling State
   const [userLevel, setUserLevel] = useState<UserStats | null>(null);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function Dashboard() {
 
     const loadDashboardData = async () => {
         try {
-            // 1. Profile Data (Clean Time & Backup Status)
+            // 1. Profile Data
             const userDocRef = doc(database, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
               
@@ -115,8 +115,7 @@ export default function Dashboard() {
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
 
-            // 5. XP & Level Calculation (The Aggregator)
-            // We pass the raw(ish) data into the new calculator
+            // 5. XP Calculation
             const levelStats = calculateUserLevel(journals, tasks, wbSnap.size, currentCleanDays);
             setUserLevel(levelStats);
 
@@ -134,6 +133,8 @@ export default function Dashboard() {
 
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
+      
+      {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard"
@@ -145,128 +146,165 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20 space-y-6">
-        
-        {/* NEW: XP & RANK BAR */}
-        {userLevel && (
-            <div className="mx-2 -mt-12 mb-6 relative z-20 bg-white rounded-2xl p-4 shadow-lg border border-slate-100 animate-slideUp">
-                <div className="flex justify-between items-end mb-2">
+      {/* 2. FLOATING XP BAR (The Rank Card) */}
+      {userLevel && (
+        <div className="px-4 -mt-10 relative z-30 flex-shrink-0 animate-slideUp">
+            <div className="bg-white rounded-3xl p-5 shadow-xl border border-white/50 backdrop-blur-sm relative overflow-hidden">
+                {/* Decorative background blur */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                
+                <div className="flex justify-between items-end mb-3 relative z-10">
                     <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Rank</span>
-                        <h3 className="text-xl font-black text-slate-800 leading-none">{userLevel.levelData.title}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full">Rank</span>
+                            <span className="text-[10px] font-bold text-gray-400">Archetype: {userLevel.archetype}</span>
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 leading-none">{userLevel.levelData.title}</h3>
                     </div>
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-indigo-600">Lvl {userLevel.levelData.level}</div>
-                        <div className="text-[10px] font-bold text-indigo-400">
-                            {userLevel.levelData.currentXP} / {userLevel.levelData.nextLevelXP} XP
+                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                            {userLevel.levelData.level}
                         </div>
+                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Current Level</div>
                     </div>
                 </div>
                 
                 {/* XP Progress Bar */}
-                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="relative h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                     <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out"
+                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
                         style={{ width: `${userLevel.levelData.progressPercent}%` }}
                     />
-                </div>
-                
-                <div className="mt-3 flex justify-between items-center">
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-bold">
-                        Archetype: {userLevel.archetype}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                        To Next Level: {userLevel.levelData.nextLevelXP - userLevel.levelData.currentXP} XP
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-900/50 mix-blend-overlay">
+                        {userLevel.levelData.currentXP} / {userLevel.levelData.nextLevelXP} XP
+                    </div>
                 </div>
             </div>
-        )}
+        </div>
+      )}
 
+      {/* 3. SCROLLABLE CONTENT (BENTO GRID) */}
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+        
         {showBackupBanner && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
             <div className="flex items-center gap-3">
               <div className="bg-amber-100 p-2 rounded-full text-amber-700">
                 <ArrowDownTrayIcon className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-amber-900">Secure Your Progress</p>
-                <p className="text-xs text-amber-700">It's been a week since your last backup.</p>
+              <div className="text-xs text-amber-900">
+                <strong>Backup Needed:</strong> It's been a week since your last save.
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Backup</Link>
-              <button onClick={() => setShowBackupBanner(false)} className="text-amber-400 hover:text-amber-600">
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
+            <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
           </div>
         )}
 
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center relative overflow-hidden group hover:shadow-md transition-all">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-600"></div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Clean Time</div>
-            <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 drop-shadow-sm mb-2">
-                {daysClean}
+        {/* HERO CARD: Clean Time */}
+        <div className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-[2rem] p-8 text-center relative overflow-hidden shadow-xl border border-slate-700 group">
+            {/* Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center justify-center gap-2 mb-2 opacity-60">
+                    <TrophyIcon className="h-4 w-4 text-yellow-400" />
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">Freedom Count</span>
+                </div>
+                <div className="text-7xl font-black text-white tracking-tighter drop-shadow-2xl mb-1">
+                    {daysClean}
+                </div>
+                <div className="text-sm font-medium text-slate-400">Days of Sobriety</div>
             </div>
-            <div className="text-sm font-medium text-slate-500">Days of Freedom</div>
         </div>
 
+        {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
-            <Link to="/journal" className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 active:scale-95 transition-all hover:border-indigo-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <ChartBarIcon className="h-12 w-12 text-indigo-600" />
+            
+            {/* 1. JOURNAL (Indigo/Violet) */}
+            <Link to="/journal" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <ChartBarIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-indigo-600">
-                    <div className="p-1.5 bg-indigo-50 rounded-lg">
-                        <ChartBarIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <ChartBarIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Journal</span>
+                    <div className="text-3xl font-black mb-1">{journalStats.streak}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Day Streak</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Consistency</span>
+                        <span className="text-xs font-bold">{journalStats.consistency}/wk</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{journalStats.streak}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            <Link to="/tasks" className="bg-white p-5 rounded-2xl shadow-sm border border-cyan-100 active:scale-95 transition-all hover:border-cyan-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <FireIcon className="h-12 w-12 text-cyan-600" />
+            {/* 2. HABITS (Cyan/Teal) */}
+            <Link to="/tasks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <FireIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-cyan-600">
-                    <div className="p-1.5 bg-cyan-50 rounded-lg">
-                        <FireIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <FireIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Habits</span>
+                    <div className="text-3xl font-black mb-1">{taskStats.fire}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Quest Fire</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Rate</span>
+                        <span className="text-xs font-bold">{taskStats.rate}%</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{taskStats.fire}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Day Streak</div>
             </Link>
 
-            <Link to="/workbooks" className="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100 active:scale-95 transition-all hover:border-emerald-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <SparklesIcon className="h-12 w-12 text-emerald-600" />
+            {/* 3. VITALITY (Orange/Rose) */}
+            <Link to="/vitality" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <HeartIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-emerald-600">
-                    <div className="p-1.5 bg-emerald-50 rounded-lg">
-                        <SparklesIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <HeartIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Wisdom</span>
+                    <div className="text-3xl font-black mb-1">{vitalityStats.bioStreak}</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Bio-Rhythm</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Total Logs</span>
+                        <span className="text-xs font-bold">{vitalityStats.totalLogs}</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{workbookStats.completion}%</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Mastery</div>
             </Link>
 
-            <Link to="/vitality" className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100 active:scale-95 transition-all hover:border-orange-300 relative overflow-hidden">
-                <div className="absolute right-0 top-0 p-3 opacity-10">
-                    <HeartIcon className="h-12 w-12 text-orange-600" />
+            {/* 4. WISDOM (Emerald/Lime) */}
+            <Link to="/workbooks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <SparklesIcon className="h-16 w-16 rotate-12" />
                 </div>
-                <div className="flex items-center gap-2 mb-3 text-orange-600">
-                    <div className="p-1.5 bg-orange-50 rounded-lg">
-                        <HeartIcon className="h-5 w-5" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <SparklesIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wide">Vitality</span>
+                    <div className="text-3xl font-black mb-1">{workbookStats.completion}%</div>
+                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Mastery</div>
+                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-[10px] opacity-75">Score</span>
+                        <span className="text-xs font-bold">{workbookStats.wisdom}</span>
+                    </div>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">{vitalityStats.bioStreak}</div>
-                <div className="text-xs text-slate-400 font-medium mt-1">Bio Streak</div>
             </Link>
+
         </div>
       </div>
     </div>
