@@ -107,6 +107,15 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
       const iv = new Uint8Array(ivHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
       const data = new Uint8Array(dataHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
+      // --- CRITICAL FIX START ---
+      // 4. Ensure data is large enough for the auth tag (16 bytes)
+      // Without this check, subtle.decrypt throws a DOMException on corrupted/empty data
+      if (data.byteLength < 16) {
+          console.warn("Skipping decryption: Data buffer too small (corrupted entry).");
+          return "[Error: Data Corrupted]";
+      }
+      // --- CRITICAL FIX END ---
+
       const decryptedBuffer = await window.crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
         globalKey,
@@ -138,8 +147,8 @@ export function clearKey() {
 }
 
 /**
- * Check if vault is currently unlocked.
+ * Check if vault is currently unlocked
  */
 export function isVaultUnlocked(): boolean {
     return !!globalKey;
-}
+}   
