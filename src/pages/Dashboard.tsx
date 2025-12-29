@@ -1,8 +1,4 @@
-/**
- * GITHUB COMMENT:
- * [Dashboard.tsx]
- * CLEANUP: Removed unused 'no-console' eslint-disable directive.
- */
+// src/pages/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,14 +18,16 @@ import {
   calculateJournalStats, 
   calculateTaskStats, 
   calculateWorkbookStats, 
-  calculateVitalityStats 
+  calculateVitalityStats,
+  calculateUserLevel,
+  type UserStats
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
 import { 
   HomeIcon, 
   FireIcon, 
   ChartBarIcon, 
-  SparklesIcon, 
+  SparklesIcon,
   HeartIcon,
   ArrowDownTrayIcon,
   XMarkIcon
@@ -48,6 +46,9 @@ export default function Dashboard() {
   const [taskStats, setTaskStats] = useState({ rate: 0, fire: 0 });
   const [workbookStats, setWorkbookStats] = useState({ wisdom: 0, completion: 0 });
   const [vitalityStats, setVitalityStats] = useState({ bioStreak: 0, totalLogs: 0 });
+  
+  // NEW: Leveling State
+  const [userLevel, setUserLevel] = useState<UserStats | null>(null);
 
   useEffect(() => {
     if (!user || !db) {
@@ -59,9 +60,12 @@ export default function Dashboard() {
 
     const loadDashboardData = async () => {
         try {
+            // 1. Profile Data (Clean Time & Backup Status)
             const userDocRef = doc(database, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
               
+            let currentCleanDays = 0;
+
             if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 
@@ -69,8 +73,8 @@ export default function Dashboard() {
                     const start = userData.sobrietyDate.toDate ? userData.sobrietyDate.toDate() : new Date(userData.sobrietyDate);
                     const now = new Date();
                     const diffTime = Math.abs(now.getTime() - start.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    setDaysClean(diffDays);
+                    currentCleanDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    setDaysClean(currentCleanDays);
                 }
 
                 const lastExport = userData.lastExportAt as Timestamp | undefined;
@@ -80,6 +84,7 @@ export default function Dashboard() {
                 }
             }
 
+            // 2. Journal Data
             const journalQ = query(
                 collection(database, 'journals'), 
                 where('uid', '==', user.uid),
@@ -97,16 +102,23 @@ export default function Dashboard() {
             const vStats = calculateVitalityStats(journals);
             setVitalityStats(vStats);
 
+            // 3. Task Data
             const taskQ = query(collection(database, 'tasks'), where('uid', '==', user.uid));
             const taskSnap = await getDocs(taskQ);
             const tasks = taskSnap.docs.map(d => d.data());
             const tStats = calculateTaskStats(tasks);
             setTaskStats({ rate: tStats.completionRate, fire: tStats.habitFire });
 
+            // 4. Workbook Data
             const wbQ = query(collection(database, 'users', user.uid, 'workbook_answers'));
             const wbSnap = await getDocs(wbQ);
             const wStats = calculateWorkbookStats(wbSnap.size, TOTAL_WORKBOOK_QUESTIONS);
             setWorkbookStats({ wisdom: wStats.wisdomScore, completion: wStats.masterCompletion });
+
+            // 5. XP & Level Calculation (The Aggregator)
+            // We pass the raw(ish) data into the new calculator
+            const levelStats = calculateUserLevel(journals, tasks, wbSnap.size, currentCleanDays);
+            setUserLevel(levelStats);
 
         } catch (error) {
             console.error("Dashboard load error:", error);
@@ -134,6 +146,42 @@ export default function Dashboard() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20 space-y-6">
+        
+        {/* NEW: XP & RANK BAR */}
+        {userLevel && (
+            <div className="mx-2 -mt-12 mb-6 relative z-20 bg-white rounded-2xl p-4 shadow-lg border border-slate-100 animate-slideUp">
+                <div className="flex justify-between items-end mb-2">
+                    <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Rank</span>
+                        <h3 className="text-xl font-black text-slate-800 leading-none">{userLevel.levelData.title}</h3>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-2xl font-bold text-indigo-600">Lvl {userLevel.levelData.level}</div>
+                        <div className="text-[10px] font-bold text-indigo-400">
+                            {userLevel.levelData.currentXP} / {userLevel.levelData.nextLevelXP} XP
+                        </div>
+                    </div>
+                </div>
+                
+                {/* XP Progress Bar */}
+                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out"
+                        style={{ width: `${userLevel.levelData.progressPercent}%` }}
+                    />
+                </div>
+                
+                <div className="mt-3 flex justify-between items-center">
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-bold">
+                        Archetype: {userLevel.archetype}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                        To Next Level: {userLevel.levelData.nextLevelXP - userLevel.levelData.currentXP} XP
+                    </span>
+                </div>
+            </div>
+        )}
+
         {showBackupBanner && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
             <div className="flex items-center gap-3">
