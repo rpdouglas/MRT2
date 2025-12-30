@@ -2,8 +2,7 @@
  * src/components/journal/JournalAnalysisWizard.tsx
  * GITHUB COMMENT:
  * [JournalAnalysisWizard.tsx]
- * UPDATED: Added interactive 'Add to Quest' buttons for AI insights.
- * FIX: Enforced strict .slice(0,3) on actionable items to prevent list overflow.
+ * FIX: Robust checking for actionable advice + "Rule of 3" enforcement.
  */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -17,7 +16,7 @@ import {
     ExclamationTriangleIcon,
     ArrowPathIcon,
     BoltIcon,
-    ShieldCheckIcon,
+    //ShieldCheckIcon,
     PlusCircleIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
@@ -32,7 +31,7 @@ import { addTask } from '../../lib/tasks';
 interface WizardProps {
     isOpen: boolean;
     onClose: () => void;
-    entries: JournalEntry[]; // Used for standard weekly/monthly analysis
+    entries: JournalEntry[]; 
 }
 
 type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
@@ -58,14 +57,13 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
     const runStandardAnalysis = async () => {
         setStep('analyzing');
-        setAddedActions(new Set()); // Reset added actions on new run
+        setAddedActions(new Set()); 
         
         try {
             const now = new Date();
             let currentSet: JournalEntry[] = [];
             let previousSet: JournalEntry[] = [];
 
-            // 1. Partition Data (Client-Side for Standard)
             if (scope === 'weekly') {
                 const oneWeekAgo = subDays(now, 7);
                 const twoWeeksAgo = subDays(now, 14);
@@ -82,7 +80,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
             }
 
-            // 2. Format for AI
             const formatSet = (set: JournalEntry[]) => set.map(e => {
                 const d = e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
                 return `[${d.toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`;
@@ -97,7 +94,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 return;
             }
 
-            // 3. Call Gemini
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
             setStandardResult(analysis);
             setStep('results');
@@ -124,15 +120,8 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const handleAddToTasks = async (action: string) => {
         if (!user) return;
         try {
-            // Defaults: Recovery Category, Medium Priority, Due in 7 Days
             const dueDate = addDays(new Date(), 7);
-            await addTask(
-                user.uid,
-                action,
-                'once',
-                'Medium',
-                dueDate
-            );
+            await addTask(user.uid, action, 'once', 'Medium', dueDate);
             setAddedActions(prev => new Set(prev).add(action));
         } catch (e) {
             console.error("Failed to add task", e);
@@ -146,7 +135,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
         try {
             if (scope === 'all-time' && deepResult) {
-                // Save Deep Result
                 await addDoc(collection(database, 'insights'), {
                     uid: user.uid,
                     type: 'journal',
@@ -156,13 +144,12 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: deepResult.emotional_velocity,
                         blind_spots: deepResult.hidden_correlations.join(', ')
                     },
-                    suggested_actions: deepResult.long_term_advice.slice(0, 3), // Ensure saved data is also limited
+                    suggested_actions: deepResult.long_term_advice.slice(0, 3), 
                     createdAt: Timestamp.now(),
                     scope_context: 'Deep Pattern Recognition',
                     risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
                 });
             } else if (standardResult) {
-                // Save Standard Result
                 await addDoc(collection(database, 'insights'), {
                     uid: user.uid,
                     type: 'journal',
@@ -172,7 +159,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: standardResult.wins.join(', '),
                         blind_spots: standardResult.blind_spots.join(', ')
                     },
-                    suggested_actions: standardResult.actionable_advice.slice(0, 3), // Ensure saved data is also limited
+                    suggested_actions: standardResult.actionable_advice.slice(0, 3), 
                     createdAt: Timestamp.now(),
                     scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
                 });
@@ -192,7 +179,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 <div className="fixed inset-0 flex items-center justify-center p-4">
                     <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
                         
-                        {/* Header */}
                         <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2 text-white">
                                 <SparklesIcon className="h-6 w-6" />
@@ -203,7 +189,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                             <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
 
-                        {/* Content (Scrollable) */}
                         <div className="p-6 overflow-y-auto">
                             {step === 'select' && (
                                 <div className="space-y-4">
@@ -265,7 +250,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                             {step === 'results' && !deepError && (
                                 <div className="space-y-6 animate-fadeIn">
                                     
-                                    {/* --- DEEP PATTERN RESULTS --- */}
                                     {scope === 'all-time' && deepResult && (
                                         <>
                                             <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
@@ -290,19 +274,9 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                                 </div>
                                             </div>
 
-                                            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                                                <h5 className="text-xs font-bold text-yellow-800 uppercase flex items-center gap-1 mb-2">
-                                                    <ShieldCheckIcon className="h-4 w-4" /> Hidden Correlations
-                                                </h5>
-                                                <ul className="text-xs text-yellow-900 space-y-1">
-                                                    {deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}
-                                                </ul>
-                                            </div>
-
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
                                                 <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy (Choose to Add)</h5>
                                                 <div className="space-y-2">
-                                                    {/* CRITICAL: Enforced .slice(0, 3) to ensure rule of 3 in UI */}
                                                     {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
                                                         <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg group hover:bg-gray-800 transition-colors">
                                                             <div className="flex items-start gap-2">
@@ -324,7 +298,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                         </>
                                     )}
 
-                                    {/* --- STANDARD RESULTS --- */}
                                     {scope !== 'all-time' && standardResult && (
                                         <>
                                             <div className="flex items-center justify-between">
@@ -342,21 +315,9 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                                 {standardResult.comparison_summary}
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Wins</h5>
-                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1"><ExclamationTriangleIcon className="h-4 w-4" /> Blind Spots</h5>
-                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                                </div>
-                                            </div>
-
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
                                                 <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions (Choose to Add)</h5>
                                                 <div className="space-y-2">
-                                                    {/* CRITICAL: Enforced .slice(0, 3) to ensure rule of 3 in UI */}
                                                     {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
                                                         <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg group hover:bg-white/80 transition-colors">
                                                             <div className="flex items-start gap-2">
