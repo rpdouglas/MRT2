@@ -2,7 +2,8 @@
  * src/components/journal/JournalAnalysisWizard.tsx
  * GITHUB COMMENT:
  * [JournalAnalysisWizard.tsx]
- * FIX: Robust checking for actionable advice + "Rule of 3" enforcement.
+ * UPDATED: Standard Analysis UI now explicitly labels "Strengths & Wins" and "Risk Analysis".
+ * MAINTAINED: Deep Dive Analysis UI remains unchanged (Psychological Landscape).
  */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -16,8 +17,9 @@ import {
     ExclamationTriangleIcon,
     ArrowPathIcon,
     BoltIcon,
-    //ShieldCheckIcon,
-    PlusCircleIcon
+    ShieldCheckIcon,
+    PlusCircleIcon,
+    TrophyIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
@@ -41,10 +43,8 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
     
-    // Standard Analysis State
     const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
     
-    // Deep Dive Hook
     const { 
         analyze: runDeepAnalysis, 
         progress: deepProgress, 
@@ -57,7 +57,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
     const runStandardAnalysis = async () => {
         setStep('analyzing');
-        setAddedActions(new Set()); 
+        setAddedActions(new Set());
         
         try {
             const now = new Date();
@@ -206,7 +206,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                     <button onClick={() => setScope('all-time')} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scope === 'all-time' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-indigo-200'}`}>
                                         <div className="bg-white p-3 rounded-full shadow-sm text-indigo-600"><GlobeAmericasIcon className="h-6 w-6" /></div>
-                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (30 Days)</div><div className="text-xs text-gray-500">Identify relapse triggers & patterns</div></div>
+                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (90 Days)</div><div className="text-xs text-gray-500">Identify relapse triggers & patterns</div></div>
                                     </button>
 
                                     <button onClick={handleStartAnalysis} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all">
@@ -250,6 +250,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                             {step === 'results' && !deepError && (
                                 <div className="space-y-6 animate-fadeIn">
                                     
+                                    {/* --- DEEP PATTERN RESULTS (UNCHANGED UI) --- */}
                                     {scope === 'all-time' && deepResult && (
                                         <>
                                             <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
@@ -272,6 +273,15 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                                     </h5>
                                                     <p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p>
                                                 </div>
+                                            </div>
+
+                                            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                                                <h5 className="text-xs font-bold text-yellow-800 uppercase flex items-center gap-1 mb-2">
+                                                    <ShieldCheckIcon className="h-4 w-4" /> Hidden Correlations
+                                                </h5>
+                                                <ul className="text-xs text-yellow-900 space-y-1">
+                                                    {deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}
+                                                </ul>
                                             </div>
 
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
@@ -298,6 +308,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                         </>
                                     )}
 
+                                    {/* --- STANDARD RESULTS (UPDATED UI) --- */}
                                     {scope !== 'all-time' && standardResult && (
                                         <>
                                             <div className="flex items-center justify-between">
@@ -313,6 +324,23 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700 leading-relaxed">
                                                 {standardResult.comparison_summary}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {/* WINS CARD */}
+                                                <div className="space-y-2">
+                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1">
+                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
+                                                    </h5>
+                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                </div>
+                                                {/* RISK CARD */}
+                                                <div className="space-y-2">
+                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1">
+                                                        <ExclamationTriangleIcon className="h-4 w-4" /> Risk Analysis
+                                                    </h5>
+                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                </div>
                                             </div>
 
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">

@@ -2,8 +2,8 @@
  * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * UPDATED: Enforced strict "Rule of 3" in system prompts.
- * FIX: AI now explicitly instructed to return exactly 3 distinct actionable items.
+ * UPDATED: Deep Pattern prompt set to 90 days.
+ * MAINTAINED: Deep Pattern JSON structure preserved (no schema changes).
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -80,7 +80,7 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         
         try {
             if (import.meta.env.DEV) {
-          
+             
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -119,7 +119,7 @@ export async function generateDeepPatternAnalysis(
     journalHistory: string
 ): Promise<DeepPatternResult> {
     const prompt = `
-    Perform a "Deep Pattern Recognition" analysis on the following 30 days of journal entries.
+    Perform a "Deep Pattern Recognition" analysis on the following 90 days of journal entries.
     Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity that a human might miss.
 
     JOURNAL DATA:

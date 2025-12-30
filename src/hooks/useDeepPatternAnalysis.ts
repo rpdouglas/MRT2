@@ -1,4 +1,9 @@
-// src/hooks/useDeepPatternAnalysis.ts
+/**
+ * src/hooks/useDeepPatternAnalysis.ts
+ * GITHUB COMMENT:
+ * [useDeepPatternAnalysis.ts]
+ * UPDATED: Increased analysis window from 30 to 90 days.
+ */
 import { useState, useCallback } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
@@ -35,13 +40,12 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
         try {
             const database: Firestore = db;
             
-            // 1. Fetch last 30 entries directly from Firestore
-            // We fetch specific fields to minimize bandwidth
+            // 1. Fetch last 90 entries directly from Firestore (UPDATED from 30)
             const q = query(
                 collection(database, 'journals'),
                 where('uid', '==', user.uid),
                 orderBy('createdAt', 'desc'),
-                limit(30)
+                limit(90) // <--- CHANGED HERE
             );
 
             const snapshot = await getDocs(q);

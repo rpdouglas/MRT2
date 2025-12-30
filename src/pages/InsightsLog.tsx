@@ -2,8 +2,7 @@
  * src/pages/InsightsLog.tsx
  * GITHUB COMMENT:
  * [InsightsLog.tsx]
- * FIX: Replaced 'any' with 'unknown' and a specific interface to satisfy ESLint.
- * MAINTAINS: Data normalization logic for legacy field names.
+ * UPDATED: UI labels changed to "Strengths & Wins" and "Risk Analysis" to match wizard.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -186,26 +185,23 @@ export default function InsightsLog() {
                                                 {/* ACTION ITEMS SECTION */}
                                                 <div className="bg-green-50 p-3 rounded-xl border border-green-100">
                                                     <div className="text-green-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
-                                                        <TrophyIcon className="h-4 w-4" /> Action Plan
+                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
                                                     </div>
-                                                    <ul className="space-y-2">
-                                                        {actions.length > 0 ? (
-                                                            actions.map((step, idx) => (
-                                                                <li key={idx} className="flex items-start justify-between gap-2 text-xs text-green-900 leading-relaxed">
-                                                                    <span>• {step}</span>
-                                                                    <button
-                                                                        onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
-                                                                        disabled={addedActions.has(step)}
-                                                                        className={`p-1 rounded-full transition-all flex-shrink-0 ${addedActions.has(step) ? 'text-green-600 bg-green-200' : 'text-green-500 hover:text-green-700 hover:bg-green-200'}`}
-                                                                        title="Add to Quests"
-                                                                    >
-                                                                        {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
-                                                                    </button>
-                                                                </li>
-                                                            ))
-                                                        ) : (
-                                                            <li className="text-xs text-green-800 italic">No actions generated.</li>
-                                                        )}
+                                                    <ul className="text-xs text-green-900 leading-relaxed space-y-2">
+                                                        {/* slice(0, 3) applied to historical view as well */}
+                                                        {insight.actionableSteps && insight.actionableSteps.slice(0, 3).map((step, idx) => (
+                                                            <li key={idx} className="flex items-start justify-between gap-2">
+                                                                <span>{step}</span>
+                                                                <button
+                                                                    onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
+                                                                    disabled={addedActions.has(step)}
+                                                                    className={`p-1 rounded-full transition-all ${addedActions.has(step) ? 'text-green-600 bg-green-200' : 'text-green-400 hover:text-green-700 hover:bg-green-200'}`}
+                                                                    title="Add to Quests"
+                                                                >
+                                                                    {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
+                                                                </button>
+                                                            </li>
+                                                        ))}
                                                     </ul>
                                                 </div>
                                             </div>
