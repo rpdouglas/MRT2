@@ -1,3 +1,9 @@
+/**
+ * src/lib/insights.ts
+ * GITHUB COMMENT:
+ * [insights.ts]
+ * UPDATED: Added 'strengths' field to InsightPayload to support Weekly/Monthly wins.
+ */
 import { 
   collection, 
   addDoc, 
@@ -8,23 +14,20 @@ import {
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
-// Ensure these match the exports in your new gemini.ts
 import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
 
 // --- DEFINITIONS ---
 
-// Define a discriminated union for the two types of insights
 export type InsightType = 'journal' | 'workbook';
 
 // Combined type for what we save to Firestore
-// This ensures strict type safety based on the 'type' field
 export type InsightPayload = 
-  | ({ type: 'journal' } & AnalysisResult)
+  | ({ type: 'journal'; strengths?: string[] } & AnalysisResult)
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
 
-// The hydrated object returned to the UI (includes ID and Dates)
+// The hydrated object returned to the UI
 export type SavedInsight = InsightPayload & {
   id: string;
   uid: string;
@@ -33,15 +36,10 @@ export type SavedInsight = InsightPayload & {
 
 /**
  * Saves a new AI Insight to Firestore.
- * Supports both Journal Analysis and Workbook Analysis via discriminated union.
- * @param uid - The User ID
- * @param payload - The structured result from Gemini + type ('journal' | 'workbook')
  */
 export async function saveInsight(uid: string, payload: InsightPayload) {
   if (!db) throw new Error("Database not initialized");
 
-  // We spread the payload directly. 
-  // Firestore will store the 'type' field and all specific fields (mood vs pillars) automatically.
   await addDoc(collection(db, COLLECTION), {
     uid,
     createdAt: Timestamp.now(),
@@ -50,8 +48,7 @@ export async function saveInsight(uid: string, payload: InsightPayload) {
 }
 
 /**
- * Fetches the history of AI Insights for a user, sorted by newest first.
- * Handles backward compatibility for old records (defaults to 'journal').
+ * Fetches the history of AI Insights for a user.
  */
 export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
   if (!db) throw new Error("Database not initialized");
@@ -67,25 +64,19 @@ export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      
-      // Backward Compatibility:
-      // If 'type' is missing, it's a legacy Journal Insight.
       const type = data.type || 'journal';
 
       return {
-        ...data, // Spread first to capture all fields
+        ...data, 
         id: doc.id,
         uid: data.uid,
         type,
-        // Ensure createdAt is a real JS Date object (overriding the Timestamp from ...data)
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
       } as SavedInsight;
     });
 
   } catch (e: unknown) {
     console.error("Error fetching insights:", e);
-    
-    // RESTORED: Critical Missing Index Check
     const err = e as { message?: string };
     if (err.message && err.message.includes("index")) {
         console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
