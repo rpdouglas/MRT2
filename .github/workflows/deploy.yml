@@ -130,4 +130,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
           projectId: "${{ env.FIREBASE_PROJECT_ID }}"
-          channelId: livex`
+          channelId: live
