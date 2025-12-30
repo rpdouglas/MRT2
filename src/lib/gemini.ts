@@ -1,4 +1,10 @@
 // src/lib/gemini.ts
+/**
+ * GITHUB COMMENT:
+ * [gemini.ts]
+ * UPDATED: Enforced strict "Rule of 3" in system prompts for Actionable Advice.
+ * PREVENTS: UI clutter by limiting AI output to exactly 3 distinct steps.
+ */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini
@@ -74,7 +80,7 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         
         try {
             if (import.meta.env.DEV) {
-               
+                // eslint-disable-next-line no-console
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -127,8 +133,9 @@ export async function generateDeepPatternAnalysis(
         "emotional_velocity": "A brief description of how quickly their mood shifts (e.g. 'Stable but low', 'Volatile spikes').",
         "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
         "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
-        "long_term_advice": ["Strategic advice 1", "Strategic advice 2"]
+        "long_term_advice": ["Action 1", "Action 2", "Action 3"]
     }
+    IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items. No more, no less.
     Return ONLY raw JSON.
     `;
 
@@ -175,8 +182,9 @@ export async function generateComparativeAnalysis(
         "comparison_summary": "A 2-3 sentence narrative comparing the periods (or summarizing the journey).",
         "wins": ["Specific win 1", "Specific win 2"],
         "blind_spots": ["Potential risk or overlooked area 1", "Area 2"],
-        "actionable_advice": ["Concrete step 1", "Concrete step 2", "Concrete step 3"]
+        "actionable_advice": ["Step 1", "Step 2", "Step 3"]
     }
+    IMPORTANT: Provide EXACTLY 3 distinct "actionable_advice" items. No more, no less.
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
@@ -196,6 +204,7 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
         "actionableSteps": ["Step 1", "Step 2", "Step 3"],
         "risks": ["Risk 1", "Risk 2"] (If none, return empty array)
       }
+      IMPORTANT: "actionableSteps" must contain EXACTLY 3 items.
       Return ONLY raw JSON.
     `;
     
@@ -226,8 +235,9 @@ export async function analyzeFullWorkbook(
             "emotional_resonance": "Current emotional state (e.g. Resentful, Accepting).",
             "blind_spots": "Potential risks or overlooked areas."
         },
-        "suggested_actions": ["Specific recovery action 1", "Specific recovery action 2", "Specific recovery action 3"]
+        "suggested_actions": ["Action 1", "Action 2", "Action 3"]
     }
+    IMPORTANT: "suggested_actions" must contain EXACTLY 3 items.
     Return ONLY raw JSON.
     `;
 

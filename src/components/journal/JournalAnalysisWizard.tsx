@@ -1,8 +1,9 @@
 /**
+ * src/components/journal/JournalAnalysisWizard.tsx
  * GITHUB COMMENT:
  * [JournalAnalysisWizard.tsx]
- * UPDATED: Integrated 'Add to Quest' functionality for AI insights.
- * FEATURE: Users can now directly convert AI advice into Tasks (Defaults: Recovery, Medium Priority, Due in 7 Days).
+ * FIX: Enforced strict slice(0,3) on actionable items to prevent overflow.
+ * UPDATED: Integrated interactive "Add to Quest" logic for both Standard and Deep analysis.
  */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -156,7 +157,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: deepResult.emotional_velocity,
                         blind_spots: deepResult.hidden_correlations.join(', ')
                     },
-                    suggested_actions: deepResult.long_term_advice,
+                    suggested_actions: deepResult.long_term_advice.slice(0, 3), // Ensure saved data is also limited
                     createdAt: Timestamp.now(),
                     scope_context: 'Deep Pattern Recognition',
                     risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
@@ -172,7 +173,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: standardResult.wins.join(', '),
                         blind_spots: standardResult.blind_spots.join(', ')
                     },
-                    suggested_actions: standardResult.actionable_advice,
+                    suggested_actions: standardResult.actionable_advice.slice(0, 3), // Ensure saved data is also limited
                     createdAt: Timestamp.now(),
                     scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
                 });
@@ -300,10 +301,11 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             </div>
 
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
-                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy</h5>
+                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy (Choose to Add)</h5>
                                                 <div className="space-y-2">
-                                                    {deepResult.long_term_advice.map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg">
+                                                    {/* CRITICAL: Enforced .slice(0, 3) to ensure rule of 3 in UI */}
+                                                    {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg group hover:bg-gray-800 transition-colors">
                                                             <div className="flex items-start gap-2">
                                                                 <span className="font-bold text-gray-500">→</span>
                                                                 <span>{action}</span>
@@ -353,9 +355,10 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             </div>
 
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions</h5>
+                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions (Choose to Add)</h5>
                                                 <div className="space-y-2">
-                                                    {standardResult.actionable_advice.map((action, i) => (
+                                                    {/* CRITICAL: Enforced .slice(0, 3) to ensure rule of 3 in UI */}
+                                                    {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
                                                         <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg group hover:bg-white/80 transition-colors">
                                                             <div className="flex items-start gap-2">
                                                                 <span className="font-bold text-fuchsia-400">{i+1}.</span> 
