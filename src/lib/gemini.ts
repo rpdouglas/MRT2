@@ -1,9 +1,9 @@
-// src/lib/gemini.ts
 /**
+ * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * UPDATED: Enforced strict "Rule of 3" in system prompts for Actionable Advice.
- * PREVENTS: UI clutter by limiting AI output to exactly 3 distinct steps.
+ * UPDATED: Enforced strict "Rule of 3" in system prompts.
+ * FIX: AI now explicitly instructed to return exactly 3 distinct actionable items.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -60,8 +60,8 @@ export interface WorkbookAnalysisResult {
 // [NEW] Deep Pattern Recognition Interface
 export interface DeepPatternResult {
     core_triggers: string[];
-    emotional_velocity: string; // e.g. "Rapid cycling between anxiety and relief"
-    hidden_correlations: string[]; // e.g. "Work stress consistently precedes cravings by 2 days"
+    emotional_velocity: string; 
+    hidden_correlations: string[];
     relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
     long_term_advice: string[];
     pattern_summary: string;
@@ -80,7 +80,7 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         
         try {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
+          
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -115,7 +115,6 @@ function cleanJSON(text: string): string {
 //  EXPOSED FUNCTIONS
 // ============================================================================
 
-// [NEW] Deep Pattern Recognition
 export async function generateDeepPatternAnalysis(
     journalHistory: string
 ): Promise<DeepPatternResult> {

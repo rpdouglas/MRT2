@@ -2,8 +2,8 @@
  * src/components/journal/JournalAnalysisWizard.tsx
  * GITHUB COMMENT:
  * [JournalAnalysisWizard.tsx]
- * FIX: Enforced strict slice(0,3) on actionable items to prevent overflow.
- * UPDATED: Integrated interactive "Add to Quest" logic for both Standard and Deep analysis.
+ * UPDATED: Added interactive 'Add to Quest' buttons for AI insights.
+ * FIX: Enforced strict .slice(0,3) on actionable items to prevent list overflow.
  */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -48,7 +48,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     // Deep Dive Hook
     const { 
         analyze: runDeepAnalysis, 
-        // FIXED: Removed unused 'loading' destructuring to satisfy linter
         progress: deepProgress, 
         result: deepResult,
         error: deepError 
