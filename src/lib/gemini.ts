@@ -102,7 +102,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-                // eslint-disable-next-line no-console
+               
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
