@@ -1,10 +1,4 @@
-/**
- * src/pages/Dashboard.tsx
- * GITHUB COMMENT:
- * [Dashboard.tsx]
- * FIX: Resolved impure function error by disabling strict purity check for Date.now().
- * REASON: We need the current time to calculate backup status; this is a valid use case.
- */
+// src/pages/Dashboard.tsx
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,14 +23,14 @@ import {
   calculateUserLevel
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
+import SobrietyHero from '../components/SobrietyHero'; // IMPORTED
 import { 
   HomeIcon, 
   FireIcon, 
   ChartBarIcon, 
   SparklesIcon, 
   HeartIcon, 
-  ArrowDownTrayIcon,
-  TrophyIcon
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 
@@ -108,7 +102,7 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
-    // Days Clean
+    // Sobriety date is now passed directly to the component, so we don't need manual calc here for display
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
@@ -133,7 +127,6 @@ export default function Dashboard() {
     const showBackup = !lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000);
 
     return {
-        daysClean,
         journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
         task: { rate: tStats.completionRate, fire: tStats.habitFire },
         workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
@@ -212,22 +205,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* HERO CARD: Clean Time */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-[2rem] p-8 text-center relative overflow-hidden shadow-xl border border-slate-700 group">
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-            <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
-            
-            <div className="relative z-10">
-                <div className="flex items-center justify-center gap-2 mb-2 opacity-60">
-                    <TrophyIcon className="h-4 w-4 text-yellow-400" />
-                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">Freedom Count</span>
-                </div>
-                <div className="text-7xl font-black text-white tracking-tighter drop-shadow-2xl mb-1">
-                    {stats.daysClean}
-                </div>
-                <div className="text-sm font-medium text-slate-400">Days of Sobriety</div>
-            </div>
-        </div>
+        {/* HERO CARD: Clean Time (Refactored) */}
+        <SobrietyHero date={userProfile?.sobrietyDate} />
 
         {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
@@ -321,3 +300,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

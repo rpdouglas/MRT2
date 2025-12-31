@@ -1,4 +1,12 @@
 // src/lib/dateUtils.ts
+import { 
+    addMonths, 
+    addYears, 
+    differenceInDays, 
+    differenceInMonths, 
+    differenceInYears,
+    startOfDay
+} from 'date-fns';
 
 export type RecurrenceType = 'once' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'monthly-relative';
 
@@ -9,6 +17,38 @@ export interface RecurrenceConfig {
   dayOfMonth?: number; // 1-31 (for monthly)
   weekOfMonth?: number; // 1 (1st), 2 (2nd), ... 5 (Last) (for monthly-relative)
   dayOfWeek?: number; // 0-6 (for monthly-relative)
+}
+
+export interface SobrietyDuration {
+    years: number;
+    months: number;
+    days: number;
+    totalDays: number;
+}
+
+/**
+ * Calculates the breakdown of time since a sobriety date.
+ * Returns accurate Years, Months, and remaining Days.
+ */
+export function calculateSobrietyDuration(startDate: Date): SobrietyDuration {
+    const now = startOfDay(new Date());
+    const start = startOfDay(startDate);
+
+    // Prevent negative calculations if date is in future
+    if (start > now) {
+        return { years: 0, months: 0, days: 0, totalDays: 0 };
+    }
+
+    const totalDays = differenceInDays(now, start);
+    const years = differenceInYears(now, start);
+    
+    const dateAfterYears = addYears(start, years);
+    const months = differenceInMonths(now, dateAfterYears);
+    
+    const dateAfterMonths = addMonths(dateAfterYears, months);
+    const days = differenceInDays(now, dateAfterMonths);
+
+    return { years, months, days, totalDays };
 }
 
 /**
@@ -35,7 +75,7 @@ export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): 
       nextDate.setDate(nextDate.getDate() + 14);
       break;
 
-    case 'monthly': { // FIX: Added block scope braces
+    case 'monthly': {
       // Add 1 month, try to keep same day
       const currentDay = nextDate.getDate();
       nextDate.setMonth(nextDate.getMonth() + 1);
@@ -69,7 +109,6 @@ export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): 
               nextDate.setDate(nextDate.getDate() - subtractDays);
           } else {
               // Logic for "Nth X of month"
-              // FIX: Changed let to const
               const currentDow = nextDate.getDay();
               const daysToAdd = (targetDay - currentDow + 7) % 7;
               nextDate.setDate(nextDate.getDate() + daysToAdd);
@@ -105,3 +144,4 @@ export function getRecurrenceLabel(config: RecurrenceConfig): string {
         default: return 'Recurring';
     }
 }
+
