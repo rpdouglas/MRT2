@@ -2,8 +2,8 @@
  * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * UPDATED: Integrated Usage Logging.
- * FEATURE: Captures 'usageMetadata' from Gemini response and dispatches to analytics service.
+ * UPDATED: Added analyzeSystemHealth() for Admin Tools.
+ * FEATURE: AI Agent acts as a Senior Dev to triage crash logs and suggest fixes.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -69,6 +69,19 @@ export interface DeepPatternResult {
     pattern_summary: string;
 }
 
+// System Health Interface
+export interface SystemHealthAnalysis {
+    status: 'Critical' | 'Warning' | 'Stable';
+    summary: string;
+    top_issues: {
+        error_signature: string;
+        occurrence_count: number;
+        suspected_root_cause: string;
+        suggested_fix: string;
+    }[];
+    environment_patterns: string; // e.g. "Mostly iOS devices"
+}
+
 // --- Core Helper: Smart Cascade Generation ---
 async function generateWithCascade(prompt: string, contextTag: string, specificModel?: string): Promise<string> {
     const modelsToTry = specificModel 
@@ -82,7 +95,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-                
+               
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -122,6 +135,36 @@ function cleanJSON(text: string): string {
 //  EXPOSED FUNCTIONS
 // ============================================================================
 
+export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHealthAnalysis> {
+    const prompt = `
+    You are a Senior React & Firebase Engineer. I am providing you with a raw dump of client-side error logs.
+    Your job is to triage these errors, group duplicates, and identify root causes.
+
+    RAW ERROR LOGS:
+    ${errorLogs}
+
+    Return a JSON object with this EXACT structure:
+    {
+        "status": "Critical" | "Warning" | "Stable",
+        "summary": "A 1-sentence executive summary of the system health.",
+        "top_issues": [
+            {
+                "error_signature": "Short description (e.g. 'Undefined in JournalEditor')",
+                "occurrence_count": 0 (Integer estimate based on logs provided),
+                "suspected_root_cause": "Technical explanation",
+                "suggested_fix": "Code-level recommendation"
+            }
+        ],
+        "environment_patterns": "Note any patterns (e.g., 'Only failing on Mobile Safari' or 'Across all devices')."
+    }
+    IMPORTANT: Return ONLY valid JSON. No Markdown.
+    `;
+
+    // Use Pro model for better code analysis reasoning
+    const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-2.5-pro');
+    return JSON.parse(cleanJSON(text)) as SystemHealthAnalysis;
+}
+
 export async function generateDeepPatternAnalysis(
     journalHistory: string
 ): Promise<DeepPatternResult> {
@@ -145,7 +188,6 @@ export async function generateDeepPatternAnalysis(
     Return ONLY raw JSON.
     `;
 
-    // Force usage of Gemini 2.5 Pro for deep reasoning capabilities
     const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as DeepPatternResult;
 }

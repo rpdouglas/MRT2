@@ -1,5 +1,14 @@
+/**
+ * src/components/ErrorBoundary.tsx
+ * GITHUB COMMENT:
+ * [ErrorBoundary.tsx]
+ * UPDATED: Integrated Firestore logging for client-side crashes.
+ * FEATURE: Telemetry for Admin Dashboard 'System Health' view.
+ */
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { db } from "../lib/firebase";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 interface Props {
   children: ReactNode;
@@ -22,6 +31,22 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    
+    // Attempt to log to Firestore (Telemetry)
+    if (db) {
+        try {
+            addDoc(collection(db, 'client_errors'), {
+                message: error.message,
+                stack: error.stack || 'No stack trace',
+                componentStack: errorInfo.componentStack,
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                timestamp: Timestamp.now()
+            });
+        } catch (e) {
+            console.error("Failed to log error telemetry", e);
+        }
+    }
   }
 
   public render() {
