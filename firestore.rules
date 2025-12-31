@@ -1,3 +1,4 @@
+// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -19,23 +20,25 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
-    // Checks if the user has the 'admin' role in their profile
+    // UPDATED: Checks DB role OR hardcoded email (Matches AuthContext)
     function isAdmin() {
-      return request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return request.auth != null && (
+        // Option A: Hardcoded Super Admin (Emergency Access)
+        request.auth.token.email == 'rpdouglas@gmail.com' || 
+        // Option B: Database Role
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
     // --- COLLECTION RULES ---
 
     // 1. User Profiles (Root Document Only)
-    // Admins can read/write PROFILES (Metadata, Roles), but NOT subcollections
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
     // 1b. User Subcollections (The Vault)
-    // Covers: /users/{uid}/workbook_answers, /users/{uid}/templates, etc.
-    // STRICTLY OWNER ONLY - Admins cannot peek here
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
@@ -64,9 +67,8 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // 6. Client Error Logs (NEW)
+    // 6. Client Error Logs
     match /client_errors/{errorId} {
-      // Any user (even unauthenticated if logic permits, but let's stick to auth) can report a crash
       allow create: if request.auth != null; 
       allow read, delete: if isAdmin();
     }
