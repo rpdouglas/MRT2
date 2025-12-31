@@ -1,23 +1,31 @@
 // src/components/SobrietyHero.tsx
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { TrophyIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { RECOVERY_SLOGANS } from '../data/slogans';
 
 interface SobrietyHeroProps {
     date?: Timestamp | Date | null;
 }
 
 export default function SobrietyHero({ date }: SobrietyHeroProps) {
+    // 1. Calculate Time Stats
     const stats = useMemo(() => {
         if (!date) return null;
         const startDate = date instanceof Date ? date : date.toDate();
         return calculateSobrietyDuration(startDate);
     }, [date]);
 
+    // 2. Select Random Slogan (Lazy State Initialization)
+    // This runs only once on mount, satisfying React purity rules.
+    const [slogan] = useState(() => {
+        const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
+        return RECOVERY_SLOGANS[randomIndex];
+    });
+
     if (!stats) {
         return (
-            // Reduced padding here too for consistency
             <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-6 text-center text-white shadow-xl border border-white/20">
                 <div className="opacity-80 mb-2 font-bold uppercase tracking-widest text-xs">Begin the Journey</div>
                 <p className="text-sm">Set your sobriety date in Profile to track your freedom.</p>
@@ -26,18 +34,19 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
     }
 
     return (
-        // TIGHTENED PADDING: p-6 -> p-4 on mobile
         <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-4 sm:p-6 text-white shadow-xl relative overflow-hidden group border border-white/10">
             {/* Dynamic Background Texture */}
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
-                {/* Header: CENTERED and reduced margin (mb-6 -> mb-3) */}
+                {/* Header: Random Slogan */}
                 <div className="flex justify-center items-center mb-3">
                     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                         <TrophyIcon className="h-4 w-4 text-yellow-300" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">One Day at a Time</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+                            {slogan}
+                        </span>
                     </div>
                 </div>
 
@@ -57,7 +66,7 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
                     </div>
                 </div>
 
-                {/* Footer: Reduced margin (mt-6 -> mt-4) */}
+                {/* Footer: Total Days */}
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-blue-100/80 font-medium">
                     <CalendarDaysIcon className="h-4 w-4" />
                     <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
