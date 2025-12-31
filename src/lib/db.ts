@@ -1,9 +1,9 @@
 /**
+ * src/lib/db.ts
  * GITHUB COMMENT:
  * [db.ts]
- * UPDATED: Integrated 'role' and 'lastExportAt' into UserProfile interface and initialization.
- * FIXED: updateProfileData signature to properly support Partial updates.
- * MAINTAINED: All Journal, Task, and Export data fetching protocols.
+ * UPDATED: Added Firestore Data Converter pattern for strict type safety.
+ * FEATURE: Generic converter automatically handles Timestamp -> Date transformation.
  */
 import { 
   doc, 
@@ -14,14 +14,39 @@ import {
   getDocs, 
   deleteDoc, 
   addDoc,
-  query,
-  where,
+  query, 
+  where, 
   orderBy,
   Timestamp,
-  type Firestore
+  type Firestore,
+  type QueryDocumentSnapshot,
+  type DocumentData,
+  type WithFieldValue
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
+
+// --- GENERIC CONVERTER ---
+// This helper ensures all data fetched follows the strict TS interfaces
+// and automatically converts Firestore Timestamps to JS Dates.
+export const createConverter = <T extends object>() => ({
+  toFirestore(data: WithFieldValue<T>): DocumentData {
+    return data;
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot): T {
+    const data = snapshot.data();
+    // Recursive helper could go here, but for now we handle top-level dates
+    const converted = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        if (value instanceof Timestamp) {
+          return [key, value.toDate()];
+        }
+        return [key, value];
+      })
+    );
+    return { id: snapshot.id, ...converted } as T;
+  },
+});
 
 // --- INTERFACES ---
 
@@ -33,8 +58,8 @@ export interface UserProfile {
   sobrietyDate: Timestamp | null;
   createdAt: Timestamp;
   lastLogin?: Timestamp;
-  lastExportAt?: Timestamp; // Added for 7-day backup reminder
-  role?: 'admin' | 'user';   // Added for Admin Tools access
+  lastExportAt?: Timestamp; 
+  role?: 'admin' | 'user';   
 }
 
 export interface JournalTemplate {
