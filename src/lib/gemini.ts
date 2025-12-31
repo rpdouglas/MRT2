@@ -4,6 +4,7 @@
  * [gemini.ts]
  * UPDATED: Standardized Audio Analysis to use 'gemini-2.5-flash'.
  * FIX: Removed deprecated 'gemini-1.5-flash' from model cascade.
+* ADDED: New function 'analyzeSystemHealth' for client-side error log analysis.                    
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
