@@ -17,7 +17,8 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
 
     if (!stats) {
         return (
-            <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-8 text-center text-white shadow-xl border border-white/20">
+            // Reduced padding here too for consistency
+            <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-6 text-center text-white shadow-xl border border-white/20">
                 <div className="opacity-80 mb-2 font-bold uppercase tracking-widest text-xs">Begin the Journey</div>
                 <p className="text-sm">Set your sobriety date in Profile to track your freedom.</p>
             </div>
@@ -25,19 +26,19 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
     }
 
     return (
-        <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden group border border-white/10">
+        // TIGHTENED PADDING: p-6 -> p-4 on mobile
+        <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-4 sm:p-6 text-white shadow-xl relative overflow-hidden group border border-white/10">
             {/* Dynamic Background Texture */}
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
-                {/* Header: Slogan moved here */}
-                <div className="flex justify-between items-start mb-6">
+                {/* Header: CENTERED and reduced margin (mb-6 -> mb-3) */}
+                <div className="flex justify-center items-center mb-3">
                     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                         <TrophyIcon className="h-4 w-4 text-yellow-300" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-white">One Day at a Time</span>
                     </div>
-                    {/* Top Right is intentionally empty now per design request */}
                 </div>
 
                 {/* Main Counters: Years / Months / Days */}
@@ -56,8 +57,8 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
                     </div>
                 </div>
 
-                {/* Footer: Total Days moved here */}
-                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-blue-100/80 font-medium">
+                {/* Footer: Reduced margin (mt-6 -> mt-4) */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-blue-100/80 font-medium">
                     <CalendarDaysIcon className="h-4 w-4" />
                     <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
                 </div>
