@@ -1,3 +1,10 @@
+/**
+ * src/pages/Tasks.tsx
+ * GITHUB COMMENT:
+ * [Tasks.tsx]
+ * FIX: Resolved "Unsupported field value: undefined" error in recurring tasks.
+ * UPDATE: Properly strips 'id' from payload before creating new recurring task instances.
+ */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,7 +20,8 @@ import {
   deleteDoc, 
   doc, 
   serverTimestamp, 
-  Timestamp 
+  Timestamp,
+  type Firestore 
 } from 'firebase/firestore';
 import { 
   PlusIcon, 
@@ -74,8 +82,9 @@ export default function Tasks() {
   useEffect(() => {
     if (!user || !db) return;
 
+    const database: Firestore = db;
     const q = query(
-      collection(db, 'tasks'),
+      collection(database, 'tasks'),
       where('uid', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
@@ -166,9 +175,12 @@ export default function Tasks() {
             const nextDate = calculateNextDueDate(currentDueDate, task.recurrence);
             
             if (nextDate) {
+                // FIX: Destructure ID out to avoid "undefined" error in addDoc
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, ...cleanTask } = task;
+
                 await addDoc(collection(db, 'tasks'), {
-                    ...task, 
-                    id: undefined, 
+                    ...cleanTask, 
                     status: 'pending',
                     createdAt: serverTimestamp(),
                     dueDate: nextDate,
@@ -264,7 +276,7 @@ export default function Tasks() {
         
         {/* HEADER: The Spark */}
         <VibrantHeader 
-            title="Today's Quests"
+            title="Today's Quests" 
             subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
             icon={FireIcon}
             fromColor={THEME.tasks.header.from}
@@ -329,16 +341,16 @@ export default function Tasks() {
 
                                 <div className="flex-1 min-w-0 pt-0.5">
                                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                        {getPriorityBadge(task.priority)}
-                                        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.bg} ${theme.text} ${theme.border}`}>
-                                            {task.category || 'General'}
-                                        </span>
-                                        {task.recurrence && task.recurrence.type !== 'once' && (
-                                            <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">
-                                                <ArrowPathIcon className="h-3 w-3" />
-                                                {getRecurrenceLabel(task.recurrence)}
+                                            {getPriorityBadge(task.priority)}
+                                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.bg} ${theme.text} ${theme.border}`}>
+                                                {task.category || 'General'}
                                             </span>
-                                        )}
+                                            {task.recurrence && task.recurrence.type !== 'once' && (
+                                                <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">
+                                                    <ArrowPathIcon className="h-3 w-3" />
+                                                    {getRecurrenceLabel(task.recurrence)}
+                                                </span>
+                                            )}
                                     </div>
 
                                     <div className={`text-sm font-medium leading-relaxed transition-all duration-300 ${
@@ -346,20 +358,16 @@ export default function Tasks() {
                                     } ${
                                         expandedTaskId === task.id ? 'whitespace-pre-wrap' : 'line-clamp-2'
                                     }`}>
-                                        {task.title}
+                                            {task.title}
                                     </div>
 
                                     <div className="flex items-center gap-3 text-xs font-medium text-gray-400 mt-2.5">
-                                        {/* Removed redundant CalendarIcon usage here if it caused issues, or kept if essential. 
-                                            I removed the DATE PILL entirely in this logic to match the "Removed CalendarIcon" directive.
-                                            If you want the date back, we must import CalendarIcon. 
-                                            Currently, I removed the import, so I must remove the usage. */}
-                                        {task.stats && (
-                                            <span className="text-blue-600 flex items-center gap-1">
-                                                <TrophyIcon className="h-3 w-3" />
-                                                +{task.stats.xp} XP
-                                            </span>
-                                        )}
+                                            {task.stats && (
+                                                <span className="text-blue-600 flex items-center gap-1">
+                                                    <TrophyIcon className="h-3 w-3" />
+                                                    +{task.stats.xp} XP
+                                                </span>
+                                            )}
                                     </div>
                                 </div>
 
