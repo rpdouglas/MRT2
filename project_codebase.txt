@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2025-12-29T22:55:19.591Z
+PROJECT EXPORT - 2025-12-31T02:36:55.470Z
 ENVIRONMENT: PRODUCTION_READY_V4.8 (Architectural Edition)
 NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 
@@ -80,6 +80,9 @@ NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 │   │   ├── VaultGate.tsx
 │   │   ├── VersionBadge.tsx
 │   │   ├── VibrantHeader.tsx
+│   │   ├── admin
+│   │   │   ├── ErrorLogViewer.tsx
+│   │   │   └── UserDirectory.tsx
 │   │   ├── journal
 │   │   │   ├── JournalAnalysisWizard.tsx
 │   │   │   ├── JournalEditor.tsx
@@ -101,6 +104,7 @@ NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 │   │   └── useDeepPatternAnalysis.ts
 │   ├── index.css
 │   ├── lib
+│   │   ├── analytics.ts
 │   │   ├── crypto.ts
 │   │   ├── dateUtils.ts
 │   │   ├── db.ts
@@ -280,7 +284,7 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
           projectId: "${{ env.FIREBASE_PROJECT_ID }}"
-          channelId: livex`
+          channelId: live
 --- END_FILE: .github/workflows/deploy.yml ---
 
 --- START_FILE: AI_Maintenance.md ---
@@ -616,10 +620,23 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
+    // Checks if the user has the 'admin' role in their profile
+    function isAdmin() {
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // --- COLLECTION RULES ---
 
-    // 1. User Profiles & Subcollections 
-    // Covers: /users/{uid} AND /users/{uid}/workbook_answers/{answerId}
+    // 1. User Profiles (Root Document Only)
+    // Admins can read/write PROFILES (Metadata, Roles), but NOT subcollections
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // 1b. User Subcollections (The Vault)
+    // Covers: /users/{uid}/workbook_answers, /users/{uid}/templates, etc.
+    // STRICTLY OWNER ONLY - Admins cannot peek here
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
@@ -636,10 +653,23 @@ service cloud.firestore {
       allow read, update, delete: if isResourceOwner();
     }
 
-    // 4. Insights / Wisdom Log (Root Collection) - NEW in v3.3
+    // 4. Insights / Wisdom Log (Root Collection)
     match /insights/{insightId} {
       allow create: if isCreatingOwnedResource();
       allow read, update, delete: if isResourceOwner();
+    }
+
+    // 5. AI Analytics Logs
+    match /ai_logs/{logId} {
+      allow create: if request.auth != null;
+      allow read: if isAdmin();
+    }
+
+    // 6. Client Error Logs (NEW)
+    match /client_errors/{errorId} {
+      // Any user (even unauthenticated if logic permits, but let's stick to auth) can report a crash
+      allow create: if request.auth != null; 
+      allow read, delete: if isAdmin();
     }
   }
 }
@@ -1984,8 +2014,17 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: Create
 --- END_FILE: src/components/CreateTaskModal.tsx ---
 
 --- START_FILE: src/components/ErrorBoundary.tsx ---
+/**
+ * src/components/ErrorBoundary.tsx
+ * GITHUB COMMENT:
+ * [ErrorBoundary.tsx]
+ * UPDATED: Integrated Firestore logging for client-side crashes.
+ * FEATURE: Telemetry for Admin Dashboard 'System Health' view.
+ */
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { db } from "../lib/firebase";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 interface Props {
   children: ReactNode;
@@ -2008,6 +2047,22 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    
+    // Attempt to log to Firestore (Telemetry)
+    if (db) {
+        try {
+            addDoc(collection(db, 'client_errors'), {
+                message: error.message,
+                stack: error.stack || 'No stack trace',
+                componentStack: errorInfo.componentStack,
+                url: window.location.href,
+                userAgent: navigator.userAgent,
+                timestamp: Timestamp.now()
+            });
+        } catch (e) {
+            console.error("Failed to log error telemetry", e);
+        }
+    }
   }
 
   public render() {
@@ -2932,8 +2987,421 @@ export default function VibrantHeader({
 }
 --- END_FILE: src/components/VibrantHeader.tsx ---
 
+--- START_FILE: src/components/admin/ErrorLogViewer.tsx ---
+/**
+ * src/components/admin/ErrorLogViewer.tsx
+ * GITHUB COMMENT:
+ * [ErrorLogViewer.tsx]
+ * UPDATED: Integrated 'Analyze with AI' feature.
+ * FEATURE: Aggregates client errors and uses Gemini to diagnose system health and suggest fixes.
+ */
+import { useState, useEffect } from 'react';
+import { db } from '../../lib/firebase';
+import { 
+    collection, 
+    getDocs, 
+    deleteDoc, 
+    doc, 
+    orderBy, 
+    query, 
+    limit, 
+    type Firestore,
+    Timestamp 
+} from 'firebase/firestore';
+import { analyzeSystemHealth, type SystemHealthAnalysis } from '../../lib/gemini';
+import { 
+    ExclamationTriangleIcon, 
+    TrashIcon,
+    ComputerDesktopIcon,
+    SparklesIcon,
+    ArrowPathIcon,
+    CheckBadgeIcon,
+    WrenchScrewdriverIcon
+} from '@heroicons/react/24/outline';
+
+interface ErrorLog {
+    id: string;
+    message: string;
+    stack: string;
+    url: string;
+    timestamp: Timestamp;
+    userAgent: string;
+}
+
+export default function ErrorLogViewer() {
+    const [errors, setErrors] = useState<ErrorLog[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    // Analysis State
+    const [analyzing, setAnalyzing] = useState(false);
+    const [analysis, setAnalysis] = useState<SystemHealthAnalysis | null>(null);
+
+    useEffect(() => {
+        loadErrors();
+    }, []);
+
+    const loadErrors = async () => {
+        if (!db) return;
+        setLoading(true);
+        try {
+            const database: Firestore = db;
+            const q = query(
+                collection(database, 'client_errors'),
+                orderBy('timestamp', 'desc'),
+                limit(50)
+            );
+            const snap = await getDocs(q);
+            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as ErrorLog));
+            setErrors(data);
+        } catch (error) {
+            console.error("Failed to load errors", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!db) return;
+        if (!confirm("Delete this log?")) return;
+        try {
+            await deleteDoc(doc(db, 'client_errors', id));
+            setErrors(prev => prev.filter(e => e.id !== id));
+        } catch (e) {
+            console.error("Failed to delete", e);
+        }
+    };
+
+    const handleAnalyze = async () => {
+        if (errors.length === 0) return;
+        setAnalyzing(true);
+        setAnalysis(null);
+
+        try {
+            // 1. Prepare Data (Aggregation to save tokens)
+            // Group by error message to avoid sending 50 identical logs
+            const aggregated = errors.reduce((acc, curr) => {
+                const key = curr.message;
+                if (!acc[key]) {
+                    acc[key] = { count: 0, sampleStack: curr.stack, browsers: new Set() };
+                }
+                acc[key].count++;
+                acc[key].browsers.add(curr.userAgent.split(')')[0]); // Simple user agent trunc
+                return acc;
+            }, {} as Record<string, { count: number; sampleStack: string; browsers: Set<string> }>);
+
+            // Format for prompt
+            const logSummary = Object.entries(aggregated).map(([msg, details]) => `
+                ERROR: ${msg}
+                COUNT: ${details.count}
+                BROWSERS: ${Array.from(details.browsers).join(', ')}
+                STACK_SNIPPET: ${details.sampleStack.substring(0, 300)}...
+            `).join('\n---\n');
+
+            // 2. Call Gemini
+            const result = await analyzeSystemHealth(logSummary);
+            setAnalysis(result);
+
+        } catch (e) {
+            console.error("Analysis failed", e);
+            alert("Failed to generate AI analysis.");
+        } finally {
+            setAnalyzing(false);
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center text-gray-400">Scanning telemetry...</div>;
+
+    if (errors.length === 0) {
+        return (
+            <div className="bg-green-50 p-8 rounded-2xl border border-green-200 text-center">
+                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <ComputerDesktopIcon className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-green-900 font-bold">System Healthy</h3>
+                <p className="text-green-700 text-sm">No client-side crashes reported.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+                    Recent Crashes ({errors.length})
+                </h3>
+                <button 
+                    onClick={handleAnalyze} 
+                    disabled={analyzing}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 text-sm font-bold"
+                >
+                    {analyzing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <SparklesIcon className="h-4 w-4" />}
+                    Analyze Health
+                </button>
+            </div>
+
+            {/* AI DIAGNOSIS PANEL */}
+            {analysis && (
+                <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg overflow-hidden animate-slideUp">
+                    <div className={`px-6 py-4 flex justify-between items-center ${
+                        analysis.status === 'Critical' ? 'bg-red-50 border-b border-red-100' :
+                        analysis.status === 'Warning' ? 'bg-orange-50 border-b border-orange-100' :
+                        'bg-green-50 border-b border-green-100'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                            <SparklesIcon className="h-6 w-6 text-indigo-600" />
+                            <h4 className="font-bold text-gray-900">AI Diagnosis</h4>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide ${
+                            analysis.status === 'Critical' ? 'bg-red-100 text-red-700 border-red-200' :
+                            analysis.status === 'Warning' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                            'bg-green-100 text-green-700 border-green-200'
+                        }`}>
+                            System Status: {analysis.status}
+                        </span>
+                    </div>
+                    
+                    <div className="p-6 space-y-6">
+                        <p className="text-gray-700 font-medium">{analysis.summary}</p>
+                        
+                        <div className="grid gap-4">
+                            {analysis.top_issues.map((issue, idx) => (
+                                <div key={idx} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h5 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px]">#{idx + 1}</span>
+                                            {issue.error_signature}
+                                        </h5>
+                                        <span className="text-xs text-gray-500 font-mono">Count: ~{issue.occurrence_count}</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        <div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Root Cause</div>
+                                            <p className="text-xs text-gray-700 leading-relaxed">{issue.suspected_root_cause}</p>
+                                        </div>
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                            <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                                <WrenchScrewdriverIcon className="h-3 w-3" /> Fix
+                                            </div>
+                                            <p className="text-xs text-blue-900 font-mono">{issue.suggested_fix}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {analysis.environment_patterns && (
+                            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 p-2 rounded-lg justify-center">
+                                <CheckBadgeIcon className="h-4 w-4" />
+                                <strong>Pattern Detected:</strong> {analysis.environment_patterns}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+            
+            {/* RAW LOGS */}
+            <div className="grid gap-4">
+                {errors.map(err => (
+                    <div key={err.id} className="bg-white p-5 rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <span className="text-xs font-bold bg-red-100 text-red-800 px-2 py-1 rounded">
+                                    {err.timestamp?.toDate().toLocaleString()}
+                                </span>
+                                <h4 className="font-bold text-gray-900 mt-2 text-sm">{err.message}</h4>
+                            </div>
+                            <button 
+                                onClick={() => handleDelete(err.id)}
+                                className="text-gray-400 hover:text-red-600 p-1"
+                            >
+                                <TrashIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded-lg text-xs font-mono text-gray-600 overflow-x-auto mb-3">
+                            {err.stack ? err.stack.split('\n')[0] : 'No stack trace'}
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-gray-400">
+                            <span className="truncate max-w-[200px]">{err.url}</span>
+                            <span className="truncate max-w-[200px]">{err.userAgent}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+--- END_FILE: src/components/admin/ErrorLogViewer.tsx ---
+
+--- START_FILE: src/components/admin/UserDirectory.tsx ---
+/**
+ * src/components/admin/UserDirectory.tsx
+ * GITHUB COMMENT:
+ * [UserDirectory.tsx]
+ * NEW: Metadata-only User Management table.
+ * FEATURES: List users, sort by Last Login, Toggle Admin Role.
+ */
+import { useState, useEffect } from 'react';
+import { db } from '../../lib/firebase';
+import { 
+    collection, 
+    getDocs, 
+    updateDoc, 
+    doc, 
+    type Firestore,
+    Timestamp 
+} from 'firebase/firestore';
+import { 
+    UserCircleIcon, 
+   // ShieldCheckIcon,
+    ClockIcon,
+    MagnifyingGlassIcon
+} from '@heroicons/react/24/outline';
+
+interface UserMeta {
+    uid: string;
+    email: string;
+    displayName: string;
+    role?: 'user' | 'admin';
+    lastLogin?: Timestamp;
+    createdAt?: Timestamp;
+}
+
+export default function UserDirectory() {
+    const [users, setUsers] = useState<UserMeta[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        if (!db) return;
+        setLoading(true);
+        try {
+            const database: Firestore = db;
+            const snap = await getDocs(collection(database, 'users'));
+            const data = snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserMeta));
+            
+            // Sort by Last Login Descending
+            data.sort((a, b) => {
+                const timeA = a.lastLogin?.toMillis() || 0;
+                const timeB = b.lastLogin?.toMillis() || 0;
+                return timeB - timeA;
+            });
+
+            setUsers(data);
+        } catch (error) {
+            console.error("Failed to load users", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleRole = async (uid: string, currentRole?: string) => {
+        if (!db) return;
+        if (!confirm(`Are you sure you want to change this user's role?`)) return;
+
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        try {
+            await updateDoc(doc(db, 'users', uid), { role: newRole });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+        } catch (e) {
+            console.error("Failed to update role", e);
+            alert("Error updating role.");
+        }
+    };
+
+    const filteredUsers = users.filter(u => 
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        u.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return <div className="p-8 text-center text-gray-400">Loading directory...</div>;
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center gap-4">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                    <UserCircleIcon className="h-5 w-5 text-indigo-600" />
+                    User Directory ({users.length})
+                </h3>
+                <div className="relative">
+                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input 
+                        type="text" 
+                        placeholder="Search users..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-64"
+                    />
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 text-gray-500 font-medium">
+                        <tr>
+                            <th className="px-6 py-3">User</th>
+                            <th className="px-6 py-3">Role</th>
+                            <th className="px-6 py-3">Last Active</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {filteredUsers.map(user => (
+                            <tr key={user.uid} className="hover:bg-gray-50/50 transition-colors">
+                                <td className="px-6 py-4">
+                                    <div className="font-bold text-gray-900">{user.displayName || 'Unknown'}</div>
+                                    <div className="text-xs text-gray-500">{user.email}</div>
+                                    <div className="text-[10px] text-gray-400 font-mono mt-0.5 select-all">{user.uid}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                        user.role === 'admin' 
+                                            ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                                    }`}>
+                                        {user.role === 'admin' ? 'Admin' : 'User'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-gray-600">
+                                    <div className="flex items-center gap-1.5">
+                                        <ClockIcon className="h-4 w-4 text-gray-400" />
+                                        {user.lastLogin 
+                                            ? new Date(user.lastLogin.toDate()).toLocaleDateString() 
+                                            : 'Never'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <button 
+                                        onClick={() => toggleRole(user.uid, user.role)}
+                                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
+                                    >
+                                        {user.role === 'admin' ? 'Demote' : 'Promote'}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+--- END_FILE: src/components/admin/UserDirectory.tsx ---
+
 --- START_FILE: src/components/journal/JournalAnalysisWizard.tsx ---
-// src/components/journal/JournalAnalysisWizard.tsx
+/**
+ * src/components/journal/JournalAnalysisWizard.tsx
+ * GITHUB COMMENT:
+ * [JournalAnalysisWizard.tsx]
+ * FIX: Restored missing data mapping in saveInsight().
+ * ENSURES: 'strengths' and 'risks' are saved to Firestore so they appear in the history log.
+ */
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
@@ -2946,20 +3414,23 @@ import {
     ExclamationTriangleIcon,
     ArrowPathIcon,
     BoltIcon,
-    ShieldCheckIcon
+    ShieldCheckIcon,
+    PlusCircleIcon,
+    TrophyIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
 import type { JournalEntry } from './JournalEditor';
-import { subDays, isAfter, isBefore } from 'date-fns';
+import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
+import { addTask } from '../../lib/tasks';
 
 interface WizardProps {
     isOpen: boolean;
     onClose: () => void;
-    entries: JournalEntry[]; // Used for standard weekly/monthly analysis
+    entries: JournalEntry[]; 
 }
 
 type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
@@ -2969,29 +3440,27 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
     
-    // Standard Analysis State
     const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
     
-    // Deep Dive Hook
     const { 
         analyze: runDeepAnalysis, 
-        // FIXED: Removed unused 'loading' destructuring to satisfy linter
         progress: deepProgress, 
         result: deepResult,
         error: deepError 
     } = useDeepPatternAnalysis();
 
     const [saving, setSaving] = useState(false);
+    const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
     const runStandardAnalysis = async () => {
         setStep('analyzing');
+        setAddedActions(new Set());
         
         try {
             const now = new Date();
             let currentSet: JournalEntry[] = [];
             let previousSet: JournalEntry[] = [];
 
-            // 1. Partition Data (Client-Side for Standard)
             if (scope === 'weekly') {
                 const oneWeekAgo = subDays(now, 7);
                 const twoWeeksAgo = subDays(now, 14);
@@ -3008,7 +3477,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
             }
 
-            // 2. Format for AI
             const formatSet = (set: JournalEntry[]) => set.map(e => {
                 const d = e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
                 return `[${d.toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`;
@@ -3023,7 +3491,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 return;
             }
 
-            // 3. Call Gemini
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
             setStandardResult(analysis);
             setStep('results');
@@ -3038,11 +3505,23 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const handleStartAnalysis = () => {
         if (scope === 'all-time') {
             setStep('analyzing');
+            setAddedActions(new Set());
             runDeepAnalysis().then(() => {
                 setStep('results');
             });
         } else {
             runStandardAnalysis();
+        }
+    };
+
+    const handleAddToTasks = async (action: string) => {
+        if (!user) return;
+        try {
+            const dueDate = addDays(new Date(), 7);
+            await addTask(user.uid, action, 'once', 'Medium', dueDate);
+            setAddedActions(prev => new Set(prev).add(action));
+        } catch (e) {
+            console.error("Failed to add task", e);
         }
     };
 
@@ -3053,7 +3532,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
         try {
             if (scope === 'all-time' && deepResult) {
-                // Save Deep Result
+                // Save Deep Result (Unchanged)
                 await addDoc(collection(database, 'insights'), {
                     uid: user.uid,
                     type: 'journal',
@@ -3063,7 +3542,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: deepResult.emotional_velocity,
                         blind_spots: deepResult.hidden_correlations.join(', ')
                     },
-                    suggested_actions: deepResult.long_term_advice,
+                    suggested_actions: deepResult.long_term_advice.slice(0, 3), 
                     createdAt: Timestamp.now(),
                     scope_context: 'Deep Pattern Recognition',
                     risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
@@ -3079,7 +3558,11 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: standardResult.wins.join(', '),
                         blind_spots: standardResult.blind_spots.join(', ')
                     },
-                    suggested_actions: standardResult.actionable_advice,
+                    // --- MISSING LINES RESTORED BELOW ---
+                    strengths: standardResult.wins,
+                    risks: standardResult.blind_spots,
+                    // ------------------------------------
+                    suggested_actions: standardResult.actionable_advice.slice(0, 3), 
                     createdAt: Timestamp.now(),
                     scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
                 });
@@ -3099,7 +3582,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 <div className="fixed inset-0 flex items-center justify-center p-4">
                     <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
                         
-                        {/* Header */}
                         <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2 text-white">
                                 <SparklesIcon className="h-6 w-6" />
@@ -3110,7 +3592,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                             <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
 
-                        {/* Content (Scrollable) */}
                         <div className="p-6 overflow-y-auto">
                             {step === 'select' && (
                                 <div className="space-y-4">
@@ -3128,7 +3609,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                     <button onClick={() => setScope('all-time')} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scope === 'all-time' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-indigo-200'}`}>
                                         <div className="bg-white p-3 rounded-full shadow-sm text-indigo-600"><GlobeAmericasIcon className="h-6 w-6" /></div>
-                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (30 Days)</div><div className="text-xs text-gray-500">Identify relapse triggers & patterns</div></div>
+                                        <div className="text-left"><div className="font-bold text-gray-900">Deep Dive (90 Days)</div><div className="text-xs text-gray-500">Identify relapse triggers & patterns</div></div>
                                     </button>
 
                                     <button onClick={handleStartAnalysis} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all">
@@ -3207,10 +3688,26 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             </div>
 
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
-                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy</h5>
-                                                <ul className="text-sm space-y-2">
-                                                    {deepResult.long_term_advice.map((adv, i) => <li key={i}>→ {adv}</li>)}
-                                                </ul>
+                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy (Choose to Add)</h5>
+                                                <div className="space-y-2">
+                                                    {/* CRITICAL: Enforced .slice(0, 3) to ensure rule of 3 in UI */}
+                                                    {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg group hover:bg-gray-800 transition-colors">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="font-bold text-gray-500">→</span>
+                                                                <span>{action}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
+                                                                disabled={addedActions.has(action)}
+                                                                className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-400 bg-green-900/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
+                                                            >
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </>
                                     )}
@@ -3235,21 +3732,36 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Wins</h5>
+                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1">
+                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
+                                                    </h5>
                                                     <ul className="text-xs text-gray-600 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1"><ExclamationTriangleIcon className="h-4 w-4" /> Blind Spots</h5>
+                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1">
+                                                        <ExclamationTriangleIcon className="h-4 w-4" /> Risk Analysis
+                                                    </h5>
                                                     <ul className="text-xs text-gray-600 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
                                                 </div>
                                             </div>
 
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions</h5>
+                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions (Choose to Add)</h5>
                                                 <div className="space-y-2">
-                                                    {standardResult.actionable_advice.map((action, i) => (
-                                                        <div key={i} className="flex items-start gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
-                                                            <span className="font-bold text-fuchsia-400">{i+1}.</span> {action}
+                                                    {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg group hover:bg-white/80 transition-colors">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="font-bold text-fuchsia-400">{i+1}.</span> 
+                                                                <span>{action}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
+                                                                disabled={addedActions.has(action)}
+                                                                className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}
+                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
+                                                            >
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -6215,7 +6727,12 @@ export function getWorkbook(id: string): Workbook | undefined {
 --- END_FILE: src/data/workbooks.ts ---
 
 --- START_FILE: src/hooks/useDeepPatternAnalysis.ts ---
-// src/hooks/useDeepPatternAnalysis.ts
+/**
+ * src/hooks/useDeepPatternAnalysis.ts
+ * GITHUB COMMENT:
+ * [useDeepPatternAnalysis.ts]
+ * UPDATED: Increased analysis window from 30 to 90 days.
+ */
 import { useState, useCallback } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
@@ -6252,13 +6769,12 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
         try {
             const database: Firestore = db;
             
-            // 1. Fetch last 30 entries directly from Firestore
-            // We fetch specific fields to minimize bandwidth
+            // 1. Fetch last 90 entries directly from Firestore (UPDATED from 30)
             const q = query(
                 collection(database, 'journals'),
                 where('uid', '==', user.uid),
                 orderBy('createdAt', 'desc'),
-                limit(30)
+                limit(90) // <--- CHANGED HERE
             );
 
             const snapshot = await getDocs(q);
@@ -6348,6 +6864,74 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
   }
 }
 --- END_FILE: src/index.css ---
+
+--- START_FILE: src/lib/analytics.ts ---
+/**
+ * src/lib/analytics.ts
+ * GITHUB COMMENT:
+ * [analytics.ts]
+ * NEW: Dedicated service for logging system metrics.
+ * HANDLES: Asynchronous writes to 'ai_logs' collection for Gemini token usage tracking.
+ */
+import { db } from './firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+
+export interface TokenUsage {
+    promptTokens: number;
+    candidatesTokens: number;
+    totalTokens: number;
+}
+
+export interface AILogEntry {
+    uid: string;
+    model: string;
+    context: string; // e.g., 'journal_analysis', 'workbook_coach'
+    timestamp: Timestamp;
+    usage: TokenUsage;
+}
+
+/**
+ * Logs AI usage metrics to Firestore.
+ * This is a "fire-and-forget" operation to avoid blocking the UI.
+ * * @param uid - User ID (or 'anonymous')
+ * @param model - Model name (e.g. 'gemini-2.5-flash')
+ * @param context - Feature context triggering the call
+ * @param usage - Token counts from the API response
+ */
+export async function logAIUsage(
+    uid: string, 
+    model: string, 
+    context: string, 
+    usage?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }
+) {
+    if (!db) return;
+
+    try {
+        const usageData: TokenUsage = {
+            promptTokens: usage?.promptTokenCount || 0,
+            candidatesTokens: usage?.candidatesTokenCount || 0,
+            totalTokens: usage?.totalTokenCount || 0
+        };
+
+        const entry: AILogEntry = {
+            uid,
+            model,
+            context,
+            timestamp: Timestamp.now(),
+            usage: usageData
+        };
+
+        // Fire and forget - do not await
+        addDoc(collection(db, 'ai_logs'), entry).catch(err => {
+            console.warn("Failed to log AI usage:", err);
+        });
+
+    } catch (error) {
+        // Silently fail to not disrupt user experience
+        console.warn("Analytics error:", error);
+    }
+}
+--- END_FILE: src/lib/analytics.ts ---
 
 --- START_FILE: src/lib/crypto.ts ---
 // src/lib/crypto.ts
@@ -7434,8 +8018,16 @@ export const calculateVitalityStats = (journals: ScorableJournal[]): VitalitySta
 --- END_FILE: src/lib/gamification.ts ---
 
 --- START_FILE: src/lib/gemini.ts ---
-// src/lib/gemini.ts
+/**
+ * src/lib/gemini.ts
+ * GITHUB COMMENT:
+ * [gemini.ts]
+ * UPDATED: Added analyzeSystemHealth() for Admin Tools.
+ * FEATURE: AI Agent acts as a Senior Dev to triage crash logs and suggest fixes.
+ */
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { auth } from './firebase'; // To capture current user for logging
+import { logAIUsage } from './analytics';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
@@ -7487,18 +8079,31 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
-// [NEW] Deep Pattern Recognition Interface
+// Deep Pattern Recognition Interface
 export interface DeepPatternResult {
     core_triggers: string[];
-    emotional_velocity: string; // e.g. "Rapid cycling between anxiety and relief"
-    hidden_correlations: string[]; // e.g. "Work stress consistently precedes cravings by 2 days"
+    emotional_velocity: string; 
+    hidden_correlations: string[];
     relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
     long_term_advice: string[];
     pattern_summary: string;
 }
 
+// System Health Interface
+export interface SystemHealthAnalysis {
+    status: 'Critical' | 'Warning' | 'Stable';
+    summary: string;
+    top_issues: {
+        error_signature: string;
+        occurrence_count: number;
+        suspected_root_cause: string;
+        suggested_fix: string;
+    }[];
+    environment_patterns: string; // e.g. "Mostly iOS devices"
+}
+
 // --- Core Helper: Smart Cascade Generation ---
-async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
+async function generateWithCascade(prompt: string, contextTag: string, specificModel?: string): Promise<string> {
     const modelsToTry = specificModel 
         ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
         : MODEL_CASCADE;
@@ -7525,6 +8130,11 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
             
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
             
+            // --- LOGGING ---
+            const uid = auth?.currentUser?.uid || 'anonymous';
+            logAIUsage(uid, currentModelName, contextTag, response.usageMetadata);
+            // ----------------
+            
             return text;
 
         } catch (error) {
@@ -7545,12 +8155,41 @@ function cleanJSON(text: string): string {
 //  EXPOSED FUNCTIONS
 // ============================================================================
 
-// [NEW] Deep Pattern Recognition
+export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHealthAnalysis> {
+    const prompt = `
+    You are a Senior React & Firebase Engineer. I am providing you with a raw dump of client-side error logs.
+    Your job is to triage these errors, group duplicates, and identify root causes.
+
+    RAW ERROR LOGS:
+    ${errorLogs}
+
+    Return a JSON object with this EXACT structure:
+    {
+        "status": "Critical" | "Warning" | "Stable",
+        "summary": "A 1-sentence executive summary of the system health.",
+        "top_issues": [
+            {
+                "error_signature": "Short description (e.g. 'Undefined in JournalEditor')",
+                "occurrence_count": 0 (Integer estimate based on logs provided),
+                "suspected_root_cause": "Technical explanation",
+                "suggested_fix": "Code-level recommendation"
+            }
+        ],
+        "environment_patterns": "Note any patterns (e.g., 'Only failing on Mobile Safari' or 'Across all devices')."
+    }
+    IMPORTANT: Return ONLY valid JSON. No Markdown.
+    `;
+
+    // Use Pro model for better code analysis reasoning
+    const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-2.5-pro');
+    return JSON.parse(cleanJSON(text)) as SystemHealthAnalysis;
+}
+
 export async function generateDeepPatternAnalysis(
     journalHistory: string
 ): Promise<DeepPatternResult> {
     const prompt = `
-    Perform a "Deep Pattern Recognition" analysis on the following 30 days of journal entries.
+    Perform a "Deep Pattern Recognition" analysis on the following 90 days of journal entries.
     Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity that a human might miss.
 
     JOURNAL DATA:
@@ -7563,13 +8202,13 @@ export async function generateDeepPatternAnalysis(
         "emotional_velocity": "A brief description of how quickly their mood shifts (e.g. 'Stable but low', 'Volatile spikes').",
         "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
         "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
-        "long_term_advice": ["Strategic advice 1", "Strategic advice 2"]
+        "long_term_advice": ["Action 1", "Action 2", "Action 3"]
     }
+    IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items. No more, no less.
     Return ONLY raw JSON.
     `;
 
-    // Force usage of Gemini 2.5 Pro for deep reasoning capabilities
-    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as DeepPatternResult;
 }
 
@@ -7611,12 +8250,13 @@ export async function generateComparativeAnalysis(
         "comparison_summary": "A 2-3 sentence narrative comparing the periods (or summarizing the journey).",
         "wins": ["Specific win 1", "Specific win 2"],
         "blind_spots": ["Potential risk or overlooked area 1", "Area 2"],
-        "actionable_advice": ["Concrete step 1", "Concrete step 2", "Concrete step 3"]
+        "actionable_advice": ["Step 1", "Step 2", "Step 3"]
     }
+    IMPORTANT: Provide EXACTLY 3 distinct "actionable_advice" items. No more, no less.
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithCascade(systemPrompt + promptContext);
+    const text = await generateWithCascade(systemPrompt + promptContext, `comparative_analysis_${scope}`);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
@@ -7632,10 +8272,11 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
         "actionableSteps": ["Step 1", "Step 2", "Step 3"],
         "risks": ["Risk 1", "Risk 2"] (If none, return empty array)
       }
+      IMPORTANT: "actionableSteps" must contain EXACTLY 3 items.
       Return ONLY raw JSON.
     `;
     
-    const text = await generateWithCascade(prompt);
+    const text = await generateWithCascade(prompt, 'journal_analysis');
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
@@ -7662,12 +8303,13 @@ export async function analyzeFullWorkbook(
             "emotional_resonance": "Current emotional state (e.g. Resentful, Accepting).",
             "blind_spots": "Potential risks or overlooked areas."
         },
-        "suggested_actions": ["Specific recovery action 1", "Specific recovery action 2", "Specific recovery action 3"]
+        "suggested_actions": ["Action 1", "Action 2", "Action 3"]
     }
+    IMPORTANT: "suggested_actions" must contain EXACTLY 3 items.
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'workbook_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
@@ -7685,7 +8327,7 @@ export async function getGeminiCoaching(
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
     
-    return await generateWithCascade(prompt);
+    return await generateWithCascade(prompt, 'workbook_coach');
 }
 --- END_FILE: src/lib/gemini.ts ---
 
@@ -7950,6 +8592,12 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
 --- END_FILE: src/lib/importer.ts ---
 
 --- START_FILE: src/lib/insights.ts ---
+/**
+ * src/lib/insights.ts
+ * GITHUB COMMENT:
+ * [insights.ts]
+ * UPDATED: Added 'strengths' field to InsightPayload to support Weekly/Monthly wins.
+ */
 import { 
   collection, 
   addDoc, 
@@ -7960,23 +8608,20 @@ import {
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
-// Ensure these match the exports in your new gemini.ts
 import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
 
 // --- DEFINITIONS ---
 
-// Define a discriminated union for the two types of insights
 export type InsightType = 'journal' | 'workbook';
 
 // Combined type for what we save to Firestore
-// This ensures strict type safety based on the 'type' field
 export type InsightPayload = 
-  | ({ type: 'journal' } & AnalysisResult)
+  | ({ type: 'journal'; strengths?: string[] } & AnalysisResult)
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
 
-// The hydrated object returned to the UI (includes ID and Dates)
+// The hydrated object returned to the UI
 export type SavedInsight = InsightPayload & {
   id: string;
   uid: string;
@@ -7985,15 +8630,10 @@ export type SavedInsight = InsightPayload & {
 
 /**
  * Saves a new AI Insight to Firestore.
- * Supports both Journal Analysis and Workbook Analysis via discriminated union.
- * @param uid - The User ID
- * @param payload - The structured result from Gemini + type ('journal' | 'workbook')
  */
 export async function saveInsight(uid: string, payload: InsightPayload) {
   if (!db) throw new Error("Database not initialized");
 
-  // We spread the payload directly. 
-  // Firestore will store the 'type' field and all specific fields (mood vs pillars) automatically.
   await addDoc(collection(db, COLLECTION), {
     uid,
     createdAt: Timestamp.now(),
@@ -8002,8 +8642,7 @@ export async function saveInsight(uid: string, payload: InsightPayload) {
 }
 
 /**
- * Fetches the history of AI Insights for a user, sorted by newest first.
- * Handles backward compatibility for old records (defaults to 'journal').
+ * Fetches the history of AI Insights for a user.
  */
 export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
   if (!db) throw new Error("Database not initialized");
@@ -8019,25 +8658,19 @@ export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      
-      // Backward Compatibility:
-      // If 'type' is missing, it's a legacy Journal Insight.
       const type = data.type || 'journal';
 
       return {
-        ...data, // Spread first to capture all fields
+        ...data, 
         id: doc.id,
         uid: data.uid,
         type,
-        // Ensure createdAt is a real JS Date object (overriding the Timestamp from ...data)
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
       } as SavedInsight;
     });
 
   } catch (e: unknown) {
     console.error("Error fetching insights:", e);
-    
-    // RESTORED: Critical Missing Index Check
     const err = e as { message?: string };
     if (err.message && err.message.includes("index")) {
         console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
@@ -8635,13 +9268,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 --- START_FILE: src/pages/AdminDashboard.tsx ---
 /**
+ * src/pages/AdminDashboard.tsx
  * GITHUB COMMENT:
  * [AdminDashboard.tsx]
- * NEW: Internal tools for data maintenance.
- * FEATURE: Journal Deduplication utility using Batched Writes.
- * SECURITY: Restricted to users with 'isAdmin' context.
+ * MERGE: Consolidated existing Deduplication tools with new Admin features.
+ * STRUCTURE: 4 Tabs -> Analytics (Gemini), Users (Directory), Health (Errors), Maintenance (Dedupe).
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { 
@@ -8651,6 +9284,9 @@ import {
   getDocs, 
   writeBatch, 
   doc, 
+  orderBy,
+  limit,
+  Timestamp,
   type Firestore 
 } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
@@ -8658,22 +9294,109 @@ import { THEME } from '../lib/theme';
 import { 
   CommandLineIcon, 
   DocumentDuplicateIcon, 
-  ShieldCheckIcon,
-  UserGroupIcon,
-  ArrowPathIcon,
-  CheckCircleIcon
+  ShieldCheckIcon, 
+  UserGroupIcon, 
+  ArrowPathIcon, 
+  CheckCircleIcon,
+  CpuChipIcon,
+  ServerIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import { Navigate } from 'react-router-dom';
+import { 
+    BarChart, 
+    Bar, 
+    XAxis, 
+    YAxis, 
+    Tooltip, 
+    ResponsiveContainer, 
+    PieChart, 
+    Pie, 
+    Cell, 
+    Legend
+} from 'recharts';
+import UserDirectory from '../components/admin/UserDirectory';
+import ErrorLogViewer from '../components/admin/ErrorLogViewer';
+
+// Types for Analytics
+interface AIUsageLog {
+    id: string;
+    model: string;
+    timestamp: Timestamp;
+    usage: {
+        totalTokens: number;
+        promptTokens: number;
+        candidatesTokens: number;
+    };
+}
+
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
 
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuth();
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'health' | 'maintenance'>('analytics');
+  
+  // Operation State (Dedupe, etc.)
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Analytics Data State
+  const [logs, setLogs] = useState<AIUsageLog[]>([]);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+
+  // --- 1. AUTH CHECK & INITIAL LOAD ---
+  useEffect(() => {
+      if (isAdmin && user && db) {
+          loadAnalytics();
+      }
+  }, [isAdmin, user]);
 
   if (!isAdmin) {
     return <Navigate to="/dashboard" />;
   }
 
+  // --- 2. DATA FETCHING (ANALYTICS) ---
+  const loadAnalytics = async () => {
+      if (!db) return;
+      try {
+          const q = query(
+              collection(db, 'ai_logs'), 
+              orderBy('timestamp', 'desc'), 
+              limit(100)
+          );
+          const snap = await getDocs(q);
+          const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AIUsageLog));
+          setLogs(data);
+      } catch (e) {
+          console.error("Failed to load analytics", e);
+      } finally {
+          setMetricsLoading(false);
+      }
+  };
+
+  // --- 3. CHART DATA PREP ---
+  const modelData = logs.reduce((acc, log) => {
+      const existing = acc.find(i => i.name === log.model);
+      if (existing) {
+          existing.value += 1;
+      } else {
+          acc.push({ name: log.model, value: 1 });
+      }
+      return acc;
+  }, [] as { name: string; value: number }[]);
+
+  const tokenData = logs.slice(0, 20).reverse().map(log => ({
+      name: new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      tokens: log.usage.totalTokens,
+      model: log.model
+  }));
+
+  const totalTokens = logs.reduce((sum, log) => sum + log.usage.totalTokens, 0);
+
+  // --- 4. MAINTENANCE TOOLS (DEDUPLICATION) ---
+  // Restored from previous version
   const runDeduplication = async () => {
     if (!user || !db) return;
     if (!confirm("This will permanently delete duplicate journal entries. Continue?")) return;
@@ -8739,74 +9462,185 @@ export default function AdminDashboard() {
     <div className={`h-[100dvh] flex flex-col ${THEME.profile.page}`}>
       <VibrantHeader 
         title="Admin Tools"
-        subtitle="Data maintenance and developer console."
+        subtitle="Operational governance and system telemetry."
         icon={CommandLineIcon}
         fromColor="from-slate-800"
         viaColor="via-gray-900"
         toColor="to-black"
       />
 
-      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-6 max-w-4xl mx-auto w-full">
-        {status && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center gap-3 text-blue-800 text-sm font-medium animate-fadeIn">
-            {loading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
-            {status}
-          </div>
+      {/* --- TAB NAVIGATION --- */}
+      <div className="px-4 -mt-10 relative z-30">
+        <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex flex-wrap max-w-2xl mx-auto">
+            <button 
+                onClick={() => setActiveTab('analytics')}
+                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <CpuChipIcon className="h-4 w-4" /> Analytics
+            </button>
+            <button 
+                onClick={() => setActiveTab('users')}
+                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'users' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <UserGroupIcon className="h-4 w-4" /> Users
+            </button>
+            <button 
+                onClick={() => setActiveTab('health')}
+                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'health' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <ServerIcon className="h-4 w-4" /> Health
+            </button>
+            <button 
+                onClick={() => setActiveTab('maintenance')}
+                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'maintenance' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <WrenchScrewdriverIcon className="h-4 w-4" /> Tools
+            </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-8 max-w-5xl mx-auto w-full animate-fadeIn">
+        
+        {/* --- TAB 1: ANALYTICS --- */}
+        {activeTab === 'analytics' && (
+            <section className="space-y-4">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <CpuChipIcon className="h-6 w-6 text-purple-600" /> Gemini API Metrics
+                </h2>
+                
+                {metricsLoading ? (
+                    <div className="p-10 text-center text-gray-400">Loading metrics...</div>
+                ) : logs.length === 0 ? (
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center text-gray-500">
+                        No AI usage logs found yet. Use the app to generate some data.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* CARD 1: Model Distribution */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 h-80">
+                            <h4 className="text-sm font-bold text-gray-500 uppercase mb-4">Request Distribution</h4>
+                            <ResponsiveContainer width="100%" height="90%">
+                                <PieChart>
+                                    <Pie 
+                                        data={modelData} 
+                                        cx="50%" 
+                                        cy="50%" 
+                                        innerRadius={60} 
+                                        outerRadius={80} 
+                                        paddingAngle={5} 
+                                        dataKey="value"
+                                    >
+                                        {modelData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* CARD 2: Token Usage Stream */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 h-80 flex flex-col">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-sm font-bold text-gray-500 uppercase">Recent Token Usage</h4>
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-md font-bold">Total: {totalTokens.toLocaleString()}</span>
+                            </div>
+                            <div className="flex-1 min-h-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={tokenData}>
+                                        <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
+                                        <YAxis hide />
+                                        <Tooltip 
+                                            contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                                            cursor={{fill: '#f3f4f6'}} 
+                                        />
+                                        <Bar dataKey="tokens" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </section>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* TOOL: DEDUPLICATION */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-50 rounded-lg text-red-600">
-                <DocumentDuplicateIcon className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-gray-900">Journal Deduplicator</h3>
-            </div>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              Scans your journals for entries with identical content and timestamps created by multiple imports. Keeps the original and removes clones.
-            </p>
-            <button 
-              onClick={runDeduplication}
-              disabled={loading}
-              className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-all active:scale-95"
-            >
-              Run Clean Up
-            </button>
-          </div>
+        {/* --- TAB 2: USERS --- */}
+        {activeTab === 'users' && <UserDirectory />}
 
-          {/* TOOL: ENCRYPTION AUDIT */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                <ShieldCheckIcon className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-gray-900">Security Audit</h3>
-            </div>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              Identifies unencrypted entries in the cloud that need re-saving to be secured by your new PIN.
-            </p>
-            <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
-              Coming Soon
-            </button>
-          </div>
+        {/* --- TAB 3: HEALTH --- */}
+        {activeTab === 'health' && <ErrorLogViewer />}
 
-          {/* TOOL: TEAM MANAGEMENT */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                <UserGroupIcon className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-gray-900">Manage Admins</h3>
+        {/* --- TAB 4: MAINTENANCE (Restored Tools) --- */}
+        {activeTab === 'maintenance' && (
+            <div className="space-y-6">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <WrenchScrewdriverIcon className="h-6 w-6 text-orange-600" /> Data Maintenance
+                </h2>
+
+                {status && (
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center gap-3 text-blue-800 text-sm font-medium animate-fadeIn">
+                        {loading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
+                        {status}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* TOOL: DEDUPLICATION */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-red-50 rounded-lg text-red-600">
+                                <DocumentDuplicateIcon className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-bold text-gray-900">Journal Deduplicator</h3>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                            Scans your journals for entries with identical content and timestamps created by multiple imports. Keeps the original and removes clones.
+                        </p>
+                        <button 
+                            onClick={runDeduplication} 
+                            disabled={loading}
+                            className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-all active:scale-95"
+                        >
+                            Run Clean Up
+                        </button>
+                    </div>
+
+                    {/* TOOL: ENCRYPTION AUDIT */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                <ShieldCheckIcon className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-bold text-gray-900">Security Audit</h3>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                            Identifies unencrypted entries in the cloud that need re-saving to be secured by your new PIN.
+                        </p>
+                        <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
+                            Coming Soon
+                        </button>
+                    </div>
+
+                    {/* TOOL: TEAM MANAGEMENT */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                                <UserGroupIcon className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-bold text-gray-900">Manage Admins</h3>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                            Grant developer access to other emails to help troubleshoot data issues.
+                        </p>
+                        <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
+                            Coming Soon
+                        </button>
+                    </div>
+                </div>
             </div>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              Grant developer access to other emails to help troubleshoot data issues.
-            </p>
-            <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
-              Coming Soon
-            </button>
-          </div>
-        </div>
+        )}
+
       </div>
     </div>
   );
@@ -9129,201 +9963,276 @@ export default function Dashboard() {
 --- END_FILE: src/pages/Dashboard.tsx ---
 
 --- START_FILE: src/pages/InsightsLog.tsx ---
+/**
+ * src/pages/InsightsLog.tsx
+ * GITHUB COMMENT:
+ * [InsightsLog.tsx]
+ * FIX: Separated "Strengths" from "Suggested Actions".
+ * FEATURE: Historical insights now have interactive "Add to Task" buttons.
+ */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
+import { addTask } from '../lib/tasks';
+import { addDays } from 'date-fns';
 import { 
-  LightBulbIcon, 
-  SparklesIcon, 
-  AcademicCapIcon, 
-  BookOpenIcon, 
-  ShieldExclamationIcon, 
-  CheckCircleIcon, 
-  TrophyIcon, 
-  CalendarDaysIcon
+    LightBulbIcon, 
+    SparklesIcon, 
+    AcademicCapIcon, 
+    BookOpenIcon, 
+    ShieldExclamationIcon, 
+    CheckCircleIcon, 
+    TrophyIcon, 
+    CalendarDaysIcon,
+    PlusCircleIcon
 } from '@heroicons/react/24/outline';
 
+// Local interface
+interface InsightWithActions {
+    suggested_actions?: string[];
+    actionableSteps?: string[];
+    actionable_advice?: string[];
+    strengths?: string[];
+    risks?: string[];
+    pillars?: {
+        growth?: string;
+        blind_spots?: string;
+        understanding?: string;
+        emotional_resonance?: string;
+    };
+}
+
+// Helper to normalize actions
+const getActions = (data: unknown): string[] => {
+    const insight = data as InsightWithActions;
+    if (insight.suggested_actions && Array.isArray(insight.suggested_actions)) return insight.suggested_actions;
+    if (insight.actionableSteps && Array.isArray(insight.actionableSteps)) return insight.actionableSteps;
+    if (insight.actionable_advice && Array.isArray(insight.actionable_advice)) return insight.actionable_advice;
+    return [];
+};
+
+// Helper to normalize strengths/wins
+const getStrengths = (data: unknown): string[] => {
+    const insight = data as InsightWithActions;
+    if (insight.strengths && Array.isArray(insight.strengths)) return insight.strengths;
+    // Fallback to legacy pillar string if array is missing
+    if (insight.pillars?.growth) return [insight.pillars.growth]; 
+    return [];
+};
+
+// Helper to normalize risks
+const getRisks = (data: unknown): string[] => {
+    const insight = data as InsightWithActions;
+    if (insight.risks && Array.isArray(insight.risks)) return insight.risks;
+    // Fallback to legacy pillar string
+    if (insight.pillars?.blind_spots) return [insight.pillars.blind_spots];
+    return [];
+};
+
 export default function InsightsLog() {
-  const { user } = useAuth();
-  const [insights, setInsights] = useState<SavedInsight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'journal' | 'workbook'>('all');
+    const { user } = useAuth();
+    const [insights, setInsights] = useState<SavedInsight[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'journal' | 'workbook'>('all');
+    const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
-    try {
-      const data = await getInsightHistory(user.uid);
-      setInsights(data);
-    } catch (error) {
-      console.error("Failed to load insights log", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    const loadData = useCallback(async () => {
+        if (!user) return;
+        try {
+            const data = await getInsightHistory(user.uid);
+            setInsights(data);
+        } catch (error) {
+            console.error("Failed to load insights log", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
-  const filteredInsights = insights.filter(item => filter === 'all' || item.type === filter);
+    const handleAddToTasks = async (action: string) => {
+        if (!user) return;
+        try {
+            const dueDate = addDays(new Date(), 7);
+            await addTask(user.uid, action, 'once', 'Medium', dueDate);
+            setAddedActions(prev => new Set(prev).add(action));
+        } catch (e) {
+            console.error("Failed to add task", e);
+        }
+    };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
+    const filteredInsights = insights.filter(item => filter === 'all' || item.type === filter);
 
-  return (
-    <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
-      {/* HEADER */}
-      <VibrantHeader 
-        title="Insights"
-        subtitle="A timeline of your AI coaching sessions and breakthroughs."
-        icon={LightBulbIcon}
-        fromColor={THEME.insights.header.from}
-        viaColor={THEME.insights.header.via}
-        toColor={THEME.insights.header.to}
-      />
+    if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
 
-      <div className="px-4 -mt-10 relative z-30">
-        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
-            {(['all', 'journal', 'workbook'] as const).map((tab) => (
-            <button
-                key={tab}
-                onClick={() => setFilter(tab)}
-                className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
-                filter === tab 
-                    ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md transform scale-105' 
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-            >
-                {tab}
-            </button>
-            ))}
-        </div>
-      </div>
+    return (
+        <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
+            <VibrantHeader 
+                title="Insights" 
+                subtitle="A timeline of your AI coaching sessions and breakthroughs." 
+                icon={LightBulbIcon} 
+                fromColor={THEME.insights.header.from} 
+                viaColor={THEME.insights.header.via} 
+                toColor={THEME.insights.header.to} 
+            />
 
-      <div className="max-w-4xl mx-auto space-y-6 px-4 mt-6">
-        {filteredInsights.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
-                <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <SparklesIcon className="h-8 w-8 text-gray-400" />
+            <div className="px-4 -mt-10 relative z-30">
+                <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
+                    {(['all', 'journal', 'workbook'] as const).map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setFilter(tab)}
+                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
+                        filter === tab 
+                            ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md transform scale-105' 
+                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                    >
+                        {tab}
+                    </button>
+                    ))}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">No Insights Yet</h3>
-                <p className="text-gray-500 text-sm mt-1">
-                    Generate analysis from your Journal or Workbooks to populate this log.
-                </p>
             </div>
-        ) : (
-            filteredInsights.map((insight) => (
-                <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                    
-                    <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            {insight.type === 'journal' ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                    <BookOpenIcon className="h-3.5 w-3.5" /> Journal
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
-                                    <AcademicCapIcon className="h-3.5 w-3.5" /> Workbook
-                                </span>
-                            )}
-                            <span className="text-xs text-gray-400 flex items-center gap-1 font-medium">
-                                <CalendarDaysIcon className="h-3.5 w-3.5" />
-                                {insight.createdAt.toLocaleDateString()}
-                            </span>
-                        </div>
-                    </div>
 
-                    <div className="p-5">
-                        {insight.type === 'journal' && (
-                            <div className="space-y-5">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Daily Reflection</h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed">{insight.summary}</p>
-                                </div>
-                                <div className="flex flex-wrap gap-3 text-xs">
-                                    <div className="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-blue-700">
-                                        {/* FIX: Use moodScore instead of mood */}
-                                        Mood: <span className="font-bold">{insight.moodScore}/10</span>
-                                    </div>
-                                    <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 text-indigo-700">
-                                        Sentiment: <span className="font-bold">{insight.sentiment}</span>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                        <div className="text-orange-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
-                                            <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
-                                        </div>
-                                        {/* FIX: Map over risks array instead of rendering string */}
-                                        <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                            {insight.risks && insight.risks.length > 0 ? (
-                                                insight.risks.map((risk, idx) => <li key={idx}>{risk}</li>)
-                                            ) : (
-                                                <li>None detected.</li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                    <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                        <div className="text-green-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
-                                            <TrophyIcon className="h-4 w-4" /> Strength & Win
-                                        </div>
-                                        {/* FIX: Map over actionableSteps array instead of positive_reinforcement string */}
-                                        <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                            {insight.actionableSteps && insight.actionableSteps.length > 0 ? (
-                                                insight.actionableSteps.map((step, idx) => <li key={idx}>{step}</li>)
-                                            ) : (
-                                                <li>Keep moving forward.</li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {insight.type === 'workbook' && (
-                            <div className="space-y-5">
-                                <div>
-                                    <h3 className="text-lg font-bold text-purple-900 mb-1 flex items-center gap-2">
-                                        {insight.scope_context}
-                                    </h3>
-                                    {/* FIX: Added summary for workbook cards */}
-                                    <p className="text-gray-600 text-sm leading-relaxed mt-2">{insight.summary}</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                        <div className="text-blue-800 font-bold text-xs uppercase mb-1">Understanding</div>
-                                        <p className="text-xs text-blue-900 leading-relaxed">{insight.pillars.understanding}</p>
-                                    </div>
-                                    <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                        <div className="text-green-800 font-bold text-xs uppercase mb-1">Growth</div>
-                                        <p className="text-xs text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p>
-                                    </div>
-                                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                        <div className="text-orange-800 font-bold text-xs uppercase mb-1">Blind Spots</div>
-                                        <p className="text-xs text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                    <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1">
-                                        <CheckCircleIcon className="h-4 w-4" /> Action Plan
-                                    </div>
-                                    <ul className="space-y-1.5">
-                                        {insight.suggested_actions?.map((action: string, i: number) => (
-                                            <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
-                                                <span className="text-purple-400 font-bold mt-0.5">•</span> {action}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        )}
+            <div className="max-w-4xl mx-auto space-y-6 px-4 mt-6">
+                {filteredInsights.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <SparklesIcon className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">No Insights Yet</h3>
+                        <p className="text-gray-500 text-sm mt-1">
+                            Generate analysis from your Journal or Workbooks to populate this log.
+                        </p>
                     </div>
-                </div>
-            ))
-        )}
-      </div>
-    </div>
-  );
+                ) : (
+                    filteredInsights.map((insight) => {
+                        const actions = getActions(insight).slice(0, 3);
+                        const strengths = getStrengths(insight);
+                        const risks = getRisks(insight);
+
+                        return (
+                            <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                
+                                <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        {insight.type === 'journal' ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                <BookOpenIcon className="h-3.5 w-3.5" /> Journal
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                <AcademicCapIcon className="h-3.5 w-3.5" /> Workbook
+                                            </span>
+                                        )}
+                                        <span className="text-xs text-gray-400 flex items-center gap-1 font-medium">
+                                            <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                            {insight.createdAt.toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="p-5">
+                                    {insight.type === 'journal' && (
+                                        <div className="space-y-5">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900 mb-2">Daily Reflection</h3>
+                                                <p className="text-gray-600 text-sm leading-relaxed">{insight.summary}</p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3 text-xs">
+                                                <div className="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-blue-700">
+                                                    Mood: <span className="font-bold">{insight.moodScore}/10</span>
+                                                </div>
+                                                <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 text-indigo-700">
+                                                    Sentiment: <span className="font-bold">{insight.sentiment}</span>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                                    <div className="text-orange-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
+                                                        <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
+                                                    </div>
+                                                    <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                        {risks.length > 0 ? risks.map((risk, idx) => <li key={idx}>{risk}</li>) : <li>None detected.</li>}
+                                                    </ul>
+                                                </div>
+                                                
+                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                                                    <div className="text-green-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
+                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
+                                                    </div>
+                                                    <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                        {strengths.length > 0 ? strengths.map((s, idx) => <li key={idx}>{s}</li>) : <li>Keep moving forward.</li>}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            {/* SEPARATED ACTION PLAN CARD */}
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1">
+                                                    <CheckCircleIcon className="h-4 w-4" /> Action Plan (Choose to Add)
+                                                </div>
+                                                <ul className="space-y-2">
+                                                    {actions.map((step, idx) => (
+                                                        <li key={idx} className="flex items-center justify-between gap-2 text-xs text-gray-700">
+                                                            <div className="flex gap-2">
+                                                                <span className="text-green-500 font-bold">•</span>
+                                                                <span>{step}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
+                                                                disabled={addedActions.has(step)}
+                                                                className={`p-1 rounded-full transition-all flex-shrink-0 ${addedActions.has(step) ? 'text-green-600 bg-green-200' : 'text-gray-400 hover:text-green-600 hover:bg-green-100'}`}
+                                                                title="Add to Quests"
+                                                            >
+                                                                {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {insight.type === 'workbook' && (
+                                        <div className="space-y-5">
+                                            {/* ... Workbook logic remains similar (omitted for brevity unless requested) ... */}
+                                            {/* Re-using same logic for workbook actions */}
+                                            <div>
+                                                <h3 className="text-lg font-bold text-purple-900 mb-1 flex items-center gap-2">{insight.scope_context}</h3>
+                                                <p className="text-gray-600 text-sm leading-relaxed mt-2">{insight.summary}</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100"><div className="text-blue-800 font-bold text-xs uppercase mb-1">Understanding</div><p className="text-xs text-blue-900 leading-relaxed">{insight.pillars.understanding}</p></div>
+                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100"><div className="text-green-800 font-bold text-xs uppercase mb-1">Growth</div><p className="text-xs text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p></div>
+                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100"><div className="text-orange-800 font-bold text-xs uppercase mb-1">Blind Spots</div><p className="text-xs text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p></div>
+                                            </div>
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Action Plan</div>
+                                                <ul className="space-y-2">
+                                                    {actions.map((action, idx) => (
+                                                        <li key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-2">
+                                                            <div className="flex gap-2"><span className="text-purple-400 font-bold mt-0.5">•</span>{action}</div>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all flex-shrink-0 ${addedActions.has(action) ? 'text-green-500 bg-green-100' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-100'}`}>
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        </div>
+    );
 }
 --- END_FILE: src/pages/InsightsLog.tsx ---
 
