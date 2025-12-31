@@ -205,108 +205,104 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* HERO CARD: Clean Time (Refactored) */}
+        {/* HERO CARD: Clean Time */}
         <SobrietyHero date={userProfile?.sobrietyDate} />
 
         {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
             
             {/* 1. JOURNAL (Indigo/Violet) */}
-            <Link to="/journal" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <ChartBarIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <ChartBarIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <ChartBarIcon className="h-4 w-4 text-white" />
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    {/* MOVED: Title to right of value */}
-                    <div className="flex items-baseline gap-2 mb-1">
+                    <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.journal.streak}</div>
                         <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Days</div>
                     </div>
                     
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Consistency</span>
-                        <span className="text-xs font-bold">{stats.journal.consistency}/wk</span>
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-sm font-bold opacity-75">Consistency</span>
+                        <span className="text-sm font-bold">{stats.journal.consistency}/wk</span>
                     </div>
                 </div>
             </Link>
 
             {/* 2. HABITS (Cyan/Teal) */}
-            <Link to="/tasks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <FireIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <FireIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <FireIcon className="h-4 w-4 text-white" />
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
-                    {/* MOVED: Title to right of value */}
-                    <div className="flex items-baseline gap-2 mb-1">
+                    <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.task.fire}</div>
                         <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Fire</div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Rate</span>
-                        <span className="text-xs font-bold">{stats.task.rate}%</span>
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-sm font-bold opacity-75">Rate</span>
+                        <span className="text-sm font-bold">{stats.task.rate}%</span>
                     </div>
                 </div>
             </Link>
 
             {/* 3. VITALITY (Orange/Rose) */}
-            <Link to="/vitality" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <HeartIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <HeartIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <HeartIcon className="h-4 w-4 text-white" />
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
-                    {/* MOVED: Title to right of value */}
-                    <div className="flex items-baseline gap-2 mb-1">
+                    <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
                         <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Total Logs</span>
-                        <span className="text-xs font-bold">{stats.vitality.totalLogs}</span>
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-sm font-bold opacity-75">Logs</span>
+                        <span className="text-sm font-bold">{stats.vitality.totalLogs}</span>
                     </div>
                 </div>
             </Link>
 
             {/* 4. WISDOM (Emerald/Lime) */}
-            <Link to="/workbooks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <SparklesIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <SparklesIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <SparklesIcon className="h-4 w-4 text-white" />
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
-                    {/* MOVED: Title to right of value */}
-                    <div className="flex items-baseline gap-2 mb-1">
+                    <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.workbook.completion}%</div>
                         <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Done</div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Score</span>
-                        <span className="text-xs font-bold">{stats.workbook.wisdom}</span>
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-sm font-bold opacity-75">Score</span>
+                        <span className="text-sm font-bold">{stats.workbook.wisdom}</span>
                     </div>
                 </div>
             </Link>
