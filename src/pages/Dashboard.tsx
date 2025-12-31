@@ -221,16 +221,20 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <ChartBarIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
+                        {/* Title increased to text-sm */}
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
+                        {/* Main Value unchanged */}
                         <div className="text-3xl font-black">{stats.journal.streak}</div>
-                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Days</div>
+                        {/* Main Label increased to text-base */}
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-sm font-bold opacity-75">Consistency</span>
-                        <span className="text-sm font-bold">{stats.journal.consistency}/wk</span>
+                        {/* Bottom Row increased to text-base */}
+                        <span className="text-base font-bold opacity-75">Consistency</span>
+                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
                     </div>
                 </div>
             </Link>
@@ -245,16 +249,16 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <FireIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.task.fire}</div>
-                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Fire</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
                     </div>
 
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-sm font-bold opacity-75">Rate</span>
-                        <span className="text-sm font-bold">{stats.task.rate}%</span>
+                        <span className="text-base font-bold opacity-75">Rate</span>
+                        <span className="text-base font-bold">{stats.task.rate}%</span>
                     </div>
                 </div>
             </Link>
@@ -269,16 +273,16 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <HeartIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
-                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
                     </div>
 
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-sm font-bold opacity-75">Logs</span>
-                        <span className="text-sm font-bold">{stats.vitality.totalLogs}</span>
+                        <span className="text-base font-bold opacity-75">Logs</span>
+                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
                     </div>
                 </div>
             </Link>
@@ -293,16 +297,16 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <SparklesIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.workbook.completion}%</div>
-                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Done</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
                     </div>
 
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-sm font-bold opacity-75">Score</span>
-                        <span className="text-sm font-bold">{stats.workbook.wisdom}</span>
+                        <span className="text-base font-bold opacity-75">Score</span>
+                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
                     </div>
                 </div>
             </Link>
