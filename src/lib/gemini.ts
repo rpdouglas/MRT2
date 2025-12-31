@@ -2,8 +2,8 @@
  * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * UPDATED: Added analyzeSystemHealth() for Admin Tools.
- * FEATURE: AI Agent acts as a Senior Dev to triage crash logs and suggest fixes.
+ * UPDATED: Standardized Audio Analysis to use 'gemini-2.5-flash'.
+ * FIX: Removed deprecated 'gemini-1.5-flash' from model cascade.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -38,6 +38,13 @@ export interface AIAnalysisResult {
 }
 // Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
+
+export interface AudioAnalysisResult {
+    transcription: string;
+    sentiment_label: 'Positive' | 'Neutral' | 'Negative';
+    mood_score: number; // 1-10
+    tags: string[];
+}
 
 export interface ComparativeAnalysisResult {
     trajectory: 'Improving' | 'Stable' | 'Declining' | 'Fluctuating';
@@ -95,7 +102,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-               
+                // eslint-disable-next-line no-console
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -135,6 +142,56 @@ function cleanJSON(text: string): string {
 //  EXPOSED FUNCTIONS
 // ============================================================================
 
+/**
+ * VOICE-TO-VAULT: Multimodal Analysis
+ * Sends audio blob data to Gemini for transcription and analysis.
+ */
+export async function generateAudioAnalysis(base64Audio: string, mimeType: string): Promise<AudioAnalysisResult> {
+    // UPDATED: Switched to 2.5 Flash as primary multimodal model
+    const modelName = 'gemini-2.5-flash'; 
+    const model = genAI.getGenerativeModel({ model: modelName });
+
+    const prompt = `
+    Listen to this audio journal entry.
+    1. Transcribe the audio verbatim.
+    2. Analyze the sentiment and mood.
+    3. Generate 3-5 relevant tags.
+
+    Return JSON format:
+    {
+      "transcription": "Full text here...",
+      "sentiment_label": "Positive" | "Neutral" | "Negative",
+      "mood_score": 1-10,
+      "tags": ["Tag1", "Tag2"]
+    }
+    `;
+
+    try {
+        const result = await model.generateContent([
+            {
+                inlineData: {
+                    mimeType: mimeType,
+                    data: base64Audio
+                }
+            },
+            { text: prompt }
+        ]);
+        
+        const response = await result.response;
+        const text = response.text();
+
+        // Logging
+        const uid = auth?.currentUser?.uid || 'anonymous';
+        logAIUsage(uid, modelName, 'voice_to_vault', response.usageMetadata);
+
+        return JSON.parse(cleanJSON(text)) as AudioAnalysisResult;
+
+    } catch (error) {
+        console.error("Audio Analysis Failed:", error);
+        throw new Error("Failed to process audio.");
+    }
+}
+
 export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHealthAnalysis> {
     const prompt = `
     You are a Senior React & Firebase Engineer. I am providing you with a raw dump of client-side error logs.
@@ -160,7 +217,6 @@ export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHeal
     IMPORTANT: Return ONLY valid JSON. No Markdown.
     `;
 
-    // Use Pro model for better code analysis reasoning
     const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as SystemHealthAnalysis;
 }

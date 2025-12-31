@@ -1,6 +1,13 @@
+/**
+ * src/components/journal/JournalEditor.tsx
+ * GITHUB COMMENT:
+ * [JournalEditor.tsx]
+ * UPDATED: Integrated AudioRecorder component.
+ * FEATURE: Toggle between Text and Voice modes. Auto-fills content from AI transcription.
+ */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useEncryption } from '../../contexts/EncryptionContext'; // NEW: Import Encryption
+import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
@@ -9,11 +16,14 @@ import {
     MapPinIcon,
     ArrowPathIcon,
     TagIcon,
-    XMarkIcon
+    XMarkIcon,
+    MicrophoneIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
+import AudioRecorder from './AudioRecorder';
+import type { AudioAnalysisResult } from '../../lib/gemini';
 
 // --- Types ---
 
@@ -30,7 +40,7 @@ export interface JournalEntry {
   createdAt: Timestamp; 
   tags?: string[];
   weather?: { temp: number; condition: string } | null;
-  isEncrypted?: boolean; // NEW: Added encryption flag
+  isEncrypted?: boolean; 
 }
 
 interface ExtendedJournalTemplate extends JournalTemplate {
@@ -52,7 +62,7 @@ const DEFAULT_TEMPLATES = [
 
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user } = useAuth();
-  const { encrypt } = useEncryption(); // NEW: Destructure encrypt function
+  const { encrypt } = useEncryption();
   const navigate = useNavigate();
 
   // State
@@ -72,6 +82,9 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
+
+  // NEW: Voice Mode State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   // --- Helper Functions ---
 
@@ -217,7 +230,15 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
   );
 
-  // --- SAVE HANDLER (With Encryption) ---
+  // --- VOICE HANDLER ---
+  const handleAudioComplete = (result: AudioAnalysisResult) => {
+      setNewEntry(prev => (prev ? prev + "\n\n" + result.transcription : result.transcription));
+      setMood(result.mood_score);
+      setTags(prev => [...new Set([...prev, ...result.tags, "Voice Note"])]);
+      setIsVoiceMode(false);
+  };
+
+  // --- SAVE HANDLER ---
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !db) return;
@@ -298,7 +319,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
              {/* LEFT: Weather Widget */}
              <div>
                  {weather ? (
-                   <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
                       <span>{weather.condition}</span>
                       <span className="font-bold">{weather.temp}°C</span>
                       {!initialEntry && (
@@ -306,7 +327,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                               <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
                           </button>
                       )}
-                   </div>
+                    </div>
                 ) : (
                     !initialEntry && (
                         <button 
@@ -362,136 +383,157 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
              </div>
         </div>
         
-        <form onSubmit={handleSave} className="p-4 space-y-4">
-          
-          {/* EDITOR AREA */}
-          {activeTemplate ? (
-             <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
-                    <button 
-                        type="button" 
-                        onClick={() => setActiveTemplate(null)}
-                        className="text-xs text-blue-500 hover:text-blue-700 underline"
+        {/* VOICE MODE OVERLAY */}
+        {isVoiceMode ? (
+            <div className="p-6">
+                <AudioRecorder 
+                    onAnalysisComplete={handleAudioComplete}
+                    onCancel={() => setIsVoiceMode(false)}
+                />
+            </div>
+        ) : (
+            <form onSubmit={handleSave} className="p-4 space-y-4">
+            
+            {/* EDITOR AREA */}
+            {activeTemplate ? (
+                <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
+                        <button 
+                            type="button" 
+                            onClick={() => setActiveTemplate(null)}
+                            className="text-xs text-blue-500 hover:text-blue-700 underline"
+                        >
+                            Switch to Text Mode
+                        </button>
+                    </div>
+                    
+                    {activeTemplate.prompts.map((prompt, idx) => (
+                        <div key={idx}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
+                            <textarea
+                                rows={4} 
+                                value={formAnswers[idx] || ''}
+                                onChange={(e) => {
+                                    const newAns = [...formAnswers];
+                                    newAns[idx] = e.target.value;
+                                    setFormAnswers(newAns);
+                                }}
+                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                placeholder="Type your answer..."
+                            />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="relative">
+                    <textarea
+                        value={newEntry}
+                        onChange={(e) => setNewEntry(e.target.value)}
+                        placeholder="How are you feeling today?"
+                        className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed font-mono"
+                    />
+                    {/* Floating Voice Button */}
+                    <button
+                        type="button"
+                        onClick={() => setIsVoiceMode(true)}
+                        className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-lg transition-all active:scale-95 group"
+                        title="Voice Note"
                     >
-                        Switch to Text Mode
+                        <MicrophoneIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
                     </button>
                 </div>
-                
-                {activeTemplate.prompts.map((prompt, idx) => (
-                    <div key={idx}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
-                        <textarea
-                            rows={4} 
-                            value={formAnswers[idx] || ''}
-                            onChange={(e) => {
-                                const newAns = [...formAnswers];
-                                newAns[idx] = e.target.value;
-                                setFormAnswers(newAns);
-                            }}
-                            className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            placeholder="Type your answer..."
-                        />
-                    </div>
-                ))}
-             </div>
-          ) : (
-            <textarea
-                value={newEntry}
-                onChange={(e) => setNewEntry(e.target.value)}
-                placeholder="How are you feeling today?"
-                className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed font-mono"
-            />
-          )}
+            )}
 
-          {/* MOOD SLIDER */}
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-             <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">Mood Score</label>
-                <span className={`text-sm font-bold px-2 py-0.5 rounded ${mood >= 7 ? 'text-green-700 bg-green-100' : mood <= 4 ? 'text-red-700 bg-red-100' : 'text-yellow-700 bg-yellow-100'}`}>
-                    {mood}/10
-                </span>
-             </div>
-             <input 
-                 type="range" 
-                 min="1" 
-                 max="10" 
-                 value={mood}
-                 onChange={(e) => setMood(Number(e.target.value))}
-                 className="w-full accent-blue-600 cursor-pointer"
-             />
-             <div className="flex justify-between text-xs text-gray-400 mt-1">
-                 <span>Struggling</span>
-                 <span>Neutral</span>
-                 <span>Thriving</span>
-             </div>
-          </div>
-
-          {/* FOOTER */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            
-            {/* TAG INPUT */}
-            <div className="relative group w-full sm:flex-1">
-                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                    <TagIcon className="h-4 w-4 text-gray-400" />
-                    
-                    {tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
-                            {tag}
-                            <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                                <XMarkIcon className="h-3 w-3" />
-                            </button>
-                        </span>
-                    ))}
-
-                    <input 
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => {
-                            setTagInput(e.target.value);
-                            setShowSuggestions(true);
-                        }}
-                        onKeyDown={handleAddTag}
-                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                        placeholder={tags.length === 0 ? "Add tags (e.g. Grateful)..." : ""}
-                        className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
-                    />
+            {/* MOOD SLIDER */}
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">Mood Score</label>
+                    <span className={`text-sm font-bold px-2 py-0.5 rounded ${mood >= 7 ? 'text-green-700 bg-green-100' : mood <= 4 ? 'text-red-700 bg-red-100' : 'text-yellow-700 bg-yellow-100'}`}>
+                        {mood}/10
+                    </span>
                 </div>
-
-                {/* Autocomplete Suggestions */}
-                {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
-                    <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
-                        {filteredSuggestions.map(tag => (
-                            <button
-                                key={tag}
-                                type="button"
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                                onClick={() => addTag(tag)}
-                            >
-                                {tag}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                <input 
+                    type="range" 
+                    min="1" 
+                    max="10" 
+                    value={mood}
+                    onChange={(e) => setMood(Number(e.target.value))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>Struggling</span>
+                    <span>Neutral</span>
+                    <span>Thriving</span>
+                </div>
             </div>
 
-            {/* Save Button */}
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
-            >
-              {saving ? (
-                <span>Saving...</span>
-              ) : (
-                <>
-                  <PlusIcon className="h-5 w-5" />
-                  <span>{initialEntry ? 'Update Entry' : 'Save Entry'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+            {/* FOOTER */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                
+                {/* TAG INPUT */}
+                <div className="relative group w-full sm:flex-1">
+                    <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                        <TagIcon className="h-4 w-4 text-gray-400" />
+                        
+                        {tags.map(tag => (
+                            <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                                {tag}
+                                <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                    <XMarkIcon className="h-3 w-3" />
+                                </button>
+                            </span>
+                        ))}
+
+                        <input 
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => {
+                                setTagInput(e.target.value);
+                                setShowSuggestions(true);
+                            }}
+                            onKeyDown={handleAddTag}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            placeholder={tags.length === 0 ? "Add tags (e.g. Grateful)..." : ""}
+                            className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
+                        />
+                    </div>
+
+                    {/* Autocomplete Suggestions */}
+                    {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                        <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
+                            {filteredSuggestions.map(tag => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                    onClick={() => addTag(tag)}
+                                >
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Save Button */}
+                <button
+                type="submit"
+                disabled={saving}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                >
+                {saving ? (
+                    <span>Saving...</span>
+                ) : (
+                    <>
+                    <PlusIcon className="h-5 w-5" />
+                    <span>{initialEntry ? 'Update Entry' : 'Save Entry'}</span>
+                    </>
+                )}
+                </button>
+            </div>
+            </form>
+        )}
+    </div>
   );
 }
