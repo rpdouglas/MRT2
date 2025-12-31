@@ -223,10 +223,14 @@ export default function Dashboard() {
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.journal.streak}</div>
-                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide">Day Streak</div> {/* Increased */}
+                    {/* MOVED: Title to right of value */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                        <div className="text-3xl font-black">{stats.journal.streak}</div>
+                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Days</div>
+                    </div>
+                    
                     <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Consistency</span> {/* Increased */}
+                        <span className="text-xs opacity-75">Consistency</span>
                         <span className="text-xs font-bold">{stats.journal.consistency}/wk</span>
                     </div>
                 </div>
@@ -244,10 +248,14 @@ export default function Dashboard() {
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.task.fire}</div>
-                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide">Quest Fire</div> {/* Increased */}
+                    {/* MOVED: Title to right of value */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                        <div className="text-3xl font-black">{stats.task.fire}</div>
+                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Fire</div>
+                    </div>
+
                     <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Rate</span> {/* Increased */}
+                        <span className="text-xs opacity-75">Rate</span>
                         <span className="text-xs font-bold">{stats.task.rate}%</span>
                     </div>
                 </div>
@@ -265,10 +273,14 @@ export default function Dashboard() {
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.vitality.bioStreak}</div>
-                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide">Bio-Rhythm</div> {/* Increased */}
+                    {/* MOVED: Title to right of value */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
+                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
+                    </div>
+
                     <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Total Logs</span> {/* Increased */}
+                        <span className="text-xs opacity-75">Total Logs</span>
                         <span className="text-xs font-bold">{stats.vitality.totalLogs}</span>
                     </div>
                 </div>
@@ -286,10 +298,14 @@ export default function Dashboard() {
                         </div>
                         <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.workbook.completion}%</div>
-                    <div className="text-xs font-medium opacity-80 uppercase tracking-wide">Mastery</div> {/* Increased */}
+                    {/* MOVED: Title to right of value */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
+                        <div className="text-sm font-bold opacity-80 uppercase tracking-wide">Done</div>
+                    </div>
+
                     <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-xs opacity-75">Score</span> {/* Increased */}
+                        <span className="text-xs opacity-75">Score</span>
                         <span className="text-xs font-bold">{stats.workbook.wisdom}</span>
                     </div>
                 </div>
@@ -300,4 +316,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
