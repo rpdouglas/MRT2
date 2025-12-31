@@ -18,7 +18,6 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
     }, [date]);
 
     // 2. Select Random Slogan (Lazy State Initialization)
-    // This runs only once on mount, satisfying React purity rules.
     const [slogan] = useState(() => {
         const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
         return RECOVERY_SLOGANS[randomIndex];
@@ -40,35 +39,37 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
-                {/* Header: Random Slogan */}
+                {/* Header: Random Slogan (Increased Size) */}
                 <div className="flex justify-center items-center mb-3">
-                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                        <TrophyIcon className="h-4 w-4 text-yellow-300" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                        <TrophyIcon className="h-5 w-5 text-yellow-300" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-white">
                             {slogan}
                         </span>
                     </div>
                 </div>
 
-                {/* Main Counters: Years / Months / Days */}
+                {/* Main Counters */}
                 <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/20">
                     <div className="px-2">
+                        {/* Value Unchanged */}
                         <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.years}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-70 mt-1">Years</div>
+                        {/* Title Increased */}
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Years</div>
                     </div>
                     <div className="px-2">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.months}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-70 mt-1">Months</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Months</div>
                     </div>
                     <div className="px-2">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.days}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-70 mt-1">Days</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Days</div>
                     </div>
                 </div>
 
-                {/* Footer: Total Days */}
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-blue-100/80 font-medium">
-                    <CalendarDaysIcon className="h-4 w-4" />
+                {/* Footer: Total Days (Increased Size) */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-blue-100/90 font-medium">
+                    <CalendarDaysIcon className="h-5 w-5" />
                     <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
                 </div>
             </div>
