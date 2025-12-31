@@ -2,8 +2,7 @@
  * src/lib/db.ts
  * GITHUB COMMENT:
  * [db.ts]
- * UPDATED: Added Firestore Data Converter pattern for strict type safety.
- * FEATURE: Generic converter automatically handles Timestamp -> Date transformation.
+ * UPDATED: Added sponsorName and sponsorPhone to UserProfile schema.
  */
 import { 
   doc, 
@@ -27,15 +26,12 @@ import { db } from "./firebase";
 import type { User } from "firebase/auth";
 
 // --- GENERIC CONVERTER ---
-// This helper ensures all data fetched follows the strict TS interfaces
-// and automatically converts Firestore Timestamps to JS Dates.
 export const createConverter = <T extends object>() => ({
   toFirestore(data: WithFieldValue<T>): DocumentData {
     return data;
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): T {
     const data = snapshot.data();
-    // Recursive helper could go here, but for now we handle top-level dates
     const converted = Object.fromEntries(
       Object.entries(data).map(([key, value]) => {
         if (value instanceof Timestamp) {
@@ -59,7 +55,10 @@ export interface UserProfile {
   createdAt: Timestamp;
   lastLogin?: Timestamp;
   lastExportAt?: Timestamp; 
-  role?: 'admin' | 'user';   
+  role?: 'admin' | 'user';
+  // NEW: Support Network Fields
+  sponsorName?: string;
+  sponsorPhone?: string;
 }
 
 export interface JournalTemplate {
@@ -132,7 +131,7 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       sobrietyDate: null, 
       createdAt: Timestamp.now(),
       lastLogin: Timestamp.now(),
-      role: 'user' // Default new users to 'user' role
+      role: 'user'
     };
     await setDoc(userRef, newProfile);
     return newProfile;

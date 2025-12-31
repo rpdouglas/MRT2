@@ -1,7 +1,9 @@
 /**
+ * src/components/AppShell.tsx
  * GITHUB COMMENT:
  * [AppShell.tsx]
- * UPDATED: Added conditional 'Admin' menu item for users with the admin role.
+ * UPDATED: Integrated Offline Indicator and PWA Install Banner.
+ * FEATURES: Visual feedback for network state (Red banner when offline).
  */
 import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -15,7 +17,8 @@ import {
   AcademicCapIcon, 
   HeartIcon, 
   LightBulbIcon,
-  CommandLineIcon
+  CommandLineIcon,
+  WifiIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,9 +30,10 @@ import { fetchAllUserData } from '../lib/db';
 import { prepareDataForExport, generateJSON } from '../lib/exporter';
 import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
+import PWAInstallBanner from './PWAInstallBanner';
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen } = useLayout();
+  const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, isOnline } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
@@ -46,7 +50,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   };
 
   const performAutoBackup = useCallback(async () => {
-    if (!user || !db || !driveAccessToken || !isVaultUnlocked) return;
+    if (!user || !db || !driveAccessToken || !isVaultUnlocked || !isOnline) return;
     const database: Firestore = db;
 
     try {
@@ -75,16 +79,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Auto-backup failed silently:", e);
     }
-  }, [user, driveAccessToken, isVaultUnlocked]);
+  }, [user, driveAccessToken, isVaultUnlocked, isOnline]);
 
   useEffect(() => {
-    if (isVaultUnlocked && driveAccessToken) {
+    if (isVaultUnlocked && driveAccessToken && isOnline) {
       const timer = setTimeout(() => {
         performAutoBackup();
       }, 10000);
       return () => clearTimeout(timer);
     }
-  }, [isVaultUnlocked, driveAccessToken, performAutoBackup]);
+  }, [isVaultUnlocked, driveAccessToken, performAutoBackup, isOnline]);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -96,14 +100,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
-  // ADDED: Conditional Admin Link
   if (isAdmin) {
     navigation.push({ name: 'Admin', href: '/admin', icon: CommandLineIcon });
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+
+      {/* OFFLINE INDICATOR */}
+      {!isOnline && (
+          <div className="bg-red-600 text-white text-xs font-bold text-center py-2 px-4 fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 shadow-md animate-slideDown">
+              <WifiIcon className="h-4 w-4" />
+              <span>You are offline. Data will save locally and sync when connection returns.</span>
+          </div>
+      )}
+
+      {/* PWA INSTALL BANNER */}
+      <PWAInstallBanner />
 
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={setSidebarOpen}>
@@ -157,7 +171,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     
                     <li className="mt-auto">
                       <div className="flex flex-col gap-2 pt-6 border-t border-blue-500/30">
-                         {user && (
+                          {user && (
                              <div className="flex items-center gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-white bg-blue-800/50 border border-blue-700/50">
                                  {user.photoURL ? (
                                      <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700 border-2 border-white/20" />
@@ -165,19 +179,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                      <UserCircleIcon className="h-8 w-8 text-blue-200" />
                                  )}
                                  <div className="flex flex-col truncate">
-                                    <span className="sr-only">Your profile</span>
-                                    <span aria-hidden="true">{user.displayName || 'User'}</span>
-                                    <span className="text-xs text-blue-300 font-normal truncate opacity-80">{user.email}</span>
+                                     <span className="sr-only">Your profile</span>
+                                     <span aria-hidden="true">{user.displayName || 'User'}</span>
+                                     <span className="text-xs text-blue-300 font-normal truncate opacity-80">{user.email}</span>
                                  </div>
                              </div>
-                         )}
-                         <button
-                           onClick={handleLogout}
-                           className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
-                         >
-                           <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                            Log out
-                         </button>
+                          )}
+                          <button
+                            onClick={handleLogout}
+                            className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
+                          >
+                            <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                             Log out
+                          </button>
                       </div>
                     </li>
                   </ul>
@@ -188,7 +202,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </Dialog>
       </Transition.Root>
 
-      <main className="min-h-screen">
+      <main className={`min-h-screen ${!isOnline ? 'pt-10' : ''}`}>
           {children}
       </main>
     </div>

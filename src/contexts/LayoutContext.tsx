@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+/**
+ * src/contexts/LayoutContext.tsx
+ * GITHUB COMMENT:
+ * [LayoutContext.tsx]
+ * NEW: Added 'isOnline' state for Network Resilience.
+ * FEATURES: Automatically detects offline/online status via window event listeners.
+ */
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface LayoutContextType {
   sidebarOpen: boolean;
@@ -7,6 +14,7 @@ interface LayoutContextType {
   setIsSOSOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   toggleSOS: () => void;
+  isOnline: boolean; // NEW
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -23,6 +31,20 @@ export function useLayout() {
 export function LayoutProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSOSOpen, setIsSOSOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+
+      return () => {
+          window.removeEventListener('online', handleOnline);
+          window.removeEventListener('offline', handleOffline);
+      };
+  }, []);
 
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
   const toggleSOS = () => setIsSOSOpen(prev => !prev);
@@ -33,7 +55,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     isSOSOpen,
     setIsSOSOpen,
     toggleSidebar,
-    toggleSOS
+    toggleSOS,
+    isOnline
   };
 
   return (

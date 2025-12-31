@@ -1,18 +1,20 @@
 /**
+ * src/pages/Profile.tsx
  * GITHUB COMMENT:
  * [Profile.tsx]
- * FIXED: TypeScript Error TS2322. Converted native Date object to Firestore Timestamp 
- * before updating profile to match the UserProfile interface.
+ * UPDATED: Added Support Network configuration (Sponsor Name/Phone).
+ * FEATURE: Saves contact info to Firestore for use in SOS Modal.
  */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData } from '../lib/db';
-import { Timestamp } from 'firebase/firestore'; // Added import
+import { Timestamp } from 'firebase/firestore'; 
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
 import { 
   UserCircleIcon, 
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  UserGroupIcon // NEW
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
@@ -25,6 +27,11 @@ export default function Profile() {
   
   const [displayName, setDisplayName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState('');
+  
+  // NEW: Support Network State
+  const [sponsorName, setSponsorName] = useState('');
+  const [sponsorPhone, setSponsorPhone] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -38,6 +45,9 @@ export default function Profile() {
           if (data.sobrietyDate) {
             setSobrietyDate(data.sobrietyDate.toDate().toISOString().split('T')[0]);
           }
+          // Load Sponsor Data
+          setSponsorName(data.sponsorName || '');
+          setSponsorPhone(data.sponsorPhone || '');
         }
         setLoading(false);
       }
@@ -62,17 +72,18 @@ export default function Profile() {
     setMessage(null);
 
     try {
-      // Convert the string input to a Firestore Timestamp
       let sobrietyTimestamp: Timestamp | null = null;
       if (sobrietyDate) {
           const [y, m, d] = sobrietyDate.split('-').map(Number);
           const dateObj = new Date(y, m - 1, d);
-          sobrietyTimestamp = Timestamp.fromDate(dateObj); // FIXED: Convert to Timestamp
+          sobrietyTimestamp = Timestamp.fromDate(dateObj);
       }
       
       await updateProfileData(user.uid, {
         displayName,
-        sobrietyDate: sobrietyTimestamp // Now matches strict interface
+        sobrietyDate: sobrietyTimestamp,
+        sponsorName,  // Save new fields
+        sponsorPhone
       });
 
       setMessage({ type: 'success', text: 'Profile updated successfully' });
@@ -102,25 +113,57 @@ export default function Profile() {
         
         <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
             <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Settings</h3>
+            
+            {/* PERSONAL INFO */}
             <div>
-            <label className="block text-sm font-medium text-gray-700">Display Name</label>
-            <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            />
+                <label className="block text-sm font-medium text-gray-700">Display Name</label>
+                <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
             </div>
 
             <div>
-            <label className="block text-sm font-medium text-gray-700">Sobriety Date</label>
-            <input
-                type="date"
-                value={sobrietyDate}
-                onChange={(e) => setSobrietyDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            />
-            <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
+                <label className="block text-sm font-medium text-gray-700">Sobriety Date</label>
+                <input
+                    type="date"
+                    value={sobrietyDate}
+                    onChange={(e) => setSobrietyDate(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+                <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
+            </div>
+
+            {/* SUPPORT NETWORK SECTION */}
+            <div className="pt-4 border-t border-gray-100">
+                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <UserGroupIcon className="h-4 w-4 text-emerald-600" /> Support Network
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Name</label>
+                        <input
+                            type="text"
+                            placeholder="Sponsor, Therapist, etc."
+                            value={sponsorName}
+                            onChange={(e) => setSponsorName(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
+                        <input
+                            type="tel"
+                            placeholder="+1 555-0199"
+                            value={sponsorPhone}
+                            onChange={(e) => setSponsorPhone(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                        />
+                        <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
+                    </div>
+                </div>
             </div>
 
             {message && (

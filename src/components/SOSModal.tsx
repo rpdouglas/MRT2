@@ -1,13 +1,24 @@
-import { Fragment } from 'react';
+/**
+ * src/components/SOSModal.tsx
+ * GITHUB COMMENT:
+ * [SOSModal.tsx]
+ * FIX: Resolved Firestore type mismatch error by ensuring db is typed as Firestore.
+ */
+import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   PhoneIcon, 
   XMarkIcon, 
-  ExclamationTriangleIcon,
+  ExclamationTriangleIcon, 
   HeartIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  UserGroupIcon,
+  ChatBubbleOvalLeftIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { doc, getDoc, type Firestore } from 'firebase/firestore';
 
 interface SOSModalProps {
   isOpen: boolean;
@@ -15,7 +26,31 @@ interface SOSModalProps {
 }
 
 export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [sponsorName, setSponsorName] = useState<string | null>(null);
+  const [sponsorPhone, setSponsorPhone] = useState<string | null>(null);
+
+  useEffect(() => {
+      if (isOpen && user && db) {
+          const fetchSponsor = async () => {
+              try {
+                  // Explicitly cast db to Firestore to satisfy TS
+                  const database = db as Firestore;
+                  const ref = doc(database, 'users', user.uid);
+                  const snap = await getDoc(ref);
+                  if (snap.exists()) {
+                      const data = snap.data();
+                      setSponsorName(data.sponsorName || null);
+                      setSponsorPhone(data.sponsorPhone || null);
+                  }
+              } catch (e) {
+                  console.error("Failed to load sponsor info", e);
+              }
+          };
+          fetchSponsor();
+      }
+  }, [isOpen, user]);
 
   const handleNavigation = (path: string) => {
     onClose();
@@ -50,7 +85,6 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 border-t-8 border-red-500">
                 
-                {/* Close Button */}
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"
@@ -81,6 +115,32 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                 {/* OPTIONS GRID */}
                 <div className="grid gap-4">
                     
+                    {/* OPTION 0: SPONSOR CONNECT (New Feature) */}
+                    {sponsorPhone && (
+                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                             <h4 className="font-bold text-emerald-900 flex items-center gap-2 mb-2">
+                                <UserGroupIcon className="h-5 w-5" />
+                                {sponsorName ? `Contact ${sponsorName}` : 'Contact Support'}
+                             </h4>
+                             <div className="flex gap-3">
+                                <a 
+                                    href={`tel:${sponsorPhone}`}
+                                    className="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-lg text-center shadow-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <PhoneIcon className="h-4 w-4" /> Call
+                                </a>
+                                <a 
+                                    href={`https://wa.me/${sponsorPhone.replace(/\D/g,'')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex-1 bg-white border border-emerald-200 text-emerald-700 font-bold py-3 rounded-lg text-center shadow-sm hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <ChatBubbleOvalLeftIcon className="h-4 w-4" /> WhatsApp
+                                </a>
+                             </div>
+                        </div>
+                    )}
+
                     {/* OPTION 1: CALL HELP */}
                     <div className="bg-red-50 p-4 rounded-xl border border-red-100">
                         <h4 className="font-bold text-red-900 flex items-center gap-2 mb-2">
@@ -133,7 +193,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
 
                 </div>
 
-                <div className="mt-6 sm:flex sm:flex-row-reverse">
+                <div className="mt-6 sm:flex sm:flex-row-reverse justify-between items-center">
                   <button
                     type="button"
                     className="inline-flex w-full justify-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-200 sm:ml-3 sm:w-auto"
@@ -141,6 +201,14 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                   >
                     Cancel
                   </button>
+                  {!sponsorPhone && (
+                      <button 
+                        onClick={() => handleNavigation('/profile')}
+                        className="mt-2 sm:mt-0 text-xs text-gray-500 hover:text-blue-600 underline"
+                      >
+                          Add Sponsor Contact Info
+                      </button>
+                  )}
                 </div>
 
               </Dialog.Panel>
