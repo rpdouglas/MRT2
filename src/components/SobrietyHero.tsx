@@ -31,19 +31,16 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
-                {/* Header */}
+                {/* Header: Slogan moved here */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                         <TrophyIcon className="h-4 w-4 text-yellow-300" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">Freedom Count</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">One Day at a Time</span>
                     </div>
-                    <div className="text-right opacity-80">
-                        <div className="text-[10px] uppercase font-medium">Total Days</div>
-                        <div className="text-xl font-mono font-bold leading-none">{stats.totalDays.toLocaleString()}</div>
-                    </div>
+                    {/* Top Right is intentionally empty now per design request */}
                 </div>
 
-                {/* Main Counters */}
+                {/* Main Counters: Years / Months / Days */}
                 <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/20">
                     <div className="px-2">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.years}</div>
@@ -59,13 +56,12 @@ export default function SobrietyHero({ date }: SobrietyHeroProps) {
                     </div>
                 </div>
 
-                {/* Footer Note */}
+                {/* Footer: Total Days moved here */}
                 <div className="mt-6 flex items-center justify-center gap-2 text-xs text-blue-100/80 font-medium">
                     <CalendarDaysIcon className="h-4 w-4" />
-                    <span>One Day at a Time</span>
+                    <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
                 </div>
             </div>
         </div>
     );
 }
-
