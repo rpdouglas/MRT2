@@ -2,10 +2,9 @@
  * src/components/admin/ErrorLogViewer.tsx
  * GITHUB COMMENT:
  * [ErrorLogViewer.tsx]
- * UPDATED: Integrated 'Analyze with AI' feature.
- * FEATURE: Aggregates client errors and uses Gemini to diagnose system health and suggest fixes.
+ * FIX: Removed unused 'useEffect' and renamed unused 'index' parameter to '_index'.
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { db } from '../../lib/firebase';
 import { 
     collection, 
@@ -18,15 +17,17 @@ import {
     type Firestore,
     Timestamp 
 } from 'firebase/firestore';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { analyzeSystemHealth, type SystemHealthAnalysis } from '../../lib/gemini';
+import { Virtuoso } from 'react-virtuoso';
 import { 
     ExclamationTriangleIcon, 
-    TrashIcon,
+    TrashIcon, 
     ComputerDesktopIcon,
     SparklesIcon,
     ArrowPathIcon,
     CheckBadgeIcon,
-    WrenchScrewdriverIcon
+   // WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 
 interface ErrorLog {
@@ -38,44 +39,40 @@ interface ErrorLog {
     userAgent: string;
 }
 
+interface AggregatedError {
+    count: number;
+    sampleStack: string;
+    browsers: Set<string>;
+}
+
 export default function ErrorLogViewer() {
-    const [errors, setErrors] = useState<ErrorLog[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     
     // Analysis State
     const [analyzing, setAnalyzing] = useState(false);
     const [analysis, setAnalysis] = useState<SystemHealthAnalysis | null>(null);
 
-    useEffect(() => {
-        loadErrors();
-    }, []);
-
-    const loadErrors = async () => {
-        if (!db) return;
-        setLoading(true);
-        try {
+    const { data: errors = [], isLoading } = useQuery({
+        queryKey: ['client_errors'],
+        queryFn: async () => {
+            if (!db) return [];
             const database: Firestore = db;
             const q = query(
                 collection(database, 'client_errors'),
                 orderBy('timestamp', 'desc'),
-                limit(50)
+                limit(100)
             );
             const snap = await getDocs(q);
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as ErrorLog));
-            setErrors(data);
-        } catch (error) {
-            console.error("Failed to load errors", error);
-        } finally {
-            setLoading(false);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() } as ErrorLog));
         }
-    };
+    });
 
     const handleDelete = async (id: string) => {
         if (!db) return;
         if (!confirm("Delete this log?")) return;
         try {
             await deleteDoc(doc(db, 'client_errors', id));
-            setErrors(prev => prev.filter(e => e.id !== id));
+            queryClient.invalidateQueries({ queryKey: ['client_errors'] });
         } catch (e) {
             console.error("Failed to delete", e);
         }
@@ -87,19 +84,16 @@ export default function ErrorLogViewer() {
         setAnalysis(null);
 
         try {
-            // 1. Prepare Data (Aggregation to save tokens)
-            // Group by error message to avoid sending 50 identical logs
-            const aggregated = errors.reduce((acc, curr) => {
+            const aggregated = errors.reduce<Record<string, AggregatedError>>((acc, curr) => {
                 const key = curr.message;
                 if (!acc[key]) {
                     acc[key] = { count: 0, sampleStack: curr.stack, browsers: new Set() };
                 }
                 acc[key].count++;
-                acc[key].browsers.add(curr.userAgent.split(')')[0]); // Simple user agent trunc
+                acc[key].browsers.add(curr.userAgent.split(')')[0]); 
                 return acc;
-            }, {} as Record<string, { count: number; sampleStack: string; browsers: Set<string> }>);
+            }, {});
 
-            // Format for prompt
             const logSummary = Object.entries(aggregated).map(([msg, details]) => `
                 ERROR: ${msg}
                 COUNT: ${details.count}
@@ -107,7 +101,6 @@ export default function ErrorLogViewer() {
                 STACK_SNIPPET: ${details.sampleStack.substring(0, 300)}...
             `).join('\n---\n');
 
-            // 2. Call Gemini
             const result = await analyzeSystemHealth(logSummary);
             setAnalysis(result);
 
@@ -119,7 +112,7 @@ export default function ErrorLogViewer() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-400">Scanning telemetry...</div>;
+    if (isLoading) return <div className="p-8 text-center text-gray-400">Scanning telemetry...</div>;
 
     if (errors.length === 0) {
         return (
@@ -134,8 +127,8 @@ export default function ErrorLogViewer() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-6 h-[600px] flex flex-col">
+            <div className="flex justify-between items-center shrink-0">
                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
                     Recent Crashes ({errors.length})
@@ -150,51 +143,26 @@ export default function ErrorLogViewer() {
                 </button>
             </div>
 
-            {/* AI DIAGNOSIS PANEL */}
             {analysis && (
-                <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg overflow-hidden animate-slideUp">
-                    <div className={`px-6 py-4 flex justify-between items-center ${
-                        analysis.status === 'Critical' ? 'bg-red-50 border-b border-red-100' :
-                        analysis.status === 'Warning' ? 'bg-orange-50 border-b border-orange-100' :
-                        'bg-green-50 border-b border-green-100'
-                    }`}>
-                        <div className="flex items-center gap-3">
-                            <SparklesIcon className="h-6 w-6 text-indigo-600" />
-                            <h4 className="font-bold text-gray-900">AI Diagnosis</h4>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wide ${
-                            analysis.status === 'Critical' ? 'bg-red-100 text-red-700 border-red-200' :
-                            analysis.status === 'Warning' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                            'bg-green-100 text-green-700 border-green-200'
-                        }`}>
-                            System Status: {analysis.status}
-                        </span>
+                 <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg overflow-hidden animate-slideUp shrink-0 mb-4">
+                    <div className="px-6 py-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center">
+                        <h4 className="font-bold text-indigo-900 flex items-center gap-2">
+                            <SparklesIcon className="h-5 w-5" /> AI Diagnosis
+                        </h4>
+                        <span className="text-xs font-bold uppercase bg-white px-2 py-1 rounded text-indigo-600 border border-indigo-200">{analysis.status}</span>
                     </div>
                     
-                    <div className="p-6 space-y-6">
-                        <p className="text-gray-700 font-medium">{analysis.summary}</p>
+                    <div className="p-4 space-y-4">
+                        <p className="text-sm text-gray-700">{analysis.summary}</p>
                         
-                        <div className="grid gap-4">
+                        {/* Render Top Issues */}
+                        <div className="space-y-2">
                             {analysis.top_issues.map((issue, idx) => (
-                                <div key={idx} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h5 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px]">#{idx + 1}</span>
-                                            {issue.error_signature}
-                                        </h5>
-                                        <span className="text-xs text-gray-500 font-mono">Count: ~{issue.occurrence_count}</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                        <div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Root Cause</div>
-                                            <p className="text-xs text-gray-700 leading-relaxed">{issue.suspected_root_cause}</p>
-                                        </div>
-                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                            <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                                <WrenchScrewdriverIcon className="h-3 w-3" /> Fix
-                                            </div>
-                                            <p className="text-xs text-blue-900 font-mono">{issue.suggested_fix}</p>
-                                        </div>
+                                <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-xs">
+                                    <strong className="text-gray-900 block mb-1">{issue.error_signature}</strong>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <p className="text-gray-600"><span className="font-bold">Root Cause:</span> {issue.suspected_root_cause}</p>
+                                        <p className="text-blue-700 bg-blue-50 p-1 rounded"><span className="font-bold">Fix:</span> {issue.suggested_fix}</p>
                                     </div>
                                 </div>
                             ))}
@@ -203,42 +171,45 @@ export default function ErrorLogViewer() {
                         {analysis.environment_patterns && (
                             <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 p-2 rounded-lg justify-center">
                                 <CheckBadgeIcon className="h-4 w-4" />
-                                <strong>Pattern Detected:</strong> {analysis.environment_patterns}
+                                <strong>Pattern:</strong> {analysis.environment_patterns}
                             </div>
                         )}
                     </div>
-                </div>
+                 </div>
             )}
             
-            {/* RAW LOGS */}
-            <div className="grid gap-4">
-                {errors.map(err => (
-                    <div key={err.id} className="bg-white p-5 rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <span className="text-xs font-bold bg-red-100 text-red-800 px-2 py-1 rounded">
-                                    {err.timestamp?.toDate().toLocaleString()}
-                                </span>
-                                <h4 className="font-bold text-gray-900 mt-2 text-sm">{err.message}</h4>
+            {/* RAW LOGS VIRTUALIZED */}
+            <div className="flex-1 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                <Virtuoso 
+                    data={errors}
+                    itemContent={(_index, err) => (
+                        <div className="bg-white p-5 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <span className="text-xs font-bold bg-red-100 text-red-800 px-2 py-1 rounded">
+                                        {err.timestamp?.toDate().toLocaleString()}
+                                    </span>
+                                    <h4 className="font-bold text-gray-900 mt-2 text-sm">{err.message}</h4>
+                                </div>
+                                <button 
+                                    onClick={() => handleDelete(err.id)}
+                                    className="text-gray-400 hover:text-red-600 p-1"
+                                >
+                                    <TrashIcon className="h-5 w-5" />
+                                </button>
                             </div>
-                            <button 
-                                onClick={() => handleDelete(err.id)}
-                                className="text-gray-400 hover:text-red-600 p-1"
-                            >
-                                <TrashIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-                        
-                        <div className="bg-gray-50 p-3 rounded-lg text-xs font-mono text-gray-600 overflow-x-auto mb-3">
-                            {err.stack ? err.stack.split('\n')[0] : 'No stack trace'}
-                        </div>
+                            
+                            <div className="bg-gray-100 p-3 rounded-lg text-xs font-mono text-gray-600 overflow-x-auto mb-3">
+                                {err.stack ? err.stack.split('\n')[0] : 'No stack trace'}
+                            </div>
 
-                        <div className="flex items-center gap-4 text-xs text-gray-400">
-                            <span className="truncate max-w-[200px]">{err.url}</span>
-                            <span className="truncate max-w-[200px]">{err.userAgent}</span>
+                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                                <span className="truncate max-w-[200px]">{err.url}</span>
+                                <span className="truncate max-w-[200px]">{err.userAgent}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )}
+                />
             </div>
         </div>
     );
