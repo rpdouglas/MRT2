@@ -2,10 +2,12 @@
  * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * UPDATED: Deep Pattern prompt set to 90 days.
- * MAINTAINED: Deep Pattern JSON structure preserved (no schema changes).
+ * UPDATED: Integrated Usage Logging.
+ * FEATURE: Captures 'usageMetadata' from Gemini response and dispatches to analytics service.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { auth } from './firebase'; // To capture current user for logging
+import { logAIUsage } from './analytics';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
@@ -57,7 +59,7 @@ export interface WorkbookAnalysisResult {
     suggested_actions: string[];
 }
 
-// [NEW] Deep Pattern Recognition Interface
+// Deep Pattern Recognition Interface
 export interface DeepPatternResult {
     core_triggers: string[];
     emotional_velocity: string; 
@@ -68,7 +70,7 @@ export interface DeepPatternResult {
 }
 
 // --- Core Helper: Smart Cascade Generation ---
-async function generateWithCascade(prompt: string, specificModel?: string): Promise<string> {
+async function generateWithCascade(prompt: string, contextTag: string, specificModel?: string): Promise<string> {
     const modelsToTry = specificModel 
         ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
         : MODEL_CASCADE;
@@ -80,7 +82,7 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
         
         try {
             if (import.meta.env.DEV) {
-             
+                
                 console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
@@ -94,6 +96,11 @@ async function generateWithCascade(prompt: string, specificModel?: string): Prom
             const text = response.text();
             
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
+            
+            // --- LOGGING ---
+            const uid = auth?.currentUser?.uid || 'anonymous';
+            logAIUsage(uid, currentModelName, contextTag, response.usageMetadata);
+            // ----------------
             
             return text;
 
@@ -139,7 +146,7 @@ export async function generateDeepPatternAnalysis(
     `;
 
     // Force usage of Gemini 2.5 Pro for deep reasoning capabilities
-    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as DeepPatternResult;
 }
 
@@ -187,7 +194,7 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithCascade(systemPrompt + promptContext);
+    const text = await generateWithCascade(systemPrompt + promptContext, `comparative_analysis_${scope}`);
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
@@ -207,7 +214,7 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       Return ONLY raw JSON.
     `;
     
-    const text = await generateWithCascade(prompt);
+    const text = await generateWithCascade(prompt, 'journal_analysis');
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
@@ -240,7 +247,7 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithCascade(prompt, 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'workbook_analysis', 'gemini-2.5-pro');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
@@ -258,5 +265,5 @@ export async function getGeminiCoaching(
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
     
-    return await generateWithCascade(prompt);
+    return await generateWithCascade(prompt, 'workbook_coach');
 }

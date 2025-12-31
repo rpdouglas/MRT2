@@ -19,10 +19,15 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
+    // Checks if the user has the 'admin' role in their profile
+    function isAdmin() {
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // --- COLLECTION RULES ---
 
     // 1. User Profiles & Subcollections 
-    // Covers: /users/{uid} AND /users/{uid}/workbook_answers/{answerId}
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
@@ -39,10 +44,18 @@ service cloud.firestore {
       allow read, update, delete: if isResourceOwner();
     }
 
-    // 4. Insights / Wisdom Log (Root Collection) - NEW in v3.3
+    // 4. Insights / Wisdom Log (Root Collection)
     match /insights/{insightId} {
       allow create: if isCreatingOwnedResource();
       allow read, update, delete: if isResourceOwner();
+    }
+
+    // 5. AI Analytics Logs (NEW)
+    match /ai_logs/{logId} {
+      // Any authenticated user can generate a log (usage happens on their behalf)
+      allow create: if request.auth != null;
+      // Only admins can read the aggregated logs
+      allow read: if isAdmin();
     }
   }
 }
