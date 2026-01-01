@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2025-12-31T16:51:00.770Z
+PROJECT EXPORT - 2026-01-01T22:39:52.031Z
 ENVIRONMENT: PRODUCTION_READY_V4.8 (Architectural Edition)
 NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 
@@ -34,6 +34,7 @@ NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 ├── Logo.png:Zone.Identifier
 ├── README.md
 ├── check_models.js
+├── docs
 ├── eslint.config.js
 ├── firebase.json
 ├── firestore.indexes.json
@@ -78,6 +79,7 @@ NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 │   │   ├── RecoveryHero.tsx
 │   │   ├── SOSModal.tsx
 │   │   ├── SobrietyCounter.tsx
+│   │   ├── SobrietyHero.tsx
 │   │   ├── VaultGate.tsx
 │   │   ├── VersionBadge.tsx
 │   │   ├── VibrantHeader.tsx
@@ -104,6 +106,7 @@ NOTE: Includes Source Code, CI/CD Workflows, and Documentation.
 │   │   ├── EncryptionContext.tsx
 │   │   └── LayoutContext.tsx
 │   ├── data
+│   │   ├── slogans.ts
 │   │   └── workbooks.ts
 │   ├── hooks
 │   │   └── useDeepPatternAnalysis.ts
@@ -204,7 +207,7 @@ jobs:
         id: versioning
         run: node scripts/increment-version.cjs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           # GH_PAT: ${{ secrets.GH_PAT }} 
@@ -604,6 +607,7 @@ export default defineConfig([
 --- END_FILE: README.md ---
 
 --- START_FILE: firestore.rules ---
+// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -625,23 +629,25 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
-    // Checks if the user has the 'admin' role in their profile
+    // UPDATED: Checks DB role OR hardcoded email (Matches AuthContext)
     function isAdmin() {
-      return request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return request.auth != null && (
+        // Option A: Hardcoded Super Admin (Emergency Access)
+        request.auth.token.email == 'rpdouglas@gmail.com' || 
+        // Option B: Database Role
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
     // --- COLLECTION RULES ---
 
     // 1. User Profiles (Root Document Only)
-    // Admins can read/write PROFILES (Metadata, Roles), but NOT subcollections
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
 
     // 1b. User Subcollections (The Vault)
-    // Covers: /users/{uid}/workbook_answers, /users/{uid}/templates, etc.
-    // STRICTLY OWNER ONLY - Admins cannot peek here
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
@@ -670,9 +676,8 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // 6. Client Error Logs (NEW)
+    // 6. Client Error Logs
     match /client_errors/{errorId} {
-      // Any user (even unauthenticated if logic permits, but let's stick to auth) can report a crash
       allow create: if request.auth != null; 
       allow read, delete: if isAdmin();
     }
@@ -2748,6 +2753,87 @@ export default function SobrietyCounter({ sobrietyDate }: SobrietyCounterProps) 
   );
 }
 --- END_FILE: src/components/SobrietyCounter.tsx ---
+
+--- START_FILE: src/components/SobrietyHero.tsx ---
+// src/components/SobrietyHero.tsx
+import { useMemo, useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
+import { TrophyIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { RECOVERY_SLOGANS } from '../data/slogans';
+
+interface SobrietyHeroProps {
+    date?: Timestamp | Date | null;
+}
+
+export default function SobrietyHero({ date }: SobrietyHeroProps) {
+    // 1. Calculate Time Stats
+    const stats = useMemo(() => {
+        if (!date) return null;
+        const startDate = date instanceof Date ? date : date.toDate();
+        return calculateSobrietyDuration(startDate);
+    }, [date]);
+
+    // 2. Select Random Slogan (Lazy State Initialization)
+    const [slogan] = useState(() => {
+        const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
+        return RECOVERY_SLOGANS[randomIndex];
+    });
+
+    if (!stats) {
+        return (
+            <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-6 text-center text-white shadow-xl border border-white/20">
+                <div className="opacity-80 mb-2 font-bold uppercase tracking-widest text-xs">Begin the Journey</div>
+                <p className="text-sm">Set your sobriety date in Profile to track your freedom.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2rem] p-4 sm:p-6 text-white shadow-xl relative overflow-hidden group border border-white/10">
+            {/* Dynamic Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
+
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                {/* Header: Random Slogan (Increased Size) */}
+                <div className="flex justify-center items-center mb-3">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                        <TrophyIcon className="h-5 w-5 text-yellow-300" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-white">
+                            {slogan}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Main Counters */}
+                <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/20">
+                    <div className="px-2">
+                        {/* Value Unchanged */}
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.years}</div>
+                        {/* Title Increased */}
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Years</div>
+                    </div>
+                    <div className="px-2">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.months}</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Months</div>
+                    </div>
+                    <div className="px-2">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight">{stats.days}</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-70 mt-1">Days</div>
+                    </div>
+                </div>
+
+                {/* Footer: Total Days (Increased Size) */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-blue-100/90 font-medium">
+                    <CalendarDaysIcon className="h-5 w-5" />
+                    <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                </div>
+            </div>
+        </div>
+    );
+}
+--- END_FILE: src/components/SobrietyHero.tsx ---
 
 --- START_FILE: src/components/VaultGate.tsx ---
 /**
@@ -6900,6 +6986,70 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
 }
 --- END_FILE: src/contexts/LayoutContext.tsx ---
 
+--- START_FILE: src/data/slogans.ts ---
+// src/data/slogans.ts
+
+export const RECOVERY_SLOGANS = [
+    // 12-Step Classics (AA/NA/CA)
+    "One Day at a Time",
+    "Easy Does It",
+    "First Things First",
+    "Keep It Simple",
+    "Let Go and Let God",
+    "Live and Let Live",
+    "Progress Not Perfection",
+    "This Too Shall Pass",
+    "Just For Today",
+    "One Step at a Time",
+    "To Thine Own Self Be True",
+    "Nothing Changes if Nothing Changes",
+    "Faith Without Works is Dead",
+    "Meeting Makers Make It",
+    "Keep Coming Back",
+    "It Works If You Work It",
+    "We Do Recover",
+    "Principles Before Personalities",
+    "Don't Quit Before the Miracle",
+    "Sobriety is a Journey, Not a Destination",
+    "Acceptance is the Answer",
+    "Feelings Aren't Facts",
+    "Halting the Chaos",
+    "Let It Begin With Me",
+    "Expect Miracles",
+    "But for the Grace of God",
+    "Surrender to Win",
+    "Trust the Process",
+    "Don't Pick Up, No Matter What",
+    "Suit Up and Show Up",
+
+    // Recovery Dharma / Buddhist Inspired
+    "Pain is Inevitable, Suffering is Optional",
+    "Be Here Now",
+    "Observe, Don't React",
+    "Compassion for Self and Others",
+    "The Path is the Goal",
+    "Begin Again",
+    "Breathe Through It",
+    "Everything is Impermanent",
+    "Awaken the Heart",
+    "Refuge in the Sangha",
+    "Kindness is the Way",
+    "Letting Go is Freedom",
+    "Present Moment, Wonderful Moment",
+    
+    // Secular / Stoic / General Motivation
+    "Resilience is Key",
+    "Discipline is Freedom",
+    "Choose Life",
+    "Your Past Does Not Define You",
+    "Courage to Change",
+    "Freedom from Bondage",
+    "Healing is Linear... Until it's Not",
+    "You Are Not Alone",
+    "Stay in the Solution"
+];
+--- END_FILE: src/data/slogans.ts ---
+
 --- START_FILE: src/data/workbooks.ts ---
 // src/data/workbooks.ts
 
@@ -7869,6 +8019,14 @@ export function isVaultUnlocked(): boolean {
 
 --- START_FILE: src/lib/dateUtils.ts ---
 // src/lib/dateUtils.ts
+import { 
+    addMonths, 
+    addYears, 
+    differenceInDays, 
+    differenceInMonths, 
+    differenceInYears,
+    startOfDay
+} from 'date-fns';
 
 export type RecurrenceType = 'once' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'monthly-relative';
 
@@ -7879,6 +8037,38 @@ export interface RecurrenceConfig {
   dayOfMonth?: number; // 1-31 (for monthly)
   weekOfMonth?: number; // 1 (1st), 2 (2nd), ... 5 (Last) (for monthly-relative)
   dayOfWeek?: number; // 0-6 (for monthly-relative)
+}
+
+export interface SobrietyDuration {
+    years: number;
+    months: number;
+    days: number;
+    totalDays: number;
+}
+
+/**
+ * Calculates the breakdown of time since a sobriety date.
+ * Returns accurate Years, Months, and remaining Days.
+ */
+export function calculateSobrietyDuration(startDate: Date): SobrietyDuration {
+    const now = startOfDay(new Date());
+    const start = startOfDay(startDate);
+
+    // Prevent negative calculations if date is in future
+    if (start > now) {
+        return { years: 0, months: 0, days: 0, totalDays: 0 };
+    }
+
+    const totalDays = differenceInDays(now, start);
+    const years = differenceInYears(now, start);
+    
+    const dateAfterYears = addYears(start, years);
+    const months = differenceInMonths(now, dateAfterYears);
+    
+    const dateAfterMonths = addMonths(dateAfterYears, months);
+    const days = differenceInDays(now, dateAfterMonths);
+
+    return { years, months, days, totalDays };
 }
 
 /**
@@ -7905,7 +8095,7 @@ export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): 
       nextDate.setDate(nextDate.getDate() + 14);
       break;
 
-    case 'monthly': { // FIX: Added block scope braces
+    case 'monthly': {
       // Add 1 month, try to keep same day
       const currentDay = nextDate.getDate();
       nextDate.setMonth(nextDate.getMonth() + 1);
@@ -7939,7 +8129,6 @@ export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): 
               nextDate.setDate(nextDate.getDate() - subtractDays);
           } else {
               // Logic for "Nth X of month"
-              // FIX: Changed let to const
               const currentDow = nextDate.getDay();
               const daysToAdd = (targetDay - currentDow + 7) % 7;
               nextDate.setDate(nextDate.getDate() + daysToAdd);
@@ -7975,6 +8164,8 @@ export function getRecurrenceLabel(config: RecurrenceConfig): string {
         default: return 'Recurring';
     }
 }
+
+
 --- END_FILE: src/lib/dateUtils.ts ---
 
 --- START_FILE: src/lib/db.ts ---
@@ -10345,13 +10536,7 @@ export default function AdminDashboard() {
 --- END_FILE: src/pages/AdminDashboard.tsx ---
 
 --- START_FILE: src/pages/Dashboard.tsx ---
-/**
- * src/pages/Dashboard.tsx
- * GITHUB COMMENT:
- * [Dashboard.tsx]
- * FIX: Resolved impure function error by disabling strict purity check for Date.now().
- * REASON: We need the current time to calculate backup status; this is a valid use case.
- */
+// src/pages/Dashboard.tsx
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -10376,14 +10561,14 @@ import {
   calculateUserLevel
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
+import SobrietyHero from '../components/SobrietyHero'; // IMPORTED
 import { 
   HomeIcon, 
   FireIcon, 
   ChartBarIcon, 
   SparklesIcon, 
   HeartIcon, 
-  ArrowDownTrayIcon,
-  TrophyIcon
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 
@@ -10455,7 +10640,7 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
-    // Days Clean
+    // Sobriety date is now passed directly to the component, so we don't need manual calc here for display
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
@@ -10480,7 +10665,6 @@ export default function Dashboard() {
     const showBackup = !lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000);
 
     return {
-        daysClean,
         journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
         task: { rate: tStats.completionRate, fire: tStats.habitFire },
         workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
@@ -10560,105 +10744,107 @@ export default function Dashboard() {
         )}
 
         {/* HERO CARD: Clean Time */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-950 rounded-[2rem] p-8 text-center relative overflow-hidden shadow-xl border border-slate-700 group">
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-            <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
-            
-            <div className="relative z-10">
-                <div className="flex items-center justify-center gap-2 mb-2 opacity-60">
-                    <TrophyIcon className="h-4 w-4 text-yellow-400" />
-                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">Freedom Count</span>
-                </div>
-                <div className="text-7xl font-black text-white tracking-tighter drop-shadow-2xl mb-1">
-                    {stats.daysClean}
-                </div>
-                <div className="text-sm font-medium text-slate-400">Days of Sobriety</div>
-            </div>
-        </div>
+        <SobrietyHero date={userProfile?.sobrietyDate} />
 
         {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
             
             {/* 1. JOURNAL (Indigo/Violet) */}
-            <Link to="/journal" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <ChartBarIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <ChartBarIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <ChartBarIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Journal</span>
+                        {/* Title increased to text-sm */}
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.journal.streak}</div>
-                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Day Streak</div>
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-[10px] opacity-75">Consistency</span>
-                        <span className="text-xs font-bold">{stats.journal.consistency}/wk</span>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        {/* Main Value unchanged */}
+                        <div className="text-3xl font-black">{stats.journal.streak}</div>
+                        {/* Main Label increased to text-base */}
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        {/* Bottom Row increased to text-base */}
+                        <span className="text-base font-bold opacity-75">Consistency</span>
+                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
                     </div>
                 </div>
             </Link>
 
             {/* 2. HABITS (Cyan/Teal) */}
-            <Link to="/tasks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <FireIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <FireIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <FireIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Quests</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Quests</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.task.fire}</div>
-                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Quest Fire</div>
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-[10px] opacity-75">Rate</span>
-                        <span className="text-xs font-bold">{stats.task.rate}%</span>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.task.fire}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Rate</span>
+                        <span className="text-base font-bold">{stats.task.rate}%</span>
                     </div>
                 </div>
             </Link>
 
             {/* 3. VITALITY (Orange/Rose) */}
-            <Link to="/vitality" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <HeartIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <HeartIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <HeartIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Vitality</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.vitality.bioStreak}</div>
-                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Bio-Rhythm</div>
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-[10px] opacity-75">Total Logs</span>
-                        <span className="text-xs font-bold">{stats.vitality.totalLogs}</span>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Logs</span>
+                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
                     </div>
                 </div>
             </Link>
 
             {/* 4. WISDOM (Emerald/Lime) */}
-            <Link to="/workbooks" className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
+            <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <SparklesIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                            <SparklesIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <SparklesIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Wisdom</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">{stats.workbook.completion}%</div>
-                    <div className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Mastery</div>
-                    <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-[10px] opacity-75">Score</span>
-                        <span className="text-xs font-bold">{stats.workbook.wisdom}</span>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Score</span>
+                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
                     </div>
                 </div>
             </Link>

@@ -2,14 +2,24 @@
  * src/components/journal/JournalHistory.tsx
  * GITHUB COMMENT:
  * [JournalHistory.tsx]
- * FIX: Resolved strict type mismatches and unused variables.
- * PERFORMANCE: Maintained Virtuoso implementation.
+ * FEATURE: Added Weather visualization to journal entries.
+ * UPDATE: Implemented icon mapping for weather conditions (Sun/Cloud/Rain).
  */
 import { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, deleteDoc, doc, Timestamp, type Firestore } from 'firebase/firestore';
+import { 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    getDocs, 
+    deleteDoc, 
+    doc, 
+    Timestamp, 
+    type Firestore 
+} from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { groupItemsByDate } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
@@ -21,7 +31,10 @@ import {
     ShieldExclamationIcon, 
     ShareIcon, 
     CheckIcon, 
-    SparklesIcon 
+    SparklesIcon,
+    SunIcon,
+    CloudIcon,
+    BoltIcon
 } from '@heroicons/react/24/outline';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
@@ -34,6 +47,18 @@ type HistoryItem =
 interface JournalHistoryProps {
   onEdit: (entry: JournalEntry) => void;
 }
+
+// Helper to pick the right weather icon
+const WeatherIcon = ({ condition }: { condition: string }) => {
+    const lower = condition.toLowerCase();
+    if (lower.includes('rain') || lower.includes('drizzle') || lower.includes('storm')) {
+        return <BoltIcon className="h-3 w-3 text-blue-500" />;
+    }
+    if (lower.includes('cloud') || lower.includes('fog') || lower.includes('mist')) {
+        return <CloudIcon className="h-3 w-3 text-gray-500" />;
+    }
+    return <SunIcon className="h-3 w-3 text-orange-500" />;
+};
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
@@ -84,7 +109,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 ...data, 
                 content, 
                 createdAt: createdDate,
-                isError          
+                isError                       
             } as unknown as JournalEntryWithStatus;
         }));
     },
@@ -153,15 +178,27 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 return (
                     <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
                         <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-xs font-mono text-gray-400">
                                     {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
                                 </span>
+                                
+                                {/* MOOD BADGE */}
                                 {entry.moodScore && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${entry.moodScore >= 7 ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-700'}`}>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
                                         Mood: {entry.moodScore}
                                     </span>
                                 )}
+
+                                {/* WEATHER BADGE */}
+                                {entry.weather && (
+                                    <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                                        <WeatherIcon condition={entry.weather.condition} />
+                                        {Math.round(entry.weather.temp)}°
+                                        <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
+                                    </span>
+                                )}
+
                                 {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
                             </div>
                             

@@ -1,15 +1,24 @@
+/**
+ * src/components/journal/JournalInsights.tsx
+ * GITHUB COMMENT:
+ * [JournalInsights.tsx]
+ * REFACTOR: Implemented Client-Side Aggregation for Daily Averages.
+ * FEATURE: Added Dual-Axis ComposedChart (Mood Line + Weather Bar).
+ */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { 
-  AreaChart, 
-  Area, 
+  ComposedChart, 
+  Line, 
+  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
+  Legend,
   PieChart,
   Pie,
   Cell
@@ -17,14 +26,19 @@ import {
 import { 
     FaceSmileIcon, 
     ChartBarIcon, 
-    CloudIcon,
-    FireIcon
+    CloudIcon, 
+    FireIcon 
 } from '@heroicons/react/24/outline';
 
 // --- TYPES ---
-interface ChartDataPoint {
-    date: string;
-    mood: number;
+
+// Aggregated Daily Data
+interface DailyStats {
+    date: string; // YYYY-MM-DD
+    displayDate: string; // "Oct 12"
+    avgMood: number;
+    avgTemp: number;
+    entryCount: number;
 }
 
 interface SentimentDataPoint {
@@ -38,6 +52,14 @@ interface WordFrequency {
     value: number;
 }
 
+interface JournalEntryRaw {
+    moodScore?: number;
+    weather?: { temp: number; condition: string } | null;
+    createdAt: Timestamp;
+    sentiment?: string;
+    content?: string;
+}
+
 const COLORS = ['#10B981', '#6366F1', '#F43F5E', '#F59E0B', '#8B5CF6'];
 
 // Stop words to filter out of the cloud
@@ -49,7 +71,9 @@ const STOP_WORDS = new Set([
 
 export default function JournalInsights() {
   const { user } = useAuth();
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  
+  // State
+  const [chartData, setChartData] = useState<DailyStats[]>([]);
   const [sentimentData, setSentimentData] = useState<SentimentDataPoint[]>([]);
   const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,41 +84,75 @@ export default function JournalInsights() {
         if (!user || !db) return;
 
         try {
-            // Fetch last 60 days for robust data
+            // Fetch last 60 days
             const q = query(
                 collection(db, 'journals'), 
                 where('uid', '==', user.uid),
-                orderBy('createdAt', 'asc')
+                orderBy('createdAt', 'asc') // Oldest first for chronological aggregation
             );
             
             const snapshot = await getDocs(q);
-            const rawData = snapshot.docs.map(d => d.data());
+            const rawData = snapshot.docs.map(d => d.data() as JournalEntryRaw);
 
-            // 1. CHART: Mood Trends (Last 14 entries)
-            const trends: ChartDataPoint[] = rawData
-                .filter(d => d.moodScore !== undefined)
-                .map(d => ({
-                    date: d.createdAt?.toDate 
-                        ? d.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) 
-                        : 'Unknown',
-                    mood: d.moodScore
-                }))
-                .slice(-14);
-            setChartData(trends);
+            // --- 1. AGGREGATION ENGINE (Daily Averages) ---
+            const groupedData = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
 
-            // 2. PIE: Sentiment Analysis
+            rawData.forEach(entry => {
+                if (!entry.createdAt) return;
+                
+                const dateObj = entry.createdAt.toDate();
+                // Format YYYY-MM-DD using local time to keep daily buckets correct
+                const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+
+                if (!groupedData.has(dateKey)) {
+                    groupedData.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
+                }
+
+                const dayStat = groupedData.get(dateKey)!;
+
+                // Aggregate Mood
+                if (entry.moodScore !== undefined) {
+                    dayStat.moodSum += entry.moodScore;
+                    dayStat.moodCount += 1;
+                }
+
+                // Aggregate Weather
+                if (entry.weather && entry.weather.temp !== undefined) {
+                    dayStat.tempSum += entry.weather.temp;
+                    dayStat.tempCount += 1;
+                }
+            });
+
+            // Flatten Map to Array for Recharts
+            const dailyStats: DailyStats[] = Array.from(groupedData.entries()).map(([key, stat]) => {
+                const avgMood = stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0;
+                const avgTemp = stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0;
+                
+                return {
+                    date: key,
+                    displayDate: stat.timestamp.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                    avgMood,
+                    avgTemp,
+                    entryCount: stat.moodCount
+                };
+            });
+
+            // Slice last 14 active days for the chart
+            setChartData(dailyStats.slice(-14));
+
+            // --- 2. SENTIMENT ANALYSIS (PIE) ---
             const sentiments = rawData.reduce((acc: Record<string, number>, curr) => {
                 const s = curr.sentiment || 'Neutral';
                 acc[s] = (acc[s] || 0) + 1;
                 return acc;
             }, {});
-            const pieData = Object.keys(sentiments).map(key => ({
+            
+            setSentimentData(Object.keys(sentiments).map(key => ({
                 name: key,
                 value: sentiments[key]
-            }));
-            setSentimentData(pieData);
+            })));
 
-            // 3. WORD CLOUD: Text Analysis
+            // --- 3. WORD CLOUD ---
             const textContent = rawData.map(d => d.content?.toLowerCase() || '').join(' ');
             const words = textContent.match(/\b\w+\b/g) || [];
             const frequency: Record<string, number> = {};
@@ -106,22 +164,19 @@ export default function JournalInsights() {
             });
 
             const topWords = Object.entries(frequency)
-                .sort((a, b) => b[1] - a[1]) // Sort by count desc
-                .slice(0, 20) // Top 20
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20)
                 .map(([text, value]) => ({ text, value }));
             
             setWordCloudData(topWords);
 
-            // 4. GENERAL STATS
+            // --- 4. GENERAL STATS ---
             const totalMood = rawData.reduce((sum, curr) => sum + (curr.moodScore || 0), 0);
-            
-            // Calculate streak (consecutive days)
-            // Simplified logic: Count entries in last X days
             
             setStats({
                 total: rawData.length,
                 avgMood: rawData.length > 0 ? Math.round((totalMood / rawData.length) * 10) / 10 : 0,
-                streak: rawData.length // Placeholder logic
+                streak: rawData.length // Placeholder for simple count
             });
 
         } catch (error) {
@@ -155,16 +210,16 @@ export default function JournalInsights() {
             </div>
         </div>
 
-        {/* --- MOOD TREND CHART --- */}
+        {/* --- DUAL AXIS CHART: MOOD vs WEATHER --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <ChartBarIcon className="h-4 w-4 text-indigo-500" />
-                Mood Trajectory
+                Mood vs. Weather
             </h3>
             
-            <div className="h-64 w-full min-w-0">
+            <div className="h-72 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <AreaChart data={chartData}>
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
                         <defs>
                             <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
@@ -173,16 +228,31 @@ export default function JournalInsights() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
                         <XAxis 
-                            dataKey="date" 
+                            dataKey="displayDate" 
                             tick={{fontSize: 10, fill: '#94A3B8'}} 
                             axisLine={false}
                             tickLine={false}
                             minTickGap={30}
                         />
-                        <YAxis domain={[0, 10]} hide />
-                        <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                        <Area type="monotone" dataKey="mood" stroke="#6366F1" strokeWidth={3} fillOpacity={1} fill="url(#colorMood)" />
-                    </AreaChart>
+                        
+                        {/* LEFT AXIS: Mood (1-10) */}
+                        <YAxis yAxisId="left" domain={[0, 10]} hide />
+                        
+                        {/* RIGHT AXIS: Temperature (-10 to 40) */}
+                        <YAxis yAxisId="right" orientation="right" hide domain={['auto', 'auto']} />
+
+                        <Tooltip 
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                            labelStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}}
+                        />
+                        <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
+
+                        {/* Bar: Temperature */}
+                        <Bar yAxisId="right" dataKey="avgTemp" name="Temp (°C)" fill="#FDBA74" radius={[4, 4, 0, 0]} barSize={20} />
+
+                        {/* Line: Mood */}
+                        <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Mood" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff'}} />
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
         </div>
@@ -246,10 +316,10 @@ export default function JournalInsights() {
                 
                 {/* Center Label */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <div className="text-center">
-                         <div className="text-xs text-gray-400 font-bold uppercase">Total</div>
-                         <div className="text-xl font-black text-gray-800">{stats.total}</div>
-                     </div>
+                      <div className="text-center">
+                          <div className="text-xs text-gray-400 font-bold uppercase">Total</div>
+                          <div className="text-xl font-black text-gray-800">{stats.total}</div>
+                      </div>
                 </div>
             </div>
 
