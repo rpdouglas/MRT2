@@ -2,8 +2,8 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * UI UPDATE: Refactored Gamification/Level Card to match "Vibrant Momentum" theme.
- * FEATURES: Added glassmorphism, gradient borders, and shimmer animations to the XP bar.
+ * UI UPDATE: Reordered dashboard hierarchy per user request.
+ * LAYOUT: Header -> Clean Time (Floating) -> Bento Grid -> XP Card (Bottom).
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -117,7 +117,6 @@ export default function Dashboard() {
     }
 
     // Gamification
-    // Cast types to any for the calculator library to accept raw firestore data
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const jStats = calculateJournalStats(journals as any);
     const tStats = calculateTaskStats(tasks as any);
@@ -161,67 +160,15 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 2. FLOATING XP BAR (The Rank Card) */}
+      {/* 2. FLOATING HERO: Clean Time (Moved to Top) */}
       <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
-            {/* Glassmorphism Card with Theme Gradient Border */}
-            <div className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-300 via-blue-400 to-indigo-400 shadow-xl shadow-blue-200/50">
-                <div className="bg-white rounded-[22px] p-5 relative overflow-hidden h-full">
-                    
-                    {/* Background Texture */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-100 to-blue-50 rounded-bl-full opacity-60 pointer-events-none"></div>
-                    <SparklesIcon className="absolute top-4 right-4 h-12 w-12 text-blue-100/50 rotate-12" />
-
-                    <div className="relative z-10 flex justify-between items-end">
-                        
-                        {/* LEFT: Identity */}
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">
-                                Current Rank
-                            </span>
-                            <h3 className="text-2xl font-black text-slate-800 leading-none tracking-tight">
-                                {stats.level.levelData.title}
-                            </h3>
-                            <div className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg self-start">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase">Archetype</span>
-                                <span className="text-xs font-bold text-indigo-600">{stats.level.archetype}</span>
-                            </div>
-                        </div>
-
-                        {/* RIGHT: Level Stats */}
-                        <div className="text-right">
-                            <div className="flex items-baseline justify-end gap-1">
-                                <span className="text-sm font-bold text-slate-400">LVL</span>
-                                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-sky-600 to-indigo-600 shadow-sm">
-                                    {stats.level.levelData.level}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                
-                    {/* Progress Bar */}
-                    <div className="mt-5">
-                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-                            <span>Progress</span>
-                            <span>{stats.level.levelData.currentXP} / {stats.level.levelData.nextLevelXP} XP</span>
-                        </div>
-                        <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                            <div 
-                                className="h-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-1000 ease-out relative"
-                                style={{ width: `${stats.level.levelData.progressPercent}%` }}
-                            >
-                                {/* Shimmer Effect */}
-                                <div className="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+         <SobrietyHero date={userProfile?.sobrietyDate} />
       </div>
 
-      {/* 3. SCROLLABLE CONTENT (BENTO GRID) */}
+      {/* 3. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
         
+        {/* Backup Alert */}
         {stats.showBackup && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
             <div className="flex items-center gap-3">
@@ -236,9 +183,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* HERO CARD: Clean Time */}
-        <SobrietyHero date={userProfile?.sobrietyDate} />
-
         {/* 2x2 BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
             
@@ -252,18 +196,14 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <ChartBarIcon className="h-4 w-4 text-white" />
                         </div>
-                        {/* Title increased to text-sm */}
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        {/* Main Value unchanged */}
                         <div className="text-3xl font-black">{stats.journal.streak}</div>
-                        {/* Main Label increased to text-base */}
                         <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        {/* Bottom Row increased to text-base */}
                         <span className="text-base font-bold opacity-75">Consistency</span>
                         <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
                     </div>
@@ -343,6 +283,63 @@ export default function Dashboard() {
             </Link>
 
         </div>
+
+        {/* 4. XP / RANK CARD (Moved to Bottom) */}
+        {/* Glassmorphism Card with Theme Gradient Border */}
+        <div className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-300 via-blue-400 to-indigo-400 shadow-xl shadow-blue-200/50">
+            <div className="bg-white rounded-[22px] p-5 relative overflow-hidden h-full">
+                
+                {/* Background Texture */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-100 to-blue-50 rounded-bl-full opacity-60 pointer-events-none"></div>
+                <SparklesIcon className="absolute top-4 right-4 h-12 w-12 text-blue-100/50 rotate-12" />
+
+                <div className="relative z-10 flex justify-between items-end">
+                    
+                    {/* LEFT: Identity */}
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">
+                            Current Rank
+                        </span>
+                        <h3 className="text-2xl font-black text-slate-800 leading-none tracking-tight">
+                            {stats.level.levelData.title}
+                        </h3>
+                        <div className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg self-start">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Archetype</span>
+                            <span className="text-xs font-bold text-indigo-600">{stats.level.archetype}</span>
+                        </div>
+                    </div>
+
+                    {/* RIGHT: Level Stats */}
+                    <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                            <span className="text-sm font-bold text-slate-400">LVL</span>
+                            <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-sky-600 to-indigo-600 shadow-sm">
+                                {stats.level.levelData.level}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            
+                {/* Progress Bar */}
+                <div className="mt-5">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                        <span>Progress</span>
+                        <span>{stats.level.levelData.currentXP} / {stats.level.levelData.nextLevelXP} XP</span>
+                    </div>
+                    <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                        <div 
+                            className="h-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-1000 ease-out relative"
+                            style={{ width: `${stats.level.levelData.progressPercent}%` }}
+                        >
+                            {/* Shimmer Effect */}
+                            <div className="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
       </div>
     </div>
   );
