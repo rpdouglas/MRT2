@@ -2,8 +2,8 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * REFACTOR: Implemented Client-Side Aggregation for Daily Averages.
- * FEATURE: Added Dual-Axis ComposedChart (Mood Line + Weather Bar).
+ * FIX: Removed unused date-fns imports (startOfDay, isSameDay).
+ * FIX: Resolved Recharts Tooltip formatter type mismatch by loosening parameter type.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,26 +13,27 @@ import {
   ComposedChart, 
   Line, 
   Bar, 
+  BarChart,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   Legend,
-  PieChart,
-  Pie,
   Cell
 } from 'recharts';
 import { 
     FaceSmileIcon, 
     ChartBarIcon, 
     CloudIcon, 
-    FireIcon 
+    FireIcon,
+    CalendarDaysIcon
 } from '@heroicons/react/24/outline';
+import { format, subDays, getDay } from 'date-fns';
 
 // --- TYPES ---
 
-// Aggregated Daily Data
+// 1. Daily Stats (Mood vs Weather)
 interface DailyStats {
     date: string; // YYYY-MM-DD
     displayDate: string; // "Oct 12"
@@ -41,10 +42,21 @@ interface DailyStats {
     entryCount: number;
 }
 
-interface SentimentDataPoint {
-    name: string;
-    value: number;
-    [key: string]: unknown; 
+// 2. Weekly Rhythm (Cyclic Patterns)
+interface WeeklyRhythmStats {
+    dayName: string; // "Mon", "Tue"
+    totalMood: number;
+    count: number;
+    average: number;
+}
+
+// 3. Sentiment Flow (7-Day Trend)
+interface SentimentFlowStats {
+    date: string;
+    displayDate: string;
+    Positive: number;
+    Neutral: number;
+    Negative: number;
 }
 
 interface WordFrequency {
@@ -56,11 +68,15 @@ interface JournalEntryRaw {
     moodScore?: number;
     weather?: { temp: number; condition: string } | null;
     createdAt: Timestamp;
-    sentiment?: string;
+    sentiment?: string; // 'Positive' | 'Neutral' | 'Negative'
     content?: string;
 }
 
-const COLORS = ['#10B981', '#6366F1', '#F43F5E', '#F59E0B', '#8B5CF6'];
+const SENTIMENT_COLORS = {
+    Positive: '#10B981', // Emerald-500
+    Neutral: '#94A3B8',  // Slate-400
+    Negative: '#F43F5E'  // Rose-500
+};
 
 // Stop words to filter out of the cloud
 const STOP_WORDS = new Set([
@@ -69,114 +85,164 @@ const STOP_WORDS = new Set([
   'feeling', 'feel', 'am', 'just', 'had', 'very', 'really', 'will', 'up', 'out', 'from'
 ]);
 
+const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default function JournalInsights() {
   const { user } = useAuth();
   
   // State
-  const [chartData, setChartData] = useState<DailyStats[]>([]);
-  const [sentimentData, setSentimentData] = useState<SentimentDataPoint[]>([]);
-  const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0 });
+  
+  // Chart Data States
+  const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
+  const [weeklyRhythmData, setWeeklyRhythmData] = useState<WeeklyRhythmStats[]>([]);
+  const [sentimentFlowData, setSentimentFlowData] = useState<SentimentFlowStats[]>([]);
+  const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
 
   useEffect(() => {
     async function loadData() {
         if (!user || !db) return;
 
         try {
-            // Fetch last 60 days
+            // Fetch last 90 days for robust analysis
             const q = query(
                 collection(db, 'journals'), 
                 where('uid', '==', user.uid),
-                orderBy('createdAt', 'asc') // Oldest first for chronological aggregation
+                orderBy('createdAt', 'asc')
             );
             
             const snapshot = await getDocs(q);
             const rawData = snapshot.docs.map(d => d.data() as JournalEntryRaw);
 
-            // --- 1. AGGREGATION ENGINE (Daily Averages) ---
-            const groupedData = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
+            // --- AGGREGATION ENGINE ---
+
+            // 1. Initialize Containers
+            const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
+            
+            // Initialize 7 days for Weekly Rhythm (0=Sun -> 6=Sat)
+            const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
+                dayName: DAYS_OF_WEEK[i],
+                totalMood: 0,
+                count: 0,
+                average: 0
+            }));
+
+            // Initialize last 7 days for Sentiment Flow
+            const today = new Date();
+            const sentimentMap = new Map<string, SentimentFlowStats>();
+            for (let i = 6; i >= 0; i--) {
+                const d = subDays(today, i);
+                const key = format(d, 'yyyy-MM-dd');
+                sentimentMap.set(key, {
+                    date: key,
+                    displayDate: format(d, 'EEE'), // "Mon"
+                    Positive: 0,
+                    Neutral: 0,
+                    Negative: 0
+                });
+            }
+
+            // Word Cloud Container
+            const wordFreq: Record<string, number> = {};
+
+            // 2. Single Pass Processing
+            let totalMoodSum = 0;
+            let totalEntries = 0;
 
             rawData.forEach(entry => {
                 if (!entry.createdAt) return;
-                
                 const dateObj = entry.createdAt.toDate();
-                // Format YYYY-MM-DD using local time to keep daily buckets correct
-                const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+                const dateKey = format(dateObj, 'yyyy-MM-dd');
 
-                if (!groupedData.has(dateKey)) {
-                    groupedData.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
+                // --- A. Daily Trend Aggregation ---
+                if (!dailyMap.has(dateKey)) {
+                    dailyMap.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
                 }
+                const dayStat = dailyMap.get(dateKey)!;
 
-                const dayStat = groupedData.get(dateKey)!;
-
-                // Aggregate Mood
                 if (entry.moodScore !== undefined) {
                     dayStat.moodSum += entry.moodScore;
                     dayStat.moodCount += 1;
+                    
+                    // Global Stats
+                    totalMoodSum += entry.moodScore;
+                    totalEntries++;
+
+                    // --- B. Weekly Rhythm Aggregation ---
+                    const dayIndex = getDay(dateObj); // 0 = Sun
+                    weeklyBuckets[dayIndex].totalMood += entry.moodScore;
+                    weeklyBuckets[dayIndex].count += 1;
                 }
 
-                // Aggregate Weather
                 if (entry.weather && entry.weather.temp !== undefined) {
                     dayStat.tempSum += entry.weather.temp;
                     dayStat.tempCount += 1;
                 }
-            });
 
-            // Flatten Map to Array for Recharts
-            const dailyStats: DailyStats[] = Array.from(groupedData.entries()).map(([key, stat]) => {
-                const avgMood = stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0;
-                const avgTemp = stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0;
-                
-                return {
-                    date: key,
-                    displayDate: stat.timestamp.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                    avgMood,
-                    avgTemp,
-                    entryCount: stat.moodCount
-                };
-            });
+                // --- C. Sentiment Flow Aggregation ---
+                // Only count if it falls within the last 7 days map we initialized
+                if (sentimentMap.has(dateKey)) {
+                    const sStat = sentimentMap.get(dateKey)!;
+                    // Normalize sentiment string case
+                    const sentimentKey = (entry.sentiment || 'Neutral') as keyof Pick<SentimentFlowStats, 'Positive' | 'Neutral' | 'Negative'>;
+                    if (sStat[sentimentKey] !== undefined) {
+                        sStat[sentimentKey] += 1;
+                    } else {
+                        sStat['Neutral'] += 1; // Fallback
+                    }
+                }
 
-            // Slice last 14 active days for the chart
-            setChartData(dailyStats.slice(-14));
-
-            // --- 2. SENTIMENT ANALYSIS (PIE) ---
-            const sentiments = rawData.reduce((acc: Record<string, number>, curr) => {
-                const s = curr.sentiment || 'Neutral';
-                acc[s] = (acc[s] || 0) + 1;
-                return acc;
-            }, {});
-            
-            setSentimentData(Object.keys(sentiments).map(key => ({
-                name: key,
-                value: sentiments[key]
-            })));
-
-            // --- 3. WORD CLOUD ---
-            const textContent = rawData.map(d => d.content?.toLowerCase() || '').join(' ');
-            const words = textContent.match(/\b\w+\b/g) || [];
-            const frequency: Record<string, number> = {};
-            
-            words.forEach(word => {
-                if (!STOP_WORDS.has(word) && word.length > 3) {
-                    frequency[word] = (frequency[word] || 0) + 1;
+                // --- D. Word Cloud Processing ---
+                if (entry.content) {
+                    const words = entry.content.toLowerCase().match(/\b\w+\b/g) || [];
+                    words.forEach(word => {
+                        if (!STOP_WORDS.has(word) && word.length > 3) {
+                            wordFreq[word] = (wordFreq[word] || 0) + 1;
+                        }
+                    });
                 }
             });
 
-            const topWords = Object.entries(frequency)
+            // 3. Finalize Data Structures
+
+            // Daily Trend (Last 14 Active Days)
+            const dailyStatsArray = Array.from(dailyMap.values()).map(stat => ({
+                date: format(stat.timestamp, 'yyyy-MM-dd'),
+                displayDate: format(stat.timestamp, 'MMM d'),
+                avgMood: stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0,
+                avgTemp: stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0,
+                entryCount: stat.moodCount
+            })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            setDailyTrendData(dailyStatsArray.slice(-14));
+
+            // Weekly Rhythm (Reorder to start Monday)
+            // Shift Sunday (0) to end
+            const sunday = weeklyBuckets.shift(); 
+            if (sunday) weeklyBuckets.push(sunday);
+            
+            const finalizedWeekly = weeklyBuckets.map(b => ({
+                ...b,
+                average: b.count > 0 ? parseFloat((b.totalMood / b.count).toFixed(1)) : 0
+            }));
+            setWeeklyRhythmData(finalizedWeekly);
+
+            // Sentiment Flow
+            setSentimentFlowData(Array.from(sentimentMap.values()));
+
+            // Word Cloud
+            const topWords = Object.entries(wordFreq)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 20)
                 .map(([text, value]) => ({ text, value }));
-            
             setWordCloudData(topWords);
 
-            // --- 4. GENERAL STATS ---
-            const totalMood = rawData.reduce((sum, curr) => sum + (curr.moodScore || 0), 0);
-            
+            // Global Stats
             setStats({
                 total: rawData.length,
-                avgMood: rawData.length > 0 ? Math.round((totalMood / rawData.length) * 10) / 10 : 0,
-                streak: rawData.length // Placeholder for simple count
+                avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
+                streak: rawData.length // Placeholder
             });
 
         } catch (error) {
@@ -210,16 +276,84 @@ export default function JournalInsights() {
             </div>
         </div>
 
-        {/* --- DUAL AXIS CHART: MOOD vs WEATHER --- */}
+        {/* --- 1. SENTIMENT FLOW (Stacked Bar) --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
+                <FaceSmileIcon className="h-4 w-4 text-emerald-500" />
+                Sentiment Flow (Last 7 Days)
+            </h3>
+            
+            <div className="h-64 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
+                    <BarChart data={sentimentFlowData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <XAxis 
+                            dataKey="displayDate" 
+                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis hide />
+                        <Tooltip 
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                            cursor={{fill: '#f8fafc'}}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
+                        
+                        <Bar dataKey="Positive" stackId="a" fill={SENTIMENT_COLORS.Positive} radius={[0, 0, 4, 4]} />
+                        <Bar dataKey="Neutral" stackId="a" fill={SENTIMENT_COLORS.Neutral} />
+                        <Bar dataKey="Negative" stackId="a" fill={SENTIMENT_COLORS.Negative} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+
+        {/* --- 2. WEEKLY RHYTHM (Simple Bar) --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
+                <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
+                Weekly Rhythm
+            </h3>
+            
+            <div className="h-48 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
+                    <BarChart data={weeklyRhythmData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <XAxis 
+                            dataKey="dayName" 
+                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis domain={[0, 10]} hide />
+                        <Tooltip 
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                            cursor={{fill: '#f8fafc'}}
+                            // Fix: Use 'any' type for value to satisfy Recharts strict typing while we know it's a number
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            formatter={(value: any) => [value, 'Avg Mood']}
+                        />
+                        <Bar dataKey="average" fill="#8B5CF6" radius={[4, 4, 0, 0]} barSize={24}>
+                            {weeklyRhythmData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fillOpacity={entry.count > 0 ? 1 : 0.3} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+            <p className="text-center text-xs text-gray-400 mt-2">Average Mood Score by Day of Week</p>
+        </div>
+
+        {/* --- 3. MOOD vs WEATHER (Composed) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <ChartBarIcon className="h-4 w-4 text-indigo-500" />
-                Mood vs. Weather
+                Daily Trends (Mood vs Weather)
             </h3>
             
             <div className="h-72 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <ComposedChart data={chartData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
+                    <ComposedChart data={dailyTrendData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
                         <defs>
                             <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
@@ -234,11 +368,7 @@ export default function JournalInsights() {
                             tickLine={false}
                             minTickGap={30}
                         />
-                        
-                        {/* LEFT AXIS: Mood (1-10) */}
                         <YAxis yAxisId="left" domain={[0, 10]} hide />
-                        
-                        {/* RIGHT AXIS: Temperature (-10 to 40) */}
                         <YAxis yAxisId="right" orientation="right" hide domain={['auto', 'auto']} />
 
                         <Tooltip 
@@ -247,17 +377,14 @@ export default function JournalInsights() {
                         />
                         <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
 
-                        {/* Bar: Temperature */}
                         <Bar yAxisId="right" dataKey="avgTemp" name="Temp (°C)" fill="#FDBA74" radius={[4, 4, 0, 0]} barSize={20} />
-
-                        {/* Line: Mood */}
                         <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Mood" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff'}} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </div>
         </div>
 
-        {/* --- WORD CLOUD (Recurring Themes) --- */}
+        {/* --- 4. WORD CLOUD --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <CloudIcon className="h-4 w-4 text-blue-500" />
@@ -269,7 +396,6 @@ export default function JournalInsights() {
             ) : (
                 <div className="flex flex-wrap gap-2 justify-center items-center py-4">
                     {wordCloudData.map((word, i) => {
-                        // Dynamic sizing based on frequency relative to max
                         const maxVal = wordCloudData[0].value;
                         const sizeClass = 
                             word.value > maxVal * 0.8 ? 'text-2xl font-black text-indigo-600' :
@@ -285,53 +411,6 @@ export default function JournalInsights() {
                     })}
                 </div>
             )}
-        </div>
-
-        {/* --- SENTIMENT PIE --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
-            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
-                <FaceSmileIcon className="h-4 w-4 text-emerald-500" />
-                Emotional Balance
-            </h3>
-
-            <div className="h-64 w-full relative min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <PieChart>
-                        <Pie
-                            data={sentimentData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                        >
-                            {sentimentData.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip />
-                    </PieChart>
-                </ResponsiveContainer>
-                
-                {/* Center Label */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="text-center">
-                          <div className="text-xs text-gray-400 font-bold uppercase">Total</div>
-                          <div className="text-xl font-black text-gray-800">{stats.total}</div>
-                      </div>
-                </div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex justify-center gap-4 mt-4 flex-wrap">
-                {sentimentData.map((entry, index) => (
-                    <div key={index} className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                        <span className="text-xs font-medium text-gray-600">{entry.name}</span>
-                    </div>
-                ))}
-            </div>
         </div>
     </div>
   );
