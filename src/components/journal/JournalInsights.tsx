@@ -2,9 +2,9 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FEAT: Implemented Comparative Weekly Rhythm (Current Month vs Previous Month).
- * REFACTOR: Updated aggregation engine to bucket data by month for side-by-side analysis.
- * VISUAL: Used Grouped Bar Chart with muted colors for history and vibrant colors for active month.
+ * FEAT: Updated Weekly Rhythm to use Rolling 30-Day Window comparison.
+ * LOGIC: Compares "Last 30 Days" vs "Previous 30 Days" (Days 31-60).
+ * MAINTAINED: Daily Trends, Word Cloud, and all existing type safety.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,7 +21,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Legend,
- // Cell
+  //Cell
 } from 'recharts';
 import { 
     ChartBarIcon, 
@@ -29,7 +29,7 @@ import {
     FireIcon,
     CalendarDaysIcon
 } from '@heroicons/react/24/outline';
-import { format,  getDay, isSameMonth, subMonths } from 'date-fns';
+import { format, subDays, getDay, startOfDay } from 'date-fns';
 
 // --- TYPES ---
 
@@ -117,9 +117,10 @@ export default function JournalInsights() {
             // Word Cloud Container
             const wordFreq: Record<string, number> = {};
 
-            // 2. Reference Dates for Comparison
-            const today = new Date();
-            const prevMonthDate = subMonths(today, 1);
+            // 2. Reference Dates for Rolling Window
+            const today = startOfDay(new Date());
+            const thirtyDaysAgo = subDays(today, 30);
+            const sixtyDaysAgo = subDays(today, 60);
 
             // 3. Single Pass Processing
             let totalMoodSum = 0;
@@ -127,8 +128,8 @@ export default function JournalInsights() {
 
             rawData.forEach(entry => {
                 if (!entry.createdAt) return;
-                const dateObj = entry.createdAt.toDate();
-                const dateKey = format(dateObj, 'yyyy-MM-dd');
+                const dateObj = entry.createdAt.toDate(); // Keep full date for comparison
+                const dateKey = format(dateObj, 'yyyy-MM-dd'); // For Daily Map
 
                 // --- A. Daily Trend Aggregation ---
                 if (!dailyMap.has(dateKey)) {
@@ -144,15 +145,15 @@ export default function JournalInsights() {
                     totalMoodSum += entry.moodScore;
                     totalEntries++;
 
-                    // --- B. Comparative Weekly Rhythm Aggregation ---
+                    // --- B. Comparative Weekly Rhythm (Rolling 30 vs Prev 30) ---
                     const dayIndex = getDay(dateObj); // 0 = Sun
                     
-                    if (isSameMonth(dateObj, today)) {
-                        // Current Month Bucket
+                    if (dateObj >= thirtyDaysAgo) {
+                        // Current 30 Days Bucket
                         weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].currentCount += 1;
-                    } else if (isSameMonth(dateObj, prevMonthDate)) {
-                        // Previous Month Bucket
+                    } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
+                        // Previous 30 Days Bucket
                         weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].prevCount += 1;
                     }
@@ -255,10 +256,10 @@ export default function JournalInsights() {
                 </h3>
                 <div className="flex gap-3 text-[10px] font-bold">
                     <span className="flex items-center gap-1 text-slate-400">
-                        <div className="w-2 h-2 rounded-full bg-slate-300"></div> Last Month
+                        <div className="w-2 h-2 rounded-full bg-slate-300"></div> Prev 30 Days
                     </span>
                     <span className="flex items-center gap-1 text-purple-600">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> This Month
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> Last 30 Days
                     </span>
                 </div>
             </div>
@@ -279,17 +280,17 @@ export default function JournalInsights() {
                             cursor={{fill: '#f8fafc'}}
                             // Satisfy strict Recharts typing by accepting generic payload
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            formatter={(value: any, name: any) => [value, name === 'currentAvg' ? 'This Month' : 'Last Month']}
+                            formatter={(value: any, name: any) => [value, name === 'currentAvg' ? 'Last 30 Days' : 'Prev 30 Days']}
                         />
-                        {/* Previous Month (Baseline) - Muted */}
-                        <Bar dataKey="prevAvg" name="Last Month" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={12} />
+                        {/* Previous 30 Days (Baseline) - Muted */}
+                        <Bar dataKey="prevAvg" name="Prev 30 Days" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={12} />
                         
-                        {/* Current Month (Active) - Vibrant */}
-                        <Bar dataKey="currentAvg" name="This Month" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={12} />
+                        {/* Current 30 Days (Active) - Vibrant */}
+                        <Bar dataKey="currentAvg" name="Last 30 Days" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={12} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score Comparison</p>
+            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score (Rolling Comparison)</p>
         </div>
 
         {/* --- 2. MOOD vs WEATHER (Composed) --- */}
