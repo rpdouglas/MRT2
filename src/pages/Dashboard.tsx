@@ -1,4 +1,10 @@
-// src/pages/Dashboard.tsx
+/**
+ * src/pages/Dashboard.tsx
+ * GITHUB COMMENT:
+ * [Dashboard.tsx]
+ * UI UPDATE: Refactored Gamification/Level Card to match "Vibrant Momentum" theme.
+ * FEATURES: Added glassmorphism, gradient borders, and shimmer animations to the XP bar.
+ */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +16,7 @@ import {
   orderBy, 
   getDocs, 
   doc, 
-  getDoc,
+  getDoc, 
   Timestamp,
   type Firestore 
 } from 'firebase/firestore';
@@ -23,7 +29,7 @@ import {
   calculateUserLevel
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
-import SobrietyHero from '../components/SobrietyHero'; // IMPORTED
+import SobrietyHero from '../components/SobrietyHero';
 import { 
   HomeIcon, 
   FireIcon, 
@@ -102,7 +108,7 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
-    // Sobriety date is now passed directly to the component, so we don't need manual calc here for display
+    // Sobriety date calculation
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
@@ -156,34 +162,59 @@ export default function Dashboard() {
       </div>
 
       {/* 2. FLOATING XP BAR (The Rank Card) */}
-      <div className="px-4 -mt-10 relative z-30 flex-shrink-0 animate-slideUp">
-            <div className="bg-white rounded-3xl p-5 shadow-xl border border-white/50 backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-                
-                <div className="flex justify-between items-end mb-3 relative z-10">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-full">Rank</span>
-                            <span className="text-[10px] font-bold text-gray-400">Archetype: {stats.level.archetype}</span>
+      <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
+            {/* Glassmorphism Card with Theme Gradient Border */}
+            <div className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-300 via-blue-400 to-indigo-400 shadow-xl shadow-blue-200/50">
+                <div className="bg-white rounded-[22px] p-5 relative overflow-hidden h-full">
+                    
+                    {/* Background Texture */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-100 to-blue-50 rounded-bl-full opacity-60 pointer-events-none"></div>
+                    <SparklesIcon className="absolute top-4 right-4 h-12 w-12 text-blue-100/50 rotate-12" />
+
+                    <div className="relative z-10 flex justify-between items-end">
+                        
+                        {/* LEFT: Identity */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">
+                                Current Rank
+                            </span>
+                            <h3 className="text-2xl font-black text-slate-800 leading-none tracking-tight">
+                                {stats.level.levelData.title}
+                            </h3>
+                            <div className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg self-start">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">Archetype</span>
+                                <span className="text-xs font-bold text-indigo-600">{stats.level.archetype}</span>
+                            </div>
                         </div>
-                        <h3 className="text-2xl font-black text-slate-800 leading-none">{stats.level.levelData.title}</h3>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-                            {stats.level.levelData.level}
+
+                        {/* RIGHT: Level Stats */}
+                        <div className="text-right">
+                            <div className="flex items-baseline justify-end gap-1">
+                                <span className="text-sm font-bold text-slate-400">LVL</span>
+                                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-sky-600 to-indigo-600 shadow-sm">
+                                    {stats.level.levelData.level}
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Current Level</div>
                     </div>
-                </div>
                 
-                <div className="relative h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                    <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                        style={{ width: `${stats.level.levelData.progressPercent}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-900/50 mix-blend-overlay">
-                        {stats.level.levelData.currentXP} / {stats.level.levelData.nextLevelXP} XP
+                    {/* Progress Bar */}
+                    <div className="mt-5">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                            <span>Progress</span>
+                            <span>{stats.level.levelData.currentXP} / {stats.level.levelData.nextLevelXP} XP</span>
+                        </div>
+                        <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-1000 ease-out relative"
+                                style={{ width: `${stats.level.levelData.progressPercent}%` }}
+                            >
+                                {/* Shimmer Effect */}
+                                <div className="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
       </div>
