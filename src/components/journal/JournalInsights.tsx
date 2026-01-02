@@ -2,8 +2,8 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FIX: Removed unused date-fns imports (startOfDay, isSameDay).
- * FIX: Resolved Recharts Tooltip formatter type mismatch by loosening parameter type.
+ * CHORE: Removed Sentiment Flow chart and logic per backlog decision.
+ * MAINTAINED: Weekly Rhythm, Daily Trends (Mood/Weather), and Word Cloud.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,13 +23,12 @@ import {
   Cell
 } from 'recharts';
 import { 
-    FaceSmileIcon, 
     ChartBarIcon, 
     CloudIcon, 
     FireIcon,
     CalendarDaysIcon
 } from '@heroicons/react/24/outline';
-import { format, subDays, getDay } from 'date-fns';
+import { format, getDay } from 'date-fns';
 
 // --- TYPES ---
 
@@ -50,15 +49,6 @@ interface WeeklyRhythmStats {
     average: number;
 }
 
-// 3. Sentiment Flow (7-Day Trend)
-interface SentimentFlowStats {
-    date: string;
-    displayDate: string;
-    Positive: number;
-    Neutral: number;
-    Negative: number;
-}
-
 interface WordFrequency {
     text: string;
     value: number;
@@ -68,15 +58,9 @@ interface JournalEntryRaw {
     moodScore?: number;
     weather?: { temp: number; condition: string } | null;
     createdAt: Timestamp;
-    sentiment?: string; // 'Positive' | 'Neutral' | 'Negative'
+    sentiment?: string; // Kept in type for compatibility, but ignored in logic
     content?: string;
 }
-
-const SENTIMENT_COLORS = {
-    Positive: '#10B981', // Emerald-500
-    Neutral: '#94A3B8',  // Slate-400
-    Negative: '#F43F5E'  // Rose-500
-};
 
 // Stop words to filter out of the cloud
 const STOP_WORDS = new Set([
@@ -97,7 +81,6 @@ export default function JournalInsights() {
   // Chart Data States
   const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
   const [weeklyRhythmData, setWeeklyRhythmData] = useState<WeeklyRhythmStats[]>([]);
-  const [sentimentFlowData, setSentimentFlowData] = useState<SentimentFlowStats[]>([]);
   const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
 
   useEffect(() => {
@@ -127,21 +110,6 @@ export default function JournalInsights() {
                 count: 0,
                 average: 0
             }));
-
-            // Initialize last 7 days for Sentiment Flow
-            const today = new Date();
-            const sentimentMap = new Map<string, SentimentFlowStats>();
-            for (let i = 6; i >= 0; i--) {
-                const d = subDays(today, i);
-                const key = format(d, 'yyyy-MM-dd');
-                sentimentMap.set(key, {
-                    date: key,
-                    displayDate: format(d, 'EEE'), // "Mon"
-                    Positive: 0,
-                    Neutral: 0,
-                    Negative: 0
-                });
-            }
 
             // Word Cloud Container
             const wordFreq: Record<string, number> = {};
@@ -180,20 +148,7 @@ export default function JournalInsights() {
                     dayStat.tempCount += 1;
                 }
 
-                // --- C. Sentiment Flow Aggregation ---
-                // Only count if it falls within the last 7 days map we initialized
-                if (sentimentMap.has(dateKey)) {
-                    const sStat = sentimentMap.get(dateKey)!;
-                    // Normalize sentiment string case
-                    const sentimentKey = (entry.sentiment || 'Neutral') as keyof Pick<SentimentFlowStats, 'Positive' | 'Neutral' | 'Negative'>;
-                    if (sStat[sentimentKey] !== undefined) {
-                        sStat[sentimentKey] += 1;
-                    } else {
-                        sStat['Neutral'] += 1; // Fallback
-                    }
-                }
-
-                // --- D. Word Cloud Processing ---
+                // --- C. Word Cloud Processing ---
                 if (entry.content) {
                     const words = entry.content.toLowerCase().match(/\b\w+\b/g) || [];
                     words.forEach(word => {
@@ -227,9 +182,6 @@ export default function JournalInsights() {
                 average: b.count > 0 ? parseFloat((b.totalMood / b.count).toFixed(1)) : 0
             }));
             setWeeklyRhythmData(finalizedWeekly);
-
-            // Sentiment Flow
-            setSentimentFlowData(Array.from(sentimentMap.values()));
 
             // Word Cloud
             const topWords = Object.entries(wordFreq)
@@ -276,39 +228,7 @@ export default function JournalInsights() {
             </div>
         </div>
 
-        {/* --- 1. SENTIMENT FLOW (Stacked Bar) --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
-            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
-                <FaceSmileIcon className="h-4 w-4 text-emerald-500" />
-                Sentiment Flow (Last 7 Days)
-            </h3>
-            
-            <div className="h-64 w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <BarChart data={sentimentFlowData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
-                        <XAxis 
-                            dataKey="displayDate" 
-                            tick={{fontSize: 10, fill: '#94A3B8'}} 
-                            axisLine={false}
-                            tickLine={false}
-                        />
-                        <YAxis hide />
-                        <Tooltip 
-                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
-                            cursor={{fill: '#f8fafc'}}
-                        />
-                        <Legend iconType="circle" wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
-                        
-                        <Bar dataKey="Positive" stackId="a" fill={SENTIMENT_COLORS.Positive} radius={[0, 0, 4, 4]} />
-                        <Bar dataKey="Neutral" stackId="a" fill={SENTIMENT_COLORS.Neutral} />
-                        <Bar dataKey="Negative" stackId="a" fill={SENTIMENT_COLORS.Negative} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-
-        {/* --- 2. WEEKLY RHYTHM (Simple Bar) --- */}
+        {/* --- 1. WEEKLY RHYTHM (Simple Bar) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
@@ -344,7 +264,7 @@ export default function JournalInsights() {
             <p className="text-center text-xs text-gray-400 mt-2">Average Mood Score by Day of Week</p>
         </div>
 
-        {/* --- 3. MOOD vs WEATHER (Composed) --- */}
+        {/* --- 2. MOOD vs WEATHER (Composed) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <ChartBarIcon className="h-4 w-4 text-indigo-500" />
@@ -384,7 +304,7 @@ export default function JournalInsights() {
             </div>
         </div>
 
-        {/* --- 4. WORD CLOUD --- */}
+        {/* --- 3. WORD CLOUD --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <CloudIcon className="h-4 w-4 text-blue-500" />
@@ -396,6 +316,7 @@ export default function JournalInsights() {
             ) : (
                 <div className="flex flex-wrap gap-2 justify-center items-center py-4">
                     {wordCloudData.map((word, i) => {
+                        // Dynamic sizing based on frequency relative to max
                         const maxVal = wordCloudData[0].value;
                         const sizeClass = 
                             word.value > maxVal * 0.8 ? 'text-2xl font-black text-indigo-600' :
