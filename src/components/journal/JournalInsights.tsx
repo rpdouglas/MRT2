@@ -2,8 +2,9 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * CHORE: Removed Sentiment Flow chart and logic per backlog decision.
- * MAINTAINED: Weekly Rhythm, Daily Trends (Mood/Weather), and Word Cloud.
+ * FEAT: Implemented Comparative Weekly Rhythm (Current Month vs Previous Month).
+ * REFACTOR: Updated aggregation engine to bucket data by month for side-by-side analysis.
+ * VISUAL: Used Grouped Bar Chart with muted colors for history and vibrant colors for active month.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +21,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Legend,
-  Cell
+ // Cell
 } from 'recharts';
 import { 
     ChartBarIcon, 
@@ -28,7 +29,7 @@ import {
     FireIcon,
     CalendarDaysIcon
 } from '@heroicons/react/24/outline';
-import { format, getDay } from 'date-fns';
+import { format,  getDay, isSameMonth, subMonths } from 'date-fns';
 
 // --- TYPES ---
 
@@ -41,12 +42,13 @@ interface DailyStats {
     entryCount: number;
 }
 
-// 2. Weekly Rhythm (Cyclic Patterns)
-interface WeeklyRhythmStats {
+// 2. Comparative Weekly Rhythm
+interface WeeklyComparisonStats {
     dayName: string; // "Mon", "Tue"
-    totalMood: number;
-    count: number;
-    average: number;
+    currentAvg: number;
+    prevAvg: number;
+    currentCount: number;
+    prevCount: number;
 }
 
 interface WordFrequency {
@@ -58,7 +60,7 @@ interface JournalEntryRaw {
     moodScore?: number;
     weather?: { temp: number; condition: string } | null;
     createdAt: Timestamp;
-    sentiment?: string; // Kept in type for compatibility, but ignored in logic
+    sentiment?: string; 
     content?: string;
 }
 
@@ -80,7 +82,7 @@ export default function JournalInsights() {
   
   // Chart Data States
   const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
-  const [weeklyRhythmData, setWeeklyRhythmData] = useState<WeeklyRhythmStats[]>([]);
+  const [weeklyComparisonData, setWeeklyComparisonData] = useState<WeeklyComparisonStats[]>([]);
   const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
 
   useEffect(() => {
@@ -103,18 +105,23 @@ export default function JournalInsights() {
             // 1. Initialize Containers
             const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
             
-            // Initialize 7 days for Weekly Rhythm (0=Sun -> 6=Sat)
+            // Initialize Weekly Buckets (0=Sun -> 6=Sat)
             const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
                 dayName: DAYS_OF_WEEK[i],
-                totalMood: 0,
-                count: 0,
-                average: 0
+                currentTotal: 0,
+                currentCount: 0,
+                prevTotal: 0,
+                prevCount: 0
             }));
 
             // Word Cloud Container
             const wordFreq: Record<string, number> = {};
 
-            // 2. Single Pass Processing
+            // 2. Reference Dates for Comparison
+            const today = new Date();
+            const prevMonthDate = subMonths(today, 1);
+
+            // 3. Single Pass Processing
             let totalMoodSum = 0;
             let totalEntries = 0;
 
@@ -137,10 +144,18 @@ export default function JournalInsights() {
                     totalMoodSum += entry.moodScore;
                     totalEntries++;
 
-                    // --- B. Weekly Rhythm Aggregation ---
+                    // --- B. Comparative Weekly Rhythm Aggregation ---
                     const dayIndex = getDay(dateObj); // 0 = Sun
-                    weeklyBuckets[dayIndex].totalMood += entry.moodScore;
-                    weeklyBuckets[dayIndex].count += 1;
+                    
+                    if (isSameMonth(dateObj, today)) {
+                        // Current Month Bucket
+                        weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
+                        weeklyBuckets[dayIndex].currentCount += 1;
+                    } else if (isSameMonth(dateObj, prevMonthDate)) {
+                        // Previous Month Bucket
+                        weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
+                        weeklyBuckets[dayIndex].prevCount += 1;
+                    }
                 }
 
                 if (entry.weather && entry.weather.temp !== undefined) {
@@ -172,16 +187,19 @@ export default function JournalInsights() {
             
             setDailyTrendData(dailyStatsArray.slice(-14));
 
-            // Weekly Rhythm (Reorder to start Monday)
+            // Weekly Comparison (Reorder to start Monday)
             // Shift Sunday (0) to end
             const sunday = weeklyBuckets.shift(); 
             if (sunday) weeklyBuckets.push(sunday);
             
-            const finalizedWeekly = weeklyBuckets.map(b => ({
-                ...b,
-                average: b.count > 0 ? parseFloat((b.totalMood / b.count).toFixed(1)) : 0
+            const finalizedWeekly: WeeklyComparisonStats[] = weeklyBuckets.map(b => ({
+                dayName: b.dayName,
+                currentAvg: b.currentCount > 0 ? parseFloat((b.currentTotal / b.currentCount).toFixed(1)) : 0,
+                prevAvg: b.prevCount > 0 ? parseFloat((b.prevTotal / b.prevCount).toFixed(1)) : 0,
+                currentCount: b.currentCount,
+                prevCount: b.prevCount
             }));
-            setWeeklyRhythmData(finalizedWeekly);
+            setWeeklyComparisonData(finalizedWeekly);
 
             // Word Cloud
             const topWords = Object.entries(wordFreq)
@@ -228,16 +246,26 @@ export default function JournalInsights() {
             </div>
         </div>
 
-        {/* --- 1. WEEKLY RHYTHM (Simple Bar) --- */}
+        {/* --- 1. COMPARATIVE WEEKLY RHYTHM (Grouped Bar) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
-            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
-                <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
-                Weekly Rhythm
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
+                    <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
+                    Weekly Rhythm
+                </h3>
+                <div className="flex gap-3 text-[10px] font-bold">
+                    <span className="flex items-center gap-1 text-slate-400">
+                        <div className="w-2 h-2 rounded-full bg-slate-300"></div> Last Month
+                    </span>
+                    <span className="flex items-center gap-1 text-purple-600">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> This Month
+                    </span>
+                </div>
+            </div>
             
-            <div className="h-48 w-full min-w-0">
+            <div className="h-56 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <BarChart data={weeklyRhythmData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
+                    <BarChart data={weeklyComparisonData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
                         <XAxis 
                             dataKey="dayName" 
@@ -249,19 +277,19 @@ export default function JournalInsights() {
                         <Tooltip 
                             contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
                             cursor={{fill: '#f8fafc'}}
-                            // Fix: Use 'any' type for value to satisfy Recharts strict typing while we know it's a number
+                            // Satisfy strict Recharts typing by accepting generic payload
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            formatter={(value: any) => [value, 'Avg Mood']}
+                            formatter={(value: any, name: any) => [value, name === 'currentAvg' ? 'This Month' : 'Last Month']}
                         />
-                        <Bar dataKey="average" fill="#8B5CF6" radius={[4, 4, 0, 0]} barSize={24}>
-                            {weeklyRhythmData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fillOpacity={entry.count > 0 ? 1 : 0.3} />
-                            ))}
-                        </Bar>
+                        {/* Previous Month (Baseline) - Muted */}
+                        <Bar dataKey="prevAvg" name="Last Month" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={12} />
+                        
+                        {/* Current Month (Active) - Vibrant */}
+                        <Bar dataKey="currentAvg" name="This Month" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={12} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-center text-xs text-gray-400 mt-2">Average Mood Score by Day of Week</p>
+            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score Comparison</p>
         </div>
 
         {/* --- 2. MOOD vs WEATHER (Composed) --- */}
@@ -316,7 +344,6 @@ export default function JournalInsights() {
             ) : (
                 <div className="flex flex-wrap gap-2 justify-center items-center py-4">
                     {wordCloudData.map((word, i) => {
-                        // Dynamic sizing based on frequency relative to max
                         const maxVal = wordCloudData[0].value;
                         const sizeClass = 
                             word.value > maxVal * 0.8 ? 'text-2xl font-black text-indigo-600' :
