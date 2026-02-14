@@ -2,7 +2,8 @@
  * src/lib/db.ts
  * GITHUB COMMENT:
  * [db.ts]
- * UPDATED: Added sponsorName and sponsorPhone to UserProfile schema.
+ * SCHEMA UPDATE: Added 'usage_limits' to UserProfile to track AI Insight cooldowns.
+ * PURPOSE: Enforces frequency limits (Weekly/Monthly) for non-admin users.
  */
 import { 
   doc, 
@@ -56,9 +57,15 @@ export interface UserProfile {
   lastLogin?: Timestamp;
   lastExportAt?: Timestamp; 
   role?: 'admin' | 'user';
-  // NEW: Support Network Fields
+  // Support Network Fields
   sponsorName?: string;
   sponsorPhone?: string;
+  // NEW: AI Usage Tracking
+  usage_limits?: {
+    lastWeeklyInsight?: Timestamp;
+    lastMonthlyInsight?: Timestamp;
+    lastDeepDive?: Timestamp;
+  };
 }
 
 export interface JournalTemplate {

@@ -1,0 +1,508 @@
+# DOCS DIRECTORY DUMP
+**Generated on:** Tue Feb 10 21:59:21 EST 2026
+
+================================================================================
+FILE: docs/CONTEXT_DUMP.md
+================================================================================
+# 🧠 MRT: Platform Context
+**Stack:** React 19 + Vite + Tailwind v4 + Firebase + Gemini 2.5
+**Security:** Zero-Knowledge (AES-GCM Client-Side)
+**Version:** v1.0.0 (Production)
+
+## 🏗️ Architectural Pillars
+
+### 1. Zero-Knowledge Security
+* **Boundary:** `src/lib/crypto.ts` is the absolute boundary.
+* **Rule:** Plain text sensitive data (Journals, Workbook Answers) **NEVER** leaves the client device.
+* **Mechanism:** Data is encrypted with a key derived from `User PIN + Salt` (PBKDF2) before being sent to Firestore.
+* **Recovery:** If the PIN is lost, the data is mathematically unrecoverable. This is a feature, not a bug.
+
+### 2. Offline-First PWA
+* **State:** We use `TanStack Query` with `persistPersister` (planned) or local state to handle flaky connections.
+* **Sync:** The "Online/Offline" indicator (`LayoutContext`) informs the user of sync status.
+
+### 3. AI Isolation
+* **Model:** Gemini 2.5 Flash / Pro.
+* **Flow:** Data is decrypted on the client -> Sent to Gemini API -> Result displayed/saved.
+* **Privacy:** We do not fine-tune models on user data. Prompts are stateless.
+
+## 📂 Directory Structure
+* `src/components/journal/` -> Editor, History, and Analysis.
+* `src/components/service/` -> Sponsee management & Service commitments.
+* `src/lib/` -> Core logic (`crypto.ts`, `firebase.ts`, `gemini.ts`).
+* `src/data/` -> Static content (Workbook questions, Slogans).
+* `functions/` -> (Planned) Server-side sanitization.
+
+## 🛠️ Coding Standards
+* **Strict Typing:** No `any`. Interfaces for `JournalEntry` and `Task` are mandatory.
+* **No Magic Strings:** Use constants for Collection Names (`journals`, `tasks`).
+* **Environment:** All secrets via `import.meta.env`.
+
+================================================================================
+FILE: docs/DEPLOYMENT.md
+================================================================================
+# ☁️ Deployment & CI/CD
+
+**Platform:** Firebase Hosting
+**Pipeline:** GitHub Actions (Multi-Environment)
+
+## 1. Environment Strategy
+We use a **Promotion Pipeline**: `DEV` -> `UAT` -> `PROD`.
+
+| Environment | Branch | Firebase Project | URL |
+| :--- | :--- | :--- | :--- |
+| **DEV** | `feature/*` | `mrt2-app-dev` | (Preview URLs) |
+| **UAT** | `release/*` | `mrt2-app-uat` | `mrt2-app-uat.web.app` |
+| **PROD** | `main` | `mrt2-app-prod` | `myrecoverytoolkit.web.app` |
+
+## 2. Secrets Management
+Secrets are stored in GitHub Actions Secrets and injected into the build process.
+* `VITE_FIREBASE_API_KEY`
+* `VITE_GEMINI_API_KEY`
+* `FIREBASE_SERVICE_ACCOUNT` (Base64 encoded for deployment)
+
+## 3. Deployment Commands
+**Manual Deploy (Emergency only):**
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+**Database Rules:**
+```bash
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```
+
+================================================================================
+FILE: docs/PERSONAS.md
+================================================================================
+# 👥 Persona-Based Development Model
+
+Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, and technical environment.
+
+## 🌍 The Users (The Recovery Journey)
+*Goal: Sobriety, Stability, and Growth*
+
+### 1. "David" (The User in Crisis)
+* **Stage:** Day 1 to 30. Acute distress, high anxiety, cravings.
+* **Goal:** De-escalate immediate urges. Access help instantly.
+* **UX Constraint:** **Zero Friction.**
+    * *Rule:* No complex navigation. SOS button must be visible in < 1s.
+    * *Rule:* No login timeouts during active crisis usage.
+    * *Rule:* "Urge Log" must be accessible with 1 tap.
+* **Tech Needs:** Offline capability (PWA) is critical as they may be in poor signal areas.
+
+### 2. "Ned" (The Pink Cloud)
+* **Stage:** 30 to 90 Days. Optimistic, building habits, eager to track progress.
+* **Goal:** Gamification and streak tracking.
+* **UX Constraint:** **Visual Reward.**
+    * *Rule:* Dashboard must prominently display clean time/streaks.
+    * *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
+    * *Rule:* Needs "Quick Add" for daily tasks to maintain momentum.
+
+### 3. "Lisa" (The Service Superstar)
+* **Stage:** 7 Years (Maintenance). High-functioning, high-stress.
+* **Goal:** Manage sponsee commitments (Step 12) without burnout.
+* **UX Constraint:** **Boundary Management.**
+    * *Rule:* "Sponsee Dashboard" must organize commitments efficiently to reduce mental load.
+    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" to prevent compassion fatigue.
+    * *Rule:* UI must not be overwhelming or guilt-inducing; avoid complex scheduling tools that add stress.
+
+### 4. "Walt" (The Zen Master / Maintenance)
+* **Stage:** Years 1+. Stable, reflective, focused on service.
+* **Goal:** Deep journaling, analyzing long-term patterns, mentorship.
+* **UX Constraint:** **Data Sovereignty & Depth.**
+    * *Rule:* Export tools (PDF/JSON) must work perfectly for their archives.
+    * *Rule:* Encryption must be unbreakable but invisible.
+    * *Rule:* Features should focus on "Insights" and "Patterns" rather than simple streaks.
+
+## 🔐 Internal Actors (System & Security)
+
+### 5. "The Architect" (Admin/Developer)
+* **Goal:** Deploy safe code, manage schema, ensure uptime.
+* **Constraint:** **Zero-Knowledge Breach Prevention.**
+    * *Rule:* Never implement a feature that allows the server/admin to see the User PIN.
+    * *Rule:* Database maintenance scripts (migrations) must account for encrypted blobs.
+
+### 6. "The Recovery Coach" (The Gemini Agent)
+* **Role:** AI Analysis & Pattern Recognition.
+* **Goal:** Identify triggers in *decrypted* client-side text without storing the analysis permanently.
+* **Constraint:** **Privacy First.**
+    * *Rule:* AI never retains context between sessions.
+    * *Rule:* Data is analyzed in-memory or via secure stateless cloud functions, then discarded.
+
+## 📱 Hardware Contexts
+
+### 7. "The Mobile User" (Primary)
+* **Context:** 90% of usage is on mobile (PWA installed).
+* **Constraint:** **Thumb-Friendly UI.**
+    * *Rule:* Touch targets 44px+.
+    * *Rule:* Vitality logs (breathwork) must prevent screen sleep.
+
+
+================================================================================
+FILE: docs/ROADMAP.md
+================================================================================
+# 🗺️ MRT Product Roadmap
+
+**Vision:** To build the world's most secure, persona-aware digital recovery companion.
+
+## 📅 Q1 2026: The Security & Foundation
+*Focus: Hardening the Zero-Knowledge architecture and establishing CI/CD safety.*
+
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟡 **Active** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
+| ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
+| ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
+
+## 📅 Q2 2026: Engagement & Intelligence
+*Focus: Deepening the AI capabilities and user retention.*
+
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Pending | `PROJ-04` | **Local RAG (Chat with Journal)** | Admin | "Talk to your past" |
+| ⚪ Pending | `PROJ-05` | **Vitality 2.0 (Visuals)** | Admin | Photo Logging |
+
+---
+**Legend:** 🟢 Complete | 🟡 Active | ⚪ Planned | 🔴 Blocked
+
+================================================================================
+FILE: docs/SCHEMA_ARCHITECTURE.md
+================================================================================
+# 🗄️ Schema Architecture & Data Graph
+
+**Storage Engine:** Cloud Firestore (NoSQL)
+**Encryption Strategy:** Client-Side AES-GCM (Content fields only)
+
+## 1. High-Level Topology
+
+```mermaid
+graph TD
+    root[🔥 Firestore Root]
+    
+    root --> users[📂 users]
+    users --> userDoc[📄 User Profile]
+    userDoc --> workbook_progress[📂 workbook_progress]
+    
+    root --> journals[📂 journals]
+    root --> tasks[📂 tasks]
+    root --> insights[📂 insights]
+    root --> ai_logs[📂 ai_logs]
+    root --> service[📂 service]
+```
+
+## 2. Collection Definitions
+
+### `users/{uid}`
+* **Purpose:** Profile, Auth, & Encryption Params.
+* **Sensitive Fields:**
+    * `encryptionSalt` (String): Public salt needed to derive key.
+    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
+    * `sobrietyDate` (Timestamp): Metrics base.
+
+### `journals/{entryId}`
+* **Purpose:** Daily logs and reflections.
+* **Fields:**
+    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
+    * `isEncrypted` (Boolean): `true`.
+    * `moodScore` (Int): **UNENCRYPTED** (Allows metadata analysis/charts without unlocking vault).
+    * `tags` (Array): **UNENCRYPTED** (Allows filtering).
+    * `weather` (Map): Snapshot of environment.
+
+### `tasks/{taskId}`
+* **Purpose:** Gamification & Habits.
+* **Encryption:** Generally unencrypted to allow background stats.
+* **Fields:**
+    * `title` (String): Quest name.
+    * `category` (String): 'Recovery', 'Health', etc.
+    * `recurrence` (Map): Logic for repetition.
+
+### `insights/{insightId}`
+* **Purpose:** AI-generated analysis of journals/workbooks.
+* **Fields:**
+    * `summary` (String): The AI's output.
+    * `type` (String): 'journal' | 'workbook'.
+    * `pillars` (Map): Structured breakdown (Growth, Blind Spots).
+
+
+### `service/{serviceId}`
+* **Purpose:** "Digital Rolodex" for Lisa to manage sponsees/commitments.
+* **Fields:**
+    * `type` (String): 'sponsee' | 'commitment'.
+    * `name` (String): **ENCRYPTED** (Protect identity of sponsees).
+    * `notes` (String): **ENCRYPTED** (Private session notes).
+    * `contactInfo` (String): **ENCRYPTED**.
+    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
+    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
+
+
+## 3. Query Strategy
+* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
+* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
+
+================================================================================
+FILE: docs/SECURITY_ZERO_KNOWLEDGE.md
+================================================================================
+# 🛡️ Security Model: Zero-Knowledge Architecture
+
+**Philosophy:** "We cannot leak what we cannot read."
+
+## 1. The Encryption Lifecycle
+
+### A. Setup (Vault Creation)
+1. User enters 4-digit PIN.
+2. App generates random 16-byte `Salt`.
+3. App derives `Key` using PBKDF2 (100k iterations).
+4. App creates `Verifier` = Hash(PIN + Salt).
+5. App sends `Salt` and `Verifier` to Firestore. **PIN and Key are discarded.**
+
+### B. Storage (Writing Data)
+1. User types "I feel anxious today."
+2. App checks memory for `Key`. (If missing, prompt for PIN).
+3. App generates random `IV` (Initialization Vector).
+4. App encrypts text via AES-GCM -> `Ciphertext`.
+5. App sends string `IV:Ciphertext` to Firestore.
+
+### C. Retrieval (Reading Data)
+1. App fetches document from Firestore.
+2. App splits `IV:Ciphertext`.
+3. App uses `Key` to decrypt.
+4. Plain text renders in React.
+
+## 2. AI Privacy Boundary
+When a user asks for AI Analysis:
+1. Data is decrypted **in the browser**.
+2. Plain text is sent to Gemini API via HTTPS.
+3. Gemini processes data statelessly.
+4. Response is returned.
+5. **Critical:** We do NOT train models on this data.
+
+## 3. Emergency Access
+* **Lost PIN:** Data is lost. There is no backdoor.
+* **Legacy Data:** Older unencrypted entries are flagged (`isEncrypted: false`) and can be read/migrated.
+
+## 4. Third-Party Data (The Service Model)
+* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
+* **Rule:** This is a **Digital Rolodex**, not a Social Network.
+* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
+    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
+    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
+
+================================================================================
+FILE: docs/SPRINT_BOARD.md
+================================================================================
+# 🏃 Active Sprint Board
+**Sprint:** 16.2 "The Iron Gate"
+**Start Date:** 2026-02-10
+**Goal:** Close all critical security vulnerabilities identified in the audit.
+
+## 📌 To Do
+- [ ] `PROJ-01` Remove `AdminGrant.tsx` component completely.
+- [ ] `PROJ-01` Implement `npm run lint` check in GitHub Actions `deploy.yaml`.
+- [ ] `PROJ-01` Create `crypto.test.ts` to verify encryption round-trips.
+
+## 🚧 In Progress
+- [ ] Refactoring Documentation (You are here).
+
+## ✅ Done (This Sprint)
+- [x] Defined "Lisa" Persona.
+- [x] Updated Schema Architecture docs.
+- [x] Audited Codebase state.
+
+---
+## 🧊 Backlog (Next Up)
+- [ ] `PROJ-02` Create `service` collection in Firestore.
+- [ ] `PROJ-02` Build `useServiceData` hook.
+
+================================================================================
+FILE: docs/projects/00_TEMPLATE.md
+================================================================================
+# 📁 Project [ID]: [Name]
+
+**Objective:** [1 sentence goal]
+**Status:** ⚪ Planned
+**Personas Involved:** [David, Ned, Lisa, Walt]
+
+## 🏗️ Phase 1: Schema & Security
+* [ ] Does this require new Firestore collections?
+* [ ] Does this require new Encryption patterns?
+
+## 🧠 Phase 2: Logic & State
+* [ ] New Hooks?
+* [ ] New Contexts?
+
+## 🎨 Phase 3: UI & UX
+* [ ] Components needed?
+* [ ] Responsive check (Mobile First)?
+
+## 🚀 Phase 4: Delivery
+* [ ] Unit Tests passed?
+* [ ] Documentation Updated?
+
+================================================================================
+FILE: docs/projects/01_SECURITY_HARDENING.md
+================================================================================
+# 🔐 Project 01: Security Hardening
+
+**Objective:** Eliminate critical vulnerabilities found in the Feb 2026 Audit.
+**Status:** 🟡 Active
+
+## 🛑 Phase 1: Access Control (The Gate)
+* [ ] **Delete Backdoors:** Remove `src/components/AdminGrant.tsx`.
+* [ ] **Fix Rules:** Update `firestore.rules` to remove hardcoded emails. Use Custom Claims logic instead.
+* [ ] **Lock Button:** Add a "Lock Vault" button to the UI that clears `globalKey` from memory instantly.
+
+## 🛡️ Phase 2: Pipeline Safety (The Guard)
+* [ ] **CI/CD Gates:** Update `.github/workflows/deploy.yaml`.
+    * Add `npm install`
+    * Add `npm run lint`
+    * Add `npm run test` (Make sure it fails the build if tests fail).
+
+## 🧪 Phase 3: Integrity Verification (The Proof)
+* [ ] **Unit Tests:** Create `src/lib/crypto.test.ts`.
+    * Test: `encrypt('hello')` -> `decrypt(result)` === `'hello'`.
+    * Test: Decrypting with wrong key throws specific error.
+
+================================================================================
+FILE: docs/projects/02_SERVICE_MODE.md
+================================================================================
+# 🤝 Project 02: The "Lisa" Service Module
+
+**Objective:** Build the "Digital Rolodex" for sponsors to manage sponsees securely.
+**Status:** ⚪ Planned
+**Persona:** Lisa (The Service Superstar)
+
+## 🏗️ Phase 1: Schema & Crypto
+* [ ] **Schema:** Create `service` collection structure (See `SCHEMA_ARCHITECTURE.md`).
+* [ ] **Crypto:** Verify `src/lib/crypto.ts` can handle small, discrete fields (Name, Phone) individually, rather than just big blobs of text.
+
+## 🧠 Phase 2: Logic Layer
+* [ ] **Hook:** Build `useServiceData()` context hook.
+* [ ] **CRUD:** Implement `addSponsee()`, `updateSponseeNote()`.
+* [ ] **Boundary Check:** Ensure deleting a sponsee deletes their encrypted notes (Crypto-shredding).
+
+## 🎨 Phase 3: UI Implementation
+* [ ] **Dashboard:** Create `ServiceWidget` for the main dashboard (replacing Vitality or below it).
+* [ ] **List View:** Create `pages/Service.tsx` with "Active" and "Alumni" tabs.
+* [ ] **Detail View:** A secure card showing encrypted notes + unencrypted Next Meeting time.
+
+## 🚀 Phase 4: Release
+* [ ] Update `UserGuide.tsx` with a section for Sponsors.
+
+================================================================================
+FILE: docs/prompts/APPROVAL.md
+================================================================================
+# ✅ Execution Prompt (The Builder)
+
+**Instructions:**
+Use after the Plan is approved.
+
+---
+
+**Decision:** I approve the plan. Proceed with **Phase Execution**.
+
+**Strict Constraints:**
+1. **Script First:** Generate `install_phase.sh` to create/update files safely.
+2. **Governance:** Do NOT build features belonging to a future Phase. Stick to *this* Phase.
+3. **Safety:** If modifying `deploy.yaml` or `crypto.ts`, add a rollback verification step.
+
+**Output:**
+1. The Bash Script (`install_phase.sh`).
+2. **Manual Verification:** List specific checks to ensure the Phase is complete.
+
+================================================================================
+FILE: docs/prompts/AUDIT.md
+================================================================================
+# 🛡️ Phase Completion & Audit Prompt
+
+**Trigger:** You have finished coding and testing a Phase.
+
+**Task:**
+1. **Security Scan:** Check for `console.log` or weak types (`any`).
+2. **PM Update:** Generate a Python script (`update_pm.py`) to:
+    * Mark tasks as `[x]` in `docs/SPRINT_BOARD.md`.
+    * If the whole Project is done, mark it `[x]` in `docs/ROADMAP.md`.
+    * Update `docs/CHANGELOG.md` with technical details.
+
+**Output:**
+* Audit Report.
+* `update_pm.py` script.
+
+================================================================================
+FILE: docs/prompts/INITIALIZATION.md
+================================================================================
+# 🤖 AI Session Initialization Prompt
+
+**Role:** Principal Software Architect & Product Manager.
+
+**1. Load Technical Context:**
+* **Stack:** React 19, Vite, Tailwind v4, Firebase, Gemini 2.5.
+* **Security:** Zero-Knowledge (AES-GCM). *Never output user data in plain text.*
+* **Reference:** Read `docs/CONTEXT_DUMP.md`.
+
+**2. Load Project Context:**
+* **Reference:** Read `docs/SPRINT_BOARD.md` to see active tasks.
+* **Reference:** Read `docs/ROADMAP.md` for high-level goals.
+
+**Your Goal:**
+You are not just writing code; you are executing a specific **Phase** of an active **Project**. 
+Do not deviate from the active Sprint goals.
+
+**Reply:** 'MRT Platform Loaded. Sprint Context Active. Ready for Task.'
+
+================================================================================
+FILE: docs/prompts/PLANNING.md
+================================================================================
+# 📝 Phase Planning Prompt (The Architect)
+
+**Instructions:**
+1. Open the active Project file (e.g., `docs/projects/01_SECURITY.md`).
+2. Identify the current **Phase** we are executing.
+3. Fill in the plan below.
+
+---
+
+**Role:** Senior Architect for MRT.
+**Current Project:** [INSERT PROJECT NAME/ID]
+**Current Phase:** [INSERT PHASE NUMBER & NAME]
+
+**Objective:** Implement the tasks listed in this Phase.
+
+**Security Check:**
+* Does this Phase touch `src/lib/crypto.ts`?
+* Does it require new Firestore Rules?
+* **Persona Check:** How does this impact "Lisa" (Service) or "David" (Crisis)?
+
+**Implementation Strategy:**
+Break down this Phase into atomic coding steps.
+1. **Schema/Types:** What interfaces need changing?
+2. **Logic:** What hooks/functions need creation?
+3. **UI:** What components need building?
+
+**Deliverable:**
+* A bulleted list of files to create/modify.
+* Confirmation that this matches the "Project Spec" in `docs/projects/`.
+
+================================================================================
+FILE: docs/prompts/TESTING.md
+================================================================================
+# 🧪 Phase Verification Prompt (QA)
+
+**Role:** Senior SDET.
+**Task:** Verify the code delivered in this Phase.
+
+**Context:**
+* Project: [INSERT PROJECT ID]
+* Phase: [INSERT PHASE ID]
+
+**Strategy:**
+1. **Unit Tests:** Generate Vitest specs for new components.
+2. **Integration:** Does this break any existing features (Regression)?
+3. **Security:** Verify no plain-text leaks in logs.
+
+**Output:**
+* `.test.tsx` files.
+* A specific "Smoke Test" checklist for the developer.
+

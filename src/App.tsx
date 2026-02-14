@@ -1,9 +1,6 @@
 /**
  * src/App.tsx
- * GITHUB COMMENT:
- * [App.tsx]
- * UPDATED: Implemented TanStack Query Provider and Route Lazy Loading.
- * PERFORMANCE: Reduced initial bundle size by splitting Admin, Insights, and Vitality pages.
+ * UPDATED: PROJ-01 Security Hardening (Removed AdminGrant)
  */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -27,7 +24,6 @@ import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // --- LAZY LOADED ROUTES ---
-// These are heavy or less frequently accessed pages
 const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -36,7 +32,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // Data fresh for 5 minutes
+            staleTime: 1000 * 60 * 5, 
             retry: 1,
             refetchOnWindowFocus: false
         }
