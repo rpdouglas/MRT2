@@ -1,9 +1,6 @@
 /**
  * src/components/AppShell.tsx
- * GITHUB COMMENT:
- * [AppShell.tsx]
- * UPDATED: Integrated Offline Indicator and PWA Install Banner.
- * FEATURES: Visual feedback for network state (Red banner when offline).
+ * UPDATED: PROJ-01 Phase 1 (Added Lock Vault Button)
  */
 import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -18,7 +15,8 @@ import {
   HeartIcon, 
   LightBulbIcon,
   CommandLineIcon,
-  WifiIcon
+  WifiIcon,
+  LockClosedIcon // Imported Lock Icon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,7 +35,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
-  const { isVaultUnlocked } = useEncryption();
+  const { isVaultUnlocked, lockVault } = useEncryption(); // Use lockVault
 
   const handleLogout = async () => {
     try {
@@ -47,6 +45,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to log out', error);
     }
+  };
+
+  const handleLock = () => {
+      lockVault();
+      setSidebarOpen(false);
+      // Optional: Navigate to dashboard to force VaultGate re-check if on a protected route
+      navigate('/dashboard');
   };
 
   const performAutoBackup = useCallback(async () => {
@@ -185,6 +190,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  </div>
                              </div>
                           )}
+                          
+                          {/* LOCK VAULT BUTTON */}
+                          {isVaultUnlocked && (
+                            <button
+                                onClick={handleLock}
+                                className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
+                            >
+                                <LockClosedIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
+                                Lock Vault
+                            </button>
+                          )}
+
                           <button
                             onClick={handleLogout}
                             className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
