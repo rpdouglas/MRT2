@@ -1,7 +1,10 @@
-PROJECT EXPORT - 2026-02-15T17:30:49.419Z
+PROJECT EXPORT - 2026-02-16T17:52:40.965Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
+├── .devcontainer
+│   ├── devcontainer.json
+│   └── setup.sh
 ├── .env
 ├── .eslintrc.json
 ├── .gitignore
@@ -39,7 +42,6 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── SCHEMA_ARCHITECTURE.md
 │   ├── SECURITY_ZERO_KNOWLEDGE.md
 │   ├── SPRINT_BOARD.md
-│   ├── guide
 │   ├── legal
 │   │   ├── PRIVACY_POLICY.md
 │   │   └── TERMS_OF_SERVICE.md
@@ -90,7 +92,6 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   └── walt.jpg
 │   ├── pwa-192x192.png
 │   └── pwa-512x512.png
-├── pwa-assets
 ├── scripts
 │   ├── dump_docs.sh
 │   ├── generate-build-info.js
@@ -148,6 +149,7 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── index.css
 │   ├── lib
 │   │   ├── analytics.ts
+│   │   ├── crypto.test.ts
 │   │   ├── crypto.ts
 │   │   ├── dateUtils.ts
 │   │   ├── db.ts
@@ -193,6 +195,70 @@ Note: Binary files and strictly ignored directories are excluded.
 
 
 ### FILE CONTENTS ###
+
+<file path=".devcontainer/devcontainer.json">
+{
+  "name": "MRT Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "tamasfe.even-better-toml",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "files.eol": "\n"
+      }
+    }
+  },
+
+  "forwardPorts": [5173, 9099, 4000, 8080],
+  
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  
+  "remoteUser": "node"
+}
+
+</file>
+
+<file path=".devcontainer/setup.sh">
+#!/bin/bash
+
+echo "🚀 Starting Environment Setup..."
+
+# A. Install Dependencies
+echo "📦 Installing NPM Packages..."
+npm install
+
+# B. Install Firebase CLI globally
+echo "🔥 Installing Firebase Tools..."
+npm install -g firebase-tools
+
+# C. Setup Environment Variables
+# If secrets are passed to the container, we write them to .env
+if [ ! -f .env ]; then
+    echo "📝 Creating local .env from Example..."
+    # We create a dummy file to prevent Vite crash on start
+    echo "VITE_APP_VERSION=CODESPACE-DEV" > .env
+    echo "VITE_GEMINI_API_KEY=placeholder_replace_me" >> .env
+fi
+
+echo "✅ Ready to Code! Run 'npm run dev' to start."
+
+</file>
 
 <file path=".eslintrc.json">
 {
@@ -254,6 +320,7 @@ dist-ssr
 
 # Security
 *.env
+service-account.json
 
 # Editor directories and files
 .vscode/*
@@ -929,7 +996,8 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
+| 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
+| 🟡 **Active** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
 | ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
 | ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
 
@@ -943,6 +1011,7 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 
 ---
 **Legend:** 🟢 Complete | 🟡 Active | ⚪ Planned | 🔴 Blocked
+
 </file>
 
 <file path="docs/SCHEMA_ARCHITECTURE.md">
@@ -1410,81 +1479,134 @@ Break down this Phase into atomic coding steps.
 # 📖 Feature Specification: The Journal (The Vault)
 
 **Status:** Live (v1.1)
-**Security Level:** Zero-Knowledge (Client-Side Encrypted)
-**Primary Persona:** David (The Crisis User) & Lisa (The Maintenance User)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
 ---
 
 ## 1. Overview
-The Journal is the central "Input" mechanism of My Recovery Toolkit. It is not just a text editor; it is a **secure, encrypted vault** for recovery work. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching without sacrificing privacy.
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
 
 
 
-## 2. Core Architecture (Zero-Knowledge)
-* **Encryption:** All journal content (`title`, `body`, `ai_analysis`) is encrypted on the device using `AES-GCM` before it ever touches the network.
-* **Keys:** The encryption key is derived from the user's PIN. The server **never** sees the key or the plain text.
-* **Implication:** If a user loses their PIN, their journal entries are strictly unrecoverable.
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-## 3. Sub-Features
+### A. Write (The Editor)
+* **Input Methods:**
+    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
+    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
+* **Metadata:**
+    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
+    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
+    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+* **Templates:**
+    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
+    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-### A. The Editor (Write)
-* **Format:** Rich Text / Markdown support (Bold, Italic, Lists).
-* **Auto-Save:** Saves locally to `IndexedDB` (via Firestore persistence) immediately, syncs to cloud when online.
-* **Tags:** Users can tag entries (e.g., `#gratitude`, `#resentment`) for filtering.
+### B. History (The Timeline)
+* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
+* **Analysis Trigger:** Contains the "Analyze" FAB (Floating Action Button) to launch the **Journal Analysis Wizard**.
+* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
-### B. Templates (Structure)
-* **System Templates:** Pre-loaded recovery formats (e.g., "Morning Check-in", "Step 10 Inventory").
-* **Custom Templates:** Users can create their own reusable forms.
-* **Workflow:** Selecting a template populates the editor with prompts.
-
-### C. AI Analysis (The Coach)
-* **Trigger:** User manually clicks "Analyze Entry" (On-Demand only).
-* **Privacy Protocol:**
-    1.  App decrypts the entry in memory.
-    2.  App sends the *plain text* to Google Gemini API (Stateless request).
-    3.  **Constraint:** Data is NOT used for model training.
-    4.  App receives the analysis (Patterns, Cognitive Distortions, Actionable Advice).
-    5.  App *encrypts* the analysis and stores it in Firestore.
-* **Output:** The AI provides:
-    * *Summary:* 1-sentence recap.
-    * *Mood:* Detected emotional state.
-    * *Patterns:* Recurring behaviors.
-    * *Feedback:* "Compassionate but firm" recovery advice.
-
-### D. History & Search (Reflect)
-* **Timeline:** Chronological list of entries.
-* **Search:** Since data is encrypted, **server-side search is impossible**.
-    * *Implementation:* The app downloads *all* metadata (dates, tags) and decrypts them locally to perform a client-side search.
+### C. Insights (The Dashboard)
+* **Source:** `JournalInsights.tsx`
+* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
+* **Visualizations:**
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days* (Days 31-60).
+    2.  **Daily Trends:** A Composed Chart overlaying **Mood** (Line) vs **Weather Temperature** (Bar) to identify environmental triggers.
+    3.  **Word Cloud:** Frequency analysis of entry content (excluding stop words) to highlight recurring themes.
+    4.  **Top Stats:** Total Entries, Average Mood Score, and Active Streak.
 
 ---
 
-## 4. Technical Data Flow (The "Troubleshooting Map")
+## 3. Advanced AI Features
 
-### Write Flow
-1.  User types "I feel anxious."
-2.  `EncryptionContext` encrypts -> `U2FsdGVkX1...`
-3.  Firestore SDK writes `U2FsdGVkX1...` to `users/{uid}/journals/{id}`.
+### 🧠 The Analysis Wizard
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Scopes:**
+    * **Weekly:** Last 7 days vs Previous 7 days.
+    * **Monthly:** Last 30 days vs Previous 30 days.
+    * **Deep Dive:** All-time / 90-day pattern recognition.
+* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
+* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
+* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
 
-### AI Analysis Flow (Current Failure Point)
-1.  **User Action:** Click "Analyze".
-2.  **Decrypt:** Client decrypts entry text.
-3.  **API Call:** Client calls `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`.
-    * *Requires:* Valid `API_KEY` in query param.
-    * *Requires:* Valid Google Cloud Project with "Generative Language API" enabled.
-4.  **Response:** JSON with analysis text.
-5.  **Save:** Client encrypts analysis -> Firestore.
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:**
+    1.  User records audio (MediaRecorder API).
+    2.  Audio Blob converted to Base64.
+    3.  Sent to Gemini 2.5 Flash (Multimodal).
+    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
+    5.  Populates the Editor state.
 
 ---
 
-## 5. Configuration Requirements (Environment)
-For the Journal features to work in **Production**, the following must be true:
+## 4. Technical Architecture
 
-| Component | Requirement | Status (Prod) |
-| :--- | :--- | :--- |
-| **Database** | Firestore Rules must allow `create/update` on `/journals`. | ✅ Synced |
-| **Encryption** | Valid PIN entered (Vault Unlocked). | ✅ Working |
-| **AI API** | `VITE_GEMINI_API_KEY` defined in GitHub Secrets. | ⚠️ **Suspect** |
-| **AI Service** | "Generative Language API" enabled in Google Cloud. | ⚠️ **Suspect** |
+### Data Flow & Encryption
+```mermaid
+sequenceDiagram
+    participant User
+    participant App (React)
+    participant Crypto (Lib)
+    participant Gemini (AI)
+    participant Firestore
+
+    Note over App, Firestore: WRITE FLOW
+    User->>App: Types "I feel anxious"
+    App->>Crypto: encrypt("I feel anxious", Key)
+    Crypto-->>App: Returns "IV:Ciphertext"
+    App->>Firestore: Writes { content: "IV:Ciphertext", isEncrypted: true }
+
+    Note over App, Gemini: AI ANALYSIS FLOW
+    User->>App: Clicks "Analyze"
+    App->>Firestore: Fetches Encrypted Docs
+    App->>Crypto: decrypt(Docs, Key)
+    App->>Gemini: Sends Plain Text (Stateless)
+    Gemini-->>App: Returns Analysis JSON
+    App->>App: Renders Result
+    App->>Firestore: Saves Result (Optional)
+```
+
+### Database Schema (Journal Specific)
+**Collection:** `journals`
+| Field | Type | Description | Encryption |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | Owner ID | No |
+| `content` | String | The body text | **YES (AES-GCM)** |
+| `moodScore` | Number | 1-10 Integer | No (For Stats) |
+| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
+| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
+| `isEncrypted` | Bool | Flag for legacy data handling | No |
+| `createdAt` | Timestamp | Creation Time | No |
+
+---
+
+## 5. Edge Cases & Constraints
+
+1.  **Lost PIN:**
+    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
+    * *Mitigation:* `VaultGate.tsx` warns users clearly.
+
+2.  **AI Privacy:**
+    * Journal text is decrypted in browser memory *only* for the duration of the API call.
+    * Gemini API calls are stateless (data is not stored by Google for model training).
+
+3.  **API Failures:**
+    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
+    * If Gemini fails (403/500), the user can still save the text manually.
+
+## 6. Verification (QA)
+
+* [ ] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
+* [ ] **Search:** Verify searching by "Tag" works (since tags are unencrypted).
+* [ ] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
+* [ ] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
+
 </file>
 
 <file path="docs/templates/FEATURE_SPEC.md">
@@ -9994,6 +10116,96 @@ export async function logAIUsage(
 }
 </file>
 
+<file path="src/lib/crypto.test.ts">
+import { describe, it, expect, beforeEach } from 'vitest';
+import { 
+    generateKey, 
+    encrypt, 
+    decrypt, 
+    clearKey, 
+    isVaultUnlocked, 
+    generateSalt,
+    computePinHash 
+} from './crypto';
+
+describe('🛡️ Zero-Knowledge Security Engine', () => {
+
+    const TEST_PIN = "1234";
+    const TEST_SALT = generateSalt();
+
+    beforeEach(() => {
+        // Ensure vault is locked before each test
+        clearKey();
+    });
+
+    it('should generate a unique salt', () => {
+        const salt1 = generateSalt();
+        const salt2 = generateSalt();
+        expect(salt1).not.toBe(salt2);
+        expect(salt1.length).toBeGreaterThan(10);
+    });
+
+    it('should derive a key and unlock the vault', async () => {
+        expect(isVaultUnlocked()).toBe(false);
+        await generateKey(TEST_PIN, TEST_SALT);
+        expect(isVaultUnlocked()).toBe(true);
+    });
+
+    it('should successfully encrypt and decrypt text (Round Trip)', async () => {
+        await generateKey(TEST_PIN, TEST_SALT);
+        
+        const secretMessage = "My deepest darkest secret";
+        const cipherText = await encrypt(secretMessage);
+
+        expect(cipherText).not.toBe(secretMessage);
+        expect(cipherText).toContain(':'); // Checks for IV:Data format
+
+        const plainText = await decrypt(cipherText);
+        expect(plainText).toBe(secretMessage);
+    });
+
+    it('should FAIL to encrypt if vault is locked', async () => {
+        clearKey(); // Ensure locked
+        await expect(encrypt("Should fail")).rejects.toThrow(/Vault is locked/);
+    });
+
+    it('should return Safe Fallback when decrypting with wrong key', async () => {
+        // 1. Encrypt with User A's PIN
+        await generateKey("1111", TEST_SALT);
+        const secret = "User A Data";
+        const cipherText = await encrypt(secret);
+
+        // 2. Clear and switch to User B (Attacker/Wrong PIN)
+        clearKey();
+        await generateKey("9999", TEST_SALT); // Different key derived
+
+        // 3. Attempt to decrypt
+        // FIX: Expect the safe fallback string, NOT a crash
+        const result = await decrypt(cipherText);
+        expect(result).toBe("[Locked Content - Verify PIN]");
+    });
+
+    it('should generate consistent PIN hashes for verification', async () => {
+        const hash1 = await computePinHash(TEST_PIN, TEST_SALT);
+        const hash2 = await computePinHash(TEST_PIN, TEST_SALT);
+        
+        expect(hash1).toBe(hash2);
+        
+        const wrongHash = await computePinHash("0000", TEST_SALT);
+        expect(hash1).not.toBe(wrongHash);
+    });
+
+    it('should clear the key from memory when locked', async () => {
+        await generateKey(TEST_PIN, TEST_SALT);
+        expect(isVaultUnlocked()).toBe(true);
+        
+        clearKey();
+        expect(isVaultUnlocked()).toBe(false);
+    });
+});
+
+</file>
+
 <file path="src/lib/crypto.ts">
 // src/lib/crypto.ts
 
@@ -11153,11 +11365,7 @@ export const calculateVitalityStats = (journals: ScorableJournal[]): VitalitySta
 <file path="src/lib/gemini.ts">
 /**
  * src/lib/gemini.ts
- * GITHUB COMMENT:
- * [gemini.ts]
- * UPDATED: Standardized Audio Analysis to use 'gemini-2.5-flash'.
- * FIX: Removed deprecated 'gemini-1.5-flash' from model cascade.
-* ADDED: New function 'analyzeSystemHealth' for client-side error log analysis.                    
+ * UPDATED: Fixed generateComparativeAnalysis to use 'gemini-2.5-pro'.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -11256,8 +11464,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-               
-                console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
+                // console.log(\`🤖 AI Attempt \${i + 1}/\${modelsToTry.length}: Using \${currentModelName}\`);
             }
 
             const model = genAI.getGenerativeModel({ 
@@ -11446,7 +11653,13 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithCascade(systemPrompt + promptContext, `comparative_analysis_${scope}`);
+    // FIX: Forced 'gemini-2.5-pro' model to match working Deep Dive configuration
+    const text = await generateWithCascade(
+        systemPrompt + promptContext, 
+        `comparative_analysis_${scope}`, 
+        'gemini-2.5-pro'
+    );
+    
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
@@ -11519,6 +11732,7 @@ export async function getGeminiCoaching(
     
     return await generateWithCascade(prompt, 'workbook_coach');
 }
+
 </file>
 
 <file path="src/lib/googleDrive.ts">

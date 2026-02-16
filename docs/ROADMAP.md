@@ -8,8 +8,8 @@
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟡 **Active** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
-| ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
+| 🟢 **Done** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
+| 🟡 **Active** | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
 | ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
 
 ## 📅 Q2 2026: Engagement & Intelligence
