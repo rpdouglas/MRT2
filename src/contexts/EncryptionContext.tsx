@@ -1,6 +1,6 @@
 /**
  * src/contexts/EncryptionContext.tsx
- * UPDATED: Implemented sessionStorage caching for PIN to persist unlock state across refreshes.
+ * UPDATED: Fixed ESLint exhaustive-deps warning by wrapping performUnlock in useCallback.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -62,7 +62,8 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [verifier, setVerifier] = useState<string | null>(null);
 
   // Helper to actually perform the unlock logic
-  const performUnlock = async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
+  // WRAPPED IN useCallback TO FIX LINTING
+  const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
       try {
         // 1. Verify PIN if verifier exists
         if (currentVerifier) {
@@ -112,7 +113,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           console.error("Unlock logic failed", error);
           return false;
       }
-  };
+  }, [user]); // Added user dependency
 
   // Initial Load & Auto-Unlock
   useEffect(() => {
@@ -155,7 +156,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
 
     checkVaultStatus();
-  }, [user]);
+  }, [user, performUnlock]); // Added performUnlock dependency
 
   const setupVault = async (pin: string) => {
     if (!user || !db) return;
