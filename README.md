@@ -1,73 +1,64 @@
-# React + TypeScript + Vite
+# 🛡️ My Recovery Toolkit (MRT)
+### *Recovery is a High-Performance Lifestyle*
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+My Recovery Toolkit is a high-performance, **Zero-Knowledge** digital companion designed for individuals navigating 12-Step and Buddhist-inspired recovery journeys. Built with a focus on privacy, somatic regulation, and AI-driven insights, MRT meets users exactly where they are—from the acute crisis of Day 1 to the seasoned maintenance of Year 35.
 
-Currently, two official plugins are available:
+## 🗝️ The Zero-Knowledge Advantage
+Unlike traditional wellness apps, MRT is built on the principle that **we cannot leak what we cannot read.**
+* **Client-Side Encryption:** All sensitive data (Journals, Workbook answers, Sponsee notes) is encrypted on your device using the **Web Crypto API (AES-GCM)**.
+* **Mathematical Privacy:** Your encryption key is derived from your private PIN + a unique salt using **PBKDF2**. This key is never stored on our servers.
+* **Data Sovereignty:** You own your data. Export your entire history to PDF or JSON at any time.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## React Compiler
+* **The Horizon (Dashboard):** Real-time sobriety counter, habit streaks, and a "Bio-Rhythm" snapshot of your daily balance.
+* **The Vault (Secure Journaling):** Encrypted reflections with integrated **Gemini AI** for sentiment analysis and pattern recognition.
+* **The Library (Interactive Workbooks):** Structured 12-Step, CBT, and Recovery Dharma modules to facilitate deep inner work.
+* **The Pulse (Vitality):** Somatic regulation tools including a guided **4-7-8 Breathwork** pacer and activity logging.
+* **The Compass (AI Insights):** Analyzes decrypted history to identify subtle relapse triggers and emotional trends.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🎨 Design System: Vibrant Momentum
+MRT utilizes a high-saturation, motion-heavy design system designed to signal life and energy. 
+* **Atmospheric Tinting:** Each module has a unique color signature to orient users emotionally.
+* **100dvh Layouts:** Immersive, app-like experience optimized for mobile PWA usage.
+* **Tactile Feedback:** Haptic triggers for breathwork and task completion.
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
+* **Frontend:** React 19 + Vite + Tailwind CSS v4
+* **Backend:** Firebase (Auth, Firestore, Hosting)
+* **Intelligence:** Google Gemini 2.5 (Flash/Pro Cascade)
+* **Security:** AES-GCM (Client-side) + PBKDF2 Key Derivation
+* **Infrastructure:** GitHub Actions (CI/CD) + DevContainers (Codespaces)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🏁 Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Prerequisites
+* Node.js (v20+)
+* Firebase CLI
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
+1.  **Clone the Repo:**
+    \`\`\`bash
+    git clone https://github.com/rpdouglas/MRT2.git
+    cd MRT2
+    \`\`\`
+2.  **Install Dependencies:**
+    \`\`\`bash
+    npm install
+    \`\`\`
+3.  **Environment Setup:**
+    Create a \`.env\` file in the root and add your Firebase and Gemini credentials.
+4.  **Run Development Server:**
+    \`\`\`bash
+    npm run dev
+    \`\`\`
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📜 Documentation
+For detailed technical specifications, refer to the \`docs/\` directory:
+* [Infrastructure & DevOps](./docs/specs/13_INFRASTRUCTURE.md)
+* [Security Model](./docs/specs/SECURITY_ZERO_KNOWLEDGE.md)
+* [Gamification Engine](./docs/specs/07_GAMIFICATION.md)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+**Developed with purpose by Clean and Sober Ryan.**
+*Disclaimer: MRT is a self-help tool and does not provide medical advice or crisis intervention.*
