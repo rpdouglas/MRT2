@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-16T17:52:40.965Z
+PROJECT EXPORT - 2026-02-16T17:57:46.223Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -997,8 +997,8 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟡 **Active** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
-| ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
+| 🟢 **Done** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
+| 🟡 **Active** | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
 | ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
 
 ## 📅 Q2 2026: Engagement & Intelligence
@@ -1136,27 +1136,26 @@ When a user asks for AI Analysis:
 
 <file path="docs/SPRINT_BOARD.md">
 # 🏃 Active Sprint Board
-**Sprint:** 16.2 "The Iron Gate"
-**Start Date:** 2026-02-10
-**Goal:** Close all critical security vulnerabilities identified in the audit.
+**Sprint:** 17.1 "The Service Keeper"
+**Start Date:** 2026-02-16
+**Goal:** Implement the "Lisa" Persona features for sponsors and service work.
 
 ## 📌 To Do
-- [ ] `PROJ-01` Remove `AdminGrant.tsx` component completely.
-- [ ] `PROJ-01` Implement `npm run lint` check in GitHub Actions `deploy.yaml`.
-- [ ] `PROJ-01` Create `crypto.test.ts` to verify encryption round-trips.
+- [ ] `PROJ-02` Create 'Service' collection schema in Firestore.
+- [ ] `PROJ-02` Build `ServiceList` component (Sponsee Rolodex).
+- [ ] `PROJ-02` Implement `useServiceData` hook with encryption.
+- [ ] `PROJ-02` Create "Service Widget" for Dashboard.
 
 ## 🚧 In Progress
-- [ ] Refactoring Documentation (You are here).
+- [ ] Requirements Gathering (You are here).
 
-## ✅ Done (This Sprint)
-- [x] Defined "Lisa" Persona.
-- [x] Updated Schema Architecture docs.
-- [x] Audited Codebase state.
+## ✅ Done (Previous Sprint: Security & Infra)
+- [x] Migrated to GitHub Codespaces.
+- [x] Fixed "Ghost Variable" CI/CD bug.
+- [x] Standardized Gemini AI Models (v2.5-pro).
+- [x] Implemented Zero-Knowledge Vault Locking.
+- [x] Added Unit Tests for Crypto Engine.
 
----
-## 🧊 Backlog (Next Up)
-- [ ] `PROJ-02` Create `service` collection in Firestore.
-- [ ] `PROJ-02` Build `useServiceData` hook.
 </file>
 
 <file path="docs/legal/PRIVACY_POLICY.md">
