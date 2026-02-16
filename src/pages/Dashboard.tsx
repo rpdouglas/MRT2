@@ -2,8 +2,8 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * UI UPDATE: Reordered dashboard hierarchy per user request.
- * LAYOUT: Header -> Clean Time (Floating) -> Bento Grid -> XP Card (Bottom).
+ * FIX: Added 'refetchOnMount: "always"' to all queries.
+ * REASON: Solves "Stale Cache" bug where streaks didn't update after task completion.
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,7 @@ import {
   calculateJournalStats, 
   calculateTaskStats, 
   calculateWorkbookStats, 
-  calculateVitalityStats, 
+  calculateVitalityStats,
   calculateUserLevel
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
@@ -55,6 +55,7 @@ export default function Dashboard() {
         return snap.exists() ? snap.data() : null;
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 2: JOURNALS ---
@@ -69,13 +70,13 @@ export default function Dashboard() {
             orderBy('createdAt', 'desc')
         );
         const snap = await getDocs(q);
-        // Cast dates for gamification calc
         return snap.docs.map(d => ({
             ...d.data(),
             createdAt: d.data().createdAt
         }));
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 3: TASKS ---
@@ -89,6 +90,7 @@ export default function Dashboard() {
         return snap.docs.map(d => d.data());
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 4: WORKBOOKS ---
@@ -102,6 +104,7 @@ export default function Dashboard() {
         return snap.size;
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- CALCULATE STATS ---

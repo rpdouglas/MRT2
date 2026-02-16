@@ -1,55 +1,67 @@
 {
   "meta": {
     "env": "DEV",
-    "branch": "feature/autoversion",
-    "globalHash": "0375ed6",
-    "coreHash": "5535472d",
-    "buildTime": "2025-12-27T03:45:33.715Z"
+    "branch": "feature/vitality_stabalization",
+    "globalHash": "6ecc9c1",
+    "coreHash": "60a4df03",
+    "buildTime": "2026-02-16T22:12:29.404Z"
   },
   "pages": {
+    "AdminDashboard": {
+      "hash": "3486ecfe",
+      "lastModified": "2026-02-16T22:12:29.404Z"
+    },
     "Dashboard": {
-      "hash": "b066ae73",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "d0d0a247",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "InsightsLog": {
-      "hash": "b59cda82",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "9da4c74a",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Journal": {
-      "hash": "c2879395",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "d5833368",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Login": {
-      "hash": "f03fdf28",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "9a3b7deb",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Profile": {
-      "hash": "dbcf48ca",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "603f481c",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Tasks": {
-      "hash": "686658d7",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "50eee452",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "TemplateEditor": {
-      "hash": "6bb9c1ec",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "1ab113be",
+      "lastModified": "2026-02-16T22:12:29.404Z"
+    },
+    "UserGuide": {
+      "hash": "307df8c2",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Vitality": {
-      "hash": "615c2332",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "388dd49e",
+      "lastModified": "2026-02-16T22:12:29.404Z"
+    },
+    "Welcome": {
+      "hash": "7b479d32",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "WorkbookDetail": {
-      "hash": "849df9fb",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "48541494",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "WorkbookSession": {
-      "hash": "37de37e1",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "bb3573a2",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     },
     "Workbooks": {
-      "hash": "3d85eb00",
-      "lastModified": "2025-12-27T03:45:33.715Z"
+      "hash": "6bd606c9",
+      "lastModified": "2026-02-16T22:12:29.404Z"
     }
   }
 }
