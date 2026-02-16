@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
@@ -37,6 +38,7 @@ export default function WorkbookDetail() {
   const { workbookId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { decrypt } = useEncryption(); // Added for AI analysis
   const workbook = getWorkbook(workbookId || '');
 
   // Data State
@@ -126,6 +128,24 @@ export default function WorkbookDetail() {
             contextTitle = "Global Recovery Review";
         }
 
+        // --- DECRYPTION STEP ---
+        // We must decrypt the answers before sending them to the AI
+        docsToAnalyze = await Promise.all(docsToAnalyze.map(async (entry) => {
+            const rawAnswer = entry.answer;
+            // Simple check: if it contains a colon, it's likely iv:ciphertext
+            if (rawAnswer && rawAnswer.includes(':')) {
+                try {
+                    const plain = await decrypt(rawAnswer);
+                    return { ...entry, answer: plain };
+                } catch (e) {
+                    console.error("Decryption failed during analysis", e);
+                    return { ...entry, answer: "[Redacted/Error]" };
+                }
+            }
+            return entry;
+        }));
+        // -----------------------
+
         if (docsToAnalyze.length === 0) {
             alert("No entries found for this selection. Try completing some questions first.");
             setAnalyzing(false);
@@ -134,7 +154,7 @@ export default function WorkbookDetail() {
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
         
-        // FIX 1: Pass contextTitle to the AI function so it's used
+        // Pass contextTitle to the AI function so it's used
         const result = await analyzeWorkbookContent(contextTitle, [{ question: "Combined Context", answer: textContent }]);
         
         if (result) {
@@ -157,7 +177,7 @@ export default function WorkbookDetail() {
     if (!user || !insight) return;
     setSavingInsight(true);
     try {
-        // FIX 2: Explicitly add 'type: workbook' to match InsightPayload
+        // Explicitly add 'type: workbook' to match InsightPayload
         await saveInsight(user.uid, { type: 'workbook', ...insight });
         setSavingInsight(false); 
         // Optional: Add toast here
@@ -390,7 +410,7 @@ export default function WorkbookDetail() {
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
                                               </button>
                                            </li>
-                                      );
+                                       );
                                   })}
                               </ul>
                           </div>
