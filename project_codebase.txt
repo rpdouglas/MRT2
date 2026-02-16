@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-16T17:57:46.223Z
+PROJECT EXPORT - 2026-02-16T21:59:36.528Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -52,12 +52,25 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── prompts
 │   │   ├── APPROVAL.md
 │   │   ├── AUDIT.md
+│   │   ├── DOC_AUDIT.md
 │   │   ├── FIX.md
 │   │   ├── INITIALIZATION.md
 │   │   ├── PLANNING.md
 │   │   └── TESTING.md
 │   ├── specs
-│   │   └── 01_JOURNAL.md
+│   │   ├── 01_JOURNAL.md
+│   │   ├── 02_SERVICE.md
+│   │   ├── 03_ADMIN.md
+│   │   ├── 04_WORKBOOKS.md
+│   │   ├── 05_TASKS.md
+│   │   ├── 06_VITALITY.md
+│   │   ├── 07_GAMIFICATION.md
+│   │   ├── 08_ADMIN.md
+│   │   ├── 09_PROFILE.md
+│   │   ├── 10_INSIGHTS.md
+│   │   ├── 11_DASHBOARD.md
+│   │   ├── 12_USER_GUIDE.md
+│   │   └── 13_INFRASTRUCTURE.md
 │   └── templates
 │       ├── FEATURE_SPEC.md
 │       └── USER_GUIDE.md
@@ -93,6 +106,7 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── pwa-192x192.png
 │   └── pwa-512x512.png
 ├── scripts
+│   ├── .upgrade_infrastructure_doc.sh.swp
 │   ├── dump_docs.sh
 │   ├── generate-build-info.js
 │   ├── increment-version.cjs
@@ -886,38 +900,44 @@ check();
 </file>
 
 <file path="docs/DEPLOYMENT.md">
-# ☁️ Deployment & CI/CD
+# ☁️ Deployment & Development
 
 **Platform:** Firebase Hosting
 **Pipeline:** GitHub Actions (Multi-Environment)
+**Dev Environment:** GitHub Codespaces (Recommended)
 
-## 1. Environment Strategy
+## 1. Development Environment (Codespaces)
+We have migrated to **GitHub Codespaces** to ensure a consistent, secure dev environment.
+
+* **Config:** `.devcontainer/devcontainer.json`
+* **Auto-Setup:** The `setup.sh` script automatically installs Node 20, Firebase Tools, and extensions.
+* **Secrets:**
+    * **Method:** Secrets are injected from GitHub Codespaces Settings.
+    * **Boot Logic:** The setup script reads these secrets and generates a local `.env` file automatically.
+
+## 2. Environment Strategy
 We use a **Promotion Pipeline**: `DEV` -> `UAT` -> `PROD`.
 
 | Environment | Branch | Firebase Project | URL |
 | :--- | :--- | :--- | :--- |
 | **DEV** | `feature/*` | `mrt2-app-dev` | (Preview URLs) |
 | **UAT** | `release/*` | `mrt2-app-uat` | `mrt2-app-uat.web.app` |
-| **PROD** | `main` | `mrt2-app-prod` | `myrecoverytoolkit.web.app` |
+| **PROD** | `main` | `mrt2-app-prod` | `www.myrecoverytoolkit.ca` |
 
-## 2. Secrets Management
-Secrets are stored in GitHub Actions Secrets and injected into the build process.
-* `VITE_FIREBASE_API_KEY`
-* `VITE_GEMINI_API_KEY`
-* `FIREBASE_SERVICE_ACCOUNT` (Base64 encoded for deployment)
+## 3. The Build Pipeline (Secrets Security)
+We use a "Nuclear Fix" strategy for environment variables in CI/CD to prevent Vite from missing keys.
 
-## 3. Deployment Commands
-**Manual Deploy (Emergency only):**
+* **Logic:** The pipeline does *not* rely on shell variables passing through to the build.
+* **Mechanism:** The Action explicitly **writes a physical .env file** to the runner's disk immediately before the build step, populated with secrets from GitHub Actions.
+* **Admin Access:** The `FIREBASE_SERVICE_ACCOUNT` is decoded from Base64 into a temporary JSON file for the deploy step, then destroyed.
+
+## 4. Deployment Commands
+**Manual Deploy (Emergencies only):**
 ```bash
 npm run build
 firebase deploy --only hosting
 ```
 
-**Database Rules:**
-```bash
-firebase deploy --only firestore:rules
-firebase deploy --only firestore:indexes
-```
 </file>
 
 <file path="docs/PERSONAS.md">
@@ -998,7 +1018,8 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
 | 🟢 **Done** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
-| 🟡 **Active** | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
+| 🟡 **Active** | `PROJ-01.9` | **Core Stabilization** | Admin | Doc & Verify Core Modules |
+| ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
 | ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
 
 ## 📅 Q2 2026: Engagement & Intelligence
@@ -1095,66 +1116,60 @@ graph TD
 ## 1. The Encryption Lifecycle
 
 ### A. Setup (Vault Creation)
-1. User enters 4-digit PIN.
-2. App generates random 16-byte `Salt`.
-3. App derives `Key` using PBKDF2 (100k iterations).
-4. App creates `Verifier` = Hash(PIN + Salt).
-5. App sends `Salt` and `Verifier` to Firestore. **PIN and Key are discarded.**
+1.  User enters 4-digit PIN.
+2.  App generates random 16-byte `Salt`.
+3.  App derives `Key` using PBKDF2 (100k iterations).
+4.  App creates `Verifier` = Hash(PIN + Salt).
+5.  App sends `Salt` and `Verifier` to Firestore. **PIN and Key are discarded.**
 
 ### B. Storage (Writing Data)
-1. User types "I feel anxious today."
-2. App checks memory for `Key`. (If missing, prompt for PIN).
-3. App generates random `IV` (Initialization Vector).
-4. App encrypts text via AES-GCM -> `Ciphertext`.
-5. App sends string `IV:Ciphertext` to Firestore.
+1.  User types "I feel anxious today."
+2.  App checks memory for `Key`. (If missing, prompt for PIN).
+3.  App generates random `IV` (Initialization Vector).
+4.  App encrypts text via AES-GCM -> `Ciphertext`.
+5.  App sends string `IV:Ciphertext` to Firestore.
 
-### C. Retrieval (Reading Data)
-1. App fetches document from Firestore.
-2. App splits `IV:Ciphertext`.
-3. App uses `Key` to decrypt.
-4. Plain text renders in React.
+## 2. Vault Control Features
 
-## 2. AI Privacy Boundary
+### 🔒 Vault Locking (Memory Clearing)
+* **Trigger:** User clicks "Lock Vault" in the sidebar or closes the tab.
+* **Action:** The `EncryptionContext` sets `globalKey = null`.
+* **Result:** The browser memory no longer holds the decryption key. Even if an attacker gains access to the browser console, they cannot decrypt data without the user re-entering the PIN.
+
+### 🧨 Emergency Reset (Crypto-Shredding)
+* **Trigger:** User forgets PIN or wants a hard reset.
+* **Action:**
+    1.  The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
+    2.  **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
+    3.  **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
+
+## 3. AI Privacy Boundary
 When a user asks for AI Analysis:
-1. Data is decrypted **in the browser**.
-2. Plain text is sent to Gemini API via HTTPS.
-3. Gemini processes data statelessly.
-4. Response is returned.
-5. **Critical:** We do NOT train models on this data.
+1.  Data is decrypted **in the browser**.
+2.  Plain text is sent to Gemini API via HTTPS.
+3.  Gemini processes data statelessly.
+4.  Response is returned.
+5.  **Critical:** We do NOT train models on this data.
 
-## 3. Emergency Access
-* **Lost PIN:** Data is lost. There is no backdoor.
-* **Legacy Data:** Older unencrypted entries are flagged (`isEncrypted: false`) and can be read/migrated.
-
-## 4. Third-Party Data (The Service Model)
-* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
-* **Rule:** This is a **Digital Rolodex**, not a Social Network.
-* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
-    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
-    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
 </file>
 
 <file path="docs/SPRINT_BOARD.md">
 # 🏃 Active Sprint Board
-**Sprint:** 17.1 "The Service Keeper"
+**Sprint:** 17.2 "Foundation Check"
 **Start Date:** 2026-02-16
-**Goal:** Implement the "Lisa" Persona features for sponsors and service work.
+**Goal:** Document and Verify Workbooks, Tasks, and Vitality before adding new features.
 
 ## 📌 To Do
-- [ ] `PROJ-02` Create 'Service' collection schema in Firestore.
-- [ ] `PROJ-02` Build `ServiceList` component (Sponsee Rolodex).
-- [ ] `PROJ-02` Implement `useServiceData` hook with encryption.
-- [ ] `PROJ-02` Create "Service Widget" for Dashboard.
+- [ ] **Verify Tasks:** Test Recurring Task reset logic.
+- [ ] **Verify Vitality:** Test Breathwork timer and logging.
 
 ## 🚧 In Progress
-- [ ] Requirements Gathering (You are here).
+- [ ] **UX Upgrade:** Implement Session Storage for PIN (Reduce unlock friction).
 
-## ✅ Done (Previous Sprint: Security & Infra)
-- [x] Migrated to GitHub Codespaces.
-- [x] Fixed "Ghost Variable" CI/CD bug.
-- [x] Standardized Gemini AI Models (v2.5-pro).
-- [x] Implemented Zero-Knowledge Vault Locking.
-- [x] Added Unit Tests for Crypto Engine.
+## ✅ Done
+- [x] **Verify Workbooks:** Fixed "Split Brain" bug; AI analysis now reading decrypted data.
+- [x] Project 01 (Security)
+- [x] Project 01.5 (Codespaces)
 
 </file>
 
@@ -1358,6 +1373,40 @@ Use after the Plan is approved.
 **Output:**
 * Audit Report.
 * `update_pm.py` script.
+</file>
+
+<file path="docs/prompts/DOC_AUDIT.md">
+# 🔍 Documentation Consistency Audit Prompt
+
+**Trigger:** Run this before closing a major Sprint or Release.
+**Goal:** Ensure the "Map" (Docs) matches the "Territory" (Code).
+
+---
+
+**Role:** Senior Technical Writer & Systems Architect.
+
+**Input:**
+1.  **Codebase Dump:** I will provide the full `src/` directory and `docs/` directory.
+2.  **Context:** We just finished [INSERT SPRINT GOAL, e.g., "Stabilizing Gamification"].
+
+**Your Task:**
+Perform a "Drift Detection" analysis. Compare every Specification file in `docs/specs/` against its corresponding React Component/Hook in `src/`.
+
+**The Checklist:**
+1.  **Logic Drift:** Does the spec describe logic (e.g., "Daily reset") that was changed in the code (e.g., "Lazy evaluation")?
+2.  **Schema Drift:** Does the spec list Firestore fields that were renamed or removed?
+3.  **Missing Features:** Does the code contain new buttons/features (e.g., "Export PDF") not mentioned in the spec?
+4.  **Stale Roadmaps:** Is `docs/ROADMAP.md` showing completed features as "Planned"?
+
+**Output Format:**
+Produce a table of discrepancies:
+| Document | Code Reference | Discrepancy | Suggested Fix |
+| :--- | :--- | :--- | :--- |
+| `05_TASKS.md` | `tasks.ts` | Spec says "Cron Job", Code uses "Lazy Eval" | Rewrite Section 2 of Spec |
+
+**Verification:**
+After the analysis, generate a bash script (`scripts/sync_docs.sh`) to automatically update the markdown files with the corrected text.
+
 </file>
 
 <file path="docs/prompts/FIX.md">
@@ -1605,6 +1654,509 @@ sequenceDiagram
 * [ ] **Search:** Verify searching by "Tag" works (since tags are unencrypted).
 * [ ] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
 * [ ] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
+
+</file>
+
+<file path="docs/specs/02_SERVICE.md">
+# 📐 Feature Spec: Service Module (The Rolodex)
+
+**Project:** PROJ-02
+**Persona:** Lisa (The Service Superstar)
+**Goal:** A secure way to manage sponsees and service commitments without data leaks.
+
+## 1. The "Why"
+* **As:** A sponsor (Lisa).
+* **I want to:** Keep notes on my sponsees (Step work progress, contact info, important dates).
+* **So that:** I can be an effective guide without carrying a physical notebook that could be lost/read.
+
+## 2. User Experience
+* **Entry Point:** Sidebar -> "Service" (New Tab).
+* **Views:**
+    * **Active Sponsees:** List of people currently being sponsored.
+    * **Alumni:** Past sponsees.
+    * **Commitments:** Service positions (e.g., "Coffee Maker", "Greeter") with times.
+* **Detail View:** Clicking a sponsee opens a secure card with:
+    * Contact buttons (Call/Text - Unencrypted).
+    * "Step Status" (Dropdown - Unencrypted).
+    * **Private Notes:** A secure text area (Encrypted).
+
+## 3. Technical Architecture
+
+### Schema: `service` collection
+| Field | Type | Encryption | Purpose |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | No | Owner (Lisa) |
+| `type` | String | No | 'sponsee' \| 'commitment' |
+| `name` | String | **YES** | Sponsee Name (Protect Anonymity) |
+| `contact` | String | **YES** | Phone/Email |
+| `notes` | String | **YES** | Private thoughts/progress |
+| `status` | String | No | 'active' \| 'alumni' |
+| `meetingTime` | Timestamp | No | For reminders |
+
+### Security Model (The "Rolodex" Rule)
+* **Key Usage:** Data is encrypted using **Lisa's PIN**.
+* **Implication:** If Lisa forgets her PIN, she loses her sponsee notes.
+* **Privacy:** Sponsees do **not** have access to this data. It is a one-way record owned by the sponsor.
+
+## 4. Edge Cases
+* **Import/Export:** Sponsee data must be included in the JSON backup (encrypted).
+* **Deletion:** Deleting a sponsee must perform a "soft delete" (move to trash) or confirm heavily, as notes are valuable.
+
+## 5. Verification
+* [ ] Verify Sponsee Name is stored as ciphertext in Firestore console.
+* [ ] Verify Notes are unreadable if Vault is locked.
+
+</file>
+
+<file path="docs/specs/03_ADMIN.md">
+# 📐 Feature Spec: Admin Dashboard
+
+**Status:** Live (v1.2)
+**Access:** Restricted (Custom Claims `admin: true`)
+
+## 1. Overview
+The internal tool for monitoring system health, managing users, and debugging AI usage.
+
+## 2. Sub-Features
+
+### A. Analytics (Gemini Metrics)
+* **Source:** `ai_logs` collection.
+* **Visuals:**
+    * Pie Chart: Model distribution (Flash vs Pro).
+    * Bar Chart: Token usage stream.
+* **Purpose:** Cost monitoring.
+
+### B. User Directory
+* **Source:** `users` collection.
+* **Capabilities:**
+    * View all users (Paginated).
+    * **Promote/Demote:** Toggle admin status via Custom Claims.
+
+### C. System Health
+* **Source:** `client_errors` collection.
+* **AI Analysis:** Uses Gemini to aggregate raw error logs into a "System Health Report" with suggested fixes.
+
+### D. Maintenance Tools
+* **Deduplicator:** Scans for duplicate journal entries (common import bug) and cleans them.
+* **Schema Migration:** Updates legacy documents to match current type definitions.
+
+</file>
+
+<file path="docs/specs/04_WORKBOOKS.md">
+# 📐 Feature Spec: Wisdom (Workbooks)
+
+**Status:** Live (v1.0)
+**Context:** Structured recovery content (12-Step, CBT, Dharma).
+
+## 1. Overview
+A static library of interactive workbooks. Users answer questions, which are encrypted and stored in `users/{uid}/workbook_progress`.
+
+## 2. Data Structure
+* **Source:** `src/data/workbooks.ts` (Static JSON).
+* **Storage:** `workbook_progress` collection.
+* **Encryption:** Answers are encrypted individually.
+
+## 3. AI Features
+* **The Coach:** "Get AI Coaching" button sends the Question + Answer to Gemini 2.5 Pro.
+* **Analysis:** "Consult Compass" (Wizard) analyzes the entire section for patterns.
+
+## 4. Verification Checklist
+* [ ] Does progress persist after refresh?
+* [ ] Are answers truly encrypted in Firestore?
+* [ ] Does the "Mastery" score update on the dashboard?
+
+</file>
+
+<file path="docs/specs/05_TASKS.md">
+# 📐 Feature Spec: Quests (Tasks)
+
+**Status:** Live (v1.0)
+**Context:** Gamified habit tracking with recurrence engines.
+
+## 1. Overview
+A list of one-time or recurring tasks. Completion awards XP and updates "Habit Fire" streaks.
+
+## 2. The Recurrence Engine (Lazy Evaluation)
+The system does not run a nightly cron job to reset tasks. Instead, it uses **Lazy Evaluation** when the user loads the app.
+
+### A. The "Check-in" Logic
+Located in: `src/lib/tasks.ts` -> `getUserTasks()`
+1.  **Trigger:** User opens the Task list or Dashboard.
+2.  **Check:** Is the task `isRecurring`? AND Is `dueDate` < `today`?
+3.  **Logic:**
+    * If NOT completed yesterday/today:
+        * **Punishment:** Reset `currentStreak` to 0 (or decrement).
+        * **Reset:** Move `dueDate` to **Today** (The "Smart Reset").
+    * *Why?* This allows a user who missed a day to pick up right where they left off without manually rescheduling.
+
+### B. Completion Logic
+Located in: `src/lib/tasks.ts` -> `toggleTask()`
+1.  **Mark Done:**
+    * `currentStreak` += 1.
+    * `lastCompletedAt` = Now.
+    * `dueDate` = Next Interval (Tomorrow/Next Week).
+2.  **Uncheck (Undo):**
+    * `currentStreak` -= 1.
+    * `dueDate` = Today.
+
+## 3. Data Structure
+**Collection:** `tasks`
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `isRecurring` | Boolean | Determines if reset logic applies |
+| `frequency` | String | 'daily' \| 'weekly' \| 'monthly' |
+| `currentStreak` | Number | The "Fire" score |
+| `lastCompletedAt` | Timestamp | Used to validate streaks |
+| `dueDate` | Timestamp | The target for the streak |
+
+## 4. Verification Checklist
+* [ ] **Lazy Reset:** Miss a daily task yesterday. Open app today. Does date move to today and streak reset?
+* [ ] **Completion:** Mark done. Does date move to tomorrow?
+* [ ] **Undo:** Uncheck. Does date move back to today?
+
+</file>
+
+<file path="docs/specs/06_VITALITY.md">
+# 📐 Feature Spec: Vitality (Somatic Health)
+
+**Status:** Live (v1.0)
+**Architecture:** Virtual Module (Abstracted Journal Interface)
+**Primary Code:** `src/pages/Vitality.tsx`
+
+## 1. Overview
+The Vitality module is the somatic regulation engine of MRT. It allows users to track physical health (Movement, Fuel) and nervous system regulation (Breathwork). Unlike other modules, it does not store data in a separate collection; instead, it injects structured, tagged entries into the user's `journals` stream.
+
+## 2. Technical Architecture
+
+### A. The "Virtual" Data Model
+Vitality entries are standard Firestore documents in the `journals` collection with specific **Tag Signatures**.
+
+| Category | Primary Tags | Metadata (Stored in Content Body) |
+| :--- | :--- | :--- |
+| **Movement** | `#Vitality`, `#Movement` | Activity Name, Duration (mins), Intensity (Low/Mod/High) |
+| **Nutrition** | `#Vitality`, `#Nutrition` | Meal Type, Hunger Type (Physical/Emotional/Boredom), Hydration Count |
+| **Breathwork** | `#Vitality`, `#Mindfulness`, `#Meditation` | Duration, Technique ("4-7-8") |
+
+### B. The Bio-Rhythm Score
+A daily 0-100% score that resets at midnight (Local Device Time). It calculates balance across three pillars:
+
+* **Calculation:**
+    * `+33.3%` if a log exists with tag `#Movement` created *today*.
+    * `+33.3%` if a log exists with tag `#Nutrition` created *today*.
+    * `+33.3%` if a log exists with tag `#Mindfulness` created *today*.
+* **Display:** A progress ring in the Vitality Header and on the Dashboard.
+
+## 3. Sub-Features
+
+### 🏃 Movement Logger
+* **Inputs:** Activity Name (Text), Duration (Number), Intensity (Select).
+* **Behavior:** Appends a standardized formatted string to the journal body.
+
+### 🍎 Fuel (Nutrition) Logger
+* **Inputs:** Meal (Breakfast/Lunch/Dinner), Hunger Type (Physical/Emotional), Water (Counter).
+* **Purpose:** Helps users identify emotional eating patterns (e.g., HALT - Hungry, Angry, Lonely, Tired).
+
+### 🌬️ Breathwork Engine (4-7-8)
+A real-time visual pacer for nervous system regulation.
+* **Cycle Logic:**
+    1.  **Inhale (4s):** Circle expands, Opacity 100%.
+    2.  **Hold (7s):** Circle stays static, Opacity 80%.
+    3.  **Exhale (8s):** Circle contracts, Opacity 50%.
+* **State:** Managed via `setInterval` and local React state (`breathPhase`).
+* **Completion:** User must complete at least 5 seconds to log a session.
+
+## 4. Edge Cases
+* **Offline:** Works fully offline. Logs sync via standard Firestore persistence.
+* **Timezones:** The "Today" filter uses the device's local start-of-day. Traveling may reset the daily score visually.
+
+## 5. Verification Checklist
+* [ ] **Tag Integrity:** Create a Movement log. Go to Journal History. Does it appear with `#Movement` tag?
+* [ ] **Score Update:** Log one item. Does header ring show 33%?
+* [ ] **Breathwork:** Run the timer for 20 seconds. Save. Does the journal entry show the correct duration (e.g. "0m 20s")?
+
+</file>
+
+<file path="docs/specs/07_GAMIFICATION.md">
+# 📐 Feature Spec: Gamification Engine
+
+**Status:** Live (v1.5)
+**Architecture:** Stateless / On-demand Calculation
+**Location:** src/lib/gamification.ts
+
+## 1. Core Philosophy
+MRT uses a "Stateless" gamification model. XP and Levels are not stored in the database; they are calculated in real-time based on the user's actual content. This ensures the score always reflects reality.
+
+## 2. The XP Economy
+| Source | XP Value | Notes |
+| :--- | :--- | :--- |
+| **Journaling** | 25 XP | Base reward. |
+| **Deep Reflection** | +10 XP | Bonus if word count > 50. |
+| **Task (Low)** | 10 XP | Quick maintenance tasks. |
+| **Task (Med)** | 25 XP | Standard habits. |
+| **Task (High)** | 50 XP | Major recovery actions. |
+| **Workbook Q** | 15 XP | Per question answered. |
+| **Vitality Log** | 15 XP | Breathwork or movement. |
+| **Clean Time** | 500 XP | Per 30-day block. |
+
+## 3. Dynamic Archetypes
+The system compares XP buckets to assign a user persona:
+* **Scholar:** High Wisdom (Workbooks).
+* **Doer:** High Action (Tasks).
+* **Monk:** High Vitality (Breathwork).
+* **Philosopher:** High Reflection (Journaling).
+* **Balanced:** No dominant category.
+
+## 4. Streak Logic
+* **Journal Streak:** Consecutive days based on Local Browser Time.
+* **Habit Fire:** Cumulative sum of all *current* streaks on recurring tasks.
+
+## 5. Constraints
+* **Deletion:** Deleting a task/journal removes its XP immediately.
+* **Timezones:** Streaks rely on local device time; extreme travel may affect calculation.
+
+</file>
+
+<file path="docs/specs/08_ADMIN.md">
+# 📐 Feature Spec: Admin Dashboard
+
+**Status:** Live (v1.2)
+**Access:** Strict RBAC (Role-Based Access Control)
+**Security Level:** High
+
+## 1. Security Model (Split Authority)
+The system uses a "Defense in Depth" approach:
+1.  **UI Access:** Controlled by the `role` field on the `users/{uid}` document.
+2.  **Database Access:** Controlled by `request.auth.token.admin` (Firebase Custom Claims).
+* **Constraint:** Updating a user's role in the UI (`UserDirectory`) grants them *UI Access* immediately, but *Database Access* requires running the server-side script `scripts/set_admin_role.cjs`.
+
+## 2. Sub-Modules
+### A. Telemetry (Health)
+* **Source:** `client_errors` collection.
+* **Feature:** `ErrorLogViewer` visualizes crash reports and uses Gemini to suggest fixes.
+
+### B. User Directory
+* **Source:** `users` collection.
+* **Feature:** Searchable list of all users. Allows toggling the `role` field.
+
+### C. Maintenance Tools
+* **Deduplicator:** Scans `journals` for duplicate content/timestamps (common import bug) and batch-deletes.
+* **Schema Migration:** Updates legacy `insights` docs (e.g., mapping `actionableSteps` -> `suggested_actions`).
+
+## 3. Verification
+* [ ] **RBAC:** Can a non-admin user access `/admin`? (Should redirect).
+* [ ] **Telemetry:** Trigger a crash. Does it appear in the Health tab?
+
+</file>
+
+<file path="docs/specs/09_PROFILE.md">
+# 📐 Feature Spec: Profile & Data Sovereignty
+
+**Status:** Live (v1.0)
+**Context:** User identity, settings, and data portability.
+
+## 1. Support Network
+* **Fields:** `sponsorName`, `sponsorPhone`.
+* **Storage:** Stored unencrypted in `users/{uid}`.
+* **Usage:** Populates the "SOS Modal" for one-tap calling.
+
+## 2. The Export Engine
+**Philosophy:** The user owns their data.
+* **JSON Export:**
+    * Fetches ALL collections (`journals`, `tasks`, `workbooks`).
+    * **Decryption:** Decrypts all content client-side before generation.
+    * **Output:** Plain text JSON file. *User must be warned to store this securely.*
+* **PDF Export:**
+    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist.
+
+## 3. The Import Engine
+* **Logic:** parses JSON backups.
+* **Legacy Support:** Maps older data structures to the current schema.
+* **Safety:** Flags imported entries as `isEncrypted: false` (since they come from a plain text file) until the user edits/saves them again.
+
+## 4. Verification
+* [ ] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
+* [ ] **Import:** Import a backup. Do entries appear in History?
+
+</file>
+
+<file path="docs/specs/10_INSIGHTS.md">
+# 📐 Feature Spec: Insights Log
+
+**Status:** Live (v1.0)
+**Context:** A timeline of AI-generated coaching and analysis.
+
+## 1. Data Structure
+**Collection:** `insights`
+The log handles polymorphic data types:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `type` | String | 'journal' \| 'workbook' |
+| `summary` | String | AI narrative |
+| `pillars` | Map | Structured analysis (Growth, Blind Spots) |
+| `suggested_actions` | Array | List of 3 recommended habits |
+
+## 2. Features
+* **Polymorphic UI:** Renders different cards based on `type`.
+    * *Journal:* Shows Mood/Sentiment badges.
+    * *Workbook:* Shows Pillars (Understanding/Growth/Blind Spots).
+* **Action Integration:** "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date.
+
+## 3. Verification
+* [ ] **Filtering:** Filter by "Journal" - do Workbook entries disappear?
+* [ ] **Action:** Click "Add to Quest". Does it appear in the Tasks list?
+
+</file>
+
+<file path="docs/specs/11_DASHBOARD.md">
+# 📐 Feature Spec: Dashboard (The Hub)
+
+**Status:** Live (v1.5)
+**Architecture:** Client-Side Aggregator
+**Primary Code:** `src/pages/Dashboard.tsx`
+
+## 1. Overview
+The Dashboard is the central landing page. It does not store its own data; instead, it queries all other modules (Journal, Tasks, Workbooks, Profile) to generate a real-time "Health Snapshot" of the user's recovery.
+
+## 2. Technical Architecture
+
+### A. Data Aggregation
+The Dashboard executes 4 concurrent queries on mount:
+1.  **Profile:** Fetches `sobrietyDate` and `lastExportAt`.
+2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
+3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
+4.  **Workbooks:** Fetches answer count for "Wisdom" score.
+
+**Performance Note:** Queries are set to `refetchOnMount: 'always'` to ensure gamification stats update immediately after a user performs an action in another tab.
+
+### B. The Calculation Engine
+Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Engine** (`src/lib/gamification.ts`) to derive:
+* **User Level:** Based on total XP from all sources.
+* **Archetype:** (Scholar, Doer, Monk, etc.) based on activity distribution.
+* **Streaks:** Current consecutive activity chains.
+
+### C. The Backup Sentinel
+* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`.
+* **Trigger:** If > 7 days since last export.
+* **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
+
+## 3. UI Components
+* **Floating Hero:** Displays "Clean Time" (Years/Months/Days).
+* **Bento Grid:** 4-quadrant layout linking to core modules (Journal, Tasks, Vitality, Workbooks) with live stats.
+* **XP Card:** A glassmorphism card at the bottom showing Level, Progress Bar, and Archetype.
+
+## 4. Verification Checklist
+* [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
+* [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
+* [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
+
+</file>
+
+<file path="docs/specs/12_USER_GUIDE.md">
+# 📐 Feature Spec: User Guide & Onboarding
+
+**Status:** Live (v4.0)
+**Context:** In-app education and PWA installation support.
+**Primary Code:** `src/pages/UserGuide.tsx`, `src/components/PWAInstallBanner.tsx`
+
+## 1. The Interactive Handbook
+A native, scrollable guide available via the Profile page.
+* **Visuals:** Uses architectural placeholders (CSS-styled containers) to represent Pixel 9 Pro XL screenshots, ensuring the guide evolves with the design system without needing constant image updates.
+* **Content:** Covers the "4 Pillars" of the app:
+    1.  **The Horizon:** Dashboard & Clean Time.
+    2.  **The Vault:** Security & Encryption.
+    3.  **The Deep Dive:** Journaling & AI.
+    4.  **The Pulse:** Vitality & Breathwork.
+
+## 2. PWA Installation Engine
+* **Component:** `PWAInstallBanner.tsx`.
+* **Logic:**
+    * **Android/Desktop:** Listens for the `beforeinstallprompt` event and triggers the native install modal.
+    * **iOS:** Detects User Agent (`iPhone|iPad`) + `!navigator.standalone`. Renders custom instructions ("Tap Share -> Add to Home Screen").
+* **Persistence:** Uses `localStorage` to dismiss the banner permanently if the user opts out.
+
+## 3. Verification
+* [ ] **iOS Detection:** Open in Safari Dev Tools (User Agent iPhone). Does the custom iOS instruction appear?
+* [ ] **Navigation:** Does the "Back" button in the Guide return to Profile?
+
+</file>
+
+<file path="docs/specs/13_INFRASTRUCTURE.md">
+# 🏗️ Feature Spec: Infrastructure & DevOps
+
+**Status:** Live (v4.0)
+**Stack:** React 19, Vite, Firebase, GitHub Actions, Codespaces.
+**Context:** The invisible machinery that powers development, security, and deployment.
+
+## 1. Development Environment (Codespaces)
+We utilize a containerized development environment to ensure zero "works on my machine" issues.
+
+* **Base Image:** `mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye`
+* **Configuration:** `.devcontainer/devcontainer.json`
+* **Lifecycle:**
+    1.  **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
+    2.  **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
+* **Port Forwarding:**
+    * `5173`: Vite Dev Server (App).
+    * `9099`: Firebase Auth Emulator.
+    * `8080`: Firestore Emulator.
+
+## 2. Build Pipeline (Vite)
+**Config:** `vite.config.ts`
+We use advanced build optimizations to ensure performance on low-end mobile devices.
+
+### A. Chunk Splitting (ManualChunks)
+To prevent a massive `vendor.js` file, we explicitly split dependencies:
+* **`firebase`**: Isolated to its own chunk (heavy SDK).
+* **`gemini`**: AI libraries isolated (`@google/generative-ai`).
+* **`recharts`**: Data visualization libraries isolated.
+* **`vendor`**: All other node_modules.
+
+### B. PWA Service Worker (Workbox)
+* **Strategy:** `autoUpdate` (Updates apply immediately upon download).
+* **Caching Rules:**
+    * **Google Fonts:** `CacheFirst` (1-year expiration).
+    * **Firebase Storage:** `StaleWhileRevalidate` (Images/Personas).
+    * **Exclusions:** Firebase Auth endpoints are explicitly denied caching to prevent login loops.
+
+## 3. CI/CD & Secrets (The "Nuclear" Protocol)
+**Pipeline:** GitHub Actions (`.github/workflows/deploy.yaml`)
+
+We use a "Nuclear" strategy for environment variables to support Vite's build process securely.
+1.  **Injection:** GitHub Actions does *not* pass secrets as shell variables.
+2.  **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
+3.  **Destruction:** The runner is ephemeral; the file is destroyed post-build.
+
+## 4. Database Infrastructure
+**Platform:** Cloud Firestore (NoSQL)
+
+### A. Security Rules (`firestore.rules`)
+* **RBAC:** Admin access is verified via Custom Claims (`request.auth.token.admin == true`).
+* **Tenancy:** Standard users can only read/write documents where `resource.data.uid == request.auth.uid`.
+
+### B. Indexing (`firestore.indexes.json`)
+Composite indexes are required for complex queries:
+* **Journals:** `uid` (Asc) + `createdAt` (Desc) [For Timeline].
+* **Insights:** `uid` (Asc) + `createdAt` (Desc) [For Log].
+
+## 5. Automation Systems
+
+### A. Automated Versioning
+* **Script:** `scripts/generate-build-info.js`
+* **Trigger:** Pre-build.
+* **Logic:** Calculates an MD5 hash of the `src/` directory and injects it into `src/build-info.json`.
+* **UI:** Displayed in `VersionBadge.tsx`.
+
+### B. Persona Seeding
+* **Script:** `scripts/seed-personas.js`
+* **Purpose:** Resets the demo environment with 4 distinct user archetypes.
+* **Crypto:** Generates valid PBKDF2 salts and keys so encrypted features work in demo mode.
+
+## 6. Verification Checklist
+* [ ] **Container:** Does `npm run dev` start without manual config?
+* [ ] **PWA:** Does the Service Worker cache Google Fonts? (Check Network Tab).
+* [ ] **Build:** Run `npm run build`. Does `dist/assets` contain split chunks (e.g., `firebase-xxxx.js`)?
+* [ ] **Secrets:** Deploy to DEV. Does `import.meta.env.VITE_GEMINI_API_KEY` exist in the console?
 
 </file>
 
@@ -8944,10 +9496,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 <file path="src/contexts/EncryptionContext.tsx">
 /**
- * GITHUB COMMENT:
- * [EncryptionContext.tsx]
- * CLEANUP: Removed redundant 'no-console' eslint-disable directives.
- * MAINTAINED: resetVault logic and zero-knowledge security protocols.
+ * src/contexts/EncryptionContext.tsx
+ * UPDATED: Fixed ESLint exhaustive-deps warning by wrapping performUnlock in useCallback.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -8972,6 +9522,8 @@ import {
     clearKey, 
     isVaultUnlocked as checkLibUnlocked 
 } from '../lib/crypto';
+
+const SESSION_PIN_KEY = 'mrt_vault_pin';
 
 interface EncryptionContextType {
   isVaultSet: boolean;
@@ -9006,6 +9558,61 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [salt, setSalt] = useState<string | null>(null);
   const [verifier, setVerifier] = useState<string | null>(null);
 
+  // Helper to actually perform the unlock logic
+  // WRAPPED IN useCallback TO FIX LINTING
+  const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
+      try {
+        // 1. Verify PIN if verifier exists
+        if (currentVerifier) {
+            const checkHash = await computePinHash(pin, currentSalt);
+            if (checkHash !== currentVerifier) return false;
+        }
+
+        // 2. Generate Key
+        await generateKey(pin, currentSalt);
+
+        // 3. (Legacy) Verify against a real document if no verifier exists
+        if (!currentVerifier) {
+            const q = query(collection(db!, 'journals'), where('uid', '==', user!.uid), limit(1));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                const testDoc = snapshot.docs[0].data();
+                if (testDoc.content && testDoc.isEncrypted) {
+                    try {
+                        const result = await decrypt(testDoc.content);
+                        if (result.includes("Locked Content")) throw new Error("Key mismatch");
+                        
+                        // Self-Healing: Create verifier for next time
+                        const newVerifier = await computePinHash(pin, currentSalt);
+                        const userDocRef = doc(db!, 'users', user!.uid);
+                        await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                        setVerifier(newVerifier);
+                    } catch (e) {
+                        console.warn("Legacy Verification Failed", e);
+                        return true; 
+                    }
+                }
+            } else {
+                 // No data yet, create verifier
+                 const newVerifier = await computePinHash(pin, currentSalt);
+                 const userDocRef = doc(db!, 'users', user!.uid);
+                 await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                 setVerifier(newVerifier);
+            }
+        }
+        
+        setIsVaultUnlocked(true);
+        // Save to Session Storage
+        sessionStorage.setItem(SESSION_PIN_KEY, pin);
+        return true;
+
+      } catch (error) {
+          console.error("Unlock logic failed", error);
+          return false;
+      }
+  }, [user]); // Added user dependency
+
+  // Initial Load & Auto-Unlock
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -9022,8 +9629,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           if (data.encryptionSalt) {
             setIsVaultSet(true);
             setSalt(data.encryptionSalt);
-            if (data.pinVerifier) {
-                setVerifier(data.pinVerifier);
+            
+            const currentVerifier = data.pinVerifier || null;
+            if (currentVerifier) setVerifier(currentVerifier);
+
+            // --- AUTO UNLOCK CHECK ---
+            const cachedPin = sessionStorage.getItem(SESSION_PIN_KEY);
+            if (cachedPin) {
+                console.log("🔐 Found cached PIN, attempting auto-unlock...");
+                await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
             }
           } else {
             setIsVaultSet(false);
@@ -9039,7 +9653,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
 
     checkVaultStatus();
-  }, [user]);
+  }, [user, performUnlock]); // Added performUnlock dependency
 
   const setupVault = async (pin: string) => {
     if (!user || !db) return;
@@ -9060,6 +9674,8 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
+      sessionStorage.setItem(SESSION_PIN_KEY, pin); // Cache on setup
+
     } catch (error) {
       console.error("Vault setup failed:", error);
       throw error;
@@ -9079,6 +9695,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       }, { merge: true });
       
       clearKey();
+      sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
       setIsVaultSet(false);
       setIsVaultUnlocked(false);
       setSalt(null);
@@ -9093,52 +9710,12 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const unlockVault = async (pin: string): Promise<boolean> => {
     if (!salt || !user || !db) return false;
-    
-    try {
-      if (verifier) {
-          const checkHash = await computePinHash(pin, salt);
-          if (checkHash !== verifier) return false;
-          await generateKey(pin, salt);
-          setIsVaultUnlocked(true);
-          return true;
-      }
-
-      await generateKey(pin, salt);
-      const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
-      const snapshot = await getDocs(q);
-
-      if (!snapshot.empty) {
-          const testDoc = snapshot.docs[0].data();
-          if (testDoc.content && testDoc.isEncrypted) {
-              try {
-                  const result = await decrypt(testDoc.content);
-                  if (result.includes("Locked Content")) throw new Error("Key mismatch");
-                  const newVerifier = await computePinHash(pin, salt);
-                  const userDocRef = doc(db, 'users', user.uid);
-                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
-                  setVerifier(newVerifier);
-              } catch (e) {
-                  console.warn("Legacy Verification Failed", e);
-                  return true; 
-              }
-          }
-      } else {
-          const newVerifier = await computePinHash(pin, salt);
-          const userDocRef = doc(db, 'users', user.uid);
-          await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
-          setVerifier(newVerifier);
-      }
-
-      setIsVaultUnlocked(true);
-      return true;
-    } catch (error) {
-      console.error("Unlock failed", error);
-      return false;
-    }
+    return await performUnlock(pin, salt, verifier);
   };
 
   const lockVault = useCallback(() => {
     clearKey();
+    sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
     setIsVaultUnlocked(false);
   }, []);
 
@@ -9169,6 +9746,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     </EncryptionContext.Provider>
   );
 }
+
 </file>
 
 <file path="src/contexts/LayoutContext.tsx">
@@ -11027,7 +11605,7 @@ export interface GamificationStats {
 
 export interface TaskStats {
     completionRate: number;
-    habitFire: number; // Current streak of completed recurring tasks
+    habitFire: number; // Sum of all active streaks
 }
 
 export interface WorkbookStats {
@@ -11291,15 +11869,16 @@ export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
     const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
     const completionRate = Math.round((completed / tasks.length) * 100);
 
-    // Habit Fire: Longest current streak among active recurring tasks
-    let maxStreak = 0;
+    // FIX: CHANGED FROM 'MAX STREAK' TO 'SUM OF STREAKS'
+    // This ensures new habits immediately contribute to the score.
+    let totalMomentum = 0;
     tasks.forEach(t => {
-        if (t.currentStreak && t.currentStreak > maxStreak) {
-            maxStreak = t.currentStreak;
+        if (t.currentStreak && t.currentStreak > 0) {
+            totalMomentum += t.currentStreak;
         }
     });
 
-    return { completionRate, habitFire: maxStreak };
+    return { completionRate, habitFire: totalMomentum };
 };
 
 export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
@@ -11359,6 +11938,7 @@ export const calculateVitalityStats = (journals: ScorableJournal[]): VitalitySta
 
     return { bioStreak: currentStreak, totalLogs };
 };
+
 </file>
 
 <file path="src/lib/gemini.ts">
@@ -12894,8 +13474,8 @@ export default function AdminDashboard() {
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * UI UPDATE: Reordered dashboard hierarchy per user request.
- * LAYOUT: Header -> Clean Time (Floating) -> Bento Grid -> XP Card (Bottom).
+ * FIX: Added 'refetchOnMount: "always"' to all queries.
+ * REASON: Solves "Stale Cache" bug where streaks didn't update after task completion.
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -12917,7 +13497,7 @@ import {
   calculateJournalStats, 
   calculateTaskStats, 
   calculateWorkbookStats, 
-  calculateVitalityStats, 
+  calculateVitalityStats,
   calculateUserLevel
 } from '../lib/gamification';
 import VibrantHeader from '../components/VibrantHeader';
@@ -12947,6 +13527,7 @@ export default function Dashboard() {
         return snap.exists() ? snap.data() : null;
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 2: JOURNALS ---
@@ -12961,13 +13542,13 @@ export default function Dashboard() {
             orderBy('createdAt', 'desc')
         );
         const snap = await getDocs(q);
-        // Cast dates for gamification calc
         return snap.docs.map(d => ({
             ...d.data(),
             createdAt: d.data().createdAt
         }));
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 3: TASKS ---
@@ -12981,6 +13562,7 @@ export default function Dashboard() {
         return snap.docs.map(d => d.data());
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- QUERY 4: WORKBOOKS ---
@@ -12994,6 +13576,7 @@ export default function Dashboard() {
         return snap.size;
     },
     enabled: !!user,
+    refetchOnMount: 'always', // FORCE REFRESH
   });
 
   // --- CALCULATE STATS ---
@@ -13236,6 +13819,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
 </file>
 
 <file path="src/pages/InsightsLog.tsx">
@@ -15505,6 +16089,7 @@ export default function Welcome() {
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
@@ -15541,6 +16126,7 @@ export default function WorkbookDetail() {
   const { workbookId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { decrypt } = useEncryption(); // Added for AI analysis
   const workbook = getWorkbook(workbookId || '');
 
   // Data State
@@ -15630,6 +16216,24 @@ export default function WorkbookDetail() {
             contextTitle = "Global Recovery Review";
         }
 
+        // --- DECRYPTION STEP ---
+        // We must decrypt the answers before sending them to the AI
+        docsToAnalyze = await Promise.all(docsToAnalyze.map(async (entry) => {
+            const rawAnswer = entry.answer;
+            // Simple check: if it contains a colon, it's likely iv:ciphertext
+            if (rawAnswer && rawAnswer.includes(':')) {
+                try {
+                    const plain = await decrypt(rawAnswer);
+                    return { ...entry, answer: plain };
+                } catch (e) {
+                    console.error("Decryption failed during analysis", e);
+                    return { ...entry, answer: "[Redacted/Error]" };
+                }
+            }
+            return entry;
+        }));
+        // -----------------------
+
         if (docsToAnalyze.length === 0) {
             alert("No entries found for this selection. Try completing some questions first.");
             setAnalyzing(false);
@@ -15638,7 +16242,7 @@ export default function WorkbookDetail() {
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
         
-        // FIX 1: Pass contextTitle to the AI function so it's used
+        // Pass contextTitle to the AI function so it's used
         const result = await analyzeWorkbookContent(contextTitle, [{ question: "Combined Context", answer: textContent }]);
         
         if (result) {
@@ -15661,7 +16265,7 @@ export default function WorkbookDetail() {
     if (!user || !insight) return;
     setSavingInsight(true);
     try {
-        // FIX 2: Explicitly add 'type: workbook' to match InsightPayload
+        // Explicitly add 'type: workbook' to match InsightPayload
         await saveInsight(user.uid, { type: 'workbook', ...insight });
         setSavingInsight(false); 
         // Optional: Add toast here
@@ -15894,7 +16498,7 @@ export default function WorkbookDetail() {
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
                                               </button>
                                            </li>
-                                      );
+                                       );
                                   })}
                               </ul>
                           </div>
@@ -15927,6 +16531,7 @@ export default function WorkbookDetail() {
     </div>
   );
 }
+
 </file>
 
 <file path="src/pages/WorkbookSession.tsx">
@@ -15935,347 +16540,340 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext'; 
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { 
-  ChevronLeftIcon, 
-  CheckCircleIcon, 
-  ArrowRightIcon,
-  SparklesIcon,
-  BookOpenIcon // Added for Intro Slide
+    ChevronLeftIcon, 
+    CheckCircleIcon, 
+    ArrowRightIcon,
+    SparklesIcon,
+    BookOpenIcon 
 } from '@heroicons/react/24/outline';
 import { getWorkbook, type Workbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 
-// Type definition for stored answers
-type AnswerValue = string | { text: string; isEncrypted: boolean; updatedAt?: Timestamp };
-
 export default function WorkbookSession() {
-  const { workbookId, sectionId } = useParams();
-  const { user } = useAuth();
-  const { encrypt, decrypt } = useEncryption(); 
-  const navigate = useNavigate();
+    const { workbookId, sectionId } = useParams();
+    const { user } = useAuth();
+    const { encrypt, decrypt } = useEncryption(); 
+    const navigate = useNavigate();
 
-  // Content State
-  const [workbook, setWorkbook] = useState<Workbook | null>(null);
-  const [section, setSection] = useState<WorkbookSection | null>(null);
-  const [loading, setLoading] = useState(true);
+    // Content State
+    const [workbook, setWorkbook] = useState<Workbook | null>(null);
+    const [section, setSection] = useState<WorkbookSection | null>(null);
+    const [loading, setLoading] = useState(true);
 
-  // User Progress State
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  
-  // UI State
-  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [aiCoachLoading, setAiCoachLoading] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
-
-  // 1. Load Workbook Content & User Progress
-  useEffect(() => {
-    async function loadData() {
-      if (!user || !workbookId || !sectionId || !db) return;
-
-      try {
-        // A. Load Static Workbook JSON
-        const wb = getWorkbook(workbookId || '');
-        
-        if (!wb) {
-          console.warn(`Workbook not found: ${workbookId}`);
-          navigate('/workbooks');
-          return;
-        }
-        setWorkbook(wb);
-
-        const sec = wb.sections.find(s => s.id === sectionId);
-        if (!sec) {
-           console.warn(`Section not found: ${sectionId}`);
-           navigate(`/workbooks/${workbookId}`);
-           return;
-        }
-        setSection(sec);
-
-        // B. Load User Progress from Firestore
-        const progressRef = doc(db, 'users', user.uid, 'workbook_progress', workbookId);
-        const snap = await getDoc(progressRef);
-
-        if (snap.exists()) {
-          const data = snap.data();
-          
-          // DECRYPTION LOGIC
-          const rawAnswers = data.answers || {};
-          const decryptedAnswers: Record<string, string> = {};
-
-          for (const [qId, val] of Object.entries(rawAnswers)) {
-             const answerVal = val as AnswerValue;
-             
-             if (typeof answerVal === 'object' && answerVal !== null && 'isEncrypted' in answerVal && answerVal.isEncrypted) {
-                 try {
-                     decryptedAnswers[qId] = await decrypt(answerVal.text);
-                 } catch (e) {
-                     console.error(`Failed to decrypt answer for ${qId}`, e);
-                     decryptedAnswers[qId] = "🔒 [Error Decrypting Data]";
-                 }
-             } else if (typeof answerVal === 'object' && answerVal !== null && 'text' in answerVal) {
-                 decryptedAnswers[qId] = answerVal.text;
-             } else if (typeof answerVal === 'string') {
-                 decryptedAnswers[qId] = answerVal;
-             }
-          }
-          setAnswers(decryptedAnswers);
-        }
-
-      } catch (error) {
-        console.error("Error loading session:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [user, workbookId, sectionId, navigate, decrypt]);
-
-  // 2. Handle Answer Input
-  const handleAnswerChange = (text: string) => {
-    if (!section) return;
-    const qId = section.questions[activeQuestionIndex].id;
-    setAnswers(prev => ({
-      ...prev,
-      [qId]: text
-    }));
-  };
-
-  // 3. Save Answer (with Encryption)
-  const saveAnswer = async (qId: string, text: string) => {
-    if (!user || !workbookId || !db) return;
+    // User Progress State
+    const [answers, setAnswers] = useState<Record<string, string>>({});
     
-    try {
-        const progressRef = doc(db, 'users', user.uid, 'workbook_progress', workbookId);
+    // UI State
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const [saving, setSaving] = useState(false);
+    const [aiCoachLoading, setAiCoachLoading] = useState(false);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+
+    // 1. Load Workbook Content & User Progress
+    useEffect(() => {
+        async function loadData() {
+            if (!user || !workbookId || !sectionId || !db) return;
+
+            try {
+                // A. Load Static Workbook JSON
+                const wb = getWorkbook(workbookId || '');
+                
+                if (!wb) {
+                    console.warn(`Workbook not found: ${workbookId}`);
+                    navigate('/workbooks');
+                    return;
+                }
+                setWorkbook(wb);
+
+                const sec = wb.sections.find(s => s.id === sectionId);
+                if (!sec) {
+                   console.warn(`Section not found: ${sectionId}`);
+                   navigate(`/workbooks/${workbookId}`);
+                   return;
+                }
+                setSection(sec);
+
+                // B. Load User Progress from Firestore (CORRECTED: Reads from 'workbook_answers' collection)
+                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
+                const q = query(answersRef, where('workbookId', '==', workbookId));
+                const snapshot = await getDocs(q);
+
+                const loadedAnswers: Record<string, string> = {};
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    // Only load answers for this section to keep state clean (optional)
+                    if (data.answer) {
+                        if (data.isEncrypted) {
+                            try {
+                                loadedAnswers[data.questionId] = await decrypt(data.answer);
+                            } catch (e) {
+                                console.error("Decryption failed", e);
+                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
+                            }
+                        } else {
+                            loadedAnswers[data.questionId] = data.answer;
+                        }
+                    }
+                }
+                setAnswers(loadedAnswers);
+
+            } catch (error) {
+                console.error("Error loading session:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadData();
+    }, [user, workbookId, sectionId, navigate, decrypt]);
+
+    // 2. Handle Answer Input
+    const handleAnswerChange = (text: string) => {
+        if (!section) return;
+        const qId = section.questions[activeQuestionIndex].id;
+        setAnswers(prev => ({
+            ...prev,
+            [qId]: text
+        }));
+    };
+
+    // 3. Save Answer (with Encryption)
+    const saveAnswer = async (qId: string, text: string) => {
+        if (!user || !workbookId || !sectionId || !db) return;
         
-        // ENCRYPTION LOGIC
-        let payloadValue: AnswerValue;
         try {
-            const encryptedText = await encrypt(text);
-            payloadValue = {
-                text: encryptedText,
-                isEncrypted: true,
-                updatedAt: Timestamp.now()
-            };
-        } catch (e) {
-            console.error("Encryption failed", e);
-            alert("Security Error: Could not encrypt answer. Save aborted.");
-            return;
-        }
-
-        await setDoc(progressRef, {
-            answers: {
-                [qId]: payloadValue 
-            },
-            lastActive: Timestamp.now(),
-            lastSectionId: sectionId
-        }, { merge: true });
-
-    } catch (e) {
-        console.error("Failed to save answer:", e);
-    }
-  };
-
-  // 4. Navigation & Completion
-  const handleNext = async () => {
-    if (!section || !workbookId || !user || !db) return;
-    
-    const currentQ = section.questions[activeQuestionIndex];
-    
-    // Only save if it's NOT a read-only slide
-    if (currentQ.type !== 'read_only') {
-        const currentAns = answers[currentQ.id];
-        setSaving(true);
-        if (currentAns) {
-            await saveAnswer(currentQ.id, currentAns);
-        }
-    }
-
-    if (activeQuestionIndex < section.questions.length - 1) {
-        setActiveQuestionIndex(prev => prev + 1);
-        setAiFeedback(null); 
-    } else {
-        await updateDoc(doc(db, 'users', user.uid, 'workbook_progress', workbookId), {
-            completedSections: arrayUnion(sectionId)
-        });
-        navigate(`/workbooks/${workbookId}`);
-    }
-    setSaving(false);
-  };
-
-  const handlePrevious = () => {
-    if (activeQuestionIndex > 0) {
-        setActiveQuestionIndex(prev => prev - 1);
-        setAiFeedback(null);
-    }
-  };
-
-  const handleGetCoaching = async () => {
-      if (!section) return;
-      const q = section.questions[activeQuestionIndex];
-      const ans = answers[q.id];
-      if (!ans || ans.length < 10) return alert("Please write a bit more before asking for coaching.");
-
-      setAiCoachLoading(true);
-      try {
-          const qContext = q.context || q.text; 
-          const feedback = await getGeminiCoaching(qContext, ans);
-          setAiFeedback(feedback);
-      } catch (error) {
-          console.error(error);
-          alert("Coach is currently unavailable.");
-      } finally {
-          setAiCoachLoading(false);
-      }
-  };
-
-
-  if (loading || !section) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
-
-  const currentQuestion = section.questions[activeQuestionIndex];
-  const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
-  
-  // Check if this is an Intro Slide
-  const isIntroSlide = currentQuestion.type === 'read_only';
-
-  return (
-    <div className="max-w-3xl mx-auto px-4 pb-20">
-        
-        {/* NAV HEADER */}
-        <div className="flex items-center gap-4 py-6">
-            <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
-                <ChevronLeftIcon className="h-6 w-6" />
-            </button>
-            <div className="flex-1">
-                <h1 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{workbook?.title}</h1>
-                <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
-            </div>
-        </div>
-
-        {/* PROGRESS BAR */}
-        <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
-            <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out" 
-                style={{ width: `${progressPercent}%` }}
-            />
-        </div>
-
-        {/* QUESTION CARD */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col transition-all">
+            // FIX: Generate a deterministic ID so we overwrite the same question answer
+            const docId = `${workbookId}_${qId}`;
+            const answerRef = doc(db, 'users', user.uid, 'workbook_answers', docId);
             
-            {isIntroSlide ? (
-                // --- INTRO SLIDE LAYOUT ---
-                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-fadeIn">
-                    <div className="bg-blue-50 p-6 rounded-full mb-6">
-                        <BookOpenIcon className="h-16 w-16 text-blue-600" />
-                    </div>
-                    
-                    <div className="max-w-xl space-y-6">
-                        <h3 className="text-3xl font-black text-gray-900 leading-tight">
-                            {section.title}
-                        </h3>
-                        <div className="w-16 h-1 bg-blue-500 mx-auto rounded-full" />
-                        <div className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
-                            {currentQuestion.text}
+            // ENCRYPTION LOGIC
+            let finalText = text;
+            let isEncrypted = false;
+            try {
+                finalText = await encrypt(text);
+                isEncrypted = true;
+            } catch (e) {
+                console.error("Encryption failed", e);
+                alert("Security Error: Could not encrypt answer. Save aborted.");
+                return;
+            }
+
+            // FIX: Save as individual document to match Schema
+            await setDoc(answerRef, {
+                uid: user.uid,
+                workbookId,
+                sectionId,
+                questionId: qId,
+                answer: finalText,
+                isEncrypted,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+
+        } catch (e) {
+            console.error("Failed to save answer:", e);
+        }
+    };
+
+    // 4. Navigation & Completion
+    const handleNext = async () => {
+        if (!section || !workbookId || !user || !db) return;
+        
+        const currentQ = section.questions[activeQuestionIndex];
+        
+        // Only save if it's NOT a read-only slide
+        if (currentQ.type !== 'read_only') {
+            const currentAns = answers[currentQ.id];
+            setSaving(true);
+            if (currentAns) {
+                await saveAnswer(currentQ.id, currentAns);
+            }
+        }
+
+        if (activeQuestionIndex < section.questions.length - 1) {
+            setActiveQuestionIndex(prev => prev + 1);
+            setAiFeedback(null); 
+        } else {
+            // Completion Logic: Navigate back to detail
+            // Note: Detail page calculates completion based on document count, so no need to update a separate "progress" doc anymore.
+            navigate(`/workbooks/${workbookId}`);
+        }
+        setSaving(false);
+    };
+
+    const handlePrevious = () => {
+        if (activeQuestionIndex > 0) {
+            setActiveQuestionIndex(prev => prev - 1);
+            setAiFeedback(null);
+        }
+    };
+
+    const handleGetCoaching = async () => {
+        if (!section) return;
+        const q = section.questions[activeQuestionIndex];
+        const ans = answers[q.id];
+        if (!ans || ans.length < 10) return alert("Please write a bit more before asking for coaching.");
+
+        setAiCoachLoading(true);
+        try {
+            const qContext = q.context || q.text; 
+            const feedback = await getGeminiCoaching(qContext, ans);
+            setAiFeedback(feedback);
+        } catch (error) {
+            console.error(error);
+            alert("Coach is currently unavailable.");
+        } finally {
+            setAiCoachLoading(false);
+        }
+    };
+
+
+    if (loading || !section) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+
+    const currentQuestion = section.questions[activeQuestionIndex];
+    const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+    
+    // Check if this is an Intro Slide
+    const isIntroSlide = currentQuestion.type === 'read_only';
+
+    return (
+        <div className="max-w-3xl mx-auto px-4 pb-20">
+            
+            {/* NAV HEADER */}
+            <div className="flex items-center gap-4 py-6">
+                <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
+                    <ChevronLeftIcon className="h-6 w-6" />
+                </button>
+                <div className="flex-1">
+                    <h1 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{workbook?.title}</h1>
+                    <h2 className="text-xl font-bold text-gray-900">{section.title}</h2>
+                </div>
+            </div>
+
+            {/* PROGRESS BAR */}
+            <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
+                <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out" 
+                    style={{ width: `${progressPercent}%` }}
+                />
+            </div>
+
+            {/* QUESTION CARD */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[60vh] flex flex-col transition-all">
+                
+                {isIntroSlide ? (
+                    // --- INTRO SLIDE LAYOUT ---
+                    <div className="flex-1 flex flex-col items-center justify-center p-10 text-center animate-fadeIn">
+                        <div className="bg-blue-50 p-6 rounded-full mb-6">
+                            <BookOpenIcon className="h-16 w-16 text-blue-600" />
+                        </div>
+                        
+                        <div className="max-w-xl space-y-6">
+                            <h3 className="text-3xl font-black text-gray-900 leading-tight">
+                                {section.title}
+                            </h3>
+                            <div className="w-16 h-1 bg-blue-500 mx-auto rounded-full" />
+                            <div className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
+                                {currentQuestion.text}
+                            </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                // --- STANDARD QUESTION LAYOUT ---
-                <>
-                    <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
-                        <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
-                            Question {activeQuestionIndex} of {section.questions.length - 1} {/* Offset for intro */}
-                        </span>
-                        <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
-                            {currentQuestion.text}
-                        </h3>
-                        {currentQuestion.context && (
-                            <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100 text-sm text-blue-800 italic flex gap-3">
-                                <SparklesIcon className="h-5 w-5 shrink-0" />
-                                <span>{currentQuestion.context}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex-1 p-6 md:p-8 flex flex-col">
-                        <textarea
-                            className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
-                            placeholder="Type your answer here..."
-                            value={answers[currentQuestion.id] || ''}
-                            onChange={(e) => handleAnswerChange(e.target.value)}
-                        />
-                        
-                        {/* AI COACHING AREA */}
-                        {aiFeedback && (
-                            <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
-                                <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
-                                    <SparklesIcon className="h-5 w-5" />
-                                    <span>Coach's Insight</span>
+                ) : (
+                    // --- STANDARD QUESTION LAYOUT ---
+                    <>
+                        <div className="p-6 md:p-8 bg-gray-50 border-b border-gray-100">
+                            <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-4">
+                                Question {activeQuestionIndex} of {section.questions.length - 1} {/* Offset for intro */}
+                            </span>
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-relaxed">
+                                {currentQuestion.text}
+                            </h3>
+                            {currentQuestion.context && (
+                                <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100 text-sm text-blue-800 italic flex gap-3">
+                                    <SparklesIcon className="h-5 w-5 shrink-0" />
+                                    <span>{currentQuestion.context}</span>
                                 </div>
-                                <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
-                                    {aiFeedback}
+                            )}
+                        </div>
+
+                        <div className="flex-1 p-6 md:p-8 flex flex-col">
+                            <textarea
+                                className="flex-1 w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg text-gray-700 leading-relaxed bg-white"
+                                placeholder="Type your answer here..."
+                                value={answers[currentQuestion.id] || ''}
+                                onChange={(e) => handleAnswerChange(e.target.value)}
+                            />
+                            
+                            {/* AI COACHING AREA */}
+                            {aiFeedback && (
+                                <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 animate-fadeIn">
+                                    <div className="flex items-center gap-2 mb-2 text-purple-800 font-bold">
+                                        <SparklesIcon className="h-5 w-5" />
+                                        <span>Coach's Insight</span>
+                                    </div>
+                                    <div className="prose prose-sm text-purple-900 max-w-none whitespace-pre-wrap leading-relaxed">
+                                        {aiFeedback}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </>
-            )}
+                            )}
+                        </div>
+                    </>
+                )}
 
-            {/* FOOTER CONTROLS */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-                <button
-                    onClick={handlePrevious}
-                    disabled={activeQuestionIndex === 0}
-                    className="px-6 py-3 rounded-xl text-gray-600 font-medium hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                >
-                    Back
-                </button>
-
-                <div className="flex gap-2">
-                    {!isIntroSlide && (
-                        <button
-                            onClick={handleGetCoaching}
-                            disabled={aiCoachLoading || !answers[currentQuestion.id]}
-                            className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
-                            title="Get AI feedback on your answer"
-                        >
-                            {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
-                            <span>AI Coach</span>
-                        </button>
-                    )}
-
+                {/* FOOTER CONTROLS */}
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
                     <button
-                        onClick={handleNext}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        onClick={handlePrevious}
+                        disabled={activeQuestionIndex === 0}
+                        className="px-6 py-3 rounded-xl text-gray-600 font-medium hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                     >
-                        {saving ? (
-                            <span>Saving...</span>
-                        ) : activeQuestionIndex === section.questions.length - 1 ? (
-                            <>
-                                <span>Complete</span>
-                                <CheckCircleIcon className="h-5 w-5" />
-                            </>
-                        ) : isIntroSlide ? (
-                            <>
-                                <span>Begin Section</span>
-                                <ArrowRightIcon className="h-5 w-5" />
-                            </>
-                        ) : (
-                            <>
-                                <span>Next</span>
-                                <ArrowRightIcon className="h-5 w-5" />
-                            </>
-                        )}
+                        Back
                     </button>
-                </div>
-            </div>
 
+                    <div className="flex gap-2">
+                        {!isIntroSlide && (
+                            <button
+                                onClick={handleGetCoaching}
+                                disabled={aiCoachLoading || !answers[currentQuestion.id]}
+                                className="hidden sm:flex items-center gap-2 px-4 py-3 rounded-xl text-purple-700 bg-purple-100 hover:bg-purple-200 font-medium transition-colors disabled:opacity-50"
+                                title="Get AI feedback on your answer"
+                            >
+                                {aiCoachLoading ? <SparklesIcon className="h-5 w-5 animate-spin" /> : <SparklesIcon className="h-5 w-5" />}
+                                <span>AI Coach</span>
+                            </button>
+                        )}
+
+                        <button
+                            onClick={handleNext}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        >
+                            {saving ? (
+                                <span>Saving...</span>
+                            ) : activeQuestionIndex === section.questions.length - 1 ? (
+                                <>
+                                    <span>Complete</span>
+                                    <CheckCircleIcon className="h-5 w-5" />
+                                </>
+                            ) : isIntroSlide ? (
+                                <>
+                                    <span>Begin Section</span>
+                                    <ArrowRightIcon className="h-5 w-5" />
+                                </>
+                            ) : (
+                                <>
+                                    <span>Next</span>
+                                    <ArrowRightIcon className="h-5 w-5" />
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
-  );
+    );
 }
 </file>
 

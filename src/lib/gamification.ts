@@ -26,7 +26,7 @@ export interface GamificationStats {
 
 export interface TaskStats {
     completionRate: number;
-    habitFire: number; // Current streak of completed recurring tasks
+    habitFire: number; // Sum of all active streaks
 }
 
 export interface WorkbookStats {
@@ -290,15 +290,16 @@ export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
     const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
     const completionRate = Math.round((completed / tasks.length) * 100);
 
-    // Habit Fire: Longest current streak among active recurring tasks
-    let maxStreak = 0;
+    // FIX: CHANGED FROM 'MAX STREAK' TO 'SUM OF STREAKS'
+    // This ensures new habits immediately contribute to the score.
+    let totalMomentum = 0;
     tasks.forEach(t => {
-        if (t.currentStreak && t.currentStreak > maxStreak) {
-            maxStreak = t.currentStreak;
+        if (t.currentStreak && t.currentStreak > 0) {
+            totalMomentum += t.currentStreak;
         }
     });
 
-    return { completionRate, habitFire: maxStreak };
+    return { completionRate, habitFire: totalMomentum };
 };
 
 export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
