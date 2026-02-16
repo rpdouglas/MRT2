@@ -1,29 +1,44 @@
-# 📝 Phase Planning Prompt (The Architect)
+# 📐 Technical Design & Planning Prompt (MRT v4.5)
 
-**Instructions:**
-1. Open the active Project file (e.g., `docs/projects/01_SECURITY.md`).
-2. Identify the current **Phase** we are executing.
-3. Fill in the plan below.
+**Role:** Senior Staff Engineer & Systems Architect.
+**Context:** Feature request for My Recovery Toolkit (MRT).
+**Current Version:** v1.6 (Stabilized)
+**Objective:** Provide 3 distinct implementation strategies with a formal recommendation.
 
 ---
 
-**Role:** Senior Architect for MRT.
-**Current Project:** [INSERT PROJECT NAME/ID]
-**Current Phase:** [INSERT PHASE NUMBER & NAME]
+### PHASE 1: CODEBASE INGESTION & AUDIT
+1.  **Ingestion:** Review the provided `src/` and `docs/` directories.
+2.  **Dependency Mapping:** Identify the existing components, hooks, and lib functions that will be impacted. 
+3.  **Strict Constraint:** You are FORBIDDEN from assuming a utility exists. You must cite specific functions from `src/lib/` (e.g., `crypto.ts`, `db.ts`, `versioning.ts`) by name and quote their signature before proposing changes.
 
-**Objective:** Implement the tasks listed in this Phase.
+### PHASE 2: STRATEGY PROPOSAL (The Rule of 3)
+Present three distinct approaches to implementing: [INSERT FEATURE NAME]
 
-**Security Check:**
-* Does this Phase touch `src/lib/crypto.ts`?
-* Does it require new Firestore Rules?
-* **Persona Check:** How does this impact "Lisa" (Service) or "David" (Crisis)?
+**Approach A: Minimalist/Low-Impact**
+* *Philosophy:* Use existing patterns only. Lowest maintenance. No new collections.
+* *Architecture:* Summary of logic changes.
 
-**Implementation Strategy:**
-Break down this Phase into atomic coding steps.
-1. **Schema/Types:** What interfaces need changing?
-2. **Logic:** What hooks/functions need creation?
-3. **UI:** What components need building?
+**Approach B: Balanced/Integrated (RECOMMENDED)**
+* *Philosophy:* Best UX vs performance trade-off. Uses modern MRT design tokens and React 19 patterns.
+* *Architecture:* List new components and Firestore schema changes.
 
-**Deliverable:**
-* A bulleted list of files to create/modify.
-* Confirmation that this matches the "Project Spec" in `docs/projects/`.
+**Approach C: Robust/Enterprise**
+* *Philosophy:* High observability and scaling. Full logging and advanced error handling.
+* *Architecture:* Impact on bundle size and external dependencies.
+
+### PHASE 3: TECHNICAL IMPACT ANALYSIS
+For the RECOMMENDED approach, provide:
+1.  **Data Schema:** Explicit Firestore field changes/additions. Note if a Composite Index is needed.
+2.  **Security Check:** Does this touch PII? If so, verify it is encrypted via `src/lib/crypto.ts`.
+3.  **Offline Logic:** How does this handle the `LayoutContext.isOnline` state?
+4.  **Versioning:** How will the `build-info.json` hash be used to tag this data?
+5.  **Design System:** Which "Vibrant Momentum" gradients or atmospheric tints apply?
+
+### PHASE 4: THE "DO NO HARM" CHECKLIST
+* Does this break the 100dvh mobile layout?
+* Does this violate the Zero-Knowledge boundary?
+* Does this require code changes to `AppShell.tsx` or `VibrantHeader.tsx`?
+
+---
+**STOP: Provide the Analysis and wait for my formal approval before generating code.**
