@@ -1,21 +1,13 @@
 # 📐 Feature Spec: Wisdom (Workbooks)
 
-**Status:** Live (v1.0)
-**Context:** Structured recovery content (12-Step, CBT, Dharma).
+**Status:** Live (v1.1)
+**Storage:** `users/{uid}/workbook_answers/{workbookId_questionId}`
 
-## 1. Overview
-A static library of interactive workbooks. Users answer questions, which are encrypted and stored in `users/{uid}/workbook_progress`.
+## 1. Data Structure
+To prevent state conflicts, each answer is stored as an individual document.
+* **ID Format:** `[workbookId]_[questionId]`
+* **Fields:** `answer` (Encrypted), `isEncrypted` (Bool), `updatedAt` (Timestamp).
 
-## 2. Data Structure
-* **Source:** `src/data/workbooks.ts` (Static JSON).
-* **Storage:** `workbook_progress` collection.
-* **Encryption:** Answers are encrypted individually.
-
-## 3. AI Features
-* **The Coach:** "Get AI Coaching" button sends the Question + Answer to Gemini 2.5 Pro.
-* **Analysis:** "Consult Compass" (Wizard) analyzes the entire section for patterns.
-
-## 4. Verification Checklist
-* [ ] Does progress persist after refresh?
-* [ ] Are answers truly encrypted in Firestore?
-* [ ] Does the "Mastery" score update on the dashboard?
+## 2. AI Integration
+* **Coach:** Individual feedback via `getGeminiCoaching`.
+* **Compass:** Aggregate section analysis via `analyzeFullWorkbook`.

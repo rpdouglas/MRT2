@@ -9,7 +9,7 @@
 2.  App generates random 16-byte `Salt`.
 3.  App derives `Key` using PBKDF2 (100k iterations).
 4.  App creates `Verifier` = Hash(PIN + Salt).
-5.  App sends `Salt` and `Verifier` to Firestore. **PIN and Key are discarded.**
+5.  App sends `Salt` and `Verifier` to Firestore. **PIN and Key are held in sessionStorage for the duration of the browser session to reduce unlock friction.**
 
 ### B. Storage (Writing Data)
 1.  User types "I feel anxious today."
