@@ -1,32 +1,37 @@
-# ☁️ Deployment & CI/CD
+# ☁️ Deployment & Development
 
 **Platform:** Firebase Hosting
 **Pipeline:** GitHub Actions (Multi-Environment)
+**Dev Environment:** GitHub Codespaces (Recommended)
 
-## 1. Environment Strategy
+## 1. Development Environment (Codespaces)
+We have migrated to **GitHub Codespaces** to ensure a consistent, secure dev environment.
+
+* **Config:** `.devcontainer/devcontainer.json`
+* **Auto-Setup:** The `setup.sh` script automatically installs Node 20, Firebase Tools, and extensions.
+* **Secrets:**
+    * **Method:** Secrets are injected from GitHub Codespaces Settings.
+    * **Boot Logic:** The setup script reads these secrets and generates a local `.env` file automatically.
+
+## 2. Environment Strategy
 We use a **Promotion Pipeline**: `DEV` -> `UAT` -> `PROD`.
 
 | Environment | Branch | Firebase Project | URL |
 | :--- | :--- | :--- | :--- |
 | **DEV** | `feature/*` | `mrt2-app-dev` | (Preview URLs) |
 | **UAT** | `release/*` | `mrt2-app-uat` | `mrt2-app-uat.web.app` |
-| **PROD** | `main` | `mrt2-app-prod` | `myrecoverytoolkit.web.app` |
+| **PROD** | `main` | `mrt2-app-prod` | `www.myrecoverytoolkit.ca` |
 
-## 2. Secrets Management
-Secrets are stored in GitHub Actions Secrets and injected into the build process.
-* `VITE_FIREBASE_API_KEY`
-* `VITE_GEMINI_API_KEY`
-* `FIREBASE_SERVICE_ACCOUNT` (Base64 encoded for deployment)
+## 3. The Build Pipeline (Secrets Security)
+We use a "Nuclear Fix" strategy for environment variables in CI/CD to prevent Vite from missing keys.
 
-## 3. Deployment Commands
-**Manual Deploy (Emergency only):**
+* **Logic:** The pipeline does *not* rely on shell variables passing through to the build.
+* **Mechanism:** The Action explicitly **writes a physical .env file** to the runner's disk immediately before the build step, populated with secrets from GitHub Actions.
+* **Admin Access:** The `FIREBASE_SERVICE_ACCOUNT` is decoded from Base64 into a temporary JSON file for the deploy step, then destroyed.
+
+## 4. Deployment Commands
+**Manual Deploy (Emergencies only):**
 ```bash
 npm run build
 firebase deploy --only hosting
-```
-
-**Database Rules:**
-```bash
-firebase deploy --only firestore:rules
-firebase deploy --only firestore:indexes
 ```
