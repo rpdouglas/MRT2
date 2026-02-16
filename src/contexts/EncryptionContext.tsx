@@ -1,8 +1,6 @@
 /**
- * GITHUB COMMENT:
- * [EncryptionContext.tsx]
- * CLEANUP: Removed redundant 'no-console' eslint-disable directives.
- * MAINTAINED: resetVault logic and zero-knowledge security protocols.
+ * src/contexts/EncryptionContext.tsx
+ * UPDATED: Fixed ESLint exhaustive-deps warning by wrapping performUnlock in useCallback.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -27,6 +25,8 @@ import {
     clearKey, 
     isVaultUnlocked as checkLibUnlocked 
 } from '../lib/crypto';
+
+const SESSION_PIN_KEY = 'mrt_vault_pin';
 
 interface EncryptionContextType {
   isVaultSet: boolean;
@@ -61,6 +61,61 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [salt, setSalt] = useState<string | null>(null);
   const [verifier, setVerifier] = useState<string | null>(null);
 
+  // Helper to actually perform the unlock logic
+  // WRAPPED IN useCallback TO FIX LINTING
+  const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
+      try {
+        // 1. Verify PIN if verifier exists
+        if (currentVerifier) {
+            const checkHash = await computePinHash(pin, currentSalt);
+            if (checkHash !== currentVerifier) return false;
+        }
+
+        // 2. Generate Key
+        await generateKey(pin, currentSalt);
+
+        // 3. (Legacy) Verify against a real document if no verifier exists
+        if (!currentVerifier) {
+            const q = query(collection(db!, 'journals'), where('uid', '==', user!.uid), limit(1));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                const testDoc = snapshot.docs[0].data();
+                if (testDoc.content && testDoc.isEncrypted) {
+                    try {
+                        const result = await decrypt(testDoc.content);
+                        if (result.includes("Locked Content")) throw new Error("Key mismatch");
+                        
+                        // Self-Healing: Create verifier for next time
+                        const newVerifier = await computePinHash(pin, currentSalt);
+                        const userDocRef = doc(db!, 'users', user!.uid);
+                        await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                        setVerifier(newVerifier);
+                    } catch (e) {
+                        console.warn("Legacy Verification Failed", e);
+                        return true; 
+                    }
+                }
+            } else {
+                 // No data yet, create verifier
+                 const newVerifier = await computePinHash(pin, currentSalt);
+                 const userDocRef = doc(db!, 'users', user!.uid);
+                 await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
+                 setVerifier(newVerifier);
+            }
+        }
+        
+        setIsVaultUnlocked(true);
+        // Save to Session Storage
+        sessionStorage.setItem(SESSION_PIN_KEY, pin);
+        return true;
+
+      } catch (error) {
+          console.error("Unlock logic failed", error);
+          return false;
+      }
+  }, [user]); // Added user dependency
+
+  // Initial Load & Auto-Unlock
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -77,8 +132,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           if (data.encryptionSalt) {
             setIsVaultSet(true);
             setSalt(data.encryptionSalt);
-            if (data.pinVerifier) {
-                setVerifier(data.pinVerifier);
+            
+            const currentVerifier = data.pinVerifier || null;
+            if (currentVerifier) setVerifier(currentVerifier);
+
+            // --- AUTO UNLOCK CHECK ---
+            const cachedPin = sessionStorage.getItem(SESSION_PIN_KEY);
+            if (cachedPin) {
+                console.log("🔐 Found cached PIN, attempting auto-unlock...");
+                await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
             }
           } else {
             setIsVaultSet(false);
@@ -94,7 +156,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
 
     checkVaultStatus();
-  }, [user]);
+  }, [user, performUnlock]); // Added performUnlock dependency
 
   const setupVault = async (pin: string) => {
     if (!user || !db) return;
@@ -115,6 +177,8 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
+      sessionStorage.setItem(SESSION_PIN_KEY, pin); // Cache on setup
+
     } catch (error) {
       console.error("Vault setup failed:", error);
       throw error;
@@ -134,6 +198,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       }, { merge: true });
       
       clearKey();
+      sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
       setIsVaultSet(false);
       setIsVaultUnlocked(false);
       setSalt(null);
@@ -148,52 +213,12 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const unlockVault = async (pin: string): Promise<boolean> => {
     if (!salt || !user || !db) return false;
-    
-    try {
-      if (verifier) {
-          const checkHash = await computePinHash(pin, salt);
-          if (checkHash !== verifier) return false;
-          await generateKey(pin, salt);
-          setIsVaultUnlocked(true);
-          return true;
-      }
-
-      await generateKey(pin, salt);
-      const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
-      const snapshot = await getDocs(q);
-
-      if (!snapshot.empty) {
-          const testDoc = snapshot.docs[0].data();
-          if (testDoc.content && testDoc.isEncrypted) {
-              try {
-                  const result = await decrypt(testDoc.content);
-                  if (result.includes("Locked Content")) throw new Error("Key mismatch");
-                  const newVerifier = await computePinHash(pin, salt);
-                  const userDocRef = doc(db, 'users', user.uid);
-                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
-                  setVerifier(newVerifier);
-              } catch (e) {
-                  console.warn("Legacy Verification Failed", e);
-                  return true; 
-              }
-          }
-      } else {
-          const newVerifier = await computePinHash(pin, salt);
-          const userDocRef = doc(db, 'users', user.uid);
-          await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
-          setVerifier(newVerifier);
-      }
-
-      setIsVaultUnlocked(true);
-      return true;
-    } catch (error) {
-      console.error("Unlock failed", error);
-      return false;
-    }
+    return await performUnlock(pin, salt, verifier);
   };
 
   const lockVault = useCallback(() => {
     clearKey();
+    sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
     setIsVaultUnlocked(false);
   }, []);
 
