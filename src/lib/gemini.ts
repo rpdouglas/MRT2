@@ -1,10 +1,6 @@
 /**
  * src/lib/gemini.ts
- * GITHUB COMMENT:
- * [gemini.ts]
- * UPDATED: Standardized Audio Analysis to use 'gemini-2.5-flash'.
- * FIX: Removed deprecated 'gemini-1.5-flash' from model cascade.
-* ADDED: New function 'analyzeSystemHealth' for client-side error log analysis.                    
+ * UPDATED: Fixed generateComparativeAnalysis to use 'gemini-2.5-pro'.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -103,8 +99,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-               
-                console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
+                // console.log(\`🤖 AI Attempt \${i + 1}/\${modelsToTry.length}: Using \${currentModelName}\`);
             }
 
             const model = genAI.getGenerativeModel({ 
@@ -293,7 +288,13 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    const text = await generateWithCascade(systemPrompt + promptContext, `comparative_analysis_${scope}`);
+    // FIX: Forced 'gemini-2.5-pro' model to match working Deep Dive configuration
+    const text = await generateWithCascade(
+        systemPrompt + promptContext, 
+        `comparative_analysis_${scope}`, 
+        'gemini-2.5-pro'
+    );
+    
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 

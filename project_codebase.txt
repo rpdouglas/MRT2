@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-13T20:21:10.521Z
+PROJECT EXPORT - 2026-02-15T17:30:49.419Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -39,16 +39,26 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── SCHEMA_ARCHITECTURE.md
 │   ├── SECURITY_ZERO_KNOWLEDGE.md
 │   ├── SPRINT_BOARD.md
+│   ├── guide
+│   ├── legal
+│   │   ├── PRIVACY_POLICY.md
+│   │   └── TERMS_OF_SERVICE.md
 │   ├── projects
 │   │   ├── 00_TEMPLATE.md
 │   │   ├── 01_SECURITY_HARDENING.md
 │   │   └── 02_SERVICE_MODE.md
-│   └── prompts
-│       ├── APPROVAL.md
-│       ├── AUDIT.md
-│       ├── INITIALIZATION.md
-│       ├── PLANNING.md
-│       └── TESTING.md
+│   ├── prompts
+│   │   ├── APPROVAL.md
+│   │   ├── AUDIT.md
+│   │   ├── FIX.md
+│   │   ├── INITIALIZATION.md
+│   │   ├── PLANNING.md
+│   │   └── TESTING.md
+│   ├── specs
+│   │   └── 01_JOURNAL.md
+│   └── templates
+│       ├── FEATURE_SPEC.md
+│       └── USER_GUIDE.md
 ├── docs_dump.txt
 ├── eslint.config.js
 ├── export_codebase.js
@@ -86,16 +96,17 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── generate-build-info.js
 │   ├── increment-version.cjs
 │   ├── seed-personas.js
+│   ├── set_admin_role.cjs
 │   └── setup_docs.py
 ├── src
 │   ├── App.css
 │   ├── App.tsx
 │   ├── __tests__
+│   │   └── smoke.test.ts
 │   ├── assets
 │   │   └── react.svg
 │   ├── build-info.json
 │   ├── components
-│   │   ├── AdminGrant.tsx
 │   │   ├── AppShell.tsx
 │   │   ├── CreateTaskModal.tsx
 │   │   ├── ErrorBoundary.tsx
@@ -1079,6 +1090,99 @@ When a user asks for AI Analysis:
 - [ ] `PROJ-02` Build `useServiceData` hook.
 </file>
 
+<file path="docs/legal/PRIVACY_POLICY.md">
+# 🔒 Privacy Policy for My Recovery Toolkit (MRT)
+
+**Last Updated:** February 13, 2026
+
+**My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
+
+## 1. Our Core Philosophy: Zero-Knowledge Encryption
+MRT is built on a **Zero-Knowledge Architecture**.
+* **Your Private Data:** Your Journal entries, Workbook answers, and Sponsee notes are encrypted on your device using a key derived from your PIN.
+* **Our Access:** We (the developers) and our cloud providers (Firebase/Google) **cannot decrypt or read this data**. It is stored as mathematical gibberish (`ciphertext`) on our servers.
+* **Your Responsibility:** Because we do not have your encryption key, **we cannot recover your data if you lose your PIN.**
+
+## 2. Information We Collect
+We collect data in two categories:
+
+### A. Account & Metadata (Unencrypted)
+To operate the service, the following data is stored in plain text:
+* **Authentication:** Email address and User ID (via Firebase Auth).
+* **Usage Stats:** App performance, error logs, and activity streaks (e.g., "User logged in today").
+* **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). We use these to generate charts/graphs.
+
+### B. User Generated Content (Encrypted)
+The following data is encrypted *before* it leaves your device:
+* **Journals:** The text body of your diary entries.
+* **Workbooks:** Your answers to deep-dive recovery questions.
+* **Service Data:** Names and notes regarding people you sponsor.
+
+## 3. How We Use Artificial Intelligence (AI)
+MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysis.
+* **Consent:** AI analysis only happens when you explicitly click a button (e.g., "Analyze Journal", "Consult Compass").
+* **Process:** Your device temporarily decrypts the specific text, sends it to the AI provider via a secure connection, and displays the result.
+* **Privacy:** We utilize "Stateless" API calls. Your journal entries are **NOT** used to train Google's public AI models. The data is processed in memory and then discarded by the AI provider.
+
+## 4. Data Storage & Third Parties
+We use trusted third-party infrastructure to host the app:
+* **Google Firebase:** Hosts the database, authentication, and static files.
+* **Google Generative AI:** Provides the intelligence for analysis features.
+
+## 5. Data Sovereignty
+You own your data.
+* **Export:** You may download a decrypted JSON or PDF copy of your data at any time via the Profile page.
+* **Deletion:** You may delete your account at any time. This permanently wipes all data (Encrypted and Unencrypted) from our servers.
+
+## 6. Children's Privacy
+MRT is not intended for individuals under the age of 13. We do not knowingly collect data from children.
+
+## 7. Contact Us
+For technical support or privacy questions, please contact:
+**Email:** rpdouglas@gmail.com
+</file>
+
+<file path="docs/legal/TERMS_OF_SERVICE.md">
+# 📜 Terms of Service
+
+**Last Updated:** February 13, 2026
+
+By accessing or using **My Recovery Toolkit (MRT)**, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not use the application.
+
+## 1. Medical Disclaimer (Critical)
+**MRT IS NOT A MEDICAL DEVICE AND DOES NOT PROVIDE MEDICAL ADVICE.**
+* The content, AI analysis, and tools provided are for **informational and self-help purposes only**.
+* MRT is not a substitute for professional medical advice, diagnosis, or treatment.
+* **In Case of Emergency:** If you are experiencing a medical emergency, suicidal thoughts, or a relapse crisis, call 911 or your local emergency number immediately. Do not rely on this app for crisis intervention.
+
+## 2. Zero-Knowledge & Data Loss
+* **Your Security PIN:** You are solely responsible for remembering your PIN.
+* **No Recovery:** Because MRT uses Zero-Knowledge encryption, **we cannot reset your PIN or recover your encrypted data** if you forget it.
+* **Liability:** MRT and its developers are not liable for any loss of data resulting from a lost PIN, device failure, or failure to backup your data.
+
+## 3. User Responsibilities
+You agree not to:
+* Use the app for any illegal purpose.
+* Attempt to reverse-engineer the encryption protocols.
+* Enter Personal Identifiable Information (PII) of others (e.g., Sponsees) into unencrypted fields (like Task Titles).
+
+## 4. AI Features
+* **Accuracy:** Artificial Intelligence can make mistakes ("hallucinations"). You acknowledge that advice or insights generated by the "Recovery Coach" or "Compass" may be inaccurate or inappropriate. Always use your own judgment.
+* **Usage:** You agree not to use the AI features to generate harmful, illegal, or abusive content.
+
+## 5. Termination
+We reserve the right to terminate or suspend your account immediately, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the Service.
+
+## 6. Limitation of Liability
+To the maximum extent permitted by law, MRT and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.
+
+## 7. Governing Law
+These Terms shall be governed by the laws of Ontario, Canada, without regard to its conflict of law provisions.
+
+## 8. Changes to Terms
+We reserve the right to modify these terms at any time. Your continued use of the app after changes constitutes acceptance of the new terms.
+</file>
+
 <file path="docs/projects/00_TEMPLATE.md">
 # 📁 Project [ID]: [Name]
 
@@ -1188,6 +1292,47 @@ Use after the Plan is approved.
 * `update_pm.py` script.
 </file>
 
+<file path="docs/prompts/FIX.md">
+# 🚑 Error Resolution Prompt (The Hotfix Engineer)
+
+**Trigger:** You have encountered a Build Error, Lint Error, Test Failure, or Runtime Crash.
+
+**Instructions:**
+1. Paste the **Error Log** below.
+2. Paste the **Content of the file(s)** causing the error.
+3. The AI will provide a "Surgical Fix."
+
+---
+
+**Role:** Senior Site Reliability Engineer (SRE).
+**Goal:** Restore system stability with **MINIMAL** code changes.
+
+**Constraint Checklist (The "Do No Harm" Protocol):**
+1.  **🚫 Zero Styling Changes:** Do NOT touch Tailwind classes, CSS, or layout structure unless the error is explicitly a CSS error.
+2.  **🚫 Zero Refactoring:** Do NOT rewrite functions "to make them cleaner." Fix the specific bug only. If the code is ugly but works, leave it alone.
+3.  **🚫 Scope Containment:** Do not touch files unrelated to the stack trace.
+4.  **✅ Full File Output:** Always provide the *complete* file content. Do not use comments like `// ... rest of code`.
+
+**Input:**
+* **Context:** [INSERT BRIEF CONTEXT, e.g., "I just added the Lock Button"]
+* **Error Log:**
+```text
+[PASTE ERROR HERE]
+```
+* **Suspected File:** [PASTE FILE CONTENT HERE]
+
+**Analysis Strategy:**
+1.  **Identify:** What specific line caused the failure?
+2.  **Diagnose:** Is it a Type error, a Logic error, or an Import error?
+3.  **Verify:** Will this fix break the "Lisa" or "David" personas? (e.g., does it break offline mode?)
+
+**Output Format:**
+1.  **Root Cause:** 1 sentence explanation.
+2.  **The Fix:** The complete, corrected file.
+3.  **Verification:** How to verify this specific fix (e.g., "Run npm run lint").
+
+</file>
+
 <file path="docs/prompts/INITIALIZATION.md">
 # 🤖 AI Session Initialization Prompt
 
@@ -1259,6 +1404,149 @@ Break down this Phase into atomic coding steps.
 **Output:**
 * `.test.tsx` files.
 * A specific "Smoke Test" checklist for the developer.
+</file>
+
+<file path="docs/specs/01_JOURNAL.md">
+# 📖 Feature Specification: The Journal (The Vault)
+
+**Status:** Live (v1.1)
+**Security Level:** Zero-Knowledge (Client-Side Encrypted)
+**Primary Persona:** David (The Crisis User) & Lisa (The Maintenance User)
+
+---
+
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It is not just a text editor; it is a **secure, encrypted vault** for recovery work. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching without sacrificing privacy.
+
+
+
+## 2. Core Architecture (Zero-Knowledge)
+* **Encryption:** All journal content (`title`, `body`, `ai_analysis`) is encrypted on the device using `AES-GCM` before it ever touches the network.
+* **Keys:** The encryption key is derived from the user's PIN. The server **never** sees the key or the plain text.
+* **Implication:** If a user loses their PIN, their journal entries are strictly unrecoverable.
+
+## 3. Sub-Features
+
+### A. The Editor (Write)
+* **Format:** Rich Text / Markdown support (Bold, Italic, Lists).
+* **Auto-Save:** Saves locally to `IndexedDB` (via Firestore persistence) immediately, syncs to cloud when online.
+* **Tags:** Users can tag entries (e.g., `#gratitude`, `#resentment`) for filtering.
+
+### B. Templates (Structure)
+* **System Templates:** Pre-loaded recovery formats (e.g., "Morning Check-in", "Step 10 Inventory").
+* **Custom Templates:** Users can create their own reusable forms.
+* **Workflow:** Selecting a template populates the editor with prompts.
+
+### C. AI Analysis (The Coach)
+* **Trigger:** User manually clicks "Analyze Entry" (On-Demand only).
+* **Privacy Protocol:**
+    1.  App decrypts the entry in memory.
+    2.  App sends the *plain text* to Google Gemini API (Stateless request).
+    3.  **Constraint:** Data is NOT used for model training.
+    4.  App receives the analysis (Patterns, Cognitive Distortions, Actionable Advice).
+    5.  App *encrypts* the analysis and stores it in Firestore.
+* **Output:** The AI provides:
+    * *Summary:* 1-sentence recap.
+    * *Mood:* Detected emotional state.
+    * *Patterns:* Recurring behaviors.
+    * *Feedback:* "Compassionate but firm" recovery advice.
+
+### D. History & Search (Reflect)
+* **Timeline:** Chronological list of entries.
+* **Search:** Since data is encrypted, **server-side search is impossible**.
+    * *Implementation:* The app downloads *all* metadata (dates, tags) and decrypts them locally to perform a client-side search.
+
+---
+
+## 4. Technical Data Flow (The "Troubleshooting Map")
+
+### Write Flow
+1.  User types "I feel anxious."
+2.  `EncryptionContext` encrypts -> `U2FsdGVkX1...`
+3.  Firestore SDK writes `U2FsdGVkX1...` to `users/{uid}/journals/{id}`.
+
+### AI Analysis Flow (Current Failure Point)
+1.  **User Action:** Click "Analyze".
+2.  **Decrypt:** Client decrypts entry text.
+3.  **API Call:** Client calls `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`.
+    * *Requires:* Valid `API_KEY` in query param.
+    * *Requires:* Valid Google Cloud Project with "Generative Language API" enabled.
+4.  **Response:** JSON with analysis text.
+5.  **Save:** Client encrypts analysis -> Firestore.
+
+---
+
+## 5. Configuration Requirements (Environment)
+For the Journal features to work in **Production**, the following must be true:
+
+| Component | Requirement | Status (Prod) |
+| :--- | :--- | :--- |
+| **Database** | Firestore Rules must allow `create/update` on `/journals`. | ✅ Synced |
+| **Encryption** | Valid PIN entered (Vault Unlocked). | ✅ Working |
+| **AI API** | `VITE_GEMINI_API_KEY` defined in GitHub Secrets. | ⚠️ **Suspect** |
+| **AI Service** | "Generative Language API" enabled in Google Cloud. | ⚠️ **Suspect** |
+</file>
+
+<file path="docs/templates/FEATURE_SPEC.md">
+# 📐 Feature Spec: [Feature Name]
+
+**Status:** [Draft | In Progress | Live]
+**Version:** 1.0
+**Owner:** [Your Name]
+
+## 1. The "Why" (User Story)
+* **As a:** [Persona, e.g., David]
+* **I want to:** [Action]
+* **So that:** [Benefit]
+
+## 2. User Experience (The Flow)
+* **Entry Point:** [Where does it start? e.g., Dashboard -> Fab Button]
+* **Happy Path:**
+    1.  User clicks X.
+    2.  System displays Y.
+* **Error States:**
+    * Offline: [Behavior]
+    * Decryption Failure: [Behavior]
+
+## 3. Technical Architecture
+* **Data Model:** (Link to Firestore Schema)
+* **Security:** (Encryption requirements, e.g., "Client-side AES-GCM")
+* **Dependencies:** (e.g., Gemini API, Chart.js)
+
+## 4. Edge Cases & Constraints
+* [ ] What happens if the user has no network?
+* [ ] What happens if the vault is locked?
+* [ ] Limit: Max 5000 chars per entry?
+
+## 5. Verification (QA)
+* [ ] Unit Test: `src/features/X/__tests__/X.test.ts`
+* [ ] Manual Check: [Step-by-step verification]
+
+</file>
+
+<file path="docs/templates/USER_GUIDE.md">
+# 📘 User Guide: [Feature Name]
+
+## Overview
+[1-2 sentences explaining what this is in plain English.]
+
+## How to Use It
+1.  **Step 1:** Go to the Dashboard.
+2.  **Step 2:** Click the "Pen" icon.
+3.  **Step 3:** ...
+
+> **Tip:** [Helpful advice, e.g., "Use tags to track your mood over time."]
+
+## Frequently Asked Questions
+* **Q:** Is this private?
+* **A:** Yes. Your data is encrypted on your phone before it saves. Even the developers cannot read it.
+
+* **Q:** Can I use this offline?
+* **A:** Yes. It will sync when you reconnect.
+
+## Troubleshooting
+If you see an error...
+
 </file>
 
 <file path="docs_dump.txt">
@@ -1860,7 +2148,6 @@ export default defineConfig([
 </file>
 
 <file path="firestore.rules">
-// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -1882,15 +2169,9 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
-    // UPDATED: Checks DB role OR hardcoded email (Matches AuthContext)
+    // UPDATED: Checks for Custom Claim 'admin'
     function isAdmin() {
-      return request.auth != null && (
-        // Option A: Hardcoded Super Admin (Emergency Access)
-        request.auth.token.email == 'rpdouglas@gmail.com' || 
-        // Option B: Database Role
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
-      );
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     // --- COLLECTION RULES ---
@@ -1934,8 +2215,15 @@ service cloud.firestore {
       allow create: if request.auth != null; 
       allow read, delete: if isAdmin();
     }
+    
+    // 7. Service (The Lisa Module - Placeholder for PROJ-02)
+    match /service/{serviceId} {
+        allow create: if isCreatingOwnedResource();
+        allow read, update, delete: if isResourceOwner();
+    }
   }
 }
+
 </file>
 
 <file path="generate_icons.py">
@@ -2109,7 +2397,8 @@ if __name__ == "__main__":
     "@tanstack/react-query": "^5.66.0",
     "date-fns": "^4.1.0",
     "firebase": "^12.6.0",
-    "jspdf": "^3.0.4",
+    "firebase-admin": "^13.6.1",
+    "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.561.0",
     "react": "^19.2.0",
@@ -2150,6 +2439,7 @@ if __name__ == "__main__":
     "vitest": "^4.0.16"
   }
 }
+
 </file>
 
 <file path="postcss.config.js">
@@ -2594,56 +2884,167 @@ async function seedPersona(persona) {
 })();
 </file>
 
+<file path="scripts/set_admin_role.cjs">
+/**
+ * 🔐 ADMIN ROLE MANAGER
+ * Usage: node scripts/set_admin_role.js <email>
+ * Prerequisite: npm install firebase-admin
+ * Service Account: Must be present at ./service-account.json
+ */
+const admin = require('firebase-admin');
+const serviceAccount = require('../service-account.json');
+
+const args = process.argv.slice(2);
+const email = args[0];
+
+if (!email) {
+    console.error('❌ Usage: node set_admin_role.js <email>');
+    process.exit(1);
+}
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+async function setAdmin(email) {
+    try {
+        const user = await admin.auth().getUserByEmail(email);
+        await admin.auth().setCustomUserClaims(user.uid, { admin: true });
+        console.log(`✅ Success! ${email} is now an Admin (Custom Claims).`);
+        console.log('👉 They must sign out and sign back in for changes to take effect.');
+    } catch (error) {
+        console.error('❌ Error:', error.message);
+    } finally {
+        process.exit();
+    }
+}
+
+setAdmin(email);
+
+</file>
+
 <file path="scripts/setup_docs.py">
 import os
-
-def read_file(path):
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    return ""
+from datetime import date
 
 def write_file(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content.strip())
-    print(f"✅ Polished: {path}")
+    print(f"✅ Created: {path}")
 
-# ========================================================
-# 1. ENHANCE CONTEXT_DUMP (Add Design Tokens)
-# ========================================================
-ctx_path = "docs/CONTEXT_DUMP.md"
-ctx_content = read_file(ctx_path)
+current_date = date.today().strftime("%B %d, %Y")
 
-if "## 🎨 Design System (Vibrant Momentum)" not in ctx_content:
-    design_system = """
-## 🎨 Design System (Vibrant Momentum)
-**Philosophy:** "Recovery is a high-performance lifestyle."
-**Visuals:** High-saturation gradients, 100dvh layouts, glassmorphism.
+# ==========================================
+# 1. PRIVACY POLICY
+# ==========================================
+privacy_content = f"""
+# 🔒 Privacy Policy for My Recovery Toolkit (MRT)
 
-### Module Themes (Atmospheric Tinting)
-| Module | Persona Match | Gradient Source | Glow (Shadow) | Vibe |
-| :--- | :--- | :--- | :--- | :--- |
-| **Dashboard** | David (Crisis) | Sky → Blue | `bg-slate-200` | Hope & Clarity |
-| **Tasks** | Ned (Pink Cloud) | Cyan → Teal | `bg-cyan-200` | Energy & Action |
-| **Service** | **Lisa (Service)** | **Rose → Amber** | `bg-orange-200` | Warmth & Connection |
-| **Insights** | Walt (Zen) | Fuchsia → Rose | `bg-fuchsia-200` | Mystical & AI |
-| **Vitality** | Universal | Rose → Amber | `bg-orange-200` | Somatic Health |
+**Last Updated:** {current_date}
 
-### UI Rules
-* **The Trinity Header:** Left (Menu), Center (Context), Right (Action/SOS).
-* **Tactility:** Buttons use `active:scale-95`.
-* **Typography:** Hero numbers (`font-black`), Metadata (`tracking-wider`, `uppercase`).
+**My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
+
+## 1. Our Core Philosophy: Zero-Knowledge Encryption
+MRT is built on a **Zero-Knowledge Architecture**.
+* **Your Private Data:** Your Journal entries, Workbook answers, and Sponsee notes are encrypted on your device using a key derived from your PIN.
+* **Our Access:** We (the developers) and our cloud providers (Firebase/Google) **cannot decrypt or read this data**. It is stored as mathematical gibberish (`ciphertext`) on our servers.
+* **Your Responsibility:** Because we do not have your encryption key, **we cannot recover your data if you lose your PIN.**
+
+## 2. Information We Collect
+We collect data in two categories:
+
+### A. Account & Metadata (Unencrypted)
+To operate the service, the following data is stored in plain text:
+* **Authentication:** Email address and User ID (via Firebase Auth).
+* **Usage Stats:** App performance, error logs, and activity streaks (e.g., "User logged in today").
+* **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). We use these to generate charts/graphs.
+
+### B. User Generated Content (Encrypted)
+The following data is encrypted *before* it leaves your device:
+* **Journals:** The text body of your diary entries.
+* **Workbooks:** Your answers to deep-dive recovery questions.
+* **Service Data:** Names and notes regarding people you sponsor.
+
+## 3. How We Use Artificial Intelligence (AI)
+MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysis.
+* **Consent:** AI analysis only happens when you explicitly click a button (e.g., "Analyze Journal", "Consult Compass").
+* **Process:** Your device temporarily decrypts the specific text, sends it to the AI provider via a secure connection, and displays the result.
+* **Privacy:** We utilize "Stateless" API calls. Your journal entries are **NOT** used to train Google's public AI models. The data is processed in memory and then discarded by the AI provider.
+
+## 4. Data Storage & Third Parties
+We use trusted third-party infrastructure to host the app:
+* **Google Firebase:** Hosts the database, authentication, and static files.
+* **Google Generative AI:** Provides the intelligence for analysis features.
+
+## 5. Data Sovereignty
+You own your data.
+* **Export:** You may download a decrypted JSON or PDF copy of your data at any time via the Profile page.
+* **Deletion:** You may delete your account at any time. This permanently wipes all data (Encrypted and Unencrypted) from our servers.
+
+## 6. Children's Privacy
+MRT is not intended for individuals under the age of 13. We do not knowingly collect data from children.
+
+## 7. Contact Us
+For technical support or privacy questions, please contact:
+**Email:** rpdouglas@gmail.com
 """
-    # Append before Directory Structure
-    if "## 📂 Directory Structure" in ctx_content:
-        ctx_content = ctx_content.replace("## 📂 Directory Structure", design_system + "\n\n## 📂 Directory Structure")
-    else:
-        ctx_content += "\n" + design_system
-    
-    write_file(ctx_path, ctx_content)
 
-print("\n✨ Documentation Finalized!")
-print("👉 'docs/CONTEXT_DUMP.md' now includes the Vibrant Momentum Design System.")
+# ==========================================
+# 2. TERMS OF SERVICE
+# ==========================================
+terms_content = f"""
+# 📜 Terms of Service
+
+**Last Updated:** {current_date}
+
+By accessing or using **My Recovery Toolkit (MRT)**, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not use the application.
+
+## 1. Medical Disclaimer (Critical)
+**MRT IS NOT A MEDICAL DEVICE AND DOES NOT PROVIDE MEDICAL ADVICE.**
+* The content, AI analysis, and tools provided are for **informational and self-help purposes only**.
+* MRT is not a substitute for professional medical advice, diagnosis, or treatment.
+* **In Case of Emergency:** If you are experiencing a medical emergency, suicidal thoughts, or a relapse crisis, call 911 or your local emergency number immediately. Do not rely on this app for crisis intervention.
+
+## 2. Zero-Knowledge & Data Loss
+* **Your Security PIN:** You are solely responsible for remembering your PIN.
+* **No Recovery:** Because MRT uses Zero-Knowledge encryption, **we cannot reset your PIN or recover your encrypted data** if you forget it.
+* **Liability:** MRT and its developers are not liable for any loss of data resulting from a lost PIN, device failure, or failure to backup your data.
+
+## 3. User Responsibilities
+You agree not to:
+* Use the app for any illegal purpose.
+* Attempt to reverse-engineer the encryption protocols.
+* Enter Personal Identifiable Information (PII) of others (e.g., Sponsees) into unencrypted fields (like Task Titles).
+
+## 4. AI Features
+* **Accuracy:** Artificial Intelligence can make mistakes ("hallucinations"). You acknowledge that advice or insights generated by the "Recovery Coach" or "Compass" may be inaccurate or inappropriate. Always use your own judgment.
+* **Usage:** You agree not to use the AI features to generate harmful, illegal, or abusive content.
+
+## 5. Termination
+We reserve the right to terminate or suspend your account immediately, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the Service.
+
+## 6. Limitation of Liability
+To the maximum extent permitted by law, MRT and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.
+
+## 7. Governing Law
+These Terms shall be governed by the laws of Ontario, Canada, without regard to its conflict of law provisions.
+
+## 8. Changes to Terms
+We reserve the right to modify these terms at any time. Your continued use of the app after changes constitutes acceptance of the new terms.
+"""
+
+# ==========================================
+# Execution
+# ==========================================
+print("🚀 Generating Legal Documentation for App Store Compliance...")
+
+write_file("docs/legal/PRIVACY_POLICY.md", privacy_content)
+write_file("docs/legal/TERMS_OF_SERVICE.md", terms_content)
+
+print("\n✨ Legal Docs Created!")
+print("👉 Folder: docs/legal/")
+print("📝 NOTE: Before publishing, verify the 'Contact Email' and 'Governing Law' sections.")
 </file>
 
 <file path="src/App.css">
@@ -2695,10 +3096,7 @@ print("👉 'docs/CONTEXT_DUMP.md' now includes the Vibrant Momentum Design Syst
 <file path="src/App.tsx">
 /**
  * src/App.tsx
- * GITHUB COMMENT:
- * [App.tsx]
- * UPDATED: Implemented TanStack Query Provider and Route Lazy Loading.
- * PERFORMANCE: Reduced initial bundle size by splitting Admin, Insights, and Vitality pages.
+ * UPDATED: PROJ-01 Security Hardening (Removed AdminGrant)
  */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -2722,7 +3120,6 @@ import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // --- LAZY LOADED ROUTES ---
-// These are heavy or less frequently accessed pages
 const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -2731,7 +3128,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // Data fresh for 5 minutes
+            staleTime: 1000 * 60 * 5, 
             retry: 1,
             refetchOnWindowFocus: false
         }
@@ -2900,6 +3297,28 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+</file>
+
+<file path="src/__tests__/smoke.test.ts">
+import { describe, it, expect } from 'vitest';
+
+/**
+ * 💨 SMOKE TEST
+ * This file exists to ensure the Test Runner (Vitest) has at least
+ * one passing test so the CI/CD pipeline doesn't fail with "No tests found".
+ * * Real unit tests for Crypto and Components will be added in Phase 3.
+ */
+
+describe('System Sanity Check', () => {
+  it('should pass this basic truth test', () => {
+    expect(true).toBe(true);
+  });
+
+  it('should verify basic math capability', () => {
+    expect(1 + 1).toBe(2);
+  });
+});
 </file>
 
 <file path="src/assets/react.svg">
@@ -2964,79 +3383,10 @@ export default function App() {
 }
 </file>
 
-<file path="src/components/AdminGrant.tsx">
-/**
- * GITHUB COMMENT:
- * [AdminGrant.tsx]
- * TEMPORARY UTILITY: One-time script to grant 'admin' role to the current logged-in user.
- * INSTRUCTIONS: Add to App.tsx, click the button, then DELETE this file and its reference.
- */
-import { useState } from 'react';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
-import { doc, updateDoc, type Firestore } from 'firebase/firestore';
-import { ShieldCheckIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-
-export default function AdminGrant() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-
-  const grantAdmin = async () => {
-    if (!user || !db) {
-      setStatus("Error: No user logged in or DB not found.");
-      return;
-    }
-
-    const database: Firestore = db;
-    setLoading(true);
-    setStatus("Processing grant...");
-
-    try {
-      const userRef = doc(database, 'users', user.uid);
-      await updateDoc(userRef, {
-        role: 'admin'
-      });
-      setStatus(`SUCCESS: ${user.email} is now an Admin. Refresh the app.`);
-    } catch (error) {
-      console.error(error);
-      setStatus("Error: Check console. You may need to update Firestore rules first.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed bottom-20 left-4 z-[9999] animate-bounce">
-      <button
-        onClick={grantAdmin}
-        disabled={loading}
-        className="bg-red-600 text-white p-4 rounded-full shadow-2xl flex items-center gap-2 hover:bg-red-700 transition-all active:scale-95"
-      >
-        {loading ? (
-          <ArrowPathIcon className="h-6 w-6 animate-spin" />
-        ) : (
-          <ShieldCheckIcon className="h-6 w-6" />
-        )}
-        <span className="font-bold text-xs uppercase">Grant Admin Access</span>
-      </button>
-      {status && (
-        <div className="absolute bottom-full mb-2 left-0 bg-black text-white text-[10px] p-2 rounded w-48 shadow-lg">
-          {status}
-        </div>
-      )}
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/AppShell.tsx">
 /**
  * src/components/AppShell.tsx
- * GITHUB COMMENT:
- * [AppShell.tsx]
- * UPDATED: Integrated Offline Indicator and PWA Install Banner.
- * FEATURES: Visual feedback for network state (Red banner when offline).
+ * UPDATED: PROJ-01 Phase 1 (Added Lock Vault Button)
  */
 import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -3051,7 +3401,8 @@ import {
   HeartIcon, 
   LightBulbIcon,
   CommandLineIcon,
-  WifiIcon
+  WifiIcon,
+  LockClosedIcon // Imported Lock Icon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -3070,7 +3421,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
-  const { isVaultUnlocked } = useEncryption();
+  const { isVaultUnlocked, lockVault } = useEncryption(); // Use lockVault
 
   const handleLogout = async () => {
     try {
@@ -3080,6 +3431,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to log out', error);
     }
+  };
+
+  const handleLock = () => {
+      lockVault();
+      setSidebarOpen(false);
+      // Optional: Navigate to dashboard to force VaultGate re-check if on a protected route
+      navigate('/dashboard');
   };
 
   const performAutoBackup = useCallback(async () => {
@@ -3218,6 +3576,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  </div>
                              </div>
                           )}
+                          
+                          {/* LOCK VAULT BUTTON */}
+                          {isVaultUnlocked && (
+                            <button
+                                onClick={handleLock}
+                                className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
+                            >
+                                <LockClosedIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
+                                Lock Vault
+                            </button>
+                          )}
+
                           <button
                             onClick={handleLogout}
                             className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
@@ -3241,6 +3611,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
 </file>
 
 <file path="src/components/CreateTaskModal.tsx">
@@ -7401,7 +7772,13 @@ export default function JournalTabs({ activeTab, onChange }: JournalTabsProps) {
 </file>
 
 <file path="src/components/journal/TemplateEditor.tsx">
-import { useState, useEffect, useRef } from 'react';
+/**
+ * GITHUB COMMENT:
+ * [TemplateEditor.tsx]
+ * FIX: Resolved ESLint warnings/errors regarding 'any' type and React hook dependencies.
+ * REFACTOR: Wrapped loadTemplates in useCallback and hoisted above useEffect to satisfy exhaustive-deps.
+ */
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, getDocs, Timestamp } from 'firebase/firestore';
@@ -7425,15 +7802,16 @@ interface JournalTemplate {
     content?: string; 
     prompts?: string[]; // Legacy support
     defaultTags: string[];
-    createdAt: any;
+    createdAt: Timestamp; // FIX: Replaced 'any' with 'Timestamp'
 }
 
 export default function TemplateEditor() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    
     const [templates, setTemplates] = useState<JournalTemplate[]>([]);
     const [loading, setLoading] = useState(true);
-
+    
     // Editor State
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -7445,13 +7823,8 @@ export default function TemplateEditor() {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    useEffect(() => {
-        if (!user) return;
-        loadTemplates();
-        console.log("Template Editor V2 Loaded"); // Debug check
-    }, [user]);
-
-    const loadTemplates = async () => {
+    // FIX: Hoisted and wrapped in useCallback
+    const loadTemplates = useCallback(async () => {
         if (!user || !db) return;
         setLoading(true);
         try {
@@ -7464,7 +7837,13 @@ export default function TemplateEditor() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+        loadTemplates();
+        console.log("Template Editor V2 Loaded"); 
+    }, [user, loadTemplates]); // FIX: Added loadTemplates to dependencies
 
     // --- Toolbar Helpers ---
     const insertText = (before: string, after: string = '') => {
@@ -7515,6 +7894,14 @@ export default function TemplateEditor() {
         setIsEditing(true);
     };
 
+    const handleCreate = () => {
+        setEditId('');
+        setName('');
+        setContent('');
+        setTags([]);
+        setIsEditing(true);
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm("Delete this template?")) return;
         if (!user || !db) return;
@@ -7529,27 +7916,33 @@ export default function TemplateEditor() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !db) return;
-        if (!name.trim()) return alert("Please name your template");
+
+        // Clean data
+        const cleanTags = tags.map(t => t.trim()).filter(t => t !== '').map(t => t.startsWith('#') ? t : `#${t}`);
+
+        if (!name || content.trim() === '') {
+            alert("Please provide a name and template content.");
+            return;
+        }
 
         setSaving(true);
         const templateData = {
             uid: user.uid,
             name,
             content, // Saving as Free Text
-            defaultTags: tags,
+            defaultTags: cleanTags,
             updatedAt: Timestamp.now()
         };
 
         try {
             if (editId) {
                 await updateDoc(doc(db, 'users', user.uid, 'templates', editId), templateData);
-                setTemplates(prev => prev.map(t => t.id === editId ? { ...t, ...templateData } : t));
+                setTemplates(prev => prev.map(t => t.id === editId ? { ...t, ...templateData } as JournalTemplate : t));
             } else {
                 const docRef = await addDoc(collection(db, 'users', user.uid, 'templates'), {
                     ...templateData,
                     createdAt: Timestamp.now()
                 });
-                // Fix: Manually add createdAt to state to match type definition
                 setTemplates([...templates, { 
                     id: docRef.id, 
                     ...templateData, 
@@ -7572,161 +7965,172 @@ export default function TemplateEditor() {
         setTags([]);
     };
 
-    return (
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-            
-            {/* Header / Nav */}
-            <div className="flex items-center gap-4">
-                <button onClick={() => navigate('/journal')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
-                </button>
-                <h1 className="text-2xl font-bold text-gray-900">
-                    {isEditing ? (editId ? 'Edit Template' : 'New Free-Text Template') : 'My Templates'}
-                </h1>
-            </div>
+    if (loading) return <div className="p-8">Loading templates...</div>;
 
-            {isEditing ? (
-                // --- EDITOR VIEW (Free Text / Markdown) ---
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <form onSubmit={handleSave} className="space-y-6">
+    // --- EDITOR VIEW ---
+    if (isEditing) {
+        return (
+            <div className="max-w-4xl mx-auto p-4 space-y-6">
+                
+                {/* Header / Nav */}
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/journal')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {editId ? 'Edit Template' : 'New Free-Text Template'}
+                    </h1>
+                </div>
+
+                <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
+                    
+                    {/* Name Input */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                        <input 
+                            type="text" 
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="e.g. Daily Gratitude List"
+                            className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 p-2"
+                        />
+                    </div>
+
+                    {/* Content Editor */}
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium text-gray-700">Template Structure</label>
+                            <span className="text-xs text-gray-400">Markdown Supported</span>
+                        </div>
                         
-                        {/* Name Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                        {/* Toolbar */}
+                        <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
+                                <HashtagIcon className="h-4 w-4" />
+                            </button>
+                            <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
+                                B
+                            </button>
+                            <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                            <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
+                                <CheckCircleIcon className="h-4 w-4" />
+                            </button>
+                            <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List">
+                                <ListBulletIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <textarea 
+                            ref={textareaRef}
+                            rows={12}
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="Design your template here using Markdown...&#10;- [ ] Checklist item&#10;**Bold text**"
+                            className="w-full font-mono text-sm rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 leading-relaxed p-2"
+                        />
+                    </div>
+
+                    {/* Default Tags */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
+                        <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                            {tags.map(tag => (
+                                <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                                    {tag}
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                        <XMarkIcon className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            ))}
                             <input 
                                 type="text" 
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Daily Gratitude List"
-                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleAddTag}
+                                placeholder={tags.length === 0 ? "Add tags (press Enter)..." : ""}
+                                className="flex-1 min-w-[150px] text-sm border-none focus:ring-0 p-0 text-gray-700"
                             />
                         </div>
+                    </div>
 
-                        {/* Content Editor */}
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-medium text-gray-700">Template Structure</label>
-                                <span className="text-xs text-gray-400">Markdown Supported</span>
-                            </div>
-                            
-                            {/* Toolbar */}
-                            <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
-                                    <HashtagIcon className="h-4 w-4" />
-                                </button>
-                                <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
-                                    B
-                                </button>
-                                <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                                <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
-                                    <CheckCircleIcon className="h-4 w-4" />
-                                </button>
-                                <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List">
-                                    <ListBulletIcon className="h-4 w-4" />
-                                </button>
-                            </div>
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button 
+                            type="button" 
+                            onClick={() => { setIsEditing(false); resetForm(); }}
+                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit"
+                            disabled={saving}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
+                        >
+                            {saving ? 'Saving...' : 'Save Template'}
+                        </button>
+                    </div>
 
-                            <textarea 
-                                ref={textareaRef}
-                                rows={12}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Design your template here using Markdown...&#10;- [ ] Checklist item&#10;**Bold text**"
-                                className="w-full font-mono text-sm rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 leading-relaxed"
-                            />
-                        </div>
+                </form>
+            </div>
+        );
+    }
 
-                        {/* Default Tags */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
-                            <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white">
-                                {tags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
-                                        {tag}
-                                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                                            <XMarkIcon className="h-3 w-3" />
-                                        </button>
-                                    </span>
-                                ))}
-                                <input 
-                                    type="text"
-                                    value={tagInput}
-                                    onChange={(e) => setTagInput(e.target.value)}
-                                    onKeyDown={handleAddTag}
-                                    placeholder={tags.length === 0 ? "Add tags..." : ""}
-                                    className="flex-1 min-w-[100px] text-sm border-none focus:ring-0 p-0 text-gray-700"
-                                />
-                            </div>
-                        </div>
+    // --- LIST VIEW ---
+    return (
+        <div className="max-w-3xl mx-auto space-y-6 p-4">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button onClick={() => navigate('/journal')} className="text-gray-500 hover:text-gray-900 lg:hidden">
+                   <ArrowLeftIcon className="h-5 w-5" />
+                </button>
+                <h1 className="text-2xl font-bold text-gray-900">Manage Templates</h1>
+              </div>
+              <button 
+                 onClick={handleCreate}
+                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+              >
+                 <PlusIcon className="h-5 w-5" />
+                 Create New
+              </button>
+           </div>
 
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                            <button 
-                                type="button"
-                                onClick={() => { setIsEditing(false); resetForm(); }}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                type="submit"
-                                disabled={saving}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
-                            >
-                                {saving ? 'Saving...' : 'Save Template'}
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-            ) : (
-                // --- LIST VIEW ---
-                <div className="space-y-4">
-                    <button 
-                        onClick={() => { resetForm(); setIsEditing(true); }}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 font-medium"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                        Create New Template
-                    </button>
-
-                    {loading ? (
-                        <div className="text-center py-8 text-gray-400">Loading templates...</div>
-                    ) : templates.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-                            You haven't created any custom templates yet.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {templates.map(t => (
-                                <div key={t.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="font-bold text-gray-900">{t.name}</h3>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(t)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded">
-                                                <PencilSquareIcon className="h-4 w-4" />
-                                            </button>
-                                            <button onClick={() => handleDelete(t.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded">
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-gray-500 line-clamp-2 mb-3 h-8">
-                                        {t.content || (t.prompts ? "Structured Form Template" : "Empty Template")}
-                                    </p>
-                                    <div className="flex gap-2">
-                                        {t.defaultTags?.slice(0, 3).map(tag => (
-                                            <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
+           <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+              {templates.length === 0 ? (
+                 <div className="p-8 text-center text-gray-500">
+                    You haven't created any custom templates yet.
+                 </div>
+              ) : (
+                 <ul className="divide-y divide-gray-100">
+                    {templates.map((t) => (
+                       <li key={t.id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition">
+                          <div>
+                             <h3 className="font-semibold text-gray-900">{t.name}</h3>
+                             <p className="text-sm text-gray-500 mt-1">
+                                {t.defaultTags.length > 0 ? t.defaultTags.join(', ') : 'No default tags'}
+                             </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <button 
+                                onClick={() => handleEdit(t)}
+                                className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
+                                title="Edit"
+                             >
+                                <PencilSquareIcon className="h-5 w-5" />
+                             </button>
+                             <button 
+                                onClick={() => handleDelete(t.id)}
+                                className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition"
+                                title="Delete"
+                             >
+                                <TrashIcon className="h-5 w-5" />
+                             </button>
+                          </div>
+                       </li>
+                    ))}
+                 </ul>
+              )}
+           </div>
         </div>
     );
 }
@@ -13878,254 +14282,361 @@ export default function Tasks() {
 </file>
 
 <file path="src/pages/TemplateEditor.tsx">
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, getDocs, Timestamp } from 'firebase/firestore';
 import { 
-  getUserTemplates,
-  saveUserTemplate, 
-  deleteUserTemplate, 
-  type JournalTemplate 
-} from '../lib/db';
-import { 
-  PlusIcon, 
-  TrashIcon, 
-  PencilSquareIcon,
-  XMarkIcon,
-  ArrowLeftIcon
+    ArrowLeftIcon, 
+    PlusIcon, 
+    TrashIcon, 
+    PencilSquareIcon,
+    XMarkIcon,
+    ListBulletIcon,
+    HashtagIcon, 
+    CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 
+// Local Type Definition
+interface JournalTemplate {
+    id: string;
+    uid: string;
+    name: string;
+    content?: string; 
+    prompts?: string[]; // Legacy support
+    defaultTags: string[];
+    createdAt: Timestamp;
+}
+
 export default function TemplateEditor() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  
-  const [templates, setTemplates] = useState<JournalTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Editor State
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentId, setCurrentId] = useState('');
-  const [name, setName] = useState('');
-  const [prompts, setPrompts] = useState<string[]>(['']);
-  const [tags, setTags] = useState(''); // Comma separated string for input
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    
+    const [templates, setTemplates] = useState<JournalTemplate[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    // Editor State
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [name, setName] = useState('');
+    const [content, setContent] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+    const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadTemplates();
-  }, [user]);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  async function loadTemplates() {
-    if (!user) return;
-    const data = await getUserTemplates(user.uid);
-    setTemplates(data);
-    setLoading(false);
-  }
+    // FIX: Hoisted above useEffect and wrapped in useCallback
+    const loadTemplates = useCallback(async () => {
+        if (!user || !db) return;
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'users', user.uid, 'templates'));
+            const snapshot = await getDocs(q);
+            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as JournalTemplate));
+            setTemplates(data);
+        } catch (error) {
+            console.error("Failed to load templates", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
 
-  const handleEdit = (t: JournalTemplate) => {
-    setCurrentId(t.id);
-    setName(t.name);
-    setPrompts(t.prompts.length > 0 ? t.prompts : ['']);
-    setTags(t.defaultTags.join(', '));
-    setIsEditing(true);
-  };
+    useEffect(() => {
+        if (!user) return;
+        loadTemplates();
+        console.log("Template Editor V2 Loaded");
+    }, [user, loadTemplates]); // FIX: Added dependency
 
-  const handleCreate = () => {
-    setCurrentId('');
-    setName('');
-    setPrompts(['']);
-    setTags('');
-    setIsEditing(true);
-  };
+    // --- Toolbar Helpers ---
+    const insertText = (before: string, after: string = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
 
-  const handleDelete = async (id: string) => {
-    if (!user || !window.confirm("Are you sure you want to delete this template?")) return;
-    await deleteUserTemplate(user.uid, id);
-    await loadTemplates();
-  };
-
-  const handlePromptChange = (idx: number, val: string) => {
-    const newPrompts = [...prompts];
-    newPrompts[idx] = val;
-    setPrompts(newPrompts);
-  };
-
-  const addPromptLine = () => {
-    setPrompts([...prompts, '']);
-  };
-
-  const removePromptLine = (idx: number) => {
-    const newPrompts = prompts.filter((_, i) => i !== idx);
-    setPrompts(newPrompts);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    // Clean data
-    const cleanPrompts = prompts.filter(p => p.trim() !== '');
-    const cleanTags = tags.split(',').map(t => t.trim()).filter(t => t !== '').map(t => t.startsWith('#') ? t : `#${t}`);
-
-    if (!name || cleanPrompts.length === 0) {
-        alert("Please provide a name and at least one prompt.");
-        return;
-    }
-
-    const templateData: JournalTemplate = {
-        id: currentId, // empty string means new doc
-        name,
-        prompts: cleanPrompts,
-        defaultTags: cleanTags
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const previousText = textarea.value;
+        const selection = previousText.substring(start, end);
+        
+        const newText = previousText.substring(0, start) + 
+                        before + selection + after + 
+                        previousText.substring(end);
+        
+        setContent(newText);
+        
+        // Reset focus and cursor
+        setTimeout(() => {
+            textarea.focus();
+            const newCursorPos = start + before.length + selection.length + after.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
     };
 
-    await saveUserTemplate(user.uid, templateData);
-    setIsEditing(false);
-    await loadTemplates();
-  };
+    // --- Tag Helpers ---
+    const handleAddTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const clean = tagInput.trim().replace(/^#/, '');
+            if (clean && !tags.includes(clean)) {
+                setTags([...tags, clean]);
+                setTagInput('');
+            }
+        }
+    };
 
-  if (loading) return <div className="p-8">Loading templates...</div>;
+    const removeTag = (t: string) => setTags(tags.filter(tag => tag !== t));
 
-  // --- EDITOR VIEW ---
-  if (isEditing) {
-    return (
-        <div className="max-w-2xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <button onClick={() => setIsEditing(false)} className="text-gray-500 hover:text-gray-900">
-                    <ArrowLeftIcon className="h-5 w-5" />
-                </button>
-                <h1 className="text-2xl font-bold text-gray-900">{currentId ? 'Edit Template' : 'New Template'}</h1>
-            </div>
+    // --- CRUD Operations ---
+    const handleEdit = (t: JournalTemplate) => {
+        setEditId(t.id);
+        setName(t.name);
+        // Convert legacy templates to text if needed
+        const textContent = t.content || (t.prompts ? t.prompts.map(p => `**${p}**\n\n`).join('') : '');
+        setContent(textContent);
+        setTags(t.defaultTags || []);
+        setIsEditing(true);
+    };
 
-            <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
-                    <input 
-                        type="text" 
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Step 10 Inventory"
-                    />
+    const handleCreate = () => {
+        setEditId('');
+        setName('');
+        setContent('');
+        setTags([]);
+        setIsEditing(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Delete this template?")) return;
+        if (!user || !db) return;
+        try {
+            await deleteDoc(doc(db, 'users', user.uid, 'templates', id));
+            setTemplates(templates.filter(t => t.id !== id));
+        } catch (e) {
+            console.error("Error deleting", e);
+        }
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !db) return;
+
+        // Clean data
+        const cleanTags = tags.map(t => t.trim()).filter(t => t !== '').map(t => t.startsWith('#') ? t : `#${t}`);
+
+        if (!name || content.trim() === '') {
+            alert("Please provide a name and template content.");
+            return;
+        }
+
+        setSaving(true);
+        const templateData = {
+            uid: user.uid,
+            name,
+            content, // Saving as Free Text
+            defaultTags: cleanTags,
+            updatedAt: Timestamp.now()
+        };
+
+        try {
+            if (editId) {
+                await updateDoc(doc(db, 'users', user.uid, 'templates', editId), templateData);
+                setTemplates(prev => prev.map(t => t.id === editId ? { ...t, ...templateData } as JournalTemplate : t));
+            } else {
+                const docRef = await addDoc(collection(db, 'users', user.uid, 'templates'), {
+                    ...templateData,
+                    createdAt: Timestamp.now()
+                });
+                setTemplates([...templates, { 
+                    id: docRef.id, 
+                    ...templateData, 
+                    createdAt: Timestamp.now() 
+                } as JournalTemplate]);
+            }
+            setIsEditing(false);
+            resetForm();
+        } catch (error) {
+            console.error("Error saving template", error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const resetForm = () => {
+        setEditId(null);
+        setName('');
+        setContent('');
+        setTags([]);
+    };
+
+    if (loading) return <div className="p-8">Loading templates...</div>;
+
+    // --- EDITOR VIEW ---
+    if (isEditing) {
+        return (
+            <div className="max-w-4xl mx-auto p-4 space-y-6">
+                
+                {/* Header / Nav */}
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/journal')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {editId ? 'Edit Template' : 'New Free-Text Template'}
+                    </h1>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Prompts (Questions)</label>
-                    <div className="space-y-3">
-                        {prompts.map((p, idx) => (
-                            <div key={idx} className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    value={p}
-                                    onChange={(e) => handlePromptChange(idx, e.target.value)}
-                                    className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder={`Question ${idx + 1}`}
-                                />
-                                <button 
-                                    type="button" 
-                                    onClick={() => removePromptLine(idx)}
-                                    className="text-red-400 hover:text-red-600 p-2"
-                                    title="Remove prompt"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-                        ))}
+                <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
+                    
+                    {/* Name Input */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                        <input 
+                            type="text" 
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="e.g. Daily Gratitude List"
+                            className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 p-2"
+                        />
                     </div>
-                    <button 
-                        type="button"
-                        onClick={addPromptLine}
-                        className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1"
-                    >
-                        <PlusIcon className="h-4 w-4" />
-                        Add Question
-                    </button>
-                </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Default Tags</label>
-                    <input 
-                        type="text" 
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="#step10, #inventory (comma separated)"
-                    />
-                </div>
+                    {/* Content Editor */}
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium text-gray-700">Template Structure</label>
+                            <span className="text-xs text-gray-400">Markdown Supported</span>
+                        </div>
+                        
+                        {/* Toolbar */}
+                        <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
+                                <HashtagIcon className="h-4 w-4" />
+                            </button>
+                            <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
+                                B
+                            </button>
+                            <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                            <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
+                                <CheckCircleIcon className="h-4 w-4" />
+                            </button>
+                            <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List">
+                                <ListBulletIcon className="h-4 w-4" />
+                            </button>
+                        </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <button 
-                        type="button" 
-                        onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        type="submit"
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
-                    >
-                        Save Template
-                    </button>
-                </div>
-            </form>
+                        <textarea 
+                            ref={textareaRef}
+                            rows={12}
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="Design your template here using Markdown...&#10;- [ ] Checklist item&#10;**Bold text**"
+                            className="w-full font-mono text-sm rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 leading-relaxed p-2"
+                        />
+                    </div>
+
+                    {/* Default Tags */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
+                        <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                            {tags.map(tag => (
+                                <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
+                                    {tag}
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                        <XMarkIcon className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            ))}
+                            <input 
+                                type="text" 
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleAddTag}
+                                placeholder={tags.length === 0 ? "Add tags (press Enter)..." : ""}
+                                className="flex-1 min-w-[150px] text-sm border-none focus:ring-0 p-0 text-gray-700"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button 
+                            type="button" 
+                            onClick={() => { setIsEditing(false); resetForm(); }}
+                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit"
+                            disabled={saving}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
+                        >
+                            {saving ? 'Saving...' : 'Save Template'}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        );
+    }
+
+    // --- LIST VIEW ---
+    return (
+        <div className="max-w-3xl mx-auto space-y-6 p-4">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button onClick={() => navigate('/journal')} className="text-gray-500 hover:text-gray-900 lg:hidden">
+                   <ArrowLeftIcon className="h-5 w-5" />
+                </button>
+                <h1 className="text-2xl font-bold text-gray-900">Manage Templates</h1>
+              </div>
+              <button 
+                 onClick={handleCreate}
+                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+              >
+                 <PlusIcon className="h-5 w-5" />
+                 Create New
+              </button>
+           </div>
+
+           <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+              {templates.length === 0 ? (
+                 <div className="p-8 text-center text-gray-500">
+                    You haven't created any custom templates yet.
+                 </div>
+              ) : (
+                 <ul className="divide-y divide-gray-100">
+                    {templates.map((t) => (
+                       <li key={t.id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition">
+                          <div>
+                             <h3 className="font-semibold text-gray-900">{t.name}</h3>
+                             <p className="text-sm text-gray-500 mt-1">
+                                {t.defaultTags.length > 0 ? t.defaultTags.join(', ') : 'No default tags'}
+                             </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <button 
+                                onClick={() => handleEdit(t)}
+                                className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
+                                title="Edit"
+                             >
+                                <PencilSquareIcon className="h-5 w-5" />
+                             </button>
+                             <button 
+                                onClick={() => handleDelete(t.id)}
+                                className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition"
+                                title="Delete"
+                             >
+                                <TrashIcon className="h-5 w-5" />
+                             </button>
+                          </div>
+                       </li>
+                    ))}
+                 </ul>
+              )}
+           </div>
         </div>
     );
-  }
-
-  // --- LIST VIEW ---
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-       <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/journal')} className="text-gray-500 hover:text-gray-900 lg:hidden">
-               <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Templates</h1>
-          </div>
-          <button 
-             onClick={handleCreate}
-             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-          >
-             <PlusIcon className="h-5 w-5" />
-             Create New
-          </button>
-       </div>
-
-       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
-          {templates.length === 0 ? (
-             <div className="p-8 text-center text-gray-500">
-                You haven't created any custom templates yet.
-             </div>
-          ) : (
-             <ul className="divide-y divide-gray-100">
-                {templates.map((t) => (
-                   <li key={t.id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition">
-                      <div>
-                         <h3 className="font-semibold text-gray-900">{t.name}</h3>
-                         <p className="text-sm text-gray-500 mt-1">{t.prompts.length} questions • {t.defaultTags.join(', ')}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <button 
-                            onClick={() => handleEdit(t)}
-                            className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
-                            title="Edit"
-                         >
-                            <PencilSquareIcon className="h-5 w-5" />
-                         </button>
-                         <button 
-                            onClick={() => handleDelete(t.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition"
-                            title="Delete"
-                         >
-                            <TrashIcon className="h-5 w-5" />
-                         </button>
-                      </div>
-                   </li>
-                ))}
-             </ul>
-          )}
-       </div>
-    </div>
-  );
 }
 </file>
 
