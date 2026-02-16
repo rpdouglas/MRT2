@@ -1,6 +1,9 @@
 /**
  * src/contexts/EncryptionContext.tsx
- * UPDATED: Fixed ESLint exhaustive-deps warning by wrapping performUnlock in useCallback.
+ * GITHUB COMMENT:
+ * [EncryptionContext.tsx]
+ * UPDATED: Integrated sessionStorage PIN caching and wrapped performUnlock in useCallback.
+ * PURPOSE: Reduces re-unlock friction during active browser sessions while maintaining Zero-Knowledge integrity.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -61,8 +64,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [salt, setSalt] = useState<string | null>(null);
   const [verifier, setVerifier] = useState<string | null>(null);
 
-  // Helper to actually perform the unlock logic
-  // WRAPPED IN useCallback TO FIX LINTING
+  /**
+   * Performs the actual cryptographic unlock and session caching.
+   */
   const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
       try {
         // 1. Verify PIN if verifier exists
@@ -71,12 +75,12 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
             if (checkHash !== currentVerifier) return false;
         }
 
-        // 2. Generate Key
+        // 2. Generate Key in Web Crypto API
         await generateKey(pin, currentSalt);
 
-        // 3. (Legacy) Verify against a real document if no verifier exists
-        if (!currentVerifier) {
-            const q = query(collection(db!, 'journals'), where('uid', '==', user!.uid), limit(1));
+        // 3. Self-Healing / Legacy Check
+        if (!currentVerifier && db && user) {
+            const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
             const snapshot = await getDocs(q);
             if (!snapshot.empty) {
                 const testDoc = snapshot.docs[0].data();
@@ -85,9 +89,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                         const result = await decrypt(testDoc.content);
                         if (result.includes("Locked Content")) throw new Error("Key mismatch");
                         
-                        // Self-Healing: Create verifier for next time
+                        // Create verifier for next time to speed up future unlocks
                         const newVerifier = await computePinHash(pin, currentSalt);
-                        const userDocRef = doc(db!, 'users', user!.uid);
+                        const userDocRef = doc(db, 'users', user.uid);
                         await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
                         setVerifier(newVerifier);
                     } catch (e) {
@@ -96,16 +100,16 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                     }
                 }
             } else {
-                 // No data yet, create verifier
+                 // No data yet, create verifier immediately
                  const newVerifier = await computePinHash(pin, currentSalt);
-                 const userDocRef = doc(db!, 'users', user!.uid);
+                 const userDocRef = doc(db, 'users', user.uid);
                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
                  setVerifier(newVerifier);
             }
         }
         
         setIsVaultUnlocked(true);
-        // Save to Session Storage
+        // Save to Session Storage for PWA navigation resilience
         sessionStorage.setItem(SESSION_PIN_KEY, pin);
         return true;
 
@@ -113,9 +117,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
           console.error("Unlock logic failed", error);
           return false;
       }
-  }, [user]); // Added user dependency
+  }, [user]);
 
-  // Initial Load & Auto-Unlock
+  // Initial Load & Auto-Unlock from Session Storage
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -139,7 +143,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
             // --- AUTO UNLOCK CHECK ---
             const cachedPin = sessionStorage.getItem(SESSION_PIN_KEY);
             if (cachedPin) {
-                console.log("🔐 Found cached PIN, attempting auto-unlock...");
                 await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
             }
           } else {
@@ -156,8 +159,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
 
     checkVaultStatus();
-  }, [user, performUnlock]); // Added performUnlock dependency
-  }, [user, performUnlock]); // Added performUnlock dependency
+  }, [user, performUnlock]);
 
   const setupVault = async (pin: string) => {
     if (!user || !db) return;
@@ -178,7 +180,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
-      sessionStorage.setItem(SESSION_PIN_KEY, pin); // Cache on setup
+      sessionStorage.setItem(SESSION_PIN_KEY, pin);
 
     } catch (error) {
       console.error("Vault setup failed:", error);
@@ -199,7 +201,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       }, { merge: true });
       
       clearKey();
-      sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
+      sessionStorage.removeItem(SESSION_PIN_KEY);
       setIsVaultSet(false);
       setIsVaultUnlocked(false);
       setSalt(null);
@@ -219,7 +221,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const lockVault = useCallback(() => {
     clearKey();
-    sessionStorage.removeItem(SESSION_PIN_KEY); // Clear Cache
+    sessionStorage.removeItem(SESSION_PIN_KEY);
     setIsVaultUnlocked(false);
   }, []);
 
