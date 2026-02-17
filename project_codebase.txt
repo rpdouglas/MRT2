@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-16T23:59:17.881Z
+PROJECT EXPORT - 2026-02-17T02:33:06.430Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -70,7 +70,8 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── 10_INSIGHTS.md
 │   │   ├── 11_DASHBOARD.md
 │   │   ├── 12_USER_GUIDE.md
-│   │   └── 13_INFRASTRUCTURE.md
+│   │   ├── 13_INFRASTRUCTURE.md
+│   │   └── 14_FEEDBACK.md
 │   └── templates
 │       ├── FEATURE_SPEC.md
 │       └── USER_GUIDE.md
@@ -124,6 +125,7 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── AppShell.tsx
 │   │   ├── CreateTaskModal.tsx
 │   │   ├── ErrorBoundary.tsx
+│   │   ├── FeedbackModal.tsx
 │   │   ├── PWAInstallBanner.tsx
 │   │   ├── RecoveryHero.tsx
 │   │   ├── SOSModal.tsx
@@ -136,6 +138,7 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   │   ├── AnalyticsCharts.tsx
 │   │   │   ├── DeduplicationTool.tsx
 │   │   │   ├── ErrorLogViewer.tsx
+│   │   │   ├── FeedbackViewer.tsx
 │   │   │   ├── SchemaMigration.tsx
 │   │   │   └── UserDirectory.tsx
 │   │   ├── journal
@@ -2148,6 +2151,37 @@ We use `manualChunks` to isolate heavy dependencies, improving initial load time
 
 </file>
 
+<file path="docs/specs/14_FEEDBACK.md">
+# 📐 Feature Spec: Feedback & Bug Reporting
+
+**Status:** Live (v1.6+)
+**Context:** QA & User Testing support.
+
+## 1. Overview
+A native module allowing testers to report issues or suggest features without leaving the app. It prioritizes capturing technical context over user narrative to speed up debugging.
+
+## 2. Technical Architecture
+* **Component:** `FeedbackModal.tsx`
+* **Trigger:** Accessible via the Sidebar (AppShell).
+* **Storage:** Writes to the `feedback` root collection in Firestore.
+
+### Metadata Capture
+The system automatically appends the following to every report:
+* `buildHash`: Cross-referenced against `build-info.json` to identify stale versions.
+* `vaultUnlocked`: Helps identify if encryption logic was active during a crash.
+* `route`: Identifies the specific page causing the issue.
+* `userAgent`: Identifies device/browser specific bugs.
+
+## 3. Security
+* **Access:** Any authenticated user can create. Read access restricted to Admins.
+* **Privacy:** Unencrypted collection. Users are warned via UI not to include Recovery PII.
+
+## 4. Verification
+* [ ] **Network Logic:** Submit while offline. Verify it appears in Firestore once reconnected.
+* [ ] **Metadata:** Verify the `buildHash` in Firestore matches the one displayed in `VersionBadge`.
+
+</file>
+
 <file path="docs/templates/FEATURE_SPEC.md">
 # 📐 Feature Spec: [Feature Name]
 
@@ -2881,6 +2915,14 @@ service cloud.firestore {
     match /service/{serviceId} {
         allow create: if isCreatingOwnedResource();
         allow read, update, delete: if isResourceOwner();
+    }
+
+    // 8. Feedback & Bug Reports (New for v1.6+)
+    match /feedback/{reportId} {
+      // Authenticated users can submit feedback
+      allow create: if request.auth != null;
+      // Only admins can read/manage feedback to protect user privacy
+      allow read, update, delete: if isAdmin();
     }
   }
 }
@@ -3990,67 +4032,67 @@ describe('System Sanity Check', () => {
 {
   "meta": {
     "env": "DEV",
-    "branch": "feature/vitality_stabalization",
-    "globalHash": "6ecc9c1",
-    "coreHash": "60a4df03",
-    "buildTime": "2026-02-16T22:12:29.404Z"
+    "branch": "feature/feedback",
+    "globalHash": "b661a5c",
+    "coreHash": "46c1a335",
+    "buildTime": "2026-02-17T02:18:57.103Z"
   },
   "pages": {
     "AdminDashboard": {
-      "hash": "3486ecfe",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "93d2c121",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Dashboard": {
-      "hash": "d0d0a247",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "913ae6a4",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "InsightsLog": {
-      "hash": "9da4c74a",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "3d7d2846",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Journal": {
-      "hash": "d5833368",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "74283872",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Login": {
-      "hash": "9a3b7deb",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "09bc50fe",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Profile": {
-      "hash": "603f481c",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "fbc6b203",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Tasks": {
-      "hash": "50eee452",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "a3aaf387",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "TemplateEditor": {
-      "hash": "1ab113be",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "c8dbc9f7",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "UserGuide": {
-      "hash": "307df8c2",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "1709a978",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Vitality": {
-      "hash": "388dd49e",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "3ec06754",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Welcome": {
-      "hash": "7b479d32",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "eaedc2c8",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "WorkbookDetail": {
-      "hash": "48541494",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "8a05237c",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "WorkbookSession": {
-      "hash": "bb3573a2",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "39be20e8",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     },
     "Workbooks": {
-      "hash": "6bd606c9",
-      "lastModified": "2026-02-16T22:12:29.404Z"
+      "hash": "60d2f390",
+      "lastModified": "2026-02-17T02:18:57.103Z"
     }
   }
 }
@@ -4059,9 +4101,10 @@ describe('System Sanity Check', () => {
 <file path="src/components/AppShell.tsx">
 /**
  * src/components/AppShell.tsx
- * UPDATED: PROJ-01 Phase 1 (Added Lock Vault Button)
+ * UPDATED: Integrated FeedbackModal for User Testing.
+ * CONTEXT: PROJ-02 (Service Module) Preparation / QA Phase.
  */
-import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
+import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
@@ -4075,7 +4118,8 @@ import {
   LightBulbIcon,
   CommandLineIcon,
   WifiIcon,
-  LockClosedIcon // Imported Lock Icon
+  LockClosedIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -4088,13 +4132,17 @@ import { prepareDataForExport, generateJSON } from '../lib/exporter';
 import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
 import PWAInstallBanner from './PWAInstallBanner';
+import FeedbackModal from './FeedbackModal';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, isOnline } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
-  const { isVaultUnlocked, lockVault } = useEncryption(); // Use lockVault
+  const { isVaultUnlocked, lockVault } = useEncryption();
+
+  // Local State for Feedback
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -4109,7 +4157,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const handleLock = () => {
       lockVault();
       setSidebarOpen(false);
-      // Optional: Navigate to dashboard to force VaultGate re-check if on a protected route
       navigate('/dashboard');
   };
 
@@ -4171,6 +4218,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen relative">
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+      
+      {/* INTEGRATED FEEDBACK MODAL */}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       {/* OFFLINE INDICATOR */}
       {!isOnline && (
@@ -4249,6 +4299,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  </div>
                              </div>
                           )}
+
+                          {/* FEEDBACK TRIGGER */}
+                          <button
+                              onClick={() => { setSidebarOpen(false); setIsFeedbackOpen(true); }}
+                              className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
+                          >
+                              <ChatBubbleLeftRightIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
+                              Send Feedback
+                          </button>
                           
                           {/* LOCK VAULT BUTTON */}
                           {isVaultUnlocked && (
@@ -4603,6 +4662,171 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
+</file>
+
+<file path="src/components/FeedbackModal.tsx">
+import { Fragment, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { 
+    ChatBubbleLeftEllipsisIcon, 
+    XMarkIcon, 
+    BugAntIcon, 
+    LightBulbIcon, 
+    DocumentTextIcon,
+    PaperAirplaneIcon,
+    ExclamationCircleIcon
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
+import { useBuildInfo } from '../lib/versioning';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+interface FeedbackModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+type Category = 'bug' | 'suggestion' | 'content';
+
+export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+    const { user } = useAuth();
+    const { isVaultUnlocked } = useEncryption();
+    const meta = useBuildInfo();
+    
+    const [category, setCategory] = useState<Category>('bug');
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!db || !user || !message.trim()) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(db, 'feedback'), {
+                uid: user.uid,
+                email: user.email, // Unencrypted for admin contact
+                category,
+                message: message.trim(),
+                buildHash: meta.globalHash,
+                environment: meta.env,
+                route: window.location.pathname,
+                vaultUnlocked: isVaultUnlocked,
+                userAgent: navigator.userAgent,
+                timestamp: serverTimestamp()
+            });
+            
+            setIsSuccess(true);
+            setTimeout(() => {
+                setIsSuccess(false);
+                setMessage('');
+                onClose();
+            }, 2000);
+        } catch (error) {
+            console.error("Feedback submission failed:", error);
+            alert("Failed to send feedback. It will sync when you are back online.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Transition.Root show={isOpen} as={Fragment}>
+            <Dialog as="div" className="relative z-50" onClose={onClose}>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-slate-50 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                            
+                            <div className="absolute right-0 top-0 pr-4 pt-4">
+                                <button onClick={onClose} className="rounded-md text-slate-400 hover:text-slate-500">
+                                    <XMarkIcon className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            {isSuccess ? (
+                                <div className="py-12 text-center animate-fadeIn">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                                        <PaperAirplaneIcon className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <h3 className="mt-4 text-lg font-bold text-slate-900">Feedback Received</h3>
+                                    <p className="text-sm text-slate-500">Thank you for helping us improve the toolkit.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="sm:flex sm:items-start">
+                                        <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                            <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-600" />
+                                        </div>
+                                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                            <Dialog.Title as="h3" className="text-base font-bold leading-6 text-slate-900">
+                                                Submit Feedback
+                                            </Dialog.Title>
+                                            <p className="text-xs text-slate-500 mt-1 uppercase font-mono tracking-tighter">
+                                                Build: {meta.globalHash} • Env: {meta.env}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'bug', icon: BugAntIcon, label: 'Bug' },
+                                                { id: 'suggestion', icon: LightBulbIcon, label: 'Idea' },
+                                                { id: 'content', icon: DocumentTextIcon, label: 'Text' }
+                                            ].map((cat) => (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setCategory(cat.id as Category)}
+                                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                                                        category === cat.id 
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                                                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <cat.icon className="h-5 w-5 mb-1" />
+                                                    <span className="text-[10px] font-bold uppercase">{cat.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <textarea
+                                            rows={5}
+                                            required
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            placeholder="What happened? Or what can we do better?"
+                                            className="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-blue-500 focus:border-blue-500 p-4"
+                                        />
+
+                                        <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 flex gap-2">
+                                            <ExclamationCircleIcon className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-amber-800 leading-tight">
+                                                <strong>Privacy Note:</strong> This box is unencrypted. Do not include sensitive journal entries or your PIN.
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting || !message.trim()}
+                                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {isSubmitting ? 'Sending...' : 'Send to Developers'}
+                                        </button>
+                                    </form>
+                                </>
+                            )}
+                        </Dialog.Panel>
+                    </div>
+                </div>
+            </Dialog>
+        </Transition.Root>
+    );
+}
+
 </file>
 
 <file path="src/components/PWAInstallBanner.tsx">
@@ -6229,6 +6453,171 @@ export default function ErrorLogViewer() {
         </div>
     );
 }
+</file>
+
+<file path="src/components/admin/FeedbackViewer.tsx">
+import { useState } from 'react';
+import { db } from '../../lib/firebase';
+import { 
+    collection, 
+    query, 
+    orderBy, 
+    limit, 
+    getDocs, 
+    deleteDoc, 
+    doc,
+    Timestamp,
+    type Firestore 
+} from 'firebase/firestore';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Virtuoso } from 'react-virtuoso';
+import { 
+    BugAntIcon, 
+    LightBulbIcon, 
+    DocumentTextIcon, 
+    MapPinIcon,
+    CpuChipIcon,
+    LockClosedIcon,
+    LockOpenIcon,
+    ChatBubbleLeftRightIcon, 
+    ArrowPathIcon, 
+    CheckCircleIcon 
+} from '@heroicons/react/24/outline';
+
+interface FeedbackReport {
+    id: string;
+    uid: string;
+    email?: string;
+    category: 'bug' | 'suggestion' | 'content';
+    message: string;
+    buildHash: string;
+    environment: string;
+    route: string;
+    vaultUnlocked: boolean;
+    timestamp: Timestamp;
+}
+
+export default function FeedbackViewer() {
+    const queryClient = useQueryClient();
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    const { data: reports = [], isLoading } = useQuery({
+        queryKey: ['feedback_reports'],
+        queryFn: async () => {
+            if (!db) return [];
+            const database: Firestore = db;
+            const q = query(
+                collection(database, 'feedback'),
+                orderBy('timestamp', 'desc'),
+                limit(100)
+            );
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackReport));
+        }
+    });
+
+    const handleDelete = async (id: string) => {
+        if (!db) return;
+        if (!confirm("Mark this item as resolved (delete)?")) return;
+        
+        setLoadingId(id);
+        try {
+            await deleteDoc(doc(db, 'feedback', id));
+            queryClient.invalidateQueries({ queryKey: ['feedback_reports'] });
+        } catch (e) {
+            console.error("Failed to delete", e);
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    const getIcon = (cat: string) => {
+        switch(cat) {
+            case 'bug': return <BugAntIcon className="h-5 w-5 text-red-500" />;
+            case 'suggestion': return <LightBulbIcon className="h-5 w-5 text-yellow-500" />;
+            default: return <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
+        }
+    };
+
+    if (isLoading) return <div className="p-8 text-center text-gray-400">Loading inbox...</div>;
+
+    if (reports.length === 0) {
+        return (
+            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center">
+                <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                    <ChatBubbleLeftRightIcon className="h-6 w-6 text-slate-400" />
+                </div>
+                <h3 className="text-slate-900 font-bold">Inbox Zero</h3>
+                <p className="text-slate-500 text-sm">No feedback reports found.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4 h-[600px] flex flex-col">
+            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 shrink-0">
+                <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />
+                Feedback Inbox ({reports.length})
+            </h3>
+
+            <div className="flex-1 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                <Virtuoso 
+                    data={reports}
+                    itemContent={(_index, item) => (
+                        <div className="bg-white p-5 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg bg-slate-50 border border-slate-100`}>
+                                        {getIcon(item.category)}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                                {item.timestamp?.toDate().toLocaleString()}
+                                            </span>
+                                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">
+                                                {item.email || 'Anonymous'}
+                                            </span>
+                                        </div>
+                                        <h4 className="font-bold text-slate-900 mt-0.5 text-sm uppercase tracking-wide">{item.category}</h4>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => handleDelete(item.id)}
+                                    disabled={loadingId === item.id}
+                                    className="text-slate-300 hover:text-green-600 p-2 hover:bg-green-50 rounded-full transition-all"
+                                    title="Resolve"
+                                >
+                                    {loadingId === item.id ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
+                                </button>
+                            </div>
+                            
+                            <p className="text-sm text-slate-700 leading-relaxed mb-4 pl-12 whitespace-pre-wrap">
+                                {item.message}
+                            </p>
+
+                            <div className="pl-12 flex flex-wrap gap-3">
+                                <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                                    <CpuChipIcon className="h-3.5 w-3.5" />
+                                    <span className="font-mono">{item.buildHash}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                                    <MapPinIcon className="h-3.5 w-3.5" />
+                                    <span className="font-mono">{item.route}</span>
+                                </div>
+                                <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded border ${item.vaultUnlocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                                    {item.vaultUnlocked ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockClosedIcon className="h-3.5 w-3.5" />}
+                                    <span className="font-mono">{item.vaultUnlocked ? 'Vault Open' : 'Vault Locked'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                />
+            </div>
+        </div>
+    );
+}
+
 </file>
 
 <file path="src/components/admin/SchemaMigration.tsx">
@@ -13280,10 +13669,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 <file path="src/pages/AdminDashboard.tsx">
 /**
  * src/pages/AdminDashboard.tsx
- * GITHUB COMMENT:
- * [AdminDashboard.tsx]
- * REFACTOR: Decomposed into atomic components (AnalyticsCharts, DeduplicationTool, SchemaMigration).
- * UPDATE: Implemented Phase 1 maintenance tools.
+ * UPDATED: Added Feedback Viewer Tab. Cleaned Syntax.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -13292,18 +13678,18 @@ import {
   collection, 
   query, 
   getDocs, 
-  orderBy,
-  limit,
+  orderBy, 
+  limit, 
 } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { 
   CommandLineIcon, 
-  ShieldCheckIcon, 
   UserGroupIcon, 
-  CpuChipIcon,
+  CpuChipIcon, 
   ServerIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { Navigate } from 'react-router-dom';
 
@@ -13313,10 +13699,11 @@ import ErrorLogViewer from '../components/admin/ErrorLogViewer';
 import AnalyticsCharts, { type AIUsageLog } from '../components/admin/AnalyticsCharts';
 import DeduplicationTool from '../components/admin/DeduplicationTool';
 import SchemaMigration from '../components/admin/SchemaMigration';
+import FeedbackViewer from '../components/admin/FeedbackViewer';
 
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'health' | 'maintenance'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'health' | 'feedback' | 'maintenance'>('analytics');
   
   // Analytics Data State
   const [logs, setLogs] = useState<AIUsageLog[]>([]);
@@ -13343,7 +13730,6 @@ export default function AdminDashboard() {
               limit(100)
           );
           const snap = await getDocs(q);
-          // Cast with proper Timestamp handling (handled in component via .toDate check)
           const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AIUsageLog));
           setLogs(data);
       } catch (e) {
@@ -13356,8 +13742,8 @@ export default function AdminDashboard() {
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.profile.page}`}>
       <VibrantHeader 
-        title="Admin Tools"
-        subtitle="Operational governance and system telemetry."
+        title="Admin Tools" 
+        subtitle="Operational governance and system telemetry." 
         icon={CommandLineIcon}
         fromColor="from-slate-800"
         viaColor="via-gray-900"
@@ -13366,28 +13752,34 @@ export default function AdminDashboard() {
 
       {/* --- TAB NAVIGATION --- */}
       <div className="px-4 -mt-10 relative z-30">
-        <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex flex-wrap max-w-2xl mx-auto">
+        <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex flex-wrap max-w-3xl mx-auto">
             <button 
                 onClick={() => setActiveTab('analytics')}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
                 <CpuChipIcon className="h-4 w-4" /> Analytics
             </button>
             <button 
                 onClick={() => setActiveTab('users')}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'users' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'users' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
                 <UserGroupIcon className="h-4 w-4" /> Users
             </button>
             <button 
                 onClick={() => setActiveTab('health')}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'health' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'health' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
                 <ServerIcon className="h-4 w-4" /> Health
             </button>
             <button 
+                onClick={() => setActiveTab('feedback')}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'feedback' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <ChatBubbleLeftRightIcon className="h-4 w-4" /> Inbox
+            </button>
+            <button 
                 onClick={() => setActiveTab('maintenance')}
-                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'maintenance' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'maintenance' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
                 <WrenchScrewdriverIcon className="h-4 w-4" /> Tools
             </button>
@@ -13416,7 +13808,10 @@ export default function AdminDashboard() {
         {/* --- TAB 3: HEALTH --- */}
         {activeTab === 'health' && <ErrorLogViewer />}
 
-        {/* --- TAB 4: MAINTENANCE --- */}
+        {/* --- TAB 4: FEEDBACK --- */}
+        {activeTab === 'feedback' && <FeedbackViewer />}
+
+        {/* --- TAB 5: MAINTENANCE --- */}
         {activeTab === 'maintenance' && user && (
             <div className="space-y-6">
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -13424,43 +13819,8 @@ export default function AdminDashboard() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Tool 1: Deduplication */}
                     <DeduplicationTool uid={user.uid} />
-
-                    {/* Tool 2: Schema Migration */}
                     <SchemaMigration uid={user.uid} />
-
-                    {/* Tool 3: Encryption Audit (Placeholder) */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                                <ShieldCheckIcon className="h-6 w-6" />
-                            </div>
-                            <h3 className="font-bold text-gray-900">Security Audit</h3>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                            Identifies unencrypted entries in the cloud that need re-saving to be secured by your new PIN.
-                        </p>
-                        <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
-                            Coming Soon
-                        </button>
-                    </div>
-
-                    {/* Tool 4: Team Management (Placeholder) */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 opacity-50">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
-                                <UserGroupIcon className="h-6 w-6" />
-                            </div>
-                            <h3 className="font-bold text-gray-900">Manage Admins</h3>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                            Grant developer access to other emails to help troubleshoot data issues.
-                        </p>
-                        <button disabled className="w-full py-3 bg-gray-100 text-gray-400 font-bold rounded-xl cursor-not-allowed">
-                            Coming Soon
-                        </button>
-                    </div>
                 </div>
             </div>
         )}
@@ -13469,6 +13829,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 </file>
 
 <file path="src/pages/Dashboard.tsx">
