@@ -71,5 +71,13 @@ service cloud.firestore {
         allow create: if isCreatingOwnedResource();
         allow read, update, delete: if isResourceOwner();
     }
+
+    // 8. Feedback & Bug Reports (New for v1.6+)
+    match /feedback/{reportId} {
+      // Authenticated users can submit feedback
+      allow create: if request.auth != null;
+      // Only admins can read/manage feedback to protect user privacy
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

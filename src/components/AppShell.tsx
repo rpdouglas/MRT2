@@ -1,8 +1,9 @@
 /**
  * src/components/AppShell.tsx
- * UPDATED: PROJ-01 Phase 1 (Added Lock Vault Button)
+ * UPDATED: Integrated FeedbackModal for User Testing.
+ * CONTEXT: PROJ-02 (Service Module) Preparation / QA Phase.
  */
-import { Fragment, type ReactNode, useEffect, useCallback } from 'react';
+import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
@@ -16,7 +17,8 @@ import {
   LightBulbIcon,
   CommandLineIcon,
   WifiIcon,
-  LockClosedIcon // Imported Lock Icon
+  LockClosedIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,13 +31,17 @@ import { prepareDataForExport, generateJSON } from '../lib/exporter';
 import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
 import PWAInstallBanner from './PWAInstallBanner';
+import FeedbackModal from './FeedbackModal';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, isOnline } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
-  const { isVaultUnlocked, lockVault } = useEncryption(); // Use lockVault
+  const { isVaultUnlocked, lockVault } = useEncryption();
+
+  // Local State for Feedback
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -50,7 +56,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const handleLock = () => {
       lockVault();
       setSidebarOpen(false);
-      // Optional: Navigate to dashboard to force VaultGate re-check if on a protected route
       navigate('/dashboard');
   };
 
@@ -112,6 +117,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen relative">
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+      
+      {/* INTEGRATED FEEDBACK MODAL */}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       {/* OFFLINE INDICATOR */}
       {!isOnline && (
@@ -190,6 +198,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  </div>
                              </div>
                           )}
+
+                          {/* FEEDBACK TRIGGER */}
+                          <button
+                              onClick={() => { setSidebarOpen(false); setIsFeedbackOpen(true); }}
+                              className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
+                          >
+                              <ChatBubbleLeftRightIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
+                              Send Feedback
+                          </button>
                           
                           {/* LOCK VAULT BUTTON */}
                           {isVaultUnlocked && (
