@@ -68,3 +68,17 @@ graph TD
 ## 3. Query Strategy
 * **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
 * **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
+### `feedback/{reportId}`
+* **Purpose:** User bug reports and suggestions.
+* **Encryption:** **NONE** (To allow debugging without user PIN).
+* **Fields:**
+    * `uid`: String (Reporter ID).
+    * `email`: String (For follow-up).
+    * `message`: String (The report).
+    * `category`: 'bug' | 'suggestion' | 'content'.
+    * `buildHash`: String (Commit hash for version tracing).
+    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
+    * `route`: String (Where the issue occurred).
+    * `userAgent`: String (Browser/Device info).
+    * `vaultUnlocked`: Boolean (Was the vault open?).
+    * `timestamp`: ServerTimestamp.
