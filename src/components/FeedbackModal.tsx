@@ -1,0 +1,161 @@
+import { Fragment, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { 
+    ChatBubbleLeftEllipsisIcon, 
+    XMarkIcon, 
+    BugAntIcon, 
+    LightBulbIcon, 
+    DocumentTextIcon,
+    PaperAirplaneIcon,
+    ExclamationCircleIcon
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
+import { useBuildInfo } from '../lib/versioning';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+interface FeedbackModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+type Category = 'bug' | 'suggestion' | 'content';
+
+export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+    const { user } = useAuth();
+    const { isVaultUnlocked } = useEncryption();
+    const meta = useBuildInfo();
+    
+    const [category, setCategory] = useState<Category>('bug');
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!db || !user || !message.trim()) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(db, 'feedback'), {
+                uid: user.uid,
+                email: user.email, // Unencrypted for admin contact
+                category,
+                message: message.trim(),
+                buildHash: meta.globalHash,
+                environment: meta.env,
+                route: window.location.pathname,
+                vaultUnlocked: isVaultUnlocked,
+                userAgent: navigator.userAgent,
+                timestamp: serverTimestamp()
+            });
+            
+            setIsSuccess(true);
+            setTimeout(() => {
+                setIsSuccess(false);
+                setMessage('');
+                onClose();
+            }, 2000);
+        } catch (error) {
+            console.error("Feedback submission failed:", error);
+            alert("Failed to send feedback. It will sync when you are back online.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Transition.Root show={isOpen} as={Fragment}>
+            <Dialog as="div" className="relative z-50" onClose={onClose}>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-slate-50 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                            
+                            <div className="absolute right-0 top-0 pr-4 pt-4">
+                                <button onClick={onClose} className="rounded-md text-slate-400 hover:text-slate-500">
+                                    <XMarkIcon className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            {isSuccess ? (
+                                <div className="py-12 text-center animate-fadeIn">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                                        <PaperAirplaneIcon className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <h3 className="mt-4 text-lg font-bold text-slate-900">Feedback Received</h3>
+                                    <p className="text-sm text-slate-500">Thank you for helping us improve the toolkit.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="sm:flex sm:items-start">
+                                        <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                            <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-600" />
+                                        </div>
+                                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                            <Dialog.Title as="h3" className="text-base font-bold leading-6 text-slate-900">
+                                                Submit Feedback
+                                            </Dialog.Title>
+                                            <p className="text-xs text-slate-500 mt-1 uppercase font-mono tracking-tighter">
+                                                Build: {meta.globalHash} • Env: {meta.env}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'bug', icon: BugAntIcon, label: 'Bug' },
+                                                { id: 'suggestion', icon: LightBulbIcon, label: 'Idea' },
+                                                { id: 'content', icon: DocumentTextIcon, label: 'Text' }
+                                            ].map((cat) => (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setCategory(cat.id as Category)}
+                                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                                                        category === cat.id 
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                                                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <cat.icon className="h-5 w-5 mb-1" />
+                                                    <span className="text-[10px] font-bold uppercase">{cat.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <textarea
+                                            rows={5}
+                                            required
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            placeholder="What happened? Or what can we do better?"
+                                            className="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-blue-500 focus:border-blue-500 p-4"
+                                        />
+
+                                        <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 flex gap-2">
+                                            <ExclamationCircleIcon className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-amber-800 leading-tight">
+                                                <strong>Privacy Note:</strong> This box is unencrypted. Do not include sensitive journal entries or your PIN.
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting || !message.trim()}
+                                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {isSubmitting ? 'Sending...' : 'Send to Developers'}
+                                        </button>
+                                    </form>
+                                </>
+                            )}
+                        </Dialog.Panel>
+                    </div>
+                </div>
+            </Dialog>
+        </Transition.Root>
+    );
+}
