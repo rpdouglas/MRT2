@@ -1,16 +1,22 @@
 # 🏃 Active Sprint Board
-**Sprint:** 17.2 "Foundation Check"
-**Start Date:** 2026-02-16
-**Goal:** Document and Verify Workbooks, Tasks, and Vitality before adding new features.
+**Sprint:** 18.1 "Dopamine & Flow"
+**Start Date:** 2026-02-18
+**Goal:** Revamp the Task List to feel instant, rewarding, and organized.
 
-## 📌 To Do
-- [ ] **Verify Tasks:** Test Recurring Task reset logic.
-- [ ] **Verify Vitality:** Test Breathwork timer and logging.
+## 📌 To Do (Project 02)
+- [ ] **Optimistic UI:** Refactor `useToggleTask` to update cache immediately.
+- [ ] **Visual Redesign:** Create `TaskRow.tsx` component (Compact design).
+- [ ] **Sorting Logic:** Implement client-side sorting (Pending first, then Priority).
 
 ## 🚧 In Progress
-- [ ] **UX Upgrade:** Implement Session Storage for PIN (Reduce unlock friction).
+- [ ] **Roadmap Pivot:** Documentation updates (You are here).
 
-## ✅ Done
-- [x] **Verify Workbooks:** Fixed "Split Brain" bug; AI analysis now reading decrypted data.
-- [x] Project 01 (Security)
-- [x] Project 01.5 (Codespaces)
+## ✅ Done (Previous Sprint)
+- [x] **Feedback Loop:** `FeedbackModal` & `FeedbackViewer` deployed.
+- [x] **Security:** `firestore.rules` synced across envs.
+- [x] **Docs:** v1.7 Audit complete.
+
+---
+## 🧊 Backlog
+- [ ] **Project 03:** Workbook Polish.
+- [ ] **Project 04:** Service Module.

@@ -1,8 +1,8 @@
-# 📐 Technical Design & Planning Prompt (MRT v4.5)
+# 📐 Technical Design & Planning Prompt (MRT v4.6)
 
 **Role:** Senior Staff Engineer & Systems Architect.
 **Context:** Feature request for My Recovery Toolkit (MRT).
-**Current Version:** v1.6 (Stabilized)
+**Current Version:** v1.7 (Stabilized)
 **Objective:** Provide 3 distinct implementation strategies with a formal recommendation.
 
 ---
@@ -29,11 +29,16 @@ Present three distinct approaches to implementing: [INSERT FEATURE NAME]
 
 ### PHASE 3: TECHNICAL IMPACT ANALYSIS
 For the RECOMMENDED approach, provide:
+
 1.  **Data Schema:** Explicit Firestore field changes/additions. Note if a Composite Index is needed.
 2.  **Security Check:** Does this touch PII? If so, verify it is encrypted via `src/lib/crypto.ts`.
 3.  **Offline Logic:** How does this handle the `LayoutContext.isOnline` state?
 4.  **Versioning:** How will the `build-info.json` hash be used to tag this data?
 5.  **Design System:** Which "Vibrant Momentum" gradients or atmospheric tints apply?
+6.  **React Architecture (Critical):**
+    * List new state variables.
+    * **Hook Stability:** Identify any `useEffect` dependencies. If an effect relies on a function, explicitly state that the function must be wrapped in `useCallback` to satisfy `exhaustive-deps`.
+7.  **Permissions:** If a new collection is added, explicitly state the required update to `firestore.rules`.
 
 ### PHASE 4: THE "DO NO HARM" CHECKLIST
 * Does this break the 100dvh mobile layout?
