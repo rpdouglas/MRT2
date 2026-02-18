@@ -1,9 +1,6 @@
 /**
  * src/lib/db.ts
- * GITHUB COMMENT:
- * [db.ts]
- * SCHEMA UPDATE: Added 'usage_limits' to UserProfile to track AI Insight cooldowns.
- * PURPOSE: Enforces frequency limits (Weekly/Monthly) for non-admin users.
+ * UPDATED: Fixed Task interface to support 'recurrence' and 'category'.
  */
 import { 
   doc, 
@@ -13,18 +10,20 @@ import {
   collection, 
   getDocs, 
   deleteDoc, 
-  addDoc,
+  addDoc, 
   query, 
   where, 
-  orderBy,
-  Timestamp,
-  type Firestore,
-  type QueryDocumentSnapshot,
-  type DocumentData,
+  orderBy, 
+  Timestamp, 
+  type Firestore, 
+  type QueryDocumentSnapshot, 
+  type DocumentData, 
   type WithFieldValue
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
+// Import Recurrence types
+import type { RecurrenceConfig } from "./dateUtils";
 
 // --- GENERIC CONVERTER ---
 export const createConverter = <T extends object>() => ({
@@ -57,10 +56,8 @@ export interface UserProfile {
   lastLogin?: Timestamp;
   lastExportAt?: Timestamp; 
   role?: 'admin' | 'user';
-  // Support Network Fields
   sponsorName?: string;
   sponsorPhone?: string;
-  // NEW: AI Usage Tracking
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -90,6 +87,9 @@ export interface JournalEntry {
   } | null;
 }
 
+export type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
 export interface Task {
   id?: string;
   uid: string;
@@ -99,9 +99,16 @@ export interface Task {
   isRecurring: boolean;
   frequency: 'once' | 'daily' | 'weekly' | 'monthly';
   currentStreak: number;
-  priority: 'High' | 'Medium' | 'Low';
-  createdAt: Timestamp;
-  dueDate?: Timestamp;
+  priority: TaskPriority;
+  category?: TaskCategory; // Added Optional Category
+  recurrence?: RecurrenceConfig; // Added Recurrence Config
+  
+  // Date Fields: Allow both for flexibility during hydration
+  createdAt: Timestamp | Date;
+  dueDate?: Timestamp | Date;
+  lastCompletedAt?: Timestamp | Date | null; 
+  
+  source?: 'manual' | 'ai'; 
 }
 
 // --- PROFILE FUNCTIONS ---

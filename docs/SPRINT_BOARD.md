@@ -1,22 +1,14 @@
 # 🏃 Active Sprint Board
-**Sprint:** 18.1 "Dopamine & Flow"
+**Sprint:** 18.2 "The Wisdom Path"
 **Start Date:** 2026-02-18
-**Goal:** Revamp the Task List to feel instant, rewarding, and organized.
+**Goal:** Transition from Task management to a premium Workbook reading experience.
 
-## 📌 To Do (Project 02)
-- [ ] **Optimistic UI:** Refactor `useToggleTask` to update cache immediately.
-- [ ] **Visual Redesign:** Create `TaskRow.tsx` component (Compact design).
-- [ ] **Sorting Logic:** Implement client-side sorting (Pending first, then Priority).
-
-## 🚧 In Progress
-- [ ] **Roadmap Pivot:** Documentation updates (You are here).
+## 📌 To Do (Project 03)
+- [ ] **Typography:** Implement @tailwindcss/typography for workbook prose.
+- [ ] **Focus Mode:** Design "Reading Mode" to hide UI distractions.
+- [ ] **Auto-save:** Implement debounced listeners for workbook answers.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Feedback Loop:** `FeedbackModal` & `FeedbackViewer` deployed.
-- [x] **Security:** `firestore.rules` synced across envs.
-- [x] **Docs:** v1.7 Audit complete.
-
----
-## 🧊 Backlog
-- [ ] **Project 03:** Workbook Polish.
-- [ ] **Project 04:** Service Module.
+- [x] **Project 02:** Optimistic UI & Task Row Redesign.
+- [x] **Project 02:** Action Plan routing (source: 'ai').
+- [x] **Audit:** Governance and prompt hardening complete.

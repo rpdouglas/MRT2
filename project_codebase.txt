@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-17T02:33:06.430Z
+PROJECT EXPORT - 2026-02-18T19:08:32.416Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -48,7 +48,9 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── projects
 │   │   ├── 00_TEMPLATE.md
 │   │   ├── 01_SECURITY_HARDENING.md
-│   │   └── 02_SERVICE_MODE.md
+│   │   ├── 02_CORE_POLISH_TASKS.md
+│   │   ├── 03_CORE_POLISH_WISDOM.md
+│   │   └── 04_SERVICE_MODE.md
 │   ├── prompts
 │   │   ├── APPROVAL.md
 │   │   ├── AUDIT.md
@@ -112,7 +114,8 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── increment-version.cjs
 │   ├── seed-personas.js
 │   ├── set_admin_role.cjs
-│   └── setup_docs.py
+│   ├── setup_docs.py
+│   └── sync_security_rules.sh
 ├── src
 │   ├── App.css
 │   ├── App.tsx
@@ -152,7 +155,8 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── profile
 │   │   │   └── DataManagement.tsx
 │   │   └── tasks
-│   │       └── TaskFormModal.tsx
+│   │       ├── TaskFormModal.tsx
+│   │       └── TaskRow.tsx
 │   ├── contexts
 │   │   ├── AuthContext.tsx
 │   │   ├── EncryptionContext.tsx
@@ -161,7 +165,8 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── slogans.ts
 │   │   └── workbooks.ts
 │   ├── hooks
-│   │   └── useDeepPatternAnalysis.ts
+│   │   ├── useDeepPatternAnalysis.ts
+│   │   └── useTaskOperations.ts
 │   ├── index.css
 │   ├── lib
 │   │   ├── analytics.ts
@@ -188,6 +193,7 @@ Note: Binary files and strictly ignored directories are excluded.
 │   ├── pages
 │   │   ├── AdminDashboard.tsx
 │   │   ├── Dashboard.tsx
+│   │   ├── DebugTools.tsx
 │   │   ├── InsightsLog.tsx
 │   │   ├── Journal.tsx
 │   │   ├── Login.tsx
@@ -1004,24 +1010,30 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 
 **Vision:** To build the world's most secure, persona-aware digital recovery companion.
 
-## 📅 Q1 2026: The Security & Foundation
-*Focus: Hardening the Zero-Knowledge architecture and establishing CI/CD safety.*
+## 📅 Q1 2026: Foundation & Security (Completed)
+*Focus: Zero-Knowledge architecture, CI/CD pipeline, and Feedback loops.*
 
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟢 **Done** | `PROJ-01.5` | **Infra Modernization** | Admin | Move to Codespaces |
-| 🟢 **Done** | `PROJ-01.9` | **Core Stabilization** | Admin | Doc & Verify Core Modules |
-| ⚪ Planned | `PROJ-02` | **The "Lisa" Service Module** | Admin | New User Persona |
-| ⚪ Planned | `PROJ-03` | **AI Server-Side Proxy** | Admin | API Key Protection |
+| 🟢 **Done** | `PROJ-01.5` | **Infra Modernization** | Admin | Codespaces & CI/CD |
+| 🟢 **Done** | `PROJ-01.7` | **Feedback Loop** | Admin | In-App Bug Reporting |
+| 🟢 **Done** | `PROJ-01.9` | **Core Stabilization** | Admin | Doc & Code Parity |
 
-## 📅 Q2 2026: Engagement & Intelligence
-*Focus: Deepening the AI capabilities and user retention.*
+## 📅 Q2 2026: The "Core Polish" Phase
+*Focus: Elevating the UX of the two most used features: Tasks and Workbooks.*
 
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| ⚪ Pending | `PROJ-04` | **Local RAG (Chat with Journal)** | Admin | "Talk to your past" |
-| ⚪ Pending | `PROJ-05` | **Vitality 2.0 (Visuals)** | Admin | Photo Logging |
+| 🟡 **Active** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
+| ⚪ Planned | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience, Auto-save |
+| ⚪ Planned | `PROJ-04` | **The "Lisa" Service Module** | Admin | Sponsee Management (Encrypted) |
+
+## 🧊 Backlog (Future)
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Pending | `PROJ-05` | **AI Server-Side Proxy** | Admin | API Key Protection |
+| ⚪ Pending | `PROJ-06` | **Local RAG (Chat with Journal)** | Admin | "Talk to your past" |
 
 ---
 **Legend:** 🟢 Complete | 🟡 Active | ⚪ Planned | 🔴 Blocked
@@ -1099,6 +1111,21 @@ graph TD
 ## 3. Query Strategy
 * **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
 * **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
+### `feedback/{reportId}`
+* **Purpose:** User bug reports and suggestions.
+* **Encryption:** **NONE** (To allow debugging without user PIN).
+* **Fields:**
+    * `uid`: String (Reporter ID).
+    * `email`: String (For follow-up).
+    * `message`: String (The report).
+    * `category`: 'bug' | 'suggestion' | 'content'.
+    * `buildHash`: String (Commit hash for version tracing).
+    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
+    * `route`: String (Where the issue occurred).
+    * `userAgent`: String (Browser/Device info).
+    * `vaultUnlocked`: Boolean (Was the vault open?).
+    * `timestamp`: ServerTimestamp.
+
 </file>
 
 <file path="docs/SECURITY_ZERO_KNOWLEDGE.md">
@@ -1148,21 +1175,27 @@ When a user asks for AI Analysis:
 
 <file path="docs/SPRINT_BOARD.md">
 # 🏃 Active Sprint Board
-**Sprint:** 17.2 "Foundation Check"
-**Start Date:** 2026-02-16
-**Goal:** Document and Verify Workbooks, Tasks, and Vitality before adding new features.
+**Sprint:** 18.1 "Dopamine & Flow"
+**Start Date:** 2026-02-18
+**Goal:** Revamp the Task List to feel instant, rewarding, and organized.
 
-## 📌 To Do
-- [ ] **Verify Tasks:** Test Recurring Task reset logic.
-- [ ] **Verify Vitality:** Test Breathwork timer and logging.
+## 📌 To Do (Project 02)
+- [ ] **Optimistic UI:** Refactor `useToggleTask` to update cache immediately.
+- [ ] **Visual Redesign:** Create `TaskRow.tsx` component (Compact design).
+- [ ] **Sorting Logic:** Implement client-side sorting (Pending first, then Priority).
 
 ## 🚧 In Progress
-- [ ] **UX Upgrade:** Implement Session Storage for PIN (Reduce unlock friction).
+- [ ] **Roadmap Pivot:** Documentation updates (You are here).
 
-## ✅ Done
-- [x] **Verify Workbooks:** Fixed "Split Brain" bug; AI analysis now reading decrypted data.
-- [x] Project 01 (Security)
-- [x] Project 01.5 (Codespaces)
+## ✅ Done (Previous Sprint)
+- [x] **Feedback Loop:** `FeedbackModal` & `FeedbackViewer` deployed.
+- [x] **Security:** `firestore.rules` synced across envs.
+- [x] **Docs:** v1.7 Audit complete.
+
+---
+## 🧊 Backlog
+- [ ] **Project 03:** Workbook Polish.
+- [ ] **Project 04:** Service Module.
 
 </file>
 
@@ -1306,7 +1339,56 @@ We reserve the right to modify these terms at any time. Your continued use of th
     * Test: Decrypting with wrong key throws specific error.
 </file>
 
-<file path="docs/projects/02_SERVICE_MODE.md">
+<file path="docs/projects/02_CORE_POLISH_TASKS.md">
+# ⚡ Project 02: Professional Task List (The Engine)
+
+**Objective:** Transform the Tasks module into a high-performance, minimalist to-do list.
+**Constraint:** STRICTLY AVOID "Quest" or RPG terminology.
+**Status:** 🟡 Active
+
+## 🏗️ Phase 1: Logic & Optimistic UI (The Feel)
+* [ ] **Optimistic Toggle:** Implement `onMutate` in React Query. Clicking a checkbox must feel instant.
+* [ ] **Refactor Hook:** Create `useTaskOperations` to handle add/edit/delete/toggle.
+* [ ] **Schema Update:** Add `source` field ('manual' | 'ai') to differentiate user tasks from Insight Actions.
+
+## 🧠 Phase 2: Visual Rebranding (The Look)
+* [ ] **List Layout:** Replace "Cards" with "Compact Rows" (High density).
+* [ ] **Terminology:** Rename "New Quest" -> "New Task".
+* [ ] **Smart Tabs:**
+    1. **Today:** Due <= Today (includes Overdue).
+    2. **Upcoming:** Due > Today.
+    3. **Action Plan:** Tasks where `source == 'ai'`. (Keeps growth goals separate from chores).
+    4. **History:** Completed tasks.
+
+## 🎨 Phase 3: "Invisible" Gamification
+* [ ] **Subtle Rewards:** Completion triggers a subtle "ding" or micro-animation (no confetti).
+* [ ] **Streak Display:** Show a small "Fire" icon next to recurring habits, but keep it minimal.
+
+</file>
+
+<file path="docs/projects/03_CORE_POLISH_WISDOM.md">
+# 📖 Project 03: Wisdom Polish (Interactive Workbooks)
+
+**Objective:** Transform the Workbook experience from a "Data Entry Form" to a "Premium Interactive Book" (Headspace/MasterClass style).
+**Status:** ⚪ Planned
+
+## 🏗️ Phase 1: Typography & Layout
+* [ ] **Tailwind Typography:** Implement `@tailwindcss/typography` (`prose` classes) for rich text rendering in questions.
+* [ ] **Reading Mode:** Focus mode that hides the sidebar/header for deep work.
+
+## 🧠 Phase 2: Data Safety
+* [ ] **Auto-Save:** Implement `useDebounce` to save answers to `localStorage` (and Firestore) while typing. Prevent data loss if the browser closes.
+* [ ] **Draft Indicator:** Visual "Saving..." / "Saved" status in the corner.
+
+## 🎨 Phase 3: Interactive Inputs
+* [ ] **Polymorphic Inputs:** Support non-text answers:
+    * Sliders (1-10 Scales).
+    * Multi-Select Chips ("What emotions are you feeling?").
+    * Likert Scales (Strongly Agree <-> Strongly Disagree).
+
+</file>
+
+<file path="docs/projects/04_SERVICE_MODE.md">
 # 🤝 Project 02: The "Lisa" Service Module
 
 **Objective:** Build the "Digital Rolodex" for sponsors to manage sponsees securely.
@@ -1332,23 +1414,27 @@ We reserve the right to modify these terms at any time. Your continued use of th
 </file>
 
 <file path="docs/prompts/APPROVAL.md">
-# ✅ Execution Prompt (The Builder)
+# ✅ Execution Prompt (The Builder v2.1)
 
-**Instructions:**
-Use after the Plan is approved.
+**Instructions:** Execute ONLY after the Plan is approved.
 
 ---
 
 **Decision:** I approve the plan. Proceed with **Phase Execution**.
 
-**Strict Constraints:**
-1. **Script First:** Generate `install_phase.sh` to create/update files safely.
-2. **Governance:** Do NOT build features belonging to a future Phase. Stick to *this* Phase.
-3. **Safety:** If modifying `deploy.yaml` or `crypto.ts`, add a rollback verification step.
+**Strict Constraints (The "Clean Code" Protocol):**
+
+1.  **The Quoted Heredoc Rule:** When generating bash scripts, **ALWAYS** use `cat << 'EOF'` (with single quotes). This prevents the shell from expanding TypeScript variables like `${id}` which causes build failures.
+2.  **Script First:** Generate `install_phase.sh` to create/update files.
+3.  **Type Safety:** * No explicit `any`.
+    * Use `import type { ... }` for TS definitions.
+    * Use `toDate()` helpers for Firestore Date/Timestamp normalization.
+4.  **Linting Gate:** Code must pass `no-unused-vars` and `no-explicit-any`.
 
 **Output:**
-1. The Bash Script (`install_phase.sh`).
-2. **Manual Verification:** List specific checks to ensure the Phase is complete.
+1.  The Bash Script (`install_phase.sh`).
+2.  **Manual Verification:** List `npm run build` and `npm run lint` as required steps.
+
 </file>
 
 <file path="docs/prompts/AUDIT.md">
@@ -1403,48 +1489,40 @@ After the analysis, generate a bash script (`scripts/sync_docs.sh`) to automatic
 </file>
 
 <file path="docs/prompts/FIX.md">
-# 🚑 Error Resolution Prompt (The Hotfix Engineer)
+# 🚑 Error Resolution Prompt (The Surgical Engineer v2.2)
 
-**Trigger:** You have encountered a Build Error, Lint Error, Test Failure, or Runtime Crash.
-
-**Instructions:**
-1. Paste the **Error Log** below.
-2. Paste the **Content of the file(s)** causing the error.
-3. The AI will provide a "Surgical Fix."
+**Role:** Senior Site Reliability Engineer (SRE).
+**Objective:** Restore system stability with **ZERO** collateral damage.
 
 ---
 
-**Role:** Senior Site Reliability Engineer (SRE).
-**Goal:** Restore system stability with **MINIMAL** code changes.
+### 📜 THE SURGICAL PROTOCOL
+1.  **Analyze:** Identify the exact line and character causing the error.
+2.  **Constraint Check:** * **NO REFACTORING:** Do not rename variables or "clean up" logic.
+    * **NO DELETION:** Do not delete helper functions, comments, or UI sections unless they are the direct source of the error.
+    * **STYLING LOCK:** Do not touch Tailwind classes or CSS unless it is a layout error.
+3.  **Interface Alignment:** Compare the file against the provided `src/lib/db.ts` interface to ensure type parity.
 
-**Constraint Checklist (The "Do No Harm" Protocol):**
-1.  **🚫 Zero Styling Changes:** Do NOT touch Tailwind classes, CSS, or layout structure unless the error is explicitly a CSS error.
-2.  **🚫 Zero Refactoring:** Do NOT rewrite functions "to make them cleaner." Fix the specific bug only. If the code is ugly but works, leave it alone.
-3.  **🚫 Scope Containment:** Do not touch files unrelated to the stack trace.
-4.  **✅ Full File Output:** Always provide the *complete* file content. Do not use comments like `// ... rest of code`.
-
-**Input:**
-* **Context:** [INSERT BRIEF CONTEXT, e.g., "I just added the Lock Button"]
-* **Error Log:**
-```text
+### 📥 INPUT DATA
+* **Error Log:** ```text
 [PASTE ERROR HERE]
 ```
-* **Suspected File:** [PASTE FILE CONTENT HERE]
+* **File to Fix:** [PASTE COMPLETE FILE CONTENT]
+* **Reference Interface:** [PASTE src/lib/db.ts CONTENT]
 
-**Analysis Strategy:**
-1.  **Identify:** What specific line caused the failure?
-2.  **Diagnose:** Is it a Type error, a Logic error, or an Import error?
-3.  **Verify:** Will this fix break the "Lisa" or "David" personas? (e.g., does it break offline mode?)
+### 📤 REQUIRED OUTPUT FORMAT
+1.  **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
+2.  **Integrity Audit:** List what code was **preserved** (e.g., "Preserved all helper functions and UI Strengths/Risks sections").
+3.  **Surgical Fix:** Provide the COMPLETE file content using quoted heredocs.
+4.  **Verification:** Specific command to run (e.g., `npm run build` or `npm run lint`).
 
-**Output Format:**
-1.  **Root Cause:** 1 sentence explanation.
-2.  **The Fix:** The complete, corrected file.
-3.  **Verification:** How to verify this specific fix (e.g., "Run npm run lint").
+---
+**STRICT WARNING:** If you provide a fix that deletes existing functionality, the build will be rejected.
 
 </file>
 
 <file path="docs/prompts/INITIALIZATION.md">
-# 🤖 AI Session Initialization Prompt
+# 🤖 AI Session Initialization Prompt (v2.2)
 
 **Role:** Principal Software Architect & Product Manager.
 
@@ -1453,62 +1531,51 @@ After the analysis, generate a bash script (`scripts/sync_docs.sh`) to automatic
 * **Security:** Zero-Knowledge (AES-GCM). *Never output user data in plain text.*
 * **Reference:** Read `docs/CONTEXT_DUMP.md`.
 
-**2. Load Project Context:**
+**2. Core Technical Values (The MRT Standard):**
+* **Metadata Integrity:** Always preserve `uid`, `source`, and `category` fields across all data flows.
+* **Date Safety:** Use JS `Date` for logic/UI and Firestore `Timestamp` for storage. Always normalize using `toDate()` helpers.
+* **Type Strictness:** No `any`. No `// @ts-ignore`. Use `unknown` or `Partial<T>` if necessary.
+* **Bash Safety:** Always use `cat << 'EOF'` for scripts to prevent variable expansion bugs.
+
+**3. Load Project Context:**
 * **Reference:** Read `docs/SPRINT_BOARD.md` to see active tasks.
 * **Reference:** Read `docs/ROADMAP.md` for high-level goals.
 
 **Your Goal:**
-You are not just writing code; you are executing a specific **Phase** of an active **Project**. 
-Do not deviate from the active Sprint goals.
+You are executing a specific **Phase** of an active **Project**. Do not deviate from the active Sprint goals or compromise the Technical Core Values.
 
-**Reply:** 'MRT Platform Loaded. Sprint Context Active. Ready for Task.'
+**Reply:** 'MRT Platform Loaded. Technical guardrails active. Ready for Task.'
+
 </file>
 
 <file path="docs/prompts/PLANNING.md">
-# 📐 Technical Design & Planning Prompt (MRT v4.5)
+# 📐 Technical Design & Planning Prompt (MRT v4.8)
 
 **Role:** Senior Staff Engineer & Systems Architect.
-**Context:** Feature request for My Recovery Toolkit (MRT).
-**Current Version:** v1.6 (Stabilized)
 **Objective:** Provide 3 distinct implementation strategies with a formal recommendation.
 
 ---
 
 ### PHASE 1: CODEBASE INGESTION & AUDIT
 1.  **Ingestion:** Review the provided `src/` and `docs/` directories.
-2.  **Dependency Mapping:** Identify the existing components, hooks, and lib functions that will be impacted. 
-3.  **Strict Constraint:** You are FORBIDDEN from assuming a utility exists. You must cite specific functions from `src/lib/` (e.g., `crypto.ts`, `db.ts`, `versioning.ts`) by name and quote their signature before proposing changes.
+2.  **Dependency Mapping:** Identify existing components, hooks, and lib functions impacted. 
+3.  **Interface Audit:** Quote the specific interface from `src/lib/db.ts` that this feature will interact with.
 
 ### PHASE 2: STRATEGY PROPOSAL (The Rule of 3)
-Present three distinct approaches to implementing: [INSERT FEATURE NAME]
+*Approach A (Minimalist), Approach B (Balanced - Recommended), Approach C (Robust).*
 
-**Approach A: Minimalist/Low-Impact**
-* *Philosophy:* Use existing patterns only. Lowest maintenance. No new collections.
-* *Architecture:* Summary of logic changes.
-
-**Approach B: Balanced/Integrated (RECOMMENDED)**
-* *Philosophy:* Best UX vs performance trade-off. Uses modern MRT design tokens and React 19 patterns.
-* *Architecture:* List new components and Firestore schema changes.
-
-**Approach C: Robust/Enterprise**
-* *Philosophy:* High observability and scaling. Full logging and advanced error handling.
-* *Architecture:* Impact on bundle size and external dependencies.
-
-### PHASE 3: TECHNICAL IMPACT ANALYSIS
-For the RECOMMENDED approach, provide:
-1.  **Data Schema:** Explicit Firestore field changes/additions. Note if a Composite Index is needed.
-2.  **Security Check:** Does this touch PII? If so, verify it is encrypted via `src/lib/crypto.ts`.
-3.  **Offline Logic:** How does this handle the `LayoutContext.isOnline` state?
-4.  **Versioning:** How will the `build-info.json` hash be used to tag this data?
-5.  **Design System:** Which "Vibrant Momentum" gradients or atmospheric tints apply?
-
-### PHASE 4: THE "DO NO HARM" CHECKLIST
-* Does this break the 100dvh mobile layout?
-* Does this violate the Zero-Knowledge boundary?
-* Does this require code changes to `AppShell.tsx` or `VibrantHeader.tsx`?
+### PHASE 3: TECHNICAL IMPACT ANALYSIS (Mandatory for Recommended)
+1.  **Data Schema:** Explicit Firestore field changes. 
+2.  **Interface Parity Check:** Compare proposed Component Props against `db.ts`. Verify if fields are `optional (?)` or `nullable`.
+3.  **Metadata Persistence Audit (CRITICAL):** List every metadata field (e.g., `uid`, `source`, `isEncrypted`, `category`) that must be preserved. Ensure secondary components (Wizards/Modals) are explicitly planned to pass these fields.
+4.  **Date Normalization Standard:** You MUST use the `toDate()` helper pattern. Explicitly state if you are using `Date` (UI) or `Timestamp` (DB) and where the conversion happens.
+5.  **Security Check:** Verify encryption boundary (`src/lib/crypto.ts`).
+6.  **React Architecture:** * List new state/hooks. 
+    * **Hook Stability:** Ensure functions in `useEffect` are wrapped in `useCallback`.
+7.  **Linting:** Prohibit `any`. Use `unknown` or specific interfaces.
 
 ---
-**STOP: Provide the Analysis and wait for my formal approval before generating code.**
+**STOP: Provide the Analysis and wait for formal approval before generating code.**
 
 </file>
 
@@ -1904,7 +1971,7 @@ Derived from dominant XP source: Scholar (Workbooks), Doer (Tasks), Monk (Vitali
 <file path="docs/specs/08_ADMIN.md">
 # 📐 Feature Spec: Admin Dashboard
 
-**Status:** Live (v1.2)
+**Status:** Live (v1.7)
 **Access:** Strict RBAC (Role-Based Access Control)
 **Security Level:** High
 
@@ -1915,6 +1982,7 @@ The system uses a "Defense in Depth" approach:
 * **Constraint:** Updating a user's role in the UI (`UserDirectory`) grants them *UI Access* immediately, but *Database Access* requires running the server-side script `scripts/set_admin_role.cjs`.
 
 ## 2. Sub-Modules
+
 ### A. Telemetry (Health)
 * **Source:** `client_errors` collection.
 * **Feature:** `ErrorLogViewer` visualizes crash reports and uses Gemini to suggest fixes.
@@ -1923,13 +1991,19 @@ The system uses a "Defense in Depth" approach:
 * **Source:** `users` collection.
 * **Feature:** Searchable list of all users. Allows toggling the `role` field.
 
-### C. Maintenance Tools
-* **Deduplicator:** Scans `journals` for duplicate content/timestamps (common import bug) and batch-deletes.
-* **Schema Migration:** Updates legacy `insights` docs (e.g., mapping `actionableSteps` -> `suggested_actions`).
+### C. Feedback Inbox (New)
+* **Source:** `feedback` collection.
+* **Feature:** `FeedbackViewer` allows admins to read, filter, and resolve user reports.
+* **Context:** Displays `buildHash` and `route` to help reproduce bugs.
+
+### D. Maintenance Tools
+* **Deduplicator:** Scans `journals` for duplicate content/timestamps and batch-deletes.
+* **Schema Migration:** Updates legacy documents to match current type definitions.
 
 ## 3. Verification
 * [ ] **RBAC:** Can a non-admin user access `/admin`? (Should redirect).
 * [ ] **Telemetry:** Trigger a crash. Does it appear in the Health tab?
+* [ ] **Inbox:** Submit feedback as a user. Does it appear in the Admin Inbox?
 
 </file>
 
@@ -2154,7 +2228,7 @@ We use `manualChunks` to isolate heavy dependencies, improving initial load time
 <file path="docs/specs/14_FEEDBACK.md">
 # 📐 Feature Spec: Feedback & Bug Reporting
 
-**Status:** Live (v1.6+)
+**Status:** Live (v1.7)
 **Context:** QA & User Testing support.
 
 ## 1. Overview
@@ -2168,13 +2242,15 @@ A native module allowing testers to report issues or suggest features without le
 ### Metadata Capture
 The system automatically appends the following to every report:
 * `buildHash`: Cross-referenced against `build-info.json` to identify stale versions.
+* `environment`: Distinguishes between DEV, UAT, and PROD.
 * `vaultUnlocked`: Helps identify if encryption logic was active during a crash.
 * `route`: Identifies the specific page causing the issue.
 * `userAgent`: Identifies device/browser specific bugs.
 
 ## 3. Security
 * **Access:** Any authenticated user can create. Read access restricted to Admins.
-* **Privacy:** Unencrypted collection. Users are warned via UI not to include Recovery PII.
+* **Privacy:** **Unencrypted collection.** * *Warning:* The UI explicitly warns users NOT to include sensitive recovery data (PII) in the feedback box.
+    * *Rationale:* Admins need to read bug reports without needing the user's private PIN key.
 
 ## 4. Verification
 * [ ] **Network Logic:** Submit while offline. Verify it appears in Firestore once reconnected.
@@ -3750,6 +3826,82 @@ print("👉 Folder: docs/legal/")
 print("📝 NOTE: Before publishing, verify the 'Contact Email' and 'Governing Law' sections.")
 </file>
 
+<file path="scripts/sync_security_rules.sh">
+#!/bin/bash
+
+# ==========================================
+# 🛡️ MRT SECURITY RULE SYNCHRONIZER
+# ==========================================
+# promotes local firestore.rules to all environments.
+
+# PROJECT IDs (Hardcoded from your architecture docs)
+DEV_PROJECT="mrt2-app-dev"
+UAT_PROJECT="mrt2-app-uat"
+PROD_PROJECT="mrt2-app-prod"
+
+echo "🔒 Starting Security Rule Synchronization..."
+echo "📄 Local Source: firestore.rules"
+echo "-----------------------------------------"
+
+# Function to deploy to a specific environment
+deploy_to_env() {
+    local env_name=$1
+    local project_id=$2
+
+    echo "👉 Targeting: $env_name ($project_id)"
+    
+    # 1. Switch context
+    firebase use "$project_id" --add "$env_name" 2>/dev/null || firebase use "$project_id"
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to switch to $env_name. Do you have permissions?"
+        return 1
+    fi
+
+    # 2. Deploy only rules
+    echo "🚀 Deploying rules..."
+    firebase deploy --only firestore:rules
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ $env_name Synced Successfully."
+    else
+        echo "❌ Deployment to $env_name FAILED."
+        return 1
+    fi
+    echo "-----------------------------------------"
+}
+
+# --- EXECUTION FLOW ---
+
+# 1. DEV (Always Safe)
+deploy_to_env "DEV" "$DEV_PROJECT"
+
+# 2. UAT (Ask Confirmation)
+read -p "❓ Sync rules to UAT? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    deploy_to_env "UAT" "$UAT_PROJECT"
+else
+    echo "⏭️  Skipping UAT."
+    echo "-----------------------------------------"
+fi
+
+# 3. PROD (Ask Confirmation with Warning)
+echo "⚠️  WARNING: You are about to update PRODUCTION security rules."
+read -p "❓ Sync rules to PROD? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    deploy_to_env "PROD" "$PROD_PROJECT"
+else
+    echo "⏭️  Skipping PROD."
+fi
+
+echo "✨ Sync Sequence Complete."
+# Reset to Dev for safety
+firebase use "$DEV_PROJECT" > /dev/null
+echo "🔄 Reset CLI context to DEV."
+</file>
+
 <file path="src/App.css">
 #root {
   max-width: 1280px;
@@ -3810,6 +3962,7 @@ import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome'; 
 import Dashboard from './pages/Dashboard';
+import DebugTools from './pages/DebugTools';
 import Journal from './pages/Journal';
 import Tasks from './pages/Tasks';
 import Profile from './pages/Profile';
@@ -3989,6 +4142,9 @@ export default function App() {
                         />
                         
                         {/* FALLBACK */}
+
+                        {/* DEBUG TOOLS (Dev Only) */}
+                        <Route path="/debug" element={<PrivateRoute><DebugTools /></PrivateRoute>} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 </Suspense>
@@ -7057,10 +7213,9 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
 <file path="src/components/journal/JournalAnalysisWizard.tsx">
 /**
  * src/components/journal/JournalAnalysisWizard.tsx
- * GITHUB COMMENT:
- * [JournalAnalysisWizard.tsx]
- * FIX: Resolved explicit 'any' type error on SelectionCard component.
- * UPDATE: Added strict SelectionCardProps interface.
+ * FIXED: Removed unused icon imports to satisfy linting rules.
+ * MAINTAINED: Restored UI sections for Strengths and Risks in Standard Results.
+ * MAINTAINED: useTaskOperations hook for proper AI action routing.
  */
 import { Fragment, useState, useEffect, useCallback, type ElementType } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -7071,13 +7226,12 @@ import {
     ChartBarIcon, 
     GlobeAmericasIcon, 
     CheckCircleIcon, 
-    ExclamationTriangleIcon,
     ArrowPathIcon,
     BoltIcon,
-    ShieldCheckIcon,
     PlusCircleIcon,
     TrophyIcon,
-    LockClosedIcon
+    LockClosedIcon,
+    ShieldExclamationIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
@@ -7086,7 +7240,7 @@ import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../
 import type { JournalEntry } from './JournalEditor';
 import { subDays, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
-import { addTask } from '../../lib/tasks';
+import { useTaskOperations } from '../../hooks/useTaskOperations'; 
 import { type UserProfile } from '../../lib/db';
 
 interface WizardProps {
@@ -7097,11 +7251,10 @@ interface WizardProps {
 
 type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
 
-// Helper for UI status
 interface EligibilityStatus {
     allowed: boolean;
     reason?: string;
-    progress?: number; // 0-100 for progress bar
+    progress?: number; 
 }
 
 interface SelectionCardProps {
@@ -7116,10 +7269,10 @@ interface SelectionCardProps {
 
 export default function JournalAnalysisWizard({ isOpen, onClose, entries }: WizardProps) {
     const { user, isAdmin } = useAuth();
+    const { addTask } = useTaskOperations(); 
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
     
-    // Limits State
     const [usageProfile, setUsageProfile] = useState<UserProfile['usage_limits'] | null>(null);
     const [loadingLimits, setLoadingLimits] = useState(false);
     
@@ -7135,7 +7288,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const [saving, setSaving] = useState(false);
     const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-    // --- 1. LOAD USAGE LIMITS ON OPEN ---
     const loadUsageLimits = useCallback(async () => {
         if (!user || !db) return;
         setLoadingLimits(true);
@@ -7159,72 +7311,41 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         }
     }, [isOpen, loadUsageLimits]);
 
-    // --- 2. ELIGIBILITY LOGIC ENGINE ---
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
-        // Admin Bypass
         if (isAdmin) return { allowed: true };
-
         const entryCount = entries.length;
         const now = new Date();
 
         if (targetScope === 'weekly') {
-            // Rule: Min 7 entries
             if (entryCount < 7) {
-                return { 
-                    allowed: false, 
-                    reason: `Need ${7 - entryCount} more entries`,
-                    progress: (entryCount / 7) * 100
-                };
+                return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
             }
-            // Rule: Once every 7 days
             if (usageProfile?.lastWeeklyInsight) {
                 const lastRun = usageProfile.lastWeeklyInsight.toDate();
                 const diff = differenceInDays(now, lastRun);
-                if (diff < 7) {
-                    return { allowed: false, reason: `Available in ${7 - diff} days`, progress: 100 };
-                }
+                if (diff < 7) return { allowed: false, reason: `Available in ${7 - diff} days`, progress: 100 };
             }
         } 
         
         if (targetScope === 'monthly' || targetScope === 'all-time') {
-            // Rule: Min 30 entries
             if (entryCount < 30) {
-                return { 
-                    allowed: false, 
-                    reason: `Need ${30 - entryCount} more entries`,
-                    progress: (entryCount / 30) * 100
-                };
+                return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
             }
-            // Rule: Once every 30 days
             const lastRunTimestamp = targetScope === 'monthly' ? usageProfile?.lastMonthlyInsight : usageProfile?.lastDeepDive;
-            
             if (lastRunTimestamp) {
                 const lastRun = lastRunTimestamp.toDate();
                 const diff = differenceInDays(now, lastRun);
-                if (diff < 30) {
-                    return { allowed: false, reason: `Available in ${30 - diff} days`, progress: 100 };
-                }
+                if (diff < 30) return { allowed: false, reason: `Available in ${30 - diff} days`, progress: 100 };
             }
         }
-
         return { allowed: true };
     };
 
-    // --- 3. ENFORCE COST (STAMP USAGE) ---
     const stampUsage = async (targetScope: AnalysisScope) => {
-        if (!user || !db || isAdmin) return; // Admins don't spend tokens
-        
-        const updateField = targetScope === 'weekly' 
-            ? 'usage_limits.lastWeeklyInsight' 
-            : targetScope === 'monthly' 
-                ? 'usage_limits.lastMonthlyInsight' 
-                : 'usage_limits.lastDeepDive';
-        
+        if (!user || !db || isAdmin) return;
+        const updateField = targetScope === 'weekly' ? 'usage_limits.lastWeeklyInsight' : targetScope === 'monthly' ? 'usage_limits.lastMonthlyInsight' : 'usage_limits.lastDeepDive';
         try {
-            await updateDoc(doc(db, 'users', user.uid), {
-                [updateField]: Timestamp.now()
-            });
-            // Reload local state to reflect lock immediately if they go back
+            await updateDoc(doc(db, 'users', user.uid), { [updateField]: Timestamp.now() });
             loadUsageLimits(); 
         } catch (e) {
             console.error("Failed to stamp usage token", e);
@@ -7234,41 +7355,34 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const runStandardAnalysis = async () => {
         setStep('analyzing');
         setAddedActions(new Set());
-        
-        // STAMP USAGE IMMEDIATELY
         await stampUsage(scope);
-        
         try {
             const now = new Date();
             let currentSet: JournalEntry[] = [];
             let previousSet: JournalEntry[] = [];
+            const getDate = (e: JournalEntry): Date => {
+                if (e.createdAt instanceof Date) return e.createdAt;
+                return (e.createdAt as unknown as { toDate: () => Date }).toDate();
+            };
 
             if (scope === 'weekly') {
                 const oneWeekAgo = subDays(now, 7);
                 const twoWeeksAgo = subDays(now, 14);
-                const getDate = (e: JournalEntry) => e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
-
                 currentSet = entries.filter(e => isAfter(getDate(e), oneWeekAgo));
                 previousSet = entries.filter(e => isAfter(getDate(e), twoWeeksAgo) && isBefore(getDate(e), oneWeekAgo));
             } else if (scope === 'monthly') {
                 const oneMonthAgo = subDays(now, 30);
                 const twoMonthsAgo = subDays(now, 60);
-                const getDate = (e: JournalEntry) => e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
-
                 currentSet = entries.filter(e => isAfter(getDate(e), oneMonthAgo));
                 previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
             }
 
-            const formatSet = (set: JournalEntry[]) => set.map(e => {
-                const d = e.createdAt instanceof Date ? e.createdAt : new Date(e.createdAt as unknown as string);
-                return `[${d.toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`;
-            }).join('\n---\n');
-            
+            const formatSet = (set: JournalEntry[]) => set.map(e => `[${getDate(e).toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`).join('\n---\n');
             const currentTxt = formatSet(currentSet);
             const prevTxt = formatSet(previousSet);
 
             if (!currentTxt) {
-                alert("Not enough journal data for this period to perform an analysis.");
+                alert("Not enough journal data for this period.");
                 setStep('select');
                 return;
             }
@@ -7276,10 +7390,9 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
             setStandardResult(analysis);
             setStep('results');
-
         } catch (error) {
             console.error(error);
-            alert("Analysis failed. Please try again.");
+            alert("Analysis failed.");
             setStep('select');
         }
     };
@@ -7287,15 +7400,11 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const handleStartAnalysis = async () => {
         const status = checkEligibility(scope);
         if (!status.allowed && !isAdmin) return;
-
         if (scope === 'all-time') {
             setStep('analyzing');
             setAddedActions(new Set());
-            // STAMP USAGE
             await stampUsage('all-time');
-            runDeepAnalysis().then(() => {
-                setStep('results');
-            });
+            runDeepAnalysis().then(() => setStep('results'));
         } else {
             runStandardAnalysis();
         }
@@ -7305,7 +7414,13 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         if (!user) return;
         try {
             const dueDate = addDays(new Date(), 7);
-            await addTask(user.uid, action, 'once', 'Medium', dueDate);
+            await addTask({
+                title: action,
+                frequency: 'once',
+                priority: 'Medium',
+                dueDate: dueDate,
+                source: 'ai' 
+            });
             setAddedActions(prev => new Set(prev).add(action));
         } catch (e) {
             console.error("Failed to add task", e);
@@ -7316,7 +7431,6 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         if (!user || !db) return;
         setSaving(true);
         const database: Firestore = db;
-
         try {
             if (scope === 'all-time' && deepResult) {
                 await addDoc(collection(database, 'insights'), {
@@ -7358,38 +7472,26 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         }
     };
 
-    // Helper to render selection cards with locking logic
     const SelectionCard = ({ type, title, subtitle, icon: Icon, colorClass, borderClass, bgClass }: SelectionCardProps) => {
         const { allowed, reason, progress } = checkEligibility(type);
         const isSelected = scope === type;
-
         return (
             <button 
                 onClick={() => allowed ? setScope(type) : null}
                 disabled={!allowed}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all relative overflow-hidden ${
-                    !allowed ? 'opacity-70 bg-gray-50 border-gray-200 cursor-not-allowed' :
-                    isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'
-                }`}
+                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all relative overflow-hidden ${!allowed ? 'opacity-70 bg-gray-50 border-gray-200 cursor-not-allowed' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}
             >
-                {/* LOCKED OVERLAY */}
                 {!allowed && (
                     <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center backdrop-blur-[1px] z-10">
                         <div className="bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500">
-                            <LockClosedIcon className="h-3 w-3" />
-                            {reason}
+                            <LockClosedIcon className="h-3 w-3" /> {reason}
                         </div>
                     </div>
                 )}
-                
-                <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}>
-                    <Icon className="h-6 w-6" />
-                </div>
+                <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
                 <div className="text-left flex-1">
                     <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
                     <div className="text-xs text-gray-500">{subtitle}</div>
-                    
-                    {/* Progress Bar for Volume Requirement */}
                     {!allowed && progress !== undefined && progress < 100 && (
                         <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
@@ -7407,63 +7509,21 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" />
                 <div className="fixed inset-0 flex items-center justify-center p-4">
                     <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
-                        
                         <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
-                            <div className="flex items-center gap-2 text-white">
-                                <SparklesIcon className="h-6 w-6" />
-                                <h3 className="font-bold text-lg">
-                                    {scope === 'all-time' ? 'Deep Pattern Engine' : 'Analysis Wizard'}
-                                </h3>
-                            </div>
+                            <div className="flex items-center gap-2 text-white"><SparklesIcon className="h-6 w-6" /><h3 className="font-bold text-lg">{scope === 'all-time' ? 'Deep Pattern Engine' : 'Analysis Wizard'}</h3></div>
                             <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
 
                         <div className="p-6 overflow-y-auto">
                             {step === 'select' && (
                                 <div className="space-y-4">
-                                    {loadingLimits ? (
-                                        <div className="text-center py-8 text-gray-400">Checking eligibility...</div>
-                                    ) : (
+                                    {loadingLimits ? <div className="text-center py-8 text-gray-400">Checking eligibility...</div> : (
                                         <>
                                             <p className="text-gray-600 text-sm text-center mb-6">Select a timeframe to analyze. The AI will compare your current progress against previous patterns.</p>
-                                            
-                                            <SelectionCard 
-                                                type="weekly"
-                                                title="Weekly Check-in"
-                                                subtitle="Last 7 days vs Previous 7 days"
-                                                icon={CalendarDaysIcon}
-                                                colorClass="text-fuchsia-600"
-                                                bgClass="bg-fuchsia-50"
-                                                borderClass="border-fuchsia-500"
-                                            />
-
-                                            <SelectionCard 
-                                                type="monthly"
-                                                title="Monthly Review"
-                                                subtitle="Last 30 days vs Previous 30 days"
-                                                icon={ChartBarIcon}
-                                                colorClass="text-purple-600"
-                                                bgClass="bg-purple-50"
-                                                borderClass="border-purple-500"
-                                            />
-
-                                            <SelectionCard 
-                                                type="all-time"
-                                                title="Deep Dive (90 Days)"
-                                                subtitle="Identify relapse triggers & patterns"
-                                                icon={GlobeAmericasIcon}
-                                                colorClass="text-indigo-600"
-                                                bgClass="bg-indigo-50"
-                                                borderClass="border-indigo-500"
-                                            />
-
-                                            <button 
-                                                onClick={handleStartAnalysis} 
-                                                disabled={!checkEligibility(scope).allowed}
-                                                className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {checkEligibility(scope).allowed ? 'Begin Analysis' : 'Locked'}
-                                            </button>
+                                            <SelectionCard type="weekly" title="Weekly Check-in" subtitle="Last 7 days vs Previous 7 days" icon={CalendarDaysIcon} colorClass="text-fuchsia-600" bgClass="bg-fuchsia-50" borderClass="border-fuchsia-500" />
+                                            <SelectionCard type="monthly" title="Monthly Review" subtitle="Last 30 days vs Previous 30 days" icon={ChartBarIcon} colorClass="text-purple-600" bgClass="bg-purple-50" borderClass="border-purple-500" />
+                                            <SelectionCard type="all-time" title="Deep Dive (90 Days)" subtitle="Identify relapse triggers & patterns" icon={GlobeAmericasIcon} colorClass="text-indigo-600" bgClass="bg-indigo-50" borderClass="border-indigo-500" />
+                                            <button onClick={handleStartAnalysis} disabled={!checkEligibility(scope).allowed} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">Begin Analysis</button>
                                         </>
                                     )}
                                 </div>
@@ -7471,88 +7531,27 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
                             {step === 'analyzing' && (
                                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                                    <div className="relative">
-                                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-fuchsia-600"></div>
-                                        {scope === 'all-time' && (
-                                            <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-fuchsia-600">
-                                                {deepProgress}%
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-lg font-bold text-gray-900">
-                                            {scope === 'all-time' ? 'Processing Vault...' : 'Consulting the Compass...'}
-                                        </h4>
-                                        <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
-                                            {scope === 'all-time' 
-                                                ? "Decrypting your history and finding hidden patterns." 
-                                                : "Comparing periods and identifying trajectory."}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {step === 'results' && (deepError) && (
-                                <div className="text-center py-8">
-                                    <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                                    <h3 className="text-lg font-bold text-gray-900">Analysis Failed</h3>
-                                    <p className="text-gray-500 mb-4">{deepError}</p>
-                                    <button onClick={() => setStep('select')} className="text-indigo-600 font-bold hover:underline">Try Again</button>
+                                    <div className="relative"><div className="animate-spin rounded-full h-16 w-16 border-b-2 border-fuchsia-600"></div>{scope === 'all-time' && <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-fuchsia-600">{deepProgress}%</div>}</div>
+                                    <h4 className="text-lg font-bold text-gray-900">{scope === 'all-time' ? 'Processing Vault...' : 'Consulting the Compass...'}</h4>
                                 </div>
                             )}
 
                             {step === 'results' && !deepError && (
                                 <div className="space-y-6 animate-fadeIn">
-                                    
-                                    {/* --- DEEP PATTERN RESULTS --- */}
-                                    {scope === 'all-time' && deepResult && (
+                                    {scope === 'all-time' && deepResult ? (
                                         <>
-                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
-                                                <h5 className="text-xs font-bold text-indigo-800 uppercase mb-2">Psychological Landscape</h5>
-                                                <p className="text-sm text-indigo-900 leading-relaxed">{deepResult.pattern_summary}</p>
-                                            </div>
-
+                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><h5 className="text-xs font-bold text-indigo-800 uppercase mb-2">Landscape</h5><p className="text-sm text-indigo-900">{deepResult.pattern_summary}</p></div>
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                    <h5 className="text-xs font-bold text-orange-800 uppercase flex items-center gap-1 mb-2">
-                                                        <BoltIcon className="h-4 w-4" /> Core Triggers
-                                                    </h5>
-                                                    <ul className="text-xs text-orange-900 space-y-1">
-                                                        {deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}
-                                                    </ul>
-                                                </div>
-                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                    <h5 className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1 mb-2">
-                                                        <ArrowPathIcon className="h-4 w-4" /> Velocity
-                                                    </h5>
-                                                    <p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p>
-                                                </div>
+                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100"><h5 className="text-xs font-bold text-orange-800 uppercase flex items-center gap-1 mb-2"><BoltIcon className="h-4 w-4" /> Triggers</h5><ul className="text-xs text-orange-900 space-y-1">{deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}</ul></div>
+                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100"><h5 className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1 mb-2"><ArrowPathIcon className="h-4 w-4" /> Velocity</h5><p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p></div>
                                             </div>
-
-                                            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                                                <h5 className="text-xs font-bold text-yellow-800 uppercase flex items-center gap-1 mb-2">
-                                                    <ShieldCheckIcon className="h-4 w-4" /> Hidden Correlations
-                                                </h5>
-                                                <ul className="text-xs text-yellow-900 space-y-1">
-                                                    {deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}
-                                                </ul>
-                                            </div>
-
                                             <div className="bg-gray-900 text-white p-4 rounded-xl">
-                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Long-Term Strategy (Choose to Add)</h5>
+                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Strategy</h5>
                                                 <div className="space-y-2">
                                                     {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg group hover:bg-gray-800 transition-colors">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="font-bold text-gray-500">→</span>
-                                                                <span>{action}</span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
-                                                                disabled={addedActions.has(action)}
-                                                                className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-400 bg-green-900/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
-                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
-                                                            >
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg">
+                                                            <span>{action}</span>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full ${addedActions.has(action) ? 'text-green-400 bg-green-900/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}>
                                                                 {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
                                                             </button>
                                                         </div>
@@ -7560,57 +7559,30 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                                 </div>
                                             </div>
                                         </>
-                                    )}
-
-                                    {/* --- STANDARD RESULTS --- */}
-                                    {scope !== 'all-time' && standardResult && (
+                                    ) : standardResult && (
                                         <>
-                                            <div className="flex items-center justify-between">
-                                                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                                                    standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                                    standardResult.trajectory === 'Declining' ? 'bg-red-100 text-red-700 border-red-200' :
-                                                    'bg-blue-100 text-blue-700 border-blue-200'
-                                                }`}>
-                                                    Trajectory: {standardResult.trajectory}
-                                                </div>
-                                                <span className="text-xs text-gray-400 font-mono">AI Generated</span>
-                                            </div>
-
-                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700 leading-relaxed">
-                                                {standardResult.comparison_summary}
-                                            </div>
-
+                                            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border w-fit ${standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>Trajectory: {standardResult.trajectory}</div>
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700">{standardResult.comparison_summary}</div>
+                                            
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-green-700 uppercase flex items-center gap-1">
-                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                                    </h5>
-                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                                                    <h5 className="text-[10px] font-bold text-green-800 uppercase flex items-center gap-1 mb-1.5"><TrophyIcon className="h-3 w-3" /> Wins</h5>
+                                                    <ul className="text-xs text-green-900 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <h5 className="text-xs font-bold text-orange-700 uppercase flex items-center gap-1">
-                                                        <ExclamationTriangleIcon className="h-4 w-4" /> Risk Analysis
-                                                    </h5>
-                                                    <ul className="text-xs text-gray-600 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                                    <h5 className="text-[10px] font-bold text-orange-800 uppercase flex items-center gap-1 mb-1.5"><ShieldExclamationIcon className="h-3 w-3" /> Risks</h5>
+                                                    <ul className="text-xs text-orange-900 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
                                                 </div>
                                             </div>
 
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2">Suggested Actions (Choose to Add)</h5>
+                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2 text-center">Suggested Actions</h5>
                                                 <div className="space-y-2">
                                                     {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg group hover:bg-white/80 transition-colors">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="font-bold text-fuchsia-400">{i+1}.</span> 
-                                                                <span>{action}</span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => !addedActions.has(action) && handleAddToTasks(action)}
-                                                                disabled={addedActions.has(action)}
-                                                                className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}
-                                                                title={addedActions.has(action) ? "Added to Quests" : "Add to Quests"}
-                                                            >
-                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
+                                                            <span>{action}</span>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}>
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
                                                             </button>
                                                         </div>
                                                     ))}
@@ -7618,10 +7590,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             </div>
                                         </>
                                     )}
-
-                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">
-                                        {saving ? 'Saving...' : 'Save to Insights Log'}
-                                    </button>
+                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">{saving ? 'Saving...' : 'Save to Insights Log'}</button>
                                 </div>
                             )}
                         </div>
@@ -7631,6 +7600,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
         </Transition.Root>
     );
 }
+
 </file>
 
 <file path="src/components/journal/JournalEditor.tsx">
@@ -9492,17 +9462,17 @@ export default function DataManagement() {
 </file>
 
 <file path="src/components/tasks/TaskFormModal.tsx">
-// src/components/tasks/TaskFormModal.tsx
-import React, { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
   CalendarIcon, 
-  ArrowPathIcon 
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import type { RecurrenceConfig, RecurrenceType } from '../../lib/dateUtils';
 import { Timestamp } from 'firebase/firestore';
 
-// Define explicit union types locally to avoid 'any' casting
+// Define explicit union types locally
 type CategoryType = 'Recovery' | 'Health' | 'Life' | 'Work';
 type PriorityType = 'High' | 'Medium' | 'Low';
 
@@ -9512,23 +9482,23 @@ export interface TaskFormData {
   category: CategoryType;
   priority: PriorityType;
   recurrence: RecurrenceConfig;
-  dueDate: string; // YYYY-MM-DD format for input
+  dueDate: string; // YYYY-MM-DD
 }
 
-// Interface for the raw task data coming in (looser than FormData)
+// Interface for the raw task data coming in
 interface IncomingTask {
-    id: string;
+    id?: string;
     title: string;
-    category: CategoryType;
+    category?: CategoryType;
     priority: PriorityType;
-    dueDate: Timestamp | Date | null;
+    // SURGICAL FIX: Made dueDate optional (?) to match the Task interface from db.ts
+    dueDate?: Timestamp | Date | null; 
     recurrence?: RecurrenceConfig;
-    frequency?: string; // Legacy support
+    frequency?: string; 
 }
 
 interface TaskFormModalProps {
   isOpen: boolean;
-  // FIX: Replaced 'any' with specific type
   initialTask: IncomingTask | null; 
   onClose: () => void;
   onSave: (data: TaskFormData) => Promise<void>;
@@ -9543,18 +9513,16 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
 
   // Recurrence State
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('once');
-  const [relWeek, setRelWeek] = useState(1); // 1-5 (5=Last)
-  const [relDay, setRelDay] = useState(5); // 0-6 (5=Fri)
+  const [relWeek, setRelWeek] = useState(1); 
+  const [relDay, setRelDay] = useState(5); 
 
-  // Initialize form when opening
   useEffect(() => {
     if (isOpen) {
         if (initialTask) {
             setTitle(initialTask.title);
-            setCategory(initialTask.category);
+            setCategory(initialTask.category || 'Recovery');
             setPriority(initialTask.priority);
             
-            // Date Handling
             let dateStr = '';
             if (initialTask.dueDate) {
                  const d = initialTask.dueDate instanceof Date 
@@ -9564,13 +9532,11 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
             }
             setDueDate(dateStr);
 
-            // Recurrence Handling
             if (initialTask.recurrence) {
                 setRecurrenceType(initialTask.recurrence.type);
                 if (initialTask.recurrence.weekOfMonth) setRelWeek(initialTask.recurrence.weekOfMonth);
                 if (initialTask.recurrence.dayOfWeek !== undefined) setRelDay(initialTask.recurrence.dayOfWeek);
             } else {
-                // Fallback for old data
                 setRecurrenceType(
                     (initialTask.frequency === 'once' || !initialTask.frequency) 
                     ? 'once' 
@@ -9579,7 +9545,6 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
             }
 
         } else {
-            // Reset for new task
             setTitle('');
             setCategory('Recovery');
             setPriority('Medium');
@@ -9625,141 +9590,262 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-fadeIn">
-        <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slideUp sm:animate-fadeIn overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                    {initialTask ? 'Edit Quest' : 'New Quest'}
-                </h2>
-                <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full">
-                    <XMarkIcon className="h-6 w-6 text-gray-400" />
-                </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                 
-                {/* TITLE */}
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Quest Title</label>
-                    <input
-                        type="text"
-                        placeholder="e.g., Call Sponsor, Gym, Meditate..."
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 p-3"
-                        autoFocus={!initialTask}
-                    />
+                <div className="flex justify-between items-center mb-6">
+                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
+                      {initialTask ? 'Edit Task' : 'New Task'}
+                    </Dialog.Title>
+                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+                        <XMarkIcon className="h-6 w-6" />
+                    </button>
                 </div>
 
-                {/* CATEGORY & PRIORITY */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Category</label>
-                        <select 
-                            value={category}
-                            // FIX: Replaced 'any' with specific Union Type cast
-                            onChange={(e) => setCategory(e.target.value as CategoryType)}
-                            className="w-full rounded-xl border-gray-300 text-sm py-2.5"
-                        >
-                            <option value="Recovery">Recovery</option>
-                            <option value="Health">Health</option>
-                            <option value="Life">Life</option>
-                            <option value="Work">Work</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Priority</label>
-                        <select 
-                            value={priority}
-                            // FIX: Replaced 'any' with specific Union Type cast
-                            onChange={(e) => setPriority(e.target.value as PriorityType)}
-                            className="w-full rounded-xl border-gray-300 text-sm py-2.5"
-                        >
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* RECURRENCE SECTION */}
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
-                    <div className="flex items-center gap-2 text-gray-800 font-semibold text-sm">
-                        <ArrowPathIcon className="h-4 w-4" />
-                        Repetition Rules
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
                     
-                    <select 
-                        value={recurrenceType}
-                        onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
-                        className="w-full rounded-lg border-gray-300 text-sm"
-                    >
-                        <option value="once">One-time Quest</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Bi-Weekly (Every 2 weeks)</option>
-                        <option value="monthly">Monthly (Same date)</option>
-                        <option value="monthly-relative">Monthly (Relative day)</option>
-                    </select>
+                    {/* TITLE */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Task Name</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Morning Routine..."
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="w-full rounded-xl border-gray-300 focus:ring-slate-500 focus:border-slate-500 p-3 text-sm"
+                            autoFocus={!initialTask}
+                        />
+                    </div>
 
-                    {/* Conditional: Monthly Relative Options */}
-                    {recurrenceType === 'monthly-relative' && (
-                        <div className="flex gap-2 animate-fadeIn">
-                             <select 
-                                value={relWeek} 
-                                onChange={(e) => setRelWeek(Number(e.target.value))}
-                                className="flex-1 rounded-lg border-gray-300 text-sm"
-                             >
-                                <option value={1}>1st</option>
-                                <option value={2}>2nd</option>
-                                <option value={3}>3rd</option>
-                                <option value={4}>4th</option>
-                                <option value={5}>Last</option>
-                             </select>
-                             <select 
-                                value={relDay} 
-                                onChange={(e) => setRelDay(Number(e.target.value))}
-                                className="flex-1 rounded-lg border-gray-300 text-sm"
-                             >
-                                <option value={0}>Sunday</option>
-                                <option value={1}>Monday</option>
-                                <option value={2}>Tuesday</option>
-                                <option value={3}>Wednesday</option>
-                                <option value={4}>Thursday</option>
-                                <option value={5}>Friday</option>
-                                <option value={6}>Saturday</option>
-                             </select>
-                             <span className="self-center text-sm text-gray-500">of month</span>
+                    {/* CATEGORY & PRIORITY */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Category</label>
+                            <select 
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value as CategoryType)}
+                                className="w-full rounded-xl border-gray-300 text-sm py-2.5"
+                            >
+                                <option value="Recovery">Recovery</option>
+                                <option value="Health">Health</option>
+                                <option value="Life">Life</option>
+                                <option value="Work">Work</option>
+                            </select>
                         </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Priority</label>
+                            <select 
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value as PriorityType)}
+                                className="w-full rounded-xl border-gray-300 text-sm py-2.5"
+                            >
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* RECURRENCE */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+                        <div className="flex items-center gap-2 text-gray-800 font-semibold text-sm">
+                            <ArrowPathIcon className="h-4 w-4" />
+                            Repetition
+                        </div>
+                        
+                        <select 
+                            value={recurrenceType}
+                            onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+                            className="w-full rounded-lg border-gray-300 text-sm"
+                        >
+                            <option value="once">One-time</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-Weekly</option>
+                            <option value="monthly">Monthly (Same date)</option>
+                            <option value="monthly-relative">Monthly (Relative day)</option>
+                        </select>
+
+                        {recurrenceType === 'monthly-relative' && (
+                            <div className="flex gap-2 animate-fadeIn">
+                                 <select 
+                                    value={relWeek} 
+                                    onChange={(e) => setRelWeek(Number(e.target.value))}
+                                    className="flex-1 rounded-lg border-gray-300 text-sm"
+                                 >
+                                    <option value={1}>1st</option>
+                                    <option value={2}>2nd</option>
+                                    <option value={3}>3rd</option>
+                                    <option value={4}>4th</option>
+                                    <option value={5}>Last</option>
+                                 </select>
+                                 <select 
+                                    value={relDay} 
+                                    onChange={(e) => setRelDay(Number(e.target.value))}
+                                    className="flex-1 rounded-lg border-gray-300 text-sm"
+                                 >
+                                    <option value={0}>Sunday</option>
+                                    <option value={1}>Monday</option>
+                                    <option value={2}>Tuesday</option>
+                                    <option value={3}>Wednesday</option>
+                                    <option value={4}>Thursday</option>
+                                    <option value={5}>Friday</option>
+                                    <option value={6}>Saturday</option>
+                                 </select>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* DUE DATE */}
+                    <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Due Date</label>
+                          <div className="relative">
+                            <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                            <input 
+                                type="date" 
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="w-full pl-10 rounded-xl border-gray-300 text-sm py-2.5" 
+                            />
+                          </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={!title.trim() || loading}
+                        className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition-colors shadow-md mt-4 disabled:opacity-50"
+                    >
+                        {loading ? 'Saving...' : initialTask ? 'Update Task' : 'Create Task'}
+                    </button>
+                </form>
+            </Dialog.Panel>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  );
+}
+</file>
+
+<file path="src/components/tasks/TaskRow.tsx">
+import { 
+    CheckCircleIcon as CheckCircleOutline, 
+    TrashIcon, 
+    PencilSquareIcon,
+    ArrowPathIcon,
+    SparklesIcon
+} from '@heroicons/react/24/outline';
+import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
+import type { Task } from '../../lib/tasks';
+import { getRecurrenceLabel } from '../../lib/dateUtils';
+import { format, isBefore, startOfDay } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+
+interface TaskRowProps {
+    task: Task;
+    onToggle: (task: Task) => void;
+    onDelete: (id: string) => void;
+    onEdit: (task: Task) => void;
+}
+
+// Helper to ensure we treat timestamps as dates
+const toDate = (val: Date | Timestamp | undefined | null): Date | null => {
+    if (!val) return null;
+    if (val instanceof Timestamp) return val.toDate();
+    if (val instanceof Date) return val;
+    return null;
+}
+
+export default function TaskRow({ task, onToggle, onDelete, onEdit }: TaskRowProps) {
+    const isCompleted = task.status === 'completed';
+    const dueDate = toDate(task.dueDate);
+    const isOverdue = !isCompleted && dueDate && isBefore(dueDate, startOfDay(new Date()));
+    
+    // Priority Colors
+    const priorityColor = {
+        High: 'text-red-600 bg-red-50 border-red-100',
+        Medium: 'text-amber-600 bg-amber-50 border-amber-100',
+        Low: 'text-slate-500 bg-slate-50 border-slate-100'
+    }[task.priority || 'Medium']; // Default Medium if missing
+
+    return (
+        <div className={`group flex items-center gap-3 p-3 bg-white border-b border-gray-100 transition-all hover:bg-slate-50 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`}>
+            
+            {/* CHECKBOX */}
+            <button 
+                onClick={(e) => { e.stopPropagation(); onToggle(task); }}
+                className="flex-shrink-0 text-slate-300 hover:text-green-500 transition-colors"
+            >
+                {isCompleted ? (
+                    <CheckCircleSolid className="h-6 w-6 text-green-500" />
+                ) : (
+                    <CheckCircleOutline className="h-6 w-6" />
+                )}
+            </button>
+
+            {/* CONTENT */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                        {task.title}
+                    </span>
+                    
+                    {/* Source Badge (AI) */}
+                    {task.source === 'ai' && (
+                        <SparklesIcon className="h-3 w-3 text-purple-400" title="AI Suggested" />
                     )}
                 </div>
 
-                {/* DUE DATE */}
-                <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Due Date</label>
-                     <div className="relative">
-                        <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                        <input 
-                            type="date" 
-                            value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            className="w-full pl-10 rounded-xl border-gray-300 text-sm py-2.5" 
-                        />
-                     </div>
-                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                    {/* Priority Badge */}
+                    {!isCompleted && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${priorityColor}`}>
+                            {task.priority || 'Medium'}
+                        </span>
+                    )}
 
-                <button
-                    type="submit"
-                    disabled={!title.trim() || loading}
-                    className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors shadow-md mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    {/* Date Badge */}
+                    {dueDate && (
+                        <span className={`text-[10px] font-medium ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                            {isOverdue ? 'Overdue' : format(dueDate, 'MMM d')}
+                        </span>
+                    )}
+
+                    {/* Recurring Badge */}
+                    {task.recurrence && task.recurrence.type !== 'once' && (
+                        <div className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                            <ArrowPathIcon className="h-3 w-3" />
+                            <span className="hidden sm:inline">{getRecurrenceLabel(task.recurrence)}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ACTIONS (Desktop Hover / Mobile Always) */}
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <button 
+                    onClick={() => onEdit(task)} 
+                    className="p-1.5 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                    title="Edit"
                 >
-                    {loading ? 'Saving...' : initialTask ? 'Update Quest' : 'Accept Quest'}
+                    <PencilSquareIcon className="h-4 w-4" />
                 </button>
-            </form>
+                <button 
+                    onClick={() => onDelete(task.id!)} 
+                    className="p-1.5 text-slate-400 hover:text-red-600 rounded hover:bg-red-50"
+                    title="Delete"
+                >
+                    <TrashIcon className="h-4 w-4" />
+                </button>
+            </div>
         </div>
-    </div>
-  );
+    );
 }
+
 </file>
 
 <file path="src/contexts/AuthContext.tsx">
@@ -10998,6 +11084,164 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
 }
 </file>
 
+<file path="src/hooks/useTaskOperations.ts">
+/**
+ * src/hooks/useTaskOperations.ts
+ * PURPOSE: Centralized hook for Task CRUD with Optimistic UI updates.
+ * STACK: React Query v5 + Firebase
+ */
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
+import * as TaskLib from '../lib/tasks';
+import { Timestamp } from 'firebase/firestore';
+
+export function useTaskOperations() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    const queryKey = ['tasks', user?.uid];
+
+    // --- 1. ADD TASK ---
+    const addTaskMutation = useMutation({
+        mutationFn: async (params: { 
+            title: string; 
+            frequency: TaskLib.Frequency; 
+            priority: TaskLib.Priority; 
+            dueDate: Date;
+            source?: 'manual' | 'ai';
+        }) => {
+            if (!user) throw new Error("No user");
+            await TaskLib.addTask(
+                user.uid, 
+                params.title, 
+                params.frequency, 
+                params.priority, 
+                params.dueDate, 
+                params.source
+            );
+        },
+        onMutate: async (newVar) => {
+            await queryClient.cancelQueries({ queryKey });
+            const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
+
+            if (previousTasks && user) {
+                const optimisticTask: TaskLib.Task = {
+                    id: 'temp-' + Date.now(),
+                    uid: user.uid,
+                    title: newVar.title,
+                    frequency: newVar.frequency,
+                    priority: newVar.priority,
+                    dueDate: Timestamp.fromDate(newVar.dueDate),
+                    createdAt: Timestamp.now(),
+                    completed: false,
+                    status: 'pending',
+                    isRecurring: newVar.frequency !== 'once',
+                    currentStreak: 0,
+                    lastCompletedAt: null,
+                    source: newVar.source || 'manual',
+                    category: 'Recovery' // Default for optimistic
+                };
+                queryClient.setQueryData(queryKey, [optimisticTask, ...previousTasks]);
+            }
+
+            return { previousTasks };
+        },
+        onError: (_err, _newVar, context) => {
+            if (context?.previousTasks) {
+                queryClient.setQueryData(queryKey, context.previousTasks);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey });
+        }
+    });
+
+    // --- 2. TOGGLE TASK ---
+    const toggleTaskMutation = useMutation({
+        mutationFn: async (task: TaskLib.Task) => {
+            const isCompleted = task.status !== 'completed';
+            await TaskLib.toggleTask(task, isCompleted);
+        },
+        onMutate: async (targetTask) => {
+            await queryClient.cancelQueries({ queryKey });
+            const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
+
+            if (previousTasks) {
+                const isNowCompleted = targetTask.status !== 'completed';
+                
+                queryClient.setQueryData(queryKey, previousTasks.map(t => {
+                    if (t.id === targetTask.id) {
+                        return {
+                            ...t,
+                            status: isNowCompleted ? 'completed' : 'pending',
+                            // Optimistic Streak Update
+                            currentStreak: isNowCompleted 
+                                ? (t.currentStreak < 0 ? 1 : t.currentStreak + 1)
+                                : (t.currentStreak > 0 ? t.currentStreak - 1 : t.currentStreak)
+                        };
+                    }
+                    return t;
+                }));
+            }
+
+            return { previousTasks };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousTasks) {
+                queryClient.setQueryData(queryKey, context.previousTasks);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey });
+        }
+    });
+
+    // --- 3. DELETE TASK ---
+    const deleteTaskMutation = useMutation({
+        mutationFn: async (taskId: string) => {
+            await TaskLib.deleteTask(taskId);
+        },
+        onMutate: async (taskId) => {
+            await queryClient.cancelQueries({ queryKey });
+            const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
+
+            if (previousTasks) {
+                queryClient.setQueryData(queryKey, previousTasks.filter(t => t.id !== taskId));
+            }
+
+            return { previousTasks };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousTasks) {
+                queryClient.setQueryData(queryKey, context.previousTasks);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey });
+        }
+    });
+
+    // --- 4. UPDATE TASK ---
+    // FIX: Replaced 'any' with Partial<TaskLib.Task> to satisfy ESLint
+    const updateTaskMutation = useMutation({
+        mutationFn: async (params: { id: string } & Partial<TaskLib.Task>) => {
+            const { id, ...updates } = params;
+            await TaskLib.updateTask(id, updates);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey });
+        }
+    });
+
+    return {
+        addTask: addTaskMutation.mutate,
+        toggleTask: toggleTaskMutation.mutate,
+        deleteTask: deleteTaskMutation.mutate,
+        updateTask: updateTaskMutation.mutate,
+        isLoading: addTaskMutation.isPending || toggleTaskMutation.isPending || deleteTaskMutation.isPending
+    };
+}
+</file>
+
 <file path="src/index.css">
 @tailwind base;
 @tailwind components;
@@ -11485,10 +11729,7 @@ export function getRecurrenceLabel(config: RecurrenceConfig): string {
 <file path="src/lib/db.ts">
 /**
  * src/lib/db.ts
- * GITHUB COMMENT:
- * [db.ts]
- * SCHEMA UPDATE: Added 'usage_limits' to UserProfile to track AI Insight cooldowns.
- * PURPOSE: Enforces frequency limits (Weekly/Monthly) for non-admin users.
+ * UPDATED: Fixed Task interface to support 'recurrence' and 'category'.
  */
 import { 
   doc, 
@@ -11498,18 +11739,20 @@ import {
   collection, 
   getDocs, 
   deleteDoc, 
-  addDoc,
+  addDoc, 
   query, 
   where, 
-  orderBy,
-  Timestamp,
-  type Firestore,
-  type QueryDocumentSnapshot,
-  type DocumentData,
+  orderBy, 
+  Timestamp, 
+  type Firestore, 
+  type QueryDocumentSnapshot, 
+  type DocumentData, 
   type WithFieldValue
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
+// Import Recurrence types
+import type { RecurrenceConfig } from "./dateUtils";
 
 // --- GENERIC CONVERTER ---
 export const createConverter = <T extends object>() => ({
@@ -11542,10 +11785,8 @@ export interface UserProfile {
   lastLogin?: Timestamp;
   lastExportAt?: Timestamp; 
   role?: 'admin' | 'user';
-  // Support Network Fields
   sponsorName?: string;
   sponsorPhone?: string;
-  // NEW: AI Usage Tracking
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -11575,6 +11816,9 @@ export interface JournalEntry {
   } | null;
 }
 
+export type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
 export interface Task {
   id?: string;
   uid: string;
@@ -11584,9 +11828,16 @@ export interface Task {
   isRecurring: boolean;
   frequency: 'once' | 'daily' | 'weekly' | 'monthly';
   currentStreak: number;
-  priority: 'High' | 'Medium' | 'Low';
-  createdAt: Timestamp;
-  dueDate?: Timestamp;
+  priority: TaskPriority;
+  category?: TaskCategory; // Added Optional Category
+  recurrence?: RecurrenceConfig; // Added Recurrence Config
+  
+  // Date Fields: Allow both for flexibility during hydration
+  createdAt: Timestamp | Date;
+  dueDate?: Timestamp | Date;
+  lastCompletedAt?: Timestamp | Date | null; 
+  
+  source?: 'manual' | 'ai'; 
 }
 
 // --- PROFILE FUNCTIONS ---
@@ -11756,6 +12007,7 @@ export async function fetchAllUserData(uid: string): Promise<FullUserData> {
     workbookAnswers
   };
 }
+
 </file>
 
 <file path="src/lib/exporter.ts">
@@ -13145,6 +13397,10 @@ export async function deleteJournalEntry(id: string) {
 </file>
 
 <file path="src/lib/tasks.ts">
+/**
+ * src/lib/tasks.ts
+ * UPDATED: Fixed Type safety for Date/Timestamp mix.
+ */
 import { 
   collection, 
   addDoc, 
@@ -13152,43 +13408,42 @@ import {
   where, 
   getDocs, 
   doc, 
-  updateDoc,
+  updateDoc, 
   deleteDoc, 
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
+import type { Task as TaskInterface } from "./db";
 
+// Re-export the interface for convenience
+export type Task = TaskInterface;
 export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
 export type Priority = 'High' | 'Medium' | 'Low';
 
-export interface Task {
-  id?: string;
-  uid: string;
-  title: string;
-  isRecurring: boolean;
-  frequency: Frequency;
-  priority: Priority; // ADDED
-  currentStreak: number;
-  lastCompletedAt: Date | null;
-  dueDate: Date;
-  createdAt: Date;
-}
-
 const COLLECTION = 'tasks';
+
+// Helper: Ensure we always have a Date object
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toDate = (val: any): Date | undefined => {
+  if (!val) return undefined;
+  if (val instanceof Timestamp) return val.toDate();
+  if (val instanceof Date) return val;
+  return new Date(val); // Last resort for strings
+}
 
 // 1. CREATE
 export async function addTask(
   uid: string, 
   title: string, 
   frequency: Frequency, 
-  priority: Priority, // ADDED
-  startDate: Date // ADDED for Approach 3
+  priority: Priority, 
+  startDate: Date,
+  source: 'manual' | 'ai' = 'manual'
 ) {
   if (!db) throw new Error("Database not initialized");
   
   const isRecurring = frequency !== 'once';
-  // Ensure date is start of day to avoid time zone drift
   const due = startOfDay(startDate);
 
   await addDoc(collection(db, COLLECTION), {
@@ -13200,7 +13455,8 @@ export async function addTask(
     currentStreak: 0,
     lastCompletedAt: null,
     dueDate: Timestamp.fromDate(due),
-    createdAt: Timestamp.now()
+    createdAt: Timestamp.now(),
+    source
   });
 }
 
@@ -13219,20 +13475,29 @@ export async function getUserTasks(uid: string) {
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
-    // Safely convert Timestamps to Dates
-    const task = { 
+    
+    // Explicitly construct with conversions to avoid TS errors
+    const task: Task = { 
       id: docSnap.id, 
-      ...data,
-      dueDate: data.dueDate?.toDate(),
-      lastCompletedAt: data.lastCompletedAt?.toDate(),
-      createdAt: data.createdAt?.toDate()
-    } as Task;
+      uid: data.uid,
+      title: data.title,
+      completed: data.completed || false, // Default if missing
+      status: data.status || 'pending',
+      isRecurring: data.isRecurring || false,
+      frequency: data.frequency || 'once',
+      currentStreak: data.currentStreak || 0,
+      priority: data.priority || 'Medium',
+      dueDate: toDate(data.dueDate),
+      lastCompletedAt: toDate(data.lastCompletedAt) || null,
+      createdAt: toDate(data.createdAt) || new Date(),
+      source: data.source || 'manual'
+    };
 
-    // --- LAZY EVALUATION LOGIC (Preserved from your code) ---
-    // If it's recurring, overdue, and NOT completed today:
-    if (task.isRecurring && isBefore(task.dueDate, today)) {
+    // --- LAZY EVALUATION LOGIC ---
+    // Fix: Explicitly cast to Date because we normalized it above with toDate()
+    if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
         
-        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt as Date, today);
         
         if (!completedToday) {
             let newStreak = task.currentStreak;
@@ -13252,7 +13517,7 @@ export async function getUserTasks(uid: string) {
             });
 
             task.currentStreak = newStreak;
-            task.dueDate = today;
+            task.dueDate = today; 
         }
     }
 
@@ -13264,8 +13529,8 @@ export async function getUserTasks(uid: string) {
 
 // 3. TOGGLE COMPLETION
 export async function toggleTask(task: Task, isCompleted: boolean) {
-  if (!db) throw new Error("Database not initialized");
-  const taskRef = doc(db, COLLECTION, task.id!);
+  if (!db || !task.id) throw new Error("Database not initialized or Task ID missing");
+  const taskRef = doc(db, COLLECTION, task.id);
   const today = startOfDay(new Date());
 
   if (isCompleted) {
@@ -13277,18 +13542,17 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
         newStreak += 1;
     }
 
-    // Calculate next due date (Smart Reset Approach)
-    // We calculate from TODAY, ensuring users don't get stuck in the past
-    let nextDue = task.dueDate;
+    const currentDue = toDate(task.dueDate) || today;
+    let nextDue = currentDue;
+
     if (task.frequency === 'daily') nextDue = addDays(today, 1);
     else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
     else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
     
-    // If 'once', we don't change the due date, it just gets marked done.
-
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: Timestamp.fromDate(new Date()),
+        status: 'completed',
         // Only update due date if recurring
         ...(task.isRecurring && { dueDate: Timestamp.fromDate(nextDue) })
     });
@@ -13300,8 +13564,7 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: null,
-        // If unchecking, we usually want to reset the due date to "Today" or the original due date.
-        // For simplicity in recovery, if you uncheck it, it becomes due today.
+        status: 'pending',
         dueDate: Timestamp.fromDate(today)
     });
   }
@@ -13313,16 +13576,25 @@ export async function deleteTask(id: string) {
   await deleteDoc(doc(db, COLLECTION, id));
 }
 
-// 5. GET COMPLETED TODAY
+// 5. UPDATE (Generic)
+export async function updateTask(id: string, updates: Partial<Task>) {
+  if (!db) throw new Error("Database not initialized");
+  await updateDoc(doc(db, COLLECTION, id), updates);
+}
+
+// 6. GET COMPLETED TODAY
 export async function getCompletedTasksForToday(uid: string) {
     if (!db) throw new Error("Database not initialized");
     const today = startOfDay(new Date());
     const allTasks = await getUserTasks(uid);
     
-    return allTasks.filter(t => 
-        t.lastCompletedAt && isSameDay(t.lastCompletedAt, today)
-    );
+    // Safety check with toDate helper
+    return allTasks.filter(t => {
+        const d = toDate(t.lastCompletedAt);
+        return d && isSameDay(d, today);
+    });
 }
+
 </file>
 
 <file path="src/lib/theme.ts">
@@ -14185,34 +14457,159 @@ export default function Dashboard() {
 
 </file>
 
+<file path="src/pages/DebugTools.tsx">
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import VibrantHeader from '../components/VibrantHeader';
+import { WrenchScrewdriverIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { subDays, startOfDay } from 'date-fns';
+import { THEME } from '../lib/theme';
+
+export default function DebugTools() {
+    const { user } = useAuth();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [tasks, setTasks] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState('');
+
+    // FIX: Wrapped in useCallback to stabilize the function reference
+    const loadTasks = useCallback(async () => {
+        if (!user || !db) return;
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+            const snap = await getDocs(q);
+            setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch (e) {
+            console.error("Failed to load tasks", e);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    // FIX: Added dependency array
+    useEffect(() => { loadTasks(); }, [loadTasks]);
+
+    const simulateCompletedYesterday = async (taskId: string) => {
+        if (!db) return;
+        const yesterday = subDays(startOfDay(new Date()), 1);
+        
+        setStatus(`Simulating 'Completed Yesterday' for ${taskId}...`);
+        await updateDoc(doc(db, 'tasks', taskId), {
+            status: 'completed',
+            lastCompletedAt: Timestamp.fromDate(yesterday),
+            dueDate: Timestamp.fromDate(yesterday),
+            currentStreak: 5 
+        });
+        setStatus('Done. Go to Tasks page to verify Reset.');
+        loadTasks();
+    };
+
+    const simulateMissedYesterday = async (taskId: string) => {
+        if (!db) return;
+        const yesterday = subDays(startOfDay(new Date()), 1);
+        const twoDaysAgo = subDays(startOfDay(new Date()), 2);
+
+        setStatus(`Simulating 'Missed Yesterday' for ${taskId}...`);
+        await updateDoc(doc(db, 'tasks', taskId), {
+            status: 'pending',
+            lastCompletedAt: Timestamp.fromDate(twoDaysAgo), 
+            dueDate: Timestamp.fromDate(yesterday), 
+            currentStreak: 5 
+        });
+        setStatus('Done. Go to Tasks page to verify Punishment.');
+        loadTasks();
+    };
+
+    return (
+        <div className={`min-h-screen ${THEME.profile.page}`}>
+            <VibrantHeader 
+                title="Time Travel Debugger" 
+                subtitle="Verification tools for logic engines." 
+                icon={WrenchScrewdriverIcon}
+                fromColor="from-slate-700" viaColor="via-slate-800" toColor="to-slate-900"
+            />
+
+            <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-yellow-800 text-sm">
+                    <strong>⚠️ Dev Mode Only:</strong> These tools directly manipulate Firestore data to simulate time passing. 
+                </div>
+
+                {/* FIX: Used the 'loading' variable */}
+                {loading && <div className="text-center text-sm text-gray-500 animate-pulse">Refreshing data...</div>}
+
+                {status && (
+                    <div className="bg-green-100 text-green-800 p-3 rounded-lg font-mono text-xs animate-pulse">
+                        &gt; {status}
+                    </div>
+                )}
+
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                        <h3 className="font-bold text-gray-700">Active Tasks</h3>
+                        <button onClick={loadTasks} className="p-2 hover:bg-gray-100 rounded-full"><ArrowPathIcon className="h-5 w-5" /></button>
+                    </div>
+                    {tasks.map(task => (
+                        <div key={task.id} className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <div className="font-bold">{task.title}</div>
+                                <div className="text-xs text-gray-500 font-mono">
+                                    Streak: {task.currentStreak} | Status: {task.status} <br/>
+                                    Due: {task.dueDate?.toDate().toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => simulateCompletedYesterday(task.id)}
+                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-200"
+                                >
+                                    <ClockIcon className="h-3 w-3 inline mr-1" />
+                                    Sim: Done Yest.
+                                </button>
+                                <button 
+                                    onClick={() => simulateMissedYesterday(task.id)}
+                                    className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200"
+                                >
+                                    <ClockIcon className="h-3 w-3 inline mr-1" />
+                                    Sim: Missed
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+</file>
+
 <file path="src/pages/InsightsLog.tsx">
 /**
  * src/pages/InsightsLog.tsx
- * GITHUB COMMENT:
- * [InsightsLog.tsx]
- * FIX: Separated "Strengths" from "Suggested Actions".
- * FEATURE: Historical insights now have interactive "Add to Task" buttons.
+ * FIXED: Restored UI sections for Strengths and Risks.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { addTask } from '../lib/tasks';
+import { useTaskOperations } from '../hooks/useTaskOperations'; 
 import { addDays } from 'date-fns';
 import { 
     LightBulbIcon, 
     SparklesIcon, 
-    AcademicCapIcon, 
-    BookOpenIcon, 
-    ShieldExclamationIcon, 
     CheckCircleIcon, 
-    TrophyIcon, 
+    PlusCircleIcon,
+    ShieldExclamationIcon,
+    TrophyIcon,
     CalendarDaysIcon,
-    PlusCircleIcon
+    BookOpenIcon,
+    AcademicCapIcon
 } from '@heroicons/react/24/outline';
 
-// Local interface
 interface InsightWithActions {
     suggested_actions?: string[];
     actionableSteps?: string[];
@@ -14227,7 +14624,6 @@ interface InsightWithActions {
     };
 }
 
-// Helper to normalize actions
 const getActions = (data: unknown): string[] => {
     const insight = data as InsightWithActions;
     if (insight.suggested_actions && Array.isArray(insight.suggested_actions)) return insight.suggested_actions;
@@ -14236,26 +14632,23 @@ const getActions = (data: unknown): string[] => {
     return [];
 };
 
-// Helper to normalize strengths/wins
 const getStrengths = (data: unknown): string[] => {
     const insight = data as InsightWithActions;
     if (insight.strengths && Array.isArray(insight.strengths)) return insight.strengths;
-    // Fallback to legacy pillar string if array is missing
     if (insight.pillars?.growth) return [insight.pillars.growth]; 
     return [];
 };
 
-// Helper to normalize risks
 const getRisks = (data: unknown): string[] => {
     const insight = data as InsightWithActions;
     if (insight.risks && Array.isArray(insight.risks)) return insight.risks;
-    // Fallback to legacy pillar string
     if (insight.pillars?.blind_spots) return [insight.pillars.blind_spots];
     return [];
 };
 
 export default function InsightsLog() {
     const { user } = useAuth();
+    const { addTask } = useTaskOperations(); 
     const [insights, setInsights] = useState<SavedInsight[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'journal' | 'workbook'>('all');
@@ -14281,7 +14674,13 @@ export default function InsightsLog() {
         if (!user) return;
         try {
             const dueDate = addDays(new Date(), 7);
-            await addTask(user.uid, action, 'once', 'Medium', dueDate);
+            await addTask({
+                title: action,
+                frequency: 'once',
+                priority: 'Medium',
+                dueDate: dueDate,
+                source: 'ai' 
+            });
             setAddedActions(prev => new Set(prev).add(action));
         } catch (e) {
             console.error("Failed to add task", e);
@@ -14296,7 +14695,7 @@ export default function InsightsLog() {
         <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
             <VibrantHeader 
                 title="Insights" 
-                subtitle="A timeline of your AI coaching sessions and breakthroughs." 
+                subtitle="Daily analysis and coaching history." 
                 icon={LightBulbIcon} 
                 fromColor={THEME.insights.header.from} 
                 viaColor={THEME.insights.header.via} 
@@ -14311,7 +14710,7 @@ export default function InsightsLog() {
                         onClick={() => setFilter(tab)}
                         className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
                         filter === tab 
-                            ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md transform scale-105' 
+                            ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md' 
                             : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                         }`}
                     >
@@ -14328,9 +14727,6 @@ export default function InsightsLog() {
                             <SparklesIcon className="h-8 w-8 text-gray-400" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">No Insights Yet</h3>
-                        <p className="text-gray-500 text-sm mt-1">
-                            Generate analysis from your Journal or Workbooks to populate this log.
-                        </p>
                     </div>
                 ) : (
                     filteredInsights.map((insight) => {
@@ -14339,115 +14735,69 @@ export default function InsightsLog() {
                         const risks = getRisks(insight);
 
                         return (
-                            <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                
+                            <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                                 <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         {insight.type === 'journal' ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                                <BookOpenIcon className="h-3.5 w-3.5" /> Journal
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase border border-blue-200">
+                                                <BookOpenIcon className="h-3 w-3" /> Journal
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
-                                                <AcademicCapIcon className="h-3.5 w-3.5" /> Workbook
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 uppercase border border-purple-200">
+                                                <AcademicCapIcon className="h-3 w-3" /> Workbook
                                             </span>
                                         )}
-                                        <span className="text-xs text-gray-400 flex items-center gap-1 font-medium">
-                                            <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                                            <CalendarDaysIcon className="h-3 w-3" />
                                             {insight.createdAt.toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="p-5">
-                                    {insight.type === 'journal' && (
-                                        <div className="space-y-5">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900 mb-2">Daily Reflection</h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed">{insight.summary}</p>
+                                <div className="p-5 space-y-5">
+                                    <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
+                                    
+                                    {/* STRENGTHS & RISKS GRID */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                                            <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                <TrophyIcon className="h-4 w-4" /> Strengths & Wins
                                             </div>
-                                            <div className="flex flex-wrap gap-3 text-xs">
-                                                <div className="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-blue-700">
-                                                    Mood: <span className="font-bold">{insight.moodScore}/10</span>
-                                                </div>
-                                                <div className="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 text-indigo-700">
-                                                    Sentiment: <span className="font-bold">{insight.sentiment}</span>
-                                                </div>
+                                            <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                {strengths.length > 0 ? strengths.map((s, idx) => <li key={idx}>{s}</li>) : <li>Persistence in recovery.</li>}
+                                            </ul>
+                                        </div>
+                                        
+                                        <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                            <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                    <div className="text-orange-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
-                                                        <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
-                                                    </div>
-                                                    <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                        {risks.length > 0 ? risks.map((risk, idx) => <li key={idx}>{risk}</li>) : <li>None detected.</li>}
-                                                    </ul>
-                                                </div>
-                                                
-                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                                    <div className="text-green-800 font-bold text-xs uppercase mb-1.5 flex items-center gap-1">
-                                                        <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                                    </div>
-                                                    <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                        {strengths.length > 0 ? strengths.map((s, idx) => <li key={idx}>{s}</li>) : <li>Keep moving forward.</li>}
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                            <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                {risks.length > 0 ? risks.map((r, idx) => <li key={idx}>{r}</li>) : <li>None detected.</li>}
+                                            </ul>
+                                        </div>
+                                    </div>
 
-                                            {/* SEPARATED ACTION PLAN CARD */}
-                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1">
-                                                    <CheckCircleIcon className="h-4 w-4" /> Action Plan (Choose to Add)
-                                                </div>
-                                                <ul className="space-y-2">
-                                                    {actions.map((step, idx) => (
-                                                        <li key={idx} className="flex items-center justify-between gap-2 text-xs text-gray-700">
-                                                            <div className="flex gap-2">
-                                                                <span className="text-green-500 font-bold">•</span>
-                                                                <span>{step}</span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
-                                                                disabled={addedActions.has(step)}
-                                                                className={`p-1 rounded-full transition-all flex-shrink-0 ${addedActions.has(step) ? 'text-green-600 bg-green-200' : 'text-gray-400 hover:text-green-600 hover:bg-green-100'}`}
-                                                                title="Add to Quests"
-                                                            >
-                                                                {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
-                                                            </button>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
+                                    {/* ACTION PLAN SECTION */}
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <div className="text-gray-500 font-bold text-xs uppercase mb-3 flex items-center gap-1">
+                                            <CheckCircleIcon className="h-4 w-4" /> Suggested Actions
                                         </div>
-                                    )}
-                                    {insight.type === 'workbook' && (
-                                        <div className="space-y-5">
-                                            {/* ... Workbook logic remains similar (omitted for brevity unless requested) ... */}
-                                            {/* Re-using same logic for workbook actions */}
-                                            <div>
-                                                <h3 className="text-lg font-bold text-purple-900 mb-1 flex items-center gap-2">{insight.scope_context}</h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed mt-2">{insight.summary}</p>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100"><div className="text-blue-800 font-bold text-xs uppercase mb-1">Understanding</div><p className="text-xs text-blue-900 leading-relaxed">{insight.pillars.understanding}</p></div>
-                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100"><div className="text-green-800 font-bold text-xs uppercase mb-1">Growth</div><p className="text-xs text-green-900 leading-relaxed">{insight.pillars.emotional_resonance}</p></div>
-                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100"><div className="text-orange-800 font-bold text-xs uppercase mb-1">Blind Spots</div><p className="text-xs text-orange-900 leading-relaxed">{insight.pillars.blind_spots}</p></div>
-                                            </div>
-                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                <div className="text-gray-500 font-bold text-xs uppercase mb-2 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Action Plan</div>
-                                                <ul className="space-y-2">
-                                                    {actions.map((action, idx) => (
-                                                        <li key={idx} className="text-xs text-gray-700 flex items-center justify-between gap-2">
-                                                            <div className="flex gap-2"><span className="text-purple-400 font-bold mt-0.5">•</span>{action}</div>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all flex-shrink-0 ${addedActions.has(action) ? 'text-green-500 bg-green-100' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-100'}`}>
-                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
-                                                            </button>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    )}
+                                        <ul className="space-y-2">
+                                            {actions.map((step, idx) => (
+                                                <li key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm text-xs text-gray-700">
+                                                    <span>{step}</span>
+                                                    <button
+                                                        onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
+                                                        disabled={addedActions.has(step)}
+                                                        className={`p-1.5 rounded-full transition-all ${addedActions.has(step) ? 'text-green-600 bg-green-100' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`}
+                                                    >
+                                                        {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -14457,6 +14807,7 @@ export default function InsightsLog() {
         </div>
     );
 }
+
 </file>
 
 <file path="src/pages/Journal.tsx">
@@ -15012,433 +15363,247 @@ export default function Profile() {
 </file>
 
 <file path="src/pages/Tasks.tsx">
-/**
- * src/pages/Tasks.tsx
- * GITHUB COMMENT:
- * [Tasks.tsx]
- * FIX: Resolved "Unsupported field value: undefined" error in recurring tasks.
- * UPDATE: Properly strips 'id' from payload before creating new recurring task instances.
- */
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
+import { collection, query, where, orderBy, onSnapshot, type Firestore, Timestamp } from 'firebase/firestore';
+import { useEffect } from 'react';
 import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp, 
-  Timestamp,
-  type Firestore 
-} from 'firebase/firestore';
-import { 
-  PlusIcon, 
-  BookOpenIcon, 
-  TrashIcon, 
-  TrophyIcon, 
-  EllipsisHorizontalIcon, 
-  PencilSquareIcon,
-  ArrowPathIcon,
-  FireIcon
+    PlusIcon, 
+    ClipboardDocumentListIcon,
+    CalendarIcon,
+    ClockIcon,
+    SparklesIcon,
+    ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
-import { calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../lib/dateUtils';
-import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 import VibrantHeader from '../components/VibrantHeader';
+import TaskRow from '../components/tasks/TaskRow';
+import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
+import { useTaskOperations } from '../hooks/useTaskOperations';
 import { THEME } from '../lib/theme';
+import type { Task } from '../lib/tasks';
+import { isBefore, isAfter, endOfDay } from 'date-fns';
 
-type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
-type TaskPriority = 'High' | 'Medium' | 'Low';
-type TabOption = 'today' | 'upcoming' | 'history';
+type TabOption = 'today' | 'upcoming' | 'action_plan' | 'history';
 
-export interface Task {
-  id: string;
-  uid: string;
-  title: string;
-  category: TaskCategory;
-  priority: TaskPriority;
-  status: 'pending' | 'completed';
-  frequency?: string; 
-  recurrence?: RecurrenceConfig;
-  dueDate: Timestamp | Date | null;
-  createdAt: Timestamp;
-  completedAt?: Timestamp | null;
-  stats?: {
-    xp: number;
-    attribute: 'Wisdom' | 'Vitality' | 'Willpower';
-  };
+// Helper for type casting dates
+const toDate = (val: Date | Timestamp | undefined | null): Date | null => {
+    if (!val) return null;
+    if (val instanceof Timestamp) return val.toDate();
+    if (val instanceof Date) return val;
+    return null;
 }
-
-const CATEGORY_THEME: Record<TaskCategory, { bg: string; text: string; border: string; ring: string }> = {
-    Recovery: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', ring: 'ring-cyan-500' },
-    Health:   { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', ring: 'ring-emerald-500' },
-    Life:     { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', ring: 'ring-violet-500' },
-    Work:     { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', ring: 'ring-amber-500' },
-};
 
 export default function Tasks() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+    const { user } = useAuth();
+    const { addTask, toggleTask, deleteTask, updateTask } = useTaskOperations();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabOption>('today');
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  useEffect(() => {
-    if (!user || !db) return;
-
-    const database: Firestore = db;
-    const q = query(
-      collection(database, 'tasks'),
-      where('uid', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const taskData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Task));
-      setTasks(taskData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  const { filteredTasks, progress } = useMemo(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    // Data State
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [loading, setLoading] = useState(true);
     
-    const getTaskDate = (t: Task) => {
-        if (!t.dueDate) return null;
-        return t.dueDate instanceof Date ? t.dueDate : (t.dueDate as Timestamp).toDate();
-    };
+    // UI State
+    const [activeTab, setActiveTab] = useState<TabOption>('today');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-    const todayTasks: Task[] = [];
-    const upcomingTasks: Task[] = [];
-    const historyTasks: Task[] = [];
+    // 1. Live Subscription
+    useEffect(() => {
+        if (!user || !db) return;
+        const database: Firestore = db;
+        
+        // Fetch ALL tasks for user, filtering happens client-side for "Smart Tabs"
+        const q = query(
+            collection(database, 'tasks'),
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
 
-    let completedToday = 0;
-    let totalToday = 0;
-
-    tasks.forEach(t => {
-        const d = getTaskDate(t);
-        const isCompleted = t.status === 'completed';
-
-        if (isCompleted && (!d || d < now)) {
-            historyTasks.push(t);
-            return;
-        }
-
-        if (d && d > now && !isCompleted) {
-            upcomingTasks.push(t);
-            return;
-        }
-
-        todayTasks.push(t);
-        totalToday++;
-        if (isCompleted) completedToday++;
-    });
-
-    todayTasks.sort((a, b) => {
-        if (a.status === b.status) {
-             const pMap = { High: 3, Medium: 2, Low: 1 };
-             return pMap[b.priority] - pMap[a.priority];
-        }
-        return a.status === 'completed' ? 1 : -1;
-    });
-
-    return {
-        filteredTasks: activeTab === 'today' ? todayTasks : activeTab === 'upcoming' ? upcomingTasks : historyTasks,
-        progress: totalToday === 0 ? 0 : (completedToday / totalToday) * 100
-    };
-  }, [tasks, activeTab]);
-
-  const handleToggleComplete = useCallback(async (task: Task) => {
-    if (!db || !user) return;
-    
-    if (task.status === 'completed') {
-         await updateDoc(doc(db, 'tasks', task.id), {
-            status: 'pending',
-            completedAt: null
-        });
-        return;
-    }
-
-    try {
-        await updateDoc(doc(db, 'tasks', task.id), {
-            status: 'completed',
-            completedAt: serverTimestamp()
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const taskData = snapshot.docs.map(doc => {
+                const d = doc.data();
+                return {
+                    id: doc.id,
+                    ...d,
+                    dueDate: d.dueDate?.toDate ? d.dueDate.toDate() : d.dueDate,
+                    createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : d.createdAt,
+                    lastCompletedAt: d.lastCompletedAt?.toDate ? d.lastCompletedAt.toDate() : d.lastCompletedAt
+                } as Task;
+            });
+            setTasks(taskData);
+            setLoading(false);
         });
 
-        if (task.recurrence && task.recurrence.type !== 'once') {
-            const currentDueDate = task.dueDate instanceof Date 
-                ? task.dueDate 
-                : (task.dueDate as Timestamp).toDate();
-            
-            const nextDate = calculateNextDueDate(currentDueDate, task.recurrence);
-            
-            if (nextDate) {
-                // FIX: Destructure ID out to avoid "undefined" error in addDoc
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { id, ...cleanTask } = task;
+        return () => unsubscribe();
+    }, [user]);
 
-                await addDoc(collection(db, 'tasks'), {
-                    ...cleanTask, 
-                    status: 'pending',
-                    createdAt: serverTimestamp(),
-                    dueDate: nextDate,
-                    completedAt: null
-                });
+    // 2. Smart Filter Logic (The Brain)
+    const filteredTasks = useMemo(() => {
+        const todayEnd = endOfDay(new Date());
+        
+        return tasks.filter(task => {
+            const isCompleted = task.status === 'completed';
+            const date = toDate(task.dueDate) || new Date(); 
+            const isManual = !task.source || task.source === 'manual';
+            const isAI = task.source === 'ai';
+
+            if (activeTab === 'today') {
+                return !isCompleted && isBefore(date, todayEnd) && isManual;
             }
-        }
+            if (activeTab === 'upcoming') {
+                return !isCompleted && isAfter(date, todayEnd) && isManual;
+            }
+            if (activeTab === 'action_plan') {
+                return !isCompleted && isAI;
+            }
+            if (activeTab === 'history') {
+                return isCompleted;
+            }
+            return false;
+        }).sort((a, b) => {
+            const pMap = { High: 3, Medium: 2, Low: 1 };
+            const pA = a.priority || 'Medium';
+            const pB = b.priority || 'Medium';
+            const priorityDiff = pMap[pB] - pMap[pA];
+            if (priorityDiff !== 0) return priorityDiff;
+            
+            const dateA = toDate(a.dueDate)?.getTime() || 0;
+            const dateB = toDate(b.dueDate)?.getTime() || 0;
+            return dateA - dateB;
+        });
+    }, [tasks, activeTab]);
 
-        if (navigator.vibrate) navigator.vibrate(50);
-    } catch (e) {
-        console.error("Error completing task", e);
-    }
-  }, [user]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    if (!db) return;
-    if (confirm("Delete this quest?")) {
-        try {
-            await deleteDoc(doc(db, 'tasks', id));
-        } catch (e) {
-            console.error(e);
-        }
-    }
-  }, []);
-
-  const handleEdit = useCallback((task: Task) => {
-      setEditingTask(task);
-      setIsModalOpen(true);
-      setExpandedTaskId(null);
-  }, []);
-
-  const handleJournalReflect = useCallback((task: Task) => {
-    navigate('/journal', { 
-        state: { 
-            initialContent: `**Reflecting on Quest: ${task.title}**\n\nHow did completing this make me feel?\n` 
-        } 
-    }); 
-  }, [navigate]);
-
-  const handleSaveTask = useCallback(async (data: TaskFormData) => {
-    if (!user || !db) return;
-
-    let dueDateObj: Date | null = null;
-    if (data.dueDate) {
-        dueDateObj = new Date(data.dueDate);
-        dueDateObj.setHours(23, 59, 59);
-    }
-
-    const payload = {
-        uid: user.uid,
-        title: data.title,
-        category: data.category,
-        priority: data.priority,
-        dueDate: dueDateObj || serverTimestamp(),
-        recurrence: data.recurrence,
-        stats: {
-             xp: data.priority === 'High' ? 50 : 20,
-             attribute: data.category === 'Recovery' ? 'Wisdom' : data.category === 'Health' ? 'Vitality' : 'Willpower'
-        }
-    };
-
-    try {
-        if (data.id) {
-            await updateDoc(doc(db, 'tasks', data.id), payload);
+    // 3. Handlers
+    const handleSave = async (data: TaskFormData) => {
+        if (editingTask && data.id) {
+            await updateTask({ 
+                id: data.id,
+                title: data.title,
+                category: data.category,
+                priority: data.priority,
+                recurrence: data.recurrence,
+                // Ensure dueDate is a Date object for Firestore
+                dueDate: new Date(data.dueDate) 
+            });
         } else {
-            await addDoc(collection(db, 'tasks'), {
-                ...payload,
-                status: 'pending',
-                createdAt: serverTimestamp()
+            await addTask({
+                title: data.title,
+                frequency: data.recurrence.type === 'once' ? 'once' : 'daily',
+                priority: data.priority,
+                dueDate: new Date(data.dueDate),
+                source: 'manual' 
             });
         }
-    } catch (error) {
-        console.error("Error saving task", error);
-    }
-  }, [user]);
+    };
 
-  const getPriorityBadge = (p: string) => {
-      switch(p) {
-          case 'High': return (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
-                <FireIcon className="h-3 w-3" /> HIGH
-            </span>
-          );
-          case 'Medium': return null; 
-          default: return <span className="text-[10px] text-gray-400 font-medium">Low Priority</span>;
-      }
-  };
+    const handleEdit = (task: Task) => {
+        setEditingTask(task);
+        setIsModalOpen(true);
+    };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading your quests...</div>;
+    const handleDelete = (id: string) => {
+        if (confirm("Delete this task?")) deleteTask(id);
+    };
 
-  return (
-    <div className={`h-[100dvh] flex flex-col ${THEME.tasks.page}`}>
-        
-        {/* HEADER: The Spark */}
-        <VibrantHeader 
-            title="Today's Quests" 
-            subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-            icon={FireIcon}
-            fromColor={THEME.tasks.header.from}
-            viaColor={THEME.tasks.header.via}
-            toColor={THEME.tasks.header.to}
-            percentage={progress}
-            percentageColor={THEME.tasks.ring}
-        />
+    if (loading) return <div className="p-10 text-center text-gray-400">Loading ledger...</div>;
 
-        <div className="px-4 -mt-10 relative z-30">
-            <div className="bg-white p-1.5 rounded-xl shadow-lg border border-cyan-200 flex">
-                {['today', 'upcoming', 'history'].map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab as TabOption)}
-                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
-                            activeTab === tab 
-                            ? 'bg-gradient-to-br from-cyan-600 to-teal-600 text-white shadow-md transform scale-105' 
-                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
+    return (
+        <div className={`min-h-screen flex flex-col bg-gray-50 pb-20`}>
+            {/* Header */}
+            <div className="flex-shrink-0 z-10">
+                <VibrantHeader 
+                    title="Tasks" 
+                    subtitle="Daily Actions & Goals" 
+                    icon={ClipboardDocumentListIcon}
+                    fromColor={THEME.tasks.header.from}
+                    viaColor={THEME.tasks.header.via}
+                    toColor={THEME.tasks.header.to}
+                    percentage={0} // Can hook up completion rate later if desired
+                    percentageColor={THEME.tasks.ring}
+                />
             </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-20 space-y-4">
-            {filteredTasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
-                    <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                        <TrophyIcon className="h-10 w-10 text-yellow-400" />
-                    </div>
-                    <p className="text-gray-900 font-medium">All caught up for {activeTab}!</p>
-                    <p className="text-sm text-gray-500 mt-1">Take a moment to breathe and reflect.</p>
-                </div>
-            ) : (
-                filteredTasks.map(task => {
-                    const theme = CATEGORY_THEME[task.category] || CATEGORY_THEME.Recovery;
-                    
-                    return (
-                        <div 
-                            key={task.id} 
-                            className={`relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md ${
-                                task.status === 'completed' ? 'opacity-60 grayscale-[0.5]' : ''
+            {/* Smart Tabs */}
+            <div className="px-4 -mt-8 relative z-20">
+                <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex overflow-x-auto no-scrollbar">
+                    {[
+                        { id: 'today', label: 'Today', icon: CalendarIcon },
+                        { id: 'upcoming', label: 'Upcoming', icon: ClockIcon },
+                        { id: 'action_plan', label: 'Action Plan', icon: SparklesIcon },
+                        { id: 'history', label: 'Log', icon: ArchiveBoxIcon },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as TabOption)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
+                                activeTab === tab.id 
+                                ? 'bg-slate-800 text-white shadow-md' 
+                                : 'text-gray-500 hover:bg-gray-50'
                             }`}
-                            onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                         >
-                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${theme.bg.replace('bg-', 'bg-gradient-to-b from-')}-400 to-${theme.bg.split('-')[1]}-600`} />
-                            
-                            <div className="p-4 pl-5 flex items-start gap-4">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleToggleComplete(task); }}
-                                    className="mt-0.5 flex-shrink-0 group"
-                                >
-                                    {task.status === 'completed' ? (
-                                        <CheckCircleSolidIcon className="h-7 w-7 text-green-500 drop-shadow-sm transition-transform group-hover:scale-110" />
-                                    ) : (
-                                        <div className={`h-7 w-7 rounded-full border-2 border-gray-300 group-hover:${theme.border.replace('border-', 'border-')} group-hover:bg-gray-50 transition-colors`} />
-                                    )}
-                                </button>
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                                <div className="flex-1 min-w-0 pt-0.5">
-                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                            {getPriorityBadge(task.priority)}
-                                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.bg} ${theme.text} ${theme.border}`}>
-                                                {task.category || 'General'}
-                                            </span>
-                                            {task.recurrence && task.recurrence.type !== 'once' && (
-                                                <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100 font-medium">
-                                                    <ArrowPathIcon className="h-3 w-3" />
-                                                    {getRecurrenceLabel(task.recurrence)}
-                                                </span>
-                                            )}
-                                    </div>
-
-                                    <div className={`text-sm font-medium leading-relaxed transition-all duration-300 ${
-                                        task.status === 'completed' ? 'text-gray-400 line-through decoration-gray-300' : 'text-gray-800'
-                                    } ${
-                                        expandedTaskId === task.id ? 'whitespace-pre-wrap' : 'line-clamp-2'
-                                    }`}>
-                                            {task.title}
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-xs font-medium text-gray-400 mt-2.5">
-                                            {task.stats && (
-                                                <span className="text-blue-600 flex items-center gap-1">
-                                                    <TrophyIcon className="h-3 w-3" />
-                                                    +{task.stats.xp} XP
-                                                </span>
-                                            )}
-                                    </div>
-                                </div>
-
-                                <div className="flex-shrink-0 mt-1">
-                                    <EllipsisHorizontalIcon className={`h-6 w-6 text-gray-300 transition-transform ${expandedTaskId === task.id ? 'rotate-90 text-blue-600' : ''}`} />
-                                </div>
+            {/* List Container */}
+            <div className="flex-1 px-4 mt-6 max-w-3xl mx-auto w-full">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[300px]">
+                    {filteredTasks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                            <div className="bg-slate-50 p-4 rounded-full mb-3">
+                                {activeTab === 'action_plan' ? (
+                                    <SparklesIcon className="h-8 w-8 text-purple-300" />
+                                ) : (
+                                    <ClipboardDocumentListIcon className="h-8 w-8 text-slate-300" />
+                                )}
                             </div>
-
-                            {expandedTaskId === task.id && (
-                                <div className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-2 flex justify-end gap-2 animate-fadeIn">
-                                    {task.status === 'completed' && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleJournalReflect(task); }}
-                                            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50 active:scale-95 transition-all"
-                                        >
-                                            <BookOpenIcon className="h-4 w-4" />
-                                            Reflect
-                                        </button>
-                                    )}
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-100 active:scale-95 transition-all"
-                                    >
-                                        <PencilSquareIcon className="h-4 w-4" />
-                                        Edit
-                                    </button>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(task.id); }}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-red-600 shadow-sm hover:bg-red-50 active:scale-95 transition-all"
-                                    >
-                                        <TrashIcon className="h-4 w-4" />
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
+                            <h3 className="text-slate-900 font-bold">
+                                {activeTab === 'action_plan' ? 'No Active Insights' : 'All Clear'}
+                            </h3>
+                            <p className="text-slate-500 text-xs mt-1 max-w-xs">
+                                {activeTab === 'action_plan' 
+                                    ? 'Visit the Insights page to generate an AI Action Plan.' 
+                                    : 'You have no pending tasks for this view. Enjoy the moment.'}
+                            </p>
                         </div>
-                    );
-                })
-            )}
+                    ) : (
+                        <div className="divide-y divide-gray-50">
+                            {filteredTasks.map(task => (
+                                <TaskRow 
+                                    key={task.id} 
+                                    task={task} 
+                                    onToggle={toggleTask}
+                                    onDelete={handleDelete}
+                                    onEdit={handleEdit}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* FAB */}
+            <button
+                onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
+                className="fixed bottom-24 right-6 h-14 w-14 bg-slate-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-black transition-all active:scale-95 z-40"
+            >
+                <PlusIcon className="h-6 w-6" />
+            </button>
+
+            {/* Modal */}
+            <TaskFormModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                initialTask={editingTask}
+                onSave={handleSave}
+            />
         </div>
-
-        <button
-            onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-cyan-600 to-teal-600 text-white p-4 rounded-full shadow-lg shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95 z-30"
-        >
-            <PlusIcon className="h-7 w-7" />
-        </button>
-
-        <TaskFormModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            initialTask={editingTask}
-            onSave={handleSaveTask}
-        />
-    </div>
-  );
+    );
 }
+
 </file>
 
 <file path="src/pages/TemplateEditor.tsx">
