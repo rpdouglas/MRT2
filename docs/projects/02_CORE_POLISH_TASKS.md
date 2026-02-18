@@ -1,19 +1,23 @@
-# ⚡ Project 02: Task List Revamp (The Quest Engine)
+# ⚡ Project 02: Professional Task List (The Engine)
 
-**Objective:** Modernize the "Quests" interface to increase user engagement (dopamine) and reduce friction.
+**Objective:** Transform the Tasks module into a high-performance, minimalist to-do list.
+**Constraint:** STRICTLY AVOID "Quest" or RPG terminology.
 **Status:** 🟡 Active
-**Tech Stack:** React Query (Optimistic Updates), Tailwind v4, Framer Motion (optional).
 
-## 🏗️ Phase 1: UX & Interaction (The Feel)
-* [ ] **Optimistic UI:** Implement `onMutate` in `useMutation` so checkboxes toggle *instantly* without waiting for Firestore.
-* [ ] **Visual Redesign:** Move from "Bulky Cards" to "Compact Rows" for better density.
-* [ ] **Micro-Interactions:** Add subtle animations/confetti on completion.
+## 🏗️ Phase 1: Logic & Optimistic UI (The Feel)
+* [ ] **Optimistic Toggle:** Implement `onMutate` in React Query. Clicking a checkbox must feel instant.
+* [ ] **Refactor Hook:** Create `useTaskOperations` to handle add/edit/delete/toggle.
+* [ ] **Schema Update:** Add `source` field ('manual' | 'ai') to differentiate user tasks from Insight Actions.
 
-## 🧠 Phase 2: Logic & Architecture
-* [ ] **Sorting Engine:** Sort by: `Status (Pending > Done)` -> `Priority` -> `Due Date`.
-* [ ] **Filtering:** Add tabs/pills for "Today", "Overdue", "High Priority".
-* [ ] **Sub-Quests:** (Stretch Goal) Allow a Task to have an array of sub-checkboxes.
+## 🧠 Phase 2: Visual Rebranding (The Look)
+* [ ] **List Layout:** Replace "Cards" with "Compact Rows" (High density).
+* [ ] **Terminology:** Rename "New Quest" -> "New Task".
+* [ ] **Smart Tabs:**
+    1. **Today:** Due <= Today (includes Overdue).
+    2. **Upcoming:** Due > Today.
+    3. **Action Plan:** Tasks where `source == 'ai'`. (Keeps growth goals separate from chores).
+    4. **History:** Completed tasks.
 
-## 🎨 Phase 3: Gamification
-* [ ] **Streak Visualizer:** Show a mini "Heatmap" or "Chain" icon next to recurring tasks.
-* [ ] **Completion Sound:** Optional "Ding" sound (using `useSound` or native Audio API).
+## 🎨 Phase 3: "Invisible" Gamification
+* [ ] **Subtle Rewards:** Completion triggers a subtle "ding" or micro-animation (no confetti).
+* [ ] **Streak Display:** Show a small "Fire" icon next to recurring habits, but keep it minimal.
