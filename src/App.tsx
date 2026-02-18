@@ -11,6 +11,7 @@ import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome'; 
 import Dashboard from './pages/Dashboard';
+import DebugTools from './pages/DebugTools';
 import Journal from './pages/Journal';
 import Tasks from './pages/Tasks';
 import Profile from './pages/Profile';
@@ -190,6 +191,9 @@ export default function App() {
                         />
                         
                         {/* FALLBACK */}
+
+                        {/* DEBUG TOOLS (Dev Only) */}
+                        <Route path="/debug" element={<PrivateRoute><DebugTools /></PrivateRoute>} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 </Suspense>
