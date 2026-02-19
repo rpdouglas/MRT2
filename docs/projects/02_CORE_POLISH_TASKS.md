@@ -1,19 +1,19 @@
-# ⚡ Project 02: Task List Revamp (The Quest Engine)
+# ⚡ Project 02: Professional Task List (The Engine)
 
-**Objective:** Modernize the "Quests" interface to increase user engagement (dopamine) and reduce friction.
-**Status:** 🟡 Active
-**Tech Stack:** React Query (Optimistic Updates), Tailwind v4, Framer Motion (optional).
+**Objective:** Transform the Tasks module into a high-performance, minimalist to-do list.
+**Status:** 🟢 Done
+**Personas Involved:** Ned (The Pink Cloud)
 
-## 🏗️ Phase 1: UX & Interaction (The Feel)
-* [ ] **Optimistic UI:** Implement `onMutate` in `useMutation` so checkboxes toggle *instantly* without waiting for Firestore.
-* [ ] **Visual Redesign:** Move from "Bulky Cards" to "Compact Rows" for better density.
-* [ ] **Micro-Interactions:** Add subtle animations/confetti on completion.
+## 🏗️ Phase 1: Logic & Optimistic UI (The Feel)
+* [x] **Optimistic Toggle:** Implement `onMutate` in React Query. Clicking a checkbox must feel instant.
+* [x] **Refactor Hook:** Create `useTaskOperations` to handle add/edit/delete/toggle.
+* [x] **Schema Update:** Add `source` field ('manual' | 'ai') to differentiate user tasks from Insight Actions.
 
-## 🧠 Phase 2: Logic & Architecture
-* [ ] **Sorting Engine:** Sort by: `Status (Pending > Done)` -> `Priority` -> `Due Date`.
-* [ ] **Filtering:** Add tabs/pills for "Today", "Overdue", "High Priority".
-* [ ] **Sub-Quests:** (Stretch Goal) Allow a Task to have an array of sub-checkboxes.
+## 🧠 Phase 2: Visual Rebranding (The Look)
+* [x] **List Layout:** Replace "Cards" with "Compact Rows" (High density).
+* [x] **Terminology:** Rename "New Quest" -> "New Task".
+* [x] **Smart Tabs:** Implement Today, Upcoming, Action Plan, and History log.
 
-## 🎨 Phase 3: Gamification
-* [ ] **Streak Visualizer:** Show a mini "Heatmap" or "Chain" icon next to recurring tasks.
-* [ ] **Completion Sound:** Optional "Ding" sound (using `useSound` or native Audio API).
+## 🎨 Phase 3: "Invisible" Gamification
+* [x] **Subtle Rewards:** Completion triggers a subtle UI update.
+* [x] **Streak Display:** Show recurrence label and visual overdue indicators.
