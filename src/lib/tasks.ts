@@ -1,3 +1,7 @@
+/**
+ * src/lib/tasks.ts
+ * UPDATED: Fixed Type safety for Date/Timestamp mix.
+ */
 import { 
   collection, 
   addDoc, 
@@ -5,43 +9,42 @@ import {
   where, 
   getDocs, 
   doc, 
-  updateDoc,
+  updateDoc, 
   deleteDoc, 
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
+import type { Task as TaskInterface } from "./db";
 
+// Re-export the interface for convenience
+export type Task = TaskInterface;
 export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
 export type Priority = 'High' | 'Medium' | 'Low';
 
-export interface Task {
-  id?: string;
-  uid: string;
-  title: string;
-  isRecurring: boolean;
-  frequency: Frequency;
-  priority: Priority; // ADDED
-  currentStreak: number;
-  lastCompletedAt: Date | null;
-  dueDate: Date;
-  createdAt: Date;
-}
-
 const COLLECTION = 'tasks';
+
+// Helper: Ensure we always have a Date object
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toDate = (val: any): Date | undefined => {
+  if (!val) return undefined;
+  if (val instanceof Timestamp) return val.toDate();
+  if (val instanceof Date) return val;
+  return new Date(val); // Last resort for strings
+}
 
 // 1. CREATE
 export async function addTask(
   uid: string, 
   title: string, 
   frequency: Frequency, 
-  priority: Priority, // ADDED
-  startDate: Date // ADDED for Approach 3
+  priority: Priority, 
+  startDate: Date,
+  source: 'manual' | 'ai' = 'manual'
 ) {
   if (!db) throw new Error("Database not initialized");
   
   const isRecurring = frequency !== 'once';
-  // Ensure date is start of day to avoid time zone drift
   const due = startOfDay(startDate);
 
   await addDoc(collection(db, COLLECTION), {
@@ -53,7 +56,8 @@ export async function addTask(
     currentStreak: 0,
     lastCompletedAt: null,
     dueDate: Timestamp.fromDate(due),
-    createdAt: Timestamp.now()
+    createdAt: Timestamp.now(),
+    source
   });
 }
 
@@ -72,20 +76,29 @@ export async function getUserTasks(uid: string) {
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
-    // Safely convert Timestamps to Dates
-    const task = { 
+    
+    // Explicitly construct with conversions to avoid TS errors
+    const task: Task = { 
       id: docSnap.id, 
-      ...data,
-      dueDate: data.dueDate?.toDate(),
-      lastCompletedAt: data.lastCompletedAt?.toDate(),
-      createdAt: data.createdAt?.toDate()
-    } as Task;
+      uid: data.uid,
+      title: data.title,
+      completed: data.completed || false, // Default if missing
+      status: data.status || 'pending',
+      isRecurring: data.isRecurring || false,
+      frequency: data.frequency || 'once',
+      currentStreak: data.currentStreak || 0,
+      priority: data.priority || 'Medium',
+      dueDate: toDate(data.dueDate),
+      lastCompletedAt: toDate(data.lastCompletedAt) || null,
+      createdAt: toDate(data.createdAt) || new Date(),
+      source: data.source || 'manual'
+    };
 
-    // --- LAZY EVALUATION LOGIC (Preserved from your code) ---
-    // If it's recurring, overdue, and NOT completed today:
-    if (task.isRecurring && isBefore(task.dueDate, today)) {
+    // --- LAZY EVALUATION LOGIC ---
+    // Fix: Explicitly cast to Date because we normalized it above with toDate()
+    if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
         
-        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt, today);
+        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt as Date, today);
         
         if (!completedToday) {
             let newStreak = task.currentStreak;
@@ -105,7 +118,7 @@ export async function getUserTasks(uid: string) {
             });
 
             task.currentStreak = newStreak;
-            task.dueDate = today;
+            task.dueDate = today; 
         }
     }
 
@@ -117,8 +130,8 @@ export async function getUserTasks(uid: string) {
 
 // 3. TOGGLE COMPLETION
 export async function toggleTask(task: Task, isCompleted: boolean) {
-  if (!db) throw new Error("Database not initialized");
-  const taskRef = doc(db, COLLECTION, task.id!);
+  if (!db || !task.id) throw new Error("Database not initialized or Task ID missing");
+  const taskRef = doc(db, COLLECTION, task.id);
   const today = startOfDay(new Date());
 
   if (isCompleted) {
@@ -130,18 +143,17 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
         newStreak += 1;
     }
 
-    // Calculate next due date (Smart Reset Approach)
-    // We calculate from TODAY, ensuring users don't get stuck in the past
-    let nextDue = task.dueDate;
+    const currentDue = toDate(task.dueDate) || today;
+    let nextDue = currentDue;
+
     if (task.frequency === 'daily') nextDue = addDays(today, 1);
     else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
     else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
     
-    // If 'once', we don't change the due date, it just gets marked done.
-
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: Timestamp.fromDate(new Date()),
+        status: 'completed',
         // Only update due date if recurring
         ...(task.isRecurring && { dueDate: Timestamp.fromDate(nextDue) })
     });
@@ -153,8 +165,7 @@ export async function toggleTask(task: Task, isCompleted: boolean) {
     await updateDoc(taskRef, {
         currentStreak: newStreak,
         lastCompletedAt: null,
-        // If unchecking, we usually want to reset the due date to "Today" or the original due date.
-        // For simplicity in recovery, if you uncheck it, it becomes due today.
+        status: 'pending',
         dueDate: Timestamp.fromDate(today)
     });
   }
@@ -166,13 +177,21 @@ export async function deleteTask(id: string) {
   await deleteDoc(doc(db, COLLECTION, id));
 }
 
-// 5. GET COMPLETED TODAY
+// 5. UPDATE (Generic)
+export async function updateTask(id: string, updates: Partial<Task>) {
+  if (!db) throw new Error("Database not initialized");
+  await updateDoc(doc(db, COLLECTION, id), updates);
+}
+
+// 6. GET COMPLETED TODAY
 export async function getCompletedTasksForToday(uid: string) {
     if (!db) throw new Error("Database not initialized");
     const today = startOfDay(new Date());
     const allTasks = await getUserTasks(uid);
     
-    return allTasks.filter(t => 
-        t.lastCompletedAt && isSameDay(t.lastCompletedAt, today)
-    );
+    // Safety check with toDate helper
+    return allTasks.filter(t => {
+        const d = toDate(t.lastCompletedAt);
+        return d && isSameDay(d, today);
+    });
 }
