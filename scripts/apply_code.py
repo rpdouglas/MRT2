@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import os
+
+workbooks_code = r"""import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -176,3 +178,14 @@ export default function Workbooks() {
     </div>
   );
 }
+"""
+
+def write_file(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content.strip() + "\n")
+    print(f"✅ Modified: {path}")
+
+if __name__ == "__main__":
+    write_file("src/pages/Workbooks.tsx", workbooks_code)
+    print("🚀 Metric update complete. Run 'npm run build && npm run lint' to verify.")

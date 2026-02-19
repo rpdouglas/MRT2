@@ -1,6 +1,7 @@
 import { useLayout } from '../contexts/LayoutContext';
-import { Bars3Icon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import type { ElementType } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface VibrantHeaderProps {
   title: string;
@@ -11,6 +12,7 @@ interface VibrantHeaderProps {
   toColor: string;   // e.g. "to-purple-600"
   percentage?: number;
   percentageColor?: string;
+  backLink?: string; // NEW PROP
 }
 
 const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
@@ -65,26 +67,38 @@ export default function VibrantHeader({
   viaColor,
   toColor,
   percentage,
-  percentageColor
+  percentageColor,
+  backLink
 }: VibrantHeaderProps) {
   const { toggleSidebar, toggleSOS } = useLayout();
+  const navigate = useNavigate();
 
   return (
     <div className={`bg-gradient-to-r ${fromColor} ${viaColor} ${toColor} px-4 pt-4 pb-16 shadow-lg relative overflow-hidden`}>
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
       
-      {/* 3-Column Grid Layout: Menu | Title | Actions */}
+      {/* 3-Column Grid Layout: Menu/Back | Title | Actions */}
       <div className="relative z-20 grid grid-cols-[auto_1fr_auto] items-center gap-4">
         
-        {/* Left: Hamburger */}
-        <button 
-          onClick={toggleSidebar}
-          className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
-          aria-label="Open Menu"
-        >
-          <Bars3Icon className="h-6 w-6" />
-        </button>
+        {/* Left: Hamburger or Back Arrow */}
+        {backLink ? (
+          <button 
+            onClick={() => navigate(backLink)}
+            className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm border border-white/20 active:scale-95"
+            aria-label="Go Back"
+          >
+            <ChevronLeftIcon className="h-6 w-6" />
+          </button>
+        ) : (
+          <button 
+            onClick={toggleSidebar}
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
+            aria-label="Open Menu"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+        )}
 
         {/* Center: Title & Subtitle */}
         <div className="flex flex-col items-center text-center">

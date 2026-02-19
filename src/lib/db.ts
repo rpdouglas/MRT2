@@ -1,6 +1,6 @@
 /**
  * src/lib/db.ts
- * UPDATED: Fixed Task interface to support 'recurrence' and 'category'.
+ * UPDATED: Added WorkbookAnswer interface for Project 03.
  */
 import { 
   doc, 
@@ -22,7 +22,6 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
-// Import Recurrence types
 import type { RecurrenceConfig } from "./dateUtils";
 
 // --- GENERIC CONVERTER ---
@@ -100,15 +99,23 @@ export interface Task {
   frequency: 'once' | 'daily' | 'weekly' | 'monthly';
   currentStreak: number;
   priority: TaskPriority;
-  category?: TaskCategory; // Added Optional Category
-  recurrence?: RecurrenceConfig; // Added Recurrence Config
-  
-  // Date Fields: Allow both for flexibility during hydration
+  category?: TaskCategory;
+  recurrence?: RecurrenceConfig;
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
   lastCompletedAt?: Timestamp | Date | null; 
-  
   source?: 'manual' | 'ai'; 
+}
+
+// PROMOTED INTERFACE (Project 03)
+export interface WorkbookAnswer {
+  uid: string;
+  workbookId: string;
+  sectionId: string;
+  questionId: string;
+  answer: string; // Encrypted Ciphertext
+  isEncrypted: boolean;
+  updatedAt: Timestamp | Date;
 }
 
 // --- PROFILE FUNCTIONS ---

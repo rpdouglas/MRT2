@@ -9,6 +9,7 @@
 | Journal Entry | 25 XP (+10 for length) |
 | Task Completion | 10 (Low) / 25 (Med) / 50 (High) |
 | Workbook Answer | 15 XP |
+| Chapter Mastered | Status Milestone (Calculated locally) |
 | Vitality Log | 15 XP |
 | Clean Milestone | 500 XP (per 30 days) |
 
