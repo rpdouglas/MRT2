@@ -2,6 +2,7 @@
  * src/pages/WorkbookSession.tsx
  * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
  * FIXED: Removed unused variables and invalid characters via Python generation.
+ * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -164,7 +165,7 @@ export default function WorkbookSession() {
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
             
             {/* TOP BAR */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10">
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
                         <XMarkIcon className="h-6 w-6" />
@@ -183,22 +184,29 @@ export default function WorkbookSession() {
                         {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
                     </div>
                     
-                    <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
                     </div>
                 </div>
             </div>
 
             {/* SCROLLABLE CONTENT */}
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl mx-auto px-6 py-12">
+            <div className="flex-1 overflow-y-auto relative">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                     
                     {/* QUESTION / CONTENT */}
                     <div className="prose prose-slate prose-lg max-w-none mb-8">
                         {isIntroSlide ? (
                            <div className="text-center py-10">
                                <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
-                               <div className="whitespace-pre-wrap text-gray-600 leading-loose">{currentQuestion.text}</div>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
+                               {/* Intro Slide specific Next Button */}
+                               <button 
+                                   onClick={handleNext}
+                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                               >
+                                   Begin <ArrowRightIcon className="h-5 w-5" />
+                               </button>
                            </div>
                         ) : (
                            <div className="animate-fadeIn">
@@ -213,14 +221,44 @@ export default function WorkbookSession() {
                         )}
                     </div>
 
-                    {/* INPUT AREA */}
+                    {/* INPUT AREA WITH STICKY TOOLBAR */}
                     {!isIntroSlide && (
-                        <div className="animate-slideUp">
+                        <div className="animate-slideUp flex flex-col relative">
+                            
+                            {/* STICKY TOOLBAR */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
+                                <button 
+                                    onClick={handlePrevious} 
+                                    disabled={activeQuestionIndex === 0}
+                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                >
+                                    Back
+                                </button>
+
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button 
+                                        onClick={handleGetCoaching}
+                                        disabled={aiCoachLoading || currentAnswer.length < 10}
+                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
+                                    </button>
+
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                    >
+                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
+                                        <ArrowRightIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
                             <textarea 
                                 value={currentAnswer}
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                                 placeholder="Reflect here..."
-                                className="w-full min-h-[300px] p-6 rounded-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
                                 autoFocus
                             />
                             
@@ -233,41 +271,15 @@ export default function WorkbookSession() {
                                     <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
                                 </div>
                             )}
-
-                            <div className="mt-4 flex justify-end">
-                                <button 
-                                    onClick={handleGetCoaching}
-                                    disabled={aiCoachLoading || currentAnswer.length < 10}
-                                    className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50"
-                                >
-                                    {aiCoachLoading ? "Thinking..." : "Get AI Insight"} <SparklesIcon className="h-4 w-4" />
-                                </button>
-                            </div>
                         </div>
                     )}
 
                 </div>
             </div>
 
-            {/* BOTTOM NAV */}
-            <div className="bg-white border-t border-gray-100 p-4 safe-area-bottom z-10">
-                <div className="max-w-2xl mx-auto flex justify-between items-center">
-                    <button 
-                        onClick={handlePrevious} 
-                        disabled={activeQuestionIndex === 0}
-                        className="px-6 py-3 rounded-xl text-gray-500 font-bold hover:bg-gray-50 disabled:opacity-30 transition-colors"
-                    >
-                        Back
-                    </button>
-
-                    <button 
-                        onClick={handleNext}
-                        className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
-                    >
-                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
-                        <ArrowRightIcon className="h-4 w-4" />
-                    </button>
-                </div>
+            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
+            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
             </div>
 
         </div>
