@@ -1,182 +1,291 @@
 import os
 
-workbooks_code = r"""import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+workbook_session_code = r"""/**
+ * src/pages/WorkbookSession.tsx
+ * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
+ * FIXED: Removed unused variables and invalid characters via Python generation.
+ * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
+ */
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext'; 
 import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { WORKBOOKS } from '../data/workbooks';
-import VibrantHeader from '../components/VibrantHeader';
-import { THEME } from '../lib/theme';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { 
-    BookOpenIcon, 
-    StarIcon, 
-    HeartIcon, 
-    AcademicCapIcon,
+    CheckCircleIcon, 
+    ArrowRightIcon,
     SparklesIcon,
-    FireIcon,
-    ChevronRightIcon,
-    CheckBadgeIcon
+    XMarkIcon
 } from '@heroicons/react/24/outline';
+import { getWorkbook, type WorkbookSection } from '../data/workbooks';
+import { getGeminiCoaching } from '../lib/gemini';
+import { useAutoSave } from '../hooks/useAutoSave';
 
-export default function Workbooks() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-      chaptersMastered: 0,
-      wisdomScore: 0,
-      mastery: 0
-  });
+export default function WorkbookSession() {
+    const { workbookId, sectionId } = useParams();
+    const { user } = useAuth();
+    const { decrypt } = useEncryption(); 
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    async function loadStats() {
-        if (!user || !db) return;
-        
-        try {
-            // 1. Build requirement map from static data
-            const requiredPerSection: Record<string, number> = {};
-            let totalEstimatedQuestions = 0;
-            
-            WORKBOOKS.forEach(wb => {
-                wb.sections.forEach(sec => {
-                    const requiredCount = sec.questions.filter(q => q.type !== 'read_only').length;
-                    requiredPerSection[sec.id] = requiredCount;
-                    totalEstimatedQuestions += requiredCount;
-                });
-            });
+    // Content State
+    const [section, setSection] = useState<WorkbookSection | null>(null);
+    const [loading, setLoading] = useState(true);
 
-            // 2. Fetch User Data
-            const colRef = collection(db, 'users', user.uid, 'workbook_answers');
-            const snapshot = await getDocs(colRef);
-            
-            const wisdomScore = snapshot.size;
+    // User Progress State
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const [answers, setAnswers] = useState<Record<string, string>>({}); // Cache for loaded answers
+    
+    // UI State
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const [aiCoachLoading, setAiCoachLoading] = useState(false);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
-            // 3. Tally user answers per section
-            const userAnswersPerSection: Record<string, number> = {};
-            snapshot.docs.forEach(docSnap => {
-                const data = docSnap.data();
-                if (data.sectionId) {
-                    userAnswersPerSection[data.sectionId] = (userAnswersPerSection[data.sectionId] || 0) + 1;
+    // 1. Load Workbook Content & User Progress
+    useEffect(() => {
+        async function loadData() {
+            if (!user || !workbookId || !sectionId || !db) return;
+
+            try {
+                // A. Load Static Workbook JSON
+                const wb = getWorkbook(workbookId || '');
+                if (!wb) {
+                    navigate('/workbooks');
+                    return;
                 }
-            });
 
-            // 4. Calculate completely mastered chapters
-            let chaptersMastered = 0;
-            for (const [sectionId, requiredCount] of Object.entries(requiredPerSection)) {
-                const answeredCount = userAnswersPerSection[sectionId] || 0;
-                if (requiredCount > 0 && answeredCount >= requiredCount) {
-                    chaptersMastered++;
+                const sec = wb.sections.find(s => s.id === sectionId);
+                if (!sec) {
+                   navigate(`/workbooks/${workbookId}`);
+                   return;
                 }
+                setSection(sec);
+
+                // B. Load User Progress
+                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
+                const q = query(answersRef, where('workbookId', '==', workbookId));
+                const snapshot = await getDocs(q);
+                const loadedAnswers: Record<string, string> = {};
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    if (data.answer) {
+                        if (data.isEncrypted) {
+                            try {
+                                loadedAnswers[data.questionId] = await decrypt(data.answer);
+                            } catch {
+                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
+                            }
+                        } else {
+                            loadedAnswers[data.questionId] = data.answer;
+                        }
+                    }
+                }
+                setAnswers(loadedAnswers);
+                
+                // Initialize current answer based on first question
+                if (sec.questions.length > 0) {
+                    const firstQ = sec.questions[0];
+                    setCurrentAnswer(loadedAnswers[firstQ.id] || '');
+                }
+
+            } catch (error) {
+                console.error("Error loading session:", error);
+            } finally {
+                setLoading(false);
             }
-
-            const mastery = totalEstimatedQuestions > 0 
-                ? Math.min(100, Math.round((wisdomScore / totalEstimatedQuestions) * 100))
-                : 0;
-
-            setStats({ chaptersMastered, wisdomScore, mastery });
-        } catch (error) {
-            console.error("Failed to load workbook stats", error);
-        } finally {
-            setLoading(false);
         }
-    }
-    loadStats();
-  }, [user]);
+        loadData();
+    }, [user, workbookId, sectionId, navigate, decrypt]);
 
-  const getTheme = (type: string) => {
-    switch (type) {
-      case 'general': return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-l-yellow-500', icon: StarIcon };
-      case 'steps': return { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-l-blue-600', icon: BookOpenIcon };
-      default: return { color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-l-purple-500', icon: HeartIcon };
-    }
-  };
+    // Current Question Helpers
+    const currentQuestion = section?.questions[activeQuestionIndex];
+    const isIntroSlide = currentQuestion?.type === 'read_only';
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
+    // Update currentAnswer when question changes
+    useEffect(() => {
+        if (currentQuestion) {
+            setCurrentAnswer(answers[currentQuestion.id] || '');
+            setAiFeedback(null);
+        }
+    }, [activeQuestionIndex, currentQuestion, answers]);
 
-  return (
-    <div className={`pb-24 relative min-h-screen ${THEME.workbooks.page}`}>
-      
-      {/* HEADER */}
-      <VibrantHeader 
-        title="Recovery Library"
-        subtitle="Structured guides to process your journey."
-        icon={AcademicCapIcon}
-        fromColor={THEME.workbooks.header.from}
-        viaColor={THEME.workbooks.header.via}
-        toColor={THEME.workbooks.header.to}
-        percentage={stats.mastery}
-        percentageColor={THEME.workbooks.ring}
-      />
+    // --- AUTO SAVE HOOK ---
+    const { status: saveStatus } = useAutoSave({
+        uid: user?.uid || '',
+        workbookId: workbookId || '',
+        sectionId: sectionId || '',
+        questionId: currentQuestion?.id || '',
+        value: currentAnswer
+    });
 
-      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
-        
-        <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastered</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-emerald-600 mt-1">
-                    <CheckBadgeIcon className="h-6 w-6" />
-                    {stats.chaptersMastered}
+    // 2. Handle Answer Input
+    const handleAnswerChange = (text: string) => {
+        setCurrentAnswer(text);
+        // Update local cache immediately for UI responsiveness
+        if (currentQuestion) {
+            setAnswers(prev => ({ ...prev, [currentQuestion.id]: text }));
+        }
+    };
+
+    // 3. Navigation
+    const handleNext = () => {
+        if (!section) return;
+        if (activeQuestionIndex < section.questions.length - 1) {
+            setActiveQuestionIndex(prev => prev + 1);
+        } else {
+            navigate(`/workbooks/${workbookId}`);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (activeQuestionIndex > 0) {
+            setActiveQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const handleGetCoaching = async () => {
+        if (!currentQuestion || !currentAnswer || currentAnswer.length < 10) return alert("Write a bit more first.");
+        setAiCoachLoading(true);
+        try {
+            const context = currentQuestion.context || currentQuestion.text; 
+            const feedback = await getGeminiCoaching(context, currentAnswer);
+            setAiFeedback(feedback);
+        } catch {
+            alert("Coach unavailable.");
+        } finally {
+            setAiCoachLoading(false);
+        }
+    };
+
+    if (loading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+
+    const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+
+    return (
+        // ZEN MODE CONTAINER: Fixed full screen, covers AppShell
+        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
+            
+            {/* TOP BAR */}
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                        <XMarkIcon className="h-6 w-6" />
+                    </button>
+                    <div className="flex flex-col">
+                        <h2 className="text-sm font-bold text-gray-900">{section.title}</h2>
+                        <span className="text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {/* Auto-Save Indicator */}
+                    <div className="flex items-center gap-1.5 text-xs font-medium transition-colors">
+                        {saveStatus === 'saving' && <span className="text-blue-500 animate-pulse">Saving...</span>}
+                        {saveStatus === 'saved' && <span className="text-green-600 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Saved</span>}
+                        {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
+                    </div>
+                    
+                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+                    </div>
                 </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Wisdom Score</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-cyan-600 mt-1">
-                    <SparklesIcon className="h-6 w-6" />
-                    {stats.wisdomScore}
+
+            {/* SCROLLABLE CONTENT */}
+            <div className="flex-1 overflow-y-auto relative">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+                    
+                    {/* QUESTION / CONTENT */}
+                    <div className="prose prose-slate prose-lg max-w-none mb-8">
+                        {isIntroSlide ? (
+                           <div className="text-center py-10">
+                               <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
+                               {/* Intro Slide specific Next Button */}
+                               <button 
+                                   onClick={handleNext}
+                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                               >
+                                   Begin <ArrowRightIcon className="h-5 w-5" />
+                               </button>
+                           </div>
+                        ) : (
+                           <div className="animate-fadeIn">
+                               <h3 className="text-xl font-bold text-gray-900 mb-4">{currentQuestion.text}</h3>
+                               {currentQuestion.context && (
+                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-base">
+                                       <SparklesIcon className="h-5 w-5 inline mr-2 text-blue-500" />
+                                       {currentQuestion.context}
+                                   </blockquote>
+                               )}
+                           </div>
+                        )}
+                    </div>
+
+                    {/* INPUT AREA WITH STICKY TOOLBAR */}
+                    {!isIntroSlide && (
+                        <div className="animate-slideUp flex flex-col relative">
+                            
+                            {/* STICKY TOOLBAR */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
+                                <button 
+                                    onClick={handlePrevious} 
+                                    disabled={activeQuestionIndex === 0}
+                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                >
+                                    Back
+                                </button>
+
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button 
+                                        onClick={handleGetCoaching}
+                                        disabled={aiCoachLoading || currentAnswer.length < 10}
+                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
+                                    </button>
+
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                    >
+                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
+                                        <ArrowRightIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <textarea 
+                                value={currentAnswer}
+                                onChange={(e) => handleAnswerChange(e.target.value)}
+                                placeholder="Reflect here..."
+                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                autoFocus
+                            />
+                            
+                            {/* AI FEEDBACK */}
+                            {aiFeedback && (
+                                <div className="mt-6 bg-purple-50 p-6 rounded-xl border border-purple-100 animate-fadeIn">
+                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2">
+                                        <SparklesIcon className="h-5 w-5" /> Insight
+                                    </h4>
+                                    <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                 </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastery</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-indigo-600 mt-1">
-                    <FireIcon className="h-6 w-6" />
-                    {stats.mastery}%
-                </div>
+
+            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
+            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
             </div>
+
         </div>
-
-        <div className="space-y-4">
-          {WORKBOOKS.map((workbook) => {
-              const theme = getTheme(workbook.type);
-              
-              return (
-                  <Link 
-                      key={workbook.id} 
-                      to={`/workbooks/${workbook.id}`}
-                      className={`block relative group bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md ${theme.border} border-l-[6px]`}
-                  >
-                      <div className="flex items-start gap-4">
-                          <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
-                              <theme.icon className="h-6 w-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                                      {workbook.title}
-                                  </h3>
-                                  <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                                  {workbook.description}
-                              </p>
-                              <div className="flex items-center gap-3">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
-                                      {workbook.sections.length} Sections
-                                  </span>
-                                  {workbook.type === 'steps' && (
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                          12-Step Compatible
-                                      </span>
-                                  )}
-                              </div>
-                          </div>
-                      </div>
-                  </Link>
-              );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
 """
 
@@ -187,5 +296,5 @@ def write_file(path, content):
     print(f"✅ Modified: {path}")
 
 if __name__ == "__main__":
-    write_file("src/pages/Workbooks.tsx", workbooks_code)
-    print("🚀 Metric update complete. Run 'npm run build && npm run lint' to verify.")
+    write_file("src/pages/WorkbookSession.tsx", workbook_session_code)
+    print("🚀 Navigation Toolbar successfully updated. Run 'npm run build && npm run lint' to verify.")
