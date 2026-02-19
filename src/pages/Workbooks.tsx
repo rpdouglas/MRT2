@@ -13,14 +13,15 @@ import {
     AcademicCapIcon,
     SparklesIcon,
     FireIcon,
-    ChevronRightIcon
+    ChevronRightIcon,
+    CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 
 export default function Workbooks() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-      activeCount: 0,
+      chaptersMastered: 0,
       wisdomScore: 0,
       mastery: 0
   });
@@ -30,22 +31,47 @@ export default function Workbooks() {
         if (!user || !db) return;
         
         try {
+            // 1. Build requirement map from static data
+            const requiredPerSection: Record<string, number> = {};
+            let totalEstimatedQuestions = 0;
+            
+            WORKBOOKS.forEach(wb => {
+                wb.sections.forEach(sec => {
+                    const requiredCount = sec.questions.filter(q => q.type !== 'read_only').length;
+                    requiredPerSection[sec.id] = requiredCount;
+                    totalEstimatedQuestions += requiredCount;
+                });
+            });
+
+            // 2. Fetch User Data
             const colRef = collection(db, 'users', user.uid, 'workbook_answers');
             const snapshot = await getDocs(colRef);
             
             const wisdomScore = snapshot.size;
 
-            const uniqueWorkbooks = new Set<string>();
-            snapshot.docs.forEach(doc => {
-                const [wbId] = doc.id.split('_');
-                if (wbId) uniqueWorkbooks.add(wbId);
+            // 3. Tally user answers per section
+            const userAnswersPerSection: Record<string, number> = {};
+            snapshot.docs.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.sectionId) {
+                    userAnswersPerSection[data.sectionId] = (userAnswersPerSection[data.sectionId] || 0) + 1;
+                }
             });
-            const activeCount = uniqueWorkbooks.size;
 
-            const TOTAL_ESTIMATED_QUESTIONS = 45; 
-            const mastery = Math.min(100, Math.round((wisdomScore / TOTAL_ESTIMATED_QUESTIONS) * 100));
+            // 4. Calculate completely mastered chapters
+            let chaptersMastered = 0;
+            for (const [sectionId, requiredCount] of Object.entries(requiredPerSection)) {
+                const answeredCount = userAnswersPerSection[sectionId] || 0;
+                if (requiredCount > 0 && answeredCount >= requiredCount) {
+                    chaptersMastered++;
+                }
+            }
 
-            setStats({ activeCount, wisdomScore, mastery });
+            const mastery = totalEstimatedQuestions > 0 
+                ? Math.min(100, Math.round((wisdomScore / totalEstimatedQuestions) * 100))
+                : 0;
+
+            setStats({ chaptersMastered, wisdomScore, mastery });
         } catch (error) {
             console.error("Failed to load workbook stats", error);
         } finally {
@@ -84,19 +110,22 @@ export default function Workbooks() {
         
         <div className="grid grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active</span>
-                <span className="text-2xl font-bold text-gray-900">{stats.activeCount}</span>
+                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastered</span>
+                <div className="flex items-center gap-1 text-2xl font-bold text-emerald-600 mt-1">
+                    <CheckBadgeIcon className="h-6 w-6" />
+                    {stats.chaptersMastered}
+                </div>
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Wisdom Score</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-cyan-600">
+                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Wisdom Score</span>
+                <div className="flex items-center gap-1 text-2xl font-bold text-cyan-600 mt-1">
                     <SparklesIcon className="h-6 w-6" />
                     {stats.wisdomScore}
                 </div>
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Mastery</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-indigo-600">
+                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastery</span>
+                <div className="flex items-center gap-1 text-2xl font-bold text-indigo-600 mt-1">
                     <FireIcon className="h-6 w-6" />
                     {stats.mastery}%
                 </div>
