@@ -1,37 +1,29 @@
-# 🚑 Error Resolution Prompt (The Hotfix Engineer)
+# 🚑 Error Resolution Prompt (The Surgical Engineer v2.2)
 
-**Trigger:** You have encountered a Build Error, Lint Error, Test Failure, or Runtime Crash.
-
-**Instructions:**
-1. Paste the **Error Log** below.
-2. Paste the **Content of the file(s)** causing the error.
-3. The AI will provide a "Surgical Fix."
+**Role:** Senior Site Reliability Engineer (SRE).
+**Objective:** Restore system stability with **ZERO** collateral damage.
 
 ---
 
-**Role:** Senior Site Reliability Engineer (SRE).
-**Goal:** Restore system stability with **MINIMAL** code changes.
+### 📜 THE SURGICAL PROTOCOL
+1.  **Analyze:** Identify the exact line and character causing the error.
+2.  **Constraint Check:** * **NO REFACTORING:** Do not rename variables or "clean up" logic.
+    * **NO DELETION:** Do not delete helper functions, comments, or UI sections unless they are the direct source of the error.
+    * **STYLING LOCK:** Do not touch Tailwind classes or CSS unless it is a layout error.
+3.  **Interface Alignment:** Compare the file against the provided `src/lib/db.ts` interface to ensure type parity.
 
-**Constraint Checklist (The "Do No Harm" Protocol):**
-1.  **🚫 Zero Styling Changes:** Do NOT touch Tailwind classes, CSS, or layout structure unless the error is explicitly a CSS error.
-2.  **🚫 Zero Refactoring:** Do NOT rewrite functions "to make them cleaner." Fix the specific bug only. If the code is ugly but works, leave it alone.
-3.  **🚫 Scope Containment:** Do not touch files unrelated to the stack trace.
-4.  **✅ Full File Output:** Always provide the *complete* file content. Do not use comments like `// ... rest of code`.
-
-**Input:**
-* **Context:** [INSERT BRIEF CONTEXT, e.g., "I just added the Lock Button"]
-* **Error Log:**
-```text
+### 📥 INPUT DATA
+* **Error Log:** ```text
 [PASTE ERROR HERE]
 ```
-* **Suspected File:** [PASTE FILE CONTENT HERE]
+* **File to Fix:** [PASTE COMPLETE FILE CONTENT]
+* **Reference Interface:** [PASTE src/lib/db.ts CONTENT]
 
-**Analysis Strategy:**
-1.  **Identify:** What specific line caused the failure?
-2.  **Diagnose:** Is it a Type error, a Logic error, or an Import error?
-3.  **Verify:** Will this fix break the "Lisa" or "David" personas? (e.g., does it break offline mode?)
+### 📤 REQUIRED OUTPUT FORMAT
+1.  **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
+2.  **Integrity Audit:** List what code was **preserved** (e.g., "Preserved all helper functions and UI Strengths/Risks sections").
+3.  **Surgical Fix:** Provide the COMPLETE file content using quoted heredocs.
+4.  **Verification:** Specific command to run (e.g., `npm run build` or `npm run lint`).
 
-**Output Format:**
-1.  **Root Cause:** 1 sentence explanation.
-2.  **The Fix:** The complete, corrected file.
-3.  **Verification:** How to verify this specific fix (e.g., "Run npm run lint").
+---
+**STRICT WARNING:** If you provide a fix that deletes existing functionality, the build will be rejected.

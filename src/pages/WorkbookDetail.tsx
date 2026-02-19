@@ -11,7 +11,6 @@ import { saveInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { 
-    ArrowLeftIcon, 
     PlayCircleIcon, 
     CheckCircleIcon, 
     SparklesIcon,
@@ -192,7 +191,8 @@ export default function WorkbookDetail() {
     try {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 3);
-        await addTask(user.uid, action, 'once', 'High', dueDate);
+        // FIX: Replaced parameter 6 with 'ai' to correctly tag metadata for the Action Plan lane
+        await addTask(user.uid, action, 'once', 'High', dueDate, 'ai');
         setAddedActions(prev => new Set(prev).add(action));
     } catch (e) {
         console.error(e);
@@ -221,15 +221,8 @@ export default function WorkbookDetail() {
             toColor={THEME.workbooks.header.to}
             percentage={mastery}
             percentageColor={THEME.workbooks.ring}
+            backLink="/workbooks"
         />
-        
-        {/* Back Button (Floating on top of header) */}
-        <button 
-            onClick={() => navigate('/workbooks')}
-            className="absolute top-4 left-16 z-20 text-white/80 hover:text-white flex items-center gap-1 text-sm font-medium"
-        >
-            <ArrowLeftIcon className="h-4 w-4" /> Back
-        </button>
       </div>
 
       {/* 2. SCROLLABLE CONTENT */}

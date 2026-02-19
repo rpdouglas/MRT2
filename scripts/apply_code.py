@@ -1,4 +1,6 @@
-/**
+import os
+
+workbook_session_code = r"""/**
  * src/pages/WorkbookSession.tsx
  * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
  * FIXED: Removed unused variables and invalid characters via Python generation.
@@ -285,3 +287,14 @@ export default function WorkbookSession() {
         </div>
     );
 }
+"""
+
+def write_file(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content.strip() + "\n")
+    print(f"✅ Modified: {path}")
+
+if __name__ == "__main__":
+    write_file("src/pages/WorkbookSession.tsx", workbook_session_code)
+    print("🚀 Navigation Toolbar successfully updated. Run 'npm run build && npm run lint' to verify.")
