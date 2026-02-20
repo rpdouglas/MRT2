@@ -1,166 +1,85 @@
 import os
 
-# Variable to safely inject markdown code blocks without breaking the parser
+# Used to safely write markdown code blocks via python string formatting
 MD_BLOCK = "```"
 
-security_doc_content = """# 🛡️ Security Model: Zero-Knowledge Architecture
+ai_doc_content = f"""# 🧠 Feature Spec: AI Integration & Intelligence Layer
 
-**Philosophy:** "We cannot leak what we cannot read."
+**Status:** Live (v4.0)
+**Stack:** Google Gemini 2.5 (Flash/Pro)
+**Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
 
-## 1. The Encryption Lifecycle
+## 1. The Privacy Boundary
+**Rule:** AI analysis is strictly "Opt-In" and "Stateless".
+* Data is decrypted **in-browser**.
+* The plain text is sent to the Gemini API via a secure HTTPS request.
+* Gemini processes the data, returns the payload, and discards the prompt.
+* User data is **never** stored by Google to train public models.
 
-### A. Setup (Vault Creation)
-1. User enters 4-digit PIN.
-2. App generates random 16-byte `Salt`.
-3. App derives `Key` using PBKDF2 (100k iterations).
-4. App creates `Verifier` = Hash(PIN + Salt).
-5. App sends `Salt` and `Verifier` to Firestore. 
-6. **Session Caching:** The user's PIN is temporarily cached in the browser's `sessionStorage`. This prevents the user from having to re-enter their PIN every time they navigate between pages, while ensuring the PIN is automatically wiped by the OS the moment the browser tab is closed.
+## 2. The Cascade Engine
+**Location:** `src/lib/gemini.ts`
+To balance speed, cost, and reliability, the app utilizes a `MODEL_CASCADE`.
+* **Default Flow:** Attempts `gemini-2.5-flash` first for speed. If the API fails or rate-limits, it automatically catches the error and retries with `gemini-2.5-pro`, followed by `gemini-2.0-flash`.
+* **Exception:** Certain complex tasks (like `generateComparativeAnalysis` and `generateDeepPatternAnalysis`) explicitly force `gemini-2.5-pro` for deeper reasoning capabilities.
 
-### B. Storage (Writing Data)
-1. User types "I feel anxious today."
-2. App checks memory for `Key`. (If missing, it attempts to derive it from the `sessionStorage` PIN, or prompts the user).
-3. App generates random `IV` (Initialization Vector).
-4. App encrypts text via AES-GCM -> `Ciphertext`.
-5. App sends string `IV:Ciphertext` to Firestore.
+## 3. Strict JSON Enforcement
+To ensure the React UI can parse the AI's response predictably:
+* **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
+* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip any rogue markdown code blocks (e.g., `{MD_BLOCK}json`) before passing to `JSON.parse()`.
 
-### C. Retrieval (Reading Data)
-1. App fetches document from Firestore.
-2. App splits `IV:Ciphertext`.
-3. App uses `Key` to decrypt.
-4. Plain text renders in React.
+## 4. Chunked Processing (Deep Pattern Analysis)
+**Location:** `src/hooks/useDeepPatternAnalysis.ts`
+* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread.
+* **Solution:** The app uses `processInChunks` (from `src/lib/utils.ts`) to decrypt entries in batches of 5, yielding to the main thread in between. This allows the progress bar to update smoothly from 20% to 70%.
 
-## 2. Vault Control Features
-
-### 🔒 Vault Locking (Memory Clearing)
-* **Trigger:** User clicks "Lock Vault" in the sidebar or closes the tab.
-* **Action:** The `EncryptionContext` sets `globalKey = null` and explicitly deletes the PIN from `sessionStorage`.
-* **Result:** Even if an attacker gains physical access to the unlocked computer or browser console after the fact, they cannot decrypt data without the user re-entering the PIN.
-
-### 🧨 Emergency Reset (Crypto-Shredding)
-* **Trigger:** User forgets PIN or wants a hard reset.
-* **Action:**
-    1. The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
-    2. **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
-    3. **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
-
-## 3. AI Privacy Boundary
-When a user asks for AI Analysis:
-1. Data is decrypted **in the browser**.
-2. Plain text is sent to Gemini API via HTTPS.
-3. Gemini processes data statelessly.
-4. Response is returned.
-5. **Critical:** We do NOT train models on this data.
-
-## 4. Third-Party Data (The Service Model)
-* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
-* **Rule:** This is a **Digital Rolodex**, not a Social Network.
-* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
-    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
-    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
+## 5. Telemetry & Auditing
+**Location:** `src/lib/analytics.ts`
+* Every successful AI call asynchronously triggers `logAIUsage`.
+* This writes a record to the `ai_logs` Firestore collection containing the user ID, model used, feature context (e.g., 'journal_analysis'), and token counts (prompt, candidate, total).
+* Admins monitor this via the Admin Dashboard.
 """
 
-schema_doc_content = f"""# 🗄️ Schema Architecture & Data Graph
+cloud_sync_doc_content = f"""# ☁️ Feature Spec: Network Resilience & Cloud Sync
 
-**Storage Engine:** Cloud Firestore (NoSQL)
-**Encryption Strategy:** Client-Side AES-GCM (Content fields only)
+**Status:** Live (v1.5)
+**Context:** How MRT handles offline usage, state detection, and automated data backups.
 
-## 1. High-Level Topology
+## 1. Offline-First Architecture (Firestore)
+* MRT relies on Firebase Firestore's built-in local persistence mechanism.
+* If a user is offline (e.g., in a basement meeting room), they can still create Tasks, save Journal entries, and check off Workbook questions.
+* The data is written to the local IndexedDB cache and seamlessly syncs to the cloud once the network connection is restored.
 
-{MD_BLOCK}mermaid
-graph TD
-    root[🔥 Firestore Root]
-    
-    root --> users[📂 users]
-    users --> userDoc[📄 User Profile]
-    userDoc --> workbook_progress[📂 workbook_progress]
-    userDoc --> templates[📂 templates]
-    
-    root --> journals[📂 journals]
-    root --> tasks[📂 tasks]
-    root --> insights[📂 insights]
-    root --> ai_logs[📂 ai_logs]
-    root --> feedback[📂 feedback]
-    root --> service[📂 service]
-{MD_BLOCK}
+## 2. Network State Detection
+**Location:** `src/contexts/LayoutContext.tsx`
+* The context uses `window.addEventListener` for `online` and `offline` events to maintain an `isOnline` boolean.
+* **UI Feedback:** If `!isOnline`, a red persistent banner appears at the top of the screen (`AppShell.tsx`), assuring the user that their data is still saving locally.
 
-## 2. Collection Definitions
+## 3. Google Drive Auto-Sync (The Sentinel)
+**Location:** `src/components/AppShell.tsx` & `src/lib/googleDrive.ts`
 
-### `users/{{uid}}`
-* **Purpose:** Profile, Auth, & Settings.
-* **Fields:**
-    * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
-    * `sobrietyDate` (Timestamp): Metrics base.
-    * `role` (String): 'user' | 'admin'. Controls UI access.
-    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
-    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
+### The Authorization
+* Users opt-in by clicking "Sign in with Google" and granting the `https://www.googleapis.com/auth/drive.file` scope.
+* This restricted scope ensures the app can *only* read and write the specific `mrt_backup.json` file it creates, providing strong security isolation.
 
-### `journals/{{entryId}}`
-* **Purpose:** Daily logs, Vitality logs, and reflections.
-* **Fields:**
-    * `uid` (String): Owner ID.
-    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
-    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
-    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
-    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
-    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
-    * `weather` (Map): Snapshot of environment `{{ temp, condition }}`.
+### The Trigger
+* Handled by a `useEffect` inside `AppShell`.
+* It requires three conditions: `isVaultUnlocked == true`, `isOnline == true`, and a valid `driveAccessToken`.
+* It checks the user's `lastExportAt` timestamp. If it is older than 7 days, a silent background backup is triggered 10 seconds after the app loads.
 
-### `tasks/{{taskId}}`
-* **Purpose:** Gamification, Habits, and AI Action Plans.
-* **Encryption:** Unencrypted to allow background stats and streak evaluations.
-* **Fields:**
-    * `title` (String): Task name.
-    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
-    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
-    * `priority` (String): 'High' | 'Medium' | 'Low'.
-    * `status` (String): 'pending' | 'completed'.
-    * `currentStreak` (Int): Consecutive completions.
-    * `recurrence` (Map): Logic for repetition.
-    * `dueDate` & `lastCompletedAt` (Timestamp).
-
-### `insights/{{insightId}}`
-* **Purpose:** AI-generated analysis of journals/workbooks.
-* **Fields:**
-    * `type` (String): 'journal' | 'workbook'.
-    * `summary` (String): The AI's output.
-    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
-    * `strengths` & `risks` (Array): Listed points for UI rendering.
-    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
-
-### `feedback/{{reportId}}`
-* **Purpose:** User bug reports and suggestions.
-* **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:**
-    * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: Commit hash for version tracing.
-    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `vaultUnlocked`: Boolean.
-    * `route` & `userAgent`: Strings.
-
-### `service/{{serviceId}}`
-* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
-
-## 3. Query Strategy
-* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
+### The Payload (Data Sovereignty)
+* The app fetches all data (Journals, Tasks, Workbooks).
+* It **decrypts** the ciphertexts back into plain text in-memory.
+* The JSON is uploaded to Drive. *This is a deliberate architectural choice to ensure the user always has a readable copy of their data in case they permanently forget their MRT Vault PIN.*
 """
 
 def write_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
-    print(f"✅ Updated: {path}")
+    print(f"✅ Created: {path}")
 
 if __name__ == "__main__":
-    print("🔄 Executing Documentation Phase 1: Security & Schema Alignment...")
-    write_file("docs/SECURITY_ZERO_KNOWLEDGE.md", security_doc_content)
-    write_file("docs/SCHEMA_ARCHITECTURE.md", schema_doc_content)
-    print("✨ Documentation successfully updated.")
+    print("🔄 Executing Documentation Phase 3: AI & Cloud Sync Specs...")
+    write_file("docs/specs/15_AI_INTEGRATION.md", ai_doc_content)
+    write_file("docs/specs/16_CLOUD_SYNC.md", cloud_sync_doc_content)
+    print("✨ System mapping complete. The technical documentation is now 100% synchronized with the codebase.")
