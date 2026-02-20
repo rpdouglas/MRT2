@@ -2,9 +2,8 @@
  * src/pages/Login.tsx
  * GITHUB COMMENT:
  * [Login.tsx]
- * UX: Upgraded to a Split-Screen Hero layout (Approach C).
- * FEATURE: Integrated App Logo, Value Props, and Persona marketing.
- * PRESERVED: Firebase auth state, error handling, and form submission logic.
+ * UX: Adjusted hero background gradient for a lighter, more vibrant feel.
+ * UX: Removed max-width constraints and <br/> tags to allow title and tagline to span one line on desktop.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -117,10 +116,10 @@ export default function Login() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50">
       
       {/* LEFT COLUMN: BRANDING & NARRATIVE */}
-      <div className="lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex flex-col justify-between p-8 lg:p-12 relative overflow-hidden shrink-0">
+      <div className="lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white flex flex-col justify-between p-8 lg:p-12 relative overflow-hidden shrink-0">
         {/* Background Texture/Glow */}
-        <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-blue-500 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 bg-indigo-500 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 bg-cyan-300 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10">
             {/* Logo & Title */}
@@ -129,33 +128,35 @@ export default function Login() {
                     <img src="/pwa-192x192.png" alt="MRT Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
                 </div>
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">My Recovery<br/>Toolkit</h1>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none sm:whitespace-nowrap">
+                        My Recovery Toolkit
+                    </h1>
                 </div>
             </div>
 
             {/* Value Proposition */}
-            <div className="space-y-8 max-w-md">
-                <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
-                    Recovery is a <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">High-Performance</span> Lifestyle.
+            <div className="space-y-8 w-full max-w-2xl">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-[2.5rem] font-bold leading-tight lg:whitespace-nowrap tracking-tight">
+                    The safest place to do the <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">Hardest Work.</span>
                 </h2>
                 
-                <div className="space-y-5">
+                <div className="space-y-5 max-w-lg">
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm shrink-0">
-                            <LockClosedIcon className="h-6 w-6 text-cyan-300" />
+                            <LockClosedIcon className="h-6 w-6 text-cyan-200" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg">The Vault</h3>
-                            <p className="text-blue-100/80 text-sm leading-relaxed mt-1">Zero-Knowledge encryption ensures your personal inventory and reflections are mathematically unreadable by anyone but you.</p>
+                            <p className="text-blue-50 text-sm leading-relaxed mt-1">Zero-Knowledge encryption ensures your personal inventory and reflections are mathematically unreadable by anyone but you.</p>
                         </div>
                     </div>
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm shrink-0">
-                            <SparklesIcon className="h-6 w-6 text-fuchsia-300" />
+                            <SparklesIcon className="h-6 w-6 text-fuchsia-200" />
                         </div>
                         <div>
                             <h3 className="font-bold text-lg">The Compass</h3>
-                            <p className="text-blue-100/80 text-sm leading-relaxed mt-1">On-device AI pattern recognition helps identify subtle emotional triggers and builds actionable, step-by-step habit plans.</p>
+                            <p className="text-blue-50 text-sm leading-relaxed mt-1">On-device AI pattern recognition helps identify subtle emotional triggers and builds actionable, step-by-step habit plans.</p>
                         </div>
                     </div>
                 </div>
@@ -163,8 +164,8 @@ export default function Login() {
         </div>
 
         {/* The Personas Grid (Desktop mainly, visible on mobile scroll) */}
-        <div className="relative z-10 mt-12 lg:mt-0">
-            <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-4">Meeting you where you are</p>
+        <div className="relative z-10 mt-12 lg:mt-0 max-w-2xl">
+            <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-4">Meeting you where you are</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {PERSONAS.map(p => (
                     <div key={p.id} className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-white/10 group">
