@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-19T03:33:56.591Z
+PROJECT EXPORT - 2026-02-19T13:42:31.994Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -50,7 +50,8 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── 01_SECURITY_HARDENING.md
 │   │   ├── 02_CORE_POLISH_TASKS.md
 │   │   ├── 03_CORE_POLISH_WISDOM.md
-│   │   └── 04_SERVICE_MODE.md
+│   │   ├── 04_FRICTIONLESS_CORE.md
+│   │   └── 05_SERVICE_MODULE.md
 │   ├── prompts
 │   │   ├── APPROVAL.md
 │   │   ├── AUDIT.md
@@ -1021,8 +1022,9 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 ## 📅 Q2 2026: The "Core Polish" Phase
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
-| ⚪ Planned | `PROJ-04` | **The "Lisa" Service Module** | Admin | Sponsee Management (Encrypted) |
+| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
+| 🟡 **Active** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
+| ⚪ Planned | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
 
 </file>
 
@@ -1161,19 +1163,27 @@ When a user asks for AI Analysis:
 
 <file path="docs/SPRINT_BOARD.md">
 # 🏃 Active Sprint Board
-**Sprint:** 18.2 "The Wisdom Path"
-**Start Date:** 2026-02-18
-**Goal:** Transition from Task management to a premium Workbook reading experience.
+**Sprint:** 19.1 "The Vault & Gate"
+**Start Date:** 2026-02-19
+**Goal:** Resolve the Journal decryption refresh bug and modernize the Auth/Login UI with Trust Badges.
 
-## 📌 To Do (Project 03)
-- [ ] **Typography:** Implement @tailwindcss/typography for workbook prose.
-- [ ] **Focus Mode:** Design "Reading Mode" to hide UI distractions.
-- [ ] **Auto-save:** Implement debounced listeners for workbook answers.
+## 📌 To Do (Project 04 - Sprint 1)
+- [ ] **Bug Fix:** Wire `isVaultUnlocked` to trigger reactive re-render of Journal History without a hard refresh.
+- [ ] **Auth UX:** Redesign `Login.tsx` into a modern, split Sign-In/Sign-Up flow.
+- [ ] **Auth UX:** Add Zero-Knowledge Trust Badges to the sign-up screen.
+
+## 🚧 In Progress
+- [ ] Planning phase for Journal refresh bug.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Project 02:** Optimistic UI & Task Row Redesign.
-- [x] **Project 02:** Action Plan routing (source: 'ai').
-- [x] **Audit:** Governance and prompt hardening complete.
+- [x] **Project 03:** Wisdom (Workbook) Polish - Zen Mode, Gamification, Auto-Save.
+- [x] **Project 03:** Mobile Keyboard UX fix for Workbook Session.
+- [x] **Project 03:** Documentation sync for Phase 2.
+
+---
+## 🧊 Backlog (Upcoming Sprints)
+- [ ] **Project 04 - Sprint 2:** The "Memory Engine" (Client-side search, Insights polish).
+- [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).
 
 </file>
 
@@ -1298,97 +1308,121 @@ We reserve the right to modify these terms at any time. Your continued use of th
 # 🔐 Project 01: Security Hardening
 
 **Objective:** Eliminate critical vulnerabilities found in the Feb 2026 Audit.
-**Status:** 🟡 Active
+**Status:** 🟢 Done
+**Personas Involved:** The Architect, Walt (The Zen Master)
 
 ## 🛑 Phase 1: Access Control (The Gate)
-* [ ] **Delete Backdoors:** Remove `src/components/AdminGrant.tsx`.
-* [ ] **Fix Rules:** Update `firestore.rules` to remove hardcoded emails. Use Custom Claims logic instead.
-* [ ] **Lock Button:** Add a "Lock Vault" button to the UI that clears `globalKey` from memory instantly.
+* [x] **Delete Backdoors:** Remove `src/components/AdminGrant.tsx`.
+* [x] **Fix Rules:** Update `firestore.rules` to remove hardcoded emails. Use Custom Claims logic instead.
+* [x] **Lock Button:** Add a "Lock Vault" button to the UI that clears `globalKey` from memory instantly.
 
 ## 🛡️ Phase 2: Pipeline Safety (The Guard)
-* [ ] **CI/CD Gates:** Update `.github/workflows/deploy.yaml`.
-    * Add `npm install`
-    * Add `npm run lint`
-    * Add `npm run test` (Make sure it fails the build if tests fail).
+* [x] **CI/CD Gates:** Update `.github/workflows/deploy.yaml`.
+    * [x] Add `npm install`
+    * [x] Add `npm run lint`
+    * [x] Add `npm run test` (Make sure it fails the build if tests fail).
 
 ## 🧪 Phase 3: Integrity Verification (The Proof)
-* [ ] **Unit Tests:** Create `src/lib/crypto.test.ts`.
-    * Test: `encrypt('hello')` -> `decrypt(result)` === `'hello'`.
-    * Test: Decrypting with wrong key throws specific error.
+* [x] **Unit Tests:** Create `src/lib/crypto.test.ts`.
+    * [x] Test: `encrypt('hello')` -> `decrypt(result)` === `'hello'`.
+    * [x] Test: Decrypting with wrong key throws specific error.
+
 </file>
 
 <file path="docs/projects/02_CORE_POLISH_TASKS.md">
 # ⚡ Project 02: Professional Task List (The Engine)
 
 **Objective:** Transform the Tasks module into a high-performance, minimalist to-do list.
-**Constraint:** STRICTLY AVOID "Quest" or RPG terminology.
-**Status:** 🟡 Active
+**Status:** 🟢 Done
+**Personas Involved:** Ned (The Pink Cloud)
 
 ## 🏗️ Phase 1: Logic & Optimistic UI (The Feel)
-* [ ] **Optimistic Toggle:** Implement `onMutate` in React Query. Clicking a checkbox must feel instant.
-* [ ] **Refactor Hook:** Create `useTaskOperations` to handle add/edit/delete/toggle.
-* [ ] **Schema Update:** Add `source` field ('manual' | 'ai') to differentiate user tasks from Insight Actions.
+* [x] **Optimistic Toggle:** Implement `onMutate` in React Query. Clicking a checkbox must feel instant.
+* [x] **Refactor Hook:** Create `useTaskOperations` to handle add/edit/delete/toggle.
+* [x] **Schema Update:** Add `source` field ('manual' | 'ai') to differentiate user tasks from Insight Actions.
 
 ## 🧠 Phase 2: Visual Rebranding (The Look)
-* [ ] **List Layout:** Replace "Cards" with "Compact Rows" (High density).
-* [ ] **Terminology:** Rename "New Quest" -> "New Task".
-* [ ] **Smart Tabs:**
-    1. **Today:** Due <= Today (includes Overdue).
-    2. **Upcoming:** Due > Today.
-    3. **Action Plan:** Tasks where `source == 'ai'`. (Keeps growth goals separate from chores).
-    4. **History:** Completed tasks.
+* [x] **List Layout:** Replace "Cards" with "Compact Rows" (High density).
+* [x] **Terminology:** Rename "New Quest" -> "New Task".
+* [x] **Smart Tabs:** Implement Today, Upcoming, Action Plan, and History log.
 
 ## 🎨 Phase 3: "Invisible" Gamification
-* [ ] **Subtle Rewards:** Completion triggers a subtle "ding" or micro-animation (no confetti).
-* [ ] **Streak Display:** Show a small "Fire" icon next to recurring habits, but keep it minimal.
+* [x] **Subtle Rewards:** Completion triggers a subtle UI update.
+* [x] **Streak Display:** Show recurrence label and visual overdue indicators.
 
 </file>
 
 <file path="docs/projects/03_CORE_POLISH_WISDOM.md">
 # 📖 Project 03: Wisdom Polish (Interactive Workbooks)
 
-**Objective:** Transform the Workbook experience from a "Data Entry Form" to a "Premium Interactive Book" (Headspace/MasterClass style).
-**Status:** ⚪ Planned
+**Objective:** Transform the Workbook experience from a "Data Entry Form" to a "Premium Interactive Book".
+**Status:** 🟢 Done
+**Personas Involved:** Walt (The Zen Master)
 
 ## 🏗️ Phase 1: Typography & Layout
-* [ ] **Tailwind Typography:** Implement `@tailwindcss/typography` (`prose` classes) for rich text rendering in questions.
-* [ ] **Reading Mode:** Focus mode that hides the sidebar/header for deep work.
+* [x] **Tailwind Typography:** Implement `@tailwindcss/typography` (`prose` classes) for rich text rendering in questions.
+* [x] **Reading Mode:** Focus mode that hides the sidebar/header for deep work.
+* [x] **Sticky Nav:** Move navigation to an inline sticky toolbar for mobile UX.
 
-## 🧠 Phase 2: Data Safety
-* [ ] **Auto-Save:** Implement `useDebounce` to save answers to `localStorage` (and Firestore) while typing. Prevent data loss if the browser closes.
-* [ ] **Draft Indicator:** Visual "Saving..." / "Saved" status in the corner.
+## 🧠 Phase 2: Data Safety & AI
+* [x] **Auto-Save:** Implement `useAutoSave` to save answers to Firestore while typing.
+* [x] **Draft Indicator:** Visual "Saving..." / "Saved" status in the header.
+* [x] **On-Demand AI:** Individual question feedback via `getGeminiCoaching`.
 
-## 🎨 Phase 3: Interactive Inputs
-* [ ] **Polymorphic Inputs:** Support non-text answers:
-    * Sliders (1-10 Scales).
-    * Multi-Select Chips ("What emotions are you feeling?").
-    * Likert Scales (Strongly Agree <-> Strongly Disagree).
+## 🎨 Phase 3: Gamification
+* [x] **Chapters Mastered:** Replace "Active" metric with locally calculated Mastered chapters.
+* [x] **Task Routing:** Ensure Compass actions route to the `Action Plan` tab with `source: 'ai'`.
 
 </file>
 
-<file path="docs/projects/04_SERVICE_MODE.md">
-# 🤝 Project 02: The "Lisa" Service Module
+<file path="docs/projects/04_FRICTIONLESS_CORE.md">
+# 🛠️ Project 04: The Frictionless Core
+
+**Objective:** Refine the core engine (Auth, Data Retrieval, Education) to improve user retention.
+**Status:** 🟡 Active
+**Personas Involved:** Universal (David, Ned, Lisa, Walt)
+
+## 🏗️ Phase 1: The "Vault & Gate" Polish
+* [ ] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
+* [ ] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
+* [ ] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
+
+## 🧠 Phase 2: The "Memory Engine"
+* [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
+* [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
+* [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+
+## 🎨 Phase 3: The "Knowledge Base"
+* [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+* [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+* [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
+
+</file>
+
+<file path="docs/projects/05_SERVICE_MODULE.md">
+# 🤝 Project 05: The "Lisa" Service Module
 
 **Objective:** Build the "Digital Rolodex" for sponsors to manage sponsees securely.
 **Status:** ⚪ Planned
-**Persona:** Lisa (The Service Superstar)
+**Personas Involved:** Lisa (The Service Superstar)
 
 ## 🏗️ Phase 1: Schema & Crypto
-* [ ] **Schema:** Create `service` collection structure (See `SCHEMA_ARCHITECTURE.md`).
-* [ ] **Crypto:** Verify `src/lib/crypto.ts` can handle small, discrete fields (Name, Phone) individually, rather than just big blobs of text.
+* [ ] **Schema:** Create `service` collection structure.
+* [ ] **Crypto:** Verify `src/lib/crypto.ts` can handle small, discrete fields individually without breaking decryption.
 
 ## 🧠 Phase 2: Logic Layer
 * [ ] **Hook:** Build `useServiceData()` context hook.
 * [ ] **CRUD:** Implement `addSponsee()`, `updateSponseeNote()`.
-* [ ] **Boundary Check:** Ensure deleting a sponsee deletes their encrypted notes (Crypto-shredding).
+* [ ] **Boundary Check:** Ensure deleting a sponsee deletes their encrypted notes (crypto-shredding).
 
 ## 🎨 Phase 3: UI Implementation
-* [ ] **Dashboard:** Create `ServiceWidget` for the main dashboard (replacing Vitality or below it).
+* [ ] **Dashboard:** Create `ServiceWidget` for the main dashboard.
 * [ ] **List View:** Create `pages/Service.tsx` with "Active" and "Alumni" tabs.
 * [ ] **Detail View:** A secure card showing encrypted notes + unencrypted Next Meeting time.
 
 ## 🚀 Phase 4: Release
-* [ ] Update `UserGuide.tsx` with a section for Sponsors.
+* [ ] **Docs:** Update User Guide with a section for Sponsors.
+
 </file>
 
 <file path="docs/prompts/APPROVAL.md">
@@ -1828,9 +1862,16 @@ To prevent state conflicts, each answer is stored as an individual document.
 * **ID Format:** `[workbookId]_[questionId]`
 * **Fields:** `answer` (Encrypted), `isEncrypted` (Bool), `updatedAt` (Timestamp).
 
-## 2. AI Integration
-* **Coach:** Individual feedback via `getGeminiCoaching`.
-* **Compass:** Aggregate section analysis via `analyzeFullWorkbook`.
+## 2. Reading Experience (Zen Mode)
+* **Focus:** `WorkbookSession.tsx` implements a full-screen, distraction-free reading layer using `@tailwindcss/typography`.
+* **Data Safety:** Answers are auto-saved to Firestore via `useAutoSave` every 2 seconds. Data is encrypted client-side *before* transmission.
+
+## 3. AI Integration
+* **Coach:** On-demand, individual question feedback via `getGeminiCoaching`.
+* **Compass:** Aggregate section analysis via `analyzeFullWorkbook`. Suggested actions added to Habits are tagged with `source: 'ai'` to route them to the Action Plan tab.
+
+## 4. Gamification
+* **Chapters Mastered:** Calculated locally in `Workbooks.tsx` by cross-referencing completed answers against the required questions in the static `WORKBOOKS` schema.
 
 </file>
 
@@ -1847,7 +1888,7 @@ A streamlined interface for managing one-time tasks and recurring habits. Rebran
 The system segregates tasks into four distinct lanes:
 1. **Today:** Tasks where `dueDate` <= Now AND `source` == 'manual'.
 2. **Upcoming:** Tasks where `dueDate` > Today AND `source` == 'manual'.
-3. **Action Plan:** Tasks where `source` == 'ai'. This lane is reserved for growth items generated by the Compass or Analysis Wizard.
+3. **Action Plan:** Tasks where `source` == 'ai'. This lane is reserved for growth items generated by the Compass (Workbooks) or Analysis Wizard (Journals).
 4. **Log:** All tasks where `status` == 'completed'.
 
 ## 3. Data Structure
@@ -1938,6 +1979,7 @@ A real-time visual pacer for nervous system regulation.
 | Journal Entry | 25 XP (+10 for length) |
 | Task Completion | 10 (Low) / 25 (Med) / 50 (High) |
 | Workbook Answer | 15 XP |
+| Chapter Mastered | Status Milestone (Calculated locally) |
 | Vitality Log | 15 XP |
 | Clean Milestone | 500 XP (per 30 days) |
 
@@ -3278,183 +3320,292 @@ if __name__ == "__main__":
 <file path="scripts/apply_code.py">
 import os
 
-workbooks_code = r"""import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+workbook_session_code = r"""/**
+ * src/pages/WorkbookSession.tsx
+ * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
+ * FIXED: Removed unused variables and invalid characters via Python generation.
+ * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
+ */
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext'; 
 import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { WORKBOOKS } from '../data/workbooks';
-import VibrantHeader from '../components/VibrantHeader';
-import { THEME } from '../lib/theme';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { 
-    BookOpenIcon, 
-    StarIcon, 
-    HeartIcon, 
-    AcademicCapIcon,
+    CheckCircleIcon, 
+    ArrowRightIcon,
     SparklesIcon,
-    FireIcon,
-    ChevronRightIcon,
-    CheckBadgeIcon
+    XMarkIcon
 } from '@heroicons/react/24/outline';
+import { getWorkbook, type WorkbookSection } from '../data/workbooks';
+import { getGeminiCoaching } from '../lib/gemini';
+import { useAutoSave } from '../hooks/useAutoSave';
 
-export default function Workbooks() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-      chaptersMastered: 0,
-      wisdomScore: 0,
-      mastery: 0
-  });
+export default function WorkbookSession() {
+    const { workbookId, sectionId } = useParams();
+    const { user } = useAuth();
+    const { decrypt } = useEncryption(); 
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    async function loadStats() {
-        if (!user || !db) return;
-        
-        try {
-            // 1. Build requirement map from static data
-            const requiredPerSection: Record<string, number> = {};
-            let totalEstimatedQuestions = 0;
-            
-            WORKBOOKS.forEach(wb => {
-                wb.sections.forEach(sec => {
-                    const requiredCount = sec.questions.filter(q => q.type !== 'read_only').length;
-                    requiredPerSection[sec.id] = requiredCount;
-                    totalEstimatedQuestions += requiredCount;
-                });
-            });
+    // Content State
+    const [section, setSection] = useState<WorkbookSection | null>(null);
+    const [loading, setLoading] = useState(true);
 
-            // 2. Fetch User Data
-            const colRef = collection(db, 'users', user.uid, 'workbook_answers');
-            const snapshot = await getDocs(colRef);
-            
-            const wisdomScore = snapshot.size;
+    // User Progress State
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const [answers, setAnswers] = useState<Record<string, string>>({}); // Cache for loaded answers
+    
+    // UI State
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const [aiCoachLoading, setAiCoachLoading] = useState(false);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
-            // 3. Tally user answers per section
-            const userAnswersPerSection: Record<string, number> = {};
-            snapshot.docs.forEach(docSnap => {
-                const data = docSnap.data();
-                if (data.sectionId) {
-                    userAnswersPerSection[data.sectionId] = (userAnswersPerSection[data.sectionId] || 0) + 1;
+    // 1. Load Workbook Content & User Progress
+    useEffect(() => {
+        async function loadData() {
+            if (!user || !workbookId || !sectionId || !db) return;
+
+            try {
+                // A. Load Static Workbook JSON
+                const wb = getWorkbook(workbookId || '');
+                if (!wb) {
+                    navigate('/workbooks');
+                    return;
                 }
-            });
 
-            // 4. Calculate completely mastered chapters
-            let chaptersMastered = 0;
-            for (const [sectionId, requiredCount] of Object.entries(requiredPerSection)) {
-                const answeredCount = userAnswersPerSection[sectionId] || 0;
-                if (requiredCount > 0 && answeredCount >= requiredCount) {
-                    chaptersMastered++;
+                const sec = wb.sections.find(s => s.id === sectionId);
+                if (!sec) {
+                   navigate(`/workbooks/${workbookId}`);
+                   return;
                 }
+                setSection(sec);
+
+                // B. Load User Progress
+                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
+                const q = query(answersRef, where('workbookId', '==', workbookId));
+                const snapshot = await getDocs(q);
+                const loadedAnswers: Record<string, string> = {};
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    if (data.answer) {
+                        if (data.isEncrypted) {
+                            try {
+                                loadedAnswers[data.questionId] = await decrypt(data.answer);
+                            } catch {
+                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
+                            }
+                        } else {
+                            loadedAnswers[data.questionId] = data.answer;
+                        }
+                    }
+                }
+                setAnswers(loadedAnswers);
+                
+                // Initialize current answer based on first question
+                if (sec.questions.length > 0) {
+                    const firstQ = sec.questions[0];
+                    setCurrentAnswer(loadedAnswers[firstQ.id] || '');
+                }
+
+            } catch (error) {
+                console.error("Error loading session:", error);
+            } finally {
+                setLoading(false);
             }
-
-            const mastery = totalEstimatedQuestions > 0 
-                ? Math.min(100, Math.round((wisdomScore / totalEstimatedQuestions) * 100))
-                : 0;
-
-            setStats({ chaptersMastered, wisdomScore, mastery });
-        } catch (error) {
-            console.error("Failed to load workbook stats", error);
-        } finally {
-            setLoading(false);
         }
-    }
-    loadStats();
-  }, [user]);
+        loadData();
+    }, [user, workbookId, sectionId, navigate, decrypt]);
 
-  const getTheme = (type: string) => {
-    switch (type) {
-      case 'general': return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-l-yellow-500', icon: StarIcon };
-      case 'steps': return { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-l-blue-600', icon: BookOpenIcon };
-      default: return { color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-l-purple-500', icon: HeartIcon };
-    }
-  };
+    // Current Question Helpers
+    const currentQuestion = section?.questions[activeQuestionIndex];
+    const isIntroSlide = currentQuestion?.type === 'read_only';
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading your library...</div>;
+    // Update currentAnswer when question changes
+    useEffect(() => {
+        if (currentQuestion) {
+            setCurrentAnswer(answers[currentQuestion.id] || '');
+            setAiFeedback(null);
+        }
+    }, [activeQuestionIndex, currentQuestion, answers]);
 
-  return (
-    <div className={`pb-24 relative min-h-screen ${THEME.workbooks.page}`}>
-      
-      {/* HEADER */}
-      <VibrantHeader 
-        title="Recovery Library"
-        subtitle="Structured guides to process your journey."
-        icon={AcademicCapIcon}
-        fromColor={THEME.workbooks.header.from}
-        viaColor={THEME.workbooks.header.via}
-        toColor={THEME.workbooks.header.to}
-        percentage={stats.mastery}
-        percentageColor={THEME.workbooks.ring}
-      />
+    // --- AUTO SAVE HOOK ---
+    const { status: saveStatus } = useAutoSave({
+        uid: user?.uid || '',
+        workbookId: workbookId || '',
+        sectionId: sectionId || '',
+        questionId: currentQuestion?.id || '',
+        value: currentAnswer
+    });
 
-      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6">
-        
-        <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastered</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-emerald-600 mt-1">
-                    <CheckBadgeIcon className="h-6 w-6" />
-                    {stats.chaptersMastered}
+    // 2. Handle Answer Input
+    const handleAnswerChange = (text: string) => {
+        setCurrentAnswer(text);
+        // Update local cache immediately for UI responsiveness
+        if (currentQuestion) {
+            setAnswers(prev => ({ ...prev, [currentQuestion.id]: text }));
+        }
+    };
+
+    // 3. Navigation
+    const handleNext = () => {
+        if (!section) return;
+        if (activeQuestionIndex < section.questions.length - 1) {
+            setActiveQuestionIndex(prev => prev + 1);
+        } else {
+            navigate(`/workbooks/${workbookId}`);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (activeQuestionIndex > 0) {
+            setActiveQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const handleGetCoaching = async () => {
+        if (!currentQuestion || !currentAnswer || currentAnswer.length < 10) return alert("Write a bit more first.");
+        setAiCoachLoading(true);
+        try {
+            const context = currentQuestion.context || currentQuestion.text; 
+            const feedback = await getGeminiCoaching(context, currentAnswer);
+            setAiFeedback(feedback);
+        } catch {
+            alert("Coach unavailable.");
+        } finally {
+            setAiCoachLoading(false);
+        }
+    };
+
+    if (loading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+
+    const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+
+    return (
+        // ZEN MODE CONTAINER: Fixed full screen, covers AppShell
+        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
+            
+            {/* TOP BAR */}
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                        <XMarkIcon className="h-6 w-6" />
+                    </button>
+                    <div className="flex flex-col">
+                        <h2 className="text-sm font-bold text-gray-900">{section.title}</h2>
+                        <span className="text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {/* Auto-Save Indicator */}
+                    <div className="flex items-center gap-1.5 text-xs font-medium transition-colors">
+                        {saveStatus === 'saving' && <span className="text-blue-500 animate-pulse">Saving...</span>}
+                        {saveStatus === 'saved' && <span className="text-green-600 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Saved</span>}
+                        {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
+                    </div>
+                    
+                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+                    </div>
                 </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Wisdom Score</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-cyan-600 mt-1">
-                    <SparklesIcon className="h-6 w-6" />
-                    {stats.wisdomScore}
+
+            {/* SCROLLABLE CONTENT */}
+            <div className="flex-1 overflow-y-auto relative">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+                    
+                    {/* QUESTION / CONTENT */}
+                    <div className="prose prose-slate prose-lg max-w-none mb-8">
+                        {isIntroSlide ? (
+                           <div className="text-center py-10">
+                               <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
+                               {/* Intro Slide specific Next Button */}
+                               <button 
+                                   onClick={handleNext}
+                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                               >
+                                   Begin <ArrowRightIcon className="h-5 w-5" />
+                               </button>
+                           </div>
+                        ) : (
+                           <div className="animate-fadeIn">
+                               <h3 className="text-xl font-bold text-gray-900 mb-4">{currentQuestion.text}</h3>
+                               {currentQuestion.context && (
+                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-base">
+                                       <SparklesIcon className="h-5 w-5 inline mr-2 text-blue-500" />
+                                       {currentQuestion.context}
+                                   </blockquote>
+                               )}
+                           </div>
+                        )}
+                    </div>
+
+                    {/* INPUT AREA WITH STICKY TOOLBAR */}
+                    {!isIntroSlide && (
+                        <div className="animate-slideUp flex flex-col relative">
+                            
+                            {/* STICKY TOOLBAR */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
+                                <button 
+                                    onClick={handlePrevious} 
+                                    disabled={activeQuestionIndex === 0}
+                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                >
+                                    Back
+                                </button>
+
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button 
+                                        onClick={handleGetCoaching}
+                                        disabled={aiCoachLoading || currentAnswer.length < 10}
+                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
+                                    </button>
+
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                    >
+                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
+                                        <ArrowRightIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <textarea 
+                                value={currentAnswer}
+                                onChange={(e) => handleAnswerChange(e.target.value)}
+                                placeholder="Reflect here..."
+                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                autoFocus
+                            />
+                            
+                            {/* AI FEEDBACK */}
+                            {aiFeedback && (
+                                <div className="mt-6 bg-purple-50 p-6 rounded-xl border border-purple-100 animate-fadeIn">
+                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2">
+                                        <SparklesIcon className="h-5 w-5" /> Insight
+                                    </h4>
+                                    <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                 </div>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider text-center">Mastery</span>
-                <div className="flex items-center gap-1 text-2xl font-bold text-indigo-600 mt-1">
-                    <FireIcon className="h-6 w-6" />
-                    {stats.mastery}%
-                </div>
+
+            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
+            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
             </div>
+
         </div>
-
-        <div className="space-y-4">
-          {WORKBOOKS.map((workbook) => {
-              const theme = getTheme(workbook.type);
-              
-              return (
-                  <Link 
-                      key={workbook.id} 
-                      to={`/workbooks/${workbook.id}`}
-                      className={`block relative group bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md ${theme.border} border-l-[6px]`}
-                  >
-                      <div className="flex items-start gap-4">
-                          <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
-                              <theme.icon className="h-6 w-6" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                                      {workbook.title}
-                                  </h3>
-                                  <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                                  {workbook.description}
-                              </p>
-                              <div className="flex items-center gap-3">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
-                                      {workbook.sections.length} Sections
-                                  </span>
-                                  {workbook.type === 'steps' && (
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                          12-Step Compatible
-                                      </span>
-                                  )}
-                              </div>
-                          </div>
-                      </div>
-                  </Link>
-              );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
 """
 
@@ -3465,8 +3616,8 @@ def write_file(path, content):
     print(f"✅ Modified: {path}")
 
 if __name__ == "__main__":
-    write_file("src/pages/Workbooks.tsx", workbooks_code)
-    print("🚀 Metric update complete. Run 'npm run build && npm run lint' to verify.")
+    write_file("src/pages/WorkbookSession.tsx", workbook_session_code)
+    print("🚀 Navigation Toolbar successfully updated. Run 'npm run build && npm run lint' to verify.")
 </file>
 
 <file path="scripts/dump_docs.sh">
@@ -3881,126 +4032,60 @@ setAdmin(email);
 
 <file path="scripts/setup_docs.py">
 import os
-from datetime import date
+
+roadmap_content = """# 🗺️ MRT Product Roadmap
+
+**Vision:** To build the world's most secure, persona-aware digital recovery companion.
+
+## 📅 Q1 2026: Foundation & Security (Completed)
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
+| 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
+
+## 📅 Q2 2026: The "Core Polish" Phase
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
+| 🟡 **Active** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
+| ⚪ Planned | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
+"""
+
+sprint_board_content = """# 🏃 Active Sprint Board
+**Sprint:** 19.1 "The Vault & Gate"
+**Start Date:** 2026-02-19
+**Goal:** Resolve the Journal decryption refresh bug and modernize the Auth/Login UI with Trust Badges.
+
+## 📌 To Do (Project 04 - Sprint 1)
+- [ ] **Bug Fix:** Wire `isVaultUnlocked` to trigger reactive re-render of Journal History without a hard refresh.
+- [ ] **Auth UX:** Redesign `Login.tsx` into a modern, split Sign-In/Sign-Up flow.
+- [ ] **Auth UX:** Add Zero-Knowledge Trust Badges to the sign-up screen.
+
+## 🚧 In Progress
+- [ ] Planning phase for Journal refresh bug.
+
+## ✅ Done (Previous Sprint)
+- [x] **Project 03:** Wisdom (Workbook) Polish - Zen Mode, Gamification, Auto-Save.
+- [x] **Project 03:** Mobile Keyboard UX fix for Workbook Session.
+- [x] **Project 03:** Documentation sync for Phase 2.
+
+---
+## 🧊 Backlog (Upcoming Sprints)
+- [ ] **Project 04 - Sprint 2:** The "Memory Engine" (Client-side search, Insights polish).
+- [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).
+"""
 
 def write_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        f.write(content.strip())
-    print(f"✅ Created: {path}")
+        f.write(content)
+    print(f"✅ Updated: {path}")
 
-current_date = date.today().strftime("%B %d, %Y")
-
-# ==========================================
-# 1. PRIVACY POLICY
-# ==========================================
-privacy_content = f"""
-# 🔒 Privacy Policy for My Recovery Toolkit (MRT)
-
-**Last Updated:** {current_date}
-
-**My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
-
-## 1. Our Core Philosophy: Zero-Knowledge Encryption
-MRT is built on a **Zero-Knowledge Architecture**.
-* **Your Private Data:** Your Journal entries, Workbook answers, and Sponsee notes are encrypted on your device using a key derived from your PIN.
-* **Our Access:** We (the developers) and our cloud providers (Firebase/Google) **cannot decrypt or read this data**. It is stored as mathematical gibberish (`ciphertext`) on our servers.
-* **Your Responsibility:** Because we do not have your encryption key, **we cannot recover your data if you lose your PIN.**
-
-## 2. Information We Collect
-We collect data in two categories:
-
-### A. Account & Metadata (Unencrypted)
-To operate the service, the following data is stored in plain text:
-* **Authentication:** Email address and User ID (via Firebase Auth).
-* **Usage Stats:** App performance, error logs, and activity streaks (e.g., "User logged in today").
-* **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). We use these to generate charts/graphs.
-
-### B. User Generated Content (Encrypted)
-The following data is encrypted *before* it leaves your device:
-* **Journals:** The text body of your diary entries.
-* **Workbooks:** Your answers to deep-dive recovery questions.
-* **Service Data:** Names and notes regarding people you sponsor.
-
-## 3. How We Use Artificial Intelligence (AI)
-MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysis.
-* **Consent:** AI analysis only happens when you explicitly click a button (e.g., "Analyze Journal", "Consult Compass").
-* **Process:** Your device temporarily decrypts the specific text, sends it to the AI provider via a secure connection, and displays the result.
-* **Privacy:** We utilize "Stateless" API calls. Your journal entries are **NOT** used to train Google's public AI models. The data is processed in memory and then discarded by the AI provider.
-
-## 4. Data Storage & Third Parties
-We use trusted third-party infrastructure to host the app:
-* **Google Firebase:** Hosts the database, authentication, and static files.
-* **Google Generative AI:** Provides the intelligence for analysis features.
-
-## 5. Data Sovereignty
-You own your data.
-* **Export:** You may download a decrypted JSON or PDF copy of your data at any time via the Profile page.
-* **Deletion:** You may delete your account at any time. This permanently wipes all data (Encrypted and Unencrypted) from our servers.
-
-## 6. Children's Privacy
-MRT is not intended for individuals under the age of 13. We do not knowingly collect data from children.
-
-## 7. Contact Us
-For technical support or privacy questions, please contact:
-**Email:** rpdouglas@gmail.com
-"""
-
-# ==========================================
-# 2. TERMS OF SERVICE
-# ==========================================
-terms_content = f"""
-# 📜 Terms of Service
-
-**Last Updated:** {current_date}
-
-By accessing or using **My Recovery Toolkit (MRT)**, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not use the application.
-
-## 1. Medical Disclaimer (Critical)
-**MRT IS NOT A MEDICAL DEVICE AND DOES NOT PROVIDE MEDICAL ADVICE.**
-* The content, AI analysis, and tools provided are for **informational and self-help purposes only**.
-* MRT is not a substitute for professional medical advice, diagnosis, or treatment.
-* **In Case of Emergency:** If you are experiencing a medical emergency, suicidal thoughts, or a relapse crisis, call 911 or your local emergency number immediately. Do not rely on this app for crisis intervention.
-
-## 2. Zero-Knowledge & Data Loss
-* **Your Security PIN:** You are solely responsible for remembering your PIN.
-* **No Recovery:** Because MRT uses Zero-Knowledge encryption, **we cannot reset your PIN or recover your encrypted data** if you forget it.
-* **Liability:** MRT and its developers are not liable for any loss of data resulting from a lost PIN, device failure, or failure to backup your data.
-
-## 3. User Responsibilities
-You agree not to:
-* Use the app for any illegal purpose.
-* Attempt to reverse-engineer the encryption protocols.
-* Enter Personal Identifiable Information (PII) of others (e.g., Sponsees) into unencrypted fields (like Task Titles).
-
-## 4. AI Features
-* **Accuracy:** Artificial Intelligence can make mistakes ("hallucinations"). You acknowledge that advice or insights generated by the "Recovery Coach" or "Compass" may be inaccurate or inappropriate. Always use your own judgment.
-* **Usage:** You agree not to use the AI features to generate harmful, illegal, or abusive content.
-
-## 5. Termination
-We reserve the right to terminate or suspend your account immediately, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the Service.
-
-## 6. Limitation of Liability
-To the maximum extent permitted by law, MRT and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.
-
-## 7. Governing Law
-These Terms shall be governed by the laws of Ontario, Canada, without regard to its conflict of law provisions.
-
-## 8. Changes to Terms
-We reserve the right to modify these terms at any time. Your continued use of the app after changes constitutes acceptance of the new terms.
-"""
-
-# ==========================================
-# Execution
-# ==========================================
-print("🚀 Generating Legal Documentation for App Store Compliance...")
-
-write_file("docs/legal/PRIVACY_POLICY.md", privacy_content)
-write_file("docs/legal/TERMS_OF_SERVICE.md", terms_content)
-
-print("\n✨ Legal Docs Created!")
-print("👉 Folder: docs/legal/")
-print("📝 NOTE: Before publishing, verify the 'Contact Email' and 'Governing Law' sections.")
+if __name__ == "__main__":
+    print("🔄 Synchronizing Project Management Documents...")
+    write_file("docs/ROADMAP.md", roadmap_content)
+    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
+    print("✨ Roadmap and Sprint Board are now up to date.")
 </file>
 
 <file path="scripts/sync_security_rules.sh">
@@ -17346,6 +17431,7 @@ export default function WorkbookDetail() {
  * src/pages/WorkbookSession.tsx
  * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
  * FIXED: Removed unused variables and invalid characters via Python generation.
+ * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -17508,7 +17594,7 @@ export default function WorkbookSession() {
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
             
             {/* TOP BAR */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10">
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
                         <XMarkIcon className="h-6 w-6" />
@@ -17527,22 +17613,29 @@ export default function WorkbookSession() {
                         {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
                     </div>
                     
-                    <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
                     </div>
                 </div>
             </div>
 
             {/* SCROLLABLE CONTENT */}
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl mx-auto px-6 py-12">
+            <div className="flex-1 overflow-y-auto relative">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                     
                     {/* QUESTION / CONTENT */}
                     <div className="prose prose-slate prose-lg max-w-none mb-8">
                         {isIntroSlide ? (
                            <div className="text-center py-10">
                                <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
-                               <div className="whitespace-pre-wrap text-gray-600 leading-loose">{currentQuestion.text}</div>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
+                               {/* Intro Slide specific Next Button */}
+                               <button 
+                                   onClick={handleNext}
+                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                               >
+                                   Begin <ArrowRightIcon className="h-5 w-5" />
+                               </button>
                            </div>
                         ) : (
                            <div className="animate-fadeIn">
@@ -17557,14 +17650,44 @@ export default function WorkbookSession() {
                         )}
                     </div>
 
-                    {/* INPUT AREA */}
+                    {/* INPUT AREA WITH STICKY TOOLBAR */}
                     {!isIntroSlide && (
-                        <div className="animate-slideUp">
+                        <div className="animate-slideUp flex flex-col relative">
+                            
+                            {/* STICKY TOOLBAR */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
+                                <button 
+                                    onClick={handlePrevious} 
+                                    disabled={activeQuestionIndex === 0}
+                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                >
+                                    Back
+                                </button>
+
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button 
+                                        onClick={handleGetCoaching}
+                                        disabled={aiCoachLoading || currentAnswer.length < 10}
+                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
+                                    </button>
+
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                    >
+                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
+                                        <ArrowRightIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
                             <textarea 
                                 value={currentAnswer}
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                                 placeholder="Reflect here..."
-                                className="w-full min-h-[300px] p-6 rounded-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
                                 autoFocus
                             />
                             
@@ -17577,41 +17700,15 @@ export default function WorkbookSession() {
                                     <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
                                 </div>
                             )}
-
-                            <div className="mt-4 flex justify-end">
-                                <button 
-                                    onClick={handleGetCoaching}
-                                    disabled={aiCoachLoading || currentAnswer.length < 10}
-                                    className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50"
-                                >
-                                    {aiCoachLoading ? "Thinking..." : "Get AI Insight"} <SparklesIcon className="h-4 w-4" />
-                                </button>
-                            </div>
                         </div>
                     )}
 
                 </div>
             </div>
 
-            {/* BOTTOM NAV */}
-            <div className="bg-white border-t border-gray-100 p-4 safe-area-bottom z-10">
-                <div className="max-w-2xl mx-auto flex justify-between items-center">
-                    <button 
-                        onClick={handlePrevious} 
-                        disabled={activeQuestionIndex === 0}
-                        className="px-6 py-3 rounded-xl text-gray-500 font-bold hover:bg-gray-50 disabled:opacity-30 transition-colors"
-                    >
-                        Back
-                    </button>
-
-                    <button 
-                        onClick={handleNext}
-                        className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
-                    >
-                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
-                        <ArrowRightIcon className="h-4 w-4" />
-                    </button>
-                </div>
+            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
+            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
             </div>
 
         </div>

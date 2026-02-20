@@ -2,8 +2,8 @@
  * src/components/journal/JournalHistory.tsx
  * GITHUB COMMENT:
  * [JournalHistory.tsx]
+ * FIX: Added 'isVaultUnlocked' to queryKey to solve the decryption refresh bug.
  * FEATURE: Added Weather visualization to journal entries.
- * UPDATE: Implemented icon mapping for weather conditions (Sun/Cloud/Rain).
  */
 import { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,9 +31,9 @@ import {
     ShieldExclamationIcon, 
     ShareIcon, 
     CheckIcon, 
-    SparklesIcon,
-    SunIcon,
-    CloudIcon,
+    SparklesIcon, 
+    SunIcon, 
+    CloudIcon, 
     BoltIcon
 } from '@heroicons/react/24/outline';
 
@@ -62,7 +62,7 @@ const WeatherIcon = ({ condition }: { condition: string }) => {
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
-  const { decrypt } = useEncryption();
+  const { decrypt, isVaultUnlocked } = useEncryption(); // FIX: Extracted isVaultUnlocked
   const queryClient = useQueryClient();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -70,7 +70,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   // --- REACT QUERY FETCH ---
   const { data: allEntries = [], isLoading } = useQuery({
-    queryKey: ['journals', user?.uid],
+    // FIX: Added isVaultUnlocked to dependencies. 
+    // This forces an automatic refetch/re-decrypt when the user enters their PIN.
+    queryKey: ['journals', user?.uid, isVaultUnlocked],
     queryFn: async () => {
         if (!user || !db) return [];
         const database: Firestore = db;
@@ -109,7 +111,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 ...data, 
                 content, 
                 createdAt: createdDate,
-                isError                       
+                isError                        
             } as unknown as JournalEntryWithStatus;
         }));
     },
