@@ -1,22 +1,21 @@
 # 🏃 Active Sprint Board
-**Sprint:** 19.1 "The Vault & Gate"
-**Start Date:** 2026-02-19
-**Goal:** Resolve the Journal decryption refresh bug and modernize the Auth/Login UI with Trust Badges.
+**Sprint:** 19.2 "The Memory Engine"
+**Start Date:** 2026-02-20
+**Goal:** Implement client-side filtering for the Journal and enhance Insights formatting.
 
-## 📌 To Do (Project 04 - Sprint 1)
-- [ ] **Bug Fix:** Wire `isVaultUnlocked` to trigger reactive re-render of Journal History without a hard refresh.
-- [ ] **Auth UX:** Redesign `Login.tsx` into a modern, split Sign-In/Sign-Up flow.
-- [ ] **Auth UX:** Add Zero-Knowledge Trust Badges to the sign-up screen.
+## 📌 To Do (Project 04 - Sprint 2)
+- [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
+- [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
+- [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
 
 ## 🚧 In Progress
-- [ ] Planning phase for Journal refresh bug.
+- [ ] Planning Phase for Journal Filtering.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Project 03:** Wisdom (Workbook) Polish - Zen Mode, Gamification, Auto-Save.
-- [x] **Project 03:** Mobile Keyboard UX fix for Workbook Session.
-- [x] **Project 03:** Documentation sync for Phase 2.
+- [x] **Bug Fix:** Wired `isVaultUnlocked` to trigger reactive re-render of Journal History.
+- [x] **Auth UX:** Redesigned `Login.tsx` into a split-screen Hero layout.
+- [x] **Auth UX:** Added Zero-Knowledge Trust Badges to the sign-up screen.
 
 ---
 ## 🧊 Backlog (Upcoming Sprints)
-- [ ] **Project 04 - Sprint 2:** The "Memory Engine" (Client-side search, Insights polish).
 - [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).

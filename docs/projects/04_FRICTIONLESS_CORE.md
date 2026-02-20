@@ -5,9 +5,9 @@
 **Personas Involved:** Universal (David, Ned, Lisa, Walt)
 
 ## 🏗️ Phase 1: The "Vault & Gate" Polish
-* [ ] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
-* [ ] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
-* [ ] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
+* [x] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
+* [x] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
+* [x] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
 
 ## 🧠 Phase 2: The "Memory Engine"
 * [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
