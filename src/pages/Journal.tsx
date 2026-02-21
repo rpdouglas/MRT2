@@ -24,8 +24,10 @@ export default function Journal() {
   const handleTabChange = (tab: string) => {
     setSearchParams(prev => {
         prev.set('tab', tab);
-        // Clear template param if leaving write tab so it doesn't persist unwantedly
+        // Clear template param if leaving write tab
         if (tab !== 'write') prev.delete('template');
+        // Clear search param if leaving history tab
+        if (tab !== 'history') prev.delete('search');
         return prev;
     });
   };
@@ -113,13 +115,13 @@ export default function Journal() {
         )}
         
         {activeTab === 'history' && (
-            <div className="animate-fadeIn">
+            <div className="animate-fadeIn h-full">
                 <JournalHistory onEdit={handleEdit} />
             </div>
         )}
         
         {activeTab === 'insights' && (
-            <div className="animate-fadeIn">
+            <div className="animate-fadeIn h-full">
                 <JournalInsights />
             </div>
         )}

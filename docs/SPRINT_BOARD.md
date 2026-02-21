@@ -1,22 +1,21 @@
 # 🏃 Active Sprint Board
-**Sprint:** 19.1 "The Vault & Gate"
-**Start Date:** 2026-02-19
-**Goal:** Resolve the Journal decryption refresh bug and modernize the Auth/Login UI with Trust Badges.
+**Sprint:** 4.3 "The Knowledge Base"
+**Start Date:** 2026-02-21
+**Goal:** Initialize VitePress for static documentation hosting and migrate user guides.
 
-## 📌 To Do (Project 04 - Sprint 1)
-- [ ] **Bug Fix:** Wire `isVaultUnlocked` to trigger reactive re-render of Journal History without a hard refresh.
-- [ ] **Auth UX:** Redesign `Login.tsx` into a modern, split Sign-In/Sign-Up flow.
-- [ ] **Auth UX:** Add Zero-Knowledge Trust Badges to the sign-up screen.
+## 📌 To Do (Project 04 - Sprint 3)
+- [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+- [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+- [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 
 ## 🚧 In Progress
-- [ ] Planning phase for Journal refresh bug.
+- [ ] Requirements gathering for static site deployment via GitHub Pages/Firebase Hosting.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Project 03:** Wisdom (Workbook) Polish - Zen Mode, Gamification, Auto-Save.
-- [x] **Project 03:** Mobile Keyboard UX fix for Workbook Session.
-- [x] **Project 03:** Documentation sync for Phase 2.
+- [x] **Client-Side Search:** Built a search bar in `JournalHistory.tsx` using URL params (`useSearchParams`) to filter decrypted content.
+- [x] **Insights Polish:** Added 30-day rolling trend arrows to `JournalInsights.tsx`.
+- [x] **Interactive Word Cloud:** Made Word Cloud tags act as click-to-filter triggers routing back to Journal History.
 
 ---
 ## 🧊 Backlog (Upcoming Sprints)
-- [ ] **Project 04 - Sprint 2:** The "Memory Engine" (Client-side search, Insights polish).
-- [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).
+- [ ] **Project 05:** The "Lisa" Service Module (Sponsee management).

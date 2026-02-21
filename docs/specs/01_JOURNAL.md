@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v1.1)
+**Status:** Live (v1.2)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -8,8 +8,6 @@
 
 ## 1. Overview
 The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
-
-
 
 ## 2. The Three Modes (Tabs)
 The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
@@ -28,6 +26,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 
 ### B. History (The Timeline)
 * **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **Search & Filter:** A URL-driven search bar (`?search=xyz`) filters entries client-side *after* decryption, matching against both entry content and tags.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
 * **Analysis Trigger:** Contains the "Analyze" FAB (Floating Action Button) to launch the **Journal Analysis Wizard**.
 * **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
@@ -38,8 +37,8 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 * **Visualizations:**
     1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days* (Days 31-60).
     2.  **Daily Trends:** A Composed Chart overlaying **Mood** (Line) vs **Weather Temperature** (Bar) to identify environmental triggers.
-    3.  **Word Cloud:** Frequency analysis of entry content (excluding stop words) to highlight recurring themes.
-    4.  **Top Stats:** Total Entries, Average Mood Score, and Active Streak.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. Clicking a tag automatically navigates the user to the History tab, pre-filtered for that specific word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score (now featuring a rolling 30-day Trend Indicator arrow).
 
 ---
 
@@ -124,7 +123,7 @@ sequenceDiagram
 
 ## 6. Verification (QA)
 
-* [ ] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
-* [ ] **Search:** Verify searching by "Tag" works (since tags are unencrypted).
-* [ ] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
-* [ ] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
+* [x] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
+* [x] **Search:** Verify searching by "Tag" or "Content" correctly filters the virtualized list.
+* [x] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
+* [x] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).

@@ -1,300 +1,198 @@
 import os
 
-workbook_session_code = r"""/**
- * src/pages/WorkbookSession.tsx
- * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
- * FIXED: Removed unused variables and invalid characters via Python generation.
- * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
- */
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useEncryption } from '../contexts/EncryptionContext'; 
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { 
-    CheckCircleIcon, 
-    ArrowRightIcon,
-    SparklesIcon,
-    XMarkIcon
-} from '@heroicons/react/24/outline';
-import { getWorkbook, type WorkbookSection } from '../data/workbooks';
-import { getGeminiCoaching } from '../lib/gemini';
-import { useAutoSave } from '../hooks/useAutoSave';
+# -----------------------------------------------------------------------------
+# NOTE: We use '~~~' instead of triple backticks in the raw strings below. 
+# The script automatically replaces them with standard markdown backticks before 
+# writing to the file. This prevents the AI's markdown parser from breaking!
+# -----------------------------------------------------------------------------
 
-export default function WorkbookSession() {
-    const { workbookId, sectionId } = useParams();
-    const { user } = useAuth();
-    const { decrypt } = useEncryption(); 
-    const navigate = useNavigate();
+journal_spec = r"""# 📖 Feature Specification: The Journal (The Vault)
 
-    // Content State
-    const [section, setSection] = useState<WorkbookSection | null>(null);
-    const [loading, setLoading] = useState(true);
+**Status:** Live (v1.2)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
-    // User Progress State
-    const [currentAnswer, setCurrentAnswer] = useState('');
-    const [answers, setAnswers] = useState<Record<string, string>>({}); // Cache for loaded answers
-    
-    // UI State
-    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
-    const [aiCoachLoading, setAiCoachLoading] = useState(false);
-    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+---
 
-    // 1. Load Workbook Content & User Progress
-    useEffect(() => {
-        async function loadData() {
-            if (!user || !workbookId || !sectionId || !db) return;
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
 
-            try {
-                // A. Load Static Workbook JSON
-                const wb = getWorkbook(workbookId || '');
-                if (!wb) {
-                    navigate('/workbooks');
-                    return;
-                }
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-                const sec = wb.sections.find(s => s.id === sectionId);
-                if (!sec) {
-                   navigate(`/workbooks/${workbookId}`);
-                   return;
-                }
-                setSection(sec);
+### A. Write (The Editor)
+* **Input Methods:**
+    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
+    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
+* **Metadata:**
+    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
+    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
+    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+* **Templates:**
+    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
+    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-                // B. Load User Progress
-                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
-                const q = query(answersRef, where('workbookId', '==', workbookId));
-                const snapshot = await getDocs(q);
-                const loadedAnswers: Record<string, string> = {};
+### B. History (The Timeline)
+* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **Search & Filter:** A URL-driven search bar (`?search=xyz`) filters entries client-side *after* decryption, matching against both entry content and tags.
+* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
+* **Analysis Trigger:** Contains the "Analyze" FAB (Floating Action Button) to launch the **Journal Analysis Wizard**.
+* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
-                for (const docSnap of snapshot.docs) {
-                    const data = docSnap.data();
-                    if (data.answer) {
-                        if (data.isEncrypted) {
-                            try {
-                                loadedAnswers[data.questionId] = await decrypt(data.answer);
-                            } catch {
-                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
-                            }
-                        } else {
-                            loadedAnswers[data.questionId] = data.answer;
-                        }
-                    }
-                }
-                setAnswers(loadedAnswers);
-                
-                // Initialize current answer based on first question
-                if (sec.questions.length > 0) {
-                    const firstQ = sec.questions[0];
-                    setCurrentAnswer(loadedAnswers[firstQ.id] || '');
-                }
+### C. Insights (The Dashboard)
+* **Source:** `JournalInsights.tsx`
+* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
+* **Visualizations:**
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days* (Days 31-60).
+    2.  **Daily Trends:** A Composed Chart overlaying **Mood** (Line) vs **Weather Temperature** (Bar) to identify environmental triggers.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. Clicking a tag automatically navigates the user to the History tab, pre-filtered for that specific word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score (now featuring a rolling 30-day Trend Indicator arrow).
 
-            } catch (error) {
-                console.error("Error loading session:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadData();
-    }, [user, workbookId, sectionId, navigate, decrypt]);
+---
 
-    // Current Question Helpers
-    const currentQuestion = section?.questions[activeQuestionIndex];
-    const isIntroSlide = currentQuestion?.type === 'read_only';
+## 3. Advanced AI Features
 
-    // Update currentAnswer when question changes
-    useEffect(() => {
-        if (currentQuestion) {
-            setCurrentAnswer(answers[currentQuestion.id] || '');
-            setAiFeedback(null);
-        }
-    }, [activeQuestionIndex, currentQuestion, answers]);
+### 🧠 The Analysis Wizard
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Scopes:**
+    * **Weekly:** Last 7 days vs Previous 7 days.
+    * **Monthly:** Last 30 days vs Previous 30 days.
+    * **Deep Dive:** All-time / 90-day pattern recognition.
+* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
+* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
+* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
 
-    // --- AUTO SAVE HOOK ---
-    const { status: saveStatus } = useAutoSave({
-        uid: user?.uid || '',
-        workbookId: workbookId || '',
-        sectionId: sectionId || '',
-        questionId: currentQuestion?.id || '',
-        value: currentAnswer
-    });
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:**
+    1.  User records audio (MediaRecorder API).
+    2.  Audio Blob converted to Base64.
+    3.  Sent to Gemini 2.5 Flash (Multimodal).
+    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
+    5.  Populates the Editor state.
 
-    // 2. Handle Answer Input
-    const handleAnswerChange = (text: string) => {
-        setCurrentAnswer(text);
-        // Update local cache immediately for UI responsiveness
-        if (currentQuestion) {
-            setAnswers(prev => ({ ...prev, [currentQuestion.id]: text }));
-        }
-    };
+---
 
-    // 3. Navigation
-    const handleNext = () => {
-        if (!section) return;
-        if (activeQuestionIndex < section.questions.length - 1) {
-            setActiveQuestionIndex(prev => prev + 1);
-        } else {
-            navigate(`/workbooks/${workbookId}`);
-        }
-    };
+## 4. Technical Architecture
 
-    const handlePrevious = () => {
-        if (activeQuestionIndex > 0) {
-            setActiveQuestionIndex(prev => prev - 1);
-        }
-    };
+### Data Flow & Encryption
+~~~mermaid
+sequenceDiagram
+    participant User
+    participant App (React)
+    participant Crypto (Lib)
+    participant Gemini (AI)
+    participant Firestore
 
-    const handleGetCoaching = async () => {
-        if (!currentQuestion || !currentAnswer || currentAnswer.length < 10) return alert("Write a bit more first.");
-        setAiCoachLoading(true);
-        try {
-            const context = currentQuestion.context || currentQuestion.text; 
-            const feedback = await getGeminiCoaching(context, currentAnswer);
-            setAiFeedback(feedback);
-        } catch {
-            alert("Coach unavailable.");
-        } finally {
-            setAiCoachLoading(false);
-        }
-    };
+    Note over App, Firestore: WRITE FLOW
+    User->>App: Types "I feel anxious"
+    App->>Crypto: encrypt("I feel anxious", Key)
+    Crypto-->>App: Returns "IV:Ciphertext"
+    App->>Firestore: Writes { content: "IV:Ciphertext", isEncrypted: true }
 
-    if (loading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+    Note over App, Gemini: AI ANALYSIS FLOW
+    User->>App: Clicks "Analyze"
+    App->>Firestore: Fetches Encrypted Docs
+    App->>Crypto: decrypt(Docs, Key)
+    App->>Gemini: Sends Plain Text (Stateless)
+    Gemini-->>App: Returns Analysis JSON
+    App->>App: Renders Result
+    App->>Firestore: Saves Result (Optional)
+~~~
 
-    const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
+### Database Schema (Journal Specific)
+**Collection:** `journals`
+| Field | Type | Description | Encryption |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | Owner ID | No |
+| `content` | String | The body text | **YES (AES-GCM)** |
+| `moodScore` | Number | 1-10 Integer | No (For Stats) |
+| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
+| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
+| `isEncrypted` | Bool | Flag for legacy data handling | No |
+| `createdAt` | Timestamp | Creation Time | No |
 
-    return (
-        // ZEN MODE CONTAINER: Fixed full screen, covers AppShell
-        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
-            
-            {/* TOP BAR */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
-                        <XMarkIcon className="h-6 w-6" />
-                    </button>
-                    <div className="flex flex-col">
-                        <h2 className="text-sm font-bold text-gray-900">{section.title}</h2>
-                        <span className="text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
-                    </div>
-                </div>
+---
 
-                <div className="flex items-center gap-3">
-                    {/* Auto-Save Indicator */}
-                    <div className="flex items-center gap-1.5 text-xs font-medium transition-colors">
-                        {saveStatus === 'saving' && <span className="text-blue-500 animate-pulse">Saving...</span>}
-                        {saveStatus === 'saved' && <span className="text-green-600 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Saved</span>}
-                        {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
-                    </div>
-                    
-                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
-                    </div>
-                </div>
-            </div>
+## 5. Edge Cases & Constraints
 
-            {/* SCROLLABLE CONTENT */}
-            <div className="flex-1 overflow-y-auto relative">
-                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-                    
-                    {/* QUESTION / CONTENT */}
-                    <div className="prose prose-slate prose-lg max-w-none mb-8">
-                        {isIntroSlide ? (
-                           <div className="text-center py-10">
-                               <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
-                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
-                               {/* Intro Slide specific Next Button */}
-                               <button 
-                                   onClick={handleNext}
-                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
-                               >
-                                   Begin <ArrowRightIcon className="h-5 w-5" />
-                               </button>
-                           </div>
-                        ) : (
-                           <div className="animate-fadeIn">
-                               <h3 className="text-xl font-bold text-gray-900 mb-4">{currentQuestion.text}</h3>
-                               {currentQuestion.context && (
-                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-base">
-                                       <SparklesIcon className="h-5 w-5 inline mr-2 text-blue-500" />
-                                       {currentQuestion.context}
-                                   </blockquote>
-                               )}
-                           </div>
-                        )}
-                    </div>
+1.  **Lost PIN:**
+    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
+    * *Mitigation:* `VaultGate.tsx` warns users clearly.
 
-                    {/* INPUT AREA WITH STICKY TOOLBAR */}
-                    {!isIntroSlide && (
-                        <div className="animate-slideUp flex flex-col relative">
-                            
-                            {/* STICKY TOOLBAR */}
-                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
-                                <button 
-                                    onClick={handlePrevious} 
-                                    disabled={activeQuestionIndex === 0}
-                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
-                                >
-                                    Back
-                                </button>
+2.  **AI Privacy:**
+    * Journal text is decrypted in browser memory *only* for the duration of the API call.
+    * Gemini API calls are stateless (data is not stored by Google for model training).
 
-                                <div className="flex items-center gap-2 sm:gap-4">
-                                    <button 
-                                        onClick={handleGetCoaching}
-                                        disabled={aiCoachLoading || currentAnswer.length < 10}
-                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
-                                    >
-                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
-                                    </button>
+3.  **API Failures:**
+    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
+    * If Gemini fails (403/500), the user can still save the text manually.
 
-                                    <button 
-                                        onClick={handleNext}
-                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
-                                    >
-                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
-                                        <ArrowRightIcon className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
+## 6. Verification (QA)
 
-                            <textarea 
-                                value={currentAnswer}
-                                onChange={(e) => handleAnswerChange(e.target.value)}
-                                placeholder="Reflect here..."
-                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
-                                autoFocus
-                            />
-                            
-                            {/* AI FEEDBACK */}
-                            {aiFeedback && (
-                                <div className="mt-6 bg-purple-50 p-6 rounded-xl border border-purple-100 animate-fadeIn">
-                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2">
-                                        <SparklesIcon className="h-5 w-5" /> Insight
-                                    </h4>
-                                    <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+* [x] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
+* [x] **Search:** Verify searching by "Tag" or "Content" correctly filters the virtualized list.
+* [x] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
+* [x] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
+"""
 
-                </div>
-            </div>
+sprint_board = r"""# 🏃 Active Sprint Board
+**Sprint:** 4.3 "The Knowledge Base"
+**Start Date:** 2026-02-21
+**Goal:** Initialize VitePress for static documentation hosting and migrate user guides.
 
-            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
-            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
-                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
-            </div>
+## 📌 To Do (Project 04 - Sprint 3)
+- [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+- [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+- [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 
-        </div>
-    );
-}
+## 🚧 In Progress
+- [ ] Requirements gathering for static site deployment via GitHub Pages/Firebase Hosting.
+
+## ✅ Done (Previous Sprint)
+- [x] **Client-Side Search:** Built a search bar in `JournalHistory.tsx` using URL params (`useSearchParams`) to filter decrypted content.
+- [x] **Insights Polish:** Added 30-day rolling trend arrows to `JournalInsights.tsx`.
+- [x] **Interactive Word Cloud:** Made Word Cloud tags act as click-to-filter triggers routing back to Journal History.
+
+---
+## 🧊 Backlog (Upcoming Sprints)
+- [ ] **Project 05:** The "Lisa" Service Module (Sponsee management).
+"""
+
+project_04 = r"""# 🛠️ Project 04: The Frictionless Core
+
+**Objective:** Refine the core engine (Auth, Data Retrieval, Education) to improve user retention.
+**Status:** 🟡 Active
+**Personas Involved:** Universal (David, Ned, Lisa, Walt)
+
+## 🏗️ Phase 1: The "Vault & Gate" Polish
+* [x] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
+* [x] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
+* [x] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
+
+## 🧠 Phase 2: The "Memory Engine"
+* [x] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
+* [x] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
+* [x] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+
+## 🎨 Phase 3: The "Knowledge Base"
+* [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+* [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+* [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 """
 
 def write_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    # Safely replace our placeholders with actual markdown code block delimiters
+    final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
-        f.write(content.strip() + "\n")
-    print(f"✅ Modified: {path}")
+        f.write(final_content)
+    print(f"✅ Updated: {path}")
 
 if __name__ == "__main__":
-    write_file("src/pages/WorkbookSession.tsx", workbook_session_code)
-    print("🚀 Navigation Toolbar successfully updated. Run 'npm run build && npm run lint' to verify.")
+    print("🔄 Running Documentation Sync for Sprint 4.2 (Memory Engine)...")
+    write_file("docs/specs/01_JOURNAL.md", journal_spec)
+    write_file("docs/SPRINT_BOARD.md", sprint_board)
+    write_file("docs/projects/04_FRICTIONLESS_CORE.md", project_04)
+    print("✨ Audit successful. Documentation now reflects the codebase reality.")
