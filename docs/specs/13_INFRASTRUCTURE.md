@@ -10,38 +10,38 @@ We utilize a containerized development environment to ensure zero "works on my m
 * **Base Image:** `mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye`
 * **Configuration:** `.devcontainer/devcontainer.json`
 * **Lifecycle:**
-    1.  **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
-    2.  **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
+    1. **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
+    2. **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
 * **Port Forwarding:**
-    * `5173`: Vite Dev Server (App).
-    * `9099`: Firebase Auth Emulator.
-    * `8080`: Firestore Emulator.
+    * `5175`: Vite Dev Server (App) - *Strictly bound to support Dev Tunnels.*
+    * `9099`: Firebase Auth Emulator (If active).
+    * `8080`: Firestore Emulator (If active).
 
 ## 2. Build Pipeline (Vite)
 **Config:** `vite.config.ts`
 We use advanced build optimizations to ensure performance on low-end mobile devices.
 
 ### A. Chunk Splitting (ManualChunks)
-To prevent a massive `vendor.js` file, we explicitly split dependencies:
+To prevent a massive `vendor.js` file, we explicitly split dependencies. This drastically reduces the initial load time:
 * **`firebase`**: Isolated to its own chunk (heavy SDK).
 * **`gemini`**: AI libraries isolated (`@google/generative-ai`).
 * **`recharts`**: Data visualization libraries isolated.
-* **`vendor`**: All other node_modules.
+* **`vendor`**: All other `node_modules`.
 
 ### B. PWA Service Worker (Workbox)
 * **Strategy:** `autoUpdate` (Updates apply immediately upon download).
 * **Caching Rules:**
     * **Google Fonts:** `CacheFirst` (1-year expiration).
     * **Firebase Storage:** `StaleWhileRevalidate` (Images/Personas).
-    * **Exclusions:** Firebase Auth endpoints are explicitly denied caching to prevent login loops.
+    * **Exclusions:** Firebase Auth endpoints (`/__/auth`) are explicitly denied caching to prevent infinite login loop bugs.
 
 ## 3. CI/CD & Secrets (The "Nuclear" Protocol)
 **Pipeline:** GitHub Actions (`.github/workflows/deploy.yaml`)
 
 We use a "Nuclear" strategy for environment variables to support Vite's build process securely.
-1.  **Injection:** GitHub Actions does *not* pass secrets as shell variables.
-2.  **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
-3.  **Destruction:** The runner is ephemeral; the file is destroyed post-build.
+1. **Injection:** GitHub Actions does *not* pass secrets as shell variables.
+2. **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
+3. **Destruction:** The runner is ephemeral; the file is destroyed post-build.
 
 ## 4. Database Infrastructure
 **Platform:** Cloud Firestore (NoSQL)
@@ -69,13 +69,7 @@ Composite indexes are required for complex queries:
 * **Crypto:** Generates valid PBKDF2 salts and keys so encrypted features work in demo mode.
 
 ## 6. Verification Checklist
-* [ ] **Container:** Does `npm run dev` start without manual config?
+* [ ] **Container:** Does `npm run dev` start without manual config on port 5175?
 * [ ] **PWA:** Does the Service Worker cache Google Fonts? (Check Network Tab).
 * [ ] **Build:** Run `npm run build`. Does `dist/assets` contain split chunks (e.g., `firebase-xxxx.js`)?
 * [ ] **Secrets:** Deploy to DEV. Does `import.meta.env.VITE_GEMINI_API_KEY` exist in the console?
-
-## 7. Build Optimizations (Vite)
-We use `manualChunks` to isolate heavy dependencies, improving initial load time:
-* **Firebase:** Isolated SDK chunk.
-* **Visualization:** Recharts isolated.
-* **AI:** Gemini SDK isolated.

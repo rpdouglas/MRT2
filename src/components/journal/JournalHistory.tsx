@@ -2,10 +2,12 @@
  * src/components/journal/JournalHistory.tsx
  * GITHUB COMMENT:
  * [JournalHistory.tsx]
- * FEATURE: Added Weather visualization to journal entries.
- * UPDATE: Implemented icon mapping for weather conditions (Sun/Cloud/Rain).
+ * FEATURE: Implemented client-side filtering via useSearchParams.
+ * FIX: Re-factored layout strictly for Virtuoso bounds to prevent overflow.
+ * PRESERVED: isVaultUnlocked in React Query array.
  */
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
@@ -31,10 +33,12 @@ import {
     ShieldExclamationIcon, 
     ShareIcon, 
     CheckIcon, 
-    SparklesIcon,
-    SunIcon,
-    CloudIcon,
-    BoltIcon
+    SparklesIcon, 
+    SunIcon, 
+    CloudIcon, 
+    BoltIcon,
+    MagnifyingGlassIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
@@ -62,15 +66,20 @@ const WeatherIcon = ({ condition }: { condition: string }) => {
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
-  const { decrypt } = useEncryption();
+  const { decrypt, isVaultUnlocked } = useEncryption();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
+  // Search Param State
+  const searchQuery = searchParams.get('search') || '';
+
   // --- REACT QUERY FETCH ---
   const { data: allEntries = [], isLoading } = useQuery({
-    queryKey: ['journals', user?.uid],
+    // isVaultUnlocked remains explicitly tracked
+    queryKey: ['journals', user?.uid, isVaultUnlocked],
     queryFn: async () => {
         if (!user || !db) return [];
         const database: Firestore = db;
@@ -109,18 +118,29 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 ...data, 
                 content, 
                 createdAt: createdDate,
-                isError                       
+                isError                        
             } as unknown as JournalEntryWithStatus;
         }));
     },
     enabled: !!user,
   });
 
+  // --- FILTER ENGINE ---
+  const filteredEntries = useMemo(() => {
+      if (!searchQuery.trim()) return allEntries;
+      const lowerQuery = searchQuery.toLowerCase();
+      return allEntries.filter(entry => {
+          const textMatch = entry.content?.toLowerCase().includes(lowerQuery);
+          const tagMatch = entry.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+          return textMatch || tagMatch;
+      });
+  }, [allEntries, searchQuery]);
+
   // --- FLATTEN DATA FOR VIRTUALIZATION ---
   const flatData = useMemo(() => {
     // Cast to any to bypass strict type check for now, as grouping handles dates correctly internally
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grouped = groupItemsByDate(allEntries as any[]);
+    const grouped = groupItemsByDate(filteredEntries as any[]);
     const result: HistoryItem[] = [];
     
     Object.entries(grouped).forEach(([header, entries]) => {
@@ -130,7 +150,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         });
     });
     return result;
-  }, [allEntries]);
+  }, [filteredEntries]);
 
   const handleDelete = async (id: string) => {
     if (!db) return;
@@ -158,65 +178,100 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   };
 
   if (isLoading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;
-  if (flatData.length === 0) return <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm"><p className="text-gray-500">No entries found.</p></div>;
 
   return (
-    <div className="relative h-[calc(100vh-200px)]"> 
-        <Virtuoso
-            style={{ height: '100%' }}
-            data={flatData}
-            itemContent={(_index, item) => {
-                if (item.type === 'header') {
-                    return (
-                        <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 mt-4 rounded-lg border-b border-indigo-300 shadow-sm">
-                            <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{item.title}</h3>
-                        </div>
-                    );
-                }
+    <div className="flex flex-col h-[calc(100vh-200px)] relative"> 
+        
+        {/* SEARCH BAR (Sticky at Top) */}
+        <div className="shrink-0 mb-4 relative z-20">
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-3.5 text-indigo-400" />
+            <input
+                type="text"
+                placeholder="Search journal, tags, or feelings..."
+                value={searchQuery}
+                onChange={(e) => {
+                    setSearchParams(prev => {
+                        if (e.target.value) prev.set('search', e.target.value);
+                        else prev.delete('search');
+                        return prev;
+                    }, { replace: true });
+                }}
+                className="w-full pl-11 pr-10 py-3 bg-white border border-indigo-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm text-slate-700 placeholder:text-slate-400"
+            />
+            {searchQuery && (
+                <button
+                    onClick={() => setSearchParams(prev => { prev.delete('search'); return prev; }, { replace: true })}
+                    className="absolute right-3 top-3 p-1 text-indigo-300 hover:text-indigo-600 bg-indigo-50 rounded-full transition-colors"
+                >
+                    <XMarkIcon className="h-4 w-4" />
+                </button>
+            )}
+        </div>
 
-                const entry = item.data;
-                return (
-                    <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-xs font-mono text-gray-400">
-                                    {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
-                                </span>
-                                
-                                {/* MOOD BADGE */}
-                                {entry.moodScore && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
-                                        Mood: {entry.moodScore}
-                                    </span>
-                                )}
+        {flatData.length === 0 ? (
+             <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-6 text-center">
+                 <p className="text-gray-500 font-medium">No entries found.</p>
+                 {searchQuery && <p className="text-gray-400 text-xs mt-2">Try adjusting your search terms.</p>}
+             </div>
+        ) : (
+            <div className="flex-1 min-h-0 relative">
+                <Virtuoso
+                    style={{ height: '100%' }}
+                    data={flatData}
+                    itemContent={(_index, item) => {
+                        if (item.type === 'header') {
+                            return (
+                                <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 mt-4 rounded-lg border-b border-indigo-300 shadow-sm">
+                                    <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{item.title}</h3>
+                                </div>
+                            );
+                        }
 
-                                {/* WEATHER BADGE */}
-                                {entry.weather && (
-                                    <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                                        <WeatherIcon condition={entry.weather.condition} />
-                                        {Math.round(entry.weather.temp)}°
-                                        <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
-                                    </span>
-                                )}
+                        const entry = item.data;
+                        return (
+                            <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-mono text-gray-400">
+                                            {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                                        </span>
+                                        
+                                        {/* MOOD BADGE */}
+                                        {entry.moodScore && (
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
+                                                Mood: {entry.moodScore}
+                                            </span>
+                                        )}
 
-                                {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                        {/* WEATHER BADGE */}
+                                        {entry.weather && (
+                                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                                                <WeatherIcon condition={entry.weather.condition} />
+                                                {Math.round(entry.weather.temp)}°
+                                                <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
+                                            </span>
+                                        )}
+
+                                        {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                    </div>
+                                    
+                                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                            {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
+                                        </button>
+                                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                    </div>
+                                </div>
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                    {entry.content}
+                                </p>
                             </div>
-                            
-                            <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
-                                    {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
-                                </button>
-                                <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
-                                <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
-                            </div>
-                        </div>
-                        <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
-                            {entry.content}
-                        </p>
-                    </div>
-                );
-            }}
-        />
+                        );
+                    }}
+                />
+            </div>
+        )}
 
         {/* FLOATING ACTION BUTTON */}
         <button

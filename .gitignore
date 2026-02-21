@@ -26,3 +26,4 @@ service-account.json
 *.njsproj
 *.sln
 *.sw?
+project_codebase.txt

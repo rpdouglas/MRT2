@@ -12,73 +12,80 @@ graph TD
     root --> users[📂 users]
     users --> userDoc[📄 User Profile]
     userDoc --> workbook_progress[📂 workbook_progress]
+    userDoc --> templates[📂 templates]
     
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
     root --> insights[📂 insights]
     root --> ai_logs[📂 ai_logs]
+    root --> feedback[📂 feedback]
     root --> service[📂 service]
 ```
 
 ## 2. Collection Definitions
 
 ### `users/{uid}`
-* **Purpose:** Profile, Auth, & Encryption Params.
-* **Sensitive Fields:**
+* **Purpose:** Profile, Auth, & Settings.
+* **Fields:**
     * `encryptionSalt` (String): Public salt needed to derive key.
     * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
     * `sobrietyDate` (Timestamp): Metrics base.
+    * `role` (String): 'user' | 'admin'. Controls UI access.
+    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
+    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
+    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
 
 ### `journals/{entryId}`
-* **Purpose:** Daily logs and reflections.
+* **Purpose:** Daily logs, Vitality logs, and reflections.
 * **Fields:**
+    * `uid` (String): Owner ID.
     * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
-    * `isEncrypted` (Boolean): `true`.
-    * `moodScore` (Int): **UNENCRYPTED** (Allows metadata analysis/charts without unlocking vault).
-    * `tags` (Array): **UNENCRYPTED** (Allows filtering).
-    * `weather` (Map): Snapshot of environment.
+    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
+    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
+    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
+    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
+    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
 
 ### `tasks/{taskId}`
-* **Purpose:** Gamification & Habits.
-* **Encryption:** Generally unencrypted to allow background stats.
+* **Purpose:** Gamification, Habits, and AI Action Plans.
+* **Encryption:** Unencrypted to allow background stats and streak evaluations.
 * **Fields:**
-    * `title` (String): Quest name.
-    * `category` (String): 'Recovery', 'Health', etc.
+    * `title` (String): Task name.
+    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
+    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
+    * `priority` (String): 'High' | 'Medium' | 'Low'.
+    * `status` (String): 'pending' | 'completed'.
+    * `currentStreak` (Int): Consecutive completions.
     * `recurrence` (Map): Logic for repetition.
+    * `dueDate` & `lastCompletedAt` (Timestamp).
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
 * **Fields:**
-    * `summary` (String): The AI's output.
     * `type` (String): 'journal' | 'workbook'.
-    * `pillars` (Map): Structured breakdown (Growth, Blind Spots).
+    * `summary` (String): The AI's output.
+    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
+    * `strengths` & `risks` (Array): Listed points for UI rendering.
+    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
 
-
-### `service/{serviceId}`
-* **Purpose:** "Digital Rolodex" for Lisa to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name` (String): **ENCRYPTED** (Protect identity of sponsees).
-    * `notes` (String): **ENCRYPTED** (Private session notes).
-    * `contactInfo` (String): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
-
-
-## 3. Query Strategy
-* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions.
 * **Encryption:** **NONE** (To allow debugging without user PIN).
 * **Fields:**
-    * `uid`: String (Reporter ID).
-    * `email`: String (For follow-up).
-    * `message`: String (The report).
     * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: String (Commit hash for version tracing).
+    * `buildHash`: Commit hash for version tracing.
     * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `route`: String (Where the issue occurred).
-    * `userAgent`: String (Browser/Device info).
-    * `vaultUnlocked`: Boolean (Was the vault open?).
-    * `timestamp`: ServerTimestamp.
+    * `vaultUnlocked`: Boolean.
+    * `route` & `userAgent`: Strings.
+
+### `service/{serviceId}`
+* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
+* **Fields:**
+    * `type` (String): 'sponsee' | 'commitment'.
+    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
+    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
+    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
+
+## 3. Query Strategy
+* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
+* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).

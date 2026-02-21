@@ -2,14 +2,14 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FEAT: Updated Weekly Rhythm to use Rolling 30-Day Window comparison.
- * LOGIC: Compares "Last 30 Days" vs "Previous 30 Days" (Days 31-60).
- * MAINTAINED: Daily Trends, Word Cloud, and all existing type safety.
+ * FEAT: Updated UI to display active Trend Direction (Current 30 vs Prev 30).
+ * FEAT: Interactive Word Cloud tags act as one-click search filters via navigation.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import { 
   ComposedChart, 
   Line, 
@@ -20,14 +20,15 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend,
-  //Cell
+  Legend
 } from 'recharts';
 import { 
     ChartBarIcon, 
     CloudIcon, 
-    FireIcon,
-    CalendarDaysIcon
+    FireIcon, 
+    CalendarDaysIcon,
+    ArrowTrendingUpIcon,
+    ArrowTrendingDownIcon
 } from '@heroicons/react/24/outline';
 import { format, subDays, getDay, startOfDay } from 'date-fns';
 
@@ -75,10 +76,11 @@ const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function JournalInsights() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // State
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0 });
+  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0, trend: 0 });
   
   // Chart Data States
   const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
@@ -126,10 +128,16 @@ export default function JournalInsights() {
             let totalMoodSum = 0;
             let totalEntries = 0;
 
+            // Trend accumulators
+            let current30Total = 0;
+            let current30Count = 0;
+            let prev30Total = 0;
+            let prev30Count = 0;
+
             rawData.forEach(entry => {
                 if (!entry.createdAt) return;
-                const dateObj = entry.createdAt.toDate(); // Keep full date for comparison
-                const dateKey = format(dateObj, 'yyyy-MM-dd'); // For Daily Map
+                const dateObj = entry.createdAt.toDate(); 
+                const dateKey = format(dateObj, 'yyyy-MM-dd'); 
 
                 // --- A. Daily Trend Aggregation ---
                 if (!dailyMap.has(dateKey)) {
@@ -152,10 +160,18 @@ export default function JournalInsights() {
                         // Current 30 Days Bucket
                         weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].currentCount += 1;
+                        
+                        // Broad Trend 
+                        current30Total += entry.moodScore;
+                        current30Count += 1;
                     } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
                         // Previous 30 Days Bucket
                         weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].prevCount += 1;
+
+                        // Broad Trend
+                        prev30Total += entry.moodScore;
+                        prev30Count += 1;
                     }
                 }
 
@@ -189,7 +205,6 @@ export default function JournalInsights() {
             setDailyTrendData(dailyStatsArray.slice(-14));
 
             // Weekly Comparison (Reorder to start Monday)
-            // Shift Sunday (0) to end
             const sunday = weeklyBuckets.shift(); 
             if (sunday) weeklyBuckets.push(sunday);
             
@@ -209,11 +224,16 @@ export default function JournalInsights() {
                 .map(([text, value]) => ({ text, value }));
             setWordCloudData(topWords);
 
-            // Global Stats
+            // Global Stats with Trend Calculation
+            const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
+            const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
+            const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
+
             setStats({
                 total: rawData.length,
                 avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
-                streak: rawData.length // Placeholder
+                streak: rawData.length, // Placeholder
+                trend
             });
 
         } catch (error) {
@@ -235,15 +255,25 @@ export default function JournalInsights() {
         <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-indigo-50 flex flex-col items-center justify-center">
                 <div className="text-2xl font-black text-indigo-600">{stats.total}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Entries</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Entries</div>
             </div>
+            
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-purple-50 flex flex-col items-center justify-center">
-                <div className="text-2xl font-black text-purple-600">{stats.avgMood}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Avg Mood</div>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-2xl font-black text-purple-600">{stats.avgMood}</span>
+                    {stats.trend !== 0 && (
+                        <span className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stats.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {stats.trend > 0 ? <ArrowTrendingUpIcon className="h-3 w-3 mr-0.5" /> : <ArrowTrendingDownIcon className="h-3 w-3 mr-0.5" />}
+                            {Math.abs(stats.trend)}
+                        </span>
+                    )}
+                </div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
             </div>
+
              <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-50 flex flex-col items-center justify-center">
                 <FireIcon className="h-6 w-6 text-orange-500 mb-1" />
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Active</div>
             </div>
         </div>
 
@@ -353,9 +383,14 @@ export default function JournalInsights() {
                             'text-sm text-gray-500';
 
                         return (
-                            <span key={i} className={`${sizeClass} transition-all hover:scale-110 cursor-default px-1`}>
+                            <button
+                                key={i}
+                                onClick={() => navigate(`/journal?tab=history&search=${encodeURIComponent(word.text)}`)}
+                                className={`${sizeClass} transition-all hover:scale-110 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 focus:outline-none`}
+                                title={`Search for "${word.text}"`}
+                            >
                                 {word.text}
-                            </span>
+                            </button>
                         );
                     })}
                 </div>
