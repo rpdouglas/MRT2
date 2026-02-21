@@ -10,9 +10,9 @@
 * [x] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
 
 ## 🧠 Phase 2: The "Memory Engine"
-* [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
-* [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
-* [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+* [x] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
+* [x] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
+* [x] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
 
 ## 🎨 Phase 3: The "Knowledge Base"
 * [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.

@@ -1,85 +1,198 @@
 import os
 
-# Used to safely write markdown code blocks via python string formatting
-MD_BLOCK = "```"
+# -----------------------------------------------------------------------------
+# NOTE: We use '~~~' instead of triple backticks in the raw strings below. 
+# The script automatically replaces them with standard markdown backticks before 
+# writing to the file. This prevents the AI's markdown parser from breaking!
+# -----------------------------------------------------------------------------
 
-ai_doc_content = f"""# 🧠 Feature Spec: AI Integration & Intelligence Layer
+journal_spec = r"""# 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v4.0)
-**Stack:** Google Gemini 2.5 (Flash/Pro)
-**Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
+**Status:** Live (v1.2)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
-## 1. The Privacy Boundary
-**Rule:** AI analysis is strictly "Opt-In" and "Stateless".
-* Data is decrypted **in-browser**.
-* The plain text is sent to the Gemini API via a secure HTTPS request.
-* Gemini processes the data, returns the payload, and discards the prompt.
-* User data is **never** stored by Google to train public models.
+---
 
-## 2. The Cascade Engine
-**Location:** `src/lib/gemini.ts`
-To balance speed, cost, and reliability, the app utilizes a `MODEL_CASCADE`.
-* **Default Flow:** Attempts `gemini-2.5-flash` first for speed. If the API fails or rate-limits, it automatically catches the error and retries with `gemini-2.5-pro`, followed by `gemini-2.0-flash`.
-* **Exception:** Certain complex tasks (like `generateComparativeAnalysis` and `generateDeepPatternAnalysis`) explicitly force `gemini-2.5-pro` for deeper reasoning capabilities.
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
 
-## 3. Strict JSON Enforcement
-To ensure the React UI can parse the AI's response predictably:
-* **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
-* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip any rogue markdown code blocks (e.g., `{MD_BLOCK}json`) before passing to `JSON.parse()`.
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-## 4. Chunked Processing (Deep Pattern Analysis)
-**Location:** `src/hooks/useDeepPatternAnalysis.ts`
-* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread.
-* **Solution:** The app uses `processInChunks` (from `src/lib/utils.ts`) to decrypt entries in batches of 5, yielding to the main thread in between. This allows the progress bar to update smoothly from 20% to 70%.
+### A. Write (The Editor)
+* **Input Methods:**
+    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
+    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
+* **Metadata:**
+    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
+    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
+    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+* **Templates:**
+    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
+    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-## 5. Telemetry & Auditing
-**Location:** `src/lib/analytics.ts`
-* Every successful AI call asynchronously triggers `logAIUsage`.
-* This writes a record to the `ai_logs` Firestore collection containing the user ID, model used, feature context (e.g., 'journal_analysis'), and token counts (prompt, candidate, total).
-* Admins monitor this via the Admin Dashboard.
+### B. History (The Timeline)
+* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **Search & Filter:** A URL-driven search bar (`?search=xyz`) filters entries client-side *after* decryption, matching against both entry content and tags.
+* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
+* **Analysis Trigger:** Contains the "Analyze" FAB (Floating Action Button) to launch the **Journal Analysis Wizard**.
+* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
+
+### C. Insights (The Dashboard)
+* **Source:** `JournalInsights.tsx`
+* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
+* **Visualizations:**
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days* (Days 31-60).
+    2.  **Daily Trends:** A Composed Chart overlaying **Mood** (Line) vs **Weather Temperature** (Bar) to identify environmental triggers.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. Clicking a tag automatically navigates the user to the History tab, pre-filtered for that specific word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score (now featuring a rolling 30-day Trend Indicator arrow).
+
+---
+
+## 3. Advanced AI Features
+
+### 🧠 The Analysis Wizard
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Scopes:**
+    * **Weekly:** Last 7 days vs Previous 7 days.
+    * **Monthly:** Last 30 days vs Previous 30 days.
+    * **Deep Dive:** All-time / 90-day pattern recognition.
+* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
+* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
+* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:**
+    1.  User records audio (MediaRecorder API).
+    2.  Audio Blob converted to Base64.
+    3.  Sent to Gemini 2.5 Flash (Multimodal).
+    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
+    5.  Populates the Editor state.
+
+---
+
+## 4. Technical Architecture
+
+### Data Flow & Encryption
+~~~mermaid
+sequenceDiagram
+    participant User
+    participant App (React)
+    participant Crypto (Lib)
+    participant Gemini (AI)
+    participant Firestore
+
+    Note over App, Firestore: WRITE FLOW
+    User->>App: Types "I feel anxious"
+    App->>Crypto: encrypt("I feel anxious", Key)
+    Crypto-->>App: Returns "IV:Ciphertext"
+    App->>Firestore: Writes { content: "IV:Ciphertext", isEncrypted: true }
+
+    Note over App, Gemini: AI ANALYSIS FLOW
+    User->>App: Clicks "Analyze"
+    App->>Firestore: Fetches Encrypted Docs
+    App->>Crypto: decrypt(Docs, Key)
+    App->>Gemini: Sends Plain Text (Stateless)
+    Gemini-->>App: Returns Analysis JSON
+    App->>App: Renders Result
+    App->>Firestore: Saves Result (Optional)
+~~~
+
+### Database Schema (Journal Specific)
+**Collection:** `journals`
+| Field | Type | Description | Encryption |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | Owner ID | No |
+| `content` | String | The body text | **YES (AES-GCM)** |
+| `moodScore` | Number | 1-10 Integer | No (For Stats) |
+| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
+| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
+| `isEncrypted` | Bool | Flag for legacy data handling | No |
+| `createdAt` | Timestamp | Creation Time | No |
+
+---
+
+## 5. Edge Cases & Constraints
+
+1.  **Lost PIN:**
+    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
+    * *Mitigation:* `VaultGate.tsx` warns users clearly.
+
+2.  **AI Privacy:**
+    * Journal text is decrypted in browser memory *only* for the duration of the API call.
+    * Gemini API calls are stateless (data is not stored by Google for model training).
+
+3.  **API Failures:**
+    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
+    * If Gemini fails (403/500), the user can still save the text manually.
+
+## 6. Verification (QA)
+
+* [x] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
+* [x] **Search:** Verify searching by "Tag" or "Content" correctly filters the virtualized list.
+* [x] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
+* [x] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
 """
 
-cloud_sync_doc_content = f"""# ☁️ Feature Spec: Network Resilience & Cloud Sync
+sprint_board = r"""# 🏃 Active Sprint Board
+**Sprint:** 4.3 "The Knowledge Base"
+**Start Date:** 2026-02-21
+**Goal:** Initialize VitePress for static documentation hosting and migrate user guides.
 
-**Status:** Live (v1.5)
-**Context:** How MRT handles offline usage, state detection, and automated data backups.
+## 📌 To Do (Project 04 - Sprint 3)
+- [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+- [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+- [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 
-## 1. Offline-First Architecture (Firestore)
-* MRT relies on Firebase Firestore's built-in local persistence mechanism.
-* If a user is offline (e.g., in a basement meeting room), they can still create Tasks, save Journal entries, and check off Workbook questions.
-* The data is written to the local IndexedDB cache and seamlessly syncs to the cloud once the network connection is restored.
+## 🚧 In Progress
+- [ ] Requirements gathering for static site deployment via GitHub Pages/Firebase Hosting.
 
-## 2. Network State Detection
-**Location:** `src/contexts/LayoutContext.tsx`
-* The context uses `window.addEventListener` for `online` and `offline` events to maintain an `isOnline` boolean.
-* **UI Feedback:** If `!isOnline`, a red persistent banner appears at the top of the screen (`AppShell.tsx`), assuring the user that their data is still saving locally.
+## ✅ Done (Previous Sprint)
+- [x] **Client-Side Search:** Built a search bar in `JournalHistory.tsx` using URL params (`useSearchParams`) to filter decrypted content.
+- [x] **Insights Polish:** Added 30-day rolling trend arrows to `JournalInsights.tsx`.
+- [x] **Interactive Word Cloud:** Made Word Cloud tags act as click-to-filter triggers routing back to Journal History.
 
-## 3. Google Drive Auto-Sync (The Sentinel)
-**Location:** `src/components/AppShell.tsx` & `src/lib/googleDrive.ts`
+---
+## 🧊 Backlog (Upcoming Sprints)
+- [ ] **Project 05:** The "Lisa" Service Module (Sponsee management).
+"""
 
-### The Authorization
-* Users opt-in by clicking "Sign in with Google" and granting the `https://www.googleapis.com/auth/drive.file` scope.
-* This restricted scope ensures the app can *only* read and write the specific `mrt_backup.json` file it creates, providing strong security isolation.
+project_04 = r"""# 🛠️ Project 04: The Frictionless Core
 
-### The Trigger
-* Handled by a `useEffect` inside `AppShell`.
-* It requires three conditions: `isVaultUnlocked == true`, `isOnline == true`, and a valid `driveAccessToken`.
-* It checks the user's `lastExportAt` timestamp. If it is older than 7 days, a silent background backup is triggered 10 seconds after the app loads.
+**Objective:** Refine the core engine (Auth, Data Retrieval, Education) to improve user retention.
+**Status:** 🟡 Active
+**Personas Involved:** Universal (David, Ned, Lisa, Walt)
 
-### The Payload (Data Sovereignty)
-* The app fetches all data (Journals, Tasks, Workbooks).
-* It **decrypts** the ciphertexts back into plain text in-memory.
-* The JSON is uploaded to Drive. *This is a deliberate architectural choice to ensure the user always has a readable copy of their data in case they permanently forget their MRT Vault PIN.*
+## 🏗️ Phase 1: The "Vault & Gate" Polish
+* [x] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
+* [x] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
+* [x] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
+
+## 🧠 Phase 2: The "Memory Engine"
+* [x] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
+* [x] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
+* [x] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+
+## 🎨 Phase 3: The "Knowledge Base"
+* [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+* [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+* [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 """
 
 def write_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    # Safely replace our placeholders with actual markdown code block delimiters
+    final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
-        f.write(content.strip() + "\n")
-    print(f"✅ Created: {path}")
+        f.write(final_content)
+    print(f"✅ Updated: {path}")
 
 if __name__ == "__main__":
-    print("🔄 Executing Documentation Phase 3: AI & Cloud Sync Specs...")
-    write_file("docs/specs/15_AI_INTEGRATION.md", ai_doc_content)
-    write_file("docs/specs/16_CLOUD_SYNC.md", cloud_sync_doc_content)
-    print("✨ System mapping complete. The technical documentation is now 100% synchronized with the codebase.")
+    print("🔄 Running Documentation Sync for Sprint 4.2 (Memory Engine)...")
+    write_file("docs/specs/01_JOURNAL.md", journal_spec)
+    write_file("docs/SPRINT_BOARD.md", sprint_board)
+    write_file("docs/projects/04_FRICTIONLESS_CORE.md", project_04)
+    print("✨ Audit successful. Documentation now reflects the codebase reality.")

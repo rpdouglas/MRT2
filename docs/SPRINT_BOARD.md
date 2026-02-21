@@ -1,21 +1,21 @@
 # 🏃 Active Sprint Board
-**Sprint:** 19.2 "The Memory Engine"
-**Start Date:** 2026-02-20
-**Goal:** Implement client-side filtering for the Journal and enhance Insights formatting.
+**Sprint:** 4.3 "The Knowledge Base"
+**Start Date:** 2026-02-21
+**Goal:** Initialize VitePress for static documentation hosting and migrate user guides.
 
-## 📌 To Do (Project 04 - Sprint 2)
-- [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
-- [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
-- [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+## 📌 To Do (Project 04 - Sprint 3)
+- [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
+- [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
+- [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
 
 ## 🚧 In Progress
-- [ ] Planning Phase for Journal Filtering.
+- [ ] Requirements gathering for static site deployment via GitHub Pages/Firebase Hosting.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Bug Fix:** Wired `isVaultUnlocked` to trigger reactive re-render of Journal History.
-- [x] **Auth UX:** Redesigned `Login.tsx` into a split-screen Hero layout.
-- [x] **Auth UX:** Added Zero-Knowledge Trust Badges to the sign-up screen.
+- [x] **Client-Side Search:** Built a search bar in `JournalHistory.tsx` using URL params (`useSearchParams`) to filter decrypted content.
+- [x] **Insights Polish:** Added 30-day rolling trend arrows to `JournalInsights.tsx`.
+- [x] **Interactive Word Cloud:** Made Word Cloud tags act as click-to-filter triggers routing back to Journal History.
 
 ---
 ## 🧊 Backlog (Upcoming Sprints)
-- [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).
+- [ ] **Project 05:** The "Lisa" Service Module (Sponsee management).

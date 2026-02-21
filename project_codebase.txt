@@ -1,4 +1,4 @@
-PROJECT EXPORT - 2026-02-20T12:21:14.667Z
+PROJECT EXPORT - 2026-02-21T12:23:08.967Z
 Note: Binary files and strictly ignored directories are excluded.
 
 ### PROJECT STRUCTURE ###
@@ -74,7 +74,9 @@ Note: Binary files and strictly ignored directories are excluded.
 │   │   ├── 11_DASHBOARD.md
 │   │   ├── 12_USER_GUIDE.md
 │   │   ├── 13_INFRASTRUCTURE.md
-│   │   └── 14_FEEDBACK.md
+│   │   ├── 14_FEEDBACK.md
+│   │   ├── 15_AI_INTEGRATION.md
+│   │   └── 16_CLOUD_SYNC.md
 │   └── templates
 │       ├── FEATURE_SPEC.md
 │       └── USER_GUIDE.md
@@ -1043,76 +1045,83 @@ graph TD
     root --> users[📂 users]
     users --> userDoc[📄 User Profile]
     userDoc --> workbook_progress[📂 workbook_progress]
+    userDoc --> templates[📂 templates]
     
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
     root --> insights[📂 insights]
     root --> ai_logs[📂 ai_logs]
+    root --> feedback[📂 feedback]
     root --> service[📂 service]
 ```
 
 ## 2. Collection Definitions
 
 ### `users/{uid}`
-* **Purpose:** Profile, Auth, & Encryption Params.
-* **Sensitive Fields:**
+* **Purpose:** Profile, Auth, & Settings.
+* **Fields:**
     * `encryptionSalt` (String): Public salt needed to derive key.
     * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
     * `sobrietyDate` (Timestamp): Metrics base.
+    * `role` (String): 'user' | 'admin'. Controls UI access.
+    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
+    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
+    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
 
 ### `journals/{entryId}`
-* **Purpose:** Daily logs and reflections.
+* **Purpose:** Daily logs, Vitality logs, and reflections.
 * **Fields:**
+    * `uid` (String): Owner ID.
     * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
-    * `isEncrypted` (Boolean): `true`.
-    * `moodScore` (Int): **UNENCRYPTED** (Allows metadata analysis/charts without unlocking vault).
-    * `tags` (Array): **UNENCRYPTED** (Allows filtering).
-    * `weather` (Map): Snapshot of environment.
+    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
+    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
+    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
+    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
+    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
 
 ### `tasks/{taskId}`
-* **Purpose:** Gamification & Habits.
-* **Encryption:** Generally unencrypted to allow background stats.
+* **Purpose:** Gamification, Habits, and AI Action Plans.
+* **Encryption:** Unencrypted to allow background stats and streak evaluations.
 * **Fields:**
-    * `title` (String): Quest name.
-    * `category` (String): 'Recovery', 'Health', etc.
+    * `title` (String): Task name.
+    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
+    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
+    * `priority` (String): 'High' | 'Medium' | 'Low'.
+    * `status` (String): 'pending' | 'completed'.
+    * `currentStreak` (Int): Consecutive completions.
     * `recurrence` (Map): Logic for repetition.
+    * `dueDate` & `lastCompletedAt` (Timestamp).
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
 * **Fields:**
-    * `summary` (String): The AI's output.
     * `type` (String): 'journal' | 'workbook'.
-    * `pillars` (Map): Structured breakdown (Growth, Blind Spots).
+    * `summary` (String): The AI's output.
+    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
+    * `strengths` & `risks` (Array): Listed points for UI rendering.
+    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
 
-
-### `service/{serviceId}`
-* **Purpose:** "Digital Rolodex" for Lisa to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name` (String): **ENCRYPTED** (Protect identity of sponsees).
-    * `notes` (String): **ENCRYPTED** (Private session notes).
-    * `contactInfo` (String): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
-
-
-## 3. Query Strategy
-* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions.
 * **Encryption:** **NONE** (To allow debugging without user PIN).
 * **Fields:**
-    * `uid`: String (Reporter ID).
-    * `email`: String (For follow-up).
-    * `message`: String (The report).
     * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: String (Commit hash for version tracing).
+    * `buildHash`: Commit hash for version tracing.
     * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `route`: String (Where the issue occurred).
-    * `userAgent`: String (Browser/Device info).
-    * `vaultUnlocked`: Boolean (Was the vault open?).
-    * `timestamp`: ServerTimestamp.
+    * `vaultUnlocked`: Boolean.
+    * `route` & `userAgent`: Strings.
+
+### `service/{serviceId}`
+* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
+* **Fields:**
+    * `type` (String): 'sponsee' | 'commitment'.
+    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
+    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
+    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
+
+## 3. Query Strategy
+* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
+* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
 
 </file>
 
@@ -1124,40 +1133,54 @@ graph TD
 ## 1. The Encryption Lifecycle
 
 ### A. Setup (Vault Creation)
-1.  User enters 4-digit PIN.
-2.  App generates random 16-byte `Salt`.
-3.  App derives `Key` using PBKDF2 (100k iterations).
-4.  App creates `Verifier` = Hash(PIN + Salt).
-5.  App sends `Salt` and `Verifier` to Firestore. **PIN and Key are held in sessionStorage for the duration of the browser session to reduce unlock friction.**
+1. User enters 4-digit PIN.
+2. App generates random 16-byte `Salt`.
+3. App derives `Key` using PBKDF2 (100k iterations).
+4. App creates `Verifier` = Hash(PIN + Salt).
+5. App sends `Salt` and `Verifier` to Firestore. 
+6. **Session Caching:** The user's PIN is temporarily cached in the browser's `sessionStorage`. This prevents the user from having to re-enter their PIN every time they navigate between pages, while ensuring the PIN is automatically wiped by the OS the moment the browser tab is closed.
 
 ### B. Storage (Writing Data)
-1.  User types "I feel anxious today."
-2.  App checks memory for `Key`. (If missing, prompt for PIN).
-3.  App generates random `IV` (Initialization Vector).
-4.  App encrypts text via AES-GCM -> `Ciphertext`.
-5.  App sends string `IV:Ciphertext` to Firestore.
+1. User types "I feel anxious today."
+2. App checks memory for `Key`. (If missing, it attempts to derive it from the `sessionStorage` PIN, or prompts the user).
+3. App generates random `IV` (Initialization Vector).
+4. App encrypts text via AES-GCM -> `Ciphertext`.
+5. App sends string `IV:Ciphertext` to Firestore.
+
+### C. Retrieval (Reading Data)
+1. App fetches document from Firestore.
+2. App splits `IV:Ciphertext`.
+3. App uses `Key` to decrypt.
+4. Plain text renders in React.
 
 ## 2. Vault Control Features
 
 ### 🔒 Vault Locking (Memory Clearing)
 * **Trigger:** User clicks "Lock Vault" in the sidebar or closes the tab.
-* **Action:** The `EncryptionContext` sets `globalKey = null`.
-* **Result:** The browser memory no longer holds the decryption key. Even if an attacker gains access to the browser console, they cannot decrypt data without the user re-entering the PIN.
+* **Action:** The `EncryptionContext` sets `globalKey = null` and explicitly deletes the PIN from `sessionStorage`.
+* **Result:** Even if an attacker gains physical access to the unlocked computer or browser console after the fact, they cannot decrypt data without the user re-entering the PIN.
 
 ### 🧨 Emergency Reset (Crypto-Shredding)
 * **Trigger:** User forgets PIN or wants a hard reset.
 * **Action:**
-    1.  The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
-    2.  **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
-    3.  **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
+    1. The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
+    2. **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
+    3. **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
 
 ## 3. AI Privacy Boundary
 When a user asks for AI Analysis:
-1.  Data is decrypted **in the browser**.
-2.  Plain text is sent to Gemini API via HTTPS.
-3.  Gemini processes data statelessly.
-4.  Response is returned.
-5.  **Critical:** We do NOT train models on this data.
+1. Data is decrypted **in the browser**.
+2. Plain text is sent to Gemini API via HTTPS.
+3. Gemini processes data statelessly.
+4. Response is returned.
+5. **Critical:** We do NOT train models on this data.
+
+## 4. Third-Party Data (The Service Model)
+* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
+* **Rule:** This is a **Digital Rolodex**, not a Social Network.
+* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
+    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
+    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
 
 </file>
 
@@ -2033,31 +2056,40 @@ The system uses a "Defense in Depth" approach:
 <file path="docs/specs/09_PROFILE.md">
 # 📐 Feature Spec: Profile & Data Sovereignty
 
-**Status:** Live (v1.0)
+**Status:** Live (v1.5)
 **Context:** User identity, settings, and data portability.
 
 ## 1. Support Network
 * **Fields:** `sponsorName`, `sponsorPhone`.
 * **Storage:** Stored unencrypted in `users/{uid}`.
-* **Usage:** Populates the "SOS Modal" for one-tap calling.
+* **Usage:** Populates the "SOS Modal" for one-tap calling or WhatsApp messaging.
 
-## 2. The Export Engine
+## 2. Cloud Auto-Sync (Google Drive)
+**Philosophy:** Automated resilience without vendor lock-in.
+* **Authentication:** Uses Firebase GoogleAuthProvider with the restricted `https://www.googleapis.com/auth/drive.file` scope. This ensures MRT can only see and modify the specific backup file it creates, not the user's entire drive.
+* **The Background Engine:** * Hosted in `AppShell.tsx`.
+    * Checks if `isVaultUnlocked`, `isOnline`, and `driveAccessToken` are active.
+    * Compares `userProfile.lastExportAt` to the current date. If > 7 days, it silently triggers a background export 10 seconds after the vault is unlocked.
+    * It searches Google Drive for `mrt_backup.json`. If found, it issues a `PATCH` request to overwrite it; otherwise, a `POST` request to create it.
+* **Security Note:** The synced JSON file contains **decrypted (plain text)** data. This ensures the user retains access to their history even if they permanently forget their MRT PIN.
+
+## 3. The Manual Export Engine
 **Philosophy:** The user owns their data.
 * **JSON Export:**
     * Fetches ALL collections (`journals`, `tasks`, `workbooks`).
     * **Decryption:** Decrypts all content client-side before generation.
-    * **Output:** Plain text JSON file. *User must be warned to store this securely.*
+    * **Output:** Plain text JSON file. *User is warned in the UI to store this securely.*
 * **PDF Export:**
-    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist.
+    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist, utilizing `jsPDF` and `jspdf-autotable`.
 
-## 3. The Import Engine
-* **Logic:** parses JSON backups.
-* **Legacy Support:** Maps older data structures to the current schema.
-* **Safety:** Flags imported entries as `isEncrypted: false` (since they come from a plain text file) until the user edits/saves them again.
+## 4. The Import Engine
+* **Logic:** Parses JSON backups (both legacy formats and new full-schema formats).
+* **Legacy Support:** Maps older data structures to the current schema automatically.
+* **Safety:** Flags imported entries as `isEncrypted: false` (since they come from a plain text file). The next time the user edits and saves them, they are encrypted with the active vault key.
 
-## 4. Verification
+## 5. Verification
 * [ ] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
-* [ ] **Import:** Import a backup. Do entries appear in History?
+* [ ] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
 
 </file>
 
@@ -2176,38 +2208,38 @@ We utilize a containerized development environment to ensure zero "works on my m
 * **Base Image:** `mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye`
 * **Configuration:** `.devcontainer/devcontainer.json`
 * **Lifecycle:**
-    1.  **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
-    2.  **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
+    1. **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
+    2. **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
 * **Port Forwarding:**
-    * `5173`: Vite Dev Server (App).
-    * `9099`: Firebase Auth Emulator.
-    * `8080`: Firestore Emulator.
+    * `5175`: Vite Dev Server (App) - *Strictly bound to support Dev Tunnels.*
+    * `9099`: Firebase Auth Emulator (If active).
+    * `8080`: Firestore Emulator (If active).
 
 ## 2. Build Pipeline (Vite)
 **Config:** `vite.config.ts`
 We use advanced build optimizations to ensure performance on low-end mobile devices.
 
 ### A. Chunk Splitting (ManualChunks)
-To prevent a massive `vendor.js` file, we explicitly split dependencies:
+To prevent a massive `vendor.js` file, we explicitly split dependencies. This drastically reduces the initial load time:
 * **`firebase`**: Isolated to its own chunk (heavy SDK).
 * **`gemini`**: AI libraries isolated (`@google/generative-ai`).
 * **`recharts`**: Data visualization libraries isolated.
-* **`vendor`**: All other node_modules.
+* **`vendor`**: All other `node_modules`.
 
 ### B. PWA Service Worker (Workbox)
 * **Strategy:** `autoUpdate` (Updates apply immediately upon download).
 * **Caching Rules:**
     * **Google Fonts:** `CacheFirst` (1-year expiration).
     * **Firebase Storage:** `StaleWhileRevalidate` (Images/Personas).
-    * **Exclusions:** Firebase Auth endpoints are explicitly denied caching to prevent login loops.
+    * **Exclusions:** Firebase Auth endpoints (`/__/auth`) are explicitly denied caching to prevent infinite login loop bugs.
 
 ## 3. CI/CD & Secrets (The "Nuclear" Protocol)
 **Pipeline:** GitHub Actions (`.github/workflows/deploy.yaml`)
 
 We use a "Nuclear" strategy for environment variables to support Vite's build process securely.
-1.  **Injection:** GitHub Actions does *not* pass secrets as shell variables.
-2.  **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
-3.  **Destruction:** The runner is ephemeral; the file is destroyed post-build.
+1. **Injection:** GitHub Actions does *not* pass secrets as shell variables.
+2. **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
+3. **Destruction:** The runner is ephemeral; the file is destroyed post-build.
 
 ## 4. Database Infrastructure
 **Platform:** Cloud Firestore (NoSQL)
@@ -2235,16 +2267,10 @@ Composite indexes are required for complex queries:
 * **Crypto:** Generates valid PBKDF2 salts and keys so encrypted features work in demo mode.
 
 ## 6. Verification Checklist
-* [ ] **Container:** Does `npm run dev` start without manual config?
+* [ ] **Container:** Does `npm run dev` start without manual config on port 5175?
 * [ ] **PWA:** Does the Service Worker cache Google Fonts? (Check Network Tab).
 * [ ] **Build:** Run `npm run build`. Does `dist/assets` contain split chunks (e.g., `firebase-xxxx.js`)?
 * [ ] **Secrets:** Deploy to DEV. Does `import.meta.env.VITE_GEMINI_API_KEY` exist in the console?
-
-## 7. Build Optimizations (Vite)
-We use `manualChunks` to isolate heavy dependencies, improving initial load time:
-* **Firebase:** Isolated SDK chunk.
-* **Visualization:** Recharts isolated.
-* **AI:** Gemini SDK isolated.
 
 </file>
 
@@ -2278,6 +2304,79 @@ The system automatically appends the following to every report:
 ## 4. Verification
 * [ ] **Network Logic:** Submit while offline. Verify it appears in Firestore once reconnected.
 * [ ] **Metadata:** Verify the `buildHash` in Firestore matches the one displayed in `VersionBadge`.
+
+</file>
+
+<file path="docs/specs/15_AI_INTEGRATION.md">
+# 🧠 Feature Spec: AI Integration & Intelligence Layer
+
+**Status:** Live (v4.0)
+**Stack:** Google Gemini 2.5 (Flash/Pro)
+**Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
+
+## 1. The Privacy Boundary
+**Rule:** AI analysis is strictly "Opt-In" and "Stateless".
+* Data is decrypted **in-browser**.
+* The plain text is sent to the Gemini API via a secure HTTPS request.
+* Gemini processes the data, returns the payload, and discards the prompt.
+* User data is **never** stored by Google to train public models.
+
+## 2. The Cascade Engine
+**Location:** `src/lib/gemini.ts`
+To balance speed, cost, and reliability, the app utilizes a `MODEL_CASCADE`.
+* **Default Flow:** Attempts `gemini-2.5-flash` first for speed. If the API fails or rate-limits, it automatically catches the error and retries with `gemini-2.5-pro`, followed by `gemini-2.0-flash`.
+* **Exception:** Certain complex tasks (like `generateComparativeAnalysis` and `generateDeepPatternAnalysis`) explicitly force `gemini-2.5-pro` for deeper reasoning capabilities.
+
+## 3. Strict JSON Enforcement
+To ensure the React UI can parse the AI's response predictably:
+* **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
+* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip any rogue markdown code blocks (e.g., ````json`) before passing to `JSON.parse()`.
+
+## 4. Chunked Processing (Deep Pattern Analysis)
+**Location:** `src/hooks/useDeepPatternAnalysis.ts`
+* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread.
+* **Solution:** The app uses `processInChunks` (from `src/lib/utils.ts`) to decrypt entries in batches of 5, yielding to the main thread in between. This allows the progress bar to update smoothly from 20% to 70%.
+
+## 5. Telemetry & Auditing
+**Location:** `src/lib/analytics.ts`
+* Every successful AI call asynchronously triggers `logAIUsage`.
+* This writes a record to the `ai_logs` Firestore collection containing the user ID, model used, feature context (e.g., 'journal_analysis'), and token counts (prompt, candidate, total).
+* Admins monitor this via the Admin Dashboard.
+
+</file>
+
+<file path="docs/specs/16_CLOUD_SYNC.md">
+# ☁️ Feature Spec: Network Resilience & Cloud Sync
+
+**Status:** Live (v1.5)
+**Context:** How MRT handles offline usage, state detection, and automated data backups.
+
+## 1. Offline-First Architecture (Firestore)
+* MRT relies on Firebase Firestore's built-in local persistence mechanism.
+* If a user is offline (e.g., in a basement meeting room), they can still create Tasks, save Journal entries, and check off Workbook questions.
+* The data is written to the local IndexedDB cache and seamlessly syncs to the cloud once the network connection is restored.
+
+## 2. Network State Detection
+**Location:** `src/contexts/LayoutContext.tsx`
+* The context uses `window.addEventListener` for `online` and `offline` events to maintain an `isOnline` boolean.
+* **UI Feedback:** If `!isOnline`, a red persistent banner appears at the top of the screen (`AppShell.tsx`), assuring the user that their data is still saving locally.
+
+## 3. Google Drive Auto-Sync (The Sentinel)
+**Location:** `src/components/AppShell.tsx` & `src/lib/googleDrive.ts`
+
+### The Authorization
+* Users opt-in by clicking "Sign in with Google" and granting the `https://www.googleapis.com/auth/drive.file` scope.
+* This restricted scope ensures the app can *only* read and write the specific `mrt_backup.json` file it creates, providing strong security isolation.
+
+### The Trigger
+* Handled by a `useEffect` inside `AppShell`.
+* It requires three conditions: `isVaultUnlocked == true`, `isOnline == true`, and a valid `driveAccessToken`.
+* It checks the user's `lastExportAt` timestamp. If it is older than 7 days, a silent background backup is triggered 10 seconds after the app loads.
+
+### The Payload (Data Sovereignty)
+* The app fetches all data (Journals, Tasks, Workbooks).
+* It **decrypts** the ciphertexts back into plain text in-memory.
+* The JSON is uploaded to Drive. *This is a deliberate architectural choice to ensure the user always has a readable copy of their data in case they permanently forget their MRT Vault PIN.*
 
 </file>
 
@@ -3319,62 +3418,849 @@ if __name__ == "__main__":
 <file path="scripts/apply_code.py">
 import os
 
-proj_04_content = """# 🛠️ Project 04: The Frictionless Core
+journal_tsx_code = r"""import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import JournalEditor, { type JournalEntry } from '../components/journal/JournalEditor';
+import JournalHistory from '../components/journal/JournalHistory';
+import JournalInsights from '../components/journal/JournalInsights';
+import VibrantHeader from '../components/VibrantHeader';
+import { THEME } from '../lib/theme';
+import { 
+  PencilSquareIcon, 
+  ClockIcon, 
+  ChartBarIcon, 
+  BookOpenIcon 
+} from '@heroicons/react/24/outline';
 
-**Objective:** Refine the core engine (Auth, Data Retrieval, Education) to improve user retention.
-**Status:** 🟡 Active
-**Personas Involved:** Universal (David, Ned, Lisa, Walt)
+export default function Journal() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // State
+  const activeTab = searchParams.get('tab') || 'write';
+  const initialTemplateId = searchParams.get('template');
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
 
-## 🏗️ Phase 1: The "Vault & Gate" Polish
-* [x] **Refresh Bug:** Fix Journal decryption race condition by wiring `isVaultUnlocked` to the query render.
-* [x] **Auth UI:** Redesign `Login.tsx` into a modern split Sign-In/Sign-Up flow.
-* [x] **Trust Badges:** Add "Zero-Knowledge Encrypted" badges to the sign-up screen.
+  // Handlers
+  const handleTabChange = (tab: string) => {
+    setSearchParams(prev => {
+        prev.set('tab', tab);
+        // Clear template param if leaving write tab
+        if (tab !== 'write') prev.delete('template');
+        // Clear search param if leaving history tab
+        if (tab !== 'history') prev.delete('search');
+        return prev;
+    });
+  };
 
-## 🧠 Phase 2: The "Memory Engine"
-* [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
-* [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
-* [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+  const handleEdit = (entry: JournalEntry) => {
+    setEditingEntry(entry);
+    handleTabChange('write');
+  };
 
-## 🎨 Phase 3: The "Knowledge Base"
-* [ ] **VitePress Setup:** Initialize VitePress in a `/docs-site` directory for static hosting.
-* [ ] **Documentation Migration:** Move Privacy Policy, TOS, and User Guide to the VitePress site.
-* [ ] **App Integration:** Replace internal `UserGuide.tsx` with external links to the new site.
+  const handleEntrySaved = () => {
+    setEditingEntry(null);
+    setSearchParams(prev => {
+        prev.delete('template');
+        prev.set('tab', 'history');
+        return prev;
+    });
+  };
+
+  return (
+    <div className={`h-[100dvh] flex flex-col ${THEME.journal.page}`}>
+      
+      {/* 1. FIXED HEADER */}
+      <div className="flex-shrink-0 z-10">
+        <VibrantHeader 
+            title="Journal"
+            subtitle="Capture your thoughts."
+            icon={BookOpenIcon}
+            fromColor={THEME.journal.header.from}
+            viaColor={THEME.journal.header.via}
+            toColor={THEME.journal.header.to}
+        />
+      </div>
+
+      {/* 2. FLOATING TABS (Overlaps Header) */}
+      <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
+        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-indigo-200 flex">
+           <button 
+             onClick={() => handleTabChange('write')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
+               activeTab === 'write' 
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
+             }`}
+           >
+             <PencilSquareIcon className="h-4 w-4" />
+             Write
+           </button>
+           <button 
+             onClick={() => handleTabChange('history')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
+               activeTab === 'history' 
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
+             }`}
+           >
+             <ClockIcon className="h-4 w-4" />
+             History
+           </button>
+           <button 
+             onClick={() => handleTabChange('insights')} 
+             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
+               activeTab === 'insights' 
+                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
+                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
+             }`}
+           >
+             <ChartBarIcon className="h-4 w-4" />
+             Insights
+           </button>
+        </div>
+      </div>
+
+      {/* 3. SCROLLABLE CONTENT */}
+      {/* pt-6 ensures content doesn't butt up against the floating tabs immediately */}
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
+        
+        {activeTab === 'write' && (
+            <div className="animate-fadeIn h-full flex flex-col">
+                <JournalEditor 
+                    initialEntry={editingEntry} 
+                    initialTemplateId={initialTemplateId} 
+                    onSaveComplete={handleEntrySaved} 
+                />
+            </div>
+        )}
+        
+        {activeTab === 'history' && (
+            <div className="animate-fadeIn h-full">
+                <JournalHistory onEdit={handleEdit} />
+            </div>
+        )}
+        
+        {activeTab === 'insights' && (
+            <div className="animate-fadeIn h-full">
+                <JournalInsights />
+            </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
 """
 
-sprint_board_content = """# 🏃 Active Sprint Board
-**Sprint:** 19.2 "The Memory Engine"
-**Start Date:** 2026-02-20
-**Goal:** Implement client-side filtering for the Journal and enhance Insights formatting.
+journal_history_code = r"""/**
+ * src/components/journal/JournalHistory.tsx
+ * GITHUB COMMENT:
+ * [JournalHistory.tsx]
+ * FEATURE: Implemented client-side filtering via useSearchParams.
+ * FIX: Re-factored layout strictly for Virtuoso bounds to prevent overflow.
+ * PRESERVED: isVaultUnlocked in React Query array.
+ */
+import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext';
+import { db } from '../../lib/firebase';
+import { 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    getDocs, 
+    deleteDoc, 
+    doc, 
+    Timestamp, 
+    type Firestore 
+} from 'firebase/firestore';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { groupItemsByDate } from '../../lib/grouping';
+import type { JournalEntry } from './JournalEditor';
+import JournalAnalysisWizard from './JournalAnalysisWizard';
+import { Virtuoso } from 'react-virtuoso';
+import { 
+    TrashIcon, 
+    PencilSquareIcon, 
+    ShieldExclamationIcon, 
+    ShareIcon, 
+    CheckIcon, 
+    SparklesIcon, 
+    SunIcon, 
+    CloudIcon, 
+    BoltIcon,
+    MagnifyingGlassIcon,
+    XMarkIcon
+} from '@heroicons/react/24/outline';
 
-## 📌 To Do (Project 04 - Sprint 2)
-- [ ] **Client-Side Search:** Build a search bar in `JournalHistory.tsx` to filter decrypted content and tags.
-- [ ] **Insights Polish:** Add trend arrows to `JournalInsights.tsx`.
-- [ ] **Interactive Word Cloud:** Make Word Cloud click-to-filter.
+type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
-## 🚧 In Progress
-- [ ] Planning Phase for Journal Filtering.
+// Flattened Item Type for Virtuoso
+type HistoryItem = 
+    | { type: 'header'; title: string }
+    | { type: 'entry'; data: JournalEntryWithStatus };
 
-## ✅ Done (Previous Sprint)
-- [x] **Bug Fix:** Wired `isVaultUnlocked` to trigger reactive re-render of Journal History.
-- [x] **Auth UX:** Redesigned `Login.tsx` into a split-screen Hero layout.
-- [x] **Auth UX:** Added Zero-Knowledge Trust Badges to the sign-up screen.
+interface JournalHistoryProps {
+  onEdit: (entry: JournalEntry) => void;
+}
 
----
-## 🧊 Backlog (Upcoming Sprints)
-- [ ] **Project 04 - Sprint 3:** The "Knowledge Base" (VitePress setup, User Guide migration).
+// Helper to pick the right weather icon
+const WeatherIcon = ({ condition }: { condition: string }) => {
+    const lower = condition.toLowerCase();
+    if (lower.includes('rain') || lower.includes('drizzle') || lower.includes('storm')) {
+        return <BoltIcon className="h-3 w-3 text-blue-500" />;
+    }
+    if (lower.includes('cloud') || lower.includes('fog') || lower.includes('mist')) {
+        return <CloudIcon className="h-3 w-3 text-gray-500" />;
+    }
+    return <SunIcon className="h-3 w-3 text-orange-500" />;
+};
+
+export default function JournalHistory({ onEdit }: JournalHistoryProps) {
+  const { user } = useAuth();
+  const { decrypt, isVaultUnlocked } = useEncryption();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+
+  // Search Param State
+  const searchQuery = searchParams.get('search') || '';
+
+  // --- REACT QUERY FETCH ---
+  const { data: allEntries = [], isLoading } = useQuery({
+    // isVaultUnlocked remains explicitly tracked
+    queryKey: ['journals', user?.uid, isVaultUnlocked],
+    queryFn: async () => {
+        if (!user || !db) return [];
+        const database: Firestore = db;
+        const q = query(
+            collection(database, 'journals'), 
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        
+        // Decrypt in parallel
+        return await Promise.all(snapshot.docs.map(async (docSnap) => {
+            const data = docSnap.data();
+            let content = data.content;
+            let isError = false;
+
+            if (data.isEncrypted) {
+                try {
+                    content = await decrypt(data.content);
+                } catch (err) {
+                    console.error(`Failed to decrypt entry ${docSnap.id}:`, err);
+                    content = "🔒 [Locked - Decryption Failed]";
+                    isError = true;
+                }
+            }
+
+            let createdDate = new Date();
+            if (data.createdAt?.toDate) {
+                createdDate = data.createdAt.toDate();
+            } else if (data.createdAt instanceof Timestamp) {
+                createdDate = data.createdAt.toDate();
+            }
+
+            return { 
+                id: docSnap.id, 
+                ...data, 
+                content, 
+                createdAt: createdDate,
+                isError                        
+            } as unknown as JournalEntryWithStatus;
+        }));
+    },
+    enabled: !!user,
+  });
+
+  // --- FILTER ENGINE ---
+  const filteredEntries = useMemo(() => {
+      if (!searchQuery.trim()) return allEntries;
+      const lowerQuery = searchQuery.toLowerCase();
+      return allEntries.filter(entry => {
+          const textMatch = entry.content?.toLowerCase().includes(lowerQuery);
+          const tagMatch = entry.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+          return textMatch || tagMatch;
+      });
+  }, [allEntries, searchQuery]);
+
+  // --- FLATTEN DATA FOR VIRTUALIZATION ---
+  const flatData = useMemo(() => {
+    // Cast to any to bypass strict type check for now, as grouping handles dates correctly internally
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const grouped = groupItemsByDate(filteredEntries as any[]);
+    const result: HistoryItem[] = [];
+    
+    Object.entries(grouped).forEach(([header, entries]) => {
+        result.push({ type: 'header', title: header });
+        entries.forEach(entry => {
+            result.push({ type: 'entry', data: entry as JournalEntryWithStatus });
+        });
+    });
+    return result;
+  }, [filteredEntries]);
+
+  const handleDelete = async (id: string) => {
+    if (!db) return;
+    if (!confirm('Delete this entry?')) return;
+    try {
+      await deleteDoc(doc(db, 'journals', id));
+      queryClient.invalidateQueries({ queryKey: ['journals'] });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleShare = async (entry: JournalEntryWithStatus) => {
+    const dateStr = entry.createdAt instanceof Date ? entry.createdAt.toLocaleDateString() : 'Unknown Date';
+    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}`;
+
+    if (navigator.share) {
+        try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
+    }
+    try {
+        await navigator.clipboard.writeText(textToShare);
+        setCopiedId(entry.id);
+        setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) { console.error('Failed to copy', err); }
+  };
+
+  if (isLoading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-200px)] relative"> 
+        
+        {/* SEARCH BAR (Sticky at Top) */}
+        <div className="shrink-0 mb-4 relative z-20">
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-3.5 text-indigo-400" />
+            <input
+                type="text"
+                placeholder="Search journal, tags, or feelings..."
+                value={searchQuery}
+                onChange={(e) => {
+                    setSearchParams(prev => {
+                        if (e.target.value) prev.set('search', e.target.value);
+                        else prev.delete('search');
+                        return prev;
+                    }, { replace: true });
+                }}
+                className="w-full pl-11 pr-10 py-3 bg-white border border-indigo-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm text-slate-700 placeholder:text-slate-400"
+            />
+            {searchQuery && (
+                <button
+                    onClick={() => setSearchParams(prev => { prev.delete('search'); return prev; }, { replace: true })}
+                    className="absolute right-3 top-3 p-1 text-indigo-300 hover:text-indigo-600 bg-indigo-50 rounded-full transition-colors"
+                >
+                    <XMarkIcon className="h-4 w-4" />
+                </button>
+            )}
+        </div>
+
+        {flatData.length === 0 ? (
+             <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-6 text-center">
+                 <p className="text-gray-500 font-medium">No entries found.</p>
+                 {searchQuery && <p className="text-gray-400 text-xs mt-2">Try adjusting your search terms.</p>}
+             </div>
+        ) : (
+            <div className="flex-1 min-h-0 relative">
+                <Virtuoso
+                    style={{ height: '100%' }}
+                    data={flatData}
+                    itemContent={(_index, item) => {
+                        if (item.type === 'header') {
+                            return (
+                                <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 mt-4 rounded-lg border-b border-indigo-300 shadow-sm">
+                                    <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{item.title}</h3>
+                                </div>
+                            );
+                        }
+
+                        const entry = item.data;
+                        return (
+                            <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-mono text-gray-400">
+                                            {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                                        </span>
+                                        
+                                        {/* MOOD BADGE */}
+                                        {entry.moodScore && (
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
+                                                Mood: {entry.moodScore}
+                                            </span>
+                                        )}
+
+                                        {/* WEATHER BADGE */}
+                                        {entry.weather && (
+                                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                                                <WeatherIcon condition={entry.weather.condition} />
+                                                {Math.round(entry.weather.temp)}°
+                                                <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
+                                            </span>
+                                        )}
+
+                                        {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                    </div>
+                                    
+                                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                            {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
+                                        </button>
+                                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                    </div>
+                                </div>
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                    {entry.content}
+                                </p>
+                            </div>
+                        );
+                    }}
+                />
+            </div>
+        )}
+
+        {/* FLOATING ACTION BUTTON */}
+        <button
+            onClick={() => setIsWizardOpen(true)}
+            className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group"
+        >
+            <SparklesIcon className="h-6 w-6 group-hover:animate-pulse" />
+            <span className="hidden group-hover:inline text-sm font-bold pr-1">Analyze</span>
+        </button>
+
+        <JournalAnalysisWizard 
+            isOpen={isWizardOpen} 
+            onClose={() => setIsWizardOpen(false)} 
+            entries={allEntries} 
+        />
+    </div>
+  );
+}
+"""
+
+journal_insights_code = r"""/**
+ * src/components/journal/JournalInsights.tsx
+ * GITHUB COMMENT:
+ * [JournalInsights.tsx]
+ * FEAT: Updated UI to display active Trend Direction (Current 30 vs Prev 30).
+ * FEAT: Interactive Word Cloud tags act as one-click search filters via navigation.
+ */
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../lib/firebase';
+import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { 
+  ComposedChart, 
+  Line, 
+  Bar, 
+  BarChart,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
+import { 
+    ChartBarIcon, 
+    CloudIcon, 
+    FireIcon, 
+    CalendarDaysIcon,
+    ArrowTrendingUpIcon,
+    ArrowTrendingDownIcon
+} from '@heroicons/react/24/outline';
+import { format, subDays, getDay, startOfDay } from 'date-fns';
+
+// --- TYPES ---
+
+// 1. Daily Stats (Mood vs Weather)
+interface DailyStats {
+    date: string; // YYYY-MM-DD
+    displayDate: string; // "Oct 12"
+    avgMood: number;
+    avgTemp: number;
+    entryCount: number;
+}
+
+// 2. Comparative Weekly Rhythm
+interface WeeklyComparisonStats {
+    dayName: string; // "Mon", "Tue"
+    currentAvg: number;
+    prevAvg: number;
+    currentCount: number;
+    prevCount: number;
+}
+
+interface WordFrequency {
+    text: string;
+    value: number;
+}
+
+interface JournalEntryRaw {
+    moodScore?: number;
+    weather?: { temp: number; condition: string } | null;
+    createdAt: Timestamp;
+    sentiment?: string; 
+    content?: string;
+}
+
+// Stop words to filter out of the cloud
+const STOP_WORDS = new Set([
+  'the', 'and', 'i', 'to', 'a', 'of', 'in', 'was', 'my', 'that', 'for', 'it', 'me', 'on', 
+  'with', 'but', 'is', 'this', 'have', 'be', 'so', 'not', 'at', 'as', 'today', 'day', 
+  'feeling', 'feel', 'am', 'just', 'had', 'very', 'really', 'will', 'up', 'out', 'from'
+]);
+
+const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export default function JournalInsights() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  // State
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0, trend: 0 });
+  
+  // Chart Data States
+  const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
+  const [weeklyComparisonData, setWeeklyComparisonData] = useState<WeeklyComparisonStats[]>([]);
+  const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+        if (!user || !db) return;
+
+        try {
+            // Fetch last 90 days for robust analysis
+            const q = query(
+                collection(db, 'journals'), 
+                where('uid', '==', user.uid),
+                orderBy('createdAt', 'asc')
+            );
+            
+            const snapshot = await getDocs(q);
+            const rawData = snapshot.docs.map(d => d.data() as JournalEntryRaw);
+
+            // --- AGGREGATION ENGINE ---
+
+            // 1. Initialize Containers
+            const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
+            
+            // Initialize Weekly Buckets (0=Sun -> 6=Sat)
+            const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
+                dayName: DAYS_OF_WEEK[i],
+                currentTotal: 0,
+                currentCount: 0,
+                prevTotal: 0,
+                prevCount: 0
+            }));
+
+            // Word Cloud Container
+            const wordFreq: Record<string, number> = {};
+
+            // 2. Reference Dates for Rolling Window
+            const today = startOfDay(new Date());
+            const thirtyDaysAgo = subDays(today, 30);
+            const sixtyDaysAgo = subDays(today, 60);
+
+            // 3. Single Pass Processing
+            let totalMoodSum = 0;
+            let totalEntries = 0;
+
+            // Trend accumulators
+            let current30Total = 0;
+            let current30Count = 0;
+            let prev30Total = 0;
+            let prev30Count = 0;
+
+            rawData.forEach(entry => {
+                if (!entry.createdAt) return;
+                const dateObj = entry.createdAt.toDate(); 
+                const dateKey = format(dateObj, 'yyyy-MM-dd'); 
+
+                // --- A. Daily Trend Aggregation ---
+                if (!dailyMap.has(dateKey)) {
+                    dailyMap.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
+                }
+                const dayStat = dailyMap.get(dateKey)!;
+
+                if (entry.moodScore !== undefined) {
+                    dayStat.moodSum += entry.moodScore;
+                    dayStat.moodCount += 1;
+                    
+                    // Global Stats
+                    totalMoodSum += entry.moodScore;
+                    totalEntries++;
+
+                    // --- B. Comparative Weekly Rhythm (Rolling 30 vs Prev 30) ---
+                    const dayIndex = getDay(dateObj); // 0 = Sun
+                    
+                    if (dateObj >= thirtyDaysAgo) {
+                        // Current 30 Days Bucket
+                        weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
+                        weeklyBuckets[dayIndex].currentCount += 1;
+                        
+                        // Broad Trend 
+                        current30Total += entry.moodScore;
+                        current30Count += 1;
+                    } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
+                        // Previous 30 Days Bucket
+                        weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
+                        weeklyBuckets[dayIndex].prevCount += 1;
+
+                        // Broad Trend
+                        prev30Total += entry.moodScore;
+                        prev30Count += 1;
+                    }
+                }
+
+                if (entry.weather && entry.weather.temp !== undefined) {
+                    dayStat.tempSum += entry.weather.temp;
+                    dayStat.tempCount += 1;
+                }
+
+                // --- C. Word Cloud Processing ---
+                if (entry.content) {
+                    const words = entry.content.toLowerCase().match(/\b\w+\b/g) || [];
+                    words.forEach(word => {
+                        if (!STOP_WORDS.has(word) && word.length > 3) {
+                            wordFreq[word] = (wordFreq[word] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            // 3. Finalize Data Structures
+
+            // Daily Trend (Last 14 Active Days)
+            const dailyStatsArray = Array.from(dailyMap.values()).map(stat => ({
+                date: format(stat.timestamp, 'yyyy-MM-dd'),
+                displayDate: format(stat.timestamp, 'MMM d'),
+                avgMood: stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0,
+                avgTemp: stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0,
+                entryCount: stat.moodCount
+            })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            setDailyTrendData(dailyStatsArray.slice(-14));
+
+            // Weekly Comparison (Reorder to start Monday)
+            const sunday = weeklyBuckets.shift(); 
+            if (sunday) weeklyBuckets.push(sunday);
+            
+            const finalizedWeekly: WeeklyComparisonStats[] = weeklyBuckets.map(b => ({
+                dayName: b.dayName,
+                currentAvg: b.currentCount > 0 ? parseFloat((b.currentTotal / b.currentCount).toFixed(1)) : 0,
+                prevAvg: b.prevCount > 0 ? parseFloat((b.prevTotal / b.prevCount).toFixed(1)) : 0,
+                currentCount: b.currentCount,
+                prevCount: b.prevCount
+            }));
+            setWeeklyComparisonData(finalizedWeekly);
+
+            // Word Cloud
+            const topWords = Object.entries(wordFreq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20)
+                .map(([text, value]) => ({ text, value }));
+            setWordCloudData(topWords);
+
+            // Global Stats with Trend Calculation
+            const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
+            const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
+            const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
+
+            setStats({
+                total: rawData.length,
+                avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
+                streak: rawData.length, // Placeholder
+                trend
+            });
+
+        } catch (error) {
+            console.error("Error loading insights:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    loadData();
+  }, [user]);
+
+  if (loading) return <div className="p-10 text-center text-gray-400 animate-pulse">Analyzing patterns...</div>;
+
+  return (
+    <div className="space-y-6 pb-20">
+        
+        {/* --- TOP STATS CARDS --- */}
+        <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-indigo-50 flex flex-col items-center justify-center">
+                <div className="text-2xl font-black text-indigo-600">{stats.total}</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Entries</div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-purple-50 flex flex-col items-center justify-center">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-2xl font-black text-purple-600">{stats.avgMood}</span>
+                    {stats.trend !== 0 && (
+                        <span className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stats.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {stats.trend > 0 ? <ArrowTrendingUpIcon className="h-3 w-3 mr-0.5" /> : <ArrowTrendingDownIcon className="h-3 w-3 mr-0.5" />}
+                            {Math.abs(stats.trend)}
+                        </span>
+                    )}
+                </div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
+            </div>
+
+             <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-50 flex flex-col items-center justify-center">
+                <FireIcon className="h-6 w-6 text-orange-500 mb-1" />
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Active</div>
+            </div>
+        </div>
+
+        {/* --- 1. COMPARATIVE WEEKLY RHYTHM (Grouped Bar) --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
+                    <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
+                    Weekly Rhythm
+                </h3>
+                <div className="flex gap-3 text-[10px] font-bold">
+                    <span className="flex items-center gap-1 text-slate-400">
+                        <div className="w-2 h-2 rounded-full bg-slate-300"></div> Prev 30 Days
+                    </span>
+                    <span className="flex items-center gap-1 text-purple-600">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> Last 30 Days
+                    </span>
+                </div>
+            </div>
+            
+            <div className="h-56 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
+                    <BarChart data={weeklyComparisonData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <XAxis 
+                            dataKey="dayName" 
+                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis domain={[0, 10]} hide />
+                        <Tooltip 
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                            cursor={{fill: '#f8fafc'}}
+                            // Satisfy strict Recharts typing by accepting generic payload
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            formatter={(value: any, name: any) => [value, name === 'currentAvg' ? 'Last 30 Days' : 'Prev 30 Days']}
+                        />
+                        {/* Previous 30 Days (Baseline) - Muted */}
+                        <Bar dataKey="prevAvg" name="Prev 30 Days" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={12} />
+                        
+                        {/* Current 30 Days (Active) - Vibrant */}
+                        <Bar dataKey="currentAvg" name="Last 30 Days" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={12} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score (Rolling Comparison)</p>
+        </div>
+
+        {/* --- 2. MOOD vs WEATHER (Composed) --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
+                <ChartBarIcon className="h-4 w-4 text-indigo-500" />
+                Daily Trends (Mood vs Weather)
+            </h3>
+            
+            <div className="h-72 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" debounce={200}>
+                    <ComposedChart data={dailyTrendData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
+                        <defs>
+                            <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <XAxis 
+                            dataKey="displayDate" 
+                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            axisLine={false}
+                            tickLine={false}
+                            minTickGap={30}
+                        />
+                        <YAxis yAxisId="left" domain={[0, 10]} hide />
+                        <YAxis yAxisId="right" orientation="right" hide domain={['auto', 'auto']} />
+
+                        <Tooltip 
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
+                            labelStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}}
+                        />
+                        <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
+
+                        <Bar yAxisId="right" dataKey="avgTemp" name="Temp (°C)" fill="#FDBA74" radius={[4, 4, 0, 0]} barSize={20} />
+                        <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Mood" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff'}} />
+                    </ComposedChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+
+        {/* --- 3. WORD CLOUD --- */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
+                <CloudIcon className="h-4 w-4 text-blue-500" />
+                Recurring Themes
+            </h3>
+            
+            {wordCloudData.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm">Not enough data yet.</div>
+            ) : (
+                <div className="flex flex-wrap gap-2 justify-center items-center py-4">
+                    {wordCloudData.map((word, i) => {
+                        const maxVal = wordCloudData[0].value;
+                        const sizeClass = 
+                            word.value > maxVal * 0.8 ? 'text-2xl font-black text-indigo-600' :
+                            word.value > maxVal * 0.6 ? 'text-xl font-bold text-purple-600' :
+                            word.value > maxVal * 0.4 ? 'text-lg font-semibold text-pink-500' :
+                            'text-sm text-gray-500';
+
+                        return (
+                            <button
+                                key={i}
+                                onClick={() => navigate(`/journal?tab=history&search=${encodeURIComponent(word.text)}`)}
+                                className={`${sizeClass} transition-all hover:scale-110 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 focus:outline-none`}
+                                title={`Search for "${word.text}"`}
+                            >
+                                {word.text}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    </div>
+  );
+}
 """
 
 def write_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
-    print(f"✅ Updated: {path}")
+    print(f"✅ Modified: {path}")
 
 if __name__ == "__main__":
-    print("🔄 Synchronizing Documentation...")
-    write_file("docs/projects/04_FRICTIONLESS_CORE.md", proj_04_content)
-    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
-    print("✨ Documentation Drift Resolved. Map matches Territory.")
+    print("🚀 Initiating Sprint 2 - The Memory Engine...")
+    write_file("src/pages/Journal.tsx", journal_tsx_code)
+    write_file("src/components/journal/JournalHistory.tsx", journal_history_code)
+    write_file("src/components/journal/JournalInsights.tsx", journal_insights_code)
+    print("✨ Client-side filtering and Insights logic generated. Run 'npm run build && npm run lint' to verify.")
 </file>
 
 <file path="scripts/dump_docs.sh">
@@ -8184,10 +9070,12 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
  * src/components/journal/JournalHistory.tsx
  * GITHUB COMMENT:
  * [JournalHistory.tsx]
- * FIX: Added 'isVaultUnlocked' to queryKey to solve the decryption refresh bug.
- * FEATURE: Added Weather visualization to journal entries.
+ * FEATURE: Implemented client-side filtering via useSearchParams.
+ * FIX: Re-factored layout strictly for Virtuoso bounds to prevent overflow.
+ * PRESERVED: isVaultUnlocked in React Query array.
  */
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { db } from '../../lib/firebase';
@@ -8216,7 +9104,9 @@ import {
     SparklesIcon, 
     SunIcon, 
     CloudIcon, 
-    BoltIcon
+    BoltIcon,
+    MagnifyingGlassIcon,
+    XMarkIcon
 } from '@heroicons/react/24/outline';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
@@ -8244,16 +9134,19 @@ const WeatherIcon = ({ condition }: { condition: string }) => {
 
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
-  const { decrypt, isVaultUnlocked } = useEncryption(); // FIX: Extracted isVaultUnlocked
+  const { decrypt, isVaultUnlocked } = useEncryption();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
+  // Search Param State
+  const searchQuery = searchParams.get('search') || '';
+
   // --- REACT QUERY FETCH ---
   const { data: allEntries = [], isLoading } = useQuery({
-    // FIX: Added isVaultUnlocked to dependencies. 
-    // This forces an automatic refetch/re-decrypt when the user enters their PIN.
+    // isVaultUnlocked remains explicitly tracked
     queryKey: ['journals', user?.uid, isVaultUnlocked],
     queryFn: async () => {
         if (!user || !db) return [];
@@ -8300,11 +9193,22 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     enabled: !!user,
   });
 
+  // --- FILTER ENGINE ---
+  const filteredEntries = useMemo(() => {
+      if (!searchQuery.trim()) return allEntries;
+      const lowerQuery = searchQuery.toLowerCase();
+      return allEntries.filter(entry => {
+          const textMatch = entry.content?.toLowerCase().includes(lowerQuery);
+          const tagMatch = entry.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+          return textMatch || tagMatch;
+      });
+  }, [allEntries, searchQuery]);
+
   // --- FLATTEN DATA FOR VIRTUALIZATION ---
   const flatData = useMemo(() => {
     // Cast to any to bypass strict type check for now, as grouping handles dates correctly internally
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grouped = groupItemsByDate(allEntries as any[]);
+    const grouped = groupItemsByDate(filteredEntries as any[]);
     const result: HistoryItem[] = [];
     
     Object.entries(grouped).forEach(([header, entries]) => {
@@ -8314,7 +9218,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         });
     });
     return result;
-  }, [allEntries]);
+  }, [filteredEntries]);
 
   const handleDelete = async (id: string) => {
     if (!db) return;
@@ -8342,65 +9246,100 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   };
 
   if (isLoading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;
-  if (flatData.length === 0) return <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm"><p className="text-gray-500">No entries found.</p></div>;
 
   return (
-    <div className="relative h-[calc(100vh-200px)]"> 
-        <Virtuoso
-            style={{ height: '100%' }}
-            data={flatData}
-            itemContent={(_index, item) => {
-                if (item.type === 'header') {
-                    return (
-                        <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 mt-4 rounded-lg border-b border-indigo-300 shadow-sm">
-                            <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{item.title}</h3>
-                        </div>
-                    );
-                }
+    <div className="flex flex-col h-[calc(100vh-200px)] relative"> 
+        
+        {/* SEARCH BAR (Sticky at Top) */}
+        <div className="shrink-0 mb-4 relative z-20">
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-3.5 text-indigo-400" />
+            <input
+                type="text"
+                placeholder="Search journal, tags, or feelings..."
+                value={searchQuery}
+                onChange={(e) => {
+                    setSearchParams(prev => {
+                        if (e.target.value) prev.set('search', e.target.value);
+                        else prev.delete('search');
+                        return prev;
+                    }, { replace: true });
+                }}
+                className="w-full pl-11 pr-10 py-3 bg-white border border-indigo-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm text-slate-700 placeholder:text-slate-400"
+            />
+            {searchQuery && (
+                <button
+                    onClick={() => setSearchParams(prev => { prev.delete('search'); return prev; }, { replace: true })}
+                    className="absolute right-3 top-3 p-1 text-indigo-300 hover:text-indigo-600 bg-indigo-50 rounded-full transition-colors"
+                >
+                    <XMarkIcon className="h-4 w-4" />
+                </button>
+            )}
+        </div>
 
-                const entry = item.data;
-                return (
-                    <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-xs font-mono text-gray-400">
-                                    {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
-                                </span>
-                                
-                                {/* MOOD BADGE */}
-                                {entry.moodScore && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
-                                        Mood: {entry.moodScore}
-                                    </span>
-                                )}
+        {flatData.length === 0 ? (
+             <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-6 text-center">
+                 <p className="text-gray-500 font-medium">No entries found.</p>
+                 {searchQuery && <p className="text-gray-400 text-xs mt-2">Try adjusting your search terms.</p>}
+             </div>
+        ) : (
+            <div className="flex-1 min-h-0 relative">
+                <Virtuoso
+                    style={{ height: '100%' }}
+                    data={flatData}
+                    itemContent={(_index, item) => {
+                        if (item.type === 'header') {
+                            return (
+                                <div className="sticky top-0 z-10 bg-indigo-200/90 backdrop-blur-sm py-2 px-3 mb-2 mt-4 rounded-lg border-b border-indigo-300 shadow-sm">
+                                    <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">{item.title}</h3>
+                                </div>
+                            );
+                        }
 
-                                {/* WEATHER BADGE */}
-                                {entry.weather && (
-                                    <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
-                                        <WeatherIcon condition={entry.weather.condition} />
-                                        {Math.round(entry.weather.temp)}°
-                                        <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
-                                    </span>
-                                )}
+                        const entry = item.data;
+                        return (
+                            <div className={`bg-white rounded-xl p-4 mb-3 shadow-sm border relative group ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-mono text-gray-400">
+                                            {entry.createdAt instanceof Date ? entry.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                                        </span>
+                                        
+                                        {/* MOOD BADGE */}
+                                        {entry.moodScore && (
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
+                                                Mood: {entry.moodScore}
+                                            </span>
+                                        )}
 
-                                {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                        {/* WEATHER BADGE */}
+                                        {entry.weather && (
+                                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                                                <WeatherIcon condition={entry.weather.condition} />
+                                                {Math.round(entry.weather.temp)}°
+                                                <span className="hidden sm:inline opacity-75 ml-0.5">{entry.weather.condition}</span>
+                                            </span>
+                                        )}
+
+                                        {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                    </div>
+                                    
+                                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                            {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
+                                        </button>
+                                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
+                                    </div>
+                                </div>
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                    {entry.content}
+                                </p>
                             </div>
-                            
-                            <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
-                                    {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
-                                </button>
-                                <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
-                                <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
-                            </div>
-                        </div>
-                        <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
-                            {entry.content}
-                        </p>
-                    </div>
-                );
-            }}
-        />
+                        );
+                    }}
+                />
+            </div>
+        )}
 
         {/* FLOATING ACTION BUTTON */}
         <button
@@ -8427,14 +9366,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FEAT: Updated Weekly Rhythm to use Rolling 30-Day Window comparison.
- * LOGIC: Compares "Last 30 Days" vs "Previous 30 Days" (Days 31-60).
- * MAINTAINED: Daily Trends, Word Cloud, and all existing type safety.
+ * FEAT: Updated UI to display active Trend Direction (Current 30 vs Prev 30).
+ * FEAT: Interactive Word Cloud tags act as one-click search filters via navigation.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import { 
   ComposedChart, 
   Line, 
@@ -8445,14 +9384,15 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend,
-  //Cell
+  Legend
 } from 'recharts';
 import { 
     ChartBarIcon, 
     CloudIcon, 
-    FireIcon,
-    CalendarDaysIcon
+    FireIcon, 
+    CalendarDaysIcon,
+    ArrowTrendingUpIcon,
+    ArrowTrendingDownIcon
 } from '@heroicons/react/24/outline';
 import { format, subDays, getDay, startOfDay } from 'date-fns';
 
@@ -8500,10 +9440,11 @@ const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function JournalInsights() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // State
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0 });
+  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0, trend: 0 });
   
   // Chart Data States
   const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
@@ -8551,10 +9492,16 @@ export default function JournalInsights() {
             let totalMoodSum = 0;
             let totalEntries = 0;
 
+            // Trend accumulators
+            let current30Total = 0;
+            let current30Count = 0;
+            let prev30Total = 0;
+            let prev30Count = 0;
+
             rawData.forEach(entry => {
                 if (!entry.createdAt) return;
-                const dateObj = entry.createdAt.toDate(); // Keep full date for comparison
-                const dateKey = format(dateObj, 'yyyy-MM-dd'); // For Daily Map
+                const dateObj = entry.createdAt.toDate(); 
+                const dateKey = format(dateObj, 'yyyy-MM-dd'); 
 
                 // --- A. Daily Trend Aggregation ---
                 if (!dailyMap.has(dateKey)) {
@@ -8577,10 +9524,18 @@ export default function JournalInsights() {
                         // Current 30 Days Bucket
                         weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].currentCount += 1;
+                        
+                        // Broad Trend 
+                        current30Total += entry.moodScore;
+                        current30Count += 1;
                     } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
                         // Previous 30 Days Bucket
                         weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].prevCount += 1;
+
+                        // Broad Trend
+                        prev30Total += entry.moodScore;
+                        prev30Count += 1;
                     }
                 }
 
@@ -8614,7 +9569,6 @@ export default function JournalInsights() {
             setDailyTrendData(dailyStatsArray.slice(-14));
 
             // Weekly Comparison (Reorder to start Monday)
-            // Shift Sunday (0) to end
             const sunday = weeklyBuckets.shift(); 
             if (sunday) weeklyBuckets.push(sunday);
             
@@ -8634,11 +9588,16 @@ export default function JournalInsights() {
                 .map(([text, value]) => ({ text, value }));
             setWordCloudData(topWords);
 
-            // Global Stats
+            // Global Stats with Trend Calculation
+            const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
+            const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
+            const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
+
             setStats({
                 total: rawData.length,
                 avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
-                streak: rawData.length // Placeholder
+                streak: rawData.length, // Placeholder
+                trend
             });
 
         } catch (error) {
@@ -8660,15 +9619,25 @@ export default function JournalInsights() {
         <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-indigo-50 flex flex-col items-center justify-center">
                 <div className="text-2xl font-black text-indigo-600">{stats.total}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Entries</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Entries</div>
             </div>
+            
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-purple-50 flex flex-col items-center justify-center">
-                <div className="text-2xl font-black text-purple-600">{stats.avgMood}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Avg Mood</div>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-2xl font-black text-purple-600">{stats.avgMood}</span>
+                    {stats.trend !== 0 && (
+                        <span className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stats.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {stats.trend > 0 ? <ArrowTrendingUpIcon className="h-3 w-3 mr-0.5" /> : <ArrowTrendingDownIcon className="h-3 w-3 mr-0.5" />}
+                            {Math.abs(stats.trend)}
+                        </span>
+                    )}
+                </div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
             </div>
+
              <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-50 flex flex-col items-center justify-center">
                 <FireIcon className="h-6 w-6 text-orange-500 mb-1" />
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Active</div>
             </div>
         </div>
 
@@ -8778,9 +9747,14 @@ export default function JournalInsights() {
                             'text-sm text-gray-500';
 
                         return (
-                            <span key={i} className={`${sizeClass} transition-all hover:scale-110 cursor-default px-1`}>
+                            <button
+                                key={i}
+                                onClick={() => navigate(`/journal?tab=history&search=${encodeURIComponent(word.text)}`)}
+                                className={`${sizeClass} transition-all hover:scale-110 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 focus:outline-none`}
+                                title={`Search for "${word.text}"`}
+                            >
                                 {word.text}
-                            </span>
+                            </button>
                         );
                     })}
                 </div>
@@ -8789,6 +9763,7 @@ export default function JournalInsights() {
     </div>
   );
 }
+
 </file>
 
 <file path="src/components/journal/JournalTabs.tsx">
@@ -14968,8 +15943,10 @@ export default function Journal() {
   const handleTabChange = (tab: string) => {
     setSearchParams(prev => {
         prev.set('tab', tab);
-        // Clear template param if leaving write tab so it doesn't persist unwantedly
+        // Clear template param if leaving write tab
         if (tab !== 'write') prev.delete('template');
+        // Clear search param if leaving history tab
+        if (tab !== 'history') prev.delete('search');
         return prev;
     });
   };
@@ -15057,13 +16034,13 @@ export default function Journal() {
         )}
         
         {activeTab === 'history' && (
-            <div className="animate-fadeIn">
+            <div className="animate-fadeIn h-full">
                 <JournalHistory onEdit={handleEdit} />
             </div>
         )}
         
         {activeTab === 'insights' && (
-            <div className="animate-fadeIn">
+            <div className="animate-fadeIn h-full">
                 <JournalInsights />
             </div>
         )}
@@ -15072,6 +16049,7 @@ export default function Journal() {
     </div>
   );
 }
+
 </file>
 
 <file path="src/pages/Login.tsx">
