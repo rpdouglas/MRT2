@@ -1,5 +1,10 @@
 {
   "root": true,
+  "ignorePatterns": [
+    "dist",
+    "docs-site/.vitepress/cache",
+    "docs-site/.vitepress/dist"
+  ],
   "env": {
     "browser": true,
     "es2020": true,

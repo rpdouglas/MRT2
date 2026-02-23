@@ -11,7 +11,9 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "preview": "vite preview",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docs:dev": "vitepress dev docs-site",
+    "docs:build": "vitepress build docs-site"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
@@ -66,6 +68,7 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
     "vite-plugin-pwa": "^1.2.0",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.16"
   }
 }
