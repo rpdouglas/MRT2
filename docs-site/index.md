@@ -11,5 +11,5 @@ hero:
       link: /guide
     - theme: alt
       text: Open App
-      link: https://myrecoverytoolkit.web.app
+      link: https://www.myrecoverytoolkit.ca
 ---
