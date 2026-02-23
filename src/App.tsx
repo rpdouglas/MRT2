@@ -1,6 +1,6 @@
 /**
  * src/App.tsx
- * UPDATED: PROJ-01 Security Hardening (Removed AdminGrant)
+ * UPDATED: PROJ-04 Sprint 3 (Removed UserGuide route, migrated to VitePress)
  */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -20,7 +20,6 @@ import WorkbookDetail from './pages/WorkbookDetail';
 import WorkbookSession from './pages/WorkbookSession'; 
 import TemplateEditor from './components/journal/TemplateEditor'; 
 import AppShell from './components/AppShell';
-import UserGuide from './pages/UserGuide'; 
 import VaultGate from './components/VaultGate';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -171,16 +170,6 @@ export default function App() {
                         }
                         />
 
-                        {/* USER GUIDE ROUTE */}
-                        <Route
-                        path="/guide"
-                        element={
-                            <PrivateRoute>
-                                <UserGuide />
-                            </PrivateRoute>
-                        }
-                        />
-
                         <Route
                         path="/admin"
                         element={
@@ -190,8 +179,6 @@ export default function App() {
                         }
                         />
                         
-                        {/* FALLBACK */}
-
                         {/* DEBUG TOOLS (Dev Only) */}
                         <Route path="/debug" element={<PrivateRoute><DebugTools /></PrivateRoute>} />
                         <Route path="*" element={<Navigate to="/" />} />
