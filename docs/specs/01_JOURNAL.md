@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v1.2)
+**Status:** Live (v2.0)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -24,21 +24,23 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
     * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-### B. History (The Timeline)
+### B. History (The Timeline & Search)
 * **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
-* **Search & Filter:** A URL-driven search bar (`?search=xyz`) filters entries client-side *after* decryption, matching against both entry content and tags.
+* **The Memory Engine (Search):** * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
+    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
+    * **Scope:** Matches against Entry Content and Tags.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
-* **Analysis Trigger:** Contains the "Analyze" FAB (Floating Action Button) to launch the **Journal Analysis Wizard**.
 * **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
 ### C. Insights (The Dashboard)
 * **Source:** `JournalInsights.tsx`
 * **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
 * **Visualizations:**
-    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days* (Days 31-60).
-    2.  **Daily Trends:** A Composed Chart overlaying **Mood** (Line) vs **Weather Temperature** (Bar) to identify environmental triggers.
-    3.  **Interactive Word Cloud:** Frequency analysis of entry content. Clicking a tag automatically navigates the user to the History tab, pre-filtered for that specific word.
-    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score (now featuring a rolling 30-day Trend Indicator arrow).
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days*.
+    2.  **Trend Indicator:** A calculated "Trend Arrow" (↗️/↘️) showing if the user's 30-day average mood is improving or declining compared to the previous period.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. 
+        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score.
 
 ---
 
@@ -120,10 +122,3 @@ sequenceDiagram
 3.  **API Failures:**
     * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
     * If Gemini fails (403/500), the user can still save the text manually.
-
-## 6. Verification (QA)
-
-* [x] **Encryption Roundtrip:** Create entry -> Lock Vault -> Unlock -> Verify text is readable.
-* [x] **Search:** Verify searching by "Tag" or "Content" correctly filters the virtualized list.
-* [x] **Charts:** Ensure "Weekly Rhythm" renders correctly even with missing days.
-* [x] **Audio:** Record a clip -> Verify transcription appears in editor -> Save -> Verify playback is NOT stored (only text is saved).
