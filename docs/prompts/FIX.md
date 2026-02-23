@@ -22,8 +22,8 @@
 ### 📤 REQUIRED OUTPUT FORMAT
 1.  **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
 2.  **Integrity Audit:** List what code was **preserved** (e.g., "Preserved all helper functions and UI Strengths/Risks sections").
-3.  **Surgical Fix:** Provide the COMPLETE file content using quoted heredocs.
+3.  **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to rewrite the complete file. Do NOT use Bash heredocs. Use the ````` pattern for any markdown backticks.
 4.  **Verification:** Specific command to run (e.g., `npm run build` or `npm run lint`).
 
 ---
-**STRICT WARNING:** If you provide a fix that deletes existing functionality, the build will be rejected.
+**STRICT WARNING:** If you provide a fix that deletes existing functionality or uses Bash to write complex files, the build will be rejected.

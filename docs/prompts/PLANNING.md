@@ -6,7 +6,7 @@
 ---
 
 ### PHASE 1: CODEBASE INGESTION & AUDIT
-1.  **Ingestion:** Review the provided `src/` and `docs/` directories.
+1.  **Ingestion:** Review the provided `src/`, `docs/`, and `docs-site/` directories.
 2.  **Dependency Mapping:** Identify existing components, hooks, and lib functions impacted. 
 3.  **Interface Audit:** Quote the specific interface from `src/lib/db.ts` that this feature will interact with.
 
@@ -33,7 +33,7 @@
     * *Check:* Are there any function parameters missing types?
     * *Rule:* Use specific interfaces (e.g., `WorkbookSection`), never `any`.
 3.  **The "Heredoc" Trap (Safe Delivery):**
-    * *Check:* Does the code contain backticks (\`) or template literals (`${}`) or complex quoting?
+    * *Check:* Does the code contain backticks or template literals or complex quoting?
     * *Rule:* **DO NOT USE BASH.** You MUST generate a **Python script** (`scripts/update_feature.py`) to write the files. Python handles string escaping reliably; Bash does not.
 
 ---

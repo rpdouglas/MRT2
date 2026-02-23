@@ -9,8 +9,9 @@
 **Strict Constraints (The "Clean Code" Protocol):**
 
 1.  **The "Safe Delivery" Rule (CRITICAL):**
-    * Do **NOT** use Bash `cat << EOF` for generating complex code files (TSX/TS).
-    * You **MUST** generate a **Python script** (e.g., `scripts/update_feature.py`) to write the files. Python handles template literals (\`${}`) and backticks correctly; Bash does not.
+    * Do **NOT** use Bash `cat << EOF` for generating complex code files (TSX/TS/MD).
+    * You **MUST** generate a **Python script** (`scripts/update_feature.py`) to write the files. 
+    * When writing Markdown strings containing backticks (like code blocks or Mermaid diagrams), you MUST use a placeholder like ````` in the raw python string and replace it with backticks via `.replace('```', '```')` before writing the file to prevent parser breaks.
 
 2.  **Anti-Regression Checks:**
     * **Unused Imports:** If you remove a UI element (like a button), you MUST remove its corresponding import (e.g., icons).
