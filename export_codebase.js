@@ -1,12 +1,10 @@
 /**
  * GITHUB COMMENT:
  * [export_codebase.js]
- * ARCHITECTURAL EDITION (v3.0 - Deep Dive)
- * REFACTOR: Switched to WriteStreams to prevent V8 Heap Out of Memory errors on large repos.
- * SAFETY: Added Symlink detection to prevent infinite recursion loops.
- * FEATURE: Heuristic Binary File detection (checks buffer) to prevent garbage output.
- * FORMAT: optimized for LLM parsing (XML-style tagging).
- * UPGRADE: Auto-detects and respects .gitignore if present (basic parsing).
+ * CONTEXT MANAGEMENT EDITION (v4.0)
+ * UPGRADE: Implemented CLI targeting. E.g., `node export_codebase.js src/components`
+ * UPGRADE: Implemented strict Whitelisting. Default run only targets root files, src, docs, docs-site, and .github.
+ * FIX: Added aggressive path-based ignores to block massive cache directories like .vitepress/cache.
  */
 
 import fs from 'fs';
@@ -19,116 +17,82 @@ const rootDir = process.cwd();
 
 // --- CONFIGURATION ---
 const OUTPUT_FILE = 'project_codebase.txt';
-const MAX_FILE_SIZE_KB = 1024; // 1MB limit per file
+const MAX_FILE_SIZE_KB = 500; // Lowered to 500kb to prevent silent bloat
 
-// Global Ignore List (Base defaults)
-const ALWAYS_IGNORE_DIRS = [
-  'node_modules', '.git', 'dist', 'build', '.vscode', 'coverage', 
-  '.firebase', '.github', '.idea', '__pycache__'
+// 1. Target Defaults (If no CLI arguments are provided)
+const DEFAULT_TARGET_DIRS = ['src', 'docs', 'docs-site', '.github'];
+const INCLUDE_ROOT_FILES = true; 
+
+// 2. Aggressive Path Ignores (Matches against the relative path)
+const AGGRESSIVE_IGNORE_PATHS = [
+  '.vitepress/cache',
+  '.vitepress/dist',
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'public/Marketing',
+  'coverage',
+  '.firebase'
 ];
 
 const ALWAYS_IGNORE_FILES = [
-  'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb',
-  OUTPUT_FILE, 'export_codebase.js', '.DS_Store', '.env', '.env.local',
-  'thumbs.db'
+  'package-lock.json', 'yarn.lock', OUTPUT_FILE, 'export_codebase.js', 
+  '.DS_Store', '.env', '.env.local'
 ];
 
-// Extensions we explicitly WANT to read as text
 const TEXT_EXTENSIONS = new Set([
   '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.scss', '.json',
   '.md', '.yml', '.yaml', '.xml', '.txt', '.rules', '.env.example',
-  '.sql', '.graphql', '.py', '.rb', '.java', '.c', '.cpp', '.h'
+  '.py', '.sh', '.cjs', '.mts'
 ]);
 
 // --- UTILITIES ---
 
-// 1. Gitignore Parser (Basic)
-function loadGitIgnore() {
-  const gitIgnorePath = path.join(rootDir, '.gitignore');
-  if (!fs.existsSync(gitIgnorePath)) return [];
-  
-  const content = fs.readFileSync(gitIgnorePath, 'utf-8');
-  return content
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line && !line.startsWith('#'))
-    .map(line => line.replace(/\/$/, '')); // Remove trailing slashes
-}
-
-// 2. Binary Detection (Heuristic)
 function isBinaryFile(filePath) {
-  // First check extension whitelist (fastest)
   const ext = path.extname(filePath).toLowerCase();
   if (TEXT_EXTENSIONS.has(ext)) return false;
-
-  // If unknown extension, check the first 512 bytes for null bytes
-  try {
-    const fd = fs.openSync(filePath, 'r');
-    const buffer = Buffer.alloc(512);
-    const bytesRead = fs.readSync(fd, buffer, 0, 512, 0);
-    fs.closeSync(fd);
-    
-    for (let i = 0; i < bytesRead; i++) {
-      if (buffer[i] === 0) return true; // Null byte indicates binary
-    }
-    return false;
-  } catch (error) {
-    return true; // Treat unreadable as binary
-  }
+  if (!ext) return false; // allow extensionless files like Dockerfile
+  return true; // Aggressive binary exclusion based on whitelist
 }
 
-// 3. Tree Generator (Recursive)
-function generateTree(dir, prefix = '', ignoreList) {
-  let tree = '';
-  try {
-    const files = fs.readdirSync(dir);
-    // Filter out ignored items for the tree view to keep it clean
-    const visibleFiles = files.filter(f => !ignoreList.includes(f) && !ALWAYS_IGNORE_DIRS.includes(f));
-    
-    visibleFiles.forEach((file, index) => {
-      const fullPath = path.join(dir, file);
-      const isLast = index === visibleFiles.length - 1;
-      
-      let stats;
-      try {
-        stats = fs.statSync(fullPath);
-      } catch (e) { return; } // Skip broken links
-
-      tree += `${prefix}${isLast ? '└── ' : '├── '}${file}\n`;
-      
-      if (stats.isDirectory()) {
-        tree += generateTree(fullPath, `${prefix}${isLast ? '    ' : '│   '}`, ignoreList);
-      }
-    });
-  } catch (e) {
-    return `[Error reading tree]\n`;
+function shouldIgnorePath(relativePath, fileName) {
+  if (ALWAYS_IGNORE_FILES.includes(fileName)) return true;
+  
+  // Check if the path contains any of our aggressive ignore strings
+  const normalizedPath = relativePath.replace(/\\/g, '/');
+  for (const ignore of AGGRESSIVE_IGNORE_PATHS) {
+    if (normalizedPath.includes(ignore)) return true;
   }
-  return tree;
+  return false;
 }
 
-// 4. File Walker (Recursive with Symlink protection)
-function *walkSync(dir, ignoreList, visited = new Set()) {
+// 4. File Walker (Yields relative paths)
+function *walkSync(dir, targets = null, currentDepth = 0) {
   try {
     const files = fs.readdirSync(dir);
     
     for (const file of files) {
-      if (ALWAYS_IGNORE_DIRS.includes(file) || ALWAYS_IGNORE_FILES.includes(file) || ignoreList.includes(file)) continue;
-      
       const fullPath = path.join(dir, file);
+      const relativePath = path.relative(rootDir, fullPath);
       
-      let stats;
-      try {
-        stats = fs.lstatSync(fullPath); // Use lstat to detect symlinks
-      } catch (err) { continue; }
+      if (shouldIgnorePath(relativePath, file)) continue;
 
-      if (stats.isSymbolicLink()) continue; // SKIP SYMLINKS to prevent recursion
+      let stats;
+      try { stats = fs.lstatSync(fullPath); } catch (err) { continue; }
+      if (stats.isSymbolicLink()) continue;
 
       if (stats.isDirectory()) {
-        if (!visited.has(fullPath)) {
-          visited.add(fullPath);
-          yield* walkSync(fullPath, ignoreList, visited);
+        // If we are at the root level, and we have targets, enforce the whitelist
+        if (currentDepth === 0 && targets && !targets.includes(file)) {
+           continue; 
         }
+        yield* walkSync(fullPath, targets, currentDepth + 1);
       } else {
+        // If we are at root level, and we have targets, but INCLUDE_ROOT_FILES is false, skip.
+        if (currentDepth === 0 && targets && !INCLUDE_ROOT_FILES) {
+            continue;
+        }
         yield fullPath;
       }
     }
@@ -140,72 +104,73 @@ function *walkSync(dir, ignoreList, visited = new Set()) {
 // --- MAIN EXECUTION ---
 
 async function runExport() {
-  console.log('🚀 Starting Deep Dive Codebase Export...');
+  // Parse CLI Arguments (Skip node executable and script name)
+  const userTargets = process.argv.slice(2);
+  const isTargetedRun = userTargets.length > 0;
+  
+  console.log(`🚀 Starting Codebase Export (v4.0)...`);
+  
+  let filesToProcess = [];
+
+  if (isTargetedRun) {
+    console.log(`🎯 Targeted mode active. Scanning: ${userTargets.join(', ')}`);
+    for (const target of userTargets) {
+      const fullTargetPath = path.join(rootDir, target);
+      if (!fs.existsSync(fullTargetPath)) {
+          console.warn(`⚠️ Target not found: ${target}`);
+          continue;
+      }
+      const stats = fs.statSync(fullTargetPath);
+      if (stats.isDirectory()) {
+          filesToProcess.push(...Array.from(walkSync(fullTargetPath, null, 1)));
+      } else {
+          filesToProcess.push(fullTargetPath);
+      }
+    }
+  } else {
+    console.log(`🌐 Full Context mode active. Scanning Defaults + Root files...`);
+    filesToProcess = Array.from(walkSync(rootDir, DEFAULT_TARGET_DIRS));
+  }
+
   const writeStream = fs.createWriteStream(path.join(rootDir, OUTPUT_FILE), { flags: 'w' });
   
-  // Load ignores
-  const gitIgnores = loadGitIgnore();
-  const allIgnores = [...gitIgnores]; // Combined list could be expanded here
-
-  // Header
   writeStream.write(`PROJECT EXPORT - ${new Date().toISOString()}\n`);
-  writeStream.write(`Note: Binary files and strictly ignored directories are excluded.\n\n`);
-
-  // Write Tree
-  console.log('🌳 Generating Directory Tree...');
-  writeStream.write(`### PROJECT STRUCTURE ###\n`);
-  writeStream.write(generateTree(rootDir, '', allIgnores));
-  writeStream.write(`\n\n### FILE CONTENTS ###\n`);
+  writeStream.write(`Mode: ${isTargetedRun ? 'Targeted (' + userTargets.join(', ') + ')' : 'Default Whitelist'}\n\n`);
+  writeStream.write(`### FILE CONTENTS ###\n`);
 
   let fileCount = 0;
   let skippedCount = 0;
   let totalChars = 0;
 
-  console.log('📝 Reading files and streaming to output...');
-
-  for (const filePath of walkSync(rootDir, allIgnores)) {
+  for (const filePath of filesToProcess) {
     const relativePath = path.relative(rootDir, filePath);
     
-    // Size Check
+    // Safety Checks
+    if (shouldIgnorePath(relativePath, path.basename(filePath))) continue;
+    if (isBinaryFile(filePath)) continue;
+
     const stats = fs.statSync(filePath);
-    const fileSizeKB = stats.size / 1024;
-    
-    if (fileSizeKB > MAX_FILE_SIZE_KB) {
-      writeStream.write(`\n\n`);
+    if ((stats.size / 1024) > MAX_FILE_SIZE_KB) {
       skippedCount++;
       continue;
     }
 
-    // Binary Check
-    if (isBinaryFile(filePath)) {
-      // writeStream.write(`\n\n`); 
-      // Commented out to reduce noise, uncomment if you want a record of binary files
-      continue;
-    }
-
-    // Write File Content
     try {
       const content = fs.readFileSync(filePath, 'utf8');
-      
-      // XML Format is often better for LLM context distinction
       writeStream.write(`\n<file path="${relativePath}">\n`);
       writeStream.write(content);
       writeStream.write(`\n</file>\n`);
       
       fileCount++;
       totalChars += content.length;
-      
-      // Progress indicator every 50 files
-      if (fileCount % 50 === 0) process.stdout.write('.');
-
     } catch (err) {
-      writeStream.write(`\n\n`);
+      console.warn(`Failed to read: ${relativePath}`);
     }
   }
 
   writeStream.end();
 
-  console.log('\n\n=============================================');
+  console.log('\n=============================================');
   console.log(`✅ Export Complete: ${OUTPUT_FILE}`);
   console.log(`📊 Stats:`);
   console.log(`   - Files Included: ${fileCount}`);

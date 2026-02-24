@@ -1,18 +1,13 @@
 # 🏃 Active Sprint Board
-**Sprint:** 5.1 "The Digital Rolodex"
+**Sprint:** 4.5.2 "The Bug Bash"
 **Start Date:** 2026-02-23
-**Goal:** Implement the backend schema, crypto hooks, and UI scaffold for the Service Module.
+**Goal:** Triage and resolve all outstanding UI/UX bugs across the application.
 
-## 📌 To Do (Project 05 - Sprint 1)
-- [ ] **Schema:** Scaffold the `service` collection structure in Firestore.
-- [ ] **Crypto Hook:** Build `useServiceData()` hook to securely handle granular encryption for sponsee names, contact info, and notes.
-- [ ] **Data Model:** Ensure deleting a sponsee deletes their encrypted notes (crypto-shredding).
-- [ ] **UI Scaffold:** Create `pages/Service.tsx` with "Active" and "Alumni" tabs.
+## 📌 To Do (Project 04.5 - Sprint 2)
+- [ ] List bugs here or transition them to GitHub Issues and link them.
 
 ## 🚧 In Progress
-- [ ] Requirements gathering and architectural review for granular encryption vs bulk blob encryption.
+- [ ] Gathering bug reports.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Project 04 Closed:** Completed "The Knowledge Base" VitePress migration and documentation sync.
-- [x] **CI/CD:** Split pipelines for Firebase (App) and GitHub Pages (Docs).
-- [x] **Linting:** Fixed VitePress cache scanning bug in ESLint.
+- [x] **Unit Testing:** Achieved 100% logic test coverage in Vitest for Dates, Tasks, Gamification, and AI Recovery.
