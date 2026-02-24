@@ -5,9 +5,9 @@ import * as firestore from 'firebase/firestore';
 vi.mock('../firebase', () => ({ db: {} }));
 
 vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal();
+    const actual = await importOriginal<typeof import('firebase/firestore')>();
     return {
-        ...actual as any,
+        ...actual as Record<string, unknown>,
         collection: vi.fn(),
         query: vi.fn(),
         where: vi.fn(),
@@ -38,7 +38,7 @@ describe('🧠 Insights Engine (Firebase Recovery)', () => {
             }]
         };
 
-        vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as any);
+        vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
 
         const results = await getInsightHistory('user_1');
         

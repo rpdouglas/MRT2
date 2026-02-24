@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { 
     calculateUserLevel, 
     calculateJournalStats, 
-    calculateTaskStats, 
-    calculateVitalityStats 
+    calculateTaskStats 
 } from '../gamification';
 import { Timestamp } from 'firebase/firestore';
 
@@ -37,20 +36,20 @@ describe('🎮 Gamification Engine', () => {
     });
 
     it('should identify the "Doer" archetype based on task dominance', () => {
-      const tasks: any[] = [
-          { status: 'completed', priority: 'High' }, // 50 XP
-          { status: 'completed', priority: 'High' }, // 50 XP
-      ];
+      const tasks = [
+          { status: 'completed', priority: 'High' }, 
+          { status: 'completed', priority: 'High' }, 
+      ] as unknown as Parameters<typeof calculateTaskStats>[0];
       const result = calculateUserLevel([], tasks, 0, 0);
       expect(result.archetype).toBe('Doer');
       expect(result.totalXP).toBe(100);
     });
 
     it('should identify the "Monk" archetype for Vitality dominance', () => {
-        const journals: any[] = [
-            { tags: ['Vitality'], createdAt: mockDate(0) }, // 15 XP
-            { tags: ['Vitality'], createdAt: mockDate(0) }  // 15 XP
-        ];
+        const journals = [
+            { tags: ['Vitality'], createdAt: mockDate(0) }, 
+            { tags: ['Vitality'], createdAt: mockDate(0) }  
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
         const result = calculateUserLevel(journals, [], 0, 0);
         expect(result.archetype).toBe('Monk');
         expect(result.totalXP).toBe(30);
@@ -70,39 +69,39 @@ describe('🎮 Gamification Engine', () => {
     });
 
     it('should calculate streak if posted today', () => {
-        const journals: any[] = [
+        const journals = [
             { createdAt: mockTimestamp(0) }, // Today
             { createdAt: mockTimestamp(1) }, // Yesterday
             { createdAt: mockTimestamp(2) }, // 2 days ago
             { createdAt: mockTimestamp(4) }  // Missed day 3
-        ];
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
         const result = calculateJournalStats(journals);
         expect(result.journalStreak).toBe(3);
     });
 
     it('should calculate streak if posted yesterday (streak still active)', () => {
-        const journals: any[] = [
+        const journals = [
             { createdAt: mockTimestamp(1) }, // Yesterday
             { createdAt: mockTimestamp(2) }, // 2 days ago
-        ];
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
         const result = calculateJournalStats(journals);
         expect(result.journalStreak).toBe(2);
     });
 
     it('should break streak if missed yesterday and today', () => {
-        const journals: any[] = [
+        const journals = [
             { createdAt: mockTimestamp(2) }, // 2 days ago
             { createdAt: mockTimestamp(3) }, 
-        ];
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
         const result = calculateJournalStats(journals);
         expect(result.journalStreak).toBe(0);
     });
 
     it('should calculate average mood', () => {
-        const journals: any[] = [
+        const journals = [
             { moodScore: 10, createdAt: mockTimestamp(0) },
             { moodScore: 5, createdAt: mockTimestamp(1) }
-        ];
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
         const result = calculateJournalStats(journals);
         expect(result.averageMood).toBe(7.5);
     });
@@ -110,11 +109,11 @@ describe('🎮 Gamification Engine', () => {
 
   describe('calculateTaskStats', () => {
       it('should calculate completion rate and sum of active streaks', () => {
-          const tasks: any[] = [
+          const tasks = [
               { status: 'completed', currentStreak: 5 },
               { status: 'pending', currentStreak: 2 },
               { status: 'pending', currentStreak: 0 } // Broken streak
-          ];
+          ] as unknown as Parameters<typeof calculateTaskStats>[0];
           const result = calculateTaskStats(tasks);
           
           // 1 out of 3 completed = ~33%

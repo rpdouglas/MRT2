@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { calculateSobrietyDuration, calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../dateUtils';
 import { subDays, subMonths, subYears, startOfDay } from 'date-fns';
 

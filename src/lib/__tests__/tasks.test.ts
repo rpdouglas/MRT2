@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserTasks, toggleTask } from '../tasks';
+import { getUserTasks, toggleTask, type Task } from '../tasks';
 import * as firestore from 'firebase/firestore';
 
 // Mock Firebase config
@@ -9,7 +9,7 @@ vi.mock('../firebase', () => ({
 
 // Mock Firestore functions
 vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal();
+    const actual = await importOriginal<typeof import('firebase/firestore')>();
     
     // We must mock Timestamp as a Class so `instanceof Timestamp` works in tasks.ts
     class MockTimestamp {
@@ -21,7 +21,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     }
 
     return {
-        ...actual as any,
+        ...actual as Record<string, unknown>,
         collection: vi.fn(),
         addDoc: vi.fn(),
         query: vi.fn(),
@@ -64,7 +64,7 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
                 }]
             };
 
-            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as any);
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
 
             const tasks = await getUserTasks('user_1');
             
@@ -99,7 +99,7 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
                 }]
             };
 
-            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as any);
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
 
             const tasks = await getUserTasks('user_1');
             
@@ -111,13 +111,13 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
 
     describe('toggleTask', () => {
         it('should increment streak when marking as completed', async () => {
-            const mockTask: any = {
+            const mockTask = {
                 id: 'task_3',
                 currentStreak: 3,
                 frequency: 'daily',
                 isRecurring: true,
                 dueDate: new Date()
-            };
+            } as unknown as Task;
 
             await toggleTask(mockTask, true);
             
@@ -132,11 +132,11 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
         });
 
         it('should decrement streak when unchecking (undo)', async () => {
-            const mockTask: any = {
+            const mockTask = {
                 id: 'task_4',
                 currentStreak: 5,
                 frequency: 'daily',
-            };
+            } as unknown as Task;
 
             await toggleTask(mockTask, false);
             
