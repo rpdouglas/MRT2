@@ -19,4 +19,9 @@
 | :--- | :--- | :--- | :--- | :--- |
 | 🟡 **Active** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
 | ⚪ Planned | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
-| ⚪ Planned | `PROJ-06` | **The Launch** | Admin | TWA Android Wrapper & Play Store |
+
+## 📅 Q4 2026: Business & Distribution (Planned)
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-06` | **The Freemium Engine** | Admin | Stripe Links, Tier Locks, Paywalls |
+| ⚪ Planned | `PROJ-07` | **The Launch** | Admin | TWA Android Wrapper & Play Store |

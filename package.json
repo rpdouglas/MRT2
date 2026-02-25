@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "prepare": "husky",
     "docs:dev": "vitepress dev docs-site",
-    "docs:build": "vitepress build docs-site"
+    "docs:build": "vitepress build docs-site",
+    "test:once": "vitest run",
+  "check": "npm run lint && npm run test:once && npm run build"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [

@@ -1,460 +1,182 @@
 import os
 
-test_date_utils = r'''import { describe, it, expect } from 'vitest';
-import { calculateSobrietyDuration, calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../dateUtils';
-import { subDays, subMonths, subYears, startOfDay } from 'date-fns';
+feedback_viewer_code = r'''import React, { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { AlertCircle, CheckCircle, Clock, ExternalLink, Github } from 'lucide-react';
 
-describe('📅 DateUtils Engine', () => {
-  describe('calculateSobrietyDuration', () => {
-    it('should calculate 0 for future dates to prevent negative time', () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      const result = calculateSobrietyDuration(tomorrow);
-      expect(result).toEqual({ years: 0, months: 0, days: 0, totalDays: 0 });
-    });
+interface FeedbackReport {
+  id: string;
+  category: 'bug' | 'suggestion' | 'content';
+  message: string; // <-- FIXED: Was 'content'
+  status: 'new' | 'investigating' | 'resolved';
+  buildHash: string;
+  environment: string;
+  vaultUnlocked: boolean;
+  route: string;
+  userAgent: string;
+  timestamp?: Timestamp; // <-- FIXED: Was 'createdAt'
+}
 
-    it('should calculate exactly 1 year', () => {
-      const today = startOfDay(new Date());
-      const oneYearAgo = subYears(today, 1);
-      
-      const result = calculateSobrietyDuration(oneYearAgo);
-      expect(result.years).toBe(1);
-      expect(result.months).toBe(0);
-      expect(result.days).toBe(0);
-      expect(result.totalDays).toBeGreaterThanOrEqual(365); 
-    });
+const FeedbackViewer: React.FC = () => {
+  const [reports, setReports] = useState<FeedbackReport[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    it('should calculate complex durations (1y, 2m, 15d)', () => {
-      const today = startOfDay(new Date());
-      let pastDate = subYears(today, 1);
-      pastDate = subMonths(pastDate, 2);
-      pastDate = subDays(pastDate, 15);
-      
-      const result = calculateSobrietyDuration(pastDate);
-      expect(result.years).toBe(1);
-      expect(result.months).toBe(2);
-      expect(result.days).toBe(15);
-    });
-  });
-
-  describe('calculateNextDueDate', () => {
-    const baseDate = new Date('2026-01-01T12:00:00Z'); // Thursday
-
-    it('should return null for "once" recurrence', () => {
-      const config: RecurrenceConfig = { type: 'once' };
-      expect(calculateNextDueDate(baseDate, config)).toBeNull();
-    });
-
-    it('should add exactly 1 day for "daily" without interval', () => {
-      const config: RecurrenceConfig = { type: 'daily' };
-      const nextDate = calculateNextDueDate(baseDate, config);
-      expect(nextDate?.getDate()).toBe(2);
-      expect(nextDate?.getHours()).toBe(23); // Should normalize to end of day
-    });
-
-    it('should add specific interval for "daily" (e.g. every 3 days)', () => {
-      const config: RecurrenceConfig = { type: 'daily', interval: 3 };
-      const nextDate = calculateNextDueDate(baseDate, config);
-      expect(nextDate?.getDate()).toBe(4);
-    });
-
-    it('should add exactly 7 days for "weekly"', () => {
-      const config: RecurrenceConfig = { type: 'weekly' };
-      const nextDate = calculateNextDueDate(baseDate, config);
-      expect(nextDate?.getDate()).toBe(8);
-    });
-
-    it('should add exactly 14 days for "biweekly"', () => {
-      const config: RecurrenceConfig = { type: 'biweekly' };
-      const nextDate = calculateNextDueDate(baseDate, config);
-      expect(nextDate?.getDate()).toBe(15);
-    });
-
-    it('should handle "monthly" overflow correctly (Jan 31 -> Feb 28)', () => {
-      const endOfJan = new Date('2026-01-31T12:00:00Z');
-      const config: RecurrenceConfig = { type: 'monthly' };
-      const nextDate = calculateNextDueDate(endOfJan, config);
-      // 2026 is not a leap year, so Feb has 28 days
-      expect(nextDate?.getMonth()).toBe(1); // Feb (0-indexed)
-      expect(nextDate?.getDate()).toBe(28);
-    });
-  });
-
-  describe('getRecurrenceLabel', () => {
-    it('should return simple string for standard types', () => {
-      expect(getRecurrenceLabel({ type: 'daily' })).toBe('Daily');
-      expect(getRecurrenceLabel({ type: 'biweekly' })).toBe('Bi-Weekly');
-    });
-
-    it('should return formatted string for relative monthly', () => {
-      // 1st Monday
-      expect(getRecurrenceLabel({ type: 'monthly-relative', weekOfMonth: 1, dayOfWeek: 1 })).toBe('1st Mon of Month');
-      // Last Friday
-      expect(getRecurrenceLabel({ type: 'monthly-relative', weekOfMonth: 5, dayOfWeek: 5 })).toBe('Last Fri of Month');
-    });
-  });
-});
-'''
-
-test_gamification = r'''import { describe, it, expect } from 'vitest';
-import { 
-    calculateUserLevel, 
-    calculateJournalStats, 
-    calculateTaskStats 
-} from '../gamification';
-import { Timestamp } from 'firebase/firestore';
-
-// Helper to mock dates easily
-const mockDate = (daysAgo: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() - daysAgo);
-    return d;
-};
-
-// Helper to mock Timestamp
-const mockTimestamp = (daysAgo: number) => {
-    return Timestamp.fromDate(mockDate(daysAgo));
-};
-
-describe('🎮 Gamification Engine', () => {
-  describe('calculateUserLevel & Archetypes', () => {
-    it('should calculate level 1 for zero XP', () => {
-      const result = calculateUserLevel([], [], 0, 0);
-      expect(result.levelData.level).toBe(1);
-      expect(result.totalXP).toBe(0);
-      expect(result.archetype).toBe('Balanced');
-    });
-
-    it('should identify the "Scholar" archetype based on workbook dominance', () => {
-      // 100 questions = 1500 XP in Wisdom
-      const result = calculateUserLevel([], [], 100, 0);
-      expect(result.archetype).toBe('Scholar');
-      expect(result.totalXP).toBe(1500);
-      expect(result.levelData.level).toBeGreaterThan(1);
-    });
-
-    it('should identify the "Doer" archetype based on task dominance', () => {
-      const tasks = [
-          { status: 'completed', priority: 'High' }, 
-          { status: 'completed', priority: 'High' }, 
-      ] as unknown as Parameters<typeof calculateTaskStats>[0];
-      const result = calculateUserLevel([], tasks, 0, 0);
-      expect(result.archetype).toBe('Doer');
-      expect(result.totalXP).toBe(100);
-    });
-
-    it('should identify the "Monk" archetype for Vitality dominance', () => {
-        const journals = [
-            { tags: ['Vitality'], createdAt: mockDate(0) }, 
-            { tags: ['Vitality'], createdAt: mockDate(0) }  
-        ] as unknown as Parameters<typeof calculateJournalStats>[0];
-        const result = calculateUserLevel(journals, [], 0, 0);
-        expect(result.archetype).toBe('Monk');
-        expect(result.totalXP).toBe(30);
-    });
-
-    it('should apply Clean Day Milestones (500 XP per 30 days)', () => {
-        const result = calculateUserLevel([], [], 0, 60); // 2 months
-        expect(result.totalXP).toBe(1000);
-    });
-  });
-
-  describe('calculateJournalStats & Streaks', () => {
-    it('should return zeros for empty array', () => {
-        const result = calculateJournalStats([]);
-        expect(result.totalEntries).toBe(0);
-        expect(result.journalStreak).toBe(0);
-    });
-
-    it('should calculate streak if posted today', () => {
-        const journals = [
-            { createdAt: mockTimestamp(0) }, // Today
-            { createdAt: mockTimestamp(1) }, // Yesterday
-            { createdAt: mockTimestamp(2) }, // 2 days ago
-            { createdAt: mockTimestamp(4) }  // Missed day 3
-        ] as unknown as Parameters<typeof calculateJournalStats>[0];
-        const result = calculateJournalStats(journals);
-        expect(result.journalStreak).toBe(3);
-    });
-
-    it('should calculate streak if posted yesterday (streak still active)', () => {
-        const journals = [
-            { createdAt: mockTimestamp(1) }, // Yesterday
-            { createdAt: mockTimestamp(2) }, // 2 days ago
-        ] as unknown as Parameters<typeof calculateJournalStats>[0];
-        const result = calculateJournalStats(journals);
-        expect(result.journalStreak).toBe(2);
-    });
-
-    it('should break streak if missed yesterday and today', () => {
-        const journals = [
-            { createdAt: mockTimestamp(2) }, // 2 days ago
-            { createdAt: mockTimestamp(3) }, 
-        ] as unknown as Parameters<typeof calculateJournalStats>[0];
-        const result = calculateJournalStats(journals);
-        expect(result.journalStreak).toBe(0);
-    });
-
-    it('should calculate average mood', () => {
-        const journals = [
-            { moodScore: 10, createdAt: mockTimestamp(0) },
-            { moodScore: 5, createdAt: mockTimestamp(1) }
-        ] as unknown as Parameters<typeof calculateJournalStats>[0];
-        const result = calculateJournalStats(journals);
-        expect(result.averageMood).toBe(7.5);
-    });
-  });
-
-  describe('calculateTaskStats', () => {
-      it('should calculate completion rate and sum of active streaks', () => {
-          const tasks = [
-              { status: 'completed', currentStreak: 5 },
-              { status: 'pending', currentStreak: 2 },
-              { status: 'pending', currentStreak: 0 } // Broken streak
-          ] as unknown as Parameters<typeof calculateTaskStats>[0];
-          const result = calculateTaskStats(tasks);
-          
-          // 1 out of 3 completed = ~33%
-          expect(result.completionRate).toBe(33);
-          
-          // 5 + 2 = 7 (Total Habit Fire)
-          expect(result.habitFire).toBe(7);
-      });
-  });
-});
-'''
-
-test_insights = r'''import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getInsightHistory } from '../insights';
-import * as firestore from 'firebase/firestore';
-
-vi.mock('../firebase', () => ({ db: {} }));
-
-vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('firebase/firestore')>();
-    return {
-        ...actual as Record<string, unknown>,
-        collection: vi.fn(),
-        query: vi.fn(),
-        where: vi.fn(),
-        orderBy: vi.fn(),
-        getDocs: vi.fn()
-    };
-});
-
-describe('🧠 Insights Engine (Firebase Recovery)', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        // Spy on console.warn and console.error to keep test output clean
-        vi.spyOn(console, 'warn').mockImplementation(() => {});
-        vi.spyOn(console, 'error').mockImplementation(() => {});
-    });
-
-    it('should map Firestore docs to SavedInsight objects correctly', async () => {
-        const mockDate = new Date();
-        const mockSnapshot = {
-            docs: [{
-                id: 'insight_1',
-                data: () => ({
-                    uid: 'user_1',
-                    type: 'workbook',
-                    summary: 'You are doing great.',
-                    createdAt: { toDate: () => mockDate }
-                })
-            }]
-        };
-
-        vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
-
-        const results = await getInsightHistory('user_1');
-        
-        expect(results.length).toBe(1);
-        expect(results[0].id).toBe('insight_1');
-        expect(results[0].type).toBe('workbook');
-        expect(results[0].createdAt).toBe(mockDate);
-    });
-
-    it('should gracefully return empty array and catch missing index errors', async () => {
-        // Simulate Firebase throwing a missing index error
-        vi.mocked(firestore.getDocs).mockRejectedValue(new Error("FAILED_PRECONDITION: The query requires an index"));
-
-        const results = await getInsightHistory('user_1');
-        
-        // It should catch the error and return [] without crashing the app
-        expect(results).toEqual([]);
-        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("MISSING INDEX"));
-    });
-});
-'''
-
-test_tasks = r'''import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserTasks, toggleTask, type Task } from '../tasks';
-import * as firestore from 'firebase/firestore';
-
-// Mock Firebase config
-vi.mock('../firebase', () => ({
-    db: {} 
-}));
-
-// Mock Firestore functions
-vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('firebase/firestore')>();
-    
-    // We must mock Timestamp as a Class so `instanceof Timestamp` works in tasks.ts
-    class MockTimestamp {
-        date: Date;
-        constructor(date: Date) { this.date = date; }
-        toDate() { return this.date; }
-        static fromDate(d: Date) { return new MockTimestamp(d); }
-        static now() { return new MockTimestamp(new Date()); }
+  useEffect(() => {
+    if (!db) {
+        setTimeout(() => setLoading(false), 0);
+        return;
     }
 
-    return {
-        ...actual as Record<string, unknown>,
-        collection: vi.fn(),
-        addDoc: vi.fn(),
-        query: vi.fn(),
-        where: vi.fn(),
-        getDocs: vi.fn(),
-        doc: vi.fn(),
-        updateDoc: vi.fn(),
-        deleteDoc: vi.fn(),
-        Timestamp: MockTimestamp
-    };
-});
-
-describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    describe('getUserTasks - Lazy Evaluation', () => {
-        it('should penalize streak and reset due date for missed recurring tasks', async () => {
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-            
-            const twoDaysAgo = new Date();
-            twoDaysAgo.setDate(today.getDate() - 2);
-
-            // Mock a snapshot containing a task that was due yesterday and not completed today
-            const mockSnapshot = {
-                docs: [{
-                    id: 'task_1',
-                    data: () => ({
-                        uid: 'user_1',
-                        title: 'Morning Meditation',
-                        isRecurring: true,
-                        frequency: 'daily',
-                        currentStreak: 5,
-                        dueDate: firestore.Timestamp.fromDate(yesterday), // Missed!
-                        lastCompletedAt: firestore.Timestamp.fromDate(twoDaysAgo), 
-                    })
-                }]
-            };
-
-            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
-
-            const tasks = await getUserTasks('user_1');
-            
-            // Should have evaluated the missed task
-            expect(firestore.updateDoc).toHaveBeenCalled();
-            
-            const updatedTask = tasks[0];
-            // Streak should drop from 5 to 0 (punishment logic)
-            expect(updatedTask.currentStreak).toBe(0);
-            
-            // Due date should be smartly reset to TODAY so they can try again
-            const newDue = updatedTask.dueDate as Date;
-            expect(newDue.getDate()).toBe(today.getDate());
+    const q = query(collection(db, 'feedback'));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const data = snapshot.docs.map(d => {
+            const raw = d.data();
+            return {
+                id: d.id,
+                ...raw,
+                // Fallbacks just in case old data exists
+                message: raw.message || raw.content || '',
+                timestamp: raw.timestamp || raw.createdAt || null
+            } as FeedbackReport;
+        });
+        
+        // Sort safely in JavaScript
+        data.sort((a, b) => {
+            const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+            const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+            return timeB - timeA;
         });
 
-        it('should NOT penalize if task was completed today', async () => {
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
+        setReports(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to feedback:", error);
+        setLoading(false);
+      }
+    );
 
-            const mockSnapshot = {
-                docs: [{
-                    id: 'task_2',
-                    data: () => ({
-                        uid: 'user_1',
-                        title: 'Drink Water',
-                        isRecurring: true,
-                        currentStreak: 5,
-                        dueDate: firestore.Timestamp.fromDate(yesterday), 
-                        lastCompletedAt: firestore.Timestamp.fromDate(today), // Already done today!
-                    })
-                }]
-            };
+    return () => unsubscribe();
+  }, []);
 
-            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+  const updateStatus = async (id: string, newStatus: FeedbackReport['status']) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, 'feedback', id), { status: newStatus });
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
 
-            const tasks = await getUserTasks('user_1');
-            
-            // Should NOT trigger punishment
-            expect(firestore.updateDoc).not.toHaveBeenCalled();
-            expect(tasks[0].currentStreak).toBe(5);
-        });
-    });
+  const sendToGitHub = (report: FeedbackReport) => {
+    const repoUrl = "https://github.com/rpdouglas/MRT2/issues/new";
+    const title = encodeURIComponent(`[${report.category?.toUpperCase() || 'BUG'}] Issue reported on ${report.route || 'unknown'}`);
+    
+    const bodyMarkdown = `
+### User Report
+${report.message || 'No content provided.'}
 
-    describe('toggleTask', () => {
-        it('should increment streak when marking as completed', async () => {
-            const mockTask = {
-                id: 'task_3',
-                currentStreak: 3,
-                frequency: 'daily',
-                isRecurring: true,
-                dueDate: new Date()
-            } as unknown as Task;
+---
+### Technical Context
+* **Route:** \`${report.route || 'N/A'}\`
+* **Environment:** \`${report.environment || 'N/A'}\`
+* **Build Hash:** \`${report.buildHash || 'N/A'}\`
+* **Vault Unlocked:** \`${report.vaultUnlocked}\`
+* **Device/Browser:** \`${report.userAgent || 'N/A'}\`
+* **Firestore ID:** \`${report.id}\`
+    `.trim();
 
-            await toggleTask(mockTask, true);
-            
-            // Verify updateDoc was called with streak = 4
-            expect(firestore.updateDoc).toHaveBeenCalledWith(
-                undefined, // doc() mock returns undefined in this setup
-                expect.objectContaining({
-                    currentStreak: 4,
-                    status: 'completed'
-                })
-            );
-        });
+    const body = encodeURIComponent(bodyMarkdown);
+    window.open(`${repoUrl}?title=${title}&body=${body}`, '_blank');
+  };
 
-        it('should decrement streak when unchecking (undo)', async () => {
-            const mockTask = {
-                id: 'task_4',
-                currentStreak: 5,
-                frequency: 'daily',
-            } as unknown as Task;
+  if (loading) return <div className="p-4 text-slate-400">Loading inbox...</div>;
 
-            await toggleTask(mockTask, false);
-            
-            // Verify updateDoc was called with streak = 4
-            expect(firestore.updateDoc).toHaveBeenCalledWith(
-                undefined,
-                expect.objectContaining({
-                    currentStreak: 4,
-                    status: 'pending'
-                })
-            );
-        });
-    });
-});
+  return (
+    <div className="space-y-4">
+      {reports.map(report => (
+        <div key={report.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              {report.category === 'bug' ? (
+                <AlertCircle className="w-5 h-5 text-rose-400" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+              )}
+              <span className="text-sm font-medium text-slate-200 uppercase tracking-wider">
+                {report.category || 'unknown'}
+              </span>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                report.status === 'new' ? 'bg-blue-500/20 text-blue-300' :
+                report.status === 'investigating' ? 'bg-amber-500/20 text-amber-300' :
+                'bg-emerald-500/20 text-emerald-300'
+              }`}>
+                {report.status || 'new'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'No date'}
+            </div>
+          </div>
+
+          <p className="text-slate-300 mb-4 whitespace-pre-wrap">{report.message || 'No content.'}</p>
+
+          <div className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-400 font-mono mb-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div>Route: <span className="text-slate-300">{report.route || 'N/A'}</span></div>
+              <div>Env: <span className="text-slate-300">{report.environment || 'N/A'}</span></div>
+              <div>Build: <span className="text-slate-300">{report.buildHash || 'N/A'}</span></div>
+              <div>Vault: <span className="text-slate-300">{report.vaultUnlocked ? 'Unlocked' : 'Locked'}</span></div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 border-t border-slate-700/50 pt-3">
+            <select
+              value={report.status || 'new'}
+              onChange={(e) => updateStatus(report.id, e.target.value as FeedbackReport['status'])}
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1 outline-none focus:border-cyan-500"
+            >
+              <option value="new">New</option>
+              <option value="investigating">Investigating</option>
+              <option value="resolved">Resolved</option>
+            </select>
+
+            <button 
+              onClick={() => sendToGitHub(report)}
+              className="ml-auto flex items-center gap-1 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors"
+            >
+              <Github className="w-3 h-3" />
+              Send to GitHub
+              <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
+            </button>
+          </div>
+        </div>
+      ))}
+      
+      {reports.length === 0 && (
+        <div className="text-center text-slate-500 py-8">
+          Inbox is empty. Everything is running smoothly!
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FeedbackViewer;
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
-    if dirname:
+    if dirname: 
         os.makedirs(dirname, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
-    print(f"✅ Cleaned: {path}")
+    print(f"✅ Updated: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Eliminating ESLint warnings in Test Suites...")
-    write_file("src/lib/__tests__/dateUtils.test.ts", test_date_utils)
-    write_file("src/lib/__tests__/gamification.test.ts", test_gamification)
-    write_file("src/lib/__tests__/insights.test.ts", test_insights)
-    write_file("src/lib/__tests__/tasks.test.ts", test_tasks)
-    print("✨ All tests are now fully type-safe and lint-compliant.")
+    write_file("src/components/admin/FeedbackViewer.tsx", feedback_viewer_code)
+    print("✨ Schema mismatch resolved. Messages and dates should now be visible!")

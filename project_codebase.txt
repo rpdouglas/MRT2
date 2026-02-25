@@ -1,810 +1,169 @@
-PROJECT EXPORT - 2026-02-24T03:44:26.472Z
-Mode: Targeted (src/lib/dateUtils.ts, src/lib/gamification.ts, src/lib/tasks.ts, src/lib/insights.ts)
+PROJECT EXPORT - 2026-02-25T02:38:53.310Z
+Mode: Targeted (src/components/FeedbackModal.tsx)
 
 ### FILE CONTENTS ###
 
-<file path="src/lib/dateUtils.ts">
-// src/lib/dateUtils.ts
+<file path="src/components/FeedbackModal.tsx">
+import { Fragment, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
-    addMonths, 
-    addYears, 
-    differenceInDays, 
-    differenceInMonths, 
-    differenceInYears,
-    startOfDay
-} from 'date-fns';
+    ChatBubbleLeftEllipsisIcon, 
+    XMarkIcon, 
+    BugAntIcon, 
+    LightBulbIcon, 
+    DocumentTextIcon,
+    PaperAirplaneIcon,
+    ExclamationCircleIcon
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
+import { useBuildInfo } from '../lib/versioning';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-export type RecurrenceType = 'once' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'monthly-relative';
-
-export interface RecurrenceConfig {
-  type: RecurrenceType;
-  interval?: number; // e.g. every 2 days
-  daysOfWeek?: number[]; // 0=Sun, 1=Mon, etc. (for weekly)
-  dayOfMonth?: number; // 1-31 (for monthly)
-  weekOfMonth?: number; // 1 (1st), 2 (2nd), ... 5 (Last) (for monthly-relative)
-  dayOfWeek?: number; // 0-6 (for monthly-relative)
+interface FeedbackModalProps {
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-export interface SobrietyDuration {
-    years: number;
-    months: number;
-    days: number;
-    totalDays: number;
-}
+type Category = 'bug' | 'suggestion' | 'content';
 
-/**
- * Calculates the breakdown of time since a sobriety date.
- * Returns accurate Years, Months, and remaining Days.
- */
-export function calculateSobrietyDuration(startDate: Date): SobrietyDuration {
-    const now = startOfDay(new Date());
-    const start = startOfDay(startDate);
-
-    // Prevent negative calculations if date is in future
-    if (start > now) {
-        return { years: 0, months: 0, days: 0, totalDays: 0 };
-    }
-
-    const totalDays = differenceInDays(now, start);
-    const years = differenceInYears(now, start);
+export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+    const { user } = useAuth();
+    const { isVaultUnlocked } = useEncryption();
+    const meta = useBuildInfo();
     
-    const dateAfterYears = addYears(start, years);
-    const months = differenceInMonths(now, dateAfterYears);
-    
-    const dateAfterMonths = addMonths(dateAfterYears, months);
-    const days = differenceInDays(now, dateAfterMonths);
-
-    return { years, months, days, totalDays };
-}
-
-/**
- * Calculates the next due date based on a reference date (usually today or the completed date)
- * and the recurrence configuration.
- */
-export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): Date | null {
-  if (config.type === 'once') return null;
-
-  const nextDate = new Date(baseDate);
-  nextDate.setHours(23, 59, 59, 999); // Normalize time
-
-  switch (config.type) {
-    case 'daily':
-      nextDate.setDate(nextDate.getDate() + (config.interval || 1));
-      break;
-
-    case 'weekly':
-      // Simple weekly: Add 7 days
-      nextDate.setDate(nextDate.getDate() + 7);
-      break;
-
-    case 'biweekly':
-      nextDate.setDate(nextDate.getDate() + 14);
-      break;
-
-    case 'monthly': {
-      // Add 1 month, try to keep same day
-      const currentDay = nextDate.getDate();
-      nextDate.setMonth(nextDate.getMonth() + 1);
-      
-      // Handle edge case (e.g. Jan 31 -> Feb 28/29)
-      if (nextDate.getDate() !== currentDay) {
-          // If date changed, it means we overflowed (e.g. Feb 28 became Mar 2)
-          // Set to 0 (last day of previous month)
-          nextDate.setDate(0); 
-      }
-      break;
-    }
-
-    case 'monthly-relative':
-      // e.g. "Last Thursday of the month"
-      if (config.weekOfMonth !== undefined && config.dayOfWeek !== undefined) {
-          nextDate.setMonth(nextDate.getMonth() + 1);
-          nextDate.setDate(1); // Start at 1st of next month
-
-          const targetDay = config.dayOfWeek; // 0-6
-          const targetWeek = config.weekOfMonth; // 1-5 (5 = Last)
-
-          if (targetWeek === 5) {
-              // Logic for "Last X of month"
-              nextDate.setMonth(nextDate.getMonth() + 1);
-              nextDate.setDate(0); // Last day of target month
-              
-              const lastDayOfWeek = nextDate.getDay();
-              const diff = lastDayOfWeek - targetDay;
-              const subtractDays = diff >= 0 ? diff : diff + 7;
-              nextDate.setDate(nextDate.getDate() - subtractDays);
-          } else {
-              // Logic for "Nth X of month"
-              const currentDow = nextDate.getDay();
-              const daysToAdd = (targetDay - currentDow + 7) % 7;
-              nextDate.setDate(nextDate.getDate() + daysToAdd);
-              
-              // Add weeks
-              nextDate.setDate(nextDate.getDate() + (targetWeek - 1) * 7);
-          }
-      }
-      break;
-  }
-
-  return nextDate;
-}
-
-/**
- * Returns a human-readable string for the recurrence rule.
- */
-export function getRecurrenceLabel(config: RecurrenceConfig): string {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const ordinals = ['','1st','2nd','3rd','4th','Last'];
-
-    switch(config.type) {
-        case 'once': return 'One-time';
-        case 'daily': return 'Daily';
-        case 'weekly': return 'Weekly';
-        case 'biweekly': return 'Bi-Weekly';
-        case 'monthly': return 'Monthly';
-        case 'monthly-relative': 
-            if(config.weekOfMonth && config.dayOfWeek !== undefined) {
-                return `${ordinals[config.weekOfMonth]} ${days[config.dayOfWeek]} of Month`;
-            }
-            return 'Custom Monthly';
-        default: return 'Recurring';
-    }
-}
-
-
-</file>
-
-<file path="src/lib/gamification.ts">
-// src/lib/gamification.ts
-import { Timestamp } from 'firebase/firestore';
-
-// --- CONFIGURATION ---
-const XP_VALUES = {
-    JOURNAL_ENTRY: 25,
-    JOURNAL_LONG_ENTRY: 10, // Bonus for depth
-    TASK_LOW: 10,
-    TASK_MEDIUM: 25,
-    TASK_HIGH: 50,
-    WORKBOOK_QUESTION: 15,
-    VITALITY_LOG: 15,
-    CLEAN_DAY_MILESTONE: 500 // XP per 30 days
-};
-
-// --- INTERFACES ---
-
-export interface GamificationStats {
-  streakDays: number;
-  totalEntries: number;
-  averageMood: number;
-  journalStreak: number;
-  consistencyRate: number; // entries per week
-  totalWords: number;
-}
-
-export interface TaskStats {
-    completionRate: number;
-    habitFire: number; // Sum of all active streaks
-}
-
-export interface WorkbookStats {
-    wisdomScore: number; // Total questions answered
-    masterCompletion: number; // % of total questions
-}
-
-export interface VitalityStats {
-    bioStreak: number;
-    totalLogs: number;
-}
-
-export interface LevelData {
-    level: number;
-    title: string;
-    currentXP: number;
-    nextLevelXP: number;
-    progressPercent: number;
-}
-
-export interface UserStats {
-    totalXP: number;
-    levelData: LevelData;
-    archetype: string; // 'Scholar', 'Warrior', 'Monk', 'Philosopher', 'Balanced'
-}
-
-// Minimal interfaces for input data to avoid 'any'
-interface ScorableJournal {
-    tags?: string[];
-    content?: string;
-    moodScore?: number;
-    createdAt: { toDate: () => Date } | Date | Timestamp; 
-}
-
-interface ScorableTask {
-    status?: string;
-    priority?: 'High' | 'Medium' | 'Low';
-    completed?: boolean;
-    currentStreak?: number;
-}
-
-// --- HELPER FUNCTIONS ---
-
-// Helper to check if two dates are the same day
-const isSameDay = (d1: Date, d2: Date) => {
-  return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
-};
-
-const getTitle = (level: number): string => {
-    if (level >= 50) return "Elder / Sponsor";
-    if (level >= 40) return "Guide";
-    if (level >= 30) return "Architect";
-    if (level >= 20) return "Warrior";
-    if (level >= 10) return "Initiate";
-    return "Seeker";
-};
-
-// Standard RPG Curve: Level = Floor(Constant * Sqrt(XP))
-const calculateLevel = (xp: number): LevelData => {
-    const CONSTANT = 0.07; // 0.07 makes Lvl 10 approx 20k XP
-    // Level calculation (min level 1)
-    const level = Math.max(1, Math.floor(CONSTANT * Math.sqrt(xp)) + 1);
-    
-    // XP required for current and next levels
-    // Inverse formula: XP = (Level / CONSTANT)^2
-    const currentLevelBaseXP = Math.pow((level - 1) / CONSTANT, 2);
-    const nextLevelBaseXP = Math.pow(level / CONSTANT, 2);
-    
-    const neededForNext = nextLevelBaseXP - currentLevelBaseXP;
-    const progressInLevel = xp - currentLevelBaseXP;
-
-    // Safety check for divide by zero (shouldn't happen with level >= 1)
-    const progressPercent = neededForNext > 0 
-        ? Math.min(100, Math.round((progressInLevel / neededForNext) * 100))
-        : 0;
-
-    return {
-        level,
-        title: getTitle(level),
-        currentXP: xp,
-        nextLevelXP: Math.floor(nextLevelBaseXP),
-        progressPercent
-    };
-};
-
-// --- CORE CALCULATORS ---
-
-/**
- * Calculates the holistic User Level and Archetype based on all recovery data.
- */
-export const calculateUserLevel = (
-    journals: ScorableJournal[], 
-    tasks: ScorableTask[], 
-    workbookAnswersCount: number,
-    cleanDays: number
-): UserStats => {
-    let xp = 0;
-    const xpBreakdown = { wisdom: 0, action: 0, vitality: 0, reflection: 0 };
-
-    // 1. Calculate Journal XP
-    journals.forEach(j => {
-        let entryXP = XP_VALUES.JOURNAL_ENTRY;
-        
-        // Vitality Check (Different Bucket)
-        if (j.tags && j.tags.includes('Vitality')) {
-            // Vitality logs count towards vitality, not reflection
-            xpBreakdown.vitality += XP_VALUES.VITALITY_LOG;
-            xp += XP_VALUES.VITALITY_LOG;
-            return; 
-        }
-
-        // Depth Bonus
-        if (j.content && j.content.trim().split(/\s+/).length > 50) {
-            entryXP += XP_VALUES.JOURNAL_LONG_ENTRY;
-        }
-        
-        xpBreakdown.reflection += entryXP;
-        xp += entryXP;
-    });
-
-    // 2. Calculate Task XP
-    tasks.forEach(t => {
-        if (t.status === 'completed' || t.completed) {
-            let taskXP = 0;
-            switch(t.priority) {
-                case 'High': taskXP = XP_VALUES.TASK_HIGH; break;
-                case 'Medium': taskXP = XP_VALUES.TASK_MEDIUM; break;
-                default: taskXP = XP_VALUES.TASK_LOW;
-            }
-            xp += taskXP;
-            xpBreakdown.action += taskXP;
-        }
-    });
-
-    // 3. Calculate Workbook XP
-    const wbXP = workbookAnswersCount * XP_VALUES.WORKBOOK_QUESTION;
-    xp += wbXP;
-    xpBreakdown.wisdom += wbXP;
-
-    // 4. Clean Time Bonuses (Every 30 days)
-    const milestones = Math.floor(cleanDays / 30);
-    xp += (milestones * XP_VALUES.CLEAN_DAY_MILESTONE);
-
-    // 5. Determine Archetype
-    const maxVal = Math.max(xpBreakdown.wisdom, xpBreakdown.action, xpBreakdown.vitality, xpBreakdown.reflection);
-    let archetype = "Balanced";
-    
-    // Simple logic: if one category clearly dominates
-    if (maxVal > 0) {
-        if (maxVal === xpBreakdown.wisdom) archetype = "Scholar";
-        else if (maxVal === xpBreakdown.action) archetype = "Doer";
-        else if (maxVal === xpBreakdown.vitality) archetype = "Monk";
-        else if (maxVal === xpBreakdown.reflection) archetype = "Philosopher";
-    }
-
-    return {
-        totalXP: Math.floor(xp),
-        levelData: calculateLevel(xp),
-        archetype
-    };
-};
-
-export const calculateJournalStats = (journals: ScorableJournal[]): GamificationStats => {
-    if (!journals || journals.length === 0) {
-        return { 
-            streakDays: 0, 
-            totalEntries: 0, 
-            averageMood: 0, 
-            journalStreak: 0, 
-            consistencyRate: 0, 
-            totalWords: 0 
-        };
-    }
-
-    // Sort descending (newest first)
-    // Safely handle Firestore Timestamps vs Date objects
-    const sorted = [...journals].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
-        return dateB.getTime() - dateA.getTime();
-    });
-    
-    const today = new Date();
-    
-    // 1. Total Entries
-    const totalEntries = journals.length;
-
-    // 2. Average Mood
-    const moodSum = journals.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
-    const averageMood = totalEntries > 0 ? parseFloat((moodSum / totalEntries).toFixed(1)) : 0;
-
-    // 3. Journal Streak
-    let currentStreak = 0;
-    
-    // Check if posted today
-    const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
-    
-    const postedToday = isSameDay(lastPostDate, today);
-    // If not posted today, check if posted yesterday to maintain streak
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const postedYesterday = isSameDay(lastPostDate, yesterday);
-
-    if (postedToday || postedYesterday) {
-        currentStreak = 1;
-        // Iterate backwards to count consecutive days
-        const uniqueDays = new Set<string>();
-        journals.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
-            uniqueDays.add(d.toDateString());
-        });
-        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-        
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-            const current = sortedDates[i];
-            const next = sortedDates[i+1];
-            
-            // Difference in days
-            const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) {
-                currentStreak++;
-            } else {
-                break;
-            }
-        }
-    }
-
-    // 4. Consistency (Entries / Week)
-    const oldestEntry = sorted[sorted.length - 1];
-    const firstDate = oldestEntry.createdAt instanceof Date ? oldestEntry.createdAt : (oldestEntry.createdAt as Timestamp).toDate();
-    const timeSpanDays = Math.max(1, (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24));
-    const weeksActive = Math.ceil(timeSpanDays / 7);
-    const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
-
-    // 5. Total Words
-    const totalWords = journals.reduce((acc, curr) => {
-        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0;
-        return acc + words;
-    }, 0);
-
-    return {
-        streakDays: currentStreak,
-        totalEntries,
-        averageMood,
-        journalStreak: currentStreak,
-        consistencyRate,
-        totalWords
-    };
-};
-
-export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
-    if (!tasks || tasks.length === 0) {
-        return { completionRate: 0, habitFire: 0 };
-    }
-
-    const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
-    const completionRate = Math.round((completed / tasks.length) * 100);
-
-    // FIX: CHANGED FROM 'MAX STREAK' TO 'SUM OF STREAKS'
-    // This ensures new habits immediately contribute to the score.
-    let totalMomentum = 0;
-    tasks.forEach(t => {
-        if (t.currentStreak && t.currentStreak > 0) {
-            totalMomentum += t.currentStreak;
-        }
-    });
-
-    return { completionRate, habitFire: totalMomentum };
-};
-
-export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
-    return {
-        wisdomScore: answersSnapshotSize,
-        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
-    };
-};
-
-export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {
-    if (!journals) return { bioStreak: 0, totalLogs: 0 };
-
-    // Filter for entries tagged 'Vitality'
-    const vitalityLogs = journals.filter(j => j.tags && j.tags.includes('Vitality'));
-    
-    if (vitalityLogs.length === 0) return { bioStreak: 0, totalLogs: 0 };
-
-    // 1. Total Logs
-    const totalLogs = vitalityLogs.length;
-
-    // 2. Bio Streak (Same logic as Journal Streak)
-    const sorted = [...vitalityLogs].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
-        return dateB.getTime() - dateA.getTime();
-    });
-    const today = new Date();
-    
-    let currentStreak = 0;
-    const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
-    
-    const postedToday = isSameDay(lastPostDate, today);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const postedYesterday = isSameDay(lastPostDate, yesterday);
-
-    if (postedToday || postedYesterday) {
-        currentStreak = 1;
-        const uniqueDays = new Set<string>();
-        vitalityLogs.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
-            uniqueDays.add(d.toDateString());
-        });
-        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-        
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-            const current = sortedDates[i];
-            const next = sortedDates[i+1];
-            const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) currentStreak++;
-            else break;
-        }
-    }
-
-    return { bioStreak: currentStreak, totalLogs };
-};
-
-</file>
-
-<file path="src/lib/tasks.ts">
-/**
- * src/lib/tasks.ts
- * UPDATED: Fixed Type safety for Date/Timestamp mix.
- */
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  Timestamp 
-} from "firebase/firestore";
-import { db } from "./firebase";
-import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
-import type { Task as TaskInterface } from "./db";
-
-// Re-export the interface for convenience
-export type Task = TaskInterface;
-export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
-export type Priority = 'High' | 'Medium' | 'Low';
-
-const COLLECTION = 'tasks';
-
-// Helper: Ensure we always have a Date object
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const toDate = (val: any): Date | undefined => {
-  if (!val) return undefined;
-  if (val instanceof Timestamp) return val.toDate();
-  if (val instanceof Date) return val;
-  return new Date(val); // Last resort for strings
-}
-
-// 1. CREATE
-export async function addTask(
-  uid: string, 
-  title: string, 
-  frequency: Frequency, 
-  priority: Priority, 
-  startDate: Date,
-  source: 'manual' | 'ai' = 'manual'
-) {
-  if (!db) throw new Error("Database not initialized");
-  
-  const isRecurring = frequency !== 'once';
-  const due = startOfDay(startDate);
-
-  await addDoc(collection(db, COLLECTION), {
-    uid,
-    title,
-    isRecurring,
-    frequency,
-    priority,
-    currentStreak: 0,
-    lastCompletedAt: null,
-    dueDate: Timestamp.fromDate(due),
-    createdAt: Timestamp.now(),
-    source
-  });
-}
-
-// 2. READ & LAZY EVALUATE STREAKS
-export async function getUserTasks(uid: string) {
-  if (!db) throw new Error("Database not initialized");
-
-  const q = query(
-    collection(db, COLLECTION),
-    where("uid", "==", uid)
-  );
-
-  const snapshot = await getDocs(q);
-  const tasks: Task[] = [];
-  const today = startOfDay(new Date());
-
-  for (const docSnap of snapshot.docs) {
-    const data = docSnap.data();
-    
-    // Explicitly construct with conversions to avoid TS errors
-    const task: Task = { 
-      id: docSnap.id, 
-      uid: data.uid,
-      title: data.title,
-      completed: data.completed || false, // Default if missing
-      status: data.status || 'pending',
-      isRecurring: data.isRecurring || false,
-      frequency: data.frequency || 'once',
-      currentStreak: data.currentStreak || 0,
-      priority: data.priority || 'Medium',
-      dueDate: toDate(data.dueDate),
-      lastCompletedAt: toDate(data.lastCompletedAt) || null,
-      createdAt: toDate(data.createdAt) || new Date(),
-      source: data.source || 'manual'
-    };
-
-    // --- LAZY EVALUATION LOGIC ---
-    // Fix: Explicitly cast to Date because we normalized it above with toDate()
-    if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
-        
-        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt as Date, today);
-        
-        if (!completedToday) {
-            let newStreak = task.currentStreak;
-            
-            // Punishment Logic
-            if (newStreak > 0) {
-                newStreak = 0; // Break positive streak
-            } else {
-                newStreak -= 1; // Deepen negative streak
-            }
-
-            // Reset due date to Today so they can get back on track (Smart Reset)
-            const taskRef = doc(db, COLLECTION, task.id!);
-            await updateDoc(taskRef, {
-                currentStreak: newStreak,
-                dueDate: Timestamp.fromDate(today)
+    const [category, setCategory] = useState<Category>('bug');
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!db || !user || !message.trim()) return;
+
+        setIsSubmitting(true);
+        try {
+            await addDoc(collection(db, 'feedback'), {
+                uid: user.uid,
+                email: user.email, // Unencrypted for admin contact
+                category,
+                message: message.trim(),
+                buildHash: meta.globalHash,
+                environment: meta.env,
+                route: window.location.pathname,
+                vaultUnlocked: isVaultUnlocked,
+                userAgent: navigator.userAgent,
+                timestamp: serverTimestamp()
             });
-
-            task.currentStreak = newStreak;
-            task.dueDate = today; 
+            
+            setIsSuccess(true);
+            setTimeout(() => {
+                setIsSuccess(false);
+                setMessage('');
+                onClose();
+            }, 2000);
+        } catch (error) {
+            console.error("Feedback submission failed:", error);
+            alert("Failed to send feedback. It will sync when you are back online.");
+        } finally {
+            setIsSubmitting(false);
         }
-    }
+    };
 
-    tasks.push(task);
-  }
+    return (
+        <Transition.Root show={isOpen} as={Fragment}>
+            <Dialog as="div" className="relative z-50" onClose={onClose}>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-slate-50 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                            
+                            <div className="absolute right-0 top-0 pr-4 pt-4">
+                                <button onClick={onClose} className="rounded-md text-slate-400 hover:text-slate-500">
+                                    <XMarkIcon className="h-6 w-6" />
+                                </button>
+                            </div>
 
-  return tasks;
-}
+                            {isSuccess ? (
+                                <div className="py-12 text-center animate-fadeIn">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                                        <PaperAirplaneIcon className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <h3 className="mt-4 text-lg font-bold text-slate-900">Feedback Received</h3>
+                                    <p className="text-sm text-slate-500">Thank you for helping us improve the toolkit.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="sm:flex sm:items-start">
+                                        <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                            <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-600" />
+                                        </div>
+                                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                            <Dialog.Title as="h3" className="text-base font-bold leading-6 text-slate-900">
+                                                Submit Feedback
+                                            </Dialog.Title>
+                                            <p className="text-xs text-slate-500 mt-1 uppercase font-mono tracking-tighter">
+                                                Build: {meta.globalHash} • Env: {meta.env}
+                                            </p>
+                                        </div>
+                                    </div>
 
-// 3. TOGGLE COMPLETION
-export async function toggleTask(task: Task, isCompleted: boolean) {
-  if (!db || !task.id) throw new Error("Database not initialized or Task ID missing");
-  const taskRef = doc(db, COLLECTION, task.id);
-  const today = startOfDay(new Date());
+                                    <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'bug', icon: BugAntIcon, label: 'Bug' },
+                                                { id: 'suggestion', icon: LightBulbIcon, label: 'Idea' },
+                                                { id: 'content', icon: DocumentTextIcon, label: 'Text' }
+                                            ].map((cat) => (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setCategory(cat.id as Category)}
+                                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                                                        category === cat.id 
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                                                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                    }`}
+                                                >
+                                                    <cat.icon className="h-5 w-5 mb-1" />
+                                                    <span className="text-[10px] font-bold uppercase">{cat.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
 
-  if (isCompleted) {
-    // MARKING DONE
-    let newStreak = task.currentStreak;
-    if (newStreak < 0) {
-        newStreak = 1; // Bounce back from negative
-    } else {
-        newStreak += 1;
-    }
+                                        <textarea
+                                            rows={5}
+                                            required
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            placeholder="What happened? Or what can we do better?"
+                                            className="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-blue-500 focus:border-blue-500 p-4"
+                                        />
 
-    const currentDue = toDate(task.dueDate) || today;
-    let nextDue = currentDue;
+                                        <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 flex gap-2">
+                                            <ExclamationCircleIcon className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-amber-800 leading-tight">
+                                                <strong>Privacy Note:</strong> This box is unencrypted. Do not include sensitive journal entries or your PIN.
+                                            </p>
+                                        </div>
 
-    if (task.frequency === 'daily') nextDue = addDays(today, 1);
-    else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
-    else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
-    
-    await updateDoc(taskRef, {
-        currentStreak: newStreak,
-        lastCompletedAt: Timestamp.fromDate(new Date()),
-        status: 'completed',
-        // Only update due date if recurring
-        ...(task.isRecurring && { dueDate: Timestamp.fromDate(nextDue) })
-    });
-
-  } else {
-    // UNCHECKING (Undo)
-    const newStreak = task.currentStreak > 0 ? task.currentStreak - 1 : task.currentStreak;
-    
-    await updateDoc(taskRef, {
-        currentStreak: newStreak,
-        lastCompletedAt: null,
-        status: 'pending',
-        dueDate: Timestamp.fromDate(today)
-    });
-  }
-}
-
-// 4. DELETE
-export async function deleteTask(id: string) {
-  if (!db) throw new Error("Database not initialized");
-  await deleteDoc(doc(db, COLLECTION, id));
-}
-
-// 5. UPDATE (Generic)
-export async function updateTask(id: string, updates: Partial<Task>) {
-  if (!db) throw new Error("Database not initialized");
-  await updateDoc(doc(db, COLLECTION, id), updates);
-}
-
-// 6. GET COMPLETED TODAY
-export async function getCompletedTasksForToday(uid: string) {
-    if (!db) throw new Error("Database not initialized");
-    const today = startOfDay(new Date());
-    const allTasks = await getUserTasks(uid);
-    
-    // Safety check with toDate helper
-    return allTasks.filter(t => {
-        const d = toDate(t.lastCompletedAt);
-        return d && isSameDay(d, today);
-    });
-}
-
-</file>
-
-<file path="src/lib/insights.ts">
-/**
- * src/lib/insights.ts
- * GITHUB COMMENT:
- * [insights.ts]
- * UPDATED: Added 'strengths' field to InsightPayload to support Weekly/Monthly wins.
- */
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  Timestamp 
-} from "firebase/firestore";
-import { db } from "./firebase";
-import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
-
-const COLLECTION = 'insights';
-
-// --- DEFINITIONS ---
-
-export type InsightType = 'journal' | 'workbook';
-
-// Combined type for what we save to Firestore
-export type InsightPayload = 
-  | ({ type: 'journal'; strengths?: string[] } & AnalysisResult)
-  | ({ type: 'workbook' } & WorkbookAnalysisResult);
-
-// The hydrated object returned to the UI
-export type SavedInsight = InsightPayload & {
-  id: string;
-  uid: string;
-  createdAt: Date;
-};
-
-/**
- * Saves a new AI Insight to Firestore.
- */
-export async function saveInsight(uid: string, payload: InsightPayload) {
-  if (!db) throw new Error("Database not initialized");
-
-  await addDoc(collection(db, COLLECTION), {
-    uid,
-    createdAt: Timestamp.now(),
-    ...payload
-  });
-}
-
-/**
- * Fetches the history of AI Insights for a user.
- */
-export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
-  if (!db) throw new Error("Database not initialized");
-
-  try {
-    const q = query(
-      collection(db, COLLECTION),
-      where("uid", "==", uid),
-      orderBy("createdAt", "desc")
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting || !message.trim()}
+                                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {isSubmitting ? 'Sending...' : 'Send to Developers'}
+                                        </button>
+                                    </form>
+                                </>
+                            )}
+                        </Dialog.Panel>
+                    </div>
+                </div>
+            </Dialog>
+        </Transition.Root>
     );
-
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      const type = data.type || 'journal';
-
-      return {
-        ...data, 
-        id: doc.id,
-        uid: data.uid,
-        type,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-      } as SavedInsight;
-    });
-
-  } catch (e: unknown) {
-    console.error("Error fetching insights:", e);
-    const err = e as { message?: string };
-    if (err.message && err.message.includes("index")) {
-        console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
-    }
-    return [];
-  }
 }
+
 </file>
