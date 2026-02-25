@@ -3,6 +3,7 @@
 **Objective:** [1 sentence goal]
 **Status:** ⚪ Planned
 **Personas Involved:** [David, Ned, Lisa, Walt]
+**Monetization Impact:** [Free Tier | Premium Only | Mixed]
 
 ## 🏗️ Phase 1: Schema & Security
 * [ ] Does this require new Firestore collections?
