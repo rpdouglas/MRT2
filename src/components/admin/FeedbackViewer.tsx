@@ -1,161 +1,167 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { 
-    collection, 
-    query, 
-    orderBy, 
-    limit, 
-    getDocs, 
-    deleteDoc, 
-    doc,
-    Timestamp,
-    type Firestore 
-} from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Virtuoso } from 'react-virtuoso';
-import { 
-    BugAntIcon, 
-    LightBulbIcon, 
-    DocumentTextIcon, 
-    MapPinIcon,
-    CpuChipIcon,
-    LockClosedIcon,
-    LockOpenIcon,
-    ChatBubbleLeftRightIcon, 
-    ArrowPathIcon, 
-    CheckCircleIcon 
-} from '@heroicons/react/24/outline';
+import { AlertCircle, CheckCircle, Clock, ExternalLink, Github } from 'lucide-react';
 
 interface FeedbackReport {
-    id: string;
-    uid: string;
-    email?: string;
-    category: 'bug' | 'suggestion' | 'content';
-    message: string;
-    buildHash: string;
-    environment: string;
-    route: string;
-    vaultUnlocked: boolean;
-    timestamp: Timestamp;
+  id: string;
+  category: 'bug' | 'suggestion' | 'content';
+  message: string; // <-- FIXED: Was 'content'
+  status: 'new' | 'investigating' | 'resolved';
+  buildHash: string;
+  environment: string;
+  vaultUnlocked: boolean;
+  route: string;
+  userAgent: string;
+  timestamp?: Timestamp; // <-- FIXED: Was 'createdAt'
 }
 
-export default function FeedbackViewer() {
-    const queryClient = useQueryClient();
-    const [loadingId, setLoadingId] = useState<string | null>(null);
+const FeedbackViewer: React.FC = () => {
+  const [reports, setReports] = useState<FeedbackReport[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const { data: reports = [], isLoading } = useQuery({
-        queryKey: ['feedback_reports'],
-        queryFn: async () => {
-            if (!db) return [];
-            const database: Firestore = db;
-            const q = query(
-                collection(database, 'feedback'),
-                orderBy('timestamp', 'desc'),
-                limit(100)
-            );
-            const snap = await getDocs(q);
-            return snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackReport));
-        }
-    });
-
-    const handleDelete = async (id: string) => {
-        if (!db) return;
-        if (!confirm("Mark this item as resolved (delete)?")) return;
-        
-        setLoadingId(id);
-        try {
-            await deleteDoc(doc(db, 'feedback', id));
-            queryClient.invalidateQueries({ queryKey: ['feedback_reports'] });
-        } catch (e) {
-            console.error("Failed to delete", e);
-        } finally {
-            setLoadingId(null);
-        }
-    };
-
-    const getIcon = (cat: string) => {
-        switch(cat) {
-            case 'bug': return <BugAntIcon className="h-5 w-5 text-red-500" />;
-            case 'suggestion': return <LightBulbIcon className="h-5 w-5 text-yellow-500" />;
-            default: return <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
-        }
-    };
-
-    if (isLoading) return <div className="p-8 text-center text-gray-400">Loading inbox...</div>;
-
-    if (reports.length === 0) {
-        return (
-            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center">
-                <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                    <ChatBubbleLeftRightIcon className="h-6 w-6 text-slate-400" />
-                </div>
-                <h3 className="text-slate-900 font-bold">Inbox Zero</h3>
-                <p className="text-slate-500 text-sm">No feedback reports found.</p>
-            </div>
-        );
+  useEffect(() => {
+    if (!db) {
+        setTimeout(() => setLoading(false), 0);
+        return;
     }
 
-    return (
-        <div className="space-y-4 h-[600px] flex flex-col">
-            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 shrink-0">
-                <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />
-                Feedback Inbox ({reports.length})
-            </h3>
+    const q = query(collection(db, 'feedback'));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const data = snapshot.docs.map(d => {
+            const raw = d.data();
+            return {
+                id: d.id,
+                ...raw,
+                // Fallbacks just in case old data exists
+                message: raw.message || raw.content || '',
+                timestamp: raw.timestamp || raw.createdAt || null
+            } as FeedbackReport;
+        });
+        
+        // Sort safely in JavaScript
+        data.sort((a, b) => {
+            const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+            const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+            return timeB - timeA;
+        });
 
-            <div className="flex-1 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                <Virtuoso 
-                    data={reports}
-                    itemContent={(_index, item) => (
-                        <div className="bg-white p-5 border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg bg-slate-50 border border-slate-100`}>
-                                        {getIcon(item.category)}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                                {item.timestamp?.toDate().toLocaleString()}
-                                            </span>
-                                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">
-                                                {item.email || 'Anonymous'}
-                                            </span>
-                                        </div>
-                                        <h4 className="font-bold text-slate-900 mt-0.5 text-sm uppercase tracking-wide">{item.category}</h4>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => handleDelete(item.id)}
-                                    disabled={loadingId === item.id}
-                                    className="text-slate-300 hover:text-green-600 p-2 hover:bg-green-50 rounded-full transition-all"
-                                    title="Resolve"
-                                >
-                                    {loadingId === item.id ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <CheckCircleIcon className="h-5 w-5" />}
-                                </button>
-                            </div>
-                            
-                            <p className="text-sm text-slate-700 leading-relaxed mb-4 pl-12 whitespace-pre-wrap">
-                                {item.message}
-                            </p>
-
-                            <div className="pl-12 flex flex-wrap gap-3">
-                                <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                                    <CpuChipIcon className="h-3.5 w-3.5" />
-                                    <span className="font-mono">{item.buildHash}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                                    <MapPinIcon className="h-3.5 w-3.5" />
-                                    <span className="font-mono">{item.route}</span>
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded border ${item.vaultUnlocked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
-                                    {item.vaultUnlocked ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockClosedIcon className="h-3.5 w-3.5" />}
-                                    <span className="font-mono">{item.vaultUnlocked ? 'Vault Open' : 'Vault Locked'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                />
-            </div>
-        </div>
+        setReports(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to feedback:", error);
+        setLoading(false);
+      }
     );
-}
+
+    return () => unsubscribe();
+  }, []);
+
+  const updateStatus = async (id: string, newStatus: FeedbackReport['status']) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, 'feedback', id), { status: newStatus });
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
+
+  const sendToGitHub = (report: FeedbackReport) => {
+    const repoUrl = "https://github.com/rpdouglas/MRT2/issues/new";
+    const title = encodeURIComponent(`[${report.category?.toUpperCase() || 'BUG'}] Issue reported on ${report.route || 'unknown'}`);
+    
+    const bodyMarkdown = `
+### User Report
+${report.message || 'No content provided.'}
+
+---
+### Technical Context
+* **Route:** \`${report.route || 'N/A'}\`
+* **Environment:** \`${report.environment || 'N/A'}\`
+* **Build Hash:** \`${report.buildHash || 'N/A'}\`
+* **Vault Unlocked:** \`${report.vaultUnlocked}\`
+* **Device/Browser:** \`${report.userAgent || 'N/A'}\`
+* **Firestore ID:** \`${report.id}\`
+    `.trim();
+
+    const body = encodeURIComponent(bodyMarkdown);
+    window.open(`${repoUrl}?title=${title}&body=${body}`, '_blank');
+  };
+
+  if (loading) return <div className="p-4 text-slate-400">Loading inbox...</div>;
+
+  return (
+    <div className="space-y-4">
+      {reports.map(report => (
+        <div key={report.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              {report.category === 'bug' ? (
+                <AlertCircle className="w-5 h-5 text-rose-400" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+              )}
+              <span className="text-sm font-medium text-slate-200 uppercase tracking-wider">
+                {report.category || 'unknown'}
+              </span>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                report.status === 'new' ? 'bg-blue-500/20 text-blue-300' :
+                report.status === 'investigating' ? 'bg-amber-500/20 text-amber-300' :
+                'bg-emerald-500/20 text-emerald-300'
+              }`}>
+                {report.status || 'new'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-500 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'No date'}
+            </div>
+          </div>
+
+          <p className="text-slate-300 mb-4 whitespace-pre-wrap">{report.message || 'No content.'}</p>
+
+          <div className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-400 font-mono mb-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div>Route: <span className="text-slate-300">{report.route || 'N/A'}</span></div>
+              <div>Env: <span className="text-slate-300">{report.environment || 'N/A'}</span></div>
+              <div>Build: <span className="text-slate-300">{report.buildHash || 'N/A'}</span></div>
+              <div>Vault: <span className="text-slate-300">{report.vaultUnlocked ? 'Unlocked' : 'Locked'}</span></div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 border-t border-slate-700/50 pt-3">
+            <select
+              value={report.status || 'new'}
+              onChange={(e) => updateStatus(report.id, e.target.value as FeedbackReport['status'])}
+              className="bg-slate-900 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1 outline-none focus:border-cyan-500"
+            >
+              <option value="new">New</option>
+              <option value="investigating">Investigating</option>
+              <option value="resolved">Resolved</option>
+            </select>
+
+            <button 
+              onClick={() => sendToGitHub(report)}
+              className="ml-auto flex items-center gap-1 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors"
+            >
+              <Github className="w-3 h-3" />
+              Send to GitHub
+              <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
+            </button>
+          </div>
+        </div>
+      ))}
+      
+      {reports.length === 0 && (
+        <div className="text-center text-slate-500 py-8">
+          Inbox is empty. Everything is running smoothly!
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FeedbackViewer;

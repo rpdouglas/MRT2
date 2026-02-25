@@ -3,6 +3,7 @@
 **Status:** [Draft | In Progress | Live]
 **Version:** 1.0
 **Owner:** [Your Name]
+**Access Level:** [Free | Premium]
 
 ## 1. The "Why" (User Story)
 * **As a:** [Persona, e.g., David]
@@ -17,16 +18,16 @@
 * **Error States:**
     * Offline: [Behavior]
     * Decryption Failure: [Behavior]
+* **Paywall State:** [Behavior if Free user clicks a Premium feature]
 
 ## 3. Technical Architecture
 * **Data Model:** (Link to Firestore Schema)
-* **Security:** (Encryption requirements, e.g., "Client-side AES-GCM")
+* **Security:** (Encryption requirements)
 * **Dependencies:** (e.g., Gemini API, Chart.js)
 
 ## 4. Edge Cases & Constraints
 * [ ] What happens if the user has no network?
 * [ ] What happens if the vault is locked?
-* [ ] Limit: Max 5000 chars per entry?
 
 ## 5. Verification (QA)
 * [ ] Unit Test: `src/features/X/__tests__/X.test.ts`
