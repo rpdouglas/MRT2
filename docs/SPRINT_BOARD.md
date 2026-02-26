@@ -1,13 +1,18 @@
 # 🏃 Active Sprint Board
-**Sprint:** 4.5.2 "The Bug Bash"
-**Start Date:** 2026-02-23
-**Goal:** Triage and resolve all outstanding UI/UX bugs across the application.
+**Sprint:** 4.5.2 "Documentation-Driven QA"
+**Start Date:** 2026-02-25
+**Goal:** Execute the QA loop on Sector 1 (The Gates) and draft its comprehensive User Guide.
 
 ## 📌 To Do (Project 04.5 - Sprint 2)
-- [ ] List bugs here or transition them to GitHub Issues and link them.
+- [ ] **Attack:** Test Login, Signup, PIN Creation, and PWA Install prompts on Desktop and Mobile.
+- [ ] **Triage:** Log any UI/UX friction to GitHub via the Admin Inbox Magic Link.
+- [ ] **Fix:** Resolve GitHub issues for Sector 1.
+- [ ] **Document:** Draft `docs-site/01-getting-started.md`.
 
 ## 🚧 In Progress
-- [ ] Gathering bug reports.
+- [ ] Initializing Sector 1 Testing.
 
 ## ✅ Done (Previous Sprint)
-- [x] **Unit Testing:** Achieved 100% logic test coverage in Vitest for Dates, Tasks, Gamification, and AI Recovery.
+- [x] **Admin Inbox:** Upgraded `FeedbackViewer` to real-time `onSnapshot`.
+- [x] **Triage Tool:** Added "Send to GitHub" magic link to Admin UI.
+- [x] **Unit Testing:** Achieved 100% logic test coverage.
