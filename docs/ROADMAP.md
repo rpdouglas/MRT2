@@ -25,3 +25,4 @@
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-06` | **The Freemium Engine** | Admin | Stripe Links, Tier Locks, Paywalls |
 | ⚪ Planned | `PROJ-07` | **The Launch** | Admin | TWA Android Wrapper & Play Store |
+| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools |

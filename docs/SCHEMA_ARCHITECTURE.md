@@ -34,6 +34,7 @@ graph TD
     * `tier` (String): 'free' | 'premium'. Controls feature access.
     * `stripeCustomerId` (String): Reference for subscription management (Optional).
     * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
+    * `hasCompletedOnboarding` (Boolean): Determines if user needs forced routing to Profile setup.
     * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
     * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
 
@@ -51,21 +52,43 @@ graph TD
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans.
 * **Encryption:** Unencrypted to allow background stats and streak evaluations.
-* **Fields:** ... (Title, Category, Source, Priority, Status, Streak, Recurrence, DueDate)
+* **Fields:**
+    * `title` (String): Task name.
+    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
+    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
+    * `priority` (String): 'High' | 'Medium' | 'Low'.
+    * `status` (String): 'pending' | 'completed'.
+    * `currentStreak` (Int): Consecutive completions.
+    * `recurrence` (Map): Logic for repetition.
+    * `dueDate` & `lastCompletedAt` (Timestamp).
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
-* **Fields:** ... (Type, Summary, Pillars, Strengths, Risks, Suggested Actions)
+* **Fields:**
+    * `type` (String): 'journal' | 'workbook'.
+    * `summary` (String): The AI's output.
+    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
+    * `strengths` & `risks` (Array): Listed points for UI rendering.
+    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions.
 * **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:** ... (Category, BuildHash, Environment, VaultUnlocked, Route, UserAgent)
+* **Fields:**
+    * `category`: 'bug' | 'suggestion' | 'content'.
+    * `buildHash`: Commit hash for version tracing.
+    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
+    * `vaultUnlocked`: Boolean.
+    * `route` & `userAgent`: Strings.
 
 ### `service/{serviceId}` (Planned - Project 05)
 * **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:** ... (Type, Name [Encrypted], ContactInfo [Encrypted], Notes [Encrypted], Status, NextMeeting)
+* **Fields:**
+    * `type` (String): 'sponsee' | 'commitment'.
+    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
+    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
+    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
 
 ## 3. Query Strategy
 * **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards.
+* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
