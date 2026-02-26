@@ -8,14 +8,16 @@
 2.  **Step 2:** Click the "Pen" icon.
 3.  **Step 3:** ...
 
-> **Tip:** [Helpful advice, e.g., "Use tags to track your mood over time."]
+> **💡 Pro Tip:** [Helpful advice, e.g., "Use tags to track your mood over time."]
+
+## Edge Cases & Limitations
+* **Offline Mode:** [Explain how it behaves without internet. e.g., "Saves locally and syncs later."]
+* **Vault Locked:** [Explain what happens if the PIN is not entered. e.g., "Metadata is visible, content is blurred."]
 
 ## Frequently Asked Questions
 * **Q:** Is this private?
 * **A:** Yes. Your data is encrypted on your phone before it saves. Even the developers cannot read it.
 
-* **Q:** Can I use this offline?
-* **A:** Yes. It will sync when you reconnect.
-
 ## Troubleshooting
-If you see an error...
+* **Issue:** [Common problem]
+* **Fix:** [How to resolve it]
