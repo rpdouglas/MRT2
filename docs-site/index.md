@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Read the Guide
-      link: /guide
+      link: /guide/01-getting-started
     - theme: alt
       text: Open App
       link: https://www.myrecoverytoolkit.ca
