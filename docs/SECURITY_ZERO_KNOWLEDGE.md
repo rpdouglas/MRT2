@@ -53,3 +53,20 @@ When a user asks for AI Analysis:
 * **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
     * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
     * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
+
+## 5. PIN Management & Rotation Protocol (Sprint 2)
+Because the user's PIN mathematically derives their encryption key, changing a PIN is a highly sensitive operation.
+
+### A. Changing a Known PIN (Rotation)
+If the user knows their current PIN and wants to change it:
+1.  **Unlock:** User enters *Current PIN* to derive *Current Key*.
+2.  **Fetch & Decrypt:** App downloads ALL encrypted documents (`journals`, `workbooks`, `service`) and decrypts them into memory.
+3.  **Generate:** User enters *New PIN*. App generates a *New Salt* and derives a *New Key*.
+4.  **Re-Encrypt:** App re-encrypts all in-memory plain text with the *New Key*.
+5.  **Commit:** App uploads the *New Salt*, *New Verifier*, and all *New Ciphertext* documents to Firestore in a batched transaction.
+
+### B. Resetting a Lost PIN (Crypto-Shredding)
+If the user forgot their PIN, rotation is mathematically impossible.
+1.  **Warning:** The app must display a severe warning that resetting will permanently destroy existing secure data.
+2.  **Action:** App deletes `encryptionSalt` and `pinVerifier` from the user profile, AND deletes all existing documents in `journals` and `workbook_answers`.
+3.  **Result:** The user starts completely fresh. (If they set up Google Drive Auto-Sync, they still possess a plain-text JSON backup off-platform).
