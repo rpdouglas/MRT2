@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v1.5)
+**Status:** Live (v1.5) -> Updating to v2.0 (Sprint 2)
 **Architecture:** Client-Side Aggregator
 **Primary Code:** `src/pages/Dashboard.tsx`
 
@@ -30,11 +30,17 @@ Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Eng
 * **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
 
 ## 3. UI Components
-* **Floating Hero:** Displays "Clean Time" (Years/Months/Days).
-* **Bento Grid:** 4-quadrant layout linking to core modules (Journal, Tasks, Vitality, Workbooks) with live stats.
-* **XP Card:** A glassmorphism card at the bottom showing Level, Progress Bar, and Archetype.
+* **Floating Hero:** Displays "Clean Time" (Years/Months/Days). *Sprint 2 update: XP Tracker and Level progress bar moved here from the bottom card.*
+* **Bento Grid:** 6-quadrant layout linking to core modules with live stats:
+  * Journal
+  * Tasks
+  * Vitality
+  * Workbooks
+  * Service Portal (Placeholder UI)
+  * Recovery Games (Placeholder UI)
 
 ## 4. Verification Checklist
 * [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
 * [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
 * [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
+* [ ] **Reactivity:** Does changing the display name in the Profile instantly update the greeting on the Dashboard?
