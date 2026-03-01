@@ -4,8 +4,8 @@
 **Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
 
 ## 🚧 Sprint 1: The Gates & Onboarding (Active)
-- [ ] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
-- [ ] **1.2 Auth UI:** Consolidate to a single login/create account view.
+- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link. (60/40 Asymmetrical Layout)
+- [x] **1.2 Auth UI:** Consolidate to a single login/create account view. (Tabbed UI)
 - [ ] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
 
 ## 📌 Sprint 2: The Horizon & Identity (Planned)
