@@ -2,19 +2,23 @@
  * src/pages/Login.tsx
  * GITHUB COMMENT:
  * [Login.tsx]
- * UX: Adjusted hero background gradient for a lighter, more vibrant feel.
- * UX: Removed max-width constraints and <br/> tags to allow title and tagline to span one line on desktop.
+ * FEAT: Consolidated Login and Registration into a single tabbed view (Sprint 1).
+ * FEAT: Implemented Onboarding Redirect. New users are forced to /profile to set their name and sobriety date.
+ * FIX: Resolved unused import (EyeSlashIcon) and missing import (ExclamationTriangleIcon).
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../lib/firebase';
+import { doc, getDoc, type Firestore } from 'firebase/firestore';
 import { 
     ShieldCheckIcon, 
     EnvelopeIcon, 
     LockClosedIcon,
     KeyIcon,
-    EyeSlashIcon,
-    SparklesIcon
+    ExclamationTriangleIcon,
+    SparklesIcon,
+    ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 // --- Interfaces & Data ---
@@ -46,11 +50,32 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-Redirect when User is Detected
+  // --- THE ONBOARDING REDIRECT LOGIC ---
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/dashboard'); 
+    async function checkRouting() {
+        if (user && !loading && db) {
+            try {
+                const database: Firestore = db;
+                const userRef = doc(database, 'users', user.uid);
+                const snap = await getDoc(userRef);
+                
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.hasCompletedOnboarding) {
+                        navigate('/dashboard');
+                    } else {
+                        navigate('/profile'); // Force to setup
+                    }
+                } else {
+                    navigate('/profile'); // Safety fallback
+                }
+            } catch (err) {
+                console.error("Routing check failed", err);
+                navigate('/dashboard'); // Fallback to safe zone
+            }
+        }
     }
+    checkRouting();
   }, [user, loading, navigate]);
 
   // Handlers
@@ -59,6 +84,7 @@ export default function Login() {
       setError('');
       setIsSubmitting(true);
       await loginWithGoogle();
+      // Routing is handled by the useEffect above once user state changes
     } catch (error) {
       console.error(error);
       setError('Failed to sign in with Google.');
@@ -95,7 +121,7 @@ export default function Login() {
       } else {
         await signupWithEmail(email, password);
       }
-      navigate('/dashboard'); 
+      // Routing is handled by the useEffect above once user state changes
     } catch (err: unknown) { 
       console.error(err);
       setIsSubmitting(false); 
@@ -117,12 +143,10 @@ export default function Login() {
       
       {/* LEFT COLUMN: BRANDING & NARRATIVE */}
       <div className="lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white flex flex-col justify-between p-8 lg:p-12 relative overflow-hidden shrink-0">
-        {/* Background Texture/Glow */}
         <div className="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 bg-cyan-300 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10">
-            {/* Logo & Title */}
             <div className="flex items-center gap-4 mb-12">
                 <div className="bg-white p-2 rounded-2xl shadow-lg">
                     <img src="/pwa-192x192.png" alt="MRT Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
@@ -134,8 +158,7 @@ export default function Login() {
                 </div>
             </div>
 
-            {/* Value Proposition */}
-            <div className="space-y-8 w-full max-w-2xl">
+            <div className="space-y-8 w-full max-w-2xl hidden md:block">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-[2.5rem] font-bold leading-tight lg:whitespace-nowrap tracking-tight">
                     The safest place to do the <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">Hardest Work.</span>
                 </h2>
@@ -163,8 +186,8 @@ export default function Login() {
             </div>
         </div>
 
-        {/* The Personas Grid (Desktop mainly, visible on mobile scroll) */}
-        <div className="relative z-10 mt-12 lg:mt-0 max-w-2xl">
+        {/* The Personas Grid */}
+        <div className="relative z-10 mt-8 lg:mt-0 max-w-2xl hidden md:block">
             <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-4">Meeting you where you are</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {PERSONAS.map(p => (
@@ -187,8 +210,8 @@ export default function Login() {
       </div>
 
       {/* RIGHT COLUMN: AUTHENTICATION FORM */}
-      <div className="lg:w-7/12 xl:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12">
-        <div className="max-w-md w-full bg-white p-6 sm:p-10 rounded-3xl shadow-xl border border-slate-200/60 animate-fadeIn">
+      <div className="lg:w-7/12 xl:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 -mt-10 lg:mt-0 relative z-20">
+        <div className="max-w-md w-full bg-white p-6 sm:p-10 rounded-3xl shadow-2xl lg:shadow-xl border border-slate-100 animate-slideUp lg:animate-fadeIn">
             
             <div className="text-center mb-8 lg:hidden">
                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Access Toolkit</h2>
@@ -213,26 +236,22 @@ export default function Login() {
             {/* Error Message */}
             {error && (
                 <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 animate-fadeIn flex items-start gap-3">
-                    <EyeSlashIcon className="h-5 w-5 shrink-0" />
+                    <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
                     {error}
                 </div>
             )}
 
             {/* Trust Badges (Sign Up Only) */}
             {!isLogin && (
-                <div className="bg-emerald-50 p-5 rounded-xl mb-8 border border-emerald-100 animate-fadeIn">
-                    <h4 className="text-[10px] font-bold text-emerald-800 flex items-center gap-1.5 mb-3 uppercase tracking-widest">
+                <div className="bg-emerald-50 p-4 rounded-xl mb-6 border border-emerald-100 animate-fadeIn">
+                    <h4 className="text-[10px] font-bold text-emerald-800 flex items-center gap-1.5 mb-2 uppercase tracking-widest">
                         <ShieldCheckIcon className="h-4 w-4" />
                         Privacy Guarantee
                     </h4>
-                    <ul className="text-xs text-emerald-900 space-y-3 font-medium leading-relaxed">
+                    <ul className="text-xs text-emerald-900 space-y-2 font-medium leading-relaxed">
                         <li className="flex items-start gap-2">
                             <KeyIcon className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                            <span><strong>Zero-Knowledge Encryption:</strong> Your journals are encrypted on your device. We cannot read them.</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <EyeSlashIcon className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                            <span><strong>No Cloud Tracking:</strong> AI analysis is triggered explicitly by you and is never stored for training.</span>
+                            <span><strong>Zero-Knowledge:</strong> Journals encrypted on-device.</span>
                         </li>
                     </ul>
                 </div>
@@ -289,9 +308,10 @@ export default function Login() {
                 <button
                     type="submit"
                     disabled={isSubmitting || loading}
-                    className="w-full flex justify-center py-4 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-50 transition-all mt-6"
+                    className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-50 transition-all mt-6"
                 >
                     {isSubmitting ? 'Processing...' : (isLogin ? 'Sign In Securely' : 'Create Secure Account')}
+                    {!isSubmitting && <ArrowRightOnRectangleIcon className="h-5 w-5" />}
                 </button>
             </form>
 
