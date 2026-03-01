@@ -1,3 +1,16 @@
-# 🚧 Workbooks & The Compass
+# 🧭 The Library & The Compass
 
-> **Note:** This section of the User Guide is currently being written alongside our active Quality Assurance checks. Check back soon!
+The Workbooks module provides structured, deep-dive recovery literature (like the 12-Steps and Recovery Dharma). **All answers are Zero-Knowledge Encrypted.**
+
+## Zen Mode & Auto-Save
+* When you open a section, the app enters a distraction-free reading mode.
+* As you type your answers, look at the top right of the screen. The app **Auto-Saves** and encrypts your work every 2 seconds.
+
+## AI Coaching
+Stuck on a tough question (like Step 4 resentments)? Type your initial thoughts, then click the **"AI Insight"** button in the sticky toolbar. The Recovery Coach will provide gentle, specific feedback to help you dig deeper.
+
+## Asking the Compass
+From the main Workbook menu, click the floating **"Consult Compass"** button.
+1. Select a specific section (e.g., Step 1), or the entire workbook.
+2. The AI will decrypt your answers in-memory, analyze them, and generate a comprehensive Wisdom Report highlighting your **Strengths**, **Blind Spots**, and a 3-step **Action Plan**.
+3. Click the `+` icon next to any Action Plan item to instantly add it to your Tasks ledger!
