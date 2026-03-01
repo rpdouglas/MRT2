@@ -1,8 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { calculateSobrietyDuration, calculateNextDueDate, getRecurrenceLabel, type RecurrenceConfig } from '../dateUtils';
 import { subDays, subMonths, subYears, startOfDay } from 'date-fns';
 
 describe('📅 DateUtils Engine', () => {
+  
+  // SRE FIX: Lock system time to avoid commutative math errors 
+  // when tests run on month boundaries (like March 1st or Leap Years).
+  beforeAll(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-15T12:00:00Z'));
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   describe('calculateSobrietyDuration', () => {
     it('should calculate 0 for future dates to prevent negative time', () => {
       const tomorrow = new Date();

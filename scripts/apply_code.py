@@ -1,393 +1,272 @@
 import os
 
-# =============================================================================
-# 1. ROADMAP (Full Restore + PROJ-08)
-# =============================================================================
-roadmap = r'''# 🗺️ MRT Product Roadmap
+welcome_tsx_content = r'''/**
+ * src/pages/Welcome.tsx
+ * GITHUB COMMENT:
+ * [Welcome.tsx]
+ * FEAT: Redesigned landing page to modern Asymmetrical Layout (Sprint 1 - Ticket 1.1).
+ * FEAT: Left column focuses on App Identity & Notebook LM Video demo.
+ * FEAT: Built interactive Persona Grid with hover-bios and modal video players.
+ * FIX: Unified Logo/Title height on a single line & expanded CTA button width.
+ */
+import { useState, useEffect, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Dialog, Transition } from '@headlessui/react';
+import { 
+  ArrowRightIcon,
+  PlayCircleIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
 
-**Vision:** To build the world's most secure, persona-aware digital recovery companion.
+// --- Interfaces & Data ---
+interface PersonaData {
+  id: string;
+  name: string;
+  title: string;
+  stage: string;
+  headshot: string;
+  bio: string;
+  videoId: string;
+  color: string;
+}
 
-## 📅 Q1 2026: Foundation & Security (Completed)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
+const PERSONAS: PersonaData[] = [
+  { 
+    id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', 
+    headshot: '/david_headshot.png', bio: '/david_bio.jpg', 
+    videoId: 'Fg_j-OB5rKo', color: 'bg-blue-600' 
+  },
+  { 
+    id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', 
+    headshot: '/ned_headshot.png', bio: '/ned_bio.jpg', 
+    videoId: 'XVme0G5vNIw', color: 'bg-emerald-500' 
+  },
+  { 
+    id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', 
+    headshot: '/lisa_headshot.png', bio: '/lisa_bio.jpg', 
+    videoId: 'sPVdX2atLwI', color: 'bg-purple-600' 
+  },
+  { 
+    id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', 
+    headshot: '/walt_headshot.png', bio: '/walt_bio.jpg', 
+    videoId: 'JUv8jdG4wTE', color: 'bg-amber-600' 
+  }
+];
 
-## 📅 Q2 2026: The "Core Polish" Phase (Completed)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
-| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
+export default function Welcome() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  // State for the Video Modal
+  const [selectedPersona, setSelectedPersona] = useState<PersonaData | null>(null);
 
-## 📅 Q3 2026: Hardening & Expansion (Active)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
-| ⚪ Planned | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
+  // Smart Redirect: If user is already logged in, skip the splash page
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
-## 📅 Q4 2026: Business & Distribution (Planned)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-06` | **The Freemium Engine** | Admin | Stripe Links, Tier Locks, Paywalls |
-| ⚪ Planned | `PROJ-07` | **The Launch** | Admin | TWA Android Wrapper & Play Store |
-| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools |
-'''
+  if (loading) return null; // Avoid flicker
 
-# =============================================================================
-# 2. SPRINT BOARD (Full Update to 3-Sprint Plan)
-# =============================================================================
-sprint_board = r'''# 🏃 Active Sprint Board
-**Sprint:** 4.5.3 "Triage Execution"
-**Start Date:** 2026-02-26
-**Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
+      
+      {/* MAIN CONTAINER: 60/40 Asymmetrical Split */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 lg:py-20 flex flex-col lg:flex-row gap-12 lg:gap-20 items-start">
+        
+        {/* === LEFT COLUMN: BRAND & DEMO (60%) === */}
+        <div className="w-full lg:w-[55%] flex flex-col space-y-8 lg:space-y-10 lg:sticky lg:top-12">
+            
+            {/* Header Lockup (Single Line, Matched Heights) */}
+            <div className="flex items-center gap-3 sm:gap-5">
+                <img 
+                    src="/maskable-icon-512x512.png" 
+                    alt="MRT Logo" 
+                    className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 object-cover shrink-0" 
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/pwa-192x192.png'; }}
+                />
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 leading-none whitespace-nowrap">
+                    My Recovery Toolkit
+                </h1>
+            </div>
 
-## 🚧 Sprint 1: The Gates & Onboarding (Active)
-- [ ] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
-- [ ] **1.2 Auth UI:** Consolidate to a single login/create account view.
-- [ ] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+            {/* Blurb & CTA (Full Width) */}
+            <div className="space-y-6 w-full">
+                <p className="text-lg sm:text-xl text-slate-600 font-medium leading-relaxed max-w-xl">
+                    Zero-Knowledge encryption meets on-device AI. Your digital companion for the journey home, from Day 1 to Year 35.
+                </p>
+                <button
+                    onClick={() => navigate('/login')}
+                    className="flex w-full justify-center items-center gap-3 px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0"
+                >
+                    Begin Your Journey <ArrowRightIcon className="h-5 w-5 stroke-2" />
+                </button>
+            </div>
 
-## 📌 Sprint 2: The Horizon & Identity (Planned)
-- [ ] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [ ] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
-- [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
-- [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [ ] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+            {/* Platform Demo Video */}
+            <div className="w-full relative mt-4">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-[2.5rem] -z-10 blur-xl opacity-70"></div>
+                <div className="bg-white p-2 sm:p-3 rounded-3xl shadow-xl border border-slate-200 relative z-10">
+                    <div className="aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden shadow-inner">
+                        <iframe 
+                            className="w-full h-full"
+                            src="https://www.youtube.com/embed/BgQSM98W50I?rel=0&modestbranding=1" 
+                            title="My Recovery Toolkit Platform Overview" 
+                            frameBorder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-## 📌 Sprint 3: The Core Polish (Planned)
-- [ ] **3.1 Journal Cache:** Fix UI state so journal edits appear without page refresh.
-- [ ] **3.2 Tasks UI:** Allow text wrapping for long Action Plan titles instead of truncation.
+        {/* === RIGHT COLUMN: INTERACTIVE PERSONAS (40%) === */}
+        <div className="w-full lg:w-[45%] flex flex-col pt-8 lg:pt-0">
+            <div className="mb-8 border-b border-slate-200 pb-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">Who is this for?</h2>
+                <p className="text-slate-500 font-medium text-sm sm:text-base">We meet you exactly where you are. Tap to hear their stories.</p>
+            </div>
 
-## ✅ Done (Previous Sprint)
-- [x] Gathered 13 bugs across Sector 1.
-- [x] Built Triage Generator script.
-- [x] Restructured VitePress Knowledge Base.
-'''
+            {/* 2x2 Grid */}
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              {PERSONAS.map((p) => (
+                <div 
+                  key={p.id}
+                  onClick={() => setSelectedPersona(p)}
+                  className="relative aspect-square rounded-3xl overflow-hidden shadow-md border border-slate-200 cursor-pointer group bg-slate-100"
+                >
+                  {/* Base Headshot */}
+                  <img 
+                    src={p.headshot} 
+                    alt={p.name} 
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out group-hover:opacity-0 z-10" 
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  
+                  {/* Bio Image (Revealed on Desktop Hover) */}
+                  <img 
+                    src={p.bio} 
+                    alt={`${p.name} Bio`} 
+                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 z-20 scale-105 group-hover:scale-100" 
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
 
-# =============================================================================
-# 3. SCHEMA ARCHITECTURE (Full Restore + Onboarding Flag)
-# =============================================================================
-schema = r'''# 🗄️ Schema Architecture & Data Graph
+                  {/* Play Overlay */}
+                  <div className="absolute inset-0 z-30 bg-gradient-to-t from-slate-900/90 via-slate-900/10 to-transparent flex flex-col justify-end p-4 sm:p-5 transition-colors duration-500 group-hover:from-slate-900/95">
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                         <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                             <PlayCircleIcon className="h-10 w-10 sm:h-12 sm:w-12 text-white drop-shadow-lg scale-90 group-hover:scale-100 transition-transform" />
+                         </div>
+                     </div>
+                     <div className="relative transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                        <span className={`inline-block px-2.5 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wide mb-1.5 text-white shadow-sm ${p.color}`}>
+                            {p.stage}
+                        </span>
+                        <h3 className="font-black text-white leading-none text-lg sm:text-xl drop-shadow-md">{p.name}</h3>
+                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Simple Footer text below grid */}
+            <div className="mt-12 text-center text-xs font-medium text-slate-400">
+                Secure • Private • Encrypted
+            </div>
+        </div>
 
-**Storage Engine:** Cloud Firestore (NoSQL)
-**Encryption Strategy:** Client-Side AES-GCM (Content fields only)
+      </div>
 
-## 1. High-Level Topology
+      {/* === PERSONA VIDEO MODAL === */}
+      <Transition appear show={selectedPersona !== null} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setSelectedPersona(null)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm" />
+          </Transition.Child>
 
-~~~mermaid
-graph TD
-    root[🔥 Firestore Root]
-    
-    root --> users[📂 users]
-    users --> userDoc[📄 User Profile]
-    userDoc --> workbook_progress[📂 workbook_progress]
-    userDoc --> templates[📂 templates]
-    
-    root --> journals[📂 journals]
-    root --> tasks[📂 tasks]
-    root --> insights[📂 insights]
-    root --> ai_logs[📂 ai_logs]
-    root --> feedback[📂 feedback]
-    root --> service[📂 service (Planned)]
-~~~
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95 translate-y-4"
+                enterTo="opacity-100 scale-100 translate-y-0"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100 translate-y-0"
+                leaveTo="opacity-0 scale-95 translate-y-4"
+              >
+                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-[2rem] bg-slate-50 text-left align-middle shadow-2xl transition-all border border-slate-200">
+                  
+                  {/* Modal Header */}
+                  <div className="flex justify-between items-center px-6 py-5 bg-white border-b border-slate-100">
+                      <div className="flex items-center gap-3">
+                          <span className={`w-3.5 h-3.5 rounded-full shadow-sm ${selectedPersona?.color}`}></span>
+                          <Dialog.Title as="h3" className="text-xl font-black text-slate-900 tracking-tight">
+                            {selectedPersona?.name}'s Story
+                          </Dialog.Title>
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-full p-2 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 focus:outline-none transition-colors"
+                        onClick={() => setSelectedPersona(null)}
+                      >
+                        <XMarkIcon className="h-6 w-6 stroke-2" aria-hidden="true" />
+                      </button>
+                  </div>
 
-## 2. Collection Definitions
+                  <div className="p-4 sm:p-6 bg-slate-100">
+                      {/* Mobile Only: Show Bio Image above video since they can't hover to read it */}
+                      <div className="lg:hidden mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-white">
+                          {selectedPersona && <img src={selectedPersona.bio} alt={`${selectedPersona.name} Bio`} className="w-full h-auto object-cover" />}
+                      </div>
 
-### `users/{uid}`
-* **Purpose:** Profile, Auth, Billing, & Settings.
-* **Fields:**
-    * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
-    * `sobrietyDate` (Timestamp): Metrics base.
-    * `role` (String): 'user' | 'admin'. Controls UI access.
-    * `tier` (String): 'free' | 'premium'. Controls feature access.
-    * `stripeCustomerId` (String): Reference for subscription management (Optional).
-    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
-    * `hasCompletedOnboarding` (Boolean): Determines if user needs forced routing to Profile setup.
-    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
+                      {/* Universal: The Video Player */}
+                      <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800 relative">
+                          {selectedPersona && (
+                              <iframe 
+                                  className="absolute inset-0 w-full h-full"
+                                  src={`https://www.youtube.com/embed/${selectedPersona.videoId}?autoplay=1&rel=0&modestbranding=1`} 
+                                  title={`${selectedPersona.name}'s Story`}
+                                  frameBorder="0" 
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                  allowFullScreen
+                              ></iframe>
+                          )}
+                      </div>
+                  </div>
+                  
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
-### `journals/{entryId}`
-* **Purpose:** Daily logs, Vitality logs, and reflections.
-* **Fields:**
-    * `uid` (String): Owner ID.
-    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
-    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
-    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
-    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
-    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
-    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
-
-### `tasks/{taskId}`
-* **Purpose:** Gamification, Habits, and AI Action Plans.
-* **Encryption:** Unencrypted to allow background stats and streak evaluations.
-* **Fields:**
-    * `title` (String): Task name.
-    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
-    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
-    * `priority` (String): 'High' | 'Medium' | 'Low'.
-    * `status` (String): 'pending' | 'completed'.
-    * `currentStreak` (Int): Consecutive completions.
-    * `recurrence` (Map): Logic for repetition.
-    * `dueDate` & `lastCompletedAt` (Timestamp).
-
-### `insights/{insightId}`
-* **Purpose:** AI-generated analysis of journals/workbooks.
-* **Fields:**
-    * `type` (String): 'journal' | 'workbook'.
-    * `summary` (String): The AI's output.
-    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
-    * `strengths` & `risks` (Array): Listed points for UI rendering.
-    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
-
-### `feedback/{reportId}`
-* **Purpose:** User bug reports and suggestions.
-* **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:**
-    * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: Commit hash for version tracing.
-    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `vaultUnlocked`: Boolean.
-    * `route` & `userAgent`: Strings.
-
-### `service/{serviceId}` (Planned - Project 05)
-* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
-
-## 3. Query Strategy
-* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
-'''
-
-# =============================================================================
-# 4. SECURITY (Full Restore + PIN Rotation Protocol)
-# =============================================================================
-security = r'''# 🛡️ Security Model: Zero-Knowledge Architecture
-
-**Philosophy:** "We cannot leak what we cannot read."
-
-## 1. The Encryption Lifecycle
-
-### A. Setup (Vault Creation)
-1. User enters 4-digit PIN.
-2. App generates random 16-byte `Salt`.
-3. App derives `Key` using PBKDF2 (100k iterations).
-4. App creates `Verifier` = Hash(PIN + Salt).
-5. App sends `Salt` and `Verifier` to Firestore. 
-6. **Session Caching:** The user's PIN is temporarily cached in the browser's `sessionStorage`. This prevents the user from having to re-enter their PIN every time they navigate between pages, while ensuring the PIN is automatically wiped by the OS the moment the browser tab is closed.
-
-### B. Storage (Writing Data)
-1. User types "I feel anxious today."
-2. App checks memory for `Key`. (If missing, it attempts to derive it from the `sessionStorage` PIN, or prompts the user).
-3. App generates random `IV` (Initialization Vector).
-4. App encrypts text via AES-GCM -> `Ciphertext`.
-5. App sends string `IV:Ciphertext` to Firestore.
-
-### C. Retrieval (Reading Data)
-1. App fetches document from Firestore.
-2. App splits `IV:Ciphertext`.
-3. App uses `Key` to decrypt.
-4. Plain text renders in React.
-
-## 2. Vault Control Features
-
-### 🔒 Vault Locking (Memory Clearing)
-* **Trigger:** User clicks "Lock Vault" in the sidebar or closes the tab.
-* **Action:** The `EncryptionContext` sets `globalKey = null` and explicitly deletes the PIN from `sessionStorage`.
-* **Result:** Even if an attacker gains physical access to the unlocked computer or browser console after the fact, they cannot decrypt data without the user re-entering the PIN.
-
-### 🧨 Emergency Reset (Crypto-Shredding)
-* **Trigger:** User forgets PIN or wants a hard reset.
-* **Action:**
-    1. The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
-    2. **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
-    3. **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
-
-## 3. AI Privacy Boundary
-When a user asks for AI Analysis:
-1. Data is decrypted **in the browser**.
-2. Plain text is sent to Gemini API via HTTPS.
-3. Gemini processes data statelessly.
-4. Response is returned.
-5. **Critical:** We do NOT train models on this data.
-
-## 4. Third-Party Data (The Service Model)
-* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
-* **Rule:** This is a **Digital Rolodex**, not a Social Network.
-* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
-    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
-    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
-
-## 5. PIN Management & Rotation Protocol (Sprint 2)
-Because the user's PIN mathematically derives their encryption key, changing a PIN is a highly sensitive operation.
-
-### A. Changing a Known PIN (Rotation)
-If the user knows their current PIN and wants to change it:
-1.  **Unlock:** User enters *Current PIN* to derive *Current Key*.
-2.  **Fetch & Decrypt:** App downloads ALL encrypted documents (`journals`, `workbooks`, `service`) and decrypts them into memory.
-3.  **Generate:** User enters *New PIN*. App generates a *New Salt* and derives a *New Key*.
-4.  **Re-Encrypt:** App re-encrypts all in-memory plain text with the *New Key*.
-5.  **Commit:** App uploads the *New Salt*, *New Verifier*, and all *New Ciphertext* documents to Firestore in a batched transaction.
-
-### B. Resetting a Lost PIN (Crypto-Shredding)
-If the user forgot their PIN, rotation is mathematically impossible.
-1.  **Warning:** The app must display a severe warning that resetting will permanently destroy existing secure data.
-2.  **Action:** App deletes `encryptionSalt` and `pinVerifier` from the user profile, AND deletes all existing documents in `journals` and `workbook_answers`.
-3.  **Result:** The user starts completely fresh. (If they set up Google Drive Auto-Sync, they still possess a plain-text JSON backup off-platform).
-'''
-
-# =============================================================================
-# 5. PROFILE SPEC (Full Restore + Tab & PIN Updates)
-# =============================================================================
-profile_spec = r'''# 📐 Feature Spec: Profile & Data Sovereignty
-
-**Status:** Live (v1.5) -> Updating to v2.0 (Sprint 2)
-**Context:** User identity, settings, security, and data portability.
-
-## 1. UI Architecture (The Tabbed View)
-The Profile is split into three distinct tabs to manage complexity:
-* **General:** Display Name, Sobriety Date, Sponsor Name, Sponsor Phone.
-* **Security:** PIN Management (Change PIN, Hard Reset).
-* **Data Management:** Google Drive Sync, JSON Export, PDF Export, Account Deletion.
-
-## 2. Support Network
-* **Fields:** `sponsorName`, `sponsorPhone`.
-* **Storage:** Stored unencrypted in `users/{uid}`.
-* **Usage:** Populates the "SOS Modal" for one-tap calling or WhatsApp messaging.
-
-## 3. Cloud Auto-Sync (Google Drive)
-**Philosophy:** Automated resilience without vendor lock-in.
-* **Authentication:** Uses Firebase GoogleAuthProvider with the restricted `https://www.googleapis.com/auth/drive.file` scope. This ensures MRT can only see and modify the specific backup file it creates, not the user's entire drive.
-* **The Background Engine:** * Hosted in `AppShell.tsx`.
-    * Checks if `isVaultUnlocked`, `isOnline`, and `driveAccessToken` are active.
-    * Compares `userProfile.lastExportAt` to the current date. If > 7 days, it silently triggers a background export 10 seconds after the vault is unlocked.
-    * It searches Google Drive for `mrt_backup.json`. If found, it issues a `PATCH` request to overwrite it; otherwise, a `POST` request to create it.
-* **Security Note:** The synced JSON file contains **decrypted (plain text)** data. This ensures the user retains access to their history even if they permanently forget their MRT PIN.
-
-## 4. The Manual Export Engine
-**Philosophy:** The user owns their data.
-* **JSON Export:**
-    * Fetches ALL collections (`journals`, `tasks`, `workbooks`).
-    * **Decryption:** Decrypts all content client-side before generation.
-    * **Output:** Plain text JSON file. *User is warned in the UI to store this securely.*
-* **PDF Export:**
-    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist, utilizing `jsPDF` and `jspdf-autotable`.
-
-## 5. The Import Engine
-* **Logic:** Parses JSON backups (both legacy formats and new full-schema formats).
-* **Legacy Support:** Maps older data structures to the current schema automatically.
-* **Safety:** Flags imported entries as `isEncrypted: false` (since they come from a plain text file). The next time the user edits and saves them, they are encrypted with the active vault key.
-
-## 6. Verification
-* [ ] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
-* [ ] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
-'''
-
-# =============================================================================
-# 6. DASHBOARD SPEC (Full Restore + XP UI Updates)
-# =============================================================================
-dashboard_spec = r'''# 📐 Feature Spec: Dashboard (The Hub)
-
-**Status:** Live (v1.5) -> Updating to v2.0 (Sprint 2)
-**Architecture:** Client-Side Aggregator
-**Primary Code:** `src/pages/Dashboard.tsx`
-
-## 1. Overview
-The Dashboard is the central landing page. It does not store its own data; instead, it queries all other modules (Journal, Tasks, Workbooks, Profile) to generate a real-time "Health Snapshot" of the user's recovery.
-
-## 2. Technical Architecture
-
-### A. Data Aggregation
-The Dashboard executes 4 concurrent queries on mount:
-1.  **Profile:** Fetches `sobrietyDate` and `lastExportAt`.
-2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
-3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
-4.  **Workbooks:** Fetches answer count for "Wisdom" score.
-
-**Performance Note:** Queries are set to `refetchOnMount: 'always'` to ensure gamification stats update immediately after a user performs an action in another tab.
-
-### B. The Calculation Engine
-Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Engine** (`src/lib/gamification.ts`) to derive:
-* **User Level:** Based on total XP from all sources.
-* **Archetype:** (Scholar, Doer, Monk, etc.) based on activity distribution.
-* **Streaks:** Current consecutive activity chains.
-
-### C. The Backup Sentinel
-* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`.
-* **Trigger:** If > 7 days since last export.
-* **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
-
-## 3. UI Components
-* **Floating Hero:** Displays "Clean Time" (Years/Months/Days). *Sprint 2 update: XP Tracker and Level progress bar moved here from the bottom card.*
-* **Bento Grid:** 6-quadrant layout linking to core modules with live stats:
-  * Journal
-  * Tasks
-  * Vitality
-  * Workbooks
-  * Service Portal (Placeholder UI)
-  * Recovery Games (Placeholder UI)
-
-## 4. Verification Checklist
-* [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
-* [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
-* [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
-* [ ] **Reactivity:** Does changing the display name in the Profile instantly update the greeting on the Dashboard?
-'''
-
-# =============================================================================
-# 7. NEW ONBOARDING SPEC
-# =============================================================================
-onboarding_spec = r'''# 📐 Feature Spec: Onboarding & The Gates
-
-**Status:** Draft (Sprint 1)
-**Access Level:** Free
-
-## 1. The "Why" (User Story)
-* **As a:** New user ("David" or "Ned")
-* **I want to:** Understand the app's value quickly and set up my profile without confusion.
-* **So that:** I can start tracking my sobriety and journaling immediately.
-
-## 2. User Experience (The Flow)
-### A. The Landing Page
-* **Visuals:** Full MRT branding ("My Recovery Toolkit" + App Icon).
-* **Content:** Features headshots and brief bios of our 4 Core Personas to help the user identify their journey stage. Includes a prominent link to the Notebook LM overview video.
-* **Action:** Unified "Login / Create Account" button.
-
-### B. The Auth Consolidation
-* A single, clean interface replacing the two-step login. 
-
-### C. The Forced Redirect
-* **Logic:** Upon successful login/signup, the app checks `userProfile.hasCompletedOnboarding`.
-* **Action:** If `false` (or missing), the user is routed to `/profile`.
-* **Requirement:** They must enter a Display Name and Sobriety Date. Once saved, `hasCompletedOnboarding` is set to `true`, and they are routed to the Dashboard.
-
-## 3. Technical Architecture
-* **Data Model:** Checks and updates `users/{uid}` collection.
-* **Routing:** Uses React Router DOM inside a protected route wrapper or an authentication listener effect.
+    </div>
+  );
+}
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    # Replace the ~~~ placeholder with real markdown backticks
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Restored and Updated: {path}")
+    print(f"✅ Updated UI: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Restoring full files and applying Triage Execution Plan...")
-    
-    write_file("docs/ROADMAP.md", roadmap)
-    write_file("docs/SPRINT_BOARD.md", sprint_board)
-    write_file("docs/SCHEMA_ARCHITECTURE.md", schema)
-    write_file("docs/SECURITY_ZERO_KNOWLEDGE.md", security)
-    write_file("docs/specs/09_PROFILE.md", profile_spec)
-    write_file("docs/specs/11_DASHBOARD.md", dashboard_spec)
-    write_file("docs/specs/17_ONBOARDING.md", onboarding_spec)
-    
-    print("✨ Documentation successfully restored and upgraded. Ready to code.")
+    write_file("src/pages/Welcome.tsx", welcome_tsx_content)
+    print("✨ Title logic and button width synchronized.")
