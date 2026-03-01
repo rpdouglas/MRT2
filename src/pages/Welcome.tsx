@@ -5,7 +5,9 @@
  * FEAT: Redesigned landing page to modern Asymmetrical Layout (Sprint 1 - Ticket 1.1).
  * FEAT: Left column focuses on App Identity & Notebook LM Video demo.
  * FEAT: Built interactive Persona Grid with hover-bios and modal video players.
- * FIX: Unified Logo/Title height on a single line & expanded CTA button width.
+ * FIX: Centered Logo/Title/Blurb and moved CTA button below the video player.
+ * UX: Reduced top padding and vertical spacing to pull content above the fold on desktop.
+ * FIX: Updated image paths to /Marketing/ folder and aligned the bottom of the grid with the CTA button.
  */
 import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,22 +34,22 @@ interface PersonaData {
 const PERSONAS: PersonaData[] = [
   { 
     id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', 
-    headshot: '/david_headshot.png', bio: '/david_bio.jpg', 
+    headshot: '/Marketing/david_headshot.png', bio: '/Marketing/david_bio.jpg', 
     videoId: 'Fg_j-OB5rKo', color: 'bg-blue-600' 
   },
   { 
     id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', 
-    headshot: '/ned_headshot.png', bio: '/ned_bio.jpg', 
+    headshot: '/Marketing/ned_headshot.png', bio: '/Marketing/ned_bio.jpg', 
     videoId: 'XVme0G5vNIw', color: 'bg-emerald-500' 
   },
   { 
     id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', 
-    headshot: '/lisa_headshot.png', bio: '/lisa_bio.jpg', 
+    headshot: '/Marketing/lisa_headshot.png', bio: '/Marketing/lisa_bio.jpg', 
     videoId: 'sPVdX2atLwI', color: 'bg-purple-600' 
   },
   { 
     id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', 
-    headshot: '/walt_headshot.png', bio: '/walt_bio.jpg', 
+    headshot: '/Marketing/walt_headshot.png', bio: '/Marketing/walt_bio.jpg', 
     videoId: 'JUv8jdG4wTE', color: 'bg-amber-600' 
   }
 ];
@@ -71,14 +73,14 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
       
-      {/* MAIN CONTAINER: 60/40 Asymmetrical Split */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 lg:py-20 flex flex-col lg:flex-row gap-12 lg:gap-20 items-start">
+      {/* MAIN CONTAINER: 60/40 Asymmetrical Split (Using items-stretch to match column heights) */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 lg:py-10 flex flex-col lg:flex-row gap-12 lg:gap-16 items-stretch">
         
         {/* === LEFT COLUMN: BRAND & DEMO (60%) === */}
-        <div className="w-full lg:w-[55%] flex flex-col space-y-8 lg:space-y-10 lg:sticky lg:top-12">
+        <div className="w-full lg:w-[55%] flex flex-col items-center text-center space-y-5 lg:space-y-6 h-full">
             
-            {/* Header Lockup (Single Line, Matched Heights) */}
-            <div className="flex items-center gap-3 sm:gap-5">
+            {/* Header Lockup (Centered, Single Line, Matched Heights) */}
+            <div className="flex items-center justify-center gap-3 sm:gap-5 w-full">
                 <img 
                     src="/maskable-icon-512x512.png" 
                     alt="MRT Logo" 
@@ -90,21 +92,13 @@ export default function Welcome() {
                 </h1>
             </div>
 
-            {/* Blurb & CTA (Full Width) */}
-            <div className="space-y-6 w-full">
-                <p className="text-lg sm:text-xl text-slate-600 font-medium leading-relaxed max-w-xl">
-                    Zero-Knowledge encryption meets on-device AI. Your digital companion for the journey home, from Day 1 to Year 35.
-                </p>
-                <button
-                    onClick={() => navigate('/login')}
-                    className="flex w-full justify-center items-center gap-3 px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0"
-                >
-                    Begin Your Journey <ArrowRightIcon className="h-5 w-5 stroke-2" />
-                </button>
-            </div>
+            {/* Blurb (Centered) */}
+            <p className="text-lg sm:text-xl text-slate-600 font-medium leading-relaxed max-w-xl mx-auto">
+                Turn the noise of recovery into clear, actionable steps. Safely untangle your thoughts, spot emotional triggers before they lead to relapse, and build a life you don't want to escape from. Your private companion for the journey home.
+            </p>
 
             {/* Platform Demo Video */}
-            <div className="w-full relative mt-4">
+            <div className="w-full relative mt-2">
                 <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-[2.5rem] -z-10 blur-xl opacity-70"></div>
                 <div className="bg-white p-2 sm:p-3 rounded-3xl shadow-xl border border-slate-200 relative z-10">
                     <div className="aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden shadow-inner">
@@ -119,17 +113,27 @@ export default function Welcome() {
                     </div>
                 </div>
             </div>
+
+            {/* CTA Button (mt-auto pushes it to the absolute bottom of the flex column) */}
+            <div className="w-full pt-2 mt-auto">
+                <button
+                    onClick={() => navigate('/login')}
+                    className="flex w-full justify-center items-center gap-3 px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0"
+                >
+                    Begin Your Journey <ArrowRightIcon className="h-5 w-5 stroke-2" />
+                </button>
+            </div>
         </div>
 
         {/* === RIGHT COLUMN: INTERACTIVE PERSONAS (40%) === */}
-        <div className="w-full lg:w-[45%] flex flex-col pt-8 lg:pt-0">
-            <div className="mb-8 border-b border-slate-200 pb-6">
+        <div className="w-full lg:w-[45%] flex flex-col pt-4 lg:pt-0 h-full">
+            <div className="mb-6 border-b border-slate-200 pb-5 text-center lg:text-left">
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">Who is this for?</h2>
                 <p className="text-slate-500 font-medium text-sm sm:text-base">We meet you exactly where you are. Tap to hear their stories.</p>
             </div>
 
-            {/* 2x2 Grid */}
-            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            {/* 2x2 Grid (mt-auto pushes the grid to the absolute bottom, aligning with the CTA button) */}
+            <div className="mt-auto grid grid-cols-2 gap-4 sm:gap-6">
               {PERSONAS.map((p) => (
                 <div 
                   key={p.id}
@@ -169,13 +173,13 @@ export default function Welcome() {
                 </div>
               ))}
             </div>
-            
-            {/* Simple Footer text below grid */}
-            <div className="mt-12 text-center text-xs font-medium text-slate-400">
-                Secure • Private • Encrypted
-            </div>
         </div>
 
+      </div>
+
+      {/* Simple Footer text below main container */}
+      <div className="w-full text-center pb-8 text-xs font-medium text-slate-400">
+          Secure • Private • Encrypted
       </div>
 
       {/* === PERSONA VIDEO MODAL === */}
