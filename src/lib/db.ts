@@ -1,6 +1,6 @@
 /**
  * src/lib/db.ts
- * UPDATED: Added WorkbookAnswer interface for Project 03.
+ * UPDATED: Added hasCompletedOnboarding to UserProfile for Sprint 1 Ticket 1.3.
  */
 import { 
   doc, 
@@ -57,6 +57,7 @@ export interface UserProfile {
   role?: 'admin' | 'user';
   sponsorName?: string;
   sponsorPhone?: string;
+  hasCompletedOnboarding?: boolean;
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -152,7 +153,8 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       sobrietyDate: null, 
       createdAt: Timestamp.now(),
       lastLogin: Timestamp.now(),
-      role: 'user'
+      role: 'user',
+      hasCompletedOnboarding: false
     };
     await setDoc(userRef, newProfile);
     return newProfile;

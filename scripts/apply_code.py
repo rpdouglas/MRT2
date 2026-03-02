@@ -1,236 +1,541 @@
 import os
 
-# =============================================================================
-# 1. TECHNICAL SPECIFICATIONS
-# =============================================================================
-spec_onboarding = r'''# 📐 Feature Spec: Onboarding & The Gates
+db_ts_content = r'''/**
+ * src/lib/db.ts
+ * UPDATED: Added hasCompletedOnboarding to UserProfile for Sprint 1 Ticket 1.3.
+ */
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  collection, 
+  getDocs, 
+  deleteDoc, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  Timestamp, 
+  type Firestore, 
+  type QueryDocumentSnapshot, 
+  type DocumentData, 
+  type WithFieldValue
+} from "firebase/firestore";
+import { db } from "./firebase";
+import type { User } from "firebase/auth";
+import type { RecurrenceConfig } from "./dateUtils";
 
-**Status:** Live (Sprint 1)
-**Access Level:** Free
+// --- GENERIC CONVERTER ---
+export const createConverter = <T extends object>() => ({
+  toFirestore(data: WithFieldValue<T>): DocumentData {
+    return data;
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot): T {
+    const data = snapshot.data();
+    const converted = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => {
+        if (value instanceof Timestamp) {
+          return [key, value.toDate()];
+        }
+        return [key, value];
+      })
+    );
+    return { id: snapshot.id, ...converted } as T;
+  },
+});
 
-## 1. The "Why" (User Story)
-* **As a:** New user ("David" or "Ned")
-* **I want to:** Understand the app's value quickly and set up my profile without friction.
-* **So that:** I can start tracking my sobriety and journaling securely.
+// --- INTERFACES ---
 
-## 2. User Experience (The Flow)
-### A. The Landing Page (The Interactive Showcase)
-* **Visuals:** 60/40 Asymmetrical Layout on Desktop. Stacks vertically on Mobile.
-* **Left Column:** MRT Branding, Empathetic Blurb, and a primary "Begin Journey" CTA. Features a large, glassmorphism-wrapped Notebook LM YouTube Demo embed.
-* **Right Column:** Interactive Persona Grid.
-    * *Desktop:* Hovering transitions headshots to bios.
-    * *Mobile:* Tapping opens a clean modal with the Bio image stacked above the Persona's YouTube Video.
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  sobrietyDate: Timestamp | null;
+  createdAt: Timestamp;
+  lastLogin?: Timestamp;
+  lastExportAt?: Timestamp; 
+  role?: 'admin' | 'user';
+  sponsorName?: string;
+  sponsorPhone?: string;
+  hasCompletedOnboarding?: boolean;
+  usage_limits?: {
+    lastWeeklyInsight?: Timestamp;
+    lastMonthlyInsight?: Timestamp;
+    lastDeepDive?: Timestamp;
+  };
+}
 
-### B. The Auth Consolidation
-* A single, clean tabbed glassmorphism card in `Login.tsx`. 
-* Users can cleanly toggle between "Sign In" and "Create Account".
-* The "Create Account" tab dynamically reveals "Confirm Password" and "Privacy Guarantee" trust badges.
+export interface JournalTemplate {
+  id: string;
+  name: string;
+  prompts: string[]; 
+  defaultTags: string[]; 
+}
 
-### C. The Forced Redirect (The Trap)
-* **Logic:** Upon successful login/signup, the app checks `userProfile.hasCompletedOnboarding`.
-* **Action:** If `false` (or missing), the user is routed to `/profile`.
-* **Requirement:** They must enter a Display Name and Sobriety Date. Once saved, `hasCompletedOnboarding` is set to `true`, releasing them to the Dashboard.
+export interface JournalEntry {
+  id?: string;
+  uid: string;
+  content: string;
+  moodScore: number;
+  tags: string[];
+  createdAt: Timestamp;
+  isEncrypted?: boolean;
+  weather?: {
+    temp: number;
+    condition: string;
+    location?: string;
+  } | null;
+}
 
-## 3. Technical Architecture
-* **Data Model:** Checks and updates `users/{uid}` collection.
-* **Routing:** Uses React Router DOM inside a `useEffect` authentication listener.
+export type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
+export interface Task {
+  id?: string;
+  uid: string;
+  title: string;
+  completed: boolean; 
+  status?: 'pending' | 'completed';
+  isRecurring: boolean;
+  frequency: 'once' | 'daily' | 'weekly' | 'monthly';
+  currentStreak: number;
+  priority: TaskPriority;
+  category?: TaskCategory;
+  recurrence?: RecurrenceConfig;
+  createdAt: Timestamp | Date;
+  dueDate?: Timestamp | Date;
+  lastCompletedAt?: Timestamp | Date | null; 
+  source?: 'manual' | 'ai'; 
+}
+
+// PROMOTED INTERFACE (Project 03)
+export interface WorkbookAnswer {
+  uid: string;
+  workbookId: string;
+  sectionId: string;
+  questionId: string;
+  answer: string; // Encrypted Ciphertext
+  isEncrypted: boolean;
+  updatedAt: Timestamp | Date;
+}
+
+// --- PROFILE FUNCTIONS ---
+
+export async function getProfile(uid: string): Promise<UserProfile | null> {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+  
+  const userRef = doc(database, "users", uid);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    return userSnap.data() as UserProfile;
+  }
+  return null;
+}
+
+export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const userRef = doc(database, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (userSnap.exists()) {
+    await updateDoc(userRef, { lastLogin: Timestamp.now() });
+    return userSnap.data() as UserProfile;
+  } else {
+    const newProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      sobrietyDate: null, 
+      createdAt: Timestamp.now(),
+      lastLogin: Timestamp.now(),
+      role: 'user',
+      hasCompletedOnboarding: false
+    };
+    await setDoc(userRef, newProfile);
+    return newProfile;
+  }
+}
+
+export async function updateProfileData(uid: string, data: Partial<UserProfile>) {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const userRef = doc(database, "users", uid);
+  await setDoc(userRef, { ...data }, { merge: true });
+}
+
+export async function updateSobrietyDate(uid: string, date: Date) {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+  
+  const userRef = doc(database, "users", uid);
+  await updateDoc(userRef, {
+    sobrietyDate: Timestamp.fromDate(date)
+  });
+}
+
+// --- TEMPLATE FUNCTIONS ---
+
+export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const templatesRef = collection(database, 'users', uid, 'templates');
+  const snapshot = await getDocs(templatesRef);
+
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  } as JournalTemplate));
+}
+
+export async function saveUserTemplate(uid: string, template: JournalTemplate) {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const docRef = template.id 
+    ? doc(database, 'users', uid, 'templates', template.id)
+    : doc(collection(database, 'users', uid, 'templates'));
+
+  const dataToSave = {
+    ...template,
+    id: docRef.id 
+  };
+
+  await setDoc(docRef, dataToSave);
+}
+
+export async function deleteUserTemplate(uid: string, templateId: string) {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const docRef = doc(database, 'users', uid, 'templates', templateId);
+  await deleteDoc(docRef);
+}
+
+// --- JOURNAL FUNCTIONS ---
+
+export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+  
+  await addDoc(collection(database, 'journals'), {
+    uid,
+    ...entry,
+    createdAt: Timestamp.now(),
+  });
+};
+
+export const getJournalHistory = async (uid: string) => {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  const q = query(
+    collection(database, 'journals'),
+    where('uid', '==', uid),
+    orderBy('createdAt', 'desc')
+  );
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as JournalEntry));
+};
+
+// --- DATA SOVEREIGNTY (EXPORT) ---
+
+export interface FullUserData {
+  profile: UserProfile | null;
+  journals: JournalEntry[];
+  tasks: Task[];
+  templates: JournalTemplate[];
+  workbookAnswers: Record<string, unknown>[];
+}
+
+export async function fetchAllUserData(uid: string): Promise<FullUserData> {
+  if (!db) throw new Error("Database not initialized");
+  const database: Firestore = db;
+
+  // 1. Profile
+  const profile = await getProfile(uid);
+
+  // 2. Journals
+  const journalsQ = query(collection(database, 'journals'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+  const journalsSnap = await getDocs(journalsQ);
+  const journals = journalsSnap.docs.map(d => ({ id: d.id, ...d.data() } as JournalEntry));
+
+  // 3. Tasks
+  const tasksQ = query(collection(database, 'tasks'), where('uid', '==', uid));
+  const tasksSnap = await getDocs(tasksQ);
+  const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as Task));
+
+  // 4. Templates
+  const templates = await getUserTemplates(uid);
+
+  // 5. Workbook Answers
+  const wbQ = query(collection(database, 'users', uid, 'workbook_answers'));
+  const wbSnap = await getDocs(wbQ);
+  const workbookAnswers = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  return {
+    profile,
+    journals,
+    tasks,
+    templates,
+    workbookAnswers
+  };
+}
 '''
 
-sprint_board = r'''# 🏃 Active Sprint Board
-**Sprint:** 4.5.3 "Triage Execution"
-**Start Date:** 2026-02-26
-**Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
+profile_tsx_content = r'''/**
+ * src/pages/Profile.tsx
+ * GITHUB COMMENT:
+ * [Profile.tsx]
+ * FEAT: Implemented Onboarding Release Valve logic (Sprint 1 - Ticket 1.3).
+ * UX: Adapts UI to guide new users to complete their profile before accessing the Dashboard.
+ */
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { getProfile, updateProfileData } from '../lib/db';
+import { Timestamp } from 'firebase/firestore'; 
+import VibrantHeader from '../components/VibrantHeader'; 
+import DataManagement from '../components/profile/DataManagement';
+import { 
+  UserCircleIcon, 
+  ArrowLeftOnRectangleIcon,
+  UserGroupIcon
+} from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
+import { THEME } from '../lib/theme';
 
-## 🚧 Sprint 1: The Gates & Onboarding (Active)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link. (60/40 Asymmetrical Layout)
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view. (Tabbed UI)
-- [ ] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+export default function Profile() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
+  
+  const [displayName, setDisplayName] = useState('');
+  const [sobrietyDate, setSobrietyDate] = useState('');
+  const [sponsorName, setSponsorName] = useState('');
+  const [sponsorPhone, setSponsorPhone] = useState('');
 
-## 📌 Sprint 2: The Horizon & Identity (Planned)
-- [ ] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [ ] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
-- [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
-- [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [ ] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-## 📌 Sprint 3: The Core Polish (Planned)
-- [ ] **3.1 Journal Cache:** Fix UI state so journal edits appear without page refresh.
-- [ ] **3.2 Tasks UI:** Allow text wrapping for long Action Plan titles instead of truncation.
+  useEffect(() => {
+    async function loadProfile() {
+      if (user) {
+        const data = await getProfile(user.uid);
+        if (data) {
+          setDisplayName(data.displayName || user.displayName || '');
+          if (data.sobrietyDate) {
+            setSobrietyDate(data.sobrietyDate.toDate().toISOString().split('T')[0]);
+          }
+          setSponsorName(data.sponsorName || '');
+          setSponsorPhone(data.sponsorPhone || '');
+          
+          // DETECT ONBOARDING STATUS
+          if (!data.hasCompletedOnboarding) {
+              setIsOnboarding(true);
+          }
+        } else {
+          // If no profile document, they are definitely onboarding
+          setIsOnboarding(true);
+        }
+        setLoading(false);
+      }
+    }
+    loadProfile();
+  }, [user]);
 
-## ✅ Done (Previous Sprint)
-- [x] Gathered 13 bugs across Sector 1.
-- [x] Built Triage Generator script.
-- [x] Restructured VitePress Knowledge Base.
-'''
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
 
-# =============================================================================
-# 2. VITEPRESS USER GUIDE (docs-site/guide/)
-# =============================================================================
-guide_getting_started = r'''# 🚀 Getting Started: Account & Vault Setup
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
 
-Welcome to My Recovery Toolkit (MRT). We believe that the hardest work you do should be done in the safest place possible. 
+    setSaving(true);
+    setMessage(null);
 
-## The Onboarding Journey
-When you first create an account, MRT requires you to set up your basic identity profile.
-1. **Create Account:** Use Email/Password or Google Sign-In.
-2. **Profile Setup:** You will be automatically redirected to your Profile. You must enter your **Display Name** and your **Sobriety Date** to continue. *(The app uses your Sobriety Date to calculate milestones and gamification XP).*
-3. **Save:** Click "Save Changes" to unlock the Dashboard.
+    try {
+      let sobrietyTimestamp: Timestamp | null = null;
+      if (sobrietyDate) {
+          const [y, m, d] = sobrietyDate.split('-').map(Number);
+          const dateObj = new Date(y, m - 1, d);
+          sobrietyTimestamp = Timestamp.fromDate(dateObj);
+      }
+      
+      // ALWAYS SET ONBOARDING TO TRUE UPON SAVE
+      await updateProfileData(user.uid, {
+        displayName,
+        sobrietyDate: sobrietyTimestamp,
+        sponsorName,  
+        sponsorPhone,
+        hasCompletedOnboarding: true
+      });
 
-## 🔒 Securing Your Vault
-MRT uses **Zero-Knowledge Encryption**. This means your journals and workbook answers are mathematically scrambled on your device *before* they are sent to the cloud.
+      if (isOnboarding) {
+          // THE RELEASE VALVE: Send them to the dashboard!
+          navigate('/dashboard');
+      } else {
+          setMessage({ type: 'success', text: 'Profile updated successfully' });
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage({ type: 'error', text: 'Failed to update profile' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-1. Navigate to **Journal** or **Workbooks** in the sidebar.
-2. You will be prompted to create a **4-Digit PIN**.
-3. **WARNING:** We do not store this PIN. If you forget it, your encrypted data is permanently lost. There is no "Forgot Password" button for the Vault.
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
 
-> **💡 Pro Tip:** Your PIN is temporarily cached in your browser while the app is open so you don't have to type it on every page. Clicking "Lock Vault" in the sidebar instantly clears it from memory.
-'''
+  return (
+    <div className={`pb-24 min-h-screen ${THEME.profile.page}`}>
+      
+      <VibrantHeader 
+        title="My Profile"
+        subtitle={user?.email || ''}
+        icon={UserCircleIcon}
+        fromColor={THEME.profile.header.from}
+        viaColor={THEME.profile.header.via}
+        toColor={THEME.profile.header.to}
+      />
 
-guide_dashboard = r'''# 🌅 The Horizon Dashboard
+      <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">
+        
+        {isOnboarding && (
+          <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg animate-slideDown">
+              <h2 className="font-bold text-lg">Welcome to your Toolkit.</h2>
+              <p className="text-sm text-blue-100 mt-1">To get started, please tell us your name and your sobriety date. This helps us calculate your milestones and dashboard stats.</p>
+          </div>
+        )}
 
-Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
+        <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
+            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                {isOnboarding ? 'Required Setup' : 'Settings'}
+            </h3>
+            
+            {/* PERSONAL INFO */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Display Name {isOnboarding && <span className="text-red-500">*</span>}</label>
+                <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required={isOnboarding}
+                    placeholder="How should we address you?"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+            </div>
 
-## 1. Clean & Sober Time
-At the very top of your dashboard, your Sobriety Counter tracks your exact time in Years, Months, and Days based on the date set in your Profile. 
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Sobriety Date {isOnboarding && <span className="text-red-500">*</span>}</label>
+                <input
+                    type="date"
+                    value={sobrietyDate}
+                    onChange={(e) => setSobrietyDate(e.target.value)}
+                    required={isOnboarding}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                />
+                <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
+            </div>
 
-## 2. The Gamification Engine (XP & Rank)
-Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
-* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP based on priority), and logging vitality metrics.
-* **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
+            {/* SUPPORT NETWORK SECTION */}
+            <div className="pt-4 border-t border-gray-100">
+                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <UserGroupIcon className="h-4 w-4 text-emerald-600" /> Support Network
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Name</label>
+                        <input
+                            type="text"
+                            placeholder="Sponsor, Therapist, etc."
+                            value={sponsorName}
+                            onChange={(e) => setSponsorName(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
+                        <input
+                            type="tel"
+                            placeholder="+1 555-0199"
+                            value={sponsorPhone}
+                            onChange={(e) => setSponsorPhone(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                        />
+                        <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
+                    </div>
+                </div>
+            </div>
 
-## 3. The Bento Grid
-Quickly view your active streaks and completion rates:
-* **Journal:** View your consecutive day streak and weekly consistency.
-* **Quests (Tasks):** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
-* **Vitality:** View your biological regulation streak.
-* **Wisdom:** View your workbook mastery percentage.
-'''
+            {message && !isOnboarding && (
+            <div className={`p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {message.text}
+            </div>
+            )}
 
-guide_journal = r'''# 📖 The Vault (Journal & AI)
+            <div className="flex justify-end gap-3 pt-2">
+            <button
+                type="submit"
+                disabled={saving || (isOnboarding && (!displayName || !sobrietyDate))}
+                className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md active:scale-95"
+            >
+                {saving ? 'Saving...' : isOnboarding ? 'Complete Setup' : 'Save Changes'}
+            </button>
+            </div>
+        </form>
 
-The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**
+        {/* HIDE DATA MANAGEMENT DURING ONBOARDING TO PREVENT DISTRACTIONS */}
+        {!isOnboarding && (
+            <DataManagement />
+        )}
 
-## 1. Writing an Entry
-* **Text Mode:** Select a template (like "Morning Check-in" or "Urge Log") or free-write. 
-* **Voice-to-Vault:** Tap the Microphone icon to dictate your journal. The app uses Google Gemini to transcribe your audio, detect your mood, and auto-generate tags.
-* **Metadata:** Always slide the 1-10 Mood scale and add custom tags (e.g., `#Anxiety`, `#Meeting`) to help the AI track your patterns later.
+        <div className="border-t border-gray-200 pt-6">
+            <button
+            onClick={handleLogout}
+            className="w-full flex justify-center items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl font-semibold hover:bg-red-100 transition-colors"
+            >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            Log Out
+            </button>
+        </div>
 
-## 2. History & Search
-Navigate to the **History** tab to view past entries. 
-* Use the top search bar to filter by keyword or tag.
-* Click the "Share" icon on any card to decrypt it and copy it to your clipboard for a sponsor or therapist.
-
-## 3. Insights & Analytics
-Navigate to the **Insights** tab to view your data visually.
-* **Weekly Rhythm:** A bar chart comparing your average mood over the last 30 days vs the previous 30 days.
-* **Trend Arrow:** A quick visual indicator (Up/Down) showing your trajectory.
-* **Recurring Themes:** An interactive Word Cloud. Click any word in the cloud to instantly search your journal history for that specific topic!
-'''
-
-guide_tasks = r'''# 📋 The Ledger (Tasks & Habits)
-
-The Tasks module helps you build consistent routines and track actionable recovery steps.
-
-## Smart Tabs
-Your tasks are automatically routed into four distinct lanes to reduce overwhelm:
-1. **Today:** Tasks due today or earlier.
-2. **Upcoming:** Tasks scheduled for tomorrow or beyond.
-3. **Action Plan:** Tasks generated automatically by the AI Compass (indicated by a purple Sparkles icon).
-4. **Log:** Your history of completed tasks.
-
-## The "Smart Reset" System
-We don't believe in "Schedule Debt" or guilt. 
-* If you miss a daily recurring habit (like "Morning Meditation"), MRT doesn't leave it in the past. 
-* It automatically drops your current streak to 0 (a gentle penalty) and **moves the due date to Today** so you can try again immediately.
-
-## Creating a Task
-Click the floating `+` button to add a task. You can set Priorities (High, Medium, Low) and advanced Recurring schedules (e.g., "The Last Friday of every month").
-'''
-
-guide_vitality = r'''# ❤️ The Pulse (Vitality & Breathwork)
-
-Somatic regulation—managing your physical body—is critical to preventing emotional relapse. The Vitality module tracks three pillars of physical health.
-
-## The Bio-Rhythm Score
-At the top of the screen, you will see a percentage ring. Logging an activity in any of the three categories below adds 33.3% to your daily score. Aim for 100% every day!
-
-## 1. Movement
-Log physical activities (Walking, Gym, Yoga) along with the duration and intensity. 
-
-## 2. Fuel (Nutrition)
-A mindful eating tracker. Log your meals and identify if your hunger was *Physical*, *Emotional*, *Boredom*, or just *Habit*. Includes a quick-tap Hydration (H2O) counter.
-
-## 3. Breathwork (4-7-8 Pacer)
-A real-time visual tool to de-escalate anxiety and lower your heart rate.
-* Tap **Start** to begin the pacer.
-* Follow the visual ring: **Inhale for 4s**, **Hold for 7s**, **Exhale for 8s**.
-* You must complete at least one full cycle to log the session to your history.
-'''
-
-guide_workbooks = r'''# 🧭 The Library & The Compass
-
-The Workbooks module provides structured, deep-dive recovery literature (like the 12-Steps and Recovery Dharma). **All answers are Zero-Knowledge Encrypted.**
-
-## Zen Mode & Auto-Save
-* When you open a section, the app enters a distraction-free reading mode.
-* As you type your answers, look at the top right of the screen. The app **Auto-Saves** and encrypts your work every 2 seconds.
-
-## AI Coaching
-Stuck on a tough question (like Step 4 resentments)? Type your initial thoughts, then click the **"AI Insight"** button in the sticky toolbar. The Recovery Coach will provide gentle, specific feedback to help you dig deeper.
-
-## Asking the Compass
-From the main Workbook menu, click the floating **"Consult Compass"** button.
-1. Select a specific section (e.g., Step 1), or the entire workbook.
-2. The AI will decrypt your answers in-memory, analyze them, and generate a comprehensive Wisdom Report highlighting your **Strengths**, **Blind Spots**, and a 3-step **Action Plan**.
-3. Click the `+` icon next to any Action Plan item to instantly add it to your Tasks ledger!
-'''
-
-guide_account_data = r'''# ☁️ Data Export & Cloud Sync
-
-You own your recovery data. MRT provides multiple ways to ensure you never lose it, even if you lose your phone.
-
-## 1. Google Drive Auto-Sync
-If you created your account using **Google Sign-In**, MRT can automatically back up your data.
-* Ensure your Vault is unlocked.
-* Every 7 days, the app will silently compile a JSON backup of your data and save it to your personal Google Drive in the background.
-* *Note: This backup is unencrypted so you can always read it outside the app.*
-
-## 2. Manual Export
-You can manually export your data at any time from the **Profile -> Data Management** section.
-* **JSON Backup:** A raw data file containing your entire history.
-* **PDF Document:** A beautifully formatted, readable document containing your Journals and Tasks. Perfect for printing and bringing to a therapy session.
-
-## 3. Import Legacy Data
-If you have a JSON backup file, you can upload it here to merge old entries into your current timeline.
-
-## 4. Account Deletion
-You have the "Right to be Forgotten." Clicking **Log Out** at the bottom of your profile signs you out. If you wish to permanently destroy your account and wipe all data from our servers, contact support or use the deletion tools (coming soon).
+        <div className="text-center text-xs text-gray-400 font-mono">
+            App Version: v{appVersion}
+        </div>
+      </div>
+    </div>
+  );
+}
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    # Ensure markdown backticks remain intact
+    # Use standard string replace for markdown protection protocol
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Synced: {path}")
+    print(f"✅ Updated: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Documentation Sync Protocol...")
-    
-    # 1. Update Specs & Sprint Board
-    write_file("docs/specs/17_ONBOARDING.md", spec_onboarding)
-    write_file("docs/SPRINT_BOARD.md", sprint_board)
-    
-    # 2. Update VitePress User Guides
-    write_file("docs-site/guide/01-getting-started.md", guide_getting_started)
-    write_file("docs-site/guide/02-dashboard.md", guide_dashboard)
-    write_file("docs-site/guide/03-journal-and-ai.md", guide_journal)
-    write_file("docs-site/guide/04-tasks-habits.md", guide_tasks)
-    write_file("docs-site/guide/05-vitality.md", guide_vitality)
-    write_file("docs-site/guide/06-workbooks.md", guide_workbooks)
-    write_file("docs-site/guide/07-account-data.md", guide_account_data)
-    
-    print("✨ Documentation successfully aligned with Codebase Reality.")
+    write_file("src/lib/db.ts", db_ts_content)
+    write_file("src/pages/Profile.tsx", profile_tsx_content)
+    print("✨ Onboarding Release Valve deployed successfully.")
