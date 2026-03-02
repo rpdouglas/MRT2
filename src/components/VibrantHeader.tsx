@@ -2,7 +2,7 @@
  * src/components/VibrantHeader.tsx
  * GITHUB COMMENT:
  * [VibrantHeader.tsx]
- * UX: Refactored grid layout to flex-1 anchor pattern for perfect title centering (Ticket 2.1).
+ * UX: Added global symmetry by mirroring the icon on the right side of the title (Ticket 2.3).
  */
 import { useLayout } from '../contexts/LayoutContext';
 import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
@@ -111,8 +111,10 @@ export default function VibrantHeader({
         {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
         <div className="shrink-0 flex flex-col items-center text-center px-2">
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
+            {/* MIRRORED ICONS */}
             {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
             {title}
+            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
           </h1>
           <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide">
             {subtitle}
