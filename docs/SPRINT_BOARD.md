@@ -3,14 +3,14 @@
 **Start Date:** 2026-02-26
 **Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
 
-## 🚧 Sprint 1: The Gates & Onboarding (Active)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link. (60/40 Asymmetrical Layout)
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view. (Tabbed UI)
-- [ ] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+## ✅ Sprint 1: The Gates & Onboarding (Completed)
+- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
+- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
+- [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
 
-## 📌 Sprint 2: The Horizon & Identity (Planned)
+## 🟡 Sprint 2: The Horizon & Identity (Active)
 - [ ] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [ ] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
+- [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
 - [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
 - [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
 - [ ] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
