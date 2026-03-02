@@ -1,7 +1,7 @@
-# 🔍 Documentation Consistency Audit Prompt
+# 🔍 Documentation Consistency Audit Prompt (v2.0)
 
 **Trigger:** Run this before closing a major Sprint or Release.
-**Goal:** Ensure the "Map" (Docs) matches the "Territory" (Code).
+**Goal:** Ensure the "Map" (Docs) perfectly matches the "Territory" (Code).
 
 ---
 
@@ -9,22 +9,26 @@
 
 **Input:**
 1.  **Codebase Dump:** I will provide the full `src/`, `docs/`, and `docs-site/` directories.
-2.  **Context:** We just finished [INSERT SPRINT GOAL, e.g., "Stabilizing Gamification"].
+2.  **Context:** We just finished [INSERT SPRINT GOAL, e.g., "Sprint 1: The Gates & Onboarding"].
 
 **Your Task:**
-Perform a "Drift Detection" analysis. Compare every Specification file in `docs/specs/` and User Guide file in `docs-site/` against its corresponding React Component/Hook in `src/`.
+Perform a strict "Drift Detection" analysis. You must cross-reference our documentation sources of truth against the actual living code.
 
-**The Checklist:**
-1.  **Logic Drift:** Does the spec/guide describe logic (e.g., "Daily reset") that was changed in the code (e.g., "Lazy evaluation")?
-2.  **Schema Drift:** Does the spec list Firestore fields that were renamed or removed?
-3.  **Missing Features:** Does the code contain new buttons/features (e.g., "Export PDF") not mentioned in the spec/guide?
-4.  **Stale Roadmaps:** Is `docs/ROADMAP.md` showing completed features as "Planned"?
+**The 4-Point Checklist:**
+1.  **Technical Spec Drift (`docs/specs/`):** Do the technical specifications accurately reflect the current React components, hooks, and Firebase logic? (e.g., Did we change a layout? Did we change terminology from "Quests" to "Tasks"?)
+2.  **User Guide Drift (`docs-site/`):** Do the VitePress user guides accurately reflect the current UI? Are there new buttons, tabs, or features that the user needs to know about? Are there placeholder stubs (`🚧`) that need real content?
+3.  **Schema Drift (`docs/SCHEMA_ARCHITECTURE.md`):** Does the documented database schema perfectly match the actual interfaces defined in `src/lib/db.ts`?
+4.  **Project Management Drift (`docs/SPRINT_BOARD.md`, `docs/ROADMAP.md`):** Are completed tickets properly checked off (`[x]`)? Have we advanced to a new Sprint or QA Sector?
 
-**Output Format:**
+**Phase 1: The Audit Report**
 Produce a table of discrepancies:
 | Document | Code Reference | Discrepancy | Suggested Fix |
 | :--- | :--- | :--- | :--- |
-| `05_TASKS.md` | `tasks.ts` | Spec says "Cron Job", Code uses "Lazy Eval" | Rewrite Section 2 of Spec |
+| `docs/specs/05_TASKS.md` | `tasks.ts` | Spec uses "Quests", Code uses "Tasks" | Rewrite terminology |
 
-**Verification:**
-After the analysis, generate a **Python script** (`scripts/sync_docs.py`) using `r"""` raw strings to automatically update the markdown files with the corrected text. Remember to use the ````` placeholder for backticks in Markdown strings!
+**Phase 2: The Synchronization Script**
+After presenting the analysis, generate a **Python script** (`scripts/sync_docs.py`) to automatically update the markdown files with the corrected text. 
+
+**Strict Scripting Constraints:**
+* **Full Files Only:** You must provide the *entire* content of the updated Markdown files in your string variables. No summarizing or `// ... rest of content`.
+* **Markdown Protection (CRITICAL):** Because Markdown files contain backticks for code blocks (e.g., ````typescript`), you MUST use `~~~` as a placeholder for all backticks in your raw Python string, and explicitly include `.replace('~~~', '```')` in the file-writing execution block to prevent Python string parsing errors.

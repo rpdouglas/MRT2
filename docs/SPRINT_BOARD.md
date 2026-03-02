@@ -9,7 +9,7 @@
 - [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
 
 ## 🟡 Sprint 2: The Horizon & Identity (Active)
-- [ ] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
+- [x] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
 - [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
 - [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
 - [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
