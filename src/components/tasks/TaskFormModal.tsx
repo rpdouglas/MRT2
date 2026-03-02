@@ -1,3 +1,9 @@
+/**
+ * src/components/tasks/TaskFormModal.tsx
+ * GITHUB COMMENT:
+ * [TaskFormModal.tsx]
+ * UX: Rebranded "Quest" terminology to "Task" for a professional ledger feel (Ticket 2.1).
+ */
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
@@ -27,7 +33,6 @@ interface IncomingTask {
     title: string;
     category?: CategoryType;
     priority: PriorityType;
-    // SURGICAL FIX: Made dueDate optional (?) to match the Task interface from db.ts
     dueDate?: Timestamp | Date | null; 
     recurrence?: RecurrenceConfig;
     frequency?: string; 

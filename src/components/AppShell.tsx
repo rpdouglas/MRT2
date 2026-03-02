@@ -1,7 +1,8 @@
 /**
  * src/components/AppShell.tsx
- * UPDATED: Integrated FeedbackModal for User Testing.
- * CONTEXT: PROJ-02 (Service Module) Preparation / QA Phase.
+ * GITHUB COMMENT:
+ * [AppShell.tsx]
+ * UX: Updated sidebar title to "My Recovery Toolkit" to match brand guidelines (Ticket 2.1).
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -147,11 +148,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
             >
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-gradient-to-b from-blue-700 to-blue-900 transition-all shadow-2xl">
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
-                   <div className="flex items-center gap-3 text-white font-bold text-lg tracking-tight">
-                      <div className="bg-white/10 p-1.5 rounded-lg">
-                        <img src="/favicon-32x32.png" alt="" className="h-6 w-6" />
+                   <div className="flex items-center gap-3 text-white font-bold text-[17px] tracking-tight whitespace-nowrap">
+                      <div className="bg-white/10 p-1.5 rounded-lg shrink-0">
+                        <img src="/favicon-32x32.png" alt="MRT Logo" className="h-6 w-6" />
                       </div>
-                      Recovery Toolkit
+                      My Recovery Toolkit
                    </div>
                    <button onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5 text-blue-200 hover:text-white transition-colors">
                     <span className="sr-only">Close sidebar</span>
