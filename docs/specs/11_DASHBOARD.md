@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v1.5) -> Updating to v2.0 (Sprint 2)
+**Status:** Live (v2.1)
 **Architecture:** Client-Side Aggregator
 **Primary Code:** `src/pages/Dashboard.tsx`
 
@@ -11,7 +11,7 @@ The Dashboard is the central landing page. It does not store its own data; inste
 
 ### A. Data Aggregation
 The Dashboard executes 4 concurrent queries on mount:
-1.  **Profile:** Fetches `sobrietyDate` and `lastExportAt`.
+1.  **Profile:** Fetches `sobrietyDate`, `displayName` (for reactivity), and `lastExportAt`.
 2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
 3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
 4.  **Workbooks:** Fetches answer count for "Wisdom" score.
@@ -30,14 +30,14 @@ Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Eng
 * **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
 
 ## 3. UI Components
-* **Floating Hero:** Displays "Clean Time" (Years/Months/Days). *Sprint 2 update: XP Tracker and Level progress bar moved here from the bottom card.*
-* **Bento Grid:** 6-quadrant layout linking to core modules with live stats:
-  * Journal
-  * Tasks
-  * Vitality
-  * Workbooks
-  * Service Portal (Placeholder UI)
-  * Recovery Games (Placeholder UI)
+* **Header:** True flex-centered `VibrantHeader` displaying "Welcome back, {Name}".
+* **Floating Hero:** Displays "Clean Time" (Years/Months/Days) in an asymmetrical textured card.
+* **Bento Grid:** 4-quadrant layout linking to core modules with live stats:
+  * Journal (Streak & Consistency)
+  * Tasks/Habits (Rate & Fire Score)
+  * Vitality (Bio-Streak & Logs)
+  * Wisdom (Mastery % & Total Score)
+* **Rank Card (Bottom):** Glassmorphism card displaying current Level, Archetype, and XP Progress Bar.
 
 ## 4. Verification Checklist
 * [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
