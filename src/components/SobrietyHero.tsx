@@ -2,7 +2,7 @@
  * src/components/SobrietyHero.tsx
  * GITHUB COMMENT:
  * [SobrietyHero.tsx]
- * UX: Density overhaul. Reduced padding, applied leading-none to massive text, and tightened margins to eliminate dead space (Ticket 2.3).
+ * UX: Scaled up gamification and total days text sizes. Mirrored calendar icon for visual balance (Ticket 2.3).
  */
 import { useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -66,8 +66,8 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                 {levelData && archetype && (
                     <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
                         
-                        {/* Gamification Stats (Single Row) */}
-                        <div className="flex justify-between items-end text-[10px] sm:text-xs font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                        {/* Gamification Stats (Single Row - SCALED UP) */}
+                        <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
                             {/* Left: Rank & Level */}
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <span className="truncate">Rank: {archetype}</span>
@@ -92,10 +92,11 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                             </div>
                         </div>
 
-                        {/* Total Days */}
-                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium drop-shadow-sm opacity-90">
-                            <CalendarDaysIcon className="h-3.5 w-3.5" />
+                        {/* Total Days (SCALED UP & MIRRORED ICONS) */}
+                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <CalendarDaysIcon className="h-4 w-4" />
                             <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                            <CalendarDaysIcon className="h-4 w-4" />
                         </div>
                     </div>
                 )}

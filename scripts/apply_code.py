@@ -4,7 +4,7 @@ sobriety_hero_tsx_content = r'''/**
  * src/components/SobrietyHero.tsx
  * GITHUB COMMENT:
  * [SobrietyHero.tsx]
- * UX: Density overhaul. Reduced padding, applied leading-none to massive text, and tightened margins to eliminate dead space (Ticket 2.3).
+ * UX: Scaled up gamification and total days text sizes. Mirrored calendar icon for visual balance (Ticket 2.3).
  */
 import { useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -68,8 +68,8 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                 {levelData && archetype && (
                     <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
                         
-                        {/* Gamification Stats (Single Row) */}
-                        <div className="flex justify-between items-end text-[10px] sm:text-xs font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                        {/* Gamification Stats (Single Row - SCALED UP) */}
+                        <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
                             {/* Left: Rank & Level */}
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <span className="truncate">Rank: {archetype}</span>
@@ -94,10 +94,11 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                             </div>
                         </div>
 
-                        {/* Total Days */}
-                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium drop-shadow-sm opacity-90">
-                            <CalendarDaysIcon className="h-3.5 w-3.5" />
+                        {/* Total Days (SCALED UP & MIRRORED ICONS) */}
+                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <CalendarDaysIcon className="h-4 w-4" />
                             <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                            <CalendarDaysIcon className="h-4 w-4" />
                         </div>
                     </div>
                 )}
@@ -111,7 +112,6 @@ def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    # Use standard string replace for markdown protection protocol
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
@@ -119,4 +119,4 @@ def write_file(path, content):
 
 if __name__ == "__main__":
     write_file("src/components/SobrietyHero.tsx", sobriety_hero_tsx_content)
-    print("✨ Density overhaul complete.")
+    print("✨ Hero Card text scaling and icon mirroring complete.")
