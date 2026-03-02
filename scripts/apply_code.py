@@ -1,123 +1,480 @@
 import os
 
-# =============================================================================
-# 1. PROJECT MANAGEMENT
-# =============================================================================
-sprint_board = r'''# 🏃 Active Sprint Board
-**Sprint:** 4.5.3 "Triage Execution"
-**Start Date:** 2026-02-26
-**Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
+sobriety_hero_tsx_content = r'''/**
+ * src/components/SobrietyHero.tsx
+ * GITHUB COMMENT:
+ * [SobrietyHero.tsx]
+ * FEAT: Consolidated Gamification XP, Level, and Archetype into the Hero component (Ticket 2.3).
+ */
+import { useMemo, useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
+import { TrophyIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { RECOVERY_SLOGANS } from '../data/slogans';
 
-## ✅ Sprint 1: The Gates & Onboarding (Completed)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
-- [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+interface SobrietyHeroProps {
+    date?: Timestamp | Date | null;
+    levelData?: {
+        level: number;
+        currentXP: number;
+        nextLevelXP: number;
+        progressPercent: number;
+    };
+    archetype?: string;
+}
 
-## 🟡 Sprint 2: The Horizon & Identity (Active)
-- [x] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
-- [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
-- [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [ ] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+export default function SobrietyHero({ date, levelData, archetype }: SobrietyHeroProps) {
+    // 1. Calculate Time Stats
+    const stats = useMemo(() => {
+        if (!date) return null;
+        const startDate = date instanceof Date ? date : date.toDate();
+        return calculateSobrietyDuration(startDate);
+    }, [date]);
 
-## 📌 Sprint 3: The Core Polish (Planned)
-- [ ] **3.1 Journal Cache:** Fix UI state so journal edits appear without page refresh.
-- [ ] **3.2 Tasks UI:** Allow text wrapping for long Action Plan titles instead of truncation.
+    // 2. Select Random Slogan (Lazy State Initialization)
+    const [slogan] = useState(() => {
+        const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
+        return RECOVERY_SLOGANS[randomIndex];
+    });
 
-## ✅ Done (Previous Sprint)
-- [x] Gathered 13 bugs across Sector 1.
-- [x] Built Triage Generator script.
-- [x] Restructured VitePress Knowledge Base.
+    if (!stats) {
+        return (
+            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-[2rem] p-6 text-center text-white shadow-xl shadow-orange-500/20 border border-white/20">
+                <div className="opacity-90 mb-2 font-bold uppercase tracking-widest text-xs drop-shadow-sm">Begin the Journey</div>
+                <p className="text-sm font-medium drop-shadow-sm">Set your sobriety date in Profile to track your freedom.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-[2rem] p-4 sm:p-6 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
+            {/* Dynamic Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            {/* Decorative Glow */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-300 opacity-20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
+
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                {/* Header: Random Slogan */}
+                <div className="flex justify-center items-center mb-6">
+                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-sm">
+                        <TrophyIcon className="h-5 w-5 text-white drop-shadow-md" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">
+                            {slogan}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Main Counters */}
+                <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/30">
+                    <div className="px-2">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md">{stats.years}</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Years</div>
+                    </div>
+                    <div className="px-2">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md">{stats.months}</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Months</div>
+                    </div>
+                    <div className="px-2">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md">{stats.days}</div>
+                        <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Days</div>
+                    </div>
+                </div>
+
+                {/* Unified Footer: Gamification & Total Days */}
+                {levelData && archetype && (
+                    <div className="mt-6 pt-5 border-t border-white/20">
+                        <div className="flex justify-between items-end mb-3">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-90 mb-0.5">
+                                    Rank: {archetype}
+                                </span>
+                                <div className="text-2xl font-black leading-none drop-shadow-sm">
+                                    Level {levelData.level}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[10px] font-bold uppercase tracking-widest opacity-90 mb-0.5">
+                                    Progress
+                                </div>
+                                <div className="text-xs font-bold font-mono drop-shadow-sm">
+                                    {levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Shimmer Progress Bar */}
+                        <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-white transition-all duration-1000 ease-out relative"
+                                style={{ width: `${levelData.progressPercent}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
+
+                        {/* Total Days */}
+                        <div className="mt-4 flex items-center justify-center gap-2 text-xs font-medium drop-shadow-sm opacity-90">
+                            <CalendarDaysIcon className="h-4 w-4" />
+                            <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 '''
 
-# =============================================================================
-# 2. TECHNICAL SPECIFICATIONS
-# =============================================================================
-spec_dashboard = r'''# 📐 Feature Spec: Dashboard (The Hub)
+dashboard_tsx_content = r'''/**
+ * src/pages/Dashboard.tsx
+ * GITHUB COMMENT:
+ * [Dashboard.tsx]
+ * FEAT: Consolidated Dashboard UI (Ticket 2.3). Merged Gamification into Hero Card.
+ * FEAT: Expanded Bento grid to 6 quadrants, introducing Service Portal and Games placeholders.
+ */
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  Timestamp,
+  type Firestore 
+} from 'firebase/firestore';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  calculateJournalStats, 
+  calculateTaskStats, 
+  calculateWorkbookStats, 
+  calculateVitalityStats,
+  calculateUserLevel
+} from '../lib/gamification';
+import VibrantHeader from '../components/VibrantHeader';
+import SobrietyHero from '../components/SobrietyHero';
+import { 
+  HomeIcon, 
+  FireIcon, 
+  ChartBarIcon, 
+  SparklesIcon, 
+  HeartIcon, 
+  ArrowDownTrayIcon,
+  UserGroupIcon,
+  PuzzlePieceIcon
+} from '@heroicons/react/24/outline';
+import { THEME } from '../lib/theme';
 
-**Status:** Live (v2.1)
-**Architecture:** Client-Side Aggregator
-**Primary Code:** `src/pages/Dashboard.tsx`
+const TOTAL_WORKBOOK_QUESTIONS = 45;
 
-## 1. Overview
-The Dashboard is the central landing page. It does not store its own data; instead, it queries all other modules (Journal, Tasks, Workbooks, Profile) to generate a real-time "Health Snapshot" of the user's recovery.
+export default function Dashboard() {
+  const { user } = useAuth();
+  
+  // --- QUERY 1: USER PROFILE ---
+  const { data: userProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return null;
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+        return snap.exists() ? snap.data() : null;
+    },
+    enabled: !!user,
+    refetchOnMount: 'always', 
+  });
 
-## 2. Technical Architecture
+  // --- QUERY 2: JOURNALS ---
+  const { data: journals = [], isLoading: journalLoading } = useQuery({
+    queryKey: ['journals', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return [];
+        const database: Firestore = db;
+        const q = query(
+            collection(database, 'journals'), 
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({
+            ...d.data(),
+            createdAt: d.data().createdAt
+        }));
+    },
+    enabled: !!user,
+    refetchOnMount: 'always', 
+  });
 
-### A. Data Aggregation
-The Dashboard executes 4 concurrent queries on mount:
-1.  **Profile:** Fetches `sobrietyDate`, `displayName` (for reactivity), and `lastExportAt`.
-2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
-3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
-4.  **Workbooks:** Fetches answer count for "Wisdom" score.
+  // --- QUERY 3: TASKS ---
+  const { data: tasks = [], isLoading: taskLoading } = useQuery({
+    queryKey: ['tasks', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return [];
+        const database: Firestore = db;
+        const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => d.data());
+    },
+    enabled: !!user,
+    refetchOnMount: 'always', 
+  });
 
-**Performance Note:** Queries are set to `refetchOnMount: 'always'` to ensure gamification stats update immediately after a user performs an action in another tab.
+  // --- QUERY 4: WORKBOOKS ---
+  const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
+    queryKey: ['workbooks', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return 0;
+        const database: Firestore = db;
+        const q = query(collection(database, 'users', user.uid, 'workbook_answers'));
+        const snap = await getDocs(q);
+        return snap.size;
+    },
+    enabled: !!user,
+    refetchOnMount: 'always', 
+  });
 
-### B. The Calculation Engine
-Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Engine** (`src/lib/gamification.ts`) to derive:
-* **User Level:** Based on total XP from all sources.
-* **Archetype:** (Scholar, Doer, Monk, etc.) based on activity distribution.
-* **Streaks:** Current consecutive activity chains.
+  // --- CALCULATE STATS ---
+  const stats = useMemo(() => {
+    if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
-### C. The Backup Sentinel
-* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`.
-* **Trigger:** If > 7 days since last export.
-* **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
+    let daysClean = 0;
+    if (userProfile?.sobrietyDate) {
+        const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
+        const diffTime = Math.abs(new Date().getTime() - start.getTime());
+        daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
 
-## 3. UI Components
-* **Header:** True flex-centered `VibrantHeader` displaying "Welcome back, {Name}".
-* **Floating Hero:** Displays "Clean Time" (Years/Months/Days) in an asymmetrical textured card.
-* **Bento Grid:** 4-quadrant layout linking to core modules with live stats:
-  * Journal (Streak & Consistency)
-  * Tasks/Habits (Rate & Fire Score)
-  * Vitality (Bio-Streak & Logs)
-  * Wisdom (Mastery % & Total Score)
-* **Rank Card (Bottom):** Glassmorphism card displaying current Level, Archetype, and XP Progress Bar.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const jStats = calculateJournalStats(journals as any);
+    const tStats = calculateTaskStats(tasks as any);
+    const wStats = calculateWorkbookStats(workbookCount, TOTAL_WORKBOOK_QUESTIONS);
+    const vStats = calculateVitalityStats(journals as any);
+    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean);
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
-## 4. Verification Checklist
-* [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
-* [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
-* [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
-* [ ] **Reactivity:** Does changing the display name in the Profile instantly update the greeting on the Dashboard?
-'''
+    const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
+    
+    // eslint-disable-next-line react-hooks/purity
+    const nowMs = Date.now(); 
+    const showBackup = !lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000);
 
-# =============================================================================
-# 3. USER GUIDE
-# =============================================================================
-guide_dashboard = r'''# 🌅 The Horizon Dashboard
+    return {
+        journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
+        task: { rate: tStats.completionRate, fire: tStats.habitFire },
+        workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
+        vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
+        level,
+        showBackup
+    };
+  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading]);
 
-Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
+  const loading = journalLoading || taskLoading || workbookLoading || profileLoading;
 
-## 1. Clean & Sober Time
-At the top of your dashboard, your Sobriety Counter tracks your exact time in Years, Months, and Days based on the date set in your Profile. 
+  if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
-## 2. The Bento Grid
-Quickly view your active streaks and completion rates across your core pillars:
-* **Journal:** View your consecutive day streak and weekly consistency.
-* **Tasks:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
-* **Vitality:** View your biological regulation streak.
-* **Wisdom:** View your workbook mastery percentage.
+  const firstName = (userProfile?.displayName || user?.displayName || 'Friend').split(' ')[0];
 
-## 3. The Gamification Engine (XP & Rank)
-Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
-* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP based on priority), and logging vitality metrics.
-* **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
-* **Leveling Up:** As you earn XP, your rank will increase. Your current rank and progress to the next level are displayed at the bottom of the Dashboard.
+  return (
+    <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
+      
+      {/* 1. FIXED HEADER */}
+      <div className="flex-shrink-0 z-10">
+        <VibrantHeader 
+            title="Dashboard" 
+            subtitle={`Welcome back, ${firstName}`}
+            icon={HomeIcon}
+            fromColor={THEME.dashboard.header.from}
+            viaColor={THEME.dashboard.header.via}
+            toColor={THEME.dashboard.header.to}
+        />
+      </div>
+
+      {/* 2. FLOATING HERO: Clean Time + Gamification Unified */}
+      <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
+         <SobrietyHero 
+            date={userProfile?.sobrietyDate} 
+            levelData={stats.level.levelData}
+            archetype={stats.level.archetype}
+         />
+      </div>
+
+      {/* 3. SCROLLABLE CONTENT */}
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+        
+        {/* Backup Alert */}
+        {stats.showBackup && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <div className="bg-amber-100 p-2 rounded-full text-amber-700">
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </div>
+              <div className="text-xs text-amber-900">
+                <strong>Backup Needed:</strong> It's been a week since your last save.
+              </div>
+            </div>
+            <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
+          </div>
+        )}
+
+        {/* 6-TILE BENTO GRID */}
+        <div className="grid grid-cols-2 gap-4">
+            
+            {/* 1. JOURNAL */}
+            <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <ChartBarIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <ChartBarIcon className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.journal.streak}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Consistency</span>
+                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
+                    </div>
+                </div>
+            </Link>
+
+            {/* 2. HABITS */}
+            <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <FireIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <FireIcon className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.task.fire}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Rate</span>
+                        <span className="text-base font-bold">{stats.task.rate}%</span>
+                    </div>
+                </div>
+            </Link>
+
+            {/* 3. VITALITY */}
+            <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <HeartIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <HeartIcon className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Logs</span>
+                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
+                    </div>
+                </div>
+            </Link>
+
+            {/* 4. WISDOM */}
+            <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <SparklesIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <SparklesIcon className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
+                        <span className="text-base font-bold opacity-75">Score</span>
+                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
+                    </div>
+                </div>
+            </Link>
+
+            {/* 5. SERVICE PORTAL (Placeholder) */}
+            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
+                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
+                    <UserGroupIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
+                            <UserGroupIcon className="h-4 w-4 text-slate-500" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider">Service</span>
+                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
+                        Coming Soon
+                    </div>
+                    <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
+                </div>
+            </div>
+
+            {/* 6. RECOVERY GAMES (Placeholder) */}
+            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
+                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
+                    <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
+                            <PuzzlePieceIcon className="h-4 w-4 text-slate-500" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider">Games</span>
+                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
+                        Coming Soon
+                    </div>
+                    <p className="text-[10px] leading-tight pr-2">Map triggers & rewire pathways.</p>
+                </div>
+            </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    # Ensure markdown backticks remain intact using the protection protocol
+    # Ensure markdown backticks remain intact
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Synced: {path}")
+    print(f"✅ Updated UI: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Documentation Sync Protocol (v2.0)...")
-    write_file("docs/SPRINT_BOARD.md", sprint_board)
-    write_file("docs/specs/11_DASHBOARD.md", spec_dashboard)
-    write_file("docs-site/guide/02-dashboard.md", guide_dashboard)
-    print("✨ Documentation perfectly aligned with codebase.")
+    write_file("src/components/SobrietyHero.tsx", sobriety_hero_tsx_content)
+    write_file("src/pages/Dashboard.tsx", dashboard_tsx_content)
+    print("✨ Dashboard successfully consolidated into unified Identity layout.")
