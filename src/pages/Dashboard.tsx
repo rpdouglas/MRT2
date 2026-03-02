@@ -2,10 +2,9 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * FEAT: Consolidated Dashboard UI (Ticket 2.3). Merged Gamification into Hero Card.
- * FEAT: Expanded Bento grid to 6 quadrants, introducing Service Portal and Games placeholders.
+ * UX: Moved recovery slogan into VibrantHeader subtitle. Cleaned up unused variables (Ticket 2.3).
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -41,12 +40,19 @@ import {
   PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
+import { RECOVERY_SLOGANS } from '../data/slogans';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
   const { user } = useAuth();
   
+  // Lazy init the daily slogan
+  const [slogan] = useState(() => {
+      const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
+      return RECOVERY_SLOGANS[randomIndex];
+  });
+
   // --- QUERY 1: USER PROFILE ---
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -148,8 +154,6 @@ export default function Dashboard() {
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
-  const firstName = (userProfile?.displayName || user?.displayName || 'Friend').split(' ')[0];
-
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
       
@@ -157,7 +161,7 @@ export default function Dashboard() {
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard" 
-            subtitle={`Welcome back, ${firstName}`}
+            subtitle={slogan}
             icon={HomeIcon}
             fromColor={THEME.dashboard.header.from}
             viaColor={THEME.dashboard.header.via}
