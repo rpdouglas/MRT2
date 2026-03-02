@@ -1,150 +1,110 @@
 import os
 
-vibrantheader_tsx_content = r'''/**
- * src/components/VibrantHeader.tsx
+sobriety_hero_tsx_content = r'''/**
+ * src/components/SobrietyHero.tsx
  * GITHUB COMMENT:
- * [VibrantHeader.tsx]
- * UX: Added global symmetry by mirroring the icon on the right side of the title (Ticket 2.3).
+ * [SobrietyHero.tsx]
+ * UX: Micro-margin squeeze. Reduced grid gaps and padding around date numbers to eliminate final dead space (Ticket 2.3).
  */
-import { useLayout } from '../contexts/LayoutContext';
-import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
-import type { ElementType } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { Timestamp } from 'firebase/firestore';
+import { CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { calculateSobrietyDuration } from '../lib/dateUtils';
 
-interface VibrantHeaderProps {
-  title: string;
-  subtitle: string;
-  icon?: ElementType;
-  fromColor: string; // e.g. "from-blue-600"
-  viaColor: string;  // e.g. "via-indigo-600"
-  toColor: string;   // e.g. "to-purple-600"
-  percentage?: number;
-  percentageColor?: string;
-  backLink?: string; 
+interface SobrietyHeroProps {
+    date?: Timestamp | Date | null;
+    levelData?: {
+        level: number;
+        currentXP: number;
+        nextLevelXP: number;
+        progressPercent: number;
+    };
+    archetype?: string;
 }
 
-const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
-  const radius = 24; // Slightly smaller for the compact header
-  const stroke = 4;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+export default function SobrietyHero({ date, levelData, archetype }: SobrietyHeroProps) {
+    // Calculate Time Stats
+    const stats = useMemo(() => {
+        if (!date) return null;
+        const startDate = date instanceof Date ? date : date.toDate();
+        return calculateSobrietyDuration(startDate);
+    }, [date]);
 
-  return (
-    <div className="relative flex items-center justify-center">
-      <svg
-        height={radius * 2}
-        width={radius * 2}
-        className="transform -rotate-90"
-      >
-        <circle
-          stroke="rgba(255,255,255,0.2)"
-          strokeWidth={stroke}
-          fill="transparent"
-          r={normalizedRadius}
-          cx={radius}
-          cy={radius}
-        />
-        <circle
-          stroke={colorHex || "currentColor"}
-          strokeWidth={stroke}
-          strokeDasharray={circumference + ' ' + circumference}
-          style={{ strokeDashoffset, transition: "stroke-dashoffset 1s ease-out" }}
-          strokeLinecap="round"
-          fill="transparent"
-          r={normalizedRadius}
-          cx={radius}
-          cy={radius}
-          className={!colorHex ? "text-white" : ""} 
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center">
-        <span className="text-[10px] font-bold text-white drop-shadow-sm">
-          {Math.round(percentage)}%
-        </span>
-      </div>
-    </div>
-  );
-};
+    if (!stats) {
+        return (
+            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-center text-white shadow-xl shadow-orange-500/20 border border-white/20">
+                <div className="opacity-90 mb-1.5 font-bold uppercase tracking-widest text-xs drop-shadow-sm">Begin the Journey</div>
+                <p className="text-sm font-medium drop-shadow-sm">Set your sobriety date in Profile to track your freedom.</p>
+            </div>
+        );
+    }
 
-export default function VibrantHeader({
-  title,
-  subtitle,
-  icon: Icon,
-  fromColor,
-  viaColor,
-  toColor,
-  percentage,
-  percentageColor,
-  backLink
-}: VibrantHeaderProps) {
-  const { toggleSidebar, toggleSOS } = useLayout();
-  const navigate = useNavigate();
+    return (
+        <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
+            {/* Dynamic Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            {/* Decorative Glow */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-300 opacity-20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
-  return (
-    <div className={`bg-gradient-to-r ${fromColor} ${viaColor} ${toColor} px-4 pt-4 pb-16 shadow-lg relative overflow-hidden`}>
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-      
-      {/* 3-Column Flex Layout for Perfect Centering */}
-      <div className="relative z-20 flex items-center justify-between w-full">
-        
-        {/* Left: Hamburger or Back Arrow (Flex-1 anchors left side) */}
-        <div className="flex-1 flex justify-start">
-          {backLink ? (
-            <button 
-              onClick={() => navigate(backLink)}
-              className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm border border-white/20 active:scale-95"
-              aria-label="Go Back"
-            >
-              <ChevronLeftIcon className="h-6 w-6" />
-            </button>
-          ) : (
-            <button 
-              onClick={toggleSidebar}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
-              aria-label="Open Menu"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-          )}
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                
+                {/* Main Counters (Squeezed Margins & Padding) */}
+                <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30">
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
+                    </div>
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.months}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Months</div>
+                    </div>
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
+                    </div>
+                </div>
+
+                {/* Unified Footer: Gamification & Total Days (Squeezed Separator) */}
+                {levelData && archetype && (
+                    <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                        
+                        {/* Gamification Stats (Single Row - SCALED UP) */}
+                        <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                            {/* Left: Rank & Level */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                <span className="truncate">Rank: {archetype}</span>
+                                <span className="opacity-50">|</span>
+                                <span>LVL: {levelData.level}</span>
+                            </div>
+                            
+                            {/* Right: Progress & XP */}
+                            <div className="text-right shrink-0">
+                                <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
+                                <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+                            </div>
+                        </div>
+                            
+                        {/* Shimmer Progress Bar */}
+                        <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-white transition-all duration-1000 ease-out relative"
+                                style={{ width: `${levelData.progressPercent}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
+
+                        {/* Total Days (SCALED UP & MIRRORED ICONS) */}
+                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <CalendarDaysIcon className="h-4 w-4" />
+                            <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                            <CalendarDaysIcon className="h-4 w-4" />
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
-
-        {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
-        <div className="shrink-0 flex flex-col items-center text-center px-2">
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
-            {/* MIRRORED ICONS */}
-            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
-            {title}
-            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
-          </h1>
-          <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide">
-            {subtitle}
-          </p>
-        </div>
-
-        {/* Right: SOS & Stats (Flex-1 anchors right side) */}
-        <div className="flex-1 flex items-center justify-end gap-3">
-          {/* Progress Ring (Optional) */}
-          {percentage !== undefined && (
-             <div className="hidden sm:block bg-white/10 backdrop-blur-md rounded-full p-1 shadow-inner border border-white/5">
-                <ProgressRing percentage={percentage} colorHex={percentageColor} />
-             </div>
-          )}
-
-          {/* SOS Button */}
-          <button 
-            onClick={toggleSOS}
-            className="p-2.5 rounded-full bg-red-500/80 hover:bg-red-500 text-white border border-red-400/50 transition-all backdrop-blur-md shadow-lg animate-pulse hover:animate-none active:scale-95"
-            aria-label="Emergency SOS"
-          >
-            <ExclamationTriangleIcon className="h-6 w-6" />
-          </button>
-        </div>
-
-      </div>
-    </div>
-  );
+    );
 }
 '''
 
@@ -159,5 +119,5 @@ def write_file(path, content):
     print(f"✅ Updated UI: {path}")
 
 if __name__ == "__main__":
-    write_file("src/components/VibrantHeader.tsx", vibrantheader_tsx_content)
-    print("✨ Global header symmetry applied successfully.")
+    write_file("src/components/SobrietyHero.tsx", sobriety_hero_tsx_content)
+    print("✨ Micro-margin squeeze applied successfully.")

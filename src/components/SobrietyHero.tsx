@@ -2,7 +2,7 @@
  * src/components/SobrietyHero.tsx
  * GITHUB COMMENT:
  * [SobrietyHero.tsx]
- * UX: Scaled up gamification and total days text sizes. Mirrored calendar icon for visual balance (Ticket 2.3).
+ * UX: Micro-margin squeeze. Reduced grid gaps and padding around date numbers to eliminate final dead space (Ticket 2.3).
  */
 import { useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -46,25 +46,25 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
 
             <div className="relative z-10 flex flex-col h-full justify-between">
                 
-                {/* Main Counters */}
-                <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/30 py-1">
-                    <div className="px-2">
+                {/* Main Counters (Squeezed Margins & Padding) */}
+                <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30">
+                    <div className="px-1">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Years</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
                     </div>
-                    <div className="px-2">
+                    <div className="px-1">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.months}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Months</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Months</div>
                     </div>
-                    <div className="px-2">
+                    <div className="px-1">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
-                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-1 drop-shadow-sm">Days</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
                     </div>
                 </div>
 
-                {/* Unified Footer: Gamification & Total Days */}
+                {/* Unified Footer: Gamification & Total Days (Squeezed Separator) */}
                 {levelData && archetype && (
-                    <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
+                    <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
                         
                         {/* Gamification Stats (Single Row - SCALED UP) */}
                         <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
