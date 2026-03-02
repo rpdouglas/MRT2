@@ -1,3 +1,9 @@
+/**
+ * src/components/VibrantHeader.tsx
+ * GITHUB COMMENT:
+ * [VibrantHeader.tsx]
+ * UX: Refactored grid layout to flex-1 anchor pattern for perfect title centering (Ticket 2.1).
+ */
 import { useLayout } from '../contexts/LayoutContext';
 import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import type { ElementType } from 'react';
@@ -12,7 +18,7 @@ interface VibrantHeaderProps {
   toColor: string;   // e.g. "to-purple-600"
   percentage?: number;
   percentageColor?: string;
-  backLink?: string; // NEW PROP
+  backLink?: string; 
 }
 
 const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
@@ -78,30 +84,32 @@ export default function VibrantHeader({
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
       
-      {/* 3-Column Grid Layout: Menu/Back | Title | Actions */}
-      <div className="relative z-20 grid grid-cols-[auto_1fr_auto] items-center gap-4">
+      {/* 3-Column Flex Layout for Perfect Centering */}
+      <div className="relative z-20 flex items-center justify-between w-full">
         
-        {/* Left: Hamburger or Back Arrow */}
-        {backLink ? (
-          <button 
-            onClick={() => navigate(backLink)}
-            className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm border border-white/20 active:scale-95"
-            aria-label="Go Back"
-          >
-            <ChevronLeftIcon className="h-6 w-6" />
-          </button>
-        ) : (
-          <button 
-            onClick={toggleSidebar}
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
-            aria-label="Open Menu"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-        )}
+        {/* Left: Hamburger or Back Arrow (Flex-1 anchors left side) */}
+        <div className="flex-1 flex justify-start">
+          {backLink ? (
+            <button 
+              onClick={() => navigate(backLink)}
+              className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm border border-white/20 active:scale-95"
+              aria-label="Go Back"
+            >
+              <ChevronLeftIcon className="h-6 w-6" />
+            </button>
+          ) : (
+            <button 
+              onClick={toggleSidebar}
+              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 active:scale-95"
+              aria-label="Open Menu"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+          )}
+        </div>
 
-        {/* Center: Title & Subtitle */}
-        <div className="flex flex-col items-center text-center">
+        {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
+        <div className="shrink-0 flex flex-col items-center text-center px-2">
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
             {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
             {title}
@@ -111,8 +119,8 @@ export default function VibrantHeader({
           </p>
         </div>
 
-        {/* Right: SOS & Stats */}
-        <div className="flex items-center gap-3">
+        {/* Right: SOS & Stats (Flex-1 anchors right side) */}
+        <div className="flex-1 flex items-center justify-end gap-3">
           {/* Progress Ring (Optional) */}
           {percentage !== undefined && (
              <div className="hidden sm:block bg-white/10 backdrop-blur-md rounded-full p-1 shadow-inner border border-white/5">

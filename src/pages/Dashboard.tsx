@@ -2,8 +2,7 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * FIX: Resolved "Hello Friend" bug (Sprint 2 - Ticket 2.2) by prioritizing userProfile.displayName.
- * FIX: Added 'refetchOnMount: "always"' to all queries.
+ * UX: Updated Bento Grid terminology from Quests to Tasks/Habits (Ticket 2.1).
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -226,7 +225,7 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
                             <FireIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Quests</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.task.fire}</div>
