@@ -2,19 +2,20 @@
  * src/pages/Profile.tsx
  * GITHUB COMMENT:
  * [Profile.tsx]
- * UPDATED: Added Support Network configuration (Sponsor Name/Phone).
- * FEATURE: Saves contact info to Firestore for use in SOS Modal.
+ * FEAT: Implemented Onboarding Release Valve logic (Sprint 1 - Ticket 1.3).
+ * FIX: Synced Firebase Auth Profile on save to ensure sidebar reactivity (Ticket 2.2).
  */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData } from '../lib/db';
 import { Timestamp } from 'firebase/firestore'; 
+import { updateProfile } from 'firebase/auth'; // SRE FIX: Added for Reactivity
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
 import { 
   UserCircleIcon, 
   ArrowLeftOnRectangleIcon,
-  UserGroupIcon // NEW
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
@@ -27,13 +28,12 @@ export default function Profile() {
   
   const [displayName, setDisplayName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState('');
-  
-  // NEW: Support Network State
   const [sponsorName, setSponsorName] = useState('');
   const [sponsorPhone, setSponsorPhone] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isOnboarding, setIsOnboarding] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
@@ -45,9 +45,16 @@ export default function Profile() {
           if (data.sobrietyDate) {
             setSobrietyDate(data.sobrietyDate.toDate().toISOString().split('T')[0]);
           }
-          // Load Sponsor Data
           setSponsorName(data.sponsorName || '');
           setSponsorPhone(data.sponsorPhone || '');
+          
+          // DETECT ONBOARDING STATUS
+          if (!data.hasCompletedOnboarding) {
+              setIsOnboarding(true);
+          }
+        } else {
+          // If no profile document, they are definitely onboarding
+          setIsOnboarding(true);
         }
         setLoading(false);
       }
@@ -79,14 +86,28 @@ export default function Profile() {
           sobrietyTimestamp = Timestamp.fromDate(dateObj);
       }
       
+      // ALWAYS SET ONBOARDING TO TRUE UPON SAVE
       await updateProfileData(user.uid, {
         displayName,
         sobrietyDate: sobrietyTimestamp,
-        sponsorName,  // Save new fields
-        sponsorPhone
+        sponsorName,  
+        sponsorPhone,
+        hasCompletedOnboarding: true
       });
 
-      setMessage({ type: 'success', text: 'Profile updated successfully' });
+      // SRE FIX: SYNC FIREBASE AUTH PROFILE FOR SIDEBAR REACTIVITY
+      try {
+          await updateProfile(user, { displayName });
+      } catch (authErr) {
+          console.warn("Failed to sync auth profile", authErr);
+      }
+
+      if (isOnboarding) {
+          // THE RELEASE VALVE: Send them to the dashboard!
+          navigate('/dashboard');
+      } else {
+          setMessage({ type: 'success', text: 'Profile updated successfully' });
+      }
     } catch (error) {
       console.error(error);
       setMessage({ type: 'error', text: 'Failed to update profile' });
@@ -111,26 +132,38 @@ export default function Profile() {
 
       <div className="max-w-2xl mx-auto space-y-8 px-4 -mt-10 relative z-30">
         
+        {isOnboarding && (
+          <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg animate-slideDown">
+              <h2 className="font-bold text-lg">Welcome to your Toolkit.</h2>
+              <p className="text-sm text-blue-100 mt-1">To get started, please tell us your name and your sobriety date. This helps us calculate your milestones and dashboard stats.</p>
+          </div>
+        )}
+
         <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Settings</h3>
+            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                {isOnboarding ? 'Required Setup' : 'Settings'}
+            </h3>
             
             {/* PERSONAL INFO */}
             <div>
-                <label className="block text-sm font-medium text-gray-700">Display Name</label>
+                <label className="block text-sm font-medium text-gray-700">Display Name {isOnboarding && <span className="text-red-500">*</span>}</label>
                 <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    required={isOnboarding}
+                    placeholder="How should we address you?"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Sobriety Date</label>
+                <label className="block text-sm font-medium text-gray-700">Sobriety Date {isOnboarding && <span className="text-red-500">*</span>}</label>
                 <input
                     type="date"
                     value={sobrietyDate}
                     onChange={(e) => setSobrietyDate(e.target.value)}
+                    required={isOnboarding}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
                 <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
@@ -166,29 +199,32 @@ export default function Profile() {
                 </div>
             </div>
 
-            {message && (
+            {message && !isOnboarding && (
             <div className={`p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                 {message.text}
             </div>
             )}
 
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 pt-2">
             <button
                 type="submit"
-                disabled={saving}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                disabled={saving || (isOnboarding && (!displayName || !sobrietyDate))}
+                className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md active:scale-95"
             >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Saving...' : isOnboarding ? 'Complete Setup' : 'Save Changes'}
             </button>
             </div>
         </form>
 
-        <DataManagement />
+        {/* HIDE DATA MANAGEMENT DURING ONBOARDING TO PREVENT DISTRACTIONS */}
+        {!isOnboarding && (
+            <DataManagement />
+        )}
 
         <div className="border-t border-gray-200 pt-6">
             <button
             onClick={handleLogout}
-            className="w-full flex justify-center items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-lg font-semibold hover:bg-red-100 transition-colors"
+            className="w-full flex justify-center items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl font-semibold hover:bg-red-100 transition-colors"
             >
             <ArrowLeftOnRectangleIcon className="h-5 w-5" />
             Log Out

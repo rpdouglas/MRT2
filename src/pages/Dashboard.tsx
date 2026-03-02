@@ -2,8 +2,8 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
+ * FIX: Resolved "Hello Friend" bug (Sprint 2 - Ticket 2.2) by prioritizing userProfile.displayName.
  * FIX: Added 'refetchOnMount: "always"' to all queries.
- * REASON: Solves "Stale Cache" bug where streaks didn't update after task completion.
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -148,6 +148,9 @@ export default function Dashboard() {
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
+  // SRE FIX: Prefer the Database profile name over the Auth token name, fallback to Friend
+  const firstName = (userProfile?.displayName || user?.displayName || 'Friend').split(' ')[0];
+
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
       
@@ -155,7 +158,7 @@ export default function Dashboard() {
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard" 
-            subtitle={`Welcome back, ${user?.displayName?.split(' ')[0] || 'Friend'}`}
+            subtitle={`Welcome back, ${firstName}`}
             icon={HomeIcon}
             fromColor={THEME.dashboard.header.from}
             viaColor={THEME.dashboard.header.via}
