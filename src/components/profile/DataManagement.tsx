@@ -1,8 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [DataManagement.tsx]
- * UPDATED: Switched 'View User Guide' button to an external <a> link pointing to the new VitePress site.
- * FIX: Removed unused 'useNavigate' import from react-router-dom.
+ * UX: Migrated User Guide CTA out of Data Management and into the General Profile tab (Ticket 2.4).
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,8 +19,7 @@ import {
     ExclamationTriangleIcon,
     CheckCircleIcon,
     LockClosedIcon,
-    CloudArrowUpIcon,
-    BookOpenIcon
+    CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 export default function DataManagement() {
@@ -128,28 +126,7 @@ export default function DataManagement() {
     };
 
     return (
-        <div className="space-y-8">
-            {/* USER GUIDE CTA (Updated to external link) */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-lg text-white">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-white/20 rounded-xl">
-                        <BookOpenIcon className="h-7 w-7" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold">New to MRT?</h3>
-                        <p className="text-blue-100 text-sm">Explore our visual guide to master your recovery tools.</p>
-                    </div>
-                </div>
-                <a 
-                    href="https://rpdouglas.github.io/MRT2/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors active:scale-95 shadow-md"
-                >
-                    View User Guide
-                </a>
-            </div>
-
+        <div className="space-y-8 animate-fadeIn">
             {/* GOOGLE DRIVE SYNC STATUS */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
