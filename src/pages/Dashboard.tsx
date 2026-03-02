@@ -2,9 +2,9 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * UX: Updated Bento Grid terminology from Quests to Tasks/Habits (Ticket 2.1).
+ * UX: Moved recovery slogan into VibrantHeader subtitle. Cleaned up unused variables (Ticket 2.3).
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -35,15 +35,24 @@ import {
   ChartBarIcon, 
   SparklesIcon, 
   HeartIcon, 
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  UserGroupIcon,
+  PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
+import { RECOVERY_SLOGANS } from '../data/slogans';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
   const { user } = useAuth();
   
+  // Lazy init the daily slogan
+  const [slogan] = useState(() => {
+      const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
+      return RECOVERY_SLOGANS[randomIndex];
+  });
+
   // --- QUERY 1: USER PROFILE ---
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -54,7 +63,7 @@ export default function Dashboard() {
         return snap.exists() ? snap.data() : null;
     },
     enabled: !!user,
-    refetchOnMount: 'always', // FORCE REFRESH
+    refetchOnMount: 'always', 
   });
 
   // --- QUERY 2: JOURNALS ---
@@ -75,7 +84,7 @@ export default function Dashboard() {
         }));
     },
     enabled: !!user,
-    refetchOnMount: 'always', // FORCE REFRESH
+    refetchOnMount: 'always', 
   });
 
   // --- QUERY 3: TASKS ---
@@ -89,7 +98,7 @@ export default function Dashboard() {
         return snap.docs.map(d => d.data());
     },
     enabled: !!user,
-    refetchOnMount: 'always', // FORCE REFRESH
+    refetchOnMount: 'always', 
   });
 
   // --- QUERY 4: WORKBOOKS ---
@@ -103,14 +112,13 @@ export default function Dashboard() {
         return snap.size;
     },
     enabled: !!user,
-    refetchOnMount: 'always', // FORCE REFRESH
+    refetchOnMount: 'always', 
   });
 
   // --- CALCULATE STATS ---
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
-    // Sobriety date calculation
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
@@ -118,7 +126,6 @@ export default function Dashboard() {
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    // Gamification
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const jStats = calculateJournalStats(journals as any);
     const tStats = calculateTaskStats(tasks as any);
@@ -147,9 +154,6 @@ export default function Dashboard() {
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
-  // SRE FIX: Prefer the Database profile name over the Auth token name, fallback to Friend
-  const firstName = (userProfile?.displayName || user?.displayName || 'Friend').split(' ')[0];
-
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
       
@@ -157,7 +161,7 @@ export default function Dashboard() {
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
             title="Dashboard" 
-            subtitle={`Welcome back, ${firstName}`}
+            subtitle={slogan}
             icon={HomeIcon}
             fromColor={THEME.dashboard.header.from}
             viaColor={THEME.dashboard.header.via}
@@ -165,9 +169,13 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 2. FLOATING HERO: Clean Time (Moved to Top) */}
+      {/* 2. FLOATING HERO: Clean Time + Gamification Unified */}
       <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
-         <SobrietyHero date={userProfile?.sobrietyDate} />
+         <SobrietyHero 
+            date={userProfile?.sobrietyDate} 
+            levelData={stats.level.levelData}
+            archetype={stats.level.archetype}
+         />
       </div>
 
       {/* 3. SCROLLABLE CONTENT */}
@@ -188,10 +196,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 2x2 BENTO GRID */}
+        {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
             
-            {/* 1. JOURNAL (Indigo/Violet) */}
+            {/* 1. JOURNAL */}
             <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <ChartBarIcon className="h-16 w-16 rotate-12" />
@@ -215,7 +223,7 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 2. HABITS (Cyan/Teal) */}
+            {/* 2. HABITS */}
             <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <FireIcon className="h-16 w-16 rotate-12" />
@@ -239,7 +247,7 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 3. VITALITY (Orange/Rose) */}
+            {/* 3. VITALITY */}
             <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <HeartIcon className="h-16 w-16 rotate-12" />
@@ -263,7 +271,7 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 4. WISDOM (Emerald/Lime) */}
+            {/* 4. WISDOM */}
             <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <SparklesIcon className="h-16 w-16 rotate-12" />
@@ -287,62 +295,44 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-        </div>
-
-        {/* 4. XP / RANK CARD (Moved to Bottom) */}
-        {/* Glassmorphism Card with Theme Gradient Border */}
-        <div className="relative rounded-3xl p-[2px] bg-gradient-to-br from-sky-300 via-blue-400 to-indigo-400 shadow-xl shadow-blue-200/50">
-            <div className="bg-white rounded-[22px] p-5 relative overflow-hidden h-full">
-                
-                {/* Background Texture */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-100 to-blue-50 rounded-bl-full opacity-60 pointer-events-none"></div>
-                <SparklesIcon className="absolute top-4 right-4 h-12 w-12 text-blue-100/50 rotate-12" />
-
-                <div className="relative z-10 flex justify-between items-end">
-                    
-                    {/* LEFT: Identity */}
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">
-                            Current Rank
-                        </span>
-                        <h3 className="text-2xl font-black text-slate-800 leading-none tracking-tight">
-                            {stats.level.levelData.title}
-                        </h3>
-                        <div className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg self-start">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Archetype</span>
-                            <span className="text-xs font-bold text-indigo-600">{stats.level.archetype}</span>
-                        </div>
-                    </div>
-
-                    {/* RIGHT: Level Stats */}
-                    <div className="text-right">
-                        <div className="flex items-baseline justify-end gap-1">
-                            <span className="text-sm font-bold text-slate-400">LVL</span>
-                            <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-sky-600 to-indigo-600 shadow-sm">
-                                {stats.level.levelData.level}
-                            </span>
-                        </div>
-                    </div>
+            {/* 5. SERVICE PORTAL (Placeholder) */}
+            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
+                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
+                    <UserGroupIcon className="h-16 w-16 rotate-12" />
                 </div>
-            
-                {/* Progress Bar */}
-                <div className="mt-5">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-                        <span>Progress</span>
-                        <span>{stats.level.levelData.currentXP} / {stats.level.levelData.nextLevelXP} XP</span>
-                    </div>
-                    <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                        <div 
-                            className="h-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 transition-all duration-1000 ease-out relative"
-                            style={{ width: `${stats.level.levelData.progressPercent}%` }}
-                        >
-                            {/* Shimmer Effect */}
-                            <div className="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
+                            <UserGroupIcon className="h-4 w-4 text-slate-500" />
                         </div>
+                        <span className="text-sm font-bold uppercase tracking-wider">Service</span>
                     </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
+                        Coming Soon
+                    </div>
+                    <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
                 </div>
-
             </div>
+
+            {/* 6. RECOVERY GAMES (Placeholder) */}
+            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
+                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
+                    <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
+                            <PuzzlePieceIcon className="h-4 w-4 text-slate-500" />
+                        </div>
+                        <span className="text-sm font-bold uppercase tracking-wider">Games</span>
+                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
+                        Coming Soon
+                    </div>
+                    <p className="text-[10px] leading-tight pr-2">Map triggers & rewire pathways.</p>
+                </div>
+            </div>
+
         </div>
 
       </div>

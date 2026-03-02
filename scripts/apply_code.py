@@ -1,123 +1,123 @@
 import os
 
-# =============================================================================
-# 1. PROJECT MANAGEMENT
-# =============================================================================
-sprint_board = r'''# 🏃 Active Sprint Board
-**Sprint:** 4.5.3 "Triage Execution"
-**Start Date:** 2026-02-26
-**Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
+sobriety_hero_tsx_content = r'''/**
+ * src/components/SobrietyHero.tsx
+ * GITHUB COMMENT:
+ * [SobrietyHero.tsx]
+ * UX: Micro-margin squeeze. Reduced grid gaps and padding around date numbers to eliminate final dead space (Ticket 2.3).
+ */
+import { useMemo } from 'react';
+import { Timestamp } from 'firebase/firestore';
+import { CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { calculateSobrietyDuration } from '../lib/dateUtils';
 
-## ✅ Sprint 1: The Gates & Onboarding (Completed)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
-- [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+interface SobrietyHeroProps {
+    date?: Timestamp | Date | null;
+    levelData?: {
+        level: number;
+        currentXP: number;
+        nextLevelXP: number;
+        progressPercent: number;
+    };
+    archetype?: string;
+}
 
-## 🟡 Sprint 2: The Horizon & Identity (Active)
-- [x] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
-- [ ] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
-- [ ] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [ ] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+export default function SobrietyHero({ date, levelData, archetype }: SobrietyHeroProps) {
+    // Calculate Time Stats
+    const stats = useMemo(() => {
+        if (!date) return null;
+        const startDate = date instanceof Date ? date : date.toDate();
+        return calculateSobrietyDuration(startDate);
+    }, [date]);
 
-## 📌 Sprint 3: The Core Polish (Planned)
-- [ ] **3.1 Journal Cache:** Fix UI state so journal edits appear without page refresh.
-- [ ] **3.2 Tasks UI:** Allow text wrapping for long Action Plan titles instead of truncation.
+    if (!stats) {
+        return (
+            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-center text-white shadow-xl shadow-orange-500/20 border border-white/20">
+                <div className="opacity-90 mb-1.5 font-bold uppercase tracking-widest text-xs drop-shadow-sm">Begin the Journey</div>
+                <p className="text-sm font-medium drop-shadow-sm">Set your sobriety date in Profile to track your freedom.</p>
+            </div>
+        );
+    }
 
-## ✅ Done (Previous Sprint)
-- [x] Gathered 13 bugs across Sector 1.
-- [x] Built Triage Generator script.
-- [x] Restructured VitePress Knowledge Base.
-'''
+    return (
+        <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
+            {/* Dynamic Background Texture */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            {/* Decorative Glow */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-300 opacity-20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
 
-# =============================================================================
-# 2. TECHNICAL SPECIFICATIONS
-# =============================================================================
-spec_dashboard = r'''# 📐 Feature Spec: Dashboard (The Hub)
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                
+                {/* Main Counters (Squeezed Margins & Padding) */}
+                <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30">
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
+                    </div>
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.months}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Months</div>
+                    </div>
+                    <div className="px-1">
+                        <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
+                    </div>
+                </div>
 
-**Status:** Live (v2.1)
-**Architecture:** Client-Side Aggregator
-**Primary Code:** `src/pages/Dashboard.tsx`
+                {/* Unified Footer: Gamification & Total Days (Squeezed Separator) */}
+                {levelData && archetype && (
+                    <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                        
+                        {/* Gamification Stats (Single Row - SCALED UP) */}
+                        <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                            {/* Left: Rank & Level */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                <span className="truncate">Rank: {archetype}</span>
+                                <span className="opacity-50">|</span>
+                                <span>LVL: {levelData.level}</span>
+                            </div>
+                            
+                            {/* Right: Progress & XP */}
+                            <div className="text-right shrink-0">
+                                <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
+                                <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+                            </div>
+                        </div>
+                            
+                        {/* Shimmer Progress Bar */}
+                        <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-white transition-all duration-1000 ease-out relative"
+                                style={{ width: `${levelData.progressPercent}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
 
-## 1. Overview
-The Dashboard is the central landing page. It does not store its own data; instead, it queries all other modules (Journal, Tasks, Workbooks, Profile) to generate a real-time "Health Snapshot" of the user's recovery.
-
-## 2. Technical Architecture
-
-### A. Data Aggregation
-The Dashboard executes 4 concurrent queries on mount:
-1.  **Profile:** Fetches `sobrietyDate`, `displayName` (for reactivity), and `lastExportAt`.
-2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
-3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
-4.  **Workbooks:** Fetches answer count for "Wisdom" score.
-
-**Performance Note:** Queries are set to `refetchOnMount: 'always'` to ensure gamification stats update immediately after a user performs an action in another tab.
-
-### B. The Calculation Engine
-Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Engine** (`src/lib/gamification.ts`) to derive:
-* **User Level:** Based on total XP from all sources.
-* **Archetype:** (Scholar, Doer, Monk, etc.) based on activity distribution.
-* **Streaks:** Current consecutive activity chains.
-
-### C. The Backup Sentinel
-* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`.
-* **Trigger:** If > 7 days since last export.
-* **UI:** Displays an amber "Backup Needed" alert card that links to the Profile.
-
-## 3. UI Components
-* **Header:** True flex-centered `VibrantHeader` displaying "Welcome back, {Name}".
-* **Floating Hero:** Displays "Clean Time" (Years/Months/Days) in an asymmetrical textured card.
-* **Bento Grid:** 4-quadrant layout linking to core modules with live stats:
-  * Journal (Streak & Consistency)
-  * Tasks/Habits (Rate & Fire Score)
-  * Vitality (Bio-Streak & Logs)
-  * Wisdom (Mastery % & Total Score)
-* **Rank Card (Bottom):** Glassmorphism card displaying current Level, Archetype, and XP Progress Bar.
-
-## 4. Verification Checklist
-* [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
-* [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
-* [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
-* [ ] **Reactivity:** Does changing the display name in the Profile instantly update the greeting on the Dashboard?
-'''
-
-# =============================================================================
-# 3. USER GUIDE
-# =============================================================================
-guide_dashboard = r'''# 🌅 The Horizon Dashboard
-
-Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
-
-## 1. Clean & Sober Time
-At the top of your dashboard, your Sobriety Counter tracks your exact time in Years, Months, and Days based on the date set in your Profile. 
-
-## 2. The Bento Grid
-Quickly view your active streaks and completion rates across your core pillars:
-* **Journal:** View your consecutive day streak and weekly consistency.
-* **Tasks:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
-* **Vitality:** View your biological regulation streak.
-* **Wisdom:** View your workbook mastery percentage.
-
-## 3. The Gamification Engine (XP & Rank)
-Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
-* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP based on priority), and logging vitality metrics.
-* **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
-* **Leveling Up:** As you earn XP, your rank will increase. Your current rank and progress to the next level are displayed at the bottom of the Dashboard.
+                        {/* Total Days (SCALED UP & MIRRORED ICONS) */}
+                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <CalendarDaysIcon className="h-4 w-4" />
+                            <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                            <CalendarDaysIcon className="h-4 w-4" />
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    # Ensure markdown backticks remain intact using the protection protocol
+    # Use standard string replace for markdown protection protocol
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Synced: {path}")
+    print(f"✅ Updated UI: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Documentation Sync Protocol (v2.0)...")
-    write_file("docs/SPRINT_BOARD.md", sprint_board)
-    write_file("docs/specs/11_DASHBOARD.md", spec_dashboard)
-    write_file("docs-site/guide/02-dashboard.md", guide_dashboard)
-    print("✨ Documentation perfectly aligned with codebase.")
+    write_file("src/components/SobrietyHero.tsx", sobriety_hero_tsx_content)
+    print("✨ Micro-margin squeeze applied successfully.")
