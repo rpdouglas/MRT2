@@ -2,7 +2,7 @@
  * src/components/SobrietyHero.tsx
  * GITHUB COMMENT:
  * [SobrietyHero.tsx]
- * UX: Condensed Gamification layout for tighter vertical rhythm (Ticket 2.3).
+ * UX: Condensed Gamification layout into a single responsive flex-row to maximize vertical space (Ticket 2.3).
  */
 import { useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -64,34 +64,36 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
 
                 {/* Unified Footer: Gamification & Total Days */}
                 {levelData && archetype && (
-                    <div className="mt-5 pt-4 border-t border-white/20 space-y-3">
+                    <div className="mt-5 pt-4 border-t border-white/20 space-y-2">
                         
-                        {/* Rank & Level Line */}
-                        <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95">
-                            <span>Rank: {archetype}</span>
-                            <span>LVL: {levelData.level}</span>
-                        </div>
-                        
-                        {/* Progress & XP Line */}
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest drop-shadow-sm opacity-90">
-                                <span>Progress</span>
-                                <span className="font-mono">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+                        {/* Gamification Stats (Single Row) */}
+                        <div className="flex justify-between items-end text-[10px] sm:text-xs font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                            {/* Left: Rank & Level */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                <span className="truncate">Rank: {archetype}</span>
+                                <span className="opacity-50">|</span>
+                                <span>LVL: {levelData.level}</span>
                             </div>
                             
-                            {/* Shimmer Progress Bar */}
-                            <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
-                                <div 
-                                    className="h-full bg-white transition-all duration-1000 ease-out relative"
-                                    style={{ width: `${levelData.progressPercent}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                                </div>
+                            {/* Right: Progress & XP */}
+                            <div className="text-right shrink-0">
+                                <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
+                                <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+                            </div>
+                        </div>
+                            
+                        {/* Shimmer Progress Bar */}
+                        <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
+                            <div 
+                                className="h-full bg-white transition-all duration-1000 ease-out relative"
+                                style={{ width: `${levelData.progressPercent}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
                             </div>
                         </div>
 
                         {/* Total Days */}
-                        <div className="pt-2 flex items-center justify-center gap-2 text-xs font-medium drop-shadow-sm opacity-90">
+                        <div className="pt-2 flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium drop-shadow-sm opacity-90">
                             <CalendarDaysIcon className="h-4 w-4" />
                             <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
                         </div>
