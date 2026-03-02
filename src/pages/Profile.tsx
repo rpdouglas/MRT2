@@ -3,12 +3,13 @@
  * GITHUB COMMENT:
  * [Profile.tsx]
  * FEAT: Implemented Onboarding Release Valve logic (Sprint 1 - Ticket 1.3).
- * UX: Adapts UI to guide new users to complete their profile before accessing the Dashboard.
+ * FIX: Synced Firebase Auth Profile on save to ensure sidebar reactivity (Ticket 2.2).
  */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData } from '../lib/db';
 import { Timestamp } from 'firebase/firestore'; 
+import { updateProfile } from 'firebase/auth'; // SRE FIX: Added for Reactivity
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
 import { 
@@ -93,6 +94,13 @@ export default function Profile() {
         sponsorPhone,
         hasCompletedOnboarding: true
       });
+
+      // SRE FIX: SYNC FIREBASE AUTH PROFILE FOR SIDEBAR REACTIVITY
+      try {
+          await updateProfile(user, { displayName });
+      } catch (authErr) {
+          console.warn("Failed to sync auth profile", authErr);
+      }
 
       if (isOnboarding) {
           // THE RELEASE VALVE: Send them to the dashboard!
