@@ -4,6 +4,8 @@
  * [JournalEditor.tsx]
  * FIX: Constrained Tag Input width using min-w-0 to prevent flex blowout.
  * FIX: Replaced PlusIcon with CheckIcon for clearer 'Save' semantics.
+ * FIX: Added explicit types to getSmartMood filter/reduce to satisfy strict no-implicit-any.
+ * FIX: Ensured useQueryClient is properly imported.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,6 +13,7 @@ import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
     CheckIcon, // CHANGED from PlusIcon
     Cog6ToothIcon,
@@ -78,12 +81,12 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       if (!cache || cache.length === 0) return 5;
 
       const recent = cache
-        .filter(e => typeof e.moodScore === 'number' && e.moodScore > 0)
+        .filter((e: JournalEntry) => typeof e.moodScore === 'number' && e.moodScore > 0)
         .slice(0, 7);
       
       if (recent.length === 0) return 5;
 
-      const sum = recent.reduce((acc, curr) => acc + curr.moodScore, 0);
+      const sum = recent.reduce((acc: number, curr: JournalEntry) => acc + curr.moodScore, 0);
       return Math.round(sum / recent.length);
   };
 
@@ -288,7 +291,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         return;
       }
 
-      // 3. Save to Firestore via Hook
       if (initialEntry) {
         await updateJournal({ 
             id: initialEntry.id, 
@@ -479,7 +481,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                                 </span>
                             ))}
                             <input 
-                                type="text"
+                                type="text" 
                                 value={tagInput}
                                 onChange={(e) => {
                                     setTagInput(e.target.value);
