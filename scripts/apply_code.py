@@ -1,194 +1,215 @@
 import os
 
-test_content = r'''/**
- * src/hooks/__tests__/useJournalOperations.test.ts
- * GITHUB COMMENT:
- * [useJournalOperations.test.ts]
- * QA: Implemented strict unit tests for Journal CRUD operations.
- * Verifies that Firebase mutations trigger React Query cache invalidation.
- * FIX: Replaced explicit 'any' types with 'unknown' or proper interfaces to satisfy linting rules.
- * FIX: Separated type imports to satisfy 'verbatimModuleSyntax'.
- */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useJournalOperations } from '../useJournalOperations';
-import * as AuthContext from '../../contexts/AuthContext';
-import * as firestore from 'firebase/firestore';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createElement, type ReactNode } from 'react';
+# =============================================================================
+# 1. PROJECT MANAGEMENT (Sprint Board)
+# =============================================================================
+sprint_board = r'''# 🏃 Active Sprint Board
+**Sprint:** 4.6 "The Crucible & The Polish"
+**Start Date:** 2026-03-03
+**Goal:** Lock down logic stability (Tests) and eradicate high-friction UX bugs (Journal Polish).
 
-// --- MOCKS ---
+## ✅ Sprint 1: The Gates & Onboarding (Completed)
+- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios.
+- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
+- [x] **1.3 Onboarding Redirect:** Force new users to Profile setup.
 
-// Mock Firebase Config
-vi.mock('../../lib/firebase', () => ({
-    db: { type: 'mock-db' }
-}));
+## ✅ Sprint 2: The Horizon & Identity (Completed)
+- [x] **2.1 Sidebar/Header:** Brand alignment.
+- [x] **2.2 Reactivity:** Dashboard updates when Profile name changes.
+- [x] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter.
+- [x] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
+- [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
 
-// Mock Auth Context
-vi.mock('../../contexts/AuthContext', () => ({
-    useAuth: vi.fn()
-}));
+## ✅ Sprint 3: The Core Polish (Completed)
+- [x] **3.1 Journal Cache:** Fix History tab staleness on save/delete.
+- [x] **3.2 Tasks UI:** Fix text wrapping for long Action Plan titles.
 
-// Mock Firestore SDK
-vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('firebase/firestore')>();
-    return {
-        ...actual,
-        collection: vi.fn(),
-        doc: vi.fn(),
-        addDoc: vi.fn(),
-        updateDoc: vi.fn(),
-        deleteDoc: vi.fn(),
-        Timestamp: {
-            now: vi.fn(() => 'mock-timestamp')
-        }
-    };
-});
+## 🟡 Sprint 4: Hardening & UX Polish (Active)
 
-// --- SETUP ---
+### 🛠️ Category A: System Hardening
+- [x] **4.1 Hook Testing:** Write Vitest specs for `useJournalOperations`. (Tasks hook pending).
+- [ ] **4.2 Critical Path QA:** Manual verification of Export, PIN Rotation, and Crypto-Shredding.
 
-// Create a real QueryClient for the wrapper, but we will spy on it
-const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } }
-});
+### 🎨 Category B: Journal UX Polish
+- [ ] **4.3 Editor Ergonomics:**
+    - Fix Mic icon blocking text (padding).
+    - Move Mood Slider to Sticky Header/Footer.
+    - Set default mood to "Last 7 Days Average" instead of 5.
+- [ ] **4.4 List Efficiency:**
+    - Fix missing Sidebar Icon.
+    - Implement "Month/Year" collapsible headers in History list.
 
-// FIX: Use createElement instead of JSX to avoid parsing errors in .ts file
-const wrapper = ({ children }: { children: ReactNode }) => (
-    createElement(QueryClientProvider, { client: queryClient }, children)
-);
+### 🧠 Category C: Intelligence & Analytics
+- [ ] **4.5 Visuals & Logic:**
+    - Revamp Chart to Gradient Area Chart (Mon-Sun axis).
+    - Filter "Template Words" from Word Cloud.
+    - Tune AI Prompt for "Emotional Velocity".
+- [ ] **4.6 Template Refresh:** Update default templates (Somatic Urge Log, Evening Inventory).
 
-// Helper type to mock Auth Context return
-type AuthContextValue = ReturnType<typeof AuthContext.useAuth>;
+## 🧊 Backlog (Sprint 5+)
+- [ ] **Photo Attachments:** Requires Firestore Storage + Client-Side Encryption.
+- [ ] **Demo Mode:** Anonymous Auth flow for "Try before you buy".
+'''
 
-describe('📓 useJournalOperations Hook', () => {
-    
-    beforeEach(() => {
-        vi.clearAllMocks();
-        queryClient.clear();
-        
-        // Default Auth State: User is logged in
-        // FIX: Cast via unknown to avoid 'any'
-        vi.mocked(AuthContext.useAuth).mockReturnValue({
-            user: { uid: 'test-user-123' },
-            loading: false,
-            isAdmin: false,
-            driveAccessToken: null,
-            loginWithGoogle: vi.fn(),
-            signupWithEmail: vi.fn(),
-            loginWithEmail: vi.fn(),
-            logout: vi.fn()
-        } as unknown as AuthContextValue);
+# =============================================================================
+# 2. THE CRUCIBLE (QA Strategy)
+# =============================================================================
+crucible_spec = r'''# 🛡️ Project 04.5: The Crucible (Hardening & QA)
 
-        // Spy on the invalidation method
-        vi.spyOn(queryClient, 'invalidateQueries');
-    });
+**Objective:** Lock down core business logic with unit tests and perform a comprehensive "Documentation-Driven QA" loop.
+**Status:** 🟡 Active
+**Context:** We are currently executing the "Bug Bash" phase based on the March 2026 Audit.
 
-    it('1. should add a journal entry and invalidate cache', async () => {
-        const { result } = renderHook(() => useJournalOperations(), { wrapper });
+## 🏗️ Phase 1: The Logic Ledger (Unit Testing)
+* [x] **Setup:** Ensure `vitest` and `@testing-library/react` are fully configured.
+* [x] **Auto-Save:** Verified debounce and encryption timing.
+* [x] **Journal CRUD:** Verified `add/update/delete` hooks invalidate cache correctly (Ticket 4.1).
+* [ ] **Task CRUD:** Verify Optimistic UI rollbacks (Pending).
 
-        const payload = {
-            content: 'Encrypted Content',
-            moodScore: 8,
-            sentiment: 'Positive',
-            weather: { temp: 20, condition: 'Sunny' },
-            tags: ['Recovery'],
-            isEncrypted: true
-        };
+## 🐛 Phase 2: Documentation-Driven QA (The Bug Bash)
 
-        // FIX: Cast via unknown to avoid 'any'
-        vi.mocked(firestore.addDoc).mockResolvedValue({ id: 'new-doc-id' } as unknown as firestore.DocumentReference);
+### Sector 1: The Gates (Auth & Onboarding)
+* [x] **Status:** Secure.
 
-        await result.current.addJournal(payload);
+### Sector 2: The Horizon (Dashboard)
+* [ ] **Bug:** Fix missing/broken icon in top-left sidebar navigation.
 
-        // Verify Firebase Call
-        expect(firestore.collection).toHaveBeenCalledWith(expect.anything(), 'journals');
-        expect(firestore.addDoc).toHaveBeenCalledWith(
-            undefined, // Collection ref (mocked return of collection())
-            expect.objectContaining({
-                uid: 'test-user-123',
-                content: payload.content,
-                moodScore: 8,
-                isEncrypted: true
-            })
-        );
+### Sector 3: The Vault (Journal & Insights)
+**Active Focus Area (Sprint 4)**
+* [ ] **Editor:** Fix Microphone icon overlapping text area.
+* [ ] **Editor:** Move Mood Slider to a position that doesn't require scrolling.
+* [ ] **Logic:** Change default mood from 5 to "User's Recent Average".
+* [ ] **Visuals:** Replace "Cheap" Recharts bars with professional Gradient Area Chart.
+* [ ] **Logic:** Word Cloud must ignore template boilerplate (e.g., "Today", "Grateful").
+* [ ] **Performance:** Implement Month/Year grouping for long history lists.
 
-        // Verify Cache Invalidation (Critical for Ticket 3.1 Fix)
-        await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
-        });
-    });
+### Sector 4: The Ledger (Tasks)
+* [x] **Status:** Stable (Text wrapping fixed in Sprint 3).
 
-    it('2. should update a journal entry and invalidate cache', async () => {
-        const { result } = renderHook(() => useJournalOperations(), { wrapper });
+### Sector 5: The Pulse (Vitality)
+* [ ] **Audit Pending:** Verify Breathwork timer prevents screen sleep.
 
-        const updatePayload = {
-            id: 'journal-123',
-            content: 'Updated Content',
-            moodScore: 5,
-            tags: ['Update'],
-            isEncrypted: true
-        };
+### Sector 6: The Compass (Workbooks)
+* [ ] **Audit Pending:** Verify Auto-save works on slow 3G connections.
 
-        // FIX: Cast via unknown to avoid 'any'
-        vi.mocked(firestore.doc).mockReturnValue('mock-doc-ref' as unknown as firestore.DocumentReference);
-        vi.mocked(firestore.updateDoc).mockResolvedValue(undefined);
+### Sector 7: The Settings (Profile)
+* [ ] **Critical Path:** Verify JSON Export contains readable data (decrypts correctly).
+* [ ] **Critical Path:** Verify PIN Rotation does not corrupt history.
 
-        await result.current.updateJournal(updatePayload);
+'''
 
-        // Verify Firebase Call
-        expect(firestore.doc).toHaveBeenCalledWith(expect.anything(), 'journals', 'journal-123');
-        expect(firestore.updateDoc).toHaveBeenCalledWith(
-            'mock-doc-ref',
-            expect.objectContaining({
-                content: 'Updated Content',
-                moodScore: 5
-            })
-        );
+# =============================================================================
+# 3. JOURNAL SPEC (Verification Update)
+# =============================================================================
+spec_journal = r'''# 📖 Feature Specification: The Journal (The Vault)
 
-        // Verify Cache Invalidation
-        await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
-        });
-    });
+**Status:** Live (v2.1)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
-    it('3. should delete a journal entry and invalidate cache', async () => {
-        const { result } = renderHook(() => useJournalOperations(), { wrapper });
+---
 
-        // FIX: Cast via unknown to avoid 'any'
-        vi.mocked(firestore.doc).mockReturnValue('mock-doc-ref' as unknown as firestore.DocumentReference);
-        vi.mocked(firestore.deleteDoc).mockResolvedValue(undefined);
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
 
-        await result.current.deleteJournal('journal-123');
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-        expect(firestore.deleteDoc).toHaveBeenCalledWith('mock-doc-ref');
+### A. Write (The Editor)
+* **Input Methods:**
+    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
+    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
+* **Metadata:**
+    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
+    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
+    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+* **Templates:**
+    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
+    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-        await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
-        });
-    });
+### B. History (The Timeline & Search)
+* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **The Memory Engine (Search):**
+    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
+    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
+    * **Scope:** Matches against Entry Content and Tags.
+* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
+* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
-    it('4. should throw error if user is not authenticated', async () => {
-        // Override Auth State to null
-        // FIX: Cast via unknown to avoid 'any'
-        vi.mocked(AuthContext.useAuth).mockReturnValue({
-            user: null, // No user
-            loading: false
-        } as unknown as AuthContextValue);
+### C. Insights (The Dashboard)
+* **Source:** `JournalInsights.tsx`
+* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
+* **Visualizations:**
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days*.
+    2.  **Trend Indicator:** A calculated "Trend Arrow" (↗️/↘️) showing if the user's 30-day average mood is improving or declining compared to the previous period.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. 
+        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score.
 
-        const { result } = renderHook(() => useJournalOperations(), { wrapper });
+---
 
-        await expect(result.current.addJournal({
-            content: 'fail',
-            moodScore: 1,
-            sentiment: 'none',
-            weather: null,
-            tags: [],
-            isEncrypted: false
-        })).rejects.toThrow("Not authenticated");
+## 3. Advanced AI Features
 
-        expect(firestore.addDoc).not.toHaveBeenCalled();
-    });
-});
+### 🧠 The Analysis Wizard
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Scopes:**
+    * **Weekly:** Last 7 days vs Previous 7 days.
+    * **Monthly:** Last 30 days vs Previous 30 days.
+    * **Deep Dive:** All-time / 90-day pattern recognition.
+* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
+* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
+* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:**
+    1.  User records audio (MediaRecorder API).
+    2.  Audio Blob converted to Base64.
+    3.  Sent to Gemini 2.5 Flash (Multimodal).
+    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
+    5.  **Populates:** The Editor state.
+
+---
+
+## 4. Technical Architecture
+
+### Data Flow & Encryption
+~~~~mermaid
+sequenceDiagram
+    participant User
+    participant App (React)
+    participant Hook (useJournalOperations)
+    participant Crypto (Lib)
+    participant Firestore
+
+    Note over App, Firestore: WRITE FLOW
+    User->>App: Types "I feel anxious" and clicks Save
+    App->>Hook: addJournal(plainText)
+    Hook->>Crypto: encrypt(plainText, Key)
+    Crypto-->>Hook: Returns "IV:Ciphertext"
+    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
+    Firestore-->>Hook: Success
+    Hook->>App: Invalidates Query Cache (Refetch History)
+~~~~
+
+### Database Schema (Journal Specific)
+**Collection:** `journals`
+| Field | Type | Description | Encryption |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | Owner ID | No |
+| `content` | String | The body text | **YES (AES-GCM)** |
+| `moodScore` | Number | 1-10 Integer | No (For Stats) |
+| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
+| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
+| `isEncrypted` | Bool | Flag for legacy data handling | No |
+| `createdAt` | Timestamp | Creation Time | No |
+
+---
+
+## 5. Verification (QA)
+* [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
+* [ ] **E2E:** Manual verification of Journal creation and decryption.
 '''
 
 def write_file(path, content):
@@ -196,11 +217,14 @@ def write_file(path, content):
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
     # Ensure markdown backticks remain intact
-    final_content = content.replace("~~~", "```").strip() + "\n"
+    final_content = content.replace("~~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Surgically patched Test File: {path}")
+    print(f"✅ Synced: {path}")
 
 if __name__ == "__main__":
-    write_file("src/hooks/__tests__/useJournalOperations.test.ts", test_content)
-    print("✨ SRE Fix complete: Type-only imports separated.")
+    print("🚀 Running Documentation Sync Protocol (v2.1)...")
+    write_file("docs/SPRINT_BOARD.md", sprint_board)
+    write_file("docs/projects/04.5_THE_CRUCIBLE.md", crucible_spec)
+    write_file("docs/specs/01_JOURNAL.md", spec_journal)
+    print("✨ Documentation aligned with Sprint 4.1 completion.")

@@ -22,7 +22,7 @@
 ## 🟡 Sprint 4: Hardening & UX Polish (Active)
 
 ### 🛠️ Category A: System Hardening
-- [ ] **4.1 Hook Testing:** Write Vitest specs for `useJournalOperations` and `useTaskOperations`.
+- [x] **4.1 Hook Testing:** Write Vitest specs for `useJournalOperations`. (Tasks hook pending).
 - [ ] **4.2 Critical Path QA:** Manual verification of Export, PIN Rotation, and Crypto-Shredding.
 
 ### 🎨 Category B: Journal UX Polish

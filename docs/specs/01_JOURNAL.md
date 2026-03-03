@@ -104,16 +104,6 @@ sequenceDiagram
 
 ---
 
-## 5. Edge Cases & Constraints
-
-1.  **Lost PIN:**
-    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
-    * *Mitigation:* `VaultGate.tsx` warns users clearly.
-
-2.  **AI Privacy:**
-    * Journal text is decrypted in browser memory *only* for the duration of the API call.
-    * Gemini API calls are stateless (data is not stored by Google for model training).
-
-3.  **API Failures:**
-    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
-    * If Gemini fails (403/500), the user can still save the text manually.
+## 5. Verification (QA)
+* [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
+* [ ] **E2E:** Manual verification of Journal creation and decryption.
