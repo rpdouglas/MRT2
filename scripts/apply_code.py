@@ -1,130 +1,197 @@
 import os
 
-task_row_content = r'''import { 
-    CheckCircleIcon as CheckCircleOutline, 
-    TrashIcon, 
-    PencilSquareIcon, 
-    ArrowPathIcon, 
-    SparklesIcon
-} from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
-import type { Task } from '../../lib/tasks';
-import { getRecurrenceLabel } from '../../lib/dateUtils';
-import { format, isBefore, startOfDay } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
+# =============================================================================
+# 1. PROJECT MANAGEMENT (Sprint Board)
+# =============================================================================
+sprint_board = r'''# 🏃 Active Sprint Board
+**Sprint:** 4.6 "The Crucible" (Hardening)
+**Start Date:** 2026-03-03
+**Goal:** Finalize unit testing and prepare for the Service Module (Lisa Persona).
 
-interface TaskRowProps {
-    task: Task;
-    onToggle: (task: Task) => void;
-    onDelete: (id: string) => void;
-    onEdit: (task: Task) => void;
-}
+## ✅ Sprint 1: The Gates & Onboarding (Completed)
+- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
+- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
+- [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
 
-// Helper to ensure we treat timestamps as dates
-const toDate = (val: Date | Timestamp | undefined | null): Date | null => {
-    if (!val) return null;
-    if (val instanceof Timestamp) return val.toDate();
-    if (val instanceof Date) return val;
-    return null;
-}
+## ✅ Sprint 2: The Horizon & Identity (Completed)
+- [x] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
+- [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
+- [x] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
+- [x] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
+- [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
 
-export default function TaskRow({ task, onToggle, onDelete, onEdit }: TaskRowProps) {
-    const isCompleted = task.status === 'completed';
-    const dueDate = toDate(task.dueDate);
-    const isOverdue = !isCompleted && dueDate && isBefore(dueDate, startOfDay(new Date()));
-    
-    // Priority Colors
-    const priorityColor = {
-        High: 'text-red-600 bg-red-50 border-red-100',
-        Medium: 'text-amber-600 bg-amber-50 border-amber-100',
-        Low: 'text-slate-500 bg-slate-50 border-slate-100'
-    }[task.priority || 'Medium']; // Default Medium if missing
+## ✅ Sprint 3: The Core Polish (Completed)
+- [x] **3.1 Journal Cache:** Implemented `useJournalOperations` hook to fix History tab staleness on save/delete.
+- [x] **3.2 Tasks UI:** Refactored `TaskRow` to support multi-line text wrapping for long AI-generated titles.
 
-    return (
-        <div className={`group flex items-start gap-3 p-3 bg-white border-b border-gray-100 transition-all hover:bg-slate-50 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`}>
-            
-            {/* CHECKBOX - Top aligned with mt-0.5 for optical balance */}
-            <button 
-                onClick={(e) => { e.stopPropagation(); onToggle(task); }}
-                className="flex-shrink-0 text-slate-300 hover:text-green-500 transition-colors mt-0.5"
-            >
-                {isCompleted ? (
-                    <CheckCircleSolid className="h-6 w-6 text-green-500" />
-                ) : (
-                    <CheckCircleOutline className="h-6 w-6" />
-                )}
-            </button>
+## 🟡 Sprint 4: Unit Testing & Hardening (Active)
+- [ ] **4.1 Hook Testing:** Add comprehensive tests for `useTaskOperations` and `useJournalOperations`.
+- [ ] **4.2 Critical Path QA:** Run full manual regression on PIN rotation and Export flows.
 
-            {/* CONTENT */}
-            <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex items-start gap-2">
-                    {/* TITLE - Wraps naturally up to 4 lines */}
-                    <span className={`text-sm font-medium line-clamp-4 break-words leading-snug pt-0.5 ${isCompleted ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                        {task.title}
-                    </span>
-                    
-                    {/* Source Badge (AI) - Top aligned */}
-                    {task.source === 'ai' && (
-                        <SparklesIcon className="h-3.5 w-3.5 text-purple-400 shrink-0 mt-1" title="AI Suggested" />
-                    )}
-                </div>
+## ✅ Done (Previous Sprint)
+- [x] Gathered 13 bugs across Sector 1.
+- [x] Built Triage Generator script.
+- [x] Restructured VitePress Knowledge Base.
+'''
 
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                    {/* Priority Badge */}
-                    {!isCompleted && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${priorityColor}`}>
-                            {task.priority || 'Medium'}
-                        </span>
-                    )}
+# =============================================================================
+# 2. TECHNICAL SPECIFICATIONS (Journal)
+# =============================================================================
+spec_journal = r'''# 📖 Feature Specification: The Journal (The Vault)
 
-                    {/* Date Badge */}
-                    {dueDate && (
-                        <span className={`text-[10px] font-medium ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
-                            {isOverdue ? 'Overdue' : format(dueDate, 'MMM d')}
-                        </span>
-                    )}
+**Status:** Live (v2.1)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
-                    {/* Recurring Badge */}
-                    {task.recurrence && task.recurrence.type !== 'once' && (
-                        <div className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
-                            <ArrowPathIcon className="h-3 w-3" />
-                            <span className="hidden sm:inline">{getRecurrenceLabel(task.recurrence)}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
+---
 
-            {/* ACTIONS (Desktop Hover / Mobile Always) - Top aligned */}
-            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity mt-0.5">
-                <button 
-                    onClick={() => onEdit(task)} 
-                    className="p-1.5 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                    title="Edit"
-                >
-                    <PencilSquareIcon className="h-4 w-4" />
-                </button>
-                <button 
-                    onClick={() => onDelete(task.id!)} 
-                    className="p-1.5 text-slate-400 hover:text-red-600 rounded hover:bg-red-50"
-                    title="Delete"
-                >
-                    <TrashIcon className="h-4 w-4" />
-                </button>
-            </div>
-        </div>
-    );
-}
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
+
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
+
+### A. Write (The Editor)
+* **Input Methods:**
+    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
+    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
+* **Metadata:**
+    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
+    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
+    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+* **Templates:**
+    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
+    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
+
+### B. History (The Timeline & Search)
+* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+* **The Memory Engine (Search):**
+    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
+    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
+    * **Scope:** Matches against Entry Content and Tags.
+* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
+* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
+
+### C. Insights (The Dashboard)
+* **Source:** `JournalInsights.tsx`
+* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
+* **Visualizations:**
+    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days*.
+    2.  **Trend Indicator:** A calculated "Trend Arrow" (↗️/↘️) showing if the user's 30-day average mood is improving or declining compared to the previous period.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content. 
+        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
+    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score.
+
+---
+
+## 3. Advanced AI Features
+
+### 🧠 The Analysis Wizard
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Scopes:**
+    * **Weekly:** Last 7 days vs Previous 7 days.
+    * **Monthly:** Last 30 days vs Previous 30 days.
+    * **Deep Dive:** All-time / 90-day pattern recognition.
+* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
+* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
+* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:**
+    1.  User records audio (MediaRecorder API).
+    2.  Audio Blob converted to Base64.
+    3.  Sent to Gemini 2.5 Flash (Multimodal).
+    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
+    5.  **Populates:** The Editor state.
+
+---
+
+## 4. Technical Architecture
+
+### Data Flow & Encryption
+~~~~mermaid
+sequenceDiagram
+    participant User
+    participant App (React)
+    participant Hook (useJournalOperations)
+    participant Crypto (Lib)
+    participant Firestore
+
+    Note over App, Firestore: WRITE FLOW
+    User->>App: Types "I feel anxious" and clicks Save
+    App->>Hook: addJournal(plainText)
+    Hook->>Crypto: encrypt(plainText, Key)
+    Crypto-->>Hook: Returns "IV:Ciphertext"
+    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
+    Firestore-->>Hook: Success
+    Hook->>App: Invalidates Query Cache (Refetch History)
+~~~~
+
+### Database Schema (Journal Specific)
+**Collection:** `journals`
+| Field | Type | Description | Encryption |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | Owner ID | No |
+| `content` | String | The body text | **YES (AES-GCM)** |
+| `moodScore` | Number | 1-10 Integer | No (For Stats) |
+| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
+| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
+| `isEncrypted` | Bool | Flag for legacy data handling | No |
+| `createdAt` | Timestamp | Creation Time | No |
+
+---
+
+## 5. Edge Cases & Constraints
+
+1.  **Lost PIN:**
+    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
+    * *Mitigation:* `VaultGate.tsx` warns users clearly.
+
+2.  **AI Privacy:**
+    * Journal text is decrypted in browser memory *only* for the duration of the API call.
+    * Gemini API calls are stateless (data is not stored by Google for model training).
+
+3.  **API Failures:**
+    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
+    * If Gemini fails (403/500), the user can still save the text manually.
+'''
+
+# =============================================================================
+# 3. CHANGELOG (Public)
+# =============================================================================
+changelog = r'''# 🚀 Changelog
+
+Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
+
+### v1.0.1 (Core Polish Update)
+* **Improvement:** Journal entries now appear instantly in your History list after saving. No more manual refreshing!
+* **Improvement:** Task titles now wrap text naturally, so longer AI-generated Action Plans are fully readable.
+* **Fix:** Resolved a bug where deleting a journal entry might leave a "ghost" card until the next login.
+
+### v1.0.0 (Initial Launch)
+* **Feature:** Initial Public Release!
+* **Feature:** Zero-Knowledge Client-Side Encryption (AES-GCM).
+* **Feature:** The Horizon Gamification Dashboard.
+* **Feature:** The Pulse (Vitality Tracking & Breathwork).
+* **Feature:** The Compass (Gemini 2.5 AI Analysis).
+* **Feature:** Task Ledger with Smart Resets.
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    final_content = content.replace("~~~", "```").strip() + "\n"
+    # Ensure markdown backticks remain intact
+    final_content = content.replace("~~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Updated UI: {path}")
+    print(f"✅ Synced: {path}")
 
 if __name__ == "__main__":
-    write_file("src/components/tasks/TaskRow.tsx", task_row_content)
-    print("✨ TaskRow layout modernized.")
+    print("🚀 Running Documentation Sync Protocol (v2.1)...")
+    write_file("docs/SPRINT_BOARD.md", sprint_board)
+    write_file("docs/specs/01_JOURNAL.md", spec_journal)
+    write_file("docs-site/support/changelog.md", changelog)
+    print("✨ Documentation aligned with Sprint 3 completion.")
