@@ -41,11 +41,15 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 * **Source:** `JournalInsights.tsx`
 * **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
 * **Visualizations:**
-    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days*.
-    2.  **Trend Indicator:** A calculated "Trend Arrow" (↗️/↘️) showing if the user's 30-day average mood is improving or declining compared to the previous period.
-    3.  **Interactive Word Cloud:** Frequency analysis of entry content. 
+    1.  **Emotional Velocity (Area Chart):** A gradient-filled area chart showing mood fluctuation over the last 14 active days, overlaid with temperature data to detect seasonal patterns.
+    2.  **Weekly Rhythm (Baseline vs. Reality):** A comparative chart showing:
+        * **Ghost Line (Dotted):** Average mood for the *Previous 30 Days*.
+        * **Solid Bar:** Average mood for the *Current 30 Days*.
+        * *Insight:* If the bar is higher than the line, the user is trending up.
+    3.  **Interactive Word Cloud:** Frequency analysis of entry content.
+        * **Smart Filters:** Automatically excludes boilerplate words (e.g., "Check-in", "Morning").
+        * **User Blocklist:** Users can click the "Eye Slash" icon to open `ManageWordCloudModal` and hide specific words from the cloud locally (persisted in `localStorage`).
         * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
-    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score.
 
 ---
 
@@ -76,7 +80,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 ## 4. Technical Architecture
 
 ### Data Flow & Encryption
-```~mermaid
+```mermaid
 sequenceDiagram
     participant User
     participant App (React)
