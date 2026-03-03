@@ -16,6 +16,21 @@ Navigate to the **History** tab to view past entries.
 
 ## 3. Insights & Analytics
 Navigate to the **Insights** tab to view your data visually.
-* **Weekly Rhythm:** A bar chart comparing your average mood over the last 30 days vs the previous 30 days.
-* **Trend Arrow:** A quick visual indicator (Up/Down) showing your trajectory.
-* **Recurring Themes:** An interactive Word Cloud. Click any word in the cloud to instantly search your journal history for that specific topic!
+
+### 📊 Emotional Velocity
+This gradient chart shows the "flow" of your mood over the last 14 days.
+* The purple curve represents your **Mood**.
+* The orange line represents the **Temperature**.
+* **Why this matters:** Look for patterns. Does your mood dip when the temperature drops? Do you have "spikey" weeks or smooth sailing?
+
+### 📉 Weekly Rhythm (Baseline vs. Reality)
+This chart compares your **Current 30 Days** against your **Previous 30 Days**.
+* **Solid Purple Bar:** Your average mood for that day of the week *recently*.
+* **Dotted Grey Line:** Your average mood for that day *last month*.
+* **How to read it:** If the Purple Bar is taller than the Dotted Line, you are improving compared to your baseline!
+
+### ☁️ Recurring Themes (Word Cloud)
+See what you talk about most often.
+* **Filtering Noise:** MRT automatically hides common template words like "Morning" or "Check-in."
+* **Custom Filters:** Tap the **Eye Slash Icon** in the corner to manage your ignored words. If you want to hide a specific name or place from the cloud, add it there.
+* **Deep Dive:** Click any word in the cloud to instantly search your journal history for that specific topic!

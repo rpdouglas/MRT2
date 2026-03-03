@@ -16,12 +16,8 @@
 - [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
 
 ## ✅ Sprint 3: The Core Polish (Completed)
-- [x] **3.1 Journal Cache:** Implemented `useJournalOperations` hook to fix History tab staleness on save/delete.
-- [x] **3.2 Tasks UI:** Refactored `TaskRow` to support multi-line text wrapping for long AI-generated titles.
-
-## 🟡 Sprint 4: Unit Testing & Hardening (Active)
-- [ ] **4.1 Hook Testing:** Add comprehensive tests for `useTaskOperations` and `useJournalOperations`.
-- [ ] **4.2 Critical Path QA:** Run full manual regression on PIN rotation and Export flows.
+- [x] **3.1 Journal Cache:** Fix History tab staleness on save/delete.
+- [x] **3.2 Tasks UI:** Fix text wrapping for long Action Plan titles.
 
 ## 🟡 Sprint 4: Hardening & UX Polish (Active)
 
@@ -39,10 +35,13 @@
     - Implement "Month/Year" collapsible headers in History list.
 
 ### 🧠 Category C: Intelligence & Analytics
-- [ ] **4.5 Visuals & Logic:**
-    - Revamp Chart to Gradient Area Chart (Mon-Sun axis).
-    - Filter "Template Words" from Word Cloud.
-    - Tune AI Prompt for "Emotional Velocity".
+- [x] **4.5 Visuals & Logic:**
+    - Revamp Chart to Gradient Area Chart (Emotional Velocity).
+    - Implement "Baseline vs Reality" Weekly Rhythm Chart.
+    - Tune AI Prompt for brevity.
+- [x] **4.5.1 Filters:**
+    - Add "Manage Ignored Words" modal for Word Cloud.
+    - Persist user blocklist to LocalStorage.
 - [ ] **4.6 Template Refresh:** Update default templates (Somatic Urge Log, Evening Inventory).
 
 ## 🧊 Backlog (Sprint 5+)
