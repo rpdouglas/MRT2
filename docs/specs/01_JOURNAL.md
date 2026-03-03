@@ -92,7 +92,7 @@ sequenceDiagram
     Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
     Firestore-->>Hook: Success
     Hook->>App: Invalidates Query Cache (Refetch History)
-```~
+```
 
 ### Database Schema (Journal Specific)
 **Collection:** `journals`

@@ -16,8 +16,12 @@
 - [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
 
 ## ✅ Sprint 3: The Core Polish (Completed)
-- [x] **3.1 Journal Cache:** Fix History tab staleness on save/delete.
-- [x] **3.2 Tasks UI:** Fix text wrapping for long Action Plan titles.
+- [x] **3.1 Journal Cache:** Implemented `useJournalOperations` hook to fix History tab staleness on save/delete.
+- [x] **3.2 Tasks UI:** Refactored `TaskRow` to support multi-line text wrapping for long AI-generated titles.
+
+## 🟡 Sprint 4: Unit Testing & Hardening (Active)
+- [ ] **4.1 Hook Testing:** Add comprehensive tests for `useTaskOperations` and `useJournalOperations`.
+- [ ] **4.2 Critical Path QA:** Run full manual regression on PIN rotation and Export flows.
 
 ## 🟡 Sprint 4: Hardening & UX Polish (Active)
 

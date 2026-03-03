@@ -131,7 +131,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 ...data, 
                 content, 
                 createdAt: createdDate,
-                isError                 
+                isError                
             } as unknown as JournalEntryWithStatus;
         }));
     },

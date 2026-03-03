@@ -11,7 +11,6 @@ import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { useQueryClient } from '@tanstack/react-query';
 import { 
     CheckIcon, // CHANGED from PlusIcon
     Cog6ToothIcon,
@@ -289,6 +288,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         return;
       }
 
+      // 3. Save to Firestore via Hook
       if (initialEntry) {
         await updateJournal({ 
             id: initialEntry.id, 
