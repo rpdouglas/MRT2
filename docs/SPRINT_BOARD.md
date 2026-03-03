@@ -1,7 +1,7 @@
 # 🏃 Active Sprint Board
-**Sprint:** 4.5.3 "Triage Execution"
-**Start Date:** 2026-02-26
-**Goal:** Execute the 3-Sprint Triage plan from the Sector 1 Bug Bash.
+**Sprint:** 4.6 "The Crucible" (Hardening)
+**Start Date:** 2026-03-03
+**Goal:** Finalize unit testing and prepare for the Service Module (Lisa Persona).
 
 ## ✅ Sprint 1: The Gates & Onboarding (Completed)
 - [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
@@ -15,9 +15,13 @@
 - [x] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
 - [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
 
-## 🟡 Sprint 3: The Core Polish (Active)
-- [ ] **3.1 Journal Cache:** Fix UI state so journal edits appear without page refresh.
-- [ ] **3.2 Tasks UI:** Allow text wrapping for long Action Plan titles instead of truncation.
+## ✅ Sprint 3: The Core Polish (Completed)
+- [x] **3.1 Journal Cache:** Implemented `useJournalOperations` hook to fix History tab staleness on save/delete.
+- [x] **3.2 Tasks UI:** Refactored `TaskRow` to support multi-line text wrapping for long AI-generated titles.
+
+## 🟡 Sprint 4: Unit Testing & Hardening (Active)
+- [ ] **4.1 Hook Testing:** Add comprehensive tests for `useTaskOperations` and `useJournalOperations`.
+- [ ] **4.2 Critical Path QA:** Run full manual regression on PIN rotation and Export flows.
 
 ## ✅ Done (Previous Sprint)
 - [x] Gathered 13 bugs across Sector 1.
