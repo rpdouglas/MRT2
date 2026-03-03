@@ -2,14 +2,13 @@
  * src/components/journal/JournalHistory.tsx
  * GITHUB COMMENT:
  * [JournalHistory.tsx]
- * FEATURE: Implemented client-side filtering via useSearchParams.
- * FIX: Re-factored layout strictly for Virtuoso bounds to prevent overflow.
- * PRESERVED: isVaultUnlocked in React Query array.
+ * REFACTOR: Replaced raw Firebase deleteDoc with useJournalOperations hook to ensure cache invalidation (Ticket 3.1).
  */
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
+import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { 
     collection, 
@@ -17,12 +16,10 @@ import {
     where, 
     orderBy, 
     getDocs, 
-    deleteDoc, 
-    doc, 
     Timestamp, 
     type Firestore 
 } from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { groupItemsByDate } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
@@ -67,7 +64,7 @@ const WeatherIcon = ({ condition }: { condition: string }) => {
 export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { user } = useAuth();
   const { decrypt, isVaultUnlocked } = useEncryption();
-  const queryClient = useQueryClient();
+  const { deleteJournal } = useJournalOperations();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -118,7 +115,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 ...data, 
                 content, 
                 createdAt: createdDate,
-                isError                        
+                isError                
             } as unknown as JournalEntryWithStatus;
         }));
     },
@@ -153,11 +150,9 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   }, [filteredEntries]);
 
   const handleDelete = async (id: string) => {
-    if (!db) return;
     if (!confirm('Delete this entry?')) return;
     try {
-      await deleteDoc(doc(db, 'journals', id));
-      queryClient.invalidateQueries({ queryKey: ['journals'] });
+      await deleteJournal(id);
     } catch (error) {
       console.error(error);
     }

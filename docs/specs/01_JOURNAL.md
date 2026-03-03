@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v2.0)
+**Status:** Live (v2.1)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -26,7 +26,8 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 
 ### B. History (The Timeline & Search)
 * **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
-* **The Memory Engine (Search):** * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
+* **The Memory Engine (Search):**
+    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
     * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
     * **Scope:** Matches against Entry Content and Tags.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
@@ -64,7 +65,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     2.  Audio Blob converted to Base64.
     3.  Sent to Gemini 2.5 Flash (Multimodal).
     4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
-    5.  Populates the Editor state.
+    5.  **Populates:** The Editor state.
 
 ---
 
@@ -75,24 +76,18 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 sequenceDiagram
     participant User
     participant App (React)
+    participant Hook (useJournalOperations)
     participant Crypto (Lib)
-    participant Gemini (AI)
     participant Firestore
 
     Note over App, Firestore: WRITE FLOW
-    User->>App: Types "I feel anxious"
-    App->>Crypto: encrypt("I feel anxious", Key)
-    Crypto-->>App: Returns "IV:Ciphertext"
-    App->>Firestore: Writes { content: "IV:Ciphertext", isEncrypted: true }
-
-    Note over App, Gemini: AI ANALYSIS FLOW
-    User->>App: Clicks "Analyze"
-    App->>Firestore: Fetches Encrypted Docs
-    App->>Crypto: decrypt(Docs, Key)
-    App->>Gemini: Sends Plain Text (Stateless)
-    Gemini-->>App: Returns Analysis JSON
-    App->>App: Renders Result
-    App->>Firestore: Saves Result (Optional)
+    User->>App: Types "I feel anxious" and clicks Save
+    App->>Hook: addJournal(plainText)
+    Hook->>Crypto: encrypt(plainText, Key)
+    Crypto-->>Hook: Returns "IV:Ciphertext"
+    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
+    Firestore-->>Hook: Success
+    Hook->>App: Invalidates Query Cache (Refetch History)
 ```
 
 ### Database Schema (Journal Specific)
