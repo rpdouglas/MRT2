@@ -2,10 +2,12 @@
  * src/pages/Profile.tsx
  * GITHUB COMMENT:
  * [Profile.tsx]
- * FEAT: Migrated User Guide CTA to the General Tab for better UX context (Ticket 2.4).
+ * FEAT: Implemented PIN Rotation and Crypto-Shredding logic in Security Tab (Ticket 2.5).
+ * FIX: Resolved unused variable in catch block.
  */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext';
 import { getProfile, updateProfileData } from '../lib/db';
 import { Timestamp } from 'firebase/firestore'; 
 import { updateProfile } from 'firebase/auth'; 
@@ -18,9 +20,12 @@ import {
   IdentificationIcon,
   ShieldCheckIcon,
   CircleStackIcon,
-  LockClosedIcon,
-  BookOpenIcon
+  KeyIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
+import { BookOpenIcon } from '@heroicons/react/24/solid';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
 
@@ -28,6 +33,7 @@ type TabType = 'general' | 'security' | 'data';
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const { changePin, resetVault } = useEncryption();
   const navigate = useNavigate();
   
   const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
@@ -46,6 +52,15 @@ export default function Profile() {
   const [isOnboarding, setIsOnboarding] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+  // Security State
+  const [oldPin, setOldPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [rotProgress, setRotProgress] = useState(0);
+  const [isRotating, setIsRotating] = useState(false);
+  const [rotError, setRotError] = useState<string | null>(null);
+  const [rotSuccess, setRotSuccess] = useState(false);
+
   useEffect(() => {
     async function loadProfile() {
       if (user) {
@@ -58,13 +73,11 @@ export default function Profile() {
           setSponsorName(data.sponsorName || '');
           setSponsorPhone(data.sponsorPhone || '');
           
-          // DETECT ONBOARDING STATUS
           if (!data.hasCompletedOnboarding) {
               setIsOnboarding(true);
-              setActiveTab('general'); // Force to general tab
+              setActiveTab('general'); 
           }
         } else {
-          // If no profile document, they are definitely onboarding
           setIsOnboarding(true);
           setActiveTab('general');
         }
@@ -98,7 +111,6 @@ export default function Profile() {
           sobrietyTimestamp = Timestamp.fromDate(dateObj);
       }
       
-      // ALWAYS SET ONBOARDING TO TRUE UPON SAVE
       await updateProfileData(user.uid, {
         displayName,
         sobrietyDate: sobrietyTimestamp,
@@ -107,7 +119,6 @@ export default function Profile() {
         hasCompletedOnboarding: true
       });
 
-      // SYNC FIREBASE AUTH PROFILE FOR SIDEBAR REACTIVITY
       try {
           await updateProfile(user, { displayName });
       } catch (authErr) {
@@ -115,7 +126,6 @@ export default function Profile() {
       }
 
       if (isOnboarding) {
-          // THE RELEASE VALVE: Send them to the dashboard!
           navigate('/dashboard');
       } else {
           setMessage({ type: 'success', text: 'Profile updated successfully' });
@@ -126,6 +136,53 @@ export default function Profile() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRotation = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!oldPin || !newPin || !confirmPin) return;
+      if (newPin !== confirmPin) return setRotError("New PINs do not match.");
+      if (newPin.length < 4) return setRotError("PIN must be at least 4 digits.");
+      if (oldPin === newPin) return setRotError("New PIN must be different than your old PIN.");
+
+      setIsRotating(true);
+      setRotError(null);
+      setRotSuccess(false);
+      setRotProgress(0);
+
+      try {
+          await changePin(oldPin, newPin, setRotProgress);
+          setRotSuccess(true);
+          setOldPin('');
+          setNewPin('');
+          setConfirmPin('');
+      } catch (err: unknown) {
+          const error = err as Error;
+          if (error.message === 'INCORRECT_PIN') {
+              setRotError("Current PIN is incorrect.");
+          } else {
+              setRotError("An error occurred during rotation. State rolled back securely.");
+              console.error(error);
+          }
+      } finally {
+          setIsRotating(false);
+      }
+  };
+
+  const handleHardReset = async () => {
+      const confirmText = prompt("CRITICAL WARNING: This permanently deletes ALL encrypted journals and workbooks. They cannot be recovered.\n\nType RESET to confirm.");
+      if (confirmText !== "RESET") return;
+
+      setIsRotating(true);
+      try {
+          await resetVault();
+          alert("Vault has been permanently destroyed. You may now generate a new one.");
+          window.location.reload();
+      } catch (e) {
+          console.error("Hard reset failed", e);
+          alert("Reset failed. Check connection.");
+          setIsRotating(false);
+      } 
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
@@ -161,7 +218,7 @@ export default function Profile() {
                     <IdentificationIcon className="h-4 w-4" /> General
                 </button>
                 <button 
-                    onClick={() => { setActiveTab('security'); setMessage(null); }}
+                    onClick={() => { setActiveTab('security'); setMessage(null); setRotError(null); setRotSuccess(false); }}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'security' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                     <ShieldCheckIcon className="h-4 w-4" /> Security
@@ -183,7 +240,6 @@ export default function Profile() {
                         {isOnboarding ? 'Required Setup' : 'Identity'}
                     </h3>
                     
-                    {/* PERSONAL INFO */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Display Name {isOnboarding && <span className="text-red-500">*</span>}</label>
                         <input
@@ -208,7 +264,6 @@ export default function Profile() {
                         <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
                     </div>
 
-                    {/* SUPPORT NETWORK SECTION */}
                     <div className="pt-4 border-t border-gray-100">
                         <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                             <UserGroupIcon className="h-4 w-4 text-emerald-600" /> Support Network
@@ -255,7 +310,6 @@ export default function Profile() {
                     </div>
                 </form>
 
-                {/* USER GUIDE CTA (Moved from DataManagement) */}
                 {!isOnboarding && (
                     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-lg text-white">
                         <div className="flex items-center gap-4 mb-4">
@@ -282,21 +336,110 @@ export default function Profile() {
 
         {/* TAB 2: SECURITY */}
         {activeTab === 'security' && !isOnboarding && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6 animate-fadeIn">
-                <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2 flex items-center gap-2">
-                    <ShieldCheckIcon className="h-5 w-5 text-slate-500" /> Security & PIN
-                </h3>
+            <div className="space-y-6 animate-fadeIn">
                 
-                <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-50 rounded-xl border border-dashed border-gray-300">
-                    <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                        <LockClosedIcon className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <h4 className="text-md font-bold text-slate-700">Vault Security Tools</h4>
-                    <p className="text-sm text-slate-500 max-w-xs mt-2">PIN Management and vault rotation tools are currently being upgraded for enhanced security.</p>
-                    <div className="mt-5 px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-bold uppercase rounded-full tracking-wider border border-purple-200">
-                        Coming in v2.5
-                    </div>
+                {/* Change PIN Block */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2 mb-5">
+                        <KeyIcon className="h-5 w-5 text-blue-600" /> Change Vault PIN
+                    </h3>
+
+                    {rotSuccess && (
+                        <div className="mb-6 bg-green-50 text-green-700 p-4 rounded-xl text-sm font-bold border border-green-100 flex items-start gap-3 animate-fadeIn">
+                            <CheckCircleIcon className="h-5 w-5 shrink-0" />
+                            PIN changed successfully. All data securely re-encrypted.
+                        </div>
+                    )}
+
+                    {rotError && (
+                        <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-start gap-3 animate-fadeIn">
+                            <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+                            {rotError}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleRotation} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Current PIN</label>
+                            <input
+                                type="password"
+                                inputMode="numeric"
+                                value={oldPin}
+                                onChange={(e) => setOldPin(e.target.value)}
+                                disabled={isRotating}
+                                className="w-full text-center text-xl tracking-widest p-3 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                                required
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">New PIN</label>
+                                <input
+                                    type="password"
+                                    inputMode="numeric"
+                                    value={newPin}
+                                    onChange={(e) => setNewPin(e.target.value)}
+                                    disabled={isRotating}
+                                    className="w-full text-center text-xl tracking-widest p-3 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Confirm New</label>
+                                <input
+                                    type="password"
+                                    inputMode="numeric"
+                                    value={confirmPin}
+                                    onChange={(e) => setConfirmPin(e.target.value)}
+                                    disabled={isRotating}
+                                    className="w-full text-center text-xl tracking-widest p-3 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {isRotating && (
+                            <div className="pt-2 animate-fadeIn">
+                                <div className="flex justify-between text-xs font-bold text-blue-600 mb-1">
+                                    <span>Re-encrypting Vault...</span>
+                                    <span>{rotProgress}%</span>
+                                </div>
+                                <div className="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
+                                    <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${rotProgress}%` }}></div>
+                                </div>
+                                <p className="text-[10px] text-red-500 mt-2 text-center uppercase tracking-widest font-bold animate-pulse">
+                                    Do not close the application!
+                                </p>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isRotating || !oldPin || !newPin || !confirmPin}
+                            className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md mt-2"
+                        >
+                            {isRotating ? 'Rotating Keys...' : 'Change PIN'}
+                        </button>
+                    </form>
                 </div>
+
+                {/* Crypto-Shredding Block */}
+                <div className="bg-red-50 p-6 rounded-xl border border-red-200">
+                    <h3 className="text-lg font-bold text-red-900 mb-2 flex items-center gap-2">
+                        <TrashIcon className="h-5 w-5" /> Danger Zone: Reset Vault
+                    </h3>
+                    <p className="text-sm text-red-800 mb-4 leading-relaxed">
+                        If you forgot your PIN or want to start fresh, you can permanently wipe your vault. <strong>This instantly destroys all encrypted journals and workbooks.</strong>
+                    </p>
+                    <button
+                        onClick={handleHardReset}
+                        disabled={isRotating}
+                        className="w-full sm:w-auto px-6 py-3 bg-white text-red-600 border-2 border-red-200 font-bold rounded-xl hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        Destroy & Reset Vault
+                    </button>
+                </div>
+
             </div>
         )}
 

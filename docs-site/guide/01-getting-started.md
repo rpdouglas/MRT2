@@ -16,3 +16,9 @@ MRT uses **Zero-Knowledge Encryption**. This means your journals and workbook an
 3. **WARNING:** We do not store this PIN. If you forget it, your encrypted data is permanently lost. There is no "Forgot Password" button for the Vault.
 
 > **💡 Pro Tip:** Your PIN is temporarily cached in your browser while the app is open so you don't have to type it on every page. Clicking "Lock Vault" in the sidebar instantly clears it from memory.
+
+## 🔄 Managing Your Vault
+If you need to update your security settings, navigate to **Profile -> Security**.
+
+* **Change PIN:** If you know your current PIN, you can change it here. The app will securely re-encrypt all your historical journals and workbooks with the new PIN in the background. *Please do not close the app while the progress bar is running.*
+* **Reset Vault:** If you forgot your PIN, your data is mathematically unrecoverable. You can use the **Reset Vault** option to permanently destroy your old encrypted data and set up a brand new Vault.

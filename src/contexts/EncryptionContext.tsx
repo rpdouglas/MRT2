@@ -2,8 +2,7 @@
  * src/contexts/EncryptionContext.tsx
  * GITHUB COMMENT:
  * [EncryptionContext.tsx]
- * UPDATED: Integrated sessionStorage PIN caching and wrapped performUnlock in useCallback.
- * PURPOSE: Reduces re-unlock friction during active browser sessions while maintaining Zero-Knowledge integrity.
+ * FEAT: Integrated executePinRotation and executeCryptoShredding for Ticket 2.5.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -12,7 +11,6 @@ import {
   doc, 
   getDoc, 
   setDoc, 
-  deleteField, 
   collection, 
   query, 
   where, 
@@ -28,6 +26,7 @@ import {
     clearKey, 
     isVaultUnlocked as checkLibUnlocked 
 } from '../lib/crypto';
+import { executeCryptoShredding, executePinRotation } from '../lib/rotation';
 
 const SESSION_PIN_KEY = 'mrt_vault_pin';
 
@@ -38,6 +37,7 @@ interface EncryptionContextType {
   unlockVault: (pin: string) => Promise<boolean>;
   setupVault: (pin: string) => Promise<void>;
   resetVault: () => Promise<void>;
+  changePin: (oldPin: string, newPin: string, onProgress: (p: number) => void) => Promise<void>;
   encrypt: (text: string) => Promise<string>;
   decrypt: (encryptedText: string) => Promise<string>;
   lockVault: () => void;
@@ -64,21 +64,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const [salt, setSalt] = useState<string | null>(null);
   const [verifier, setVerifier] = useState<string | null>(null);
 
-  /**
-   * Performs the actual cryptographic unlock and session caching.
-   */
   const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
       try {
-        // 1. Verify PIN if verifier exists
         if (currentVerifier) {
             const checkHash = await computePinHash(pin, currentSalt);
             if (checkHash !== currentVerifier) return false;
         }
 
-        // 2. Generate Key in Web Crypto API
         await generateKey(pin, currentSalt);
 
-        // 3. Self-Healing / Legacy Check
         if (!currentVerifier && db && user) {
             const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
             const snapshot = await getDocs(q);
@@ -89,7 +83,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                         const result = await decrypt(testDoc.content);
                         if (result.includes("Locked Content")) throw new Error("Key mismatch");
                         
-                        // Create verifier for next time to speed up future unlocks
                         const newVerifier = await computePinHash(pin, currentSalt);
                         const userDocRef = doc(db, 'users', user.uid);
                         await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
@@ -100,7 +93,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                     }
                 }
             } else {
-                 // No data yet, create verifier immediately
                  const newVerifier = await computePinHash(pin, currentSalt);
                  const userDocRef = doc(db, 'users', user.uid);
                  await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
@@ -109,7 +101,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         }
         
         setIsVaultUnlocked(true);
-        // Save to Session Storage for PWA navigation resilience
         sessionStorage.setItem(SESSION_PIN_KEY, pin);
         return true;
 
@@ -119,7 +110,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       }
   }, [user]);
 
-  // Initial Load & Auto-Unlock from Session Storage
   useEffect(() => {
     async function checkVaultStatus() {
       if (!user || !db) {
@@ -140,7 +130,6 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
             const currentVerifier = data.pinVerifier || null;
             if (currentVerifier) setVerifier(currentVerifier);
 
-            // --- AUTO UNLOCK CHECK ---
             const cachedPin = sessionStorage.getItem(SESSION_PIN_KEY);
             if (cachedPin) {
                 await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
@@ -194,11 +183,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     if (!user || !db) return;
     try {
       setVaultLoading(true);
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, {
-        encryptionSalt: deleteField(),
-        pinVerifier: deleteField()
-      }, { merge: true });
+      
+      // Massive batch delete of all encrypted documents
+      await executeCryptoShredding(user.uid);
       
       clearKey();
       sessionStorage.removeItem(SESSION_PIN_KEY);
@@ -212,6 +199,16 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     } finally {
       setVaultLoading(false);
     }
+  };
+
+  const changePin = async (oldPin: string, newPin: string, onProgress: (p: number) => void) => {
+    if (!user || !salt) throw new Error("Missing auth state");
+    const { newSalt, newVerifier } = await executePinRotation(user.uid, oldPin, newPin, salt, verifier, onProgress);
+    
+    setSalt(newSalt);
+    setVerifier(newVerifier);
+    setIsVaultUnlocked(true);
+    sessionStorage.setItem(SESSION_PIN_KEY, newPin);
   };
 
   const unlockVault = async (pin: string): Promise<boolean> => {
@@ -241,6 +238,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     unlockVault,
     setupVault,
     resetVault,
+    changePin,
     encrypt: handleEncrypt,
     decrypt: handleDecrypt,
     lockVault
