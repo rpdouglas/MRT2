@@ -5,6 +5,7 @@
  * QA: Implemented strict timing and state boundary tests for the useAutoSave hook.
  * Verifies debounce logic, encryption payload mapping, and duplicate-save prevention.
  * FIX: Replaced synchronous timer advances and waitFor with vi.advanceTimersByTimeAsync to resolve React state update hanging/timeouts.
+ * FIX: Resolved ESLint 'any' type error and removed unused disable directive.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
@@ -49,10 +50,9 @@ describe('💾 useAutoSave Engine', () => {
         vi.useFakeTimers();
         
         // Mock encrypt to return a predictable ciphertext
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(EncryptionContext.useEncryption).mockReturnValue({
             encrypt: vi.fn().mockResolvedValue('encrypted-secret-text'),
-        } as any);
+        } as unknown as ReturnType<typeof EncryptionContext.useEncryption>);
     });
 
     afterEach(() => {
