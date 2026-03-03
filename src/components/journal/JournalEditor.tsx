@@ -2,7 +2,10 @@
  * src/components/journal/JournalEditor.tsx
  * GITHUB COMMENT:
  * [JournalEditor.tsx]
- * REFACTOR: Replaced raw Firebase mutations with the useJournalOperations hook to trigger cache invalidation (Ticket 3.1).
+ * REFACTOR: "Sticky Studio" layout. 
+ * - Moved Mood/Tags/Actions to a fixed bottom toolbar.
+ * - Implemented "Smart Default" mood based on React Query cache history.
+ * - Removed floating elements that blocked text.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +13,7 @@ import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
     PlusIcon, 
     Cog6ToothIcon,
@@ -17,7 +21,8 @@ import {
     ArrowPathIcon,
     TagIcon,
     XMarkIcon,
-    MicrophoneIcon
+    MicrophoneIcon,
+    FaceSmileIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { getCurrentWeather } from '../../lib/weather';
@@ -65,10 +70,32 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const { encrypt } = useEncryption();
   const { addJournal, updateJournal } = useJournalOperations();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // --- SMART DEFAULT MOOD LOGIC ---
+  const getSmartMood = () => {
+      if (initialEntry) return initialEntry.moodScore;
+      
+      // Peek into cache for 'journals' key (used by JournalHistory)
+      // Note: We cast vaguely because the cache structure can vary, but we expect an array of objects with moodScore
+      const cache = queryClient.getQueryData<JournalEntry[]>(['journals']);
+      
+      if (!cache || cache.length === 0) return 5;
+
+      // Filter valid recent moods (last 7)
+      const recent = cache
+        .filter(e => typeof e.moodScore === 'number' && e.moodScore > 0)
+        .slice(0, 7);
+      
+      if (recent.length === 0) return 5;
+
+      const sum = recent.reduce((acc, curr) => acc + curr.moodScore, 0);
+      return Math.round(sum / recent.length);
+  };
 
   // State
   const [newEntry, setNewEntry] = useState('');
-  const [mood, setMood] = useState(5);
+  const [mood, setMood] = useState(getSmartMood); // Initialize with function for lazy eval
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
   
   // We keep local saving state to cover both the encryption time AND network write time
@@ -193,7 +220,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setActiveTemplate(null);
     } else {
       setNewEntry('');
-      setMood(5);
+      // We don't reset Mood here to preserve the "Smart Default" unless explicitly needed
       setTags([]);
       setActiveTemplate(null);
       setFormAnswers([]);
@@ -301,7 +328,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setNewEntry('');
       setFormAnswers([]);
       setActiveTemplate(null);
-      setMood(5);
+      setMood(getSmartMood()); // Reset to smart default
       setTags([]);
       onSaveComplete();
     } catch (error) {
@@ -313,11 +340,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible relative">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-180px)] md:h-[600px] relative">
         
-        {/* HEADER */}
-        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3">
-             
+        {/* === SECTION 1: FIXED HEADER === */}
+        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3 shrink-0">
              {/* LEFT: Weather Widget */}
              <div>
                  {weather ? (
@@ -354,12 +380,12 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                  <div className="relative">
                      <select 
                         onChange={(e) => handleTemplateSelect(e.target.value)}
-                        className="pl-3 pr-8 py-1.5 text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
+                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white max-w-[140px] sm:max-w-none"
                         defaultValue=""
                         disabled={!!initialEntry} 
                     >
-                        <option value="" disabled>Choose a Template...</option>
-                        <option value="none">Free Write (Blank)</option>
+                        <option value="" disabled>Choose Template...</option>
+                        <option value="none">Free Write</option>
                         <optgroup label="Standard">
                             {DEFAULT_TEMPLATES.map(t => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -385,20 +411,17 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
              </div>
         </div>
         
-        {/* VOICE MODE OVERLAY */}
-        {isVoiceMode ? (
-            <div className="p-6">
-                <AudioRecorder 
-                    onAnalysisComplete={handleAudioComplete}
-                    onCancel={() => setIsVoiceMode(false)}
-                />
-            </div>
-        ) : (
-            <form onSubmit={handleSave} className="p-4 space-y-4">
-            
-            {/* EDITOR AREA */}
-            {activeTemplate ? (
-                <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+        {/* === SECTION 2: SCROLLABLE EDITOR BODY === */}
+        <div className="flex-1 overflow-y-auto p-4">
+            {isVoiceMode ? (
+                <div className="h-full flex items-center justify-center">
+                    <AudioRecorder 
+                        onAnalysisComplete={handleAudioComplete}
+                        onCancel={() => setIsVoiceMode(false)}
+                    />
+                </div>
+            ) : activeTemplate ? (
+                <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100 min-h-full">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
                         <button 
@@ -414,7 +437,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                         <div key={idx}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
                             <textarea
-                                rows={4} 
+                                rows={3} 
                                 value={formAnswers[idx] || ''}
                                 onChange={(e) => {
                                     const newAns = [...formAnswers];
@@ -428,87 +451,73 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     ))}
                 </div>
             ) : (
-                <div className="relative">
-                    <textarea
-                        value={newEntry}
-                        onChange={(e) => setNewEntry(e.target.value)}
-                        placeholder="How are you feeling today?"
-                        className="w-full h-[45vh] p-4 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none text-gray-700 leading-relaxed font-mono"
-                    />
-                    {/* Floating Voice Button */}
-                    <button
-                        type="button"
-                        onClick={() => setIsVoiceMode(true)}
-                        className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-lg transition-all active:scale-95 group"
-                        title="Voice Note"
-                    >
-                        <MicrophoneIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                    </button>
-                </div>
+                <textarea
+                    value={newEntry}
+                    onChange={(e) => setNewEntry(e.target.value)}
+                    placeholder="How are you feeling today?"
+                    className="w-full h-full p-2 rounded-xl border-none focus:ring-0 shadow-none resize-none text-gray-700 leading-relaxed font-mono text-base placeholder:text-gray-300"
+                />
             )}
+        </div>
 
-            {/* MOOD SLIDER */}
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700">Mood Score</label>
-                    <span className={`text-sm font-bold px-2 py-0.5 rounded ${mood >= 7 ? 'text-green-700 bg-green-100' : mood <= 4 ? 'text-red-700 bg-red-100' : 'text-yellow-700 bg-yellow-100'}`}>
-                        {mood}/10
-                    </span>
-                </div>
+        {/* === SECTION 3: STICKY COMMAND TOOLBAR === */}
+        <div className="border-t border-gray-200 bg-gray-50/95 backdrop-blur-sm p-3 shrink-0 flex flex-col gap-3">
+            
+            {/* Row 1: Mood Slider (Compact) */}
+            <div className="flex items-center gap-3 px-2">
+                <FaceSmileIcon className={`h-5 w-5 ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`} />
                 <input 
                     type="range" 
                     min="1" 
                     max="10" 
                     value={mood}
                     onChange={(e) => setMood(Number(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>Struggling</span>
-                    <span>Neutral</span>
-                    <span>Thriving</span>
-                </div>
+                <span className={`text-xs font-bold w-6 text-center ${mood >= 7 ? 'text-green-700' : mood <= 4 ? 'text-red-700' : 'text-yellow-700'}`}>
+                    {mood}
+                </span>
             </div>
 
-            {/* FOOTER */}
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            {/* Row 2: Tags & Actions */}
+            <div className="flex items-center gap-2">
                 
-                {/* TAG INPUT */}
-                <div className="relative group w-full sm:flex-1">
-                    <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                {/* Tag Input */}
+                <div className="relative flex-1 group">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
                         <TagIcon className="h-4 w-4 text-gray-400" />
-                        
-                        {tags.map(tag => (
-                            <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
-                                {tag}
-                                <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                                    <XMarkIcon className="h-3 w-3" />
-                                </button>
-                            </span>
-                        ))}
-
-                        <input 
-                            type="text"
-                            value={tagInput}
-                            onChange={(e) => {
-                                setTagInput(e.target.value);
-                                setShowSuggestions(true);
-                            }}
-                            onKeyDown={handleAddTag}
-                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                            placeholder={tags.length === 0 ? "Add tags (e.g. Grateful)..." : ""}
-                            className="flex-1 min-w-[120px] text-sm border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400"
-                        />
+                        <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar items-center">
+                            {tags.map(tag => (
+                                <span key={tag} className="flex-shrink-0 flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap">
+                                    {tag}
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                        <XMarkIcon className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            ))}
+                            <input 
+                                type="text"
+                                value={tagInput}
+                                onChange={(e) => {
+                                    setTagInput(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onKeyDown={handleAddTag}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                placeholder={tags.length === 0 ? "Add tags..." : ""}
+                                className="min-w-[60px] text-xs border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400 bg-transparent"
+                            />
+                        </div>
                     </div>
 
-                    {/* Autocomplete Suggestions */}
+                    {/* Autocomplete Suggestions (Upwards) */}
                     {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
-                        <div className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-40 overflow-y-auto z-50">
+                        <div className="absolute bottom-full left-0 mb-2 w-full max-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 max-h-32 overflow-y-auto z-50">
                             {filteredSuggestions.map(tag => (
                                 <button
                                     key={tag}
                                     type="button"
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                    className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                                     onClick={() => addTag(tag)}
                                 >
                                     {tag}
@@ -518,24 +527,31 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     )}
                 </div>
 
+                {/* Mic Button */}
+                <button
+                    type="button"
+                    onClick={() => setIsVoiceMode(true)}
+                    className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-colors flex-shrink-0"
+                    title="Voice Note"
+                >
+                    <MicrophoneIcon className="h-5 w-5" />
+                </button>
+
                 {/* Save Button */}
                 <button
-                type="submit"
-                disabled={saving}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 flex items-center gap-1"
                 >
-                {saving ? (
-                    <span>Saving...</span>
-                ) : (
-                    <>
-                    <PlusIcon className="h-5 w-5" />
-                    <span>{initialEntry ? 'Update Entry' : 'Save Entry'}</span>
-                    </>
-                )}
+                    {saving ? (
+                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <PlusIcon className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{initialEntry ? 'Update' : 'Save'}</span>
                 </button>
             </div>
-            </form>
-        )}
+        </div>
     </div>
   );
 }
