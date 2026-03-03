@@ -2,14 +2,14 @@
  * src/components/journal/JournalEditor.tsx
  * GITHUB COMMENT:
  * [JournalEditor.tsx]
- * UPDATED: Integrated AudioRecorder component.
- * FEATURE: Toggle between Text and Voice modes. Auto-fills content from AI transcription.
+ * REFACTOR: Replaced raw Firebase mutations with the useJournalOperations hook to trigger cache invalidation (Ticket 3.1).
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
+import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, Timestamp, doc, updateDoc, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
     PlusIcon, 
     Cog6ToothIcon,
@@ -63,13 +63,16 @@ const DEFAULT_TEMPLATES = [
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user } = useAuth();
   const { encrypt } = useEncryption();
+  const { addJournal, updateJournal } = useJournalOperations();
   const navigate = useNavigate();
 
   // State
   const [newEntry, setNewEntry] = useState('');
   const [mood, setMood] = useState(5);
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
-  const [saving, setSaving] = useState(false);
+  
+  // We keep local saving state to cover both the encryption time AND network write time
+  const [saving, setSaving] = useState(false); 
   const [weatherLoading, setWeatherLoading] = useState(false);
   
   // Tag State
@@ -274,23 +277,22 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         return;
       }
 
-      // 3. Save to Firestore
+      // 3. Save to Firestore via Hook
       if (initialEntry) {
-        await updateDoc(doc(db, 'journals', initialEntry.id), { 
+        await updateJournal({ 
+            id: initialEntry.id, 
             content: contentToSave, 
-            moodScore: mood,
-            tags: tags,
-            isEncrypted: isEncrypted
+            moodScore: mood, 
+            tags: tags, 
+            isEncrypted: isEncrypted 
         });
       } else {
-        await addDoc(collection(db, 'journals'), {
-          uid: user.uid,
+        await addJournal({
           content: contentToSave,
           moodScore: mood,
           sentiment: 'Pending', 
-          weather, 
+          weather: weather, 
           tags: tags,
-          createdAt: Timestamp.now(),
           isEncrypted: isEncrypted
         });
       }
