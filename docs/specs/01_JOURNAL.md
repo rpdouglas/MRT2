@@ -12,14 +12,16 @@ The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows u
 ## 2. The Three Modes (Tabs)
 The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-### A. Write (The Editor)
+### A. Write (The Editor - "Sticky Studio")
+* **Layout:** A flexible column layout with a persistent **Command Toolbar** at the bottom.
+    * **Header:** Contextual info (Date, Weather).
+    * **Body:** Scrollable textarea for distraction-free writing.
+    * **Toolbar (Sticky):** Houses the Mood Slider, Tag Input, Voice Mic, and Save Checkmark. This ensures controls never overlap text or require scrolling to access.
+* **Smart Defaults:**
+    * **Mood:** Initializes to the average of the user's last 7 entries (via `getSmartMood`) rather than a static "5".
 * **Input Methods:**
-    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
-    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
-* **Metadata:**
-    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
-    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
-    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+    * **Text:** Rich-text inputs.
+    * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
 * **Templates:**
     * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
     * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
@@ -106,4 +108,4 @@ sequenceDiagram
 
 ## 5. Verification (QA)
 * [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
-* [ ] **E2E:** Manual verification of Journal creation and decryption.
+* [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.

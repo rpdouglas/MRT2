@@ -26,7 +26,7 @@
 - [x] **4.2 Critical Path QA:** Manual verification of Export, PIN Rotation, and Crypto-Shredding.
 
 ### 🎨 Category B: Journal UX Polish
-- [ ] **4.3 Editor Ergonomics:**
+- [x] **4.3 Editor Ergonomics:**
     - Fix Mic icon blocking text (padding).
     - Move Mood Slider to Sticky Header/Footer.
     - Set default mood to "Last 7 Days Average" instead of 5.
