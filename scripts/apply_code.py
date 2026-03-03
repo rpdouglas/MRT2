@@ -4,10 +4,8 @@ journal_editor_content = r'''/**
  * src/components/journal/JournalEditor.tsx
  * GITHUB COMMENT:
  * [JournalEditor.tsx]
- * REFACTOR: "Sticky Studio" layout. 
- * - Moved Mood/Tags/Actions to a fixed bottom toolbar.
- * - Implemented "Smart Default" mood based on React Query cache history.
- * - Removed floating elements that blocked text.
+ * FIX: Constrained Tag Input width using min-w-0 to prevent flex blowout.
+ * FIX: Replaced PlusIcon with CheckIcon for clearer 'Save' semantics.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,7 +15,7 @@ import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
-    PlusIcon, 
+    CheckIcon, // CHANGED from PlusIcon
     Cog6ToothIcon,
     MapPinIcon,
     ArrowPathIcon,
@@ -78,13 +76,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const getSmartMood = () => {
       if (initialEntry) return initialEntry.moodScore;
       
-      // Peek into cache for 'journals' key (used by JournalHistory)
-      // Note: We cast vaguely because the cache structure can vary, but we expect an array of objects with moodScore
       const cache = queryClient.getQueryData<JournalEntry[]>(['journals']);
       
       if (!cache || cache.length === 0) return 5;
 
-      // Filter valid recent moods (last 7)
       const recent = cache
         .filter(e => typeof e.moodScore === 'number' && e.moodScore > 0)
         .slice(0, 7);
@@ -97,10 +92,9 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
   // State
   const [newEntry, setNewEntry] = useState('');
-  const [mood, setMood] = useState(getSmartMood); // Initialize with function for lazy eval
+  const [mood, setMood] = useState(getSmartMood); 
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
   
-  // We keep local saving state to cover both the encryption time AND network write time
   const [saving, setSaving] = useState(false); 
   const [weatherLoading, setWeatherLoading] = useState(false);
   
@@ -115,7 +109,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
 
-  // NEW: Voice Mode State
   const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   // --- Helper Functions ---
@@ -182,13 +175,11 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
     
     if (custTemplate) {
-        // Free Text Mode
         if (custTemplate.content) {
             setNewEntry(custTemplate.content);
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
             setActiveTemplate(null); 
         } 
-        // Form Mode
         else if (custTemplate.prompts) {
             setActiveTemplate(custTemplate);
             setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
@@ -222,7 +213,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setActiveTemplate(null);
     } else {
       setNewEntry('');
-      // We don't reset Mood here to preserve the "Smart Default" unless explicitly needed
       setTags([]);
       setActiveTemplate(null);
       setFormAnswers([]);
@@ -235,7 +225,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     }
   }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
 
-  // Tag Handling
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -262,7 +251,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
   );
 
-  // --- VOICE HANDLER ---
   const handleAudioComplete = (result: AudioAnalysisResult) => {
       setNewEntry(prev => (prev ? prev + "\n\n" + result.transcription : result.transcription));
       setMood(result.mood_score);
@@ -270,7 +258,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setIsVoiceMode(false);
   };
 
-  // --- SAVE HANDLER ---
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !db) return;
@@ -282,7 +269,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
     setSaving(true);
 
-    // 1. Prepare Content
     let plainContent = newEntry;
     if (activeTemplate) {
         plainContent = `**${activeTemplate.name}**\n\n`;
@@ -292,7 +278,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     }
 
     try {
-      // 2. Encrypt Content
       let contentToSave = plainContent;
       let isEncrypted = false;
 
@@ -306,7 +291,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         return;
       }
 
-      // 3. Save to Firestore via Hook
       if (initialEntry) {
         await updateJournal({ 
             id: initialEntry.id, 
@@ -326,11 +310,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         });
       }
 
-      // Reset
       setNewEntry('');
       setFormAnswers([]);
       setActiveTemplate(null);
-      setMood(getSmartMood()); // Reset to smart default
+      setMood(getSmartMood());
       setTags([]);
       onSaveComplete();
     } catch (error) {
@@ -484,10 +467,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
             {/* Row 2: Tags & Actions */}
             <div className="flex items-center gap-2">
                 
-                {/* Tag Input */}
-                <div className="relative flex-1 group">
+                {/* Tag Input - CRITICAL FIX: min-w-0 added to prevent flex overflow */}
+                <div className="relative flex-1 min-w-0 group">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                        <TagIcon className="h-4 w-4 text-gray-400" />
+                        <TagIcon className="h-4 w-4 text-gray-400 shrink-0" />
                         <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar items-center">
                             {tags.map(tag => (
                                 <span key={tag} className="flex-shrink-0 flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap">
@@ -512,7 +495,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                         </div>
                     </div>
 
-                    {/* Autocomplete Suggestions (Upwards) */}
+                    {/* Autocomplete Suggestions */}
                     {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
                         <div className="absolute bottom-full left-0 mb-2 w-full max-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 max-h-32 overflow-y-auto z-50">
                             {filteredSuggestions.map(tag => (
@@ -539,7 +522,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     <MicrophoneIcon className="h-5 w-5" />
                 </button>
 
-                {/* Save Button */}
+                {/* Save Button (Swapped to CheckIcon) */}
                 <button
                     onClick={handleSave}
                     disabled={saving}
@@ -548,7 +531,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     {saving ? (
                         <ArrowPathIcon className="h-4 w-4 animate-spin" />
                     ) : (
-                        <PlusIcon className="h-4 w-4" />
+                        <CheckIcon className="h-4 w-4" />
                     )}
                     <span className="hidden sm:inline">{initialEntry ? 'Update' : 'Save'}</span>
                 </button>
@@ -566,8 +549,8 @@ def write_file(path, content):
     final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Updated UI: {path}")
+    print(f"✅ Polished UI: {path}")
 
 if __name__ == "__main__":
     write_file("src/components/journal/JournalEditor.tsx", journal_editor_content)
-    print("✨ Sticky Studio layout applied.")
+    print("✨ UX Friction Points Resolved.")
