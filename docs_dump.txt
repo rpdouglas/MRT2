@@ -2,7 +2,7 @@
 **Generated on:** Tue Feb 10 21:59:21 EST 2026
 
 ================================================================================
-FILE: docs/CONTEXT_DUMP.md
+FILECHANGE: docs/CONTEXT_DUMP.md
 ================================================================================
 # 🧠 MRT: Platform Context
 **Stack:** React 19 + Vite + Tailwind v4 + Firebase + Gemini 2.5
