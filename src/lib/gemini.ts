@@ -1,6 +1,8 @@
 /**
  * src/lib/gemini.ts
- * UPDATED: Fixed generateComparativeAnalysis to use 'gemini-2.5-pro'.
+ * GITHUB COMMENT:
+ * [gemini.ts]
+ * TWEAK: Enforced brevity on 'emotional_velocity' prompt (Max 15 words) for Ticket 4.5.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -231,7 +233,7 @@ export async function generateDeepPatternAnalysis(
     {
         "pattern_summary": "A comprehensive paragraph describing the user's psychological landscape over this period.",
         "core_triggers": ["Trigger 1", "Trigger 2", "Trigger 3"],
-        "emotional_velocity": "A brief description of how quickly their mood shifts (e.g. 'Stable but low', 'Volatile spikes').",
+        "emotional_velocity": "A brief description (MAX 15 words) of how quickly their mood shifts (e.g. 'Volatile swings between AM and PM', 'Stable but low baseline').",
         "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
         "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
         "long_term_advice": ["Action 1", "Action 2", "Action 3"]

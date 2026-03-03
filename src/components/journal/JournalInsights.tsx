@@ -2,8 +2,10 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FEAT: Updated UI to display active Trend Direction (Current 30 vs Prev 30).
- * FEAT: Interactive Word Cloud tags act as one-click search filters via navigation.
+ * FEAT: "Emotional Velocity" upgraded to Gradient Area Chart.
+ * FEAT: "Weekly Rhythm" upgraded to 'Baseline vs Reality' (Thick Bars + Dotted Line).
+ * FEAT: Added smart Stop-Word filtering to Word Cloud.
+ * FEAT: Added "Manage Filter" modal for user-defined blocked words (LocalStorage).
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,16 +13,17 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ComposedChart, 
-  Line, 
-  Bar, 
-  BarChart,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Legend
+    AreaChart, 
+    Area, 
+    Line, 
+    Bar, 
+    ComposedChart, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    Legend
 } from 'recharts';
 import { 
     ChartBarIcon, 
@@ -28,24 +31,24 @@ import {
     FireIcon, 
     CalendarDaysIcon,
     ArrowTrendingUpIcon,
-    ArrowTrendingDownIcon
+    ArrowTrendingDownIcon,
+    EyeSlashIcon // NEW
 } from '@heroicons/react/24/outline';
 import { format, subDays, getDay, startOfDay } from 'date-fns';
+import ManageWordCloudModal from './ManageWordCloudModal'; // NEW
 
 // --- TYPES ---
 
-// 1. Daily Stats (Mood vs Weather)
 interface DailyStats {
-    date: string; // YYYY-MM-DD
-    displayDate: string; // "Oct 12"
+    date: string; 
+    displayDate: string; 
     avgMood: number;
     avgTemp: number;
     entryCount: number;
 }
 
-// 2. Comparative Weekly Rhythm
 interface WeeklyComparisonStats {
-    dayName: string; // "Mon", "Tue"
+    dayName: string;
     currentAvg: number;
     prevAvg: number;
     currentCount: number;
@@ -65,34 +68,50 @@ interface JournalEntryRaw {
     content?: string;
 }
 
-// Stop words to filter out of the cloud
-const STOP_WORDS = new Set([
-  'the', 'and', 'i', 'to', 'a', 'of', 'in', 'was', 'my', 'that', 'for', 'it', 'me', 'on', 
-  'with', 'but', 'is', 'this', 'have', 'be', 'so', 'not', 'at', 'as', 'today', 'day', 
-  'feeling', 'feel', 'am', 'just', 'had', 'very', 'really', 'will', 'up', 'out', 'from'
+// EXPANDED STOP WORDS
+const RECOVERY_STOP_WORDS = new Set([
+    'the', 'and', 'i', 'to', 'a', 'of', 'in', 'was', 'my', 'that', 'for', 'it', 'me', 'on', 
+    'with', 'but', 'is', 'this', 'have', 'be', 'so', 'not', 'at', 'as', 'today', 'day', 
+    'feeling', 'feel', 'am', 'just', 'had', 'very', 'really', 'will', 'up', 'out', 'from',
+    'about', 'what', 'when', 'where', 'how', 'why',
+    // MRT Boilerplate
+    'morning', 'check-in', 'checkin', 'nightly', 'review', 'urge', 'log', 'meeting', 'reflection',
+    'trigger', 'intensity', 'coping', 'strategy', 'topic', 'heard', 'resonated', 'apply',
+    'well', 'challenged', 'stay', 'sober', 'focus', 'grateful', 'main', 'thing', 'went'
 ]);
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const STORAGE_KEY_BLOCKLIST = 'mrt_word_cloud_ignore_list';
 
 export default function JournalInsights() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // State
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0, trend: 0 });
   
-  // Chart Data States
   const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
   const [weeklyComparisonData, setWeeklyComparisonData] = useState<WeeklyComparisonStats[]>([]);
   const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
 
+  // User Blocklist State (Persisted)
+  const [userBlockList, setUserBlockList] = useState<string[]>(() => {
+      const stored = localStorage.getItem(STORAGE_KEY_BLOCKLIST);
+      return stored ? JSON.parse(stored) : [];
+  });
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  // Save blocklist when it changes
+  useEffect(() => {
+      localStorage.setItem(STORAGE_KEY_BLOCKLIST, JSON.stringify(userBlockList));
+  }, [userBlockList]);
+
+  // Load Data Effect
   useEffect(() => {
     async function loadData() {
         if (!user || !db) return;
 
         try {
-            // Fetch last 90 days for robust analysis
             const q = query(
                 collection(db, 'journals'), 
                 where('uid', '==', user.uid),
@@ -102,44 +121,35 @@ export default function JournalInsights() {
             const snapshot = await getDocs(q);
             const rawData = snapshot.docs.map(d => d.data() as JournalEntryRaw);
 
-            // --- AGGREGATION ENGINE ---
-
-            // 1. Initialize Containers
+            // Containers
             const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
-            
-            // Initialize Weekly Buckets (0=Sun -> 6=Sat)
             const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
                 dayName: DAYS_OF_WEEK[i],
-                currentTotal: 0,
-                currentCount: 0,
-                prevTotal: 0,
-                prevCount: 0
+                currentTotal: 0, currentCount: 0,
+                prevTotal: 0, prevCount: 0
             }));
-
-            // Word Cloud Container
             const wordFreq: Record<string, number> = {};
 
-            // 2. Reference Dates for Rolling Window
+            // Dates
             const today = startOfDay(new Date());
             const thirtyDaysAgo = subDays(today, 30);
             const sixtyDaysAgo = subDays(today, 60);
 
-            // 3. Single Pass Processing
+            // Globals
             let totalMoodSum = 0;
             let totalEntries = 0;
+            let current30Total = 0; let current30Count = 0;
+            let prev30Total = 0; let prev30Count = 0;
 
-            // Trend accumulators
-            let current30Total = 0;
-            let current30Count = 0;
-            let prev30Total = 0;
-            let prev30Count = 0;
+            // Combined Block Set for Filtering
+            const activeBlockSet = new Set([...Array.from(RECOVERY_STOP_WORDS), ...userBlockList]);
 
             rawData.forEach(entry => {
                 if (!entry.createdAt) return;
                 const dateObj = entry.createdAt.toDate(); 
                 const dateKey = format(dateObj, 'yyyy-MM-dd'); 
 
-                // --- A. Daily Trend Aggregation ---
+                // 1. Daily Trend
                 if (!dailyMap.has(dateKey)) {
                     dailyMap.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
                 }
@@ -148,52 +158,44 @@ export default function JournalInsights() {
                 if (entry.moodScore !== undefined) {
                     dayStat.moodSum += entry.moodScore;
                     dayStat.moodCount += 1;
-                    
-                    // Global Stats
                     totalMoodSum += entry.moodScore;
                     totalEntries++;
 
-                    // --- B. Comparative Weekly Rhythm (Rolling 30 vs Prev 30) ---
+                    // 2. Weekly Comparison
                     const dayIndex = getDay(dateObj); // 0 = Sun
                     
                     if (dateObj >= thirtyDaysAgo) {
-                        // Current 30 Days Bucket
                         weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].currentCount += 1;
-                        
-                        // Broad Trend 
                         current30Total += entry.moodScore;
                         current30Count += 1;
                     } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
-                        // Previous 30 Days Bucket
                         weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
                         weeklyBuckets[dayIndex].prevCount += 1;
-
-                        // Broad Trend
                         prev30Total += entry.moodScore;
                         prev30Count += 1;
                     }
                 }
 
-                if (entry.weather && entry.weather.temp !== undefined) {
+                if (entry.weather?.temp !== undefined) {
                     dayStat.tempSum += entry.weather.temp;
                     dayStat.tempCount += 1;
                 }
 
-                // --- C. Word Cloud Processing ---
+                // 3. Word Cloud
                 if (entry.content) {
-                    const words = entry.content.toLowerCase().match(/\b\w+\b/g) || [];
+                    const cleanContent = entry.content.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
+                    const words = cleanContent.split(/\s+/);
                     words.forEach(word => {
-                        if (!STOP_WORDS.has(word) && word.length > 3) {
+                        // Check against the combined active block set
+                        if (word.length > 3 && !activeBlockSet.has(word)) {
                             wordFreq[word] = (wordFreq[word] || 0) + 1;
                         }
                     });
                 }
             });
 
-            // 3. Finalize Data Structures
-
-            // Daily Trend (Last 14 Active Days)
+            // Finalize Daily Trend
             const dailyStatsArray = Array.from(dailyMap.values()).map(stat => ({
                 date: format(stat.timestamp, 'yyyy-MM-dd'),
                 displayDate: format(stat.timestamp, 'MMM d'),
@@ -204,7 +206,7 @@ export default function JournalInsights() {
             
             setDailyTrendData(dailyStatsArray.slice(-14));
 
-            // Weekly Comparison (Reorder to start Monday)
+            // Finalize Weekly (Reorder to Mon-Sun)
             const sunday = weeklyBuckets.shift(); 
             if (sunday) weeklyBuckets.push(sunday);
             
@@ -217,14 +219,14 @@ export default function JournalInsights() {
             }));
             setWeeklyComparisonData(finalizedWeekly);
 
-            // Word Cloud
+            // Finalize Word Cloud
             const topWords = Object.entries(wordFreq)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 20)
                 .map(([text, value]) => ({ text, value }));
             setWordCloudData(topWords);
 
-            // Global Stats with Trend Calculation
+            // Global Trend
             const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
             const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
             const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
@@ -232,7 +234,7 @@ export default function JournalInsights() {
             setStats({
                 total: rawData.length,
                 avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
-                streak: rawData.length, // Placeholder
+                streak: rawData.length,
                 trend
             });
 
@@ -244,20 +246,32 @@ export default function JournalInsights() {
     }
 
     loadData();
-  }, [user]);
+    // Re-run when blocklist changes to filter immediately
+  }, [user, userBlockList]);
+
+  // --- Handlers for Blocklist ---
+  const handleAddBlockWord = (word: string) => {
+      const lower = word.toLowerCase();
+      if (!userBlockList.includes(lower)) {
+          setUserBlockList(prev => [...prev, lower]);
+      }
+  };
+
+  const handleRemoveBlockWord = (word: string) => {
+      setUserBlockList(prev => prev.filter(w => w !== word));
+  };
 
   if (loading) return <div className="p-10 text-center text-gray-400 animate-pulse">Analyzing patterns...</div>;
 
   return (
     <div className="space-y-6 pb-20">
         
-        {/* --- TOP STATS CARDS --- */}
+        {/* --- TOP STATS --- */}
         <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-indigo-50 flex flex-col items-center justify-center">
                 <div className="text-2xl font-black text-indigo-600">{stats.total}</div>
                 <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Entries</div>
             </div>
-            
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-purple-50 flex flex-col items-center justify-center">
                 <div className="flex items-center gap-1.5">
                     <span className="text-2xl font-black text-purple-600">{stats.avgMood}</span>
@@ -270,14 +284,13 @@ export default function JournalInsights() {
                 </div>
                 <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
             </div>
-
              <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-50 flex flex-col items-center justify-center">
                 <FireIcon className="h-6 w-6 text-orange-500 mb-1" />
                 <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Active</div>
             </div>
         </div>
 
-        {/* --- 1. COMPARATIVE WEEKLY RHYTHM (Grouped Bar) --- */}
+        {/* --- 1. WEEKLY RHYTHM (Baseline vs Reality) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
@@ -286,7 +299,7 @@ export default function JournalInsights() {
                 </h3>
                 <div className="flex gap-3 text-[10px] font-bold">
                     <span className="flex items-center gap-1 text-slate-400">
-                        <div className="w-2 h-2 rounded-full bg-slate-300"></div> Prev 30 Days
+                        <div className="w-4 h-0.5 bg-slate-400 border border-slate-400 border-dashed"></div> Prev 30 Days
                     </span>
                     <span className="flex items-center gap-1 text-purple-600">
                         <div className="w-2 h-2 rounded-full bg-purple-500"></div> Last 30 Days
@@ -295,8 +308,8 @@ export default function JournalInsights() {
             </div>
             
             <div className="h-56 w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <BarChart data={weeklyComparisonData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={weeklyComparisonData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
                         <XAxis 
                             dataKey="dayName" 
@@ -308,34 +321,42 @@ export default function JournalInsights() {
                         <Tooltip 
                             contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
                             cursor={{fill: '#f8fafc'}}
-                            // Satisfy strict Recharts typing by accepting generic payload
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            formatter={(value: any, name: any) => [value, name === 'currentAvg' ? 'Last 30 Days' : 'Prev 30 Days']}
                         />
-                        {/* Previous 30 Days (Baseline) - Muted */}
-                        <Bar dataKey="prevAvg" name="Prev 30 Days" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={12} />
-                        
-                        {/* Current 30 Days (Active) - Vibrant */}
-                        <Bar dataKey="currentAvg" name="Last 30 Days" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={12} />
-                    </BarChart>
+                        <Line 
+                            type="monotone" 
+                            dataKey="prevAvg" 
+                            name="Prev 30 Days" 
+                            stroke="#94a3b8" 
+                            strokeWidth={2} 
+                            strokeDasharray="5 5"
+                            dot={{r: 3, fill: '#94a3b8'}}
+                        />
+                        <Bar 
+                            dataKey="currentAvg" 
+                            name="Last 30 Days" 
+                            fill="#8b5cf6" 
+                            radius={[6, 6, 0, 0]} 
+                            barSize={32} 
+                        />
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score (Rolling Comparison)</p>
+            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score</p>
         </div>
 
-        {/* --- 2. MOOD vs WEATHER (Composed) --- */}
+        {/* --- 2. EMOTIONAL VELOCITY (Gradient Area) --- */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
             <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
                 <ChartBarIcon className="h-4 w-4 text-indigo-500" />
-                Daily Trends (Mood vs Weather)
+                Emotional Velocity
             </h3>
             
             <div className="h-72 w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={200}>
-                    <ComposedChart data={dailyTrendData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailyTrendData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
                         <defs>
-                            <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                            <linearGradient id="colorMoodArea" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
                                 <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
@@ -356,19 +377,48 @@ export default function JournalInsights() {
                         />
                         <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
 
-                        <Bar yAxisId="right" dataKey="avgTemp" name="Temp (°C)" fill="#FDBA74" radius={[4, 4, 0, 0]} barSize={20} />
-                        <Line yAxisId="left" type="monotone" dataKey="avgMood" name="Mood" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#fff'}} />
-                    </ComposedChart>
+                        <Area 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="avgMood" 
+                            name="Mood Flow" 
+                            stroke="#6366F1" 
+                            fillOpacity={1} 
+                            fill="url(#colorMoodArea)" 
+                            strokeWidth={3} 
+                        />
+                        <Line 
+                            yAxisId="right" 
+                            type="monotone" 
+                            dataKey="avgTemp" 
+                            name="Temp (°C)" 
+                            stroke="#FDBA74" 
+                            strokeWidth={2} 
+                            dot={false} 
+                            strokeDasharray="5 5" 
+                        />
+                    </AreaChart>
                 </ResponsiveContainer>
             </div>
         </div>
 
         {/* --- 3. WORD CLOUD --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
-            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
-                <CloudIcon className="h-4 w-4 text-blue-500" />
-                Recurring Themes
-            </h3>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50 relative">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
+                    <CloudIcon className="h-4 w-4 text-blue-500" />
+                    Recurring Themes
+                </h3>
+                
+                {/* Filter Trigger */}
+                <button 
+                    onClick={() => setIsFilterModalOpen(true)}
+                    className="p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    title="Manage Ignored Words"
+                >
+                    <EyeSlashIcon className="h-5 w-5" />
+                </button>
+            </div>
             
             {wordCloudData.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 text-sm">Not enough data yet.</div>
@@ -396,6 +446,15 @@ export default function JournalInsights() {
                 </div>
             )}
         </div>
+
+        {/* FILTER MODAL */}
+        <ManageWordCloudModal 
+            isOpen={isFilterModalOpen} 
+            onClose={() => setIsFilterModalOpen(false)}
+            blockedWords={userBlockList}
+            onAddWord={handleAddBlockWord}
+            onRemoveWord={handleRemoveBlockWord}
+        />
     </div>
   );
 }
