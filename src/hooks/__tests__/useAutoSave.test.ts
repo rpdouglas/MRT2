@@ -1,6 +1,4 @@
-import os
-
-test_content = r'''/**
+/**
  * src/hooks/__tests__/useAutoSave.test.ts
  * GITHUB COMMENT:
  * [useAutoSave.test.ts]
@@ -145,17 +143,3 @@ describe('💾 useAutoSave Engine', () => {
         expect(firestore.setDoc).toHaveBeenCalledTimes(1);
     });
 });
-'''
-
-def write_file(path, content):
-    dirname = os.path.dirname(path)
-    if dirname: 
-        os.makedirs(dirname, exist_ok=True)
-    final_content = content.replace("~~~", "```").strip() + "\n"
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(final_content)
-    print(f"✅ Surgically patched Test File: {path}")
-
-if __name__ == "__main__":
-    write_file("src/hooks/__tests__/useAutoSave.test.ts", test_content)
-    print("✨ SRE Fix complete.")
