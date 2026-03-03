@@ -2,7 +2,7 @@
  * src/components/AppShell.tsx
  * GITHUB COMMENT:
  * [AppShell.tsx]
- * UX: Updated sidebar title to "My Recovery Toolkit" to match brand guidelines (Ticket 2.1).
+ * FIX: Replaced broken favicon-32x32.png with pwa-192x192.png for sidebar icon stability (Ticket 4.4).
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -150,7 +150,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
                    <div className="flex items-center gap-3 text-white font-bold text-[17px] tracking-tight whitespace-nowrap">
                       <div className="bg-white/10 p-1.5 rounded-lg shrink-0">
-                        <img src="/favicon-32x32.png" alt="MRT Logo" className="h-6 w-6" />
+                        {/* FIX: Updated Icon Path */}
+                        <img src="/pwa-192x192.png" alt="MRT Logo" className="h-6 w-6 object-contain" />
                       </div>
                       My Recovery Toolkit
                    </div>

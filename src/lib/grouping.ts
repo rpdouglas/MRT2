@@ -1,18 +1,20 @@
-import { format, isToday, isYesterday, isSameYear, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
-// FIX: Removed '[key: string]: unknown' to allow specific interfaces like JournalEntry to be passed without error.
+// Interface
 interface TimeStampedItem {
   createdAt: Timestamp | Date | string | number;
 }
 
+// Return Type: Year -> MonthIndex (0-11) -> Array of Items
+type NestedGroup<T> = Record<string, Record<number, T[]>>;
+
 /**
- * Groups a list of items by human-readable date headings.
- * Returns an object where keys are headers (e.g. "Today", "Yesterday")
- * and values are arrays of items.
+ * Groups items by Year -> Month Index.
+ * Example: { "2026": { 2: [Entry, Entry] } } // 2 = March
  */
-export function groupItemsByDate<T extends TimeStampedItem>(items: T[]): Record<string, T[]> {
-  const groups: Record<string, T[]> = {};
+export function groupItemsByYearAndMonth<T extends TimeStampedItem>(items: T[]): NestedGroup<T> {
+  const groups: NestedGroup<T> = {};
 
   items.forEach((item) => {
     let date: Date;
@@ -28,22 +30,18 @@ export function groupItemsByDate<T extends TimeStampedItem>(items: T[]): Record<
       date = new Date(item.createdAt);
     }
 
-    let header: string;
+    const year = date.getFullYear().toString();
+    const monthIndex = date.getMonth(); // 0 = Jan, 11 = Dec
 
-    if (isToday(date)) {
-      header = 'Today';
-    } else if (isYesterday(date)) {
-      header = 'Yesterday';
-    } else if (isSameYear(date, new Date())) {
-      header = format(date, 'MMMM d'); // e.g. "October 12"
-    } else {
-      header = format(date, 'MMMM d, yyyy'); // e.g. "October 12, 2024"
+    if (!groups[year]) {
+      groups[year] = {};
     }
 
-    if (!groups[header]) {
-      groups[header] = [];
+    if (!groups[year][monthIndex]) {
+      groups[year][monthIndex] = [];
     }
-    groups[header].push(item);
+
+    groups[year][monthIndex].push(item);
   });
 
   return groups;

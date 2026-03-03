@@ -1,182 +1,550 @@
 import os
 
 # =============================================================================
-# 1. PROJECT MANAGEMENT (Sprint Board)
+# src/components/journal/JournalEditor.tsx
 # =============================================================================
-sprint_board = r'''# 🏃 Active Sprint Board
-**Sprint:** 4.6 "The Crucible" (Hardening)
-**Start Date:** 2026-03-03
-**Goal:** Finalize unit testing and prepare for the Service Module (Lisa Persona).
+journal_editor_content = r'''/**
+ * src/components/journal/JournalEditor.tsx
+ * GITHUB COMMENT:
+ * [JournalEditor.tsx]
+ * FIX: Constrained Tag Input width using min-w-0 to prevent flex blowout.
+ * FIX: Replaced PlusIcon with CheckIcon for clearer 'Save' semantics.
+ * FIX: Added explicit types to getSmartMood filter/reduce to satisfy strict no-implicit-any.
+ * FIX: Ensured useQueryClient is properly imported.
+ */
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext';
+import { useJournalOperations } from '../../hooks/useJournalOperations';
+import { db } from '../../lib/firebase';
+import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { useQueryClient } from '@tanstack/react-query';
+import { 
+    CheckIcon, // CHANGED from PlusIcon
+    Cog6ToothIcon,
+    MapPinIcon,
+    ArrowPathIcon,
+    TagIcon,
+    XMarkIcon,
+    MicrophoneIcon,
+    FaceSmileIcon
+} from '@heroicons/react/24/outline';
+import { getUserTemplates, type JournalTemplate } from '../../lib/db';
+import { getCurrentWeather } from '../../lib/weather';
+import { useNavigate } from 'react-router-dom';
+import AudioRecorder from './AudioRecorder';
+import type { AudioAnalysisResult } from '../../lib/gemini';
 
-## ✅ Sprint 1: The Gates & Onboarding (Completed)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios, Notebook LM video link.
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
-- [x] **1.3 Onboarding Redirect:** Force new users to Profile to set Name, Sponsor, and Sobriety Date.
+// --- Types ---
 
-## ✅ Sprint 2: The Horizon & Identity (Completed)
-- [x] **2.1 Sidebar/Header:** Add "My" to icon, balance header layout, rename Quest -> Tasks.
-- [x] **2.2 Reactivity:** Fix "Hello friend" bug; update Dashboard when Profile name changes.
-- [x] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter; add Service/Games placeholders.
-- [x] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+interface JournalDocData {
+    tags?: string[];
+    [key: string]: unknown;
+}
 
-## ✅ Sprint 3: The Core Polish (Completed)
-- [x] **3.1 Journal Cache:** Implemented `useJournalOperations` hook to fix History tab staleness on save/delete.
-- [x] **3.2 Tasks UI:** Refactored `TaskRow` to support multi-line text wrapping for long AI-generated titles.
+export interface JournalEntry {
+  id: string;
+  content: string;
+  moodScore: number;
+  sentiment?: string;
+  createdAt: Timestamp; 
+  tags?: string[];
+  weather?: { temp: number; condition: string } | null;
+  isEncrypted?: boolean; 
+}
 
-## 🟡 Sprint 4: Unit Testing & Hardening (Active)
-- [ ] **4.1 Hook Testing:** Add comprehensive tests for `useTaskOperations` and `useJournalOperations`.
-- [ ] **4.2 Critical Path QA:** Run full manual regression on PIN rotation and Export flows.
+interface ExtendedJournalTemplate extends JournalTemplate {
+    content?: string;
+}
 
-## ✅ Done (Previous Sprint)
-- [x] Gathered 13 bugs across Sector 1.
-- [x] Built Triage Generator script.
-- [x] Restructured VitePress Knowledge Base.
-'''
+interface JournalEditorProps {
+  initialEntry: JournalEntry | null;
+  initialTemplateId?: string | null;
+  onSaveComplete: () => void;
+}
 
-# =============================================================================
-# 2. TECHNICAL SPECIFICATIONS (Journal)
-# =============================================================================
-spec_journal = r'''# 📖 Feature Specification: The Journal (The Vault)
+const DEFAULT_TEMPLATES = [
+  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['Morning'] },
+  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['Nightly'] },
+  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['Urge', 'SOS'] },
+  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['Meeting'] },
+];
 
-**Status:** Live (v2.1)
-**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
-**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
+export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
+  const { user } = useAuth();
+  const { encrypt } = useEncryption();
+  const { addJournal, updateJournal } = useJournalOperations();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
----
+  // --- SMART DEFAULT MOOD LOGIC ---
+  const getSmartMood = () => {
+      if (initialEntry) return initialEntry.moodScore;
+      
+      const cache = queryClient.getQueryData<JournalEntry[]>(['journals']);
+      
+      if (!cache || cache.length === 0) return 5;
 
-## 1. Overview
-The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
+      const recent = cache
+        .filter((e: JournalEntry) => typeof e.moodScore === 'number' && e.moodScore > 0)
+        .slice(0, 7);
+      
+      if (recent.length === 0) return 5;
 
-## 2. The Three Modes (Tabs)
-The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
+      const sum = recent.reduce((acc: number, curr: JournalEntry) => acc + curr.moodScore, 0);
+      return Math.round(sum / recent.length);
+  };
 
-### A. Write (The Editor)
-* **Input Methods:**
-    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
-    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
-* **Metadata:**
-    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
-    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
-    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
-* **Templates:**
-    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
-    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
+  // State
+  const [newEntry, setNewEntry] = useState('');
+  const [mood, setMood] = useState(getSmartMood); 
+  const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
+  
+  const [saving, setSaving] = useState(false); 
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  
+  // Tag State
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  // Template State
+  const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
+  const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
+  const [formAnswers, setFormAnswers] = useState<string[]>([]);
 
-### B. History (The Timeline & Search)
-* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
-* **The Memory Engine (Search):**
-    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
-    * **Scope:** Matches against Entry Content and Tags.
-* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
-* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
-### C. Insights (The Dashboard)
-* **Source:** `JournalInsights.tsx`
-* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
-* **Visualizations:**
-    1.  **Weekly Rhythm:** A Bar Chart comparing "Average Mood" of the *Last 30 Days* vs the *Previous 30 Days*.
-    2.  **Trend Indicator:** A calculated "Trend Arrow" (↗️/↘️) showing if the user's 30-day average mood is improving or declining compared to the previous period.
-    3.  **Interactive Word Cloud:** Frequency analysis of entry content. 
-        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
-    4.  **Top Stats:** Total Entries, Active Streak, and Average Mood Score.
+  // --- Helper Functions ---
 
----
+  const fetchLocalWeather = useCallback(async () => {
+    setWeatherLoading(true);
+    try {
+      const data = await getCurrentWeather();
+      if (data) {
+        setWeather({
+          temp: Math.round(data.temp),
+          condition: data.condition
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to auto-load weather", e);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, []);
 
-## 3. Advanced AI Features
+  const loadCustomTemplates = useCallback(async () => {
+    if (!user) return;
+    try {
+        const t = await getUserTemplates(user.uid);
+        setCustomTemplates(t);
+    } catch (e) {
+        console.error("Failed to load templates", e);
+    }
+  }, [user]);
 
-### 🧠 The Analysis Wizard
-* **Component:** `JournalAnalysisWizard.tsx`
-* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
-* **Scopes:**
-    * **Weekly:** Last 7 days vs Previous 7 days.
-    * **Monthly:** Last 30 days vs Previous 30 days.
-    * **Deep Dive:** All-time / 90-day pattern recognition.
-* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
-* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
-* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+  const loadUserTags = useCallback(async () => {
+    if (!user || !db) return;
+    try {
+        const q = query(
+            collection(db, 'journals'),
+            where('uid', '==', user.uid),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        const snapshot = await getDocs(q);
+        const tagSet = new Set<string>();
+        snapshot.docs.forEach(doc => {
+            const data = doc.data() as JournalDocData; 
+            if (data.tags && Array.isArray(data.tags)) {
+                data.tags.forEach((t: string) => tagSet.add(t));
+            }
+        });
+        setAvailableTags(Array.from(tagSet).sort());
+    } catch (e) {
+        console.warn("Failed to load user tags", e);
+    }
+  }, [user]);
 
-### 🎙️ Voice-to-Vault
-* **Component:** `AudioRecorder.tsx`
-* **Flow:**
-    1.  User records audio (MediaRecorder API).
-    2.  Audio Blob converted to Base64.
-    3.  Sent to Gemini 2.5 Flash (Multimodal).
-    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
-    5.  **Populates:** The Editor state.
+  const handleTemplateSelect = useCallback((tId: string) => {
+    const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
+    if (defTemplate) {
+        setNewEntry(defTemplate.text);
+        setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
+        setActiveTemplate(null);
+        return;
+    }
 
----
+    const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
+    
+    if (custTemplate) {
+        if (custTemplate.content) {
+            setNewEntry(custTemplate.content);
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+            setActiveTemplate(null); 
+        } 
+        else if (custTemplate.prompts) {
+            setActiveTemplate(custTemplate);
+            setFormAnswers(new Array(custTemplate.prompts.length).fill(''));
+            setNewEntry('');
+            setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
+        }
+    } else {
+        setActiveTemplate(null);
+        setNewEntry('');
+        setTags([]);
+    }
+  }, [customTemplates]); 
 
-## 4. Technical Architecture
+  // --- Effects ---
 
-### Data Flow & Encryption
-~~~~mermaid
-sequenceDiagram
-    participant User
-    participant App (React)
-    participant Hook (useJournalOperations)
-    participant Crypto (Lib)
-    participant Firestore
+  useEffect(() => {
+    if (!user) return;
+    loadCustomTemplates();
+    loadUserTags();
+    if (!initialEntry) fetchLocalWeather(); 
+  }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
 
-    Note over App, Firestore: WRITE FLOW
-    User->>App: Types "I feel anxious" and clicks Save
-    App->>Hook: addJournal(plainText)
-    Hook->>Crypto: encrypt(plainText, Key)
-    Crypto-->>Hook: Returns "IV:Ciphertext"
-    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
-    Firestore-->>Hook: Success
-    Hook->>App: Invalidates Query Cache (Refetch History)
-~~~~
+  useEffect(() => {
+    if (initialEntry) {
+      setNewEntry(initialEntry.content);
+      setMood(initialEntry.moodScore);
+      setTags(initialEntry.tags || []);
+      if (initialEntry.weather) {
+        setWeather(initialEntry.weather);
+      }
+      setActiveTemplate(null);
+    } else {
+      setNewEntry('');
+      setTags([]);
+      setActiveTemplate(null);
+      setFormAnswers([]);
+      setWeather(null);
+      fetchLocalWeather(); 
 
-### Database Schema (Journal Specific)
-**Collection:** `journals`
-| Field | Type | Description | Encryption |
-| :--- | :--- | :--- | :--- |
-| `uid` | String | Owner ID | No |
-| `content` | String | The body text | **YES (AES-GCM)** |
-| `moodScore` | Number | 1-10 Integer | No (For Stats) |
-| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
-| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
-| `isEncrypted` | Bool | Flag for legacy data handling | No |
-| `createdAt` | Timestamp | Creation Time | No |
+      if (initialTemplateId) {
+          handleTemplateSelect(initialTemplateId);
+      }
+    }
+  }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
 
----
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addTag(tagInput);
+    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+        setTags(prev => prev.slice(0, -1));
+    }
+  };
 
-## 5. Edge Cases & Constraints
+  const addTag = (tagName: string) => {
+    const cleanTag = tagName.trim().replace(/^#/, '');
+    if (cleanTag && !tags.includes(cleanTag)) {
+        setTags([...tags, cleanTag]);
+    }
+    setTagInput('');
+    setShowSuggestions(false);
+  };
 
-1.  **Lost PIN:**
-    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
-    * *Mitigation:* `VaultGate.tsx` warns users clearly.
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
 
-2.  **AI Privacy:**
-    * Journal text is decrypted in browser memory *only* for the duration of the API call.
-    * Gemini API calls are stateless (data is not stored by Google for model training).
+  const filteredSuggestions = availableTags.filter(t => 
+    t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
+  );
 
-3.  **API Failures:**
-    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
-    * If Gemini fails (403/500), the user can still save the text manually.
-'''
+  const handleAudioComplete = (result: AudioAnalysisResult) => {
+      setNewEntry(prev => (prev ? prev + "\n\n" + result.transcription : result.transcription));
+      setMood(result.mood_score);
+      setTags(prev => [...new Set([...prev, ...result.tags, "Voice Note"])]);
+      setIsVoiceMode(false);
+  };
 
-# =============================================================================
-# 3. CHANGELOG (Public)
-# =============================================================================
-changelog = r'''# 🚀 Changelog
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !db) return;
 
-Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
+    const isFormValid = activeTemplate && formAnswers.some(a => a.trim() !== '');
+    const isTextValid = !activeTemplate && newEntry.trim() !== '';
 
-### v1.0.1 (Core Polish Update)
-* **Improvement:** Journal entries now appear instantly in your History list after saving. No more manual refreshing!
-* **Improvement:** Task titles now wrap text naturally, so longer AI-generated Action Plans are fully readable.
-* **Fix:** Resolved a bug where deleting a journal entry might leave a "ghost" card until the next login.
+    if (!isFormValid && !isTextValid) return;
 
-### v1.0.0 (Initial Launch)
-* **Feature:** Initial Public Release!
-* **Feature:** Zero-Knowledge Client-Side Encryption (AES-GCM).
-* **Feature:** The Horizon Gamification Dashboard.
-* **Feature:** The Pulse (Vitality Tracking & Breathwork).
-* **Feature:** The Compass (Gemini 2.5 AI Analysis).
-* **Feature:** Task Ledger with Smart Resets.
+    setSaving(true);
+
+    let plainContent = newEntry;
+    if (activeTemplate) {
+        plainContent = `**${activeTemplate.name}**\n\n`;
+        activeTemplate.prompts.forEach((prompt, idx) => {
+            plainContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
+        });
+    }
+
+    try {
+      let contentToSave = plainContent;
+      let isEncrypted = false;
+
+      try {
+        contentToSave = await encrypt(plainContent);
+        isEncrypted = true;
+      } catch (err) {
+        console.error("Encryption failed", err);
+        alert("Security Error: Could not encrypt. Save aborted.");
+        setSaving(false);
+        return;
+      }
+
+      if (initialEntry) {
+        await updateJournal({ 
+            id: initialEntry.id, 
+            content: contentToSave, 
+            moodScore: mood, 
+            tags: tags, 
+            isEncrypted: isEncrypted 
+        });
+      } else {
+        await addJournal({
+          content: contentToSave,
+          moodScore: mood,
+          sentiment: 'Pending', 
+          weather: weather, 
+          tags: tags,
+          isEncrypted: isEncrypted
+        });
+      }
+
+      setNewEntry('');
+      setFormAnswers([]);
+      setActiveTemplate(null);
+      setMood(getSmartMood());
+      setTags([]);
+      onSaveComplete();
+    } catch (error) {
+      console.error("Error saving entry:", error);
+      alert("Failed to save entry.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-180px)] md:h-[600px] relative">
+        
+        {/* === SECTION 1: FIXED HEADER === */}
+        <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3 shrink-0">
+             {/* LEFT: Weather Widget */}
+             <div>
+                 {weather ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                      <span>{weather.condition}</span>
+                      <span className="font-bold">{weather.temp}°C</span>
+                      {!initialEntry && (
+                          <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
+                              <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
+                          </button>
+                      )}
+                    </div>
+                ) : (
+                    !initialEntry && (
+                        <button 
+                            type="button" 
+                            onClick={fetchLocalWeather} 
+                            disabled={weatherLoading}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-white hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
+                        >
+                            {weatherLoading ? (
+                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                            ) : (
+                                <MapPinIcon className="h-3 w-3" />
+                            )}
+                            <span>Add Weather</span>
+                        </button>
+                    )
+                )}
+             </div>
+
+             {/* RIGHT: Template Controls */}
+             <div className="flex items-center gap-2">
+                 <div className="relative">
+                     <select 
+                        onChange={(e) => handleTemplateSelect(e.target.value)}
+                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white max-w-[140px] sm:max-w-none"
+                        defaultValue=""
+                        disabled={!!initialEntry} 
+                    >
+                        <option value="" disabled>Choose Template...</option>
+                        <option value="none">Free Write</option>
+                        <optgroup label="Standard">
+                            {DEFAULT_TEMPLATES.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                        </optgroup>
+                        {customTemplates.length > 0 && (
+                            <optgroup label="My Templates">
+                                {customTemplates.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
+                    </select>
+                 </div>
+
+                 <button 
+                    onClick={() => navigate('/templates')}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
+                    title="Manage Templates"
+                 >
+                    <Cog6ToothIcon className="h-5 w-5" />
+                 </button>
+             </div>
+        </div>
+        
+        {/* === SECTION 2: SCROLLABLE EDITOR BODY === */}
+        <div className="flex-1 overflow-y-auto p-4">
+            {isVoiceMode ? (
+                <div className="h-full flex items-center justify-center">
+                    <AudioRecorder 
+                        onAnalysisComplete={handleAudioComplete}
+                        onCancel={() => setIsVoiceMode(false)}
+                    />
+                </div>
+            ) : activeTemplate ? (
+                <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100 min-h-full">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
+                        <button 
+                            type="button" 
+                            onClick={() => setActiveTemplate(null)}
+                            className="text-xs text-blue-500 hover:text-blue-700 underline"
+                        >
+                            Switch to Text Mode
+                        </button>
+                    </div>
+                    
+                    {activeTemplate.prompts.map((prompt, idx) => (
+                        <div key={idx}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
+                            <textarea
+                                rows={3} 
+                                value={formAnswers[idx] || ''}
+                                onChange={(e) => {
+                                    const newAns = [...formAnswers];
+                                    newAns[idx] = e.target.value;
+                                    setFormAnswers(newAns);
+                                }}
+                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                placeholder="Type your answer..."
+                            />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <textarea
+                    value={newEntry}
+                    onChange={(e) => setNewEntry(e.target.value)}
+                    placeholder="How are you feeling today?"
+                    className="w-full h-full p-2 rounded-xl border-none focus:ring-0 shadow-none resize-none text-gray-700 leading-relaxed font-mono text-base placeholder:text-gray-300"
+                />
+            )}
+        </div>
+
+        {/* === SECTION 3: STICKY COMMAND TOOLBAR === */}
+        <div className="border-t border-gray-200 bg-gray-50/95 backdrop-blur-sm p-3 shrink-0 flex flex-col gap-3">
+            
+            {/* Row 1: Mood Slider (Compact) */}
+            <div className="flex items-center gap-3 px-2">
+                <FaceSmileIcon className={`h-5 w-5 ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`} />
+                <input 
+                    type="range" 
+                    min="1" 
+                    max="10" 
+                    value={mood}
+                    onChange={(e) => setMood(Number(e.target.value))}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <span className={`text-xs font-bold w-6 text-center ${mood >= 7 ? 'text-green-700' : mood <= 4 ? 'text-red-700' : 'text-yellow-700'}`}>
+                    {mood}
+                </span>
+            </div>
+
+            {/* Row 2: Tags & Actions */}
+            <div className="flex items-center gap-2">
+                
+                {/* Tag Input - CRITICAL FIX: min-w-0 added to prevent flex overflow */}
+                <div className="relative flex-1 min-w-0 group">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+                        <TagIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar items-center">
+                            {tags.map(tag => (
+                                <span key={tag} className="flex-shrink-0 flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap">
+                                    {tag}
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                                        <XMarkIcon className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            ))}
+                            <input 
+                                type="text" 
+                                value={tagInput}
+                                onChange={(e) => {
+                                    setTagInput(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onKeyDown={handleAddTag}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                placeholder={tags.length === 0 ? "Add tags..." : ""}
+                                className="min-w-[60px] text-xs border-none focus:ring-0 p-0 text-gray-700 placeholder:text-gray-400 bg-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Autocomplete Suggestions */}
+                    {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
+                        <div className="absolute bottom-full left-0 mb-2 w-full max-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 max-h-32 overflow-y-auto z-50">
+                            {filteredSuggestions.map(tag => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                    onClick={() => addTag(tag)}
+                                >
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Mic Button */}
+                <button
+                    type="button"
+                    onClick={() => setIsVoiceMode(true)}
+                    className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-colors flex-shrink-0"
+                    title="Voice Note"
+                >
+                    <MicrophoneIcon className="h-5 w-5" />
+                </button>
+
+                {/* Save Button (Swapped to CheckIcon) */}
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 flex items-center gap-1"
+                >
+                    {saving ? (
+                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <CheckIcon className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{initialEntry ? 'Update' : 'Save'}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+  );
+}
 '''
 
 def write_file(path, content):
@@ -184,14 +552,11 @@ def write_file(path, content):
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
     # Ensure markdown backticks remain intact
-    final_content = content.replace("~~~~", "```").strip() + "\n"
+    final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Synced: {path}")
+    print(f"✅ Surgically patched: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Documentation Sync Protocol (v2.1)...")
-    write_file("docs/SPRINT_BOARD.md", sprint_board)
-    write_file("docs/specs/01_JOURNAL.md", spec_journal)
-    write_file("docs-site/support/changelog.md", changelog)
-    print("✨ Documentation aligned with Sprint 3 completion.")
+    write_file("src/components/journal/JournalEditor.tsx", journal_editor_content)
+    print("✨ SRE Fix complete: Resolved import error and implicit types.")
