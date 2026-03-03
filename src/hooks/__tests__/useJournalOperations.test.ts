@@ -1,6 +1,4 @@
-import os
-
-test_content = r'''/**
+/**
  * src/hooks/__tests__/useJournalOperations.test.ts
  * GITHUB COMMENT:
  * [useJournalOperations.test.ts]
@@ -189,18 +187,3 @@ describe('📓 useJournalOperations Hook', () => {
         expect(firestore.addDoc).not.toHaveBeenCalled();
     });
 });
-'''
-
-def write_file(path, content):
-    dirname = os.path.dirname(path)
-    if dirname: 
-        os.makedirs(dirname, exist_ok=True)
-    # Ensure markdown backticks remain intact
-    final_content = content.replace("~~~", "```").strip() + "\n"
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(final_content)
-    print(f"✅ Surgically patched Test File: {path}")
-
-if __name__ == "__main__":
-    write_file("src/hooks/__tests__/useJournalOperations.test.ts", test_content)
-    print("✨ SRE Fix complete: Type-only imports separated.")
