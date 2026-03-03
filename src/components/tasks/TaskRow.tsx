@@ -1,8 +1,8 @@
 import { 
     CheckCircleIcon as CheckCircleOutline, 
     TrashIcon, 
-    PencilSquareIcon,
-    ArrowPathIcon,
+    PencilSquareIcon, 
+    ArrowPathIcon, 
     SparklesIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
@@ -39,12 +39,12 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit }: TaskRowPro
     }[task.priority || 'Medium']; // Default Medium if missing
 
     return (
-        <div className={`group flex items-center gap-3 p-3 bg-white border-b border-gray-100 transition-all hover:bg-slate-50 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`}>
+        <div className={`group flex items-start gap-3 p-3 bg-white border-b border-gray-100 transition-all hover:bg-slate-50 ${isCompleted ? 'opacity-60 bg-slate-50' : ''}`}>
             
-            {/* CHECKBOX */}
+            {/* CHECKBOX - Top aligned with mt-0.5 for optical balance */}
             <button 
                 onClick={(e) => { e.stopPropagation(); onToggle(task); }}
-                className="flex-shrink-0 text-slate-300 hover:text-green-500 transition-colors"
+                className="flex-shrink-0 text-slate-300 hover:text-green-500 transition-colors mt-0.5"
             >
                 {isCompleted ? (
                     <CheckCircleSolid className="h-6 w-6 text-green-500" />
@@ -54,19 +54,20 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit }: TaskRowPro
             </button>
 
             {/* CONTENT */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+            <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex items-start gap-2">
+                    {/* TITLE - Wraps naturally up to 4 lines */}
+                    <span className={`text-sm font-medium line-clamp-4 break-words leading-snug pt-0.5 ${isCompleted ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                         {task.title}
                     </span>
                     
-                    {/* Source Badge (AI) */}
+                    {/* Source Badge (AI) - Top aligned */}
                     {task.source === 'ai' && (
-                        <SparklesIcon className="h-3 w-3 text-purple-400" title="AI Suggested" />
+                        <SparklesIcon className="h-3.5 w-3.5 text-purple-400 shrink-0 mt-1" title="AI Suggested" />
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
                     {/* Priority Badge */}
                     {!isCompleted && (
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${priorityColor}`}>
@@ -91,8 +92,8 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit }: TaskRowPro
                 </div>
             </div>
 
-            {/* ACTIONS (Desktop Hover / Mobile Always) */}
-            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            {/* ACTIONS (Desktop Hover / Mobile Always) - Top aligned */}
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity mt-0.5">
                 <button 
                     onClick={() => onEdit(task)} 
                     className="p-1.5 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50"
