@@ -35,7 +35,7 @@ sprint_board = r'''# 🏃 Active Sprint Board
     - Fix Mic icon blocking text (padding).
     - Move Mood Slider to Sticky Header/Footer.
     - Set default mood to "Last 7 Days Average" instead of 5.
-- [ ] **4.4 List Efficiency:**
+- [x] **4.4 List Efficiency:**
     - Fix missing Sidebar Icon.
     - Implement "Month/Year" collapsible headers in History list.
 
@@ -81,7 +81,7 @@ crucible_spec = r'''# 🛡️ Project 04.5: The Crucible (Hardening & QA)
 * [x] **Logic:** Change default mood from 5 to "User's Recent Average".
 * [ ] **Visuals:** Replace "Cheap" Recharts bars with professional Gradient Area Chart.
 * [ ] **Logic:** Word Cloud must ignore template boilerplate (e.g., "Today", "Grateful").
-* [ ] **Performance:** Implement Month/Year grouping for long history lists.
+* [x] **Performance:** Implement Month/Year grouping for long history lists.
 
 ### Sector 4: The Ledger (Tasks)
 * [x] **Status:** Stable (Text wrapping fixed in Sprint 3).
@@ -99,11 +99,11 @@ crucible_spec = r'''# 🛡️ Project 04.5: The Crucible (Hardening & QA)
 '''
 
 # =============================================================================
-# 3. JOURNAL SPEC (Verification Update)
+# 3. JOURNAL SPEC (Technical Update)
 # =============================================================================
 spec_journal = r'''# 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v2.1)
+**Status:** Live (v2.2)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -129,12 +129,14 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
     * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-### B. History (The Timeline & Search)
-* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+### B. History (The Timeline)
+* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
+* **Grouping:** Hierarchical grouping by **Year** -> **Month** (e.g., 2026 -> March).
+    * **Defaults:** The Current Year and Current Month are expanded by default. All past periods are collapsed to reduce cognitive load.
+    * **Interaction:** Tapping a Year or Month header toggles visibility of its contents.
 * **The Memory Engine (Search):**
     * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
-    * **Scope:** Matches against Entry Content and Tags.
+    * **Behavior:** Searching automatically expands all groups to show matching results.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
 * **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
@@ -212,6 +214,33 @@ sequenceDiagram
 ## 5. Verification (QA)
 * [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
 * [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.
+* [x] **Navigation:** Verified Month/Year grouping allows easy access to old entries without infinite scrolling.
+'''
+
+# =============================================================================
+# 4. USER GUIDE (User-Facing Update)
+# =============================================================================
+user_guide_journal = r'''# 📖 The Vault (Journal & AI)
+
+The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**
+
+## 1. Writing an Entry
+* **Text Mode:** Select a template (like "Morning Check-in" or "Urge Log") or free-write. 
+* **Voice-to-Vault:** Tap the Microphone icon to dictate your journal. The app uses Google Gemini to transcribe your audio, detect your mood, and auto-generate tags.
+* **Metadata:** Always slide the 1-10 Mood scale and add custom tags (e.g., `#Anxiety`, `#Meeting`) to help the AI track your patterns later.
+
+## 2. History & Navigation
+Navigate to the **History** tab to view past entries.
+* **Timeline View:** Your entries are grouped by **Year** and **Month**.
+* **Navigation:** By default, only the current month is open. Tap any Year or Month header to expand it and view older entries.
+* **Search:** Use the top search bar to filter by keyword or tag. Searching automatically expands all groups to show every matching result.
+* **Share:** Click the "Share" icon on any card to decrypt it and copy it to your clipboard for a sponsor or therapist.
+
+## 3. Insights & Analytics
+Navigate to the **Insights** tab to view your data visually.
+* **Weekly Rhythm:** A bar chart comparing your average mood over the last 30 days vs the previous 30 days.
+* **Trend Arrow:** A quick visual indicator (Up/Down) showing your trajectory.
+* **Recurring Themes:** An interactive Word Cloud. Click any word in the cloud to instantly search your journal history for that specific topic!
 '''
 
 def write_file(path, content):
@@ -219,14 +248,15 @@ def write_file(path, content):
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
     # Ensure markdown backticks remain intact
-    final_content = content.replace("~~~~", "```").strip() + "\n"
+    final_content = content.replace("~~~", "```").strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
     print(f"✅ Synced: {path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Documentation Sync Protocol (v2.1)...")
+    print("🚀 Running Documentation Sync Protocol (v2.2)...")
     write_file("docs/SPRINT_BOARD.md", sprint_board)
     write_file("docs/projects/04.5_THE_CRUCIBLE.md", crucible_spec)
     write_file("docs/specs/01_JOURNAL.md", spec_journal)
-    print("✨ Documentation aligned with Ticket 4.3 completion.")
+    write_file("docs-site/guide/03-journal-and-ai.md", user_guide_journal)
+    print("✨ Documentation aligned with Ticket 4.4 completion.")

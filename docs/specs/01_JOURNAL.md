@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v2.1)
+**Status:** Live (v2.2)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -26,12 +26,14 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
     * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-### B. History (The Timeline & Search)
-* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+### B. History (The Timeline)
+* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
+* **Grouping:** Hierarchical grouping by **Year** -> **Month** (e.g., 2026 -> March).
+    * **Defaults:** The Current Year and Current Month are expanded by default. All past periods are collapsed to reduce cognitive load.
+    * **Interaction:** Tapping a Year or Month header toggles visibility of its contents.
 * **The Memory Engine (Search):**
     * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
-    * **Scope:** Matches against Entry Content and Tags.
+    * **Behavior:** Searching automatically expands all groups to show matching results.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
 * **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
@@ -74,7 +76,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 ## 4. Technical Architecture
 
 ### Data Flow & Encryption
-```mermaid
+```~mermaid
 sequenceDiagram
     participant User
     participant App (React)
@@ -90,7 +92,7 @@ sequenceDiagram
     Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
     Firestore-->>Hook: Success
     Hook->>App: Invalidates Query Cache (Refetch History)
-```
+```~
 
 ### Database Schema (Journal Specific)
 **Collection:** `journals`
@@ -109,3 +111,4 @@ sequenceDiagram
 ## 5. Verification (QA)
 * [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
 * [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.
+* [x] **Navigation:** Verified Month/Year grouping allows easy access to old entries without infinite scrolling.
