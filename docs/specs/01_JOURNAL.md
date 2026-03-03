@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v2.1)
+**Status:** Live (v2.2)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -12,24 +12,28 @@ The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows u
 ## 2. The Three Modes (Tabs)
 The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
 
-### A. Write (The Editor)
+### A. Write (The Editor - "Sticky Studio")
+* **Layout:** A flexible column layout with a persistent **Command Toolbar** at the bottom.
+    * **Header:** Contextual info (Date, Weather).
+    * **Body:** Scrollable textarea for distraction-free writing.
+    * **Toolbar (Sticky):** Houses the Mood Slider, Tag Input, Voice Mic, and Save Checkmark. This ensures controls never overlap text or require scrolling to access.
+* **Smart Defaults:**
+    * **Mood:** Initializes to the average of the user's last 7 entries (via `getSmartMood`) rather than a static "5".
 * **Input Methods:**
-    * **Text:** Rich-text inputs (via `JournalEditor.tsx`).
-    * **Voice-to-Vault:** Integrated `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
-* **Metadata:**
-    * **Mood Slider:** 1-10 scale (Struggling ↔ Thriving).
-    * **Weather:** Auto-fetched local weather (Temp/Condition) via Open-Meteo.
-    * **Tags:** Dynamic tagging system with auto-complete based on previous usage.
+    * **Text:** Rich-text inputs.
+    * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
 * **Templates:**
     * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
     * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
 
-### B. History (The Timeline & Search)
-* **View:** Virtualized list (`Virtuoso`) grouped by date headers (Today, Yesterday, etc.).
+### B. History (The Timeline)
+* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
+* **Grouping:** Hierarchical grouping by **Year** -> **Month** (e.g., 2026 -> March).
+    * **Defaults:** The Current Year and Current Month are expanded by default. All past periods are collapsed to reduce cognitive load.
+    * **Interaction:** Tapping a Year or Month header toggles visibility of its contents.
 * **The Memory Engine (Search):**
     * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Routing:** Uses URLSearchParams (`?search=xyz`) to allow deep-linking to specific query states.
-    * **Scope:** Matches against Entry Content and Tags.
+    * **Behavior:** Searching automatically expands all groups to show matching results.
 * **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
 * **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
 
@@ -72,7 +76,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 ## 4. Technical Architecture
 
 ### Data Flow & Encryption
-```mermaid
+```~mermaid
 sequenceDiagram
     participant User
     participant App (React)
@@ -104,16 +108,7 @@ sequenceDiagram
 
 ---
 
-## 5. Edge Cases & Constraints
-
-1.  **Lost PIN:**
-    * Since the encryption key is derived from the PIN, a lost PIN results in **permanent data loss** for journal content. Metadata (Mood/Tags) remains visible but content is unreadable.
-    * *Mitigation:* `VaultGate.tsx` warns users clearly.
-
-2.  **AI Privacy:**
-    * Journal text is decrypted in browser memory *only* for the duration of the API call.
-    * Gemini API calls are stateless (data is not stored by Google for model training).
-
-3.  **API Failures:**
-    * If `getCurrentWeather` fails (e.g., permissions denied), the entry saves with `weather: null`.
-    * If Gemini fails (403/500), the user can still save the text manually.
+## 5. Verification (QA)
+* [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
+* [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.
+* [x] **Navigation:** Verified Month/Year grouping allows easy access to old entries without infinite scrolling.
