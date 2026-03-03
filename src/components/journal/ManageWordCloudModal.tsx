@@ -1,6 +1,4 @@
-import os
-
-modal_content = r'''import { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
     XMarkIcon, 
@@ -113,18 +111,3 @@ export default function ManageWordCloudModal({
         </Transition.Root>
     );
 }
-'''
-
-def write_file(path, content):
-    dirname = os.path.dirname(path)
-    if dirname: 
-        os.makedirs(dirname, exist_ok=True)
-    # Ensure markdown backticks remain intact
-    final_content = content.replace("~~~", "```").strip() + "\n"
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(final_content)
-    print(f"✅ Updated: {path}")
-
-if __name__ == "__main__":
-    write_file("src/components/journal/ManageWordCloudModal.tsx", modal_content)
-    print("✨ SRE Fix complete: Removed unused TrashIcon import.")
