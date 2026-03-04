@@ -4,11 +4,12 @@ import { db } from '../lib/firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
+import { useWakeLock } from '../hooks/useWakeLock'; // NEW IMPORT
 import { 
     HeartIcon, 
     FireIcon, 
     BeakerIcon, 
-    BoltIcon,    
+    BoltIcon,     
     CheckCircleIcon,
     PlayIcon,
     PauseIcon,
@@ -26,6 +27,7 @@ type VitalityTab = 'move' | 'fuel' | 'breath';
 
 export default function Vitality() {
     const { user } = useAuth();
+    const { requestWakeLock, releaseWakeLock } = useWakeLock(); // NEW HOOK
     const [activeTab, setActiveTab] = useState<VitalityTab>('move');
     const [saving, setSaving] = useState(false);
     
@@ -137,12 +139,15 @@ export default function Vitality() {
         setBreathTime(0);
         setBreathNote('');
         setBreathActive(false);
+        releaseWakeLock(); // Release lock on completion
     };
 
-    // Breath Timer
+    // Breath Timer & Wake Lock
     useEffect(() => {
         let interval: ReturnType<typeof setInterval> | undefined;
+        
         if (breathActive) {
+            requestWakeLock(); // Request lock on start
             interval = setInterval(() => {
                 setBreathTime(prev => {
                     const next = prev + 1;
@@ -155,9 +160,15 @@ export default function Vitality() {
             }, 1000);
         } else {
             setBreathPhase('Idle');
+            releaseWakeLock(); // Ensure lock is released if paused/stopped
         }
-        return () => clearInterval(interval);
-    }, [breathActive]);
+        
+        // Cleanup on unmount or pause
+        return () => {
+            clearInterval(interval);
+            releaseWakeLock();
+        };
+    }, [breathActive, requestWakeLock, releaseWakeLock]);
 
     const toggleBreath = () => setBreathActive(!breathActive);
 
@@ -297,7 +308,7 @@ export default function Vitality() {
                                         <button onClick={toggleBreath} className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 ${breathActive ? 'bg-amber-100 text-amber-800' : 'bg-sky-600 text-white'}`}>
                                             {breathActive ? <><PauseIcon className="h-6 w-6" /> Pause</> : <><PlayIcon className="h-6 w-6" /> Start</>}
                                         </button>
-                                        <button onClick={() => { setBreathActive(false); setBreathTime(0); setBreathPhase('Idle'); }} className="px-5 rounded-xl border-2 border-gray-200 text-gray-400 hover:bg-gray-50"><ArrowPathIcon className="h-6 w-6" /></button>
+                                        <button onClick={() => { setBreathActive(false); setBreathTime(0); setBreathPhase('Idle'); releaseWakeLock(); }} className="px-5 rounded-xl border-2 border-gray-200 text-gray-400 hover:bg-gray-50"><ArrowPathIcon className="h-6 w-6" /></button>
                                     </div>
                                     <textarea rows={2} placeholder="Reflection..." value={breathNote} onChange={(e) => setBreathNote(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" />
                                     <button onClick={handleLogBreath} disabled={breathTime < 5 || saving} className="w-full py-3 bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50">

@@ -1,252 +1,351 @@
 import os
-import datetime
+
+# Define fence to protect markdown backticks
+FENCE = "```"
 
 # =============================================================================
-# 1. docs/SPRINT_BOARD.md (Closing the Sprint)
+# src/components/admin/FeedbackViewer.tsx
 # =============================================================================
-sprint_board_content = r'''# 🏃 Active Sprint Board
-**Sprint:** 5.0 "The Service Module (Lisa)"
-**Start Date:** 2026-03-04
-**Goal:** Implement the "Digital Rolodex" for sponsors to securely manage sponsees (The "Lisa" Persona).
+feedback_viewer_content = r'''import React, { useState, useEffect, useMemo, type ElementType } from 'react';
+import { collection, query, onSnapshot, doc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { Disclosure, Transition } from '@headlessui/react';
+import { 
+    Clock, 
+    ExternalLink, 
+    Github, 
+    ClipboardList,
+    ChevronUpIcon,
+    InboxIcon,
+    Search,     // WAS: MagnifyingGlassIcon
+    Archive     // WAS: ArchiveBoxIcon
+} from 'lucide-react';
 
-## ✅ Sprint 1: The Gates & Onboarding (Completed)
-- [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios.
-- [x] **1.2 Auth UI:** Consolidate to a single login/create account view.
-- [x] **1.3 Onboarding Redirect:** Force new users to Profile setup.
+interface FeedbackReport {
+  id: string;
+  category: 'bug' | 'suggestion' | 'content';
+  message: string;
+  status: 'new' | 'investigating' | 'resolved';
+  buildHash: string;
+  environment: string;
+  vaultUnlocked: boolean;
+  route: string;
+  userAgent: string;
+  timestamp?: Timestamp;
+}
 
-## ✅ Sprint 2: The Horizon & Identity (Completed)
-- [x] **2.1 Sidebar/Header:** Brand alignment.
-- [x] **2.2 Reactivity:** Dashboard updates when Profile name changes.
-- [x] **2.3 Dashboard UI:** Move XP tracker to Sobriety Counter.
-- [x] **2.4 Profile Tabs:** Split Profile into General / Security / Data tabs.
-- [x] **2.5 PIN Management:** Add secure Change PIN / Reset PIN flows.
+interface SectionHeaderProps {
+  title: string;
+  count: number;
+  color: string;
+  icon: ElementType;
+  isOpen: boolean;
+}
 
-## ✅ Sprint 3: The Core Polish (Completed)
-- [x] **3.1 Journal Cache:** Fix History tab staleness on save/delete.
-- [x] **3.2 Tasks UI:** Fix text wrapping for long Action Plan titles.
+const FeedbackViewer: React.FC = () => {
+  const [reports, setReports] = useState<FeedbackReport[]>([]);
+  const [loading, setLoading] = useState(true);
 
-## ✅ Sprint 4: Hardening & UX Polish (Completed)
-- [x] **4.1 Hook Testing:** Write Vitest specs for `useJournalOperations` and `useTaskOperations`.
-- [x] **4.2 Critical Path QA:** Manual verification of Export, PIN Rotation, and Crypto-Shredding.
-- [x] **4.3 Editor Ergonomics:** Fix Mic icon, move Mood Slider, set smart default mood.
-- [x] **4.4 List Efficiency:** Implement Month/Year grouping for Journal History.
-- [x] **4.5 Visuals:** Upgrade Insights to Gradient Area Chart and "Baseline vs Reality" Weekly Rhythm.
-- [x] **4.5.1 Filters:** Add "Manage Ignored Words" modal for Word Cloud.
-- [x] **4.6 Template Refresh:** Extract templates to `src/data/` and upgrade content to recovery-focused prompts.
+  // --- 1. DATA FETCHING ---
+  useEffect(() => {
+    if (!db) {
+        setTimeout(() => setLoading(false), 0);
+        return;
+    }
 
-## 🟡 Sprint 5: The "Lisa" Service Module (Active)
-- [ ] **5.1 Schema & Types:** Define `Sponsee` interface and Firestore security rules.
-- [ ] **5.2 Service Hook:** Build `useServiceOperations` (CRUD with encryption).
-- [ ] **5.3 Sponsee List UI:** Create "Active" and "Alumni" tabs.
-- [ ] **5.4 Secure Card:** Build the detail view for encrypted notes.
+    // Fetch all feedback, order by newest first
+    const q = query(collection(db, 'feedback'), orderBy('timestamp', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const data = snapshot.docs.map(d => {
+            const raw = d.data();
+            return {
+                id: d.id,
+                ...raw,
+                message: raw.message || raw.content || '',
+                // Ensure status has a default if missing
+                status: raw.status || 'new'
+            } as FeedbackReport;
+        });
+        setReports(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to feedback:", error);
+        setLoading(false);
+      }
+    );
 
-## 🧊 Backlog (Sprint 6+)
-- [ ] **Photo Attachments:** Requires Firestore Storage + Client-Side Encryption.
-- [ ] **Demo Mode:** Anonymous Auth flow for "Try before you buy".
-'''
+    return () => unsubscribe();
+  }, []);
 
-# =============================================================================
-# 2. docs/ROADMAP.md (Status Update)
-# =============================================================================
-roadmap_content = r'''# 🗺️ MRT Product Roadmap
+  // --- 2. GROUPING LOGIC ---
+  const groupedReports = useMemo(() => {
+      return {
+          new: reports.filter(r => r.status === 'new'),
+          investigating: reports.filter(r => r.status === 'investigating'),
+          resolved: reports.filter(r => r.status === 'resolved')
+      };
+  }, [reports]);
 
-**Vision:** To build the world's most secure, persona-aware digital recovery companion.
+  // --- 3. ACTIONS ---
+  const updateStatus = async (id: string, newStatus: FeedbackReport['status']) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, 'feedback', id), { status: newStatus });
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
 
-## 📅 Q1 2026: Foundation & Security (Completed)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
-
-## 📅 Q2 2026: The "Core Polish" Phase (Completed)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
-| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
-
-## 📅 Q3 2026: Hardening & Expansion (Active)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
-| 🟡 **Active** | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
-
-## 📅 Q4 2026: Business & Distribution (Planned)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-06` | **The Freemium Engine** | Admin | Stripe Links, Tier Locks, Paywalls |
-| ⚪ Planned | `PROJ-07` | **The Launch** | Admin | TWA Android Wrapper & Play Store |
-| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools |
-'''
-
-# =============================================================================
-# 3. docs-site/support/changelog.md (Release Notes)
-# =============================================================================
-changelog_content = r'''# 🚀 Changelog
-
-Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
-
-### v1.1.0 (The Visuals & Hardening Update)
-* **New:** **Gradient Insights:** Replaced basic charts with a beautiful "Emotional Velocity" area chart and a "Baseline vs Reality" weekly rhythm tracker.
-* **New:** **Smart Word Cloud:** Added a filter button to hide specific words from your recurring themes. 
-* **New:** **Template Library:** Upgraded journal templates with structured, recovery-focused prompts (e.g., HALT check, Morning Intention).
-* **Improvement:** **Journal History:** Grouped entries by Year and Month for easier navigation of long timelines.
-* **Security:** **Hardened:** Added comprehensive unit tests for core data operations and verified PIN rotation safety.
-
-### v1.0.1 (Core Polish Update)
-* **Improvement:** Journal entries now appear instantly in your History list after saving. No more manual refreshing!
-* **Improvement:** Task titles now wrap text naturally, so longer AI-generated Action Plans are fully readable.
-* **Fix:** Resolved a bug where deleting a journal entry might leave a "ghost" card until the next login.
-
-### v1.0.0 (Initial Launch)
-* **Feature:** Initial Public Release!
-* **Feature:** Zero-Knowledge Client-Side Encryption (AES-GCM).
-* **Feature:** The Horizon Gamification Dashboard.
-* **Feature:** The Pulse (Vitality Tracking & Breathwork).
-* **Feature:** The Compass (Gemini 2.5 AI Analysis).
-* **Feature:** Task Ledger with Smart Resets.
-'''
-
-# =============================================================================
-# 4. docs/specs/01_JOURNAL.md (Reflecting Code Changes)
-# =============================================================================
-# Using ~~~ as a placeholder for triple backticks to avoid Python string breaking
-journal_spec_content = r'''# 📖 Feature Specification: The Journal (The Vault)
-
-**Status:** Live (v2.2)
-**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
-**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
+  const sendToGitHub = (report: FeedbackReport) => {
+    const repoUrl = "[https://github.com/rpdouglas/MRT2/issues/new](https://github.com/rpdouglas/MRT2/issues/new)";
+    const title = encodeURIComponent(`[${report.category?.toUpperCase() || 'BUG'}] Issue reported on ${report.route || 'unknown'}`);
+    
+    const bodyMarkdown = `
+### User Report
+${report.message || 'No content provided.'}
 
 ---
+### Technical Context
+* **Route:** \`${report.route || 'N/A'}\`
+* **Environment:** \`${report.environment || 'N/A'}\`
+* **Build Hash:** \`${report.buildHash || 'N/A'}\`
+* **Vault Unlocked:** \`${report.vaultUnlocked}\`
+* **Device/Browser:** \`${report.userAgent || 'N/A'}\`
+* **Firestore ID:** \`${report.id}\`
+    `.trim();
 
-## 1. Overview
-The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
+    const body = encodeURIComponent(bodyMarkdown);
+    window.open(`${repoUrl}?title=${title}&body=${body}`, '_blank');
+  };
 
-## 2. The Three Modes (Tabs)
-The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
+  const generateTriageReport = () => {
+    const investigating = groupedReports.investigating;
+    
+    if (investigating.length === 0) {
+      alert("You have no bugs tagged as 'investigating'. Tag some first!");
+      return;
+    }
 
-### A. Write (The Editor - "Sticky Studio")
-* **Layout:** A flexible column layout with a persistent **Command Toolbar** at the bottom.
-    * **Header:** Contextual info (Date, Weather).
-    * **Body:** Scrollable textarea for distraction-free writing.
-    * **Toolbar (Sticky):** Houses the Mood Slider, Tag Input, Voice Mic, and Save Checkmark. This ensures controls never overlap text or require scrolling to access.
-* **Smart Defaults:**
-    * **Mood:** Initializes to the average of the user's last 7 entries (via `getSmartMood`) rather than a static "5".
-* **Input Methods:**
-    * **Text:** Rich-text inputs.
-    * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
-* **Templates:**
-    * **Source:** `src/data/journalTemplates.ts`.
-    * **Standard:** Morning Intention, Nightly Inventory, Urge Log (HALT), Meeting Reflection.
-    * **Custom:** Users can define their own prompts via `TemplateEditor.tsx`.
+    // Group by Route
+    const groupedByRoute = investigating.reduce((acc, report) => {
+      const route = report.route || 'Global/Unknown';
+      if (!acc[route]) acc[route] = [];
+      acc[route].push(report);
+      return acc;
+    }, {} as Record<string, FeedbackReport[]>);
 
-### B. History (The Timeline)
-* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
-* **Grouping:** Hierarchical grouping by **Year** -> **Month** (e.g., 2026 -> March).
-    * **Defaults:** The Current Year and Current Month are expanded by default. All past periods are collapsed to reduce cognitive load.
-    * **Interaction:** Tapping a Year or Month header toggles visibility of its contents.
-* **The Memory Engine (Search):**
-    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Behavior:** Searching automatically expands all groups to show matching results.
-* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
-* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
+    let markdown = `# 🐛 Bug Bash: Active Triage Report\n`;
+    markdown += `**Generated:** ${new Date().toLocaleDateString()}\n`;
+    markdown += `**Total Issues:** ${investigating.length}\n\n`;
 
-### C. Insights (The Dashboard)
-* **Source:** `JournalInsights.tsx`
-* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
-* **Visualizations:**
-    1.  **Emotional Velocity (Area Chart):** A gradient-filled area chart showing mood fluctuation over the last 14 active days, overlaid with temperature data to detect seasonal patterns.
-    2.  **Weekly Rhythm (Baseline vs. Reality):** A comparative chart showing:
-        * **Ghost Line (Dotted):** Average mood for the *Previous 30 Days*.
-        * **Solid Bar:** Average mood for the *Current 30 Days*.
-        * *Insight:* If the bar is higher than the line, the user is trending up.
-    3.  **Interactive Word Cloud:** Frequency analysis of entry content.
-        * **Smart Filters:** Automatically excludes boilerplate words (e.g., "Check-in", "Morning").
-        * **User Blocklist:** Users can click the "Eye Slash" icon to open `ManageWordCloudModal` and hide specific words from the cloud locally (persisted in `localStorage`).
-        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
+    Object.entries(groupedByRoute).forEach(([route, bugs], index) => {
+      markdown += `## Phase ${index + 1}: ${route} Polish\n`;
+      bugs.forEach(bug => {
+        const dateStr = bug.timestamp?.toDate ? bug.timestamp.toDate().toLocaleDateString() : 'Unknown Date';
+        markdown += `- [ ] **[${bug.category?.toUpperCase() || 'BUG'}]** ${bug.message.split('\n')[0]}\n`;
+        markdown += `  - *Details:* \`${bug.environment}\` | Vault Unlocked: \`${bug.vaultUnlocked}\` | Reported: ${dateStr}\n`;
+      });
+      markdown += `\n`;
+    });
 
----
+    navigator.clipboard.writeText(markdown).then(() => {
+      alert("✅ Triage Report copied!");
+    });
+  };
 
-## 3. Advanced AI Features
+  if (loading) return <div className="p-4 text-slate-400">Loading inbox...</div>;
 
-### 🧠 The Analysis Wizard
-* **Component:** `JournalAnalysisWizard.tsx`
-* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
-* **Scopes:**
-    * **Weekly:** Last 7 days vs Previous 7 days.
-    * **Monthly:** Last 30 days vs Previous 30 days.
-    * **Deep Dive:** All-time / 90-day pattern recognition.
-* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
-* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
-* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+  // --- 4. RENDER HELPERS ---
+  const SectionHeader = ({ title, count, color, icon: Icon, isOpen }: SectionHeaderProps) => (
+      <div className={`flex items-center justify-between w-full px-4 py-3 text-left text-sm font-bold rounded-xl transition-all ${
+          isOpen ? `bg-${color}-50 text-${color}-900` : 'bg-white text-slate-500 hover:bg-slate-50'
+      }`}>
+          <div className="flex items-center gap-2">
+              <div className={`p-1.5 rounded-lg ${isOpen ? `bg-${color}-100` : 'bg-slate-100'}`}>
+                  <Icon className="w-4 h-4" />
+              </div>
+              <span>{title}</span>
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${isOpen ? `bg-${color}-200 text-${color}-800` : 'bg-slate-200 text-slate-600'}`}>
+                  {count}
+              </span>
+          </div>
+          <ChevronUpIcon className={`${isOpen ? 'transform rotate-180' : ''} w-5 h-5 text-slate-400 transition-transform`} />
+      </div>
+  );
 
-### 🎙️ Voice-to-Vault
-* **Component:** `AudioRecorder.tsx`
-* **Flow:**
-    1.  User records audio (MediaRecorder API).
-    2.  Audio Blob converted to Base64.
-    3.  Sent to Gemini 2.5 Flash (Multimodal).
-    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
-    5.  **Populates:** The Editor state.
+  const ReportCard = ({ report }: { report: FeedbackReport }) => (
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative group">
+          <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide border ${
+                      report.category === 'bug' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
+                      report.category === 'suggestion' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                      'bg-slate-50 text-slate-700 border-slate-100'
+                  }`}>
+                      {report.category}
+                  </span>
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'N/A'}
+                  </span>
+              </div>
+              
+              {/* Quick Status Actions */}
+              <select 
+                  value={report.status}
+                  onChange={(e) => updateStatus(report.id, e.target.value as FeedbackReport['status'])}
+                  className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                  <option value="new">New</option>
+                  <option value="investigating">Investigating</option>
+                  <option value="resolved">Resolved</option>
+              </select>
+          </div>
 
----
+          <p className="text-sm text-slate-800 mb-3 whitespace-pre-wrap leading-relaxed">{report.message}</p>
 
-## 4. Technical Architecture
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <div className="text-[10px] font-mono text-slate-400">
+                  {report.route || '/'} • {report.environment}
+              </div>
+              <button 
+                  onClick={() => sendToGitHub(report)}
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
+                  title="Create GitHub Issue"
+              >
+                  <Github className="w-3 h-3" />
+                  <span>Issue</span>
+                  <ExternalLink className="w-3 h-3 opacity-50" />
+              </button>
+          </div>
+      </div>
+  );
 
-### Data Flow & Encryption
-~~~mermaid
-sequenceDiagram
-    participant User
-    participant App (React)
-    participant Hook (useJournalOperations)
-    participant Crypto (Lib)
-    participant Firestore
+  return (
+    <div className="space-y-6 h-full flex flex-col">
+      
+      {/* ACTION BAR */}
+      <div className="flex justify-between items-center bg-slate-900 p-4 rounded-xl shadow-lg shrink-0">
+        <div>
+          <h3 className="text-white font-bold flex items-center gap-2">
+              <InboxIcon className="w-5 h-5 text-blue-400" />
+              Feedback Inbox
+          </h3>
+          <p className="text-xs text-slate-400">Manage incoming reports.</p>
+        </div>
+        <button 
+          onClick={generateTriageReport}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-50 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-md"
+        >
+          <ClipboardList className="w-4 h-4" />
+          Triage Report
+        </button>
+      </div>
 
-    Note over App, Firestore: WRITE FLOW
-    User->>App: Types "I feel anxious" and clicks Save
-    App->>Hook: addJournal(plainText)
-    Hook->>Crypto: encrypt(plainText, Key)
-    Crypto-->>Hook: Returns "IV:Ciphertext"
-    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
-    Firestore-->>Hook: Success
-    Hook->>App: Invalidates Query Cache (Refetch History)
-~~~
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          
+          {/* SECTION 1: NEW ISSUES (Default Open) */}
+          <Disclosure defaultOpen>
+              {({ open }) => (
+                  <div className={`rounded-2xl transition-all ${open ? 'bg-blue-50/50 p-2' : ''}`}>
+                      <Disclosure.Button className="w-full focus:outline-none mb-2">
+                          <SectionHeader title="New Issues" count={groupedReports.new.length} color="blue" icon={InboxIcon} isOpen={open} />
+                      </Disclosure.Button>
+                      <Transition
+                          enter="transition duration-100 ease-out"
+                          enterFrom="transform scale-95 opacity-0"
+                          enterTo="transform scale-100 opacity-100"
+                          leave="transition duration-75 ease-out"
+                          leaveFrom="transform scale-100 opacity-100"
+                          leaveTo="transform scale-95 opacity-0"
+                      >
+                          <Disclosure.Panel className="space-y-3 px-1 pb-2">
+                              {groupedReports.new.length === 0 ? (
+                                  <div className="text-center py-6 text-slate-400 text-sm italic">Inbox Zero! No new reports.</div>
+                              ) : (
+                                  groupedReports.new.map(report => <ReportCard key={report.id} report={report} />)
+                              )}
+                          </Disclosure.Panel>
+                      </Transition>
+                  </div>
+              )}
+          </Disclosure>
 
-### Database Schema (Journal Specific)
-**Collection:** `journals`
-| Field | Type | Description | Encryption |
-| :--- | :--- | :--- | :--- |
-| `uid` | String | Owner ID | No |
-| `content` | String | The body text | **YES (AES-GCM)** |
-| `moodScore` | Number | 1-10 Integer | No (For Stats) |
-| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
-| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
-| `isEncrypted` | Bool | Flag for legacy data handling | No |
-| `createdAt` | Timestamp | Creation Time | No |
+          {/* SECTION 2: INVESTIGATING (Default Open) */}
+          <Disclosure defaultOpen>
+              {({ open }) => (
+                  <div className={`rounded-2xl transition-all ${open ? 'bg-amber-50/50 p-2' : ''}`}>
+                      <Disclosure.Button className="w-full focus:outline-none mb-2">
+                          <SectionHeader title="Investigating" count={groupedReports.investigating.length} color="amber" icon={Search} isOpen={open} />
+                      </Disclosure.Button>
+                      <Transition
+                          enter="transition duration-100 ease-out"
+                          enterFrom="transform scale-95 opacity-0"
+                          enterTo="transform scale-100 opacity-100"
+                          leave="transition duration-75 ease-out"
+                          leaveFrom="transform scale-100 opacity-100"
+                          leaveTo="transform scale-95 opacity-0"
+                      >
+                          <Disclosure.Panel className="space-y-3 px-1 pb-2">
+                               {groupedReports.investigating.length === 0 ? (
+                                  <div className="text-center py-4 text-slate-400 text-sm italic">No active investigations.</div>
+                              ) : (
+                                  groupedReports.investigating.map(report => <ReportCard key={report.id} report={report} />)
+                              )}
+                          </Disclosure.Panel>
+                      </Transition>
+                  </div>
+              )}
+          </Disclosure>
 
----
+          {/* SECTION 3: RESOLVED (Default Closed) */}
+          <Disclosure>
+              {({ open }) => (
+                  <div className={`rounded-2xl transition-all ${open ? 'bg-slate-100 p-2' : ''}`}>
+                      <Disclosure.Button className="w-full focus:outline-none mb-2">
+                          <SectionHeader title="Resolved / Archive" count={groupedReports.resolved.length} color="slate" icon={Archive} isOpen={open} />
+                      </Disclosure.Button>
+                      <Transition
+                          enter="transition duration-100 ease-out"
+                          enterFrom="transform scale-95 opacity-0"
+                          enterTo="transform scale-100 opacity-100"
+                          leave="transition duration-75 ease-out"
+                          leaveFrom="transform scale-100 opacity-100"
+                          leaveTo="transform scale-95 opacity-0"
+                      >
+                          <Disclosure.Panel className="space-y-3 px-1 pb-2">
+                              {groupedReports.resolved.map(report => (
+                                  <div key={report.id} className="opacity-75 hover:opacity-100 transition-opacity">
+                                      <ReportCard report={report} />
+                                  </div>
+                              ))}
+                          </Disclosure.Panel>
+                      </Transition>
+                  </div>
+              )}
+          </Disclosure>
+          
+      </div>
+    </div>
+  );
+};
 
-## 5. Verification (QA)
-* [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
-* [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.
-* [x] **Navigation:** Verified Month/Year grouping allows easy access to old entries without infinite scrolling.
+export default FeedbackViewer;
 '''
 
 def write_file(path, content):
     dirname = os.path.dirname(path)
     if dirname: 
         os.makedirs(dirname, exist_ok=True)
-    
-    # === THE FIX ===
-    # Replace the ~~~ placeholder with actual triple backticks
-    final_content = content.replace("~~~", "```").strip() + "\n"
-    
+    # Replace the placeholder with actual backticks
+    final_content = content.replace("__FENCE__", FENCE).strip() + "\n"
     with open(path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Updated Docs: {path}")
+    print(f"✅ Updated Feature: {path}")
 
 if __name__ == "__main__":
-    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
-    write_file("docs/ROADMAP.md", roadmap_content)
-    write_file("docs-site/support/changelog.md", changelog_content)
-    write_file("docs/specs/01_JOURNAL.md", journal_spec_content)
-    print("✨ Sprint 4 Closed. Documentation Synchronized.")
+    write_file("src/components/admin/FeedbackViewer.tsx", feedback_viewer_content)
+    print("✨ SRE Fix complete: Replaced invalid Heroicons with Lucide equivalents.")
