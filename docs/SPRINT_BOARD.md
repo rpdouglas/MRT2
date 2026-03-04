@@ -1,7 +1,7 @@
 # 🏃 Active Sprint Board
-**Sprint:** 4.6 "The Crucible & The Polish"
-**Start Date:** 2026-03-03
-**Goal:** Lock down logic stability (Tests) and eradicate high-friction UX bugs (Journal Polish).
+**Sprint:** 5.0 "The Service Module (Lisa)"
+**Start Date:** 2026-03-04
+**Goal:** Implement the "Digital Rolodex" for sponsors to securely manage sponsees (The "Lisa" Persona).
 
 ## ✅ Sprint 1: The Gates & Onboarding (Completed)
 - [x] **1.1 Landing Page:** Add MRT icon, persona headshots/bios.
@@ -19,31 +19,21 @@
 - [x] **3.1 Journal Cache:** Fix History tab staleness on save/delete.
 - [x] **3.2 Tasks UI:** Fix text wrapping for long Action Plan titles.
 
-## 🟡 Sprint 4: Hardening & UX Polish (Active)
-
-### 🛠️ Category A: System Hardening
+## ✅ Sprint 4: Hardening & UX Polish (Completed)
 - [x] **4.1 Hook Testing:** Write Vitest specs for `useJournalOperations` and `useTaskOperations`.
 - [x] **4.2 Critical Path QA:** Manual verification of Export, PIN Rotation, and Crypto-Shredding.
+- [x] **4.3 Editor Ergonomics:** Fix Mic icon, move Mood Slider, set smart default mood.
+- [x] **4.4 List Efficiency:** Implement Month/Year grouping for Journal History.
+- [x] **4.5 Visuals:** Upgrade Insights to Gradient Area Chart and "Baseline vs Reality" Weekly Rhythm.
+- [x] **4.5.1 Filters:** Add "Manage Ignored Words" modal for Word Cloud.
+- [x] **4.6 Template Refresh:** Extract templates to `src/data/` and upgrade content to recovery-focused prompts.
 
-### 🎨 Category B: Journal UX Polish
-- [x] **4.3 Editor Ergonomics:**
-    - Fix Mic icon blocking text (padding).
-    - Move Mood Slider to Sticky Header/Footer.
-    - Set default mood to "Last 7 Days Average" instead of 5.
-- [x] **4.4 List Efficiency:**
-    - Fix missing Sidebar Icon.
-    - Implement "Month/Year" collapsible headers in History list.
+## 🟡 Sprint 5: The "Lisa" Service Module (Active)
+- [ ] **5.1 Schema & Types:** Define `Sponsee` interface and Firestore security rules.
+- [ ] **5.2 Service Hook:** Build `useServiceOperations` (CRUD with encryption).
+- [ ] **5.3 Sponsee List UI:** Create "Active" and "Alumni" tabs.
+- [ ] **5.4 Secure Card:** Build the detail view for encrypted notes.
 
-### 🧠 Category C: Intelligence & Analytics
-- [x] **4.5 Visuals & Logic:**
-    - Revamp Chart to Gradient Area Chart (Emotional Velocity).
-    - Implement "Baseline vs Reality" Weekly Rhythm Chart.
-    - Tune AI Prompt for brevity.
-- [x] **4.5.1 Filters:**
-    - Add "Manage Ignored Words" modal for Word Cloud.
-    - Persist user blocklist to LocalStorage.
-- [ ] **4.6 Template Refresh:** Update default templates (Somatic Urge Log, Evening Inventory).
-
-## 🧊 Backlog (Sprint 5+)
+## 🧊 Backlog (Sprint 6+)
 - [ ] **Photo Attachments:** Requires Firestore Storage + Client-Side Encryption.
 - [ ] **Demo Mode:** Anonymous Auth flow for "Try before you buy".
