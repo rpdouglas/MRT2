@@ -25,4 +25,4 @@
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-06` | **Rich Media & Memory** | Admin | Encrypted Photos & Voice Memos |
 | ⚪ Planned | `PROJ-07` | **The Launch Engine** | Admin | Stripe, Demo Mode, & TWA Wrapper |
-| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools (Post-Launch) |
+| ⚪ Planned | `PROJ-08` | **Recovery Tools** | Admin | CBT tools, mindfulness aids, and exercises |

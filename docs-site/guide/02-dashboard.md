@@ -13,7 +13,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
 * **Vitality:** View your biological regulation streak.
 * **Wisdom:** View your workbook mastery percentage.
-* **Coming Soon:** You will also see visual placeholders for our upcoming features: The Service Portal (for managing sponsees) and Recovery Games (for mapping triggers).
+* **Coming Soon:** You will also see visual placeholders for our upcoming features: The Service Portal (for managing sponsees) and Recovery Tools (CBT exercises & mindfulness aids).
 
 ## 3. The Gamification Engine
 Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.

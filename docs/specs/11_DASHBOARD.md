@@ -37,7 +37,7 @@ Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Eng
   * Mirrored Calendar icons wrapping the Total Days counter.
 * **Bento Grid:** 6-tile layout linking to core modules:
   * **Active Modules:** Journal (Streak & Consistency), Habits (Rate & Fire Score), Vitality (Bio-Streak & Logs), Wisdom (Mastery % & Total Score).
-  * **Teaser Modules:** Service Portal and Recovery Games (Rendered with 50% opacity and 'Coming Soon' state).
+  * **Teaser Modules:** Service Portal and Recovery Tools (Rendered with 50% opacity and 'Coming Soon' state).
 
 ## 4. Verification Checklist
 * [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
