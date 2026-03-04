@@ -17,7 +17,7 @@
 * **Error Log:**
 ```text
 [PASTE ERROR HERE]
-```
+__FENCE__
 * **File to Fix:** [PASTE COMPLETE FILE CONTENT]
 
 ### 📤 REQUIRED OUTPUT FORMAT
