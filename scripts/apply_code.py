@@ -644,6 +644,7 @@ def write_file(path, content):
     print(f"✅ Updated: {path}")
 
 if __name__ == "__main__":
-    write_file("src/data/journalTemplates.ts", templates_data_content)
-    write_file("src/components/journal/JournalEditor.tsx", journal_editor_content)
-    print("✨ Ticket 4.6 Implemented: Templates Refreshed.")
+    write_file("docs/specs/01_JOURNAL.md", journal_spec_content)
+    write_file("docs-site/guide/03-journal-and-ai.md", guide_content)
+    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
+    print("✨ Documentation Synchronization Complete.")

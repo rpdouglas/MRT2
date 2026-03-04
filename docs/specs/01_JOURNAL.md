@@ -80,7 +80,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 ## 4. Technical Architecture
 
 ### Data Flow & Encryption
-```mermaid
+```~mermaid
 sequenceDiagram
     participant User
     participant App (React)
