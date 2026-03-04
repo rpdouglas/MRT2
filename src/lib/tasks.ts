@@ -1,6 +1,6 @@
 /**
  * src/lib/tasks.ts
- * UPDATED: Fixed Type safety for Date/Timestamp mix.
+ * UPDATED: Re-architected toggleTask and addTask to properly handle RecurrenceConfig.
  */
 import { 
   collection, 
@@ -16,42 +16,42 @@ import {
 import { db } from "./firebase";
 import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
 import type { Task as TaskInterface } from "./db";
+import { type RecurrenceConfig, calculateNextDueDate } from "./dateUtils";
 
-// Re-export the interface for convenience
 export type Task = TaskInterface;
 export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
 export type Priority = 'High' | 'Medium' | 'Low';
+export type { RecurrenceConfig };
 
 const COLLECTION = 'tasks';
 
-// Helper: Ensure we always have a Date object
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const toDate = (val: any): Date | undefined => {
+const toDate = (val: unknown): Date | undefined => {
   if (!val) return undefined;
   if (val instanceof Timestamp) return val.toDate();
   if (val instanceof Date) return val;
-  return new Date(val); // Last resort for strings
+  return new Date(val as string | number); 
 }
 
 // 1. CREATE
 export async function addTask(
   uid: string, 
   title: string, 
-  frequency: Frequency, 
+  recurrence: RecurrenceConfig, 
   priority: Priority, 
   startDate: Date,
   source: 'manual' | 'ai' = 'manual'
 ) {
   if (!db) throw new Error("Database not initialized");
   
-  const isRecurring = frequency !== 'once';
+  const isRecurring = recurrence.type !== 'once';
   const due = startOfDay(startDate);
 
   await addDoc(collection(db, COLLECTION), {
     uid,
     title,
     isRecurring,
-    frequency,
+    frequency: recurrence.type, // Backwards compatibility
+    recurrence, // Store the full config object
     priority,
     currentStreak: 0,
     lastCompletedAt: null,
@@ -61,7 +61,7 @@ export async function addTask(
   });
 }
 
-// 2. READ & LAZY EVALUATE STREAKS
+// 2. READ & LAZY EVALUATE
 export async function getUserTasks(uid: string) {
   if (!db) throw new Error("Database not initialized");
 
@@ -77,15 +77,15 @@ export async function getUserTasks(uid: string) {
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
     
-    // Explicitly construct with conversions to avoid TS errors
     const task: Task = { 
       id: docSnap.id, 
       uid: data.uid,
       title: data.title,
-      completed: data.completed || false, // Default if missing
+      completed: data.completed || false, 
       status: data.status || 'pending',
       isRecurring: data.isRecurring || false,
       frequency: data.frequency || 'once',
+      recurrence: data.recurrence, // Rehydrate config
       currentStreak: data.currentStreak || 0,
       priority: data.priority || 'Medium',
       dueDate: toDate(data.dueDate),
@@ -94,23 +94,18 @@ export async function getUserTasks(uid: string) {
       source: data.source || 'manual'
     };
 
-    // --- LAZY EVALUATION LOGIC ---
-    // Fix: Explicitly cast to Date because we normalized it above with toDate()
     if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
-        
         const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt as Date, today);
         
         if (!completedToday) {
             let newStreak = task.currentStreak;
             
-            // Punishment Logic
             if (newStreak > 0) {
-                newStreak = 0; // Break positive streak
+                newStreak = 0; 
             } else {
-                newStreak -= 1; // Deepen negative streak
+                newStreak -= 1; 
             }
 
-            // Reset due date to Today so they can get back on track (Smart Reset)
             const taskRef = doc(db, COLLECTION, task.id!);
             await updateDoc(taskRef, {
                 currentStreak: newStreak,
@@ -128,39 +123,37 @@ export async function getUserTasks(uid: string) {
   return tasks;
 }
 
-// 3. TOGGLE COMPLETION
-export async function toggleTask(task: Task, isCompleted: boolean) {
+// 3. TOGGLE COMPLETION (The Lifecycle Fix)
+export async function toggleTask(task: Task, isCompleting: boolean) {
   if (!db || !task.id) throw new Error("Database not initialized or Task ID missing");
   const taskRef = doc(db, COLLECTION, task.id);
   const today = startOfDay(new Date());
 
-  if (isCompleted) {
-    // MARKING DONE
-    let newStreak = task.currentStreak;
-    if (newStreak < 0) {
-        newStreak = 1; // Bounce back from negative
-    } else {
-        newStreak += 1;
-    }
-
+  if (isCompleting) {
+    const newStreak = task.currentStreak < 0 ? 1 : task.currentStreak + 1;
     const currentDue = toDate(task.dueDate) || today;
     let nextDue = currentDue;
 
-    if (task.frequency === 'daily') nextDue = addDays(today, 1);
-    else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
-    else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
+    // Use full recurrence logic if available, else fallback to legacy frequency
+    if (task.isRecurring && task.recurrence) {
+        const calculatedNext = calculateNextDueDate(currentDue, task.recurrence);
+        if (calculatedNext) nextDue = calculatedNext;
+    } else if (task.frequency && task.frequency !== 'once') {
+        if (task.frequency === 'daily') nextDue = addDays(today, 1);
+        else if (task.frequency === 'weekly') nextDue = addWeeks(today, 1);
+        else if (task.frequency === 'monthly') nextDue = addMonths(today, 1);
+    }
     
     await updateDoc(taskRef, {
         currentStreak: newStreak,
-        lastCompletedAt: Timestamp.fromDate(new Date()),
-        status: 'completed',
-        // Only update due date if recurring
+        lastCompletedAt: Timestamp.now(),
+        status: task.isRecurring ? 'pending' : 'completed',
         ...(task.isRecurring && { dueDate: Timestamp.fromDate(nextDue) })
     });
 
   } else {
-    // UNCHECKING (Undo)
-    const newStreak = task.currentStreak > 0 ? task.currentStreak - 1 : task.currentStreak;
+    // Unchecking (Undo)
+    const newStreak = Math.max(0, task.currentStreak - 1);
     
     await updateDoc(taskRef, {
         currentStreak: newStreak,
@@ -177,7 +170,7 @@ export async function deleteTask(id: string) {
   await deleteDoc(doc(db, COLLECTION, id));
 }
 
-// 5. UPDATE (Generic)
+// 5. UPDATE
 export async function updateTask(id: string, updates: Partial<Task>) {
   if (!db) throw new Error("Database not initialized");
   await updateDoc(doc(db, COLLECTION, id), updates);
@@ -189,7 +182,6 @@ export async function getCompletedTasksForToday(uid: string) {
     const today = startOfDay(new Date());
     const allTasks = await getUserTasks(uid);
     
-    // Safety check with toDate helper
     return allTasks.filter(t => {
         const d = toDate(t.lastCompletedAt);
         return d && isSameDay(d, today);

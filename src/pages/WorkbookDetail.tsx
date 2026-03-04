@@ -191,8 +191,7 @@ export default function WorkbookDetail() {
     try {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 3);
-        // FIX: Replaced parameter 6 with 'ai' to correctly tag metadata for the Action Plan lane
-        await addTask(user.uid, action, 'once', 'High', dueDate, 'ai');
+        await addTask(user.uid, action, { type: 'once' }, 'High', dueDate, 'ai');
         setAddedActions(prev => new Set(prev).add(action));
     } catch (e) {
         console.error(e);
@@ -402,7 +401,7 @@ export default function WorkbookDetail() {
                                               >
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}
                                               </button>
-                                           </li>
+                                          </li>
                                        );
                                   })}
                               </ul>

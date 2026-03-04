@@ -1,7 +1,3 @@
-/**
- * src/pages/InsightsLog.tsx
- * FIXED: Restored UI sections for Strengths and Risks.
- */
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
@@ -87,7 +83,7 @@ export default function InsightsLog() {
             const dueDate = addDays(new Date(), 7);
             await addTask({
                 title: action,
-                frequency: 'once',
+                recurrence: { type: 'once' },
                 priority: 'Medium',
                 dueDate: dueDate,
                 source: 'ai' 
