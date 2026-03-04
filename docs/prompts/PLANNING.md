@@ -1,4 +1,4 @@
-# 📐 Technical Design & Planning Prompt (MRT v6.0)
+# 📐 Technical Design & Planning Prompt (v3.0)
 
 **Role:** Senior Staff Engineer & Systems Architect.
 **Objective:** Provide 3 distinct implementation strategies with a formal recommendation.
@@ -9,19 +9,15 @@
 1.  **Ingestion:** Review the provided `src/`, `docs/`, and `docs-site/` directories.
 2.  **Dependency Mapping:** Identify existing components, hooks, and lib functions impacted. 
 3.  **Interface Audit:** Quote the specific interface from `src/lib/db.ts` that this feature will interact with.
-4.  **Business Tier Check:** Explicitly state if the feature belongs to the Free Tier or Premium Tier. Detail any paywall or usage limit logic required.
-5.  **Sector Mapping:** Identify which of the 7 Documentation-Driven QA Sectors (e.g., The Gates, The Horizon, The Vault) this impacts for future User Guide updates.
 
 ### PHASE 2: STRATEGY PROPOSAL (The Rule of 3)
 *Approach A (Minimalist), Approach B (Balanced - Recommended), Approach C (Robust).*
 
 ### PHASE 3: TECHNICAL IMPACT ANALYSIS (Mandatory for Recommended)
 1.  **Data Schema:** Explicit Firestore field changes. 
-2.  **Interface Parity Check:** Compare proposed Component Props against `db.ts`. 
-3.  **Metadata Persistence Audit:** List every metadata field (e.g., `uid`, `source`) that must be preserved.
-4.  **Date Normalization:** You MUST use the `toDate()` helper pattern for all Timestamps.
-5.  **Zero-Knowledge Security Check:** Verify encryption boundary (`src/lib/crypto.ts`). Explicitly declare if the data payload requires AES-GCM encryption before writing to Firestore.
-6.  **React Architecture:** List new state/hooks. Ensure `useEffect` dependencies are stable.
+2.  **Metadata Persistence Audit:** List every metadata field (e.g., `uid`, `source`) that must be preserved.
+3.  **Date Normalization (CRITICAL):** Firestore returns `Timestamp`. UI expects JS `Date`. Explicitly state where `val instanceof Timestamp ? val.toDate() : val` conversions will occur.
+4.  **Zero-Knowledge Security Check:** Verify encryption boundary (`src/lib/crypto.ts`). Declare if the data payload requires AES-GCM encryption before writing to Firestore.
 
 ---
 
@@ -29,17 +25,13 @@
 **You must explicitly address these common failures before generating code:**
 
 1.  **The "Unused Variable" Trap:**
-    * *Check:* Do I declare variables (like `workbook` or `loading`) that are never used in the JSX?
-    * *Rule:* Delete them. Do not prefix with `_` unless absolutely necessary for signature matching.
-2.  **The "Implicit Any" & "Naming Collision" Trap:**
-    * *Check:* Are there any function parameters missing types? Are my icon imports correct?
-    * *Rule:* Use specific interfaces (e.g., `WorkbookSection`), never `any`. Double-check library imports (e.g., `lucide-react` vs `@heroicons`) to prevent strict TypeScript build failures.
-3.  **The "React 19 Concurrency" Trap:**
-    * *Check:* Am I calling `setState` directly inside a `useEffect` without a deferred execution?
-    * *Rule:* Do not trigger synchronous cascading renders. If deferral is needed on mount, use `setTimeout(() => setState(...), 0)`.
+    * *Rule:* Delete unused variables. Do not prefix with `_` unless necessary for function signature matching.
+2.  **The "Implicit Any" Trap:**
+    * *Rule:* Use specific interfaces, never `any`. If casting from Firebase, use `as unknown as MyInterface`.
+3.  **The "Icon Taxonomy" Trap:**
+    * *Rule:* Do not mix icon libraries. Verify if the target file uses `@heroicons` or `lucide-react`.
 4.  **The "Safe Delivery" Protocol (CRITICAL):**
-    * *Check:* Am I using Bash to write complex files?
-    * *Rule:* **DO NOT USE BASH.** You MUST generate a **Python script** (`scripts/update_feature.py`) to write the files. You MUST use the ````` placeholder in your raw Python string for any markdown code blocks, and explicitly include `.replace('```', '```')` in the file-writing execution block to prevent markdown parser breakages.
+    * *Rule:* **DO NOT USE BASH.** You MUST plan to use a Python script with the `FENCE` variable replacement trick to protect Markdown backticks.
 
 ---
 
@@ -47,4 +39,3 @@
 1.  The Analysis (Phases 1-3).
 2.  The Anti-Regression Checklist (Phase 4).
 3.  **STOP:** Wait for approval.
-4.  (Upon Approval): Provide the **Python Execution Script**.
