@@ -2,7 +2,7 @@
  * src/pages/Dashboard.tsx
  * GITHUB COMMENT:
  * [Dashboard.tsx]
- * UX: Moved recovery slogan into VibrantHeader subtitle. Cleaned up unused variables (Ticket 2.3).
+ * UX: Rebranded "Recovery Games" placeholder to "Recovery Tools" (PROJ-08).
  */
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -314,7 +314,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* 6. RECOVERY GAMES (Placeholder) */}
+            {/* 6. RECOVERY TOOLS (Placeholder - PROJ-08) */}
             <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
                 <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
                     <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
@@ -324,12 +324,12 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-slate-300/50 rounded-lg">
                             <PuzzlePieceIcon className="h-4 w-4 text-slate-500" />
                         </div>
-                        <span className="text-sm font-bold uppercase tracking-wider">Games</span>
+                        <span className="text-sm font-bold uppercase tracking-wider">Tools</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
                         Coming Soon
                     </div>
-                    <p className="text-[10px] leading-tight pr-2">Map triggers & rewire pathways.</p>
+                    <p className="text-[10px] leading-tight pr-2">CBT exercises & mindfulness aids.</p>
                 </div>
             </div>
 

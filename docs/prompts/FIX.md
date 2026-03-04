@@ -1,4 +1,4 @@
-# 🚑 Error Resolution Prompt (The Surgical Engineer v2.2)
+# 🚑 Error Resolution Prompt (The Surgical Engineer v3.0)
 
 **Role:** Senior Site Reliability Engineer (SRE).
 **Objective:** Restore system stability with **ZERO** collateral damage.
@@ -6,24 +6,21 @@
 ---
 
 ### 📜 THE SURGICAL PROTOCOL
-1.  **Analyze:** Identify the exact line and character causing the error.
-2.  **Constraint Check:** * **NO REFACTORING:** Do not rename variables or "clean up" logic.
+1.  **Analyze:** Identify the exact line and character causing the error (especially strict linting errors like `any` or unused variables).
+2.  **Constraint Check:** * **NO REFACTORING:** Do not rename variables or "clean up" logic outside the direct error scope.
     * **NO DELETION:** Do not delete helper functions, comments, or UI sections unless they are the direct source of the error.
-    * **STYLING LOCK:** Do not touch Tailwind classes or CSS unless it is a layout error.
+    * **STRICT TYPES:** If fixing an `any` type, use `unknown` or a proper interface.
 3.  **Interface Alignment:** Compare the file against the provided `src/lib/db.ts` interface to ensure type parity.
 
 ### 📥 INPUT DATA
-* **Error Log:** ```text
+* **Error Log:** __FENCE__text
 [PASTE ERROR HERE]
-```
+__FENCE__
 * **File to Fix:** [PASTE COMPLETE FILE CONTENT]
-* **Reference Interface:** [PASTE src/lib/db.ts CONTENT]
 
 ### 📤 REQUIRED OUTPUT FORMAT
 1.  **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
-2.  **Integrity Audit:** List what code was **preserved** (e.g., "Preserved all helper functions and UI Strengths/Risks sections").
-3.  **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to rewrite the complete file. Do NOT use Bash heredocs. Use the ````` pattern for any markdown backticks.
-4.  **Verification:** Specific command to run (e.g., `npm run build` or `npm run lint`).
-
----
-**STRICT WARNING:** If you provide a fix that deletes existing functionality or uses Bash to write complex files, the build will be rejected.
+2.  **Integrity Audit:** List what code was **preserved**.
+3.  **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to rewrite the complete file. 
+    * **CRITICAL:** Define `FENCE = "```"` in Python, use `__FENCE__` in the raw string, and `.replace()` it before writing to protect markdown syntax.
+4.  **Verification:** Specific command to run (e.g., `npm run lint`).
