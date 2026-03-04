@@ -9,13 +9,15 @@
 
 ## Part 1: Automated Verification (The Engine)
 1. **Unit Tests:** Generate Vitest specs for core logic.
+    * *React Query Async Rule:* If testing an optimistic UI update (`onMutate`), you MUST wrap your assertions in `await waitFor(() => { ... })` to account for the microtask gap.
+    * *Strict Types:* Do not mock with `as any`. Use `as unknown as MyType`.
 2. **Regression:** Does this break any existing data boundaries (`crypto.ts`)?
 
 ## Part 2: Manual Verification (The UX)
 Provide a strict "Smoke Test" checklist for the developer using the Persona Lens:
 * **The Subway Test:** How does this feature behave if Wi-Fi drops mid-action?
-* **The Gremlin Test:** What happens if the user inputs extreme edge-case data (e.g., negative numbers, massive text walls)?
+* **The Gremlin Test:** What happens if the user inputs extreme edge-case data?
 * **The Crisis Test:** Is the UI frictionless enough for "David" (high-anxiety user)?
 
 ## Part 3: Documentation Sync
-Once the feature passes the tests above, you MUST generate the VitePress Markdown file for the User Guide, formatting it beautifully with standard sections (Overview, How to Use, Edge Cases, FAQ).
+Generate the VitePress Markdown file for the User Guide, formatting it with standard sections (Overview, How to Use, FAQ). Use the Python `FENCE` variable trick to output the markdown safely.
