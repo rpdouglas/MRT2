@@ -13,16 +13,16 @@
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
 | 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
+| 🟢 **Done** | `PROJ-04.5`| **The Crucible** | Admin | QA, Unit Tests, and Hardening |
 
-## 📅 Q3 2026: Hardening & Expansion (Active)
+## 📅 Q3 2026: Expansion (Active)
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
 | 🟡 **Active** | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
 
-## 📅 Q4 2026: Business & Distribution (Planned)
+## 📅 Q4 2026: Memory & Business (Planned)
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-06` | **The Freemium Engine** | Admin | Stripe Links, Tier Locks, Paywalls |
-| ⚪ Planned | `PROJ-07` | **The Launch** | Admin | TWA Android Wrapper & Play Store |
-| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools |
+| ⚪ Planned | `PROJ-06` | **Rich Media & Memory** | Admin | Encrypted Photos & Voice Memos |
+| ⚪ Planned | `PROJ-07` | **The Launch Engine** | Admin | Stripe, Demo Mode, & TWA Wrapper |
+| ⚪ Planned | `PROJ-08` | **Recovery Games** | Admin | Interactive gamified tools (Post-Launch) |
