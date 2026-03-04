@@ -17,8 +17,8 @@
 ## 📅 Q3 2026: Hardening & Expansion (Active)
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
-| ⚪ Planned | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
+| 🟢 **Done** | `PROJ-04.5`| **The Crucible (Hardening & QA)** | Admin | Unit Testing & Bug Bash |
+| 🟡 **Active** | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
 
 ## 📅 Q4 2026: Business & Distribution (Planned)
 | Status | ID | Project Name | Owner | Impact |

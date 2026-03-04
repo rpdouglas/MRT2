@@ -23,8 +23,9 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     * **Text:** Rich-text inputs.
     * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
 * **Templates:**
-    * Standard: Morning Check-in, Nightly Review, Urge Log, Meeting Reflection.
-    * Custom: Users can define their own prompts via `TemplateEditor.tsx`.
+    * **Source:** `src/data/journalTemplates.ts`.
+    * **Standard:** Morning Intention, Nightly Inventory, Urge Log (HALT), Meeting Reflection.
+    * **Custom:** Users can define their own prompts via `TemplateEditor.tsx`.
 
 ### B. History (The Timeline)
 * **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
@@ -80,7 +81,7 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 ## 4. Technical Architecture
 
 ### Data Flow & Encryption
-```~mermaid
+```mermaid
 sequenceDiagram
     participant User
     participant App (React)

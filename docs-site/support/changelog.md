@@ -2,6 +2,13 @@
 
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
+### v1.1.0 (The Visuals & Hardening Update)
+* **New:** **Gradient Insights:** Replaced basic charts with a beautiful "Emotional Velocity" area chart and a "Baseline vs Reality" weekly rhythm tracker.
+* **New:** **Smart Word Cloud:** Added a filter button to hide specific words from your recurring themes. 
+* **New:** **Template Library:** Upgraded journal templates with structured, recovery-focused prompts (e.g., HALT check, Morning Intention).
+* **Improvement:** **Journal History:** Grouped entries by Year and Month for easier navigation of long timelines.
+* **Security:** **Hardened:** Added comprehensive unit tests for core data operations and verified PIN rotation safety.
+
 ### v1.0.1 (Core Polish Update)
 * **Improvement:** Journal entries now appear instantly in your History list after saving. No more manual refreshing!
 * **Improvement:** Task titles now wrap text naturally, so longer AI-generated Action Plans are fully readable.
