@@ -2,12 +2,10 @@
  * src/components/journal/JournalEditor.tsx
  * GITHUB COMMENT:
  * [JournalEditor.tsx]
- * FIX: Constrained Tag Input width using min-w-0 to prevent flex blowout.
- * FIX: Replaced PlusIcon with CheckIcon for clearer 'Save' semantics.
- * FIX: Added explicit types to getSmartMood filter/reduce to satisfy strict no-implicit-any.
- * FIX: Ensured useQueryClient is properly imported.
+ * REFACTOR: Extracted DEFAULT_TEMPLATES to src/data/journalTemplates.ts (Ticket 4.6).
+ * UPDATE: Aligned template selection logic to use 'content' property instead of 'text'.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
@@ -15,7 +13,7 @@ import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
-    CheckIcon, // CHANGED from PlusIcon
+    CheckIcon,
     Cog6ToothIcon,
     MapPinIcon,
     ArrowPathIcon,
@@ -25,6 +23,7 @@ import {
     FaceSmileIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
+import { DEFAULT_TEMPLATES } from '../../data/journalTemplates'; // NEW IMPORT
 import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
@@ -58,19 +57,15 @@ interface JournalEditorProps {
   onSaveComplete: () => void;
 }
 
-const DEFAULT_TEMPLATES = [
-  { id: 'morning_checkin', name: 'Morning Check-in', text: "Morning Check-in ☀️\n\nHow am I feeling today?\n\n\nWhat is my main focus for today?\n\n\nOne thing I am grateful for:\n", tags: ['Morning'] },
-  { id: 'nightly_review', name: 'Nightly Review', text: "Nightly Review 🌙\n\nWhat went well today?\n\n\nWhat challenged me?\n\n\nDid I stay sober today?\n", tags: ['Nightly'] },
-  { id: 'urge_log', name: 'Urge Log (SOS)', text: "Urge Log 🚨\n\nTrigger:\n\n\nIntensity (1-10):\n\n\nCoping Strategy Used:\n", tags: ['Urge', 'SOS'] },
-  { id: 'meeting_reflection', name: 'Meeting Reflection', text: "Meeting Reflection 🪑\n\nMeeting Topic:\n\n\nOne thing I heard that resonated:\n\n\nHow can I apply this?\n", tags: ['Meeting'] },
-];
-
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user } = useAuth();
   const { encrypt } = useEncryption();
   const { addJournal, updateJournal } = useJournalOperations();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Editor Ref for Markdown insertion
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // --- SMART DEFAULT MOOD LOGIC ---
   const getSmartMood = () => {
@@ -164,14 +159,16 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   }, [user]);
 
   const handleTemplateSelect = useCallback((tId: string) => {
+    // 1. Check Standard Templates (from new data file)
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
-        setNewEntry(defTemplate.text);
+        setNewEntry(defTemplate.content); // UPDATED: uses .content
         setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
         setActiveTemplate(null);
         return;
     }
 
+    // 2. Check Custom User Templates
     const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
     
     if (custTemplate) {
@@ -187,6 +184,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
         }
     } else {
+        // 3. Reset / Free Write
         setActiveTemplate(null);
         setNewEntry('');
         setTags([]);
@@ -437,6 +435,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                 </div>
             ) : (
                 <textarea
+                    ref={textareaRef}
                     value={newEntry}
                     onChange={(e) => setNewEntry(e.target.value)}
                     placeholder="How are you feeling today?"
