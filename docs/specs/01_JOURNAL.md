@@ -24,8 +24,14 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
     * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
 * **Templates:**
     * **Source:** `src/data/journalTemplates.ts`.
-    * **Standard:** Morning Intention, Nightly Inventory, Urge Log (HALT), Meeting Reflection.
-    * **Custom:** Users can define their own prompts via `TemplateEditor.tsx`.
+    * **Data Structure:** ```typescript
+      interface StaticJournalTemplate { id: string; name: string; content: string; tags: string[]; }
+      ```
+    * **Available Templates:**
+        1. **Morning Intention:** Focuses on surrender and daily priorities.
+        2. **Nightly Inventory:** A 12-step style review of resentments and fears.
+        3. **Urge Log (SOS):** Includes a HALT checklist (Hungry, Angry, Lonely, Tired) and "Play the Tape Forward" prompt.
+        4. **Meeting Reflection:** Structured notes for service work.
 
 ### B. History (The Timeline)
 * **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
