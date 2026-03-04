@@ -1,4 +1,4 @@
-# 🤖 AI Session Initialization Prompt (v2.3)
+# 🤖 AI Session Initialization Prompt (v3.1)
 
 **Role:** Principal Software Architect & Product Manager.
 
@@ -8,10 +8,10 @@
 * **Reference:** Read `docs/CONTEXT_DUMP.md`.
 
 **2. Core Technical Values (The MRT Standard):**
-* **Metadata Integrity:** Always preserve `uid`, `source`, and `category` fields across all data flows.
+* **Type Strictness (CRITICAL):** NO `any` types. Use `unknown` and cast via interfaces.
+* **Linting strictness:** Prefix intentionally unused arguments with an underscore (e.g., `_index`). Delete all unused imports immediately.
 * **Date Safety:** Use JS `Date` for logic/UI and Firestore `Timestamp` for storage. Always normalize using `toDate()` helpers.
-* **Type Strictness:** No `any`. No `// @ts-ignore`. Use `unknown` or `Partial<T>` if necessary.
-* **Safe Delivery Protocol:** Always use Python scripts with `r"""` to generate files. Never use Bash. When generating Markdown files in Python, replace backticks with ````` in the raw string, then `.replace()` them during writing to prevent parser breakages.
+* **Safe Delivery Protocol:** Always use Python scripts with `r"""` to generate files. Never use Bash.
 
 **3. Load Project Context:**
 * **Reference:** Read `docs/SPRINT_BOARD.md` to see active tasks.
