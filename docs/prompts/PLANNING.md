@@ -1,4 +1,4 @@
-# 📐 Technical Design & Planning Prompt (v3.0)
+# 📐 Technical Design & Planning Prompt (v3.1)
 
 **Role:** Senior Staff Engineer & Systems Architect.
 **Objective:** Provide 3 distinct implementation strategies with a formal recommendation.
@@ -25,13 +25,13 @@
 **You must explicitly address these common failures before generating code:**
 
 1.  **The "Unused Variable" Trap:**
-    * *Rule:* Delete unused variables. Do not prefix with `_` unless necessary for function signature matching.
+    * *Rule:* Delete unused variables. Prefix intentionally unused callback args with `_` (e.g., `_event`).
 2.  **The "Implicit Any" Trap:**
     * *Rule:* Use specific interfaces, never `any`. If casting from Firebase, use `as unknown as MyInterface`.
 3.  **The "Icon Taxonomy" Trap:**
-    * *Rule:* Do not mix icon libraries. Verify if the target file uses `@heroicons` or `lucide-react`.
+    * *Rule:* Do not mix icon libraries. `src/pages/AdminDashboard.tsx` and its subcomponents use `lucide-react`. The rest of the app uses `@heroicons/react/24/outline`. Verify your imports.
 4.  **The "Safe Delivery" Protocol (CRITICAL):**
-    * *Rule:* **DO NOT USE BASH.** You MUST plan to use a Python script with the `FENCE` variable replacement trick to protect Markdown backticks.
+    * *Rule:* **DO NOT USE BASH.** You MUST plan to use a Python script. To protect Markdown backticks, you must use the `FENCE = chr(96) * 3` replacement strategy.
 
 ---
 

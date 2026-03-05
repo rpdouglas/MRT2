@@ -1,4 +1,4 @@
-# 🔍 Documentation Consistency Audit Prompt (v3.0)
+# 🔍 Documentation Consistency Audit Prompt (v3.1)
 
 **Trigger:** Run this before closing a major Sprint or Release.
 **Goal:** Ensure the "Map" (Docs) perfectly matches the "Territory" (Code).
@@ -18,7 +18,7 @@ Perform a strict "Drift Detection" analysis. Cross-reference our documentation s
 1.  **Technical Spec Drift (`docs/specs/`):** Do the specs reflect current React components, logic, and component names?
 2.  **User Guide Drift (`docs-site/`):** Do VitePress guides reflect the current UI tabs and features?
 3.  **Schema Drift (`docs/SCHEMA_ARCHITECTURE.md`):** Does the schema match `src/lib/db.ts` perfectly?
-4.  **Project Management Drift (`docs/SPRINT_BOARD.md`, `docs/ROADMAP.md`):** Are completed tickets checked off?
+4.  **Project Management Drift (`docs/SPRINT_BOARD.md`, `docs/ROADMAP.md`):** Are completed tickets checked off? Have scopes expanded?
 
 **Phase 1: The Audit Report**
 Produce a table of discrepancies:
@@ -29,4 +29,4 @@ Generate a **Python script** (`scripts/sync_docs.py`) to automatically update th
 
 **Strict Scripting Constraints:**
 * **Full Files Only:** Provide the *entire* content. No summarizing.
-* **Markdown Protection (CRITICAL):** Because Markdown files contain code blocks, define `FENCE = "```"` at the top of the Python script. Use `__FENCE__` as a placeholder in your raw Python string. Use `.replace('__FENCE__', FENCE)` during the file-writing block.
+* **Markdown Protection (CRITICAL):** Because Markdown files contain code blocks, define `FENCE = chr(96) * 3` at the top of the Python script. Use ````` as a placeholder in your raw Python string. Use `.replace('```', FENCE)` during the file-writing block.

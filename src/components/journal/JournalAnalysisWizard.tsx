@@ -1,9 +1,3 @@
-/**
- * src/components/journal/JournalAnalysisWizard.tsx
- * FIXED: Removed unused icon imports to satisfy linting rules.
- * MAINTAINED: Restored UI sections for Strengths and Risks in Standard Results.
- * MAINTAINED: useTaskOperations hook for proper AI action routing.
- */
 import { Fragment, useState, useEffect, useCallback, type ElementType } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
@@ -203,7 +197,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             const dueDate = addDays(new Date(), 7);
             await addTask({
                 title: action,
-                frequency: 'once',
+                recurrence: { type: 'once' },
                 priority: 'Medium',
                 dueDate: dueDate,
                 source: 'ai' 

@@ -40,7 +40,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: Create
       await addTask(
           user.uid, 
           title, 
-          isRecurring ? frequency : 'once', 
+          { type: isRecurring ? frequency : 'once' }, 
           priority, 
           dateObj
       );
@@ -132,7 +132,6 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: Create
                         {/* Date & Priority Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                {/* FIXED: Removed 'block' class, keeping 'flex' */}
                                 <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
                                     <CalendarDaysIcon className="h-3 w-3" /> Due Date
                                 </label>
@@ -144,7 +143,6 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: Create
                                 />
                             </div>
                             <div>
-                                {/* FIXED: Removed 'block' class, keeping 'flex' */}
                                 <label className="flex items-center gap-1 text-xs font-medium text-gray-700 mb-1">
                                     <FlagIcon className="h-3 w-3" /> Priority
                                 </label>
