@@ -1,10 +1,4 @@
-import os
-
-FENCE = chr(96) * 3
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-
-asset_map_content = r'''# 📸 Marketing Asset, Feature & Persona Map
+# 📸 Marketing Asset, Feature & Persona Map
 
 **Purpose:** This document maps our optimized `.webp` screenshots to their specific App Features and the User Personas they target. Use this matrix to construct the VitePress `docs-site/` rewrite and your Google Play Store listing.
 
@@ -73,18 +67,3 @@ asset_map_content = r'''# 📸 Marketing Asset, Feature & Persona Map
 | `scn_profile_security.webp` | **PIN Rotation & Shredder** | **Lisa** (The Sponsor) | **Unbreakable Privacy:** Shows the PIN rotation and "Destroy Vault" features. Prove to Lisa that she can safely keep notes on her sponsees here without fear of leaks. | `![Security Settings](/screenshots/scn_profile_security.webp)` |
 | `scn_profile_data.webp` | **Google Drive Sync & PDF Export** | **Walt** (Zen Master) | **Data Sovereignty:** Shows Cloud Auto-Sync and manual exports. Sell the fact that Walt owns his data and is never locked into MRT's ecosystem. | `![Data Export Options](/screenshots/scn_profile_data.webp)` |
 | `scn_profile_general.webp` | **Support Network Setup** | **David** (Crisis User) | **The Lifeline:** Shows where David configures his Sponsor's phone number so the SOS modal can route him to safety in 1 tap during a crisis. | `![Profile Settings](/screenshots/scn_profile_general.webp)` |
-'''
-
-def write_file(relative_path, content):
-    absolute_path = os.path.join(PROJECT_ROOT, relative_path)
-    dirname = os.path.dirname(absolute_path)
-    if dirname: 
-        os.makedirs(dirname, exist_ok=True)
-    final_content = content.replace("__FENCE__", FENCE).strip() + "\n"
-    with open(absolute_path, "w", encoding="utf-8") as f:
-        f.write(final_content)
-    print(f"✅ Updated Asset Map: {absolute_path}")
-
-if __name__ == "__main__":
-    write_file("docs/business/04_ASSET_MAPPING.md", asset_map_content)
-    print("✨ Feature & Persona mapping is now complete and linked to the screenshots.")
