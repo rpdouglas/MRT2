@@ -1,28 +1,25 @@
-# 🗺️ MRT Product Roadmap
+# 🗺️ MRT Product Roadmap: "Forged in Fire"
 
-**Vision:** To build the world's most secure, persona-aware digital recovery companion.
+**Vision:** To build the world's most secure, persona-aware clinical recovery operating system.
 
-## 📅 Q1 2026: Foundation & Security (Completed)
+## 📅 Q1/Q2 2026: Foundation & Polish (Completed)
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
 | 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
-
-## 📅 Q2 2026: The "Core Polish" Phase (Completed)
-| Status | ID | Project Name | Owner | Impact |
-| :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
-| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search, and VitePress |
-| 🟢 **Done** | `PROJ-04.5`| **The Crucible** | Admin | QA, Unit Tests, and Hardening |
+| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search |
+| 🟢 **Done** | `PROJ-04.5`| **The Crucible** | Admin | Dogfooding, QA, & Virtuoso Log |
 
-## 📅 Q3 2026: Expansion (Active)
-| Status | ID | Project Name | Owner | Impact |
+## 📅 Q3 2026: Launch & The Service Network (Active)
+| Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-05` | **The "Lisa" Service Module**| Admin | Sponsee Management (Encrypted) |
+| 🟡 **Active** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite into a high-converting Persona sales funnel. |
+| ⚪ Planned | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep) & Push Notifications (`PROJ-11`). |
+| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex + "Secure Drop" P2P Sharing (`PROJ-12`). |
 
-## 📅 Q4 2026: Memory & Business (Planned)
-| Status | ID | Project Name | Owner | Impact |
+## 📅 Q4 2026: Crisis, Momentum, & Intelligence (Planned)
+| Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-06` | **Rich Media & Memory** | Admin | Encrypted Photos & Voice Memos |
-| ⚪ Planned | `PROJ-07` | **The Launch Engine** | Admin | Stripe, Demo Mode, & TWA Wrapper |
-| ⚪ Planned | `PROJ-08` | **Recovery Tools** | Admin | CBT tools, mindfulness aids, and exercises |
+| ⚪ Planned | `PROJ-10` | **Crisis & Momentum**| David / Ned | Interactive Urge Surfer + Financial Freedom Calculator (`PROJ-13`). |
+| ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal) + Encrypted Photo Media (`PROJ-06`). |
