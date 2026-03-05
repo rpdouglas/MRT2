@@ -54,20 +54,17 @@ describe('📋 useTaskOperations (Optimistic UI)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         queryClient.clear();
-        // FIX: Cast via unknown to avoid 'any' violation
         vi.mocked(AuthContext.useAuth).mockReturnValue({ user: mockUser } as unknown as AuthContextValue);
-        // Pre-seed cache
         queryClient.setQueryData(['tasks', mockUser.uid], [mockTask]);
     });
 
     it('1. should perform optimistic update when toggling task', async () => {
         const { result } = renderHook(() => useTaskOperations(), { wrapper });
 
-        // Trigger Mutation
-        result.current.toggleTask(mockTask);
+        // Trigger Mutation with new signature
+        result.current.toggleTask({ task: mockTask, isCompleting: true });
 
         // IMMEDIATE: Cache should be updated before API returns
-        // FIX: Wrapped in waitFor because onMutate is async (microtask delay)
         await waitFor(() => {
             const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]);
             expect(cached?.[0].status).toBe('completed');
@@ -86,9 +83,8 @@ describe('📋 useTaskOperations (Optimistic UI)', () => {
         const { result } = renderHook(() => useTaskOperations(), { wrapper });
 
         try {
-            await result.current.toggleTask(mockTask);
+            await result.current.toggleTask({ task: mockTask, isCompleting: true });
         } catch {
-            // FIX: Removed unused 'e' variable
             // Expected error
         }
 

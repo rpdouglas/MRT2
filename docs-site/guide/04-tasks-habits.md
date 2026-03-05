@@ -4,10 +4,11 @@ The Tasks module helps you build consistent routines and track actionable recove
 
 ## Smart Tabs
 Your tasks are automatically routed into four distinct lanes to reduce overwhelm:
-1. **Today:** Tasks due today or earlier.
-2. **Upcoming:** Tasks scheduled for tomorrow or beyond.
+1. **This Week:** Tasks due today or within the next 6 days.
+2. **Later:** Tasks scheduled exactly 7 days from now or further in the future.
 3. **Action Plan:** Tasks generated automatically by the AI Compass (indicated by a purple Sparkles icon).
-4. **Log:** Your history of completed tasks.
+4. **Log:** Your history of completed tasks. 
+   * *Note:* To keep the app running smoothly, your completed tasks are grouped by Year and Month. Tap a month to expand and view your historical wins!
 
 ## The "Smart Reset" System
 We don't believe in "Schedule Debt" or guilt. 
@@ -16,3 +17,6 @@ We don't believe in "Schedule Debt" or guilt.
 
 ## Creating a Task
 Click the floating `+` button to add a task. You can set Priorities (High, Medium, Low) and advanced Recurring schedules (e.g., "The Last Friday of every month").
+
+## Completing Future Tasks
+If you attempt to check off a task that is scheduled for a future date (e.g., Tomorrow), the app will display a warning modal asking you to confirm. This prevents you from accidentally clearing out tasks you actually need to do later in the week.

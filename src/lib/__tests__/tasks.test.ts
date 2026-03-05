@@ -126,7 +126,8 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
                 undefined, // doc() mock returns undefined in this setup
                 expect.objectContaining({
                     currentStreak: 4,
-                    status: 'completed'
+                    // FIX: Recurring tasks stay pending, their due date just advances
+                    status: 'pending' 
                 })
             );
         });

@@ -59,7 +59,7 @@ graph TD
     * `priority` (String): 'High' | 'Medium' | 'Low'.
     * `status` (String): 'pending' | 'completed'.
     * `currentStreak` (Int): Consecutive completions.
-    * `recurrence` (Map): Logic for repetition.
+    * `recurrence` (Map): The full `RecurrenceConfig` logic object (e.g., `{ type: 'monthly-relative', weekOfMonth: 1, dayOfWeek: 1 }`).
     * `dueDate` & `lastCompletedAt` (Timestamp).
 
 ### `insights/{insightId}`

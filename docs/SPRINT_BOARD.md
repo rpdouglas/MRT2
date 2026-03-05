@@ -13,7 +13,12 @@
 - [x] Triage Inbox Rework (Accordion Grouping).
 
 ## 🟡 Sprint 4.8: The Dogfooding Phase (Active)
-- [ ] **Sector 4: The Ledger (Tasks):** Test recurring edge cases, overdue states, and AI action routing.
+- [x] **Sector 4: The Ledger (Tasks):**
+  - [x] The Timezone Test: Due dates now anchor to local Noon to prevent UTC midnight shifts.
+  - [x] The "Debt" Test: Smart Resets decouple visual completion from background lifecycle status.
+  - [x] The Overflow Test: Task titles wrap elegantly; mobile layout is stable.
+  - [x] The "Future Task" Test: Injected Headless UI safety intercept modal for premature completions.
+  - [x] The "Log Scalability" Test: Migrated History tab to `react-virtuoso` with Year/Month hierarchical grouping.
 - [ ] **Sector 5: The Pulse (Vitality):** Test real-world feel of the breathwork pacer, mobile rendering, and bio-rhythm edge cases.
 - [ ] **Sector 6: The Compass (Wisdom):** Test auto-save latency, mobile keyboard UX, and AI coaching prompt quality.
 - [ ] **Sector 7: Insights Log:** Test rendering of long AI responses, markdown parsing, and filter interactions.

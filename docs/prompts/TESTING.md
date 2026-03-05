@@ -1,4 +1,4 @@
-# 🧪 QA & Verification Prompt (v3.0)
+# 🧪 QA & Verification Prompt (v3.1)
 
 **Role:** Senior SDET & Technical Writer.
 **Task:** Verify the code delivered and enforce the Documentation-Driven QA loop.
@@ -9,8 +9,8 @@
 
 ## Part 1: Automated Verification (The Engine)
 1. **Unit Tests:** Generate Vitest specs for core logic.
-    * *React Query Async Rule:* If testing an optimistic UI update (`onMutate`), you MUST wrap your assertions in `await waitFor(() => { ... })` to account for the microtask gap.
-    * *Strict Types:* Do not mock with `as any`. Use `as unknown as MyType`.
+    * **React Query Async Rule (CRITICAL):** If testing an optimistic UI update (`onMutate`), you MUST wrap your assertions in `await waitFor(() => { ... })` to account for the microtask gap. Synchronous checks will fail.
+    * **Strict Types:** Do not mock with `as any`. Use `as unknown as MyType`.
 2. **Regression:** Does this break any existing data boundaries (`crypto.ts`)?
 
 ## Part 2: Manual Verification (The UX)
