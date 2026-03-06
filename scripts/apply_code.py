@@ -4,75 +4,81 @@ FENCE = chr(96) * 3
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-asset_map_content = r'''# 📸 Marketing Asset, Feature & Persona Map
+# =============================================================================
+# 1. docs/projects/04.6_SECTOR_5_VITALITY.md
+# =============================================================================
+project_content = r'''# 📁 Project 04.6: Sector 5 - The Pulse (Dogfooding & Polish)
 
-**Purpose:** This document maps our optimized `.webp` screenshots to their specific App Features and the User Personas they target. Use this matrix to construct the VitePress `docs-site/` rewrite and your Google Play Store listing.
-
----
-
-## 1. The Horizon (Dashboard)
-*The central nervous system of the app.*
-
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_dashboard.webp` | **Unified Identity Hero & Bento Grid** | **Ned** (The Pink Cloud) | **Momentum & Pride:** Showcases the Gamification engine, clean time counter, and active streaks. Appeals directly to Ned's desire to level up and see his progress. | `![MRT Dashboard](/screenshots/scn_dashboard.webp)` |
-| `scn_navbar.webp` | **Sidebar Navigation** | **All** (Universal) | **Frictionless UI:** Demonstrates the clean, distraction-free routing. Appeals to users who are overwhelmed by cluttered, ad-filled recovery apps. | `![App Navigation](/screenshots/scn_navbar.webp)` |
+**Status:** 🟡 Active
+**Primary Persona:** David (The Crisis User), Ned (The Pink Cloud)
+**Objective:** Rigorously stress-test the Vitality module's hardware APIs, animation syncing, and mathematical scoring to ensure a flawless somatic grounding experience.
 
 ---
 
-## 2. The Pulse (Vitality & Somatics)
-*Grounding the nervous system.*
+## 1. The Executive Summary
+**User Story:** * **As** David (experiencing a craving/panic attack), I want to use the 4-7-8 Breathwork Pacer so that I can regulate my nervous system.
+* **As** Ned, I want to log my gym workouts and meals so I can achieve a 100% Bio-Rhythm score.
 
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_vitality_breath.webp` | **4-7-8 Breathwork Pacer** | **David** (Crisis User) | **Immediate Relief:** David needs a lifeline. Visually demonstrates that MRT can actively de-escalate a panic attack or severe craving in real-time. | `![Breathwork Pacer](/screenshots/scn_vitality_breath.webp)` |
-| `scn_vitality_movement.webp` | **Movement Logger** | **Ned** (The Pink Cloud) | **Holistic Health:** Shows Ned that recovery isn't just about *not* doing something; it's about building physical strength and tracking those wins. | `![Movement Logger](/screenshots/scn_vitality_movement.webp)` |
-| `scn_vitality_fuel.webp` | **Mindful Nutrition Tracker** | **Walt** (Zen Master) | **Mindful Consumption:** Highlights the HALT (Hungry, Angry, Lonely, Tired) philosophy by letting users log if they are eating out of physical need or emotional avoidance. | `![Fuel & Nutrition Logger](/screenshots/scn_vitality_fuel.webp)` |
+**Competitive Gap:** Other apps offer static text instructions for breathing. MRT offers a real-time, hardware-aware pacer that prevents the screen from sleeping.
 
 ---
 
-## 3. The Ledger (Tasks & Habits)
-*Building a life you don't want to escape from.*
+## 2. Implementation Phases (The Dogfooding Plan) 🏗️
 
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_tasks_this_week.webp` | **Smart Tabs & Active Habits** | **Ned** (The Pink Cloud) | **Actionable Focus:** Sell the "No Schedule Debt" philosophy—if you miss a day, you don't get a sea of red "Overdue" text; it gracefully resets to today to keep momentum alive. | `![Active Tasks](/screenshots/scn_tasks_this_week.webp)` |
-| `scn_tasks_log.webp` | **Virtualized History Log** | **Walt** (Zen Master) | **Long-Term Scaling:** Showcases the highly performant list grouped by Year/Month. Proves the app can handle years of daily habit data without lagging. | `![Task History Log](/screenshots/scn_tasks_log.webp)` |
+### Phase 1: The Bio-Rhythm Engine (Logic & Math)
+* **The "99.9%" Bug:** The app currently adds `33.3` for each of the 3 logs (Movement, Fuel, Breath). Does this result in `99.9%` instead of `100%` on the UI due to floating-point math?
+* **The Midnight Reset:** If a user travels across time zones, does the local `startOfDay` calculation accurately reset their ring to 0% at exactly local midnight?
 
----
+### Phase 2: The Somatic Safeguard (Hardware Validation)
+* **The WakeLock Test:** Does `navigator.wakeLock.request('screen')` successfully prevent an iOS and Android device from dimming during a 3-minute breathwork session?
+* **The Background Test:** If the user minimizes the app to check a text message and comes back, does the WakeLock gracefully re-engage, or does the app crash?
 
-## 4. The Vault (Journaling & Security)
-*The safest place to do the hardest work.*
+### Phase 3: The Crisis UX (Animation Sync)
+* **The Drift Test:** The `setInterval` in JS fires every 1000ms. The CSS transition takes 4000ms. If the browser lags, do the visual ring and the text instructions fall out of sync?
+* **The Haptic Feedback:** Does `navigator.vibrate(50)` trigger correctly upon saving a log, providing that crucial micro-reward for "Ned"?
 
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_journal_write.webp` | **Sticky Studio & Voice-to-Vault** | **David** (Crisis User) | **Frictionless Venting:** Highlight the microphone icon. When David is too stressed to type, he can just speak, and the AI transcribes and secures his thoughts. | `![Journal Editor](/screenshots/scn_journal_write.webp)` |
-| `scn_journal_history.webp` | **Encrypted Timeline** | **Walt** (Zen Master) | **The Archive:** Shows the beautiful, searchable timeline of decrypted history, emphasizing the private nature of the data. | `![Journal Timeline](/screenshots/scn_journal_history.webp)` |
-| `scn_journal_insights.webp` | **Emotional Velocity Chart & Word Cloud** | **Walt** / **Ned** | **Pattern Recognition:** Shows the gradient charts and stop-word filtered Cloud. Sells the concept of tracking *trends and baseline realities*, not just days. | `![Journal Analytics](/screenshots/scn_journal_insights.webp)` |
-
----
-
-## 5. The Compass (AI & Workbooks)
-*Clinical-grade introspection.*
-
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_wisdom_main.webp` | **Workbook Library** | **Lisa** (The Sponsor) | **The Curriculum:** Shows the structured 12-Step and CBT courses. Lisa can use this to guide her sponsees through a standardized, secure curriculum. | `![Workbook Library](/screenshots/scn_wisdom_main.webp)` |
-| `scn_wison_rd.webp` | **Recovery Dharma Module** | **Walt** (Zen Master) | **Path Inclusivity:** Shows the Buddhist-inspired workbook, proving MRT isn't strictly for 12-Steppers, but embraces multiple modalities. | `![Recovery Dharma Module](/screenshots/scn_wison_rd.webp)` |
-| `scn_workbook_section_intro.webp` | **Zen Reading Mode** | **Ned** (The Pink Cloud) | **Guided Education:** Showcases the clean, typography-focused reading mode that makes learning recovery concepts feel like reading a premium digital book. | `![Section Introduction](/screenshots/scn_workbook_section_intro.webp)` |
-| `scn_workbook_question.webp` | **Sticky AI Coach** | **Walt** (Zen Master) | **24/7 Sponsorship:** Highlight the "AI Insight" button where Gemini acts as a coach to help unblock tough questions (like Step 4 resentments) in real-time. | `![Interactive Question](/screenshots/scn_workbook_question.webp)` |
-| `scn_insights.webp` | **Deep Pattern Analysis Log** | **All** | **Actionable Intelligence:** Shows the output of the Compass, including "Add to Quests" buttons that seamlessly turn AI advice directly into tracked habits. | `![AI Insights Log](/screenshots/scn_insights.webp)` |
+### Phase 4: Data Integration (The Vault Cross-Pollination)
+* **Tag Integrity:** When a user logs a "Lunch" fuel entry, does it correctly format as a Journal Entry in Firestore?
+* **Virtual Module Rendering:** Do these Vitality logs render beautifully in the `JournalHistory.tsx` timeline, or do they look like broken/empty journal cards?
 
 ---
 
-## 6. Security & Sovereignty (Profile)
-*Trust is our product.*
+## 3. QA & Verification 🧪
+* [ ] **Unit Tests:** Verify `calculateVitalityStats` in `gamification.test.ts` accurately calculates streaks bridging across midnight.
+* [ ] **The Subway Test:** Start the breath pacer while offline. Save the session. Verify it queues locally and syncs to Firestore upon reconnection.
+'''
 
-| Screenshot File | App Feature | Target Persona | Marketing Angle | VitePress Snippet |
-| :--- | :--- | :--- | :--- | :--- |
-| `scn_profile_security.webp` | **PIN Rotation & Shredder** | **Lisa** (The Sponsor) | **Unbreakable Privacy:** Shows the PIN rotation and "Destroy Vault" features. Prove to Lisa that she can safely keep notes on her sponsees here without fear of leaks. | `![Security Settings](/screenshots/scn_profile_security.webp)` |
-| `scn_profile_data.webp` | **Google Drive Sync & PDF Export** | **Walt** (Zen Master) | **Data Sovereignty:** Shows Cloud Auto-Sync and manual exports. Sell the fact that Walt owns his data and is never locked into MRT's ecosystem. | `![Data Export Options](/screenshots/scn_profile_data.webp)` |
-| `scn_profile_general.webp` | **Support Network Setup** | **David** (Crisis User) | **The Lifeline:** Shows where David configures his Sponsor's phone number so the SOS modal can route him to safety in 1 tap during a crisis. | `![Profile Settings](/screenshots/scn_profile_general.webp)` |
+# =============================================================================
+# 2. docs/SPRINT_BOARD.md
+# =============================================================================
+sprint_board_content = r'''# 🏃 Active Sprint Board
+
+**Sprint:** 4.8 "The Crucible: Dogfooding & Polish"
+**Start Date:** 2026-03-05
+**Goal:** Perform rigorous manual QA ("Dogfooding") to identify and eradicate UX friction in Tasks, Vitality, Wisdom, and Insights.
+
+## ✅ Sprints 1-4: Foundation & Ledger (Completed)
+- [x] Auth UI, Onboarding Redirect, Dashboard Identity, Journal Cache.
+- [x] Sector 4: The Ledger (Tasks) fully scaled, time-zone hardened, and Virtuoso grouped.
+
+## 🟡 Sprint 4.8: The Dogfooding Phase (Active)
+
+### 📍 Sector 5: The Pulse (Vitality) - [ACTIVE FOCUS]
+- [ ] **Phase 1: Math & Timezones:** Verify the 100% Bio-Rhythm calculation and midnight resets.
+- [ ] **Phase 2: Hardware:** Verify `useWakeLock` prevents screen dimming and handles backgrounding gracefully.
+- [ ] **Phase 3: Animation Sync:** Ensure the CSS breathing circle perfectly matches the 4-7-8 JS interval without drifting.
+- [ ] **Phase 4: Data Flow:** Verify Vitality logs render correctly inside the Journal History tab without breaking the UI.
+
+### ⏳ Sector 6 & 7 (Pending)
+- [ ] **Sector 6: The Compass (Wisdom):** Test auto-save latency, mobile keyboard UX, and AI coaching.
+- [ ] **Sector 7: Insights Log:** Test rendering of massive AI responses and markdown parsing.
+
+## 🧊 Backlog (Sprint 5+)
+- [ ] **PROJ-09:** The GTM Engine (VitePress Rewrite)
+- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
+- [ ] **PROJ-10:** Crisis & Momentum (Urge Surfer + Freedom Calculator)
+- [ ] **PROJ-14:** The Deep Mind (Local RAG + Rich Media)
+- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
 '''
 
 def write_file(relative_path, content):
@@ -83,8 +89,10 @@ def write_file(relative_path, content):
     final_content = content.replace("__FENCE__", FENCE).strip() + "\n"
     with open(absolute_path, "w", encoding="utf-8") as f:
         f.write(final_content)
-    print(f"✅ Updated Asset Map: {absolute_path}")
+    print(f"✅ Created/Updated: {absolute_path}")
 
 if __name__ == "__main__":
-    write_file("docs/business/04_ASSET_MAPPING.md", asset_map_content)
-    print("✨ Feature & Persona mapping is now complete and linked to the screenshots.")
+    print("🚀 Initializing Sector 5 Project Plan...")
+    write_file("docs/projects/04.6_SECTOR_5_VITALITY.md", project_content)
+    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
+    print("✨ Sector 5 Dogfooding Plan is locked and loaded.")
