@@ -14,6 +14,7 @@ vitality_content = r'''import React, { useState, useEffect, useMemo, useRef, use
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useQueryClient } from '@tanstack/react-query';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -36,6 +37,10 @@ interface VitalityLog {
     createdAt: Timestamp;
 }
 
+interface CachedJournal {
+    moodScore?: number;
+}
+
 type VitalityTab = 'move' | 'fuel' | 'breath';
 type BreathPhase = 'Idle' | 'Inhale' | 'Hold' | 'Exhale' | 'Hold (Empty)';
 type BreathPatternType = '4-7-8' | '4-4-4-4' | 'custom';
@@ -46,12 +51,12 @@ const PRESETS = {
 };
 
 // Haptic Engine
-const triggerHaptic = (type: 'pulse' | 'double' | 'long') => {
+const triggerHaptic = (type: 'inhale' | 'hold' | 'exhale') => {
     try {
         if (!navigator.vibrate) return;
-        if (type === 'pulse') navigator.vibrate([30]);
-        if (type === 'double') navigator.vibrate([30, 60, 30]);
-        if (type === 'long') navigator.vibrate([50, 30, 50]);
+        if (type === 'inhale') navigator.vibrate([40]); // Single distinct pulse
+        if (type === 'hold') navigator.vibrate([20, 50, 20]); // Gentle double tap
+        if (type === 'exhale') navigator.vibrate([40]); // Single distinct pulse
     } catch {
         // Safely ignore if browser blocks haptics
     }
@@ -59,6 +64,7 @@ const triggerHaptic = (type: 'pulse' | 'double' | 'long') => {
 
 export default function Vitality() {
     const { user } = useAuth();
+    const queryClient = useQueryClient();
     const { requestWakeLock, releaseWakeLock } = useWakeLock();
     const [activeTab, setActiveTab] = useState<VitalityTab>('move');
     const [saving, setSaving] = useState(false);
@@ -96,7 +102,10 @@ export default function Vitality() {
     const [phaseTimeLeft, setPhaseTimeLeft] = useState(0);
     const [visualState, setVisualState] = useState({ scale: 1, duration: 0 });
 
+    // Mutable refs to track engine state outside of React's render batching loop
     const currentPhaseIndex = useRef(0); // 0: In, 1: Hold, 2: Out, 3: HoldEmpty
+    const timeLeftRef = useRef(0);
+    const patternRef = useRef<number[]>([4, 7, 8, 0]);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
@@ -136,23 +145,38 @@ export default function Vitality() {
         return Math.min(100, score);
     }, [todaysLogs]);
 
+    // --- SMART MOOD INFERENCE ---
+    const getSmartMood = useCallback(() => {
+        if (!user) return 5;
+        const cache = queryClient.getQueryData<CachedJournal[]>(['journals', user.uid]);
+        if (!cache || cache.length === 0) return 5;
+
+        // Get the last 7 entries that have a valid mood score
+        const recent = cache.filter(e => typeof e.moodScore === 'number' && e.moodScore > 0).slice(0, 7);
+        if (recent.length === 0) return 5;
+
+        const sum = recent.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
+        return Math.round(sum / recent.length);
+    }, [queryClient, user]);
+
     // --- ACTIONS ---
     const saveVitalityEntry = async (category: string, title: string, contentDetails: string, note: string, tags: string[]) => {
         if (!user || !db) return;
         setSaving(true);
 
         const fullContent = `**${title}**\n${contentDetails}\n\n**Somatic Check-in:**\n${note || "No specific notes recorded."}`;
+        const smartMood = getSmartMood();
 
         try {
             await addDoc(collection(db, 'journals'), {
                 uid: user.uid,
                 content: fullContent,
-                moodScore: 5, 
+                moodScore: smartMood, 
                 tags: ['Vitality', category, ...tags],
                 sentiment: 'Pending',
                 createdAt: Timestamp.now()
             });
-            triggerHaptic('double');
+            triggerHaptic('hold'); // Celebration buzz
         } catch (e) {
             console.error(e);
             alert("Failed to save entry.");
@@ -192,24 +216,27 @@ export default function Vitality() {
     const applyPhase = useCallback((index: number, pattern: number[]) => {
         currentPhaseIndex.current = index;
         const duration = pattern[index];
+        
+        // Immediately sync the ref so the interval loop catches the new duration
+        timeLeftRef.current = duration;
         setPhaseTimeLeft(duration);
         
         if (index === 0) {
             setBreathPhase('Inhale');
             setVisualState({ scale: 1.5, duration });
-            triggerHaptic('pulse');
+            triggerHaptic('inhale');
         } else if (index === 1) {
             setBreathPhase('Hold');
             setVisualState({ scale: 1.5, duration });
-            triggerHaptic('double');
+            triggerHaptic('hold');
         } else if (index === 2) {
             setBreathPhase('Exhale');
             setVisualState({ scale: 0.8, duration });
-            triggerHaptic('long');
+            triggerHaptic('exhale');
         } else if (index === 3) {
             setBreathPhase('Hold (Empty)');
             setVisualState({ scale: 0.8, duration });
-            triggerHaptic('double');
+            triggerHaptic('hold');
         }
     }, []);
 
@@ -220,6 +247,7 @@ export default function Vitality() {
         requestWakeLock();
         
         const pattern = breathPattern === 'custom' ? customPattern : PRESETS[breathPattern];
+        patternRef.current = pattern;
         
         // Find first non-zero phase
         let startIndex = 0;
@@ -232,17 +260,18 @@ export default function Vitality() {
         
         timerRef.current = setInterval(() => {
             setBreathTime(t => t + 1);
-            setPhaseTimeLeft(prev => {
-                if (prev <= 1) {
-                    let nextIdx = (currentPhaseIndex.current + 1) % 4;
-                    while(pattern[nextIdx] === 0) {
-                        nextIdx = (nextIdx + 1) % 4;
-                    }
-                    applyPhase(nextIdx, pattern);
-                    return pattern[nextIdx]; 
+            
+            // Engine logic bypasses React setState batching for immediate execution
+            if (timeLeftRef.current <= 1) {
+                let nextIdx = (currentPhaseIndex.current + 1) % 4;
+                while (patternRef.current[nextIdx] === 0) {
+                    nextIdx = (nextIdx + 1) % 4;
                 }
-                return prev - 1;
-            });
+                applyPhase(nextIdx, patternRef.current);
+            } else {
+                timeLeftRef.current -= 1;
+                setPhaseTimeLeft(timeLeftRef.current);
+            }
         }, 1000);
 
     }, [breathPattern, customPattern, requestWakeLock, applyPhase]);
@@ -252,6 +281,7 @@ export default function Vitality() {
         setBreathActive(false);
         setBreathPhase('Idle');
         setPhaseTimeLeft(0);
+        timeLeftRef.current = 0;
         setVisualState({ scale: 1, duration: 1 });
         releaseWakeLock();
     }, [releaseWakeLock]);
@@ -267,7 +297,7 @@ export default function Vitality() {
         const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* ${techniqueName}`;
         
         stopEngine();
-        await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Meditation']);
+        await saveVitalityEntry('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Somatic', 'Breathing', 'Regulation', 'Meditation']);
         
         setBreathNote('');
     };
@@ -531,4 +561,4 @@ def write_file(relative_path, content):
 
 if __name__ == "__main__":
     write_file("src/pages/Vitality.tsx", vitality_content)
-    print("✨ SRE Fix Complete: Unused catch bindings removed safely.")
+    print("✨ SRE Fix Complete: Toggled smart mood calculation and granular breath tags.")
