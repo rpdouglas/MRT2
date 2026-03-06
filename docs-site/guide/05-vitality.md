@@ -11,8 +11,12 @@ Log physical activities (Walking, Gym, Yoga) along with the duration and intensi
 ## 2. Fuel (Nutrition)
 A mindful eating tracker. Log your meals and identify if your hunger was *Physical*, *Emotional*, *Boredom*, or just *Habit*. Includes a quick-tap Hydration (H2O) counter.
 
-## 3. Breathwork (4-7-8 Pacer)
-A real-time visual tool to de-escalate anxiety and lower your heart rate.
-* Tap **Start** to begin the pacer.
-* Follow the visual ring: **Inhale for 4s**, **Hold for 7s**, **Exhale for 8s**.
-* You must complete at least one full cycle to log the session to your history.
+## 3. Breathwork (Somatic Anchor)
+A real-time visual and physical tool to de-escalate anxiety and lower your heart rate. It features an "Organic Halo" visualization and haptic feedback, allowing you to close your eyes and feel the breathing prompts.
+
+* **Start a Session:** Tap **Start Focus** to begin the pacer.
+* **Change the Pattern:** Tap the **Settings icon** (⚙️) above the pacer to select a different rhythm. 
+  * **Relax (4-7-8):** Best for falling asleep or severe anxiety.
+  * **Box Breathing (4-4-4-4):** Best for regaining focus and clarity.
+  * **Custom:** Create your own specific intervals. The app will remember them for next time!
+* **Completion:** You must complete at least 5 seconds to log a session. When you log the session, it is securely saved to your Journal Vault.

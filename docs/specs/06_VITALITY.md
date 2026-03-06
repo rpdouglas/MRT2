@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Vitality (Somatic Health)
 
-**Status:** Live (v1.0)
+**Status:** Live (v2.0)
 **Architecture:** Virtual Module (Abstracted Journal Interface)
 **Primary Code:** `src/pages/Vitality.tsx`
 
@@ -16,41 +16,27 @@ Vitality entries are standard Firestore documents in the `journals` collection w
 | :--- | :--- | :--- |
 | **Movement** | `#Vitality`, `#Movement` | Activity Name, Duration (mins), Intensity (Low/Mod/High) |
 | **Nutrition** | `#Vitality`, `#Nutrition` | Meal Type, Hunger Type (Physical/Emotional/Boredom), Hydration Count |
-| **Breathwork** | `#Vitality`, `#Mindfulness`, `#Meditation` | Duration, Technique ("4-7-8") |
+| **Breathwork** | `#Vitality`, `#Mindfulness`, `#Somatic`, `#Regulation` | Duration, Technique (e.g., "Box Breathing (4-4-4-4)") |
+
+* **Smart Mood Integration:** To prevent vitality logs from skewing the user's "Average Mood" charts, the module uses React Query to silently fetch the user's 7-day average mood (`getSmartMood`) and injects it into the journal payload, rather than defaulting to `5`.
 
 ### B. The Bio-Rhythm Score
 A daily 0-100% score that resets at midnight (Local Device Time). It calculates balance across three pillars:
-
-* **Calculation:**
-    * `+33.3%` if a log exists with tag `#Movement` created *today*.
-    * `+33.3%` if a log exists with tag `#Nutrition` created *today*.
-    * `+33.3%` if a log exists with tag `#Mindfulness` created *today*.
-* **Display:** A progress ring in the Vitality Header and on the Dashboard.
+* `+33.3%` if a log exists with tag `#Movement` created *today*.
+* `+33.3%` if a log exists with tag `#Nutrition` created *today*.
+* `+33.3%` if a log exists with tag `#Mindfulness` created *today*.
 
 ## 3. Sub-Features
 
-### 🏃 Movement Logger
-* **Inputs:** Activity Name (Text), Duration (Number), Intensity (Select).
-* **Behavior:** Appends a standardized formatted string to the journal body.
+### 🏃 Movement & 🍎 Fuel Loggers
+Standard form inputs that compile into markdown strings and save as Journal entries. Includes a rapid-tap Hydration counter.
 
-### 🍎 Fuel (Nutrition) Logger
-* **Inputs:** Meal (Breakfast/Lunch/Dinner), Hunger Type (Physical/Emotional), Water (Counter).
-* **Purpose:** Helps users identify emotional eating patterns (e.g., HALT - Hungry, Angry, Lonely, Tired).
-
-### 🌬️ Breathwork Engine (4-7-8)
-A real-time visual pacer for nervous system regulation.
-* **Cycle Logic:**
-    1.  **Inhale (4s):** Circle expands, Opacity 100%.
-    2.  **Hold (7s):** Circle stays static, Opacity 80%.
-    3.  **Exhale (8s):** Circle contracts, Opacity 50%.
-* **State:** Managed via `setInterval` and local React state (`breathPhase`).
-* **Completion:** User must complete at least 5 seconds to log a session.
-
-## 4. Edge Cases
-* **Offline:** Works fully offline. Logs sync via standard Firestore persistence.
-* **Timezones:** The "Today" filter uses the device's local start-of-day. Traveling may reset the daily score visually.
-
-## 5. Verification Checklist
-* [ ] **Tag Integrity:** Create a Movement log. Go to Journal History. Does it appear with `#Movement` tag?
-* [ ] **Score Update:** Log one item. Does header ring show 33%?
-* [ ] **Breathwork:** Run the timer for 20 seconds. Save. Does the journal entry show the correct duration (e.g. "0m 20s")?
+### 🌬️ Breathwork Engine (Vitality 2.0)
+A clinical-grade somatic anchor combining visual, haptic, and hardware APIs.
+* **State Management:** Bypasses React's standard `setState` rendering batching for the core timer. Uses mutable `useRef` hooks (`timeLeftRef`, `currentPhaseIndex`) to ensure the interval perfectly matches real-world seconds without drifting.
+* **Visuals (Organic Halo):** Uses a multi-layered CSS `border-radius` morphing animation linked to dynamic `transitionDuration` properties to emulate the expansion of human lungs.
+* **Haptic Engine:** Triggers `navigator.vibrate()` on phase boundaries. 
+    * `Inhale/Exhale`: Single distinct pulse (`[40]`).
+    * `Hold`: Gentle double-tap (`[20, 50, 20]`).
+* **Hardware Safeguard:** Utilizes the `useWakeLock` hook (`navigator.wakeLock.request('screen')`) to strictly prevent the device screen from sleeping or dimming while the engine is running.
+* **Customization:** Users can select between `4-7-8`, `4-4-4-4` (Box Breathing), or define a custom array. Custom arrays are persisted in `localStorage`.
