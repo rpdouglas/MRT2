@@ -2,6 +2,13 @@
 
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
+### v1.2.0 (The Pulse Polish Update)
+* **New:** **Somatic Breathwork Engine:** Upgraded the breathing tool with a fluid "Organic Halo" visualization that perfectly matches real-world seconds.
+* **New:** **Haptic Grounding:** The app now gently vibrates at every breath change (Inhale, Hold, Exhale) so you can close your eyes and stay grounded during a crisis.
+* **New:** **Custom Breathing Patterns:** Added Box Breathing (4-4-4-4) and the ability to create and save your own custom breathing intervals.
+* **Improvement:** **Smart Mood Scoring:** Breathwork logs now automatically inherit your 7-day average mood, preventing your charts from being artificially skewed.
+* **Security:** Enforced WakeLock APIs to guarantee your screen never goes dark in the middle of a panic-reduction exercise.
+
 ### v1.1.1 (The Ledger Polish Update)
 * **New:** **Future Task Safety:** Added a warning modal to prevent accidentally completing tasks scheduled for later dates, keeping your daily stats accurate.
 * **Improvement:** **High-Performance Log:** The completed task history is now virtualized and grouped by Year/Month (just like the Journal Vault), ensuring smooth 60fps scrolling even with thousands of logged habits.

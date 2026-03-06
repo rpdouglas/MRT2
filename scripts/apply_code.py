@@ -4,95 +4,81 @@ FENCE = chr(96) * 3
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# =============================================================================
-# 1. docs/projects/04.6_SECTOR_5_VITALITY.md
-# =============================================================================
-project_content = r'''# 📁 Project 04.6: Sector 5 - The Pulse (Dogfooding & Polish)
+vitality_spec_content = r'''# 📐 Feature Spec: Vitality (Somatic Health)
 
-**Status:** 🟡 Active
-**Primary Persona:** David (The Crisis User), Ned (The Pink Cloud)
-**Objective:** Rigorously stress-test the Vitality module's hardware APIs, animation syncing, and mathematical scoring to ensure a flawless somatic grounding experience.
+**Status:** Live (v2.0)
+**Architecture:** Virtual Module (Abstracted Journal Interface)
+**Primary Code:** `src/pages/Vitality.tsx`
 
----
+## 1. Overview
+The Vitality module is the somatic regulation engine of MRT. It allows users to track physical health (Movement, Fuel) and nervous system regulation (Breathwork). Unlike other modules, it does not store data in a separate collection; instead, it injects structured, tagged entries into the user's `journals` stream.
 
-## 1. The Executive Summary
-**User Story:** * **As** David (experiencing a craving/panic attack), I want to use the 4-7-8 Breathwork Pacer so that I can regulate my nervous system.
-* **As** Ned, I want to log my gym workouts and meals so I can achieve a 100% Bio-Rhythm score.
+## 2. Technical Architecture
 
-**Competitive Gap:** Other apps offer static text instructions for breathing. MRT offers a real-time, hardware-aware pacer that prevents the screen from sleeping.
+### A. The "Virtual" Data Model
+Vitality entries are standard Firestore documents in the `journals` collection with specific **Tag Signatures**.
 
----
+| Category | Primary Tags | Metadata (Stored in Content Body) |
+| :--- | :--- | :--- |
+| **Movement** | `#Vitality`, `#Movement` | Activity Name, Duration (mins), Intensity (Low/Mod/High) |
+| **Nutrition** | `#Vitality`, `#Nutrition` | Meal Type, Hunger Type (Physical/Emotional/Boredom), Hydration Count |
+| **Breathwork** | `#Vitality`, `#Mindfulness`, `#Somatic`, `#Regulation` | Duration, Technique (e.g., "Box Breathing (4-4-4-4)") |
 
-## 2. Implementation Phases (The Dogfooding Plan) 🏗️
+* **Smart Mood Integration:** To prevent vitality logs from skewing the user's "Average Mood" charts, the module uses React Query to silently fetch the user's 7-day average mood (`getSmartMood`) and injects it into the journal payload, rather than defaulting to `5`.
 
-### Phase 1: The Bio-Rhythm Engine (Logic & Math)
-* **The "99.9%" Bug:** The app currently adds `33.3` for each of the 3 logs (Movement, Fuel, Breath). Does this result in `99.9%` instead of `100%` on the UI due to floating-point math?
-* **The Midnight Reset:** If a user travels across time zones, does the local `startOfDay` calculation accurately reset their ring to 0% at exactly local midnight?
+### B. The Bio-Rhythm Score
+A daily 0-100% score that resets at midnight (Local Device Time). It calculates balance across three pillars:
+* `+33.3%` if a log exists with tag `#Movement` created *today*.
+* `+33.3%` if a log exists with tag `#Nutrition` created *today*.
+* `+33.3%` if a log exists with tag `#Mindfulness` created *today*.
 
-### Phase 2: The Somatic Safeguard (Hardware Validation)
-* **The WakeLock Test:** Does `navigator.wakeLock.request('screen')` successfully prevent an iOS and Android device from dimming during a 3-minute breathwork session?
-* **The Background Test:** If the user minimizes the app to check a text message and comes back, does the WakeLock gracefully re-engage, or does the app crash?
+## 3. Sub-Features
 
-### Phase 3: The Crisis UX (Animation Sync)
-* **The Drift Test:** The `setInterval` in JS fires every 1000ms. The CSS transition takes 4000ms. If the browser lags, do the visual ring and the text instructions fall out of sync?
-* **The Haptic Feedback:** Does `navigator.vibrate(50)` trigger correctly upon saving a log, providing that crucial micro-reward for "Ned"?
+### 🏃 Movement & 🍎 Fuel Loggers
+Standard form inputs that compile into markdown strings and save as Journal entries. Includes a rapid-tap Hydration counter.
 
-### Phase 4: Data Integration (The Vault Cross-Pollination)
-* **Tag Integrity:** When a user logs a "Lunch" fuel entry, does it correctly format as a Journal Entry in Firestore?
-* **Virtual Module Rendering:** Do these Vitality logs render beautifully in the `JournalHistory.tsx` timeline, or do they look like broken/empty journal cards?
-
----
-
-## 3. QA & Verification 🧪
-* [ ] **Unit Tests:** Verify `calculateVitalityStats` in `gamification.test.ts` accurately calculates streaks bridging across midnight.
-* [ ] **The Subway Test:** Start the breath pacer while offline. Save the session. Verify it queues locally and syncs to Firestore upon reconnection.
+### 🌬️ Breathwork Engine (Vitality 2.0)
+A clinical-grade somatic anchor combining visual, haptic, and hardware APIs.
+* **State Management:** Bypasses React's standard `setState` rendering batching for the core timer. Uses mutable `useRef` hooks (`timeLeftRef`, `currentPhaseIndex`) to ensure the interval perfectly matches real-world seconds without drifting.
+* **Visuals (Organic Halo):** Uses a multi-layered CSS `border-radius` morphing animation linked to dynamic `transitionDuration` properties to emulate the expansion of human lungs.
+* **Haptic Engine:** Triggers `navigator.vibrate()` on phase boundaries. 
+    * `Inhale/Exhale`: Single distinct pulse (`[40]`).
+    * `Hold`: Gentle double-tap (`[20, 50, 20]`).
+* **Hardware Safeguard:** Utilizes the `useWakeLock` hook (`navigator.wakeLock.request('screen')`) to strictly prevent the device screen from sleeping or dimming while the engine is running.
+* **Customization:** Users can select between `4-7-8`, `4-4-4-4` (Box Breathing), or define a custom array. Custom arrays are persisted in `localStorage`.
 '''
 
-# =============================================================================
-# 2. docs/SPRINT_BOARD.md
-# =============================================================================
-sprint_board_content = r'''# 🏃 Active Sprint Board
+vitality_guide_content = r'''# ❤️ The Pulse (Vitality & Breathwork)
 
-**Sprint:** 4.8 "The Crucible: Dogfooding & Polish"
-**Start Date:** 2026-03-05
-**Goal:** Perform rigorous manual QA ("Dogfooding") to identify and eradicate UX friction in Tasks, Vitality, Wisdom, and Insights.
+Somatic regulation—managing your physical body—is critical to preventing emotional relapse. The Vitality module tracks three pillars of physical health.
 
-## ✅ Sprints 1-4: Foundation & Ledger (Completed)
-- [x] Auth UI, Onboarding Redirect, Dashboard Identity, Journal Cache.
-- [x] Sector 4: The Ledger (Tasks) fully scaled, time-zone hardened, and Virtuoso grouped.
+## The Bio-Rhythm Score
+At the top of the screen, you will see a percentage ring. Logging an activity in any of the three categories below adds 33.3% to your daily score. Aim for 100% every day!
 
-## 🟡 Sprint 4.8: The Dogfooding Phase (Active)
+## 1. Movement
+Log physical activities (Walking, Gym, Yoga) along with the duration and intensity. 
 
-### 📍 Sector 5: The Pulse (Vitality) - [ACTIVE FOCUS]
-- [ ] **Phase 1: Math & Timezones:** Verify the 100% Bio-Rhythm calculation and midnight resets.
-- [ ] **Phase 2: Hardware:** Verify `useWakeLock` prevents screen dimming and handles backgrounding gracefully.
-- [ ] **Phase 3: Animation Sync:** Ensure the CSS breathing circle perfectly matches the 4-7-8 JS interval without drifting.
-- [ ] **Phase 4: Data Flow:** Verify Vitality logs render correctly inside the Journal History tab without breaking the UI.
+## 2. Fuel (Nutrition)
+A mindful eating tracker. Log your meals and identify if your hunger was *Physical*, *Emotional*, *Boredom*, or just *Habit*. Includes a quick-tap Hydration (H2O) counter.
 
-### ⏳ Sector 6 & 7 (Pending)
-- [ ] **Sector 6: The Compass (Wisdom):** Test auto-save latency, mobile keyboard UX, and AI coaching.
-- [ ] **Sector 7: Insights Log:** Test rendering of massive AI responses and markdown parsing.
+## 3. Breathwork (Somatic Anchor)
+A real-time visual and physical tool to de-escalate anxiety and lower your heart rate. It features an "Organic Halo" visualization and haptic feedback, allowing you to close your eyes and feel the breathing prompts.
 
-## 🧊 Backlog (Sprint 5+)
-- [ ] **PROJ-09:** The GTM Engine (VitePress Rewrite)
-- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
-- [ ] **PROJ-10:** Crisis & Momentum (Urge Surfer + Freedom Calculator)
-- [ ] **PROJ-14:** The Deep Mind (Local RAG + Rich Media)
-- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
+* **Start a Session:** Tap **Start Focus** to begin the pacer.
+* **Change the Pattern:** Tap the **Settings icon** (⚙️) above the pacer to select a different rhythm. 
+  * **Relax (4-7-8):** Best for falling asleep or severe anxiety.
+  * **Box Breathing (4-4-4-4):** Best for regaining focus and clarity.
+  * **Custom:** Create your own specific intervals. The app will remember them for next time!
+* **Completion:** You must complete at least 5 seconds to log a session. When you log the session, it is securely saved to your Journal Vault.
 '''
 
 def write_file(relative_path, content):
     absolute_path = os.path.join(PROJECT_ROOT, relative_path)
-    dirname = os.path.dirname(absolute_path)
-    if dirname: 
-        os.makedirs(dirname, exist_ok=True)
-    final_content = content.replace("__FENCE__", FENCE).strip() + "\n"
+    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
     with open(absolute_path, "w", encoding="utf-8") as f:
-        f.write(final_content)
-    print(f"✅ Created/Updated: {absolute_path}")
+        f.write(content.replace("__FENCE__", FENCE).strip() + "\n")
+    print(f"✅ Synced: {absolute_path}")
 
 if __name__ == "__main__":
-    print("🚀 Initializing Sector 5 Project Plan...")
-    write_file("docs/projects/04.6_SECTOR_5_VITALITY.md", project_content)
-    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
-    print("✨ Sector 5 Dogfooding Plan is locked and loaded.")
+    write_file("docs/specs/06_VITALITY.md", vitality_spec_content)
+    write_file("docs-site/guide/05-vitality.md", vitality_guide_content)
