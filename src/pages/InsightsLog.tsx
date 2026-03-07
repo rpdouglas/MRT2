@@ -14,7 +14,10 @@ import {
     TrophyIcon,
     CalendarDaysIcon,
     BookOpenIcon,
-    AcademicCapIcon
+    AcademicCapIcon,
+    LinkIcon,
+    HashtagIcon,
+    BoltIcon
 } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
@@ -23,6 +26,12 @@ interface InsightWithActions {
     actionable_advice?: string[];
     strengths?: string[];
     risks?: string[];
+    key_themes?: string[];
+    hidden_correlations?: string[];
+    core_triggers?: string[];
+    emotional_velocity?: string;
+    relapse_risk_level?: string;
+    trajectory?: string;
     pillars?: {
         growth?: string;
         blind_spots?: string;
@@ -137,13 +146,18 @@ export default function InsightsLog() {
                     </div>
                 ) : (
                     filteredInsights.map((insight) => {
+                        const insightData = insight as unknown as InsightWithActions;
                         const actions = getActions(insight).slice(0, 3);
                         const strengths = getStrengths(insight);
                         const risks = getRisks(insight);
+                        
+                        const keyThemes = insightData.key_themes || [];
+                        const hiddenCorrelations = insightData.hidden_correlations || [];
+                        const triggers = insightData.core_triggers || [];
 
                         return (
                             <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center">
+                                <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
                                     <div className="flex items-center gap-2">
                                         {insight.type === 'journal' ? (
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase border border-blue-200">
@@ -159,50 +173,110 @@ export default function InsightsLog() {
                                             {insight.createdAt.toLocaleDateString()}
                                         </span>
                                     </div>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        {insightData.relapse_risk_level && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                                insightData.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
+                                                insightData.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                insightData.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                                                'bg-red-100 text-red-700 border-red-200'
+                                            }`}>
+                                                {insightData.relapse_risk_level} Risk
+                                            </span>
+                                        )}
+                                        {insightData.trajectory && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                                {insightData.trajectory}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="p-5 space-y-5">
                                     <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
                                     
-                                    {/* STRENGTHS & RISKS GRID */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                            <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                            </div>
-                                            <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                {strengths.length > 0 ? strengths.map((s, idx) => <li key={idx}>{s}</li>) : <li>Persistence in recovery.</li>}
-                                            </ul>
-                                        </div>
+                                    {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         
-                                        <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                            <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
+                                        {strengths.length > 0 && (
+                                            <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                                                <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                    <TrophyIcon className="h-4 w-4" /> Strengths & Wins
+                                                </div>
+                                                <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                    {strengths.map((s, idx) => <li key={idx}>{s}</li>)}
+                                                </ul>
                                             </div>
-                                            <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                {risks.length > 0 ? risks.map((r, idx) => <li key={idx}>{r}</li>) : <li>None detected.</li>}
-                                            </ul>
-                                        </div>
+                                        )}
+                                        
+                                        {risks.length > 0 && (
+                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                                <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                    <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
+                                                </div>
+                                                <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                    {risks.map((r, idx) => <li key={idx}>{r}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {keyThemes.length > 0 && (
+                                            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                    <HashtagIcon className="h-4 w-4" /> Key Themes
+                                                </div>
+                                                <ul className="text-xs text-blue-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                    {keyThemes.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {hiddenCorrelations.length > 0 && (
+                                            <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                                                <div className="text-rose-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                    <LinkIcon className="h-4 w-4" /> Hidden Links
+                                                </div>
+                                                <ul className="text-xs text-rose-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                    {hiddenCorrelations.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {triggers.length > 0 && (
+                                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                                <div className="text-amber-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                    <BoltIcon className="h-4 w-4" /> Triggers
+                                                </div>
+                                                <ul className="text-xs text-amber-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                    {triggers.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+
                                     </div>
 
                                     {/* ACTION PLAN SECTION */}
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                        <div className="text-gray-500 font-bold text-xs uppercase mb-3 flex items-center gap-1">
-                                            <CheckCircleIcon className="h-4 w-4" /> Suggested Actions
+                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                        <div className="text-purple-800 font-bold text-xs uppercase mb-3 flex items-center gap-1">
+                                            <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
                                         </div>
                                         <ul className="space-y-2">
-                                            {actions.map((step, idx) => (
-                                                <li key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm text-xs text-gray-700">
-                                                    <span>{step}</span>
-                                                    <button
-                                                        onClick={() => !addedActions.has(step) && handleAddToTasks(step)}
-                                                        disabled={addedActions.has(step)}
-                                                        className={`p-1.5 rounded-full transition-all ${addedActions.has(step) ? 'text-green-600 bg-green-100' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`}
-                                                    >
-                                                        {addedActions.has(step) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
-                                                    </button>
-                                                </li>
-                                            ))}
+                                            {actions.map((step, idx) => {
+                                                const isAdded = addedActions.has(step);
+                                                return (
+                                                    <li key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-sm text-purple-900">
+                                                        <span>{step}</span>
+                                                        <button 
+                                                            onClick={() => !isAdded && handleAddToTasks(step)}
+                                                            disabled={isAdded}
+                                                            className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}
+                                                        >
+                                                            {isAdded ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                        </button>
+                                                    </li>
+                                                );
+                                            })}
                                         </ul>
                                     </div>
                                 </div>
