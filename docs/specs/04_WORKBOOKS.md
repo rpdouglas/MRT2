@@ -1,6 +1,6 @@
-# 📐 Feature Spec: Wisdom (Workbooks)
+# 📐 Feature Spec: Wisdom (Workbooks & Library)
 
-**Status:** Live (v1.1)
+**Status:** Live (v2.0)
 **Storage:** `users/{uid}/workbook_answers/{workbookId_questionId}`
 
 ## 1. Data Structure
@@ -8,13 +8,16 @@ To prevent state conflicts, each answer is stored as an individual document.
 * **ID Format:** `[workbookId]_[questionId]`
 * **Fields:** `answer` (Encrypted), `isEncrypted` (Bool), `updatedAt` (Timestamp).
 
-## 2. Reading Experience (Zen Mode)
-* **Focus:** `WorkbookSession.tsx` implements a full-screen, distraction-free reading layer using `@tailwindcss/typography`.
+## 2. The Library Hub (`Workbooks.tsx`)
+The main entry point is structured via a dual-tab navigation system:
+* **Workbooks Tab:** Renders the interactive, 12-Step and Buddhist logic flows.
+* **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.
+
+## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)
+* **Zen Mode:** A full-screen, distraction-free reading layer using `@tailwindcss/typography`.
+* **Mobile Keyboard Protection:** The layout uses strict flexbox constraints (`flex-1 min-h-0` on the parent, `shrink-0` on the question text, and `flex-1 resize-none` on the textarea). This ensures that when virtual keyboards appear on iOS/Android, the input area shrinks dynamically rather than pushing the question context off the screen.
 * **Data Safety:** Answers are auto-saved to Firestore via `useAutoSave` every 2 seconds. Data is encrypted client-side *before* transmission.
 
-## 3. AI Integration
-* **Coach:** On-demand, individual question feedback via `getGeminiCoaching`.
+## 4. AI Integration
+* **Coach:** On-demand, individual question feedback via `getGeminiCoaching` (powered by ultra-fast `flash-lite`).
 * **Compass:** Aggregate section analysis via `analyzeFullWorkbook`. Suggested actions added to Habits are tagged with `source: 'ai'` to route them to the Action Plan tab.
-
-## 4. Gamification
-* **Chapters Mastered:** Calculated locally in `Workbooks.tsx` by cross-referencing completed answers against the required questions in the static `WORKBOOKS` schema.
