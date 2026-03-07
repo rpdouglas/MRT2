@@ -8,824 +8,421 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 # =============================================================================
-# 1. src/lib/insights.ts
+# 1. src/pages/Workbooks.tsx
 # =============================================================================
-insights_content = r'''/**
- * src/lib/insights.ts
- * GITHUB COMMENT:
- * [insights.ts]
- * UPDATED: Extended InsightPayload to natively support rich array data from Deep Dives.
- */
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  Timestamp 
-} from "firebase/firestore";
-import { db } from "./firebase";
-import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
-
-const COLLECTION = 'insights';
-
-// --- DEFINITIONS ---
-
-export type InsightType = 'journal' | 'workbook';
-
-// Combined type for what we save to Firestore
-export type InsightPayload = 
-  | ({ 
-      type: 'journal'; 
-      strengths?: string[];
-      key_themes?: string[];
-      hidden_correlations?: string[];
-      relapse_risk_level?: string;
-      trajectory?: string;
-      core_triggers?: string[];
-      emotional_velocity?: string;
-    } & AnalysisResult)
-  | ({ type: 'workbook' } & WorkbookAnalysisResult);
-
-// The hydrated object returned to the UI
-export type SavedInsight = InsightPayload & {
-  id: string;
-  uid: string;
-  createdAt: Date;
-};
-
-/**
- * Saves a new AI Insight to Firestore.
- */
-export async function saveInsight(uid: string, payload: InsightPayload) {
-  if (!db) throw new Error("Database not initialized");
-
-  await addDoc(collection(db, COLLECTION), {
-    uid,
-    createdAt: Timestamp.now(),
-    ...payload
-  });
-}
-
-/**
- * Fetches the history of AI Insights for a user.
- */
-export async function getInsightHistory(uid: string): Promise<SavedInsight[]> {
-  if (!db) throw new Error("Database not initialized");
-
-  try {
-    const q = query(
-      collection(db, COLLECTION),
-      where("uid", "==", uid),
-      orderBy("createdAt", "desc")
-    );
-
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      const type = data.type || 'journal';
-
-      return {
-        ...data, 
-        id: doc.id,
-        uid: data.uid,
-        type,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-      } as SavedInsight;
-    });
-
-  } catch (e: unknown) {
-    console.error("Error fetching insights:", e);
-    const err = e as { message?: string };
-    if (err.message && err.message.includes("index")) {
-        console.warn("⚠️ MISSING INDEX: Open your browser console and click the Firebase link to create the index for 'insights'.");
-    }
-    return [];
-  }
-}
-'''
-
-# =============================================================================
-# 2. src/components/journal/JournalAnalysisWizard.tsx
-# =============================================================================
-wizard_content = r'''import { Fragment, useState, useEffect, useCallback, type ElementType } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { 
-    SparklesIcon, 
-    XMarkIcon, 
-    CalendarDaysIcon, 
-    ChartBarIcon, 
-    GlobeAmericasIcon, 
-    CheckCircleIcon, 
-    ArrowPathIcon,
-    BoltIcon,
-    PlusCircleIcon,
-    TrophyIcon,
-    LockClosedIcon,
-    ShieldExclamationIcon,
-    LinkIcon,
-    HashtagIcon
-} from '@heroicons/react/24/outline';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
-import { useAuth } from '../../contexts/AuthContext';
-import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
-import type { JournalEntry } from './JournalEditor';
-import { subDays, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
-import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
-import { useTaskOperations } from '../../hooks/useTaskOperations'; 
-import { type UserProfile } from '../../lib/db';
-
-interface WizardProps {
-    isOpen: boolean;
-    onClose: () => void;
-    entries: JournalEntry[]; 
-}
-
-type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
-
-interface EligibilityStatus {
-    allowed: boolean;
-    reason?: string;
-    progress?: number; 
-}
-
-interface SelectionCardProps {
-    type: AnalysisScope;
-    title: string;
-    subtitle: string;
-    icon: ElementType;
-    colorClass: string;
-    borderClass: string;
-    bgClass: string;
-}
-
-export default function JournalAnalysisWizard({ isOpen, onClose, entries }: WizardProps) {
-    const { user, isAdmin } = useAuth();
-    const { addTask } = useTaskOperations(); 
-    const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
-    const [scope, setScope] = useState<AnalysisScope>('weekly');
-    
-    const [usageProfile, setUsageProfile] = useState<UserProfile['usage_limits'] | null>(null);
-    const [loadingLimits, setLoadingLimits] = useState(false);
-    
-    const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
-    
-    const { 
-        analyze: runDeepAnalysis, 
-        progress: deepProgress, 
-        result: deepResult,
-        error: deepError 
-    } = useDeepPatternAnalysis();
-
-    const [saving, setSaving] = useState(false);
-    const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
-
-    const loadUsageLimits = useCallback(async () => {
-        if (!user || !db) return;
-        setLoadingLimits(true);
-        try {
-            const snap = await getDoc(doc(db, 'users', user.uid));
-            if (snap.exists()) {
-                const data = snap.data() as UserProfile;
-                setUsageProfile(data.usage_limits || {});
-            }
-        } catch (e) {
-            console.error("Failed to load limits", e);
-        } finally {
-            setLoadingLimits(false);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (isOpen) {
-            loadUsageLimits();
-            setStep('select');
-        }
-    }, [isOpen, loadUsageLimits]);
-
-    const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
-        if (isAdmin) return { allowed: true };
-        const entryCount = entries.length;
-        const now = new Date();
-
-        if (targetScope === 'weekly') {
-            if (entryCount < 7) {
-                return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
-            }
-            if (usageProfile?.lastWeeklyInsight) {
-                const lastRun = usageProfile.lastWeeklyInsight.toDate();
-                const diff = differenceInDays(now, lastRun);
-                if (diff < 7) return { allowed: false, reason: `Available in ${7 - diff} days`, progress: 100 };
-            }
-        } 
-        
-        if (targetScope === 'monthly' || targetScope === 'all-time') {
-            if (entryCount < 30) {
-                return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
-            }
-            const lastRunTimestamp = targetScope === 'monthly' ? usageProfile?.lastMonthlyInsight : usageProfile?.lastDeepDive;
-            if (lastRunTimestamp) {
-                const lastRun = lastRunTimestamp.toDate();
-                const diff = differenceInDays(now, lastRun);
-                if (diff < 30) return { allowed: false, reason: `Available in ${30 - diff} days`, progress: 100 };
-            }
-        }
-        return { allowed: true };
-    };
-
-    const stampUsage = async (targetScope: AnalysisScope) => {
-        if (!user || !db || isAdmin) return;
-        const updateField = targetScope === 'weekly' ? 'usage_limits.lastWeeklyInsight' : targetScope === 'monthly' ? 'usage_limits.lastMonthlyInsight' : 'usage_limits.lastDeepDive';
-        try {
-            await updateDoc(doc(db, 'users', user.uid), { [updateField]: Timestamp.now() });
-            loadUsageLimits(); 
-        } catch (e) {
-            console.error("Failed to stamp usage token", e);
-        }
-    };
-
-    const runStandardAnalysis = async () => {
-        setStep('analyzing');
-        setAddedActions(new Set());
-        await stampUsage(scope);
-        try {
-            const now = new Date();
-            let currentSet: JournalEntry[] = [];
-            let previousSet: JournalEntry[] = [];
-            const getDate = (e: JournalEntry): Date => {
-                if (e.createdAt instanceof Date) return e.createdAt;
-                return (e.createdAt as unknown as { toDate: () => Date }).toDate();
-            };
-
-            if (scope === 'weekly') {
-                const oneWeekAgo = subDays(now, 7);
-                const twoWeeksAgo = subDays(now, 14);
-                currentSet = entries.filter(e => isAfter(getDate(e), oneWeekAgo));
-                previousSet = entries.filter(e => isAfter(getDate(e), twoWeeksAgo) && isBefore(getDate(e), oneWeekAgo));
-            } else if (scope === 'monthly') {
-                const oneMonthAgo = subDays(now, 30);
-                const twoMonthsAgo = subDays(now, 60);
-                currentSet = entries.filter(e => isAfter(getDate(e), oneMonthAgo));
-                previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
-            }
-
-            const formatSet = (set: JournalEntry[]) => set.map(e => `[${getDate(e).toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`).join('\n---\n');
-            const currentTxt = formatSet(currentSet);
-            const prevTxt = formatSet(previousSet);
-
-            if (!currentTxt) {
-                alert("Not enough journal data for this period.");
-                setStep('select');
-                return;
-            }
-
-            const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
-            setStandardResult(analysis);
-            setStep('results');
-        } catch (error) {
-            console.error(error);
-            alert("Analysis failed.");
-            setStep('select');
-        }
-    };
-
-    const handleStartAnalysis = async () => {
-        const status = checkEligibility(scope);
-        if (!status.allowed && !isAdmin) return;
-        if (scope === 'all-time') {
-            setStep('analyzing');
-            setAddedActions(new Set());
-            await stampUsage('all-time');
-            runDeepAnalysis().then(() => setStep('results'));
-        } else {
-            runStandardAnalysis();
-        }
-    };
-
-    const handleAddToTasks = async (action: string) => {
-        if (!user) return;
-        try {
-            const dueDate = addDays(new Date(), 7);
-            await addTask({
-                title: action,
-                recurrence: { type: 'once' },
-                priority: 'Medium',
-                dueDate: dueDate,
-                source: 'ai' 
-            });
-            setAddedActions(prev => new Set(prev).add(action));
-        } catch (e) {
-            console.error("Failed to add task", e);
-        }
-    };
-
-    const saveInsight = async () => {
-        if (!user || !db) return;
-        setSaving(true);
-        const database: Firestore = db;
-        try {
-            if (scope === 'all-time' && deepResult) {
-                await addDoc(collection(database, 'insights'), {
-                    uid: user.uid,
-                    type: 'journal',
-                    summary: deepResult.pattern_summary,
-                    pillars: {
-                        understanding: deepResult.core_triggers.join(', '),
-                        growth: deepResult.emotional_velocity,
-                        blind_spots: deepResult.hidden_correlations.join(', ')
-                    },
-                    core_triggers: deepResult.core_triggers,
-                    hidden_correlations: deepResult.hidden_correlations,
-                    emotional_velocity: deepResult.emotional_velocity,
-                    relapse_risk_level: deepResult.relapse_risk_level,
-                    suggested_actions: deepResult.long_term_advice.slice(0, 3), 
-                    createdAt: Timestamp.now(),
-                    scope_context: 'Deep Pattern Recognition',
-                    risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
-                });
-            } else if (standardResult) {
-                await addDoc(collection(database, 'insights'), {
-                    uid: user.uid,
-                    type: 'journal',
-                    summary: standardResult.comparison_summary,
-                    pillars: {
-                        understanding: standardResult.key_themes.join(', '),
-                        growth: standardResult.wins.join(', '),
-                        blind_spots: standardResult.blind_spots.join(', ')
-                    },
-                    key_themes: standardResult.key_themes,
-                    trajectory: standardResult.trajectory,
-                    strengths: standardResult.wins,
-                    risks: standardResult.blind_spots,
-                    suggested_actions: standardResult.actionable_advice.slice(0, 3), 
-                    createdAt: Timestamp.now(),
-                    scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
-                });
-            }
-            onClose();
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const SelectionCard = ({ type, title, subtitle, icon: Icon, colorClass, borderClass, bgClass }: SelectionCardProps) => {
-        const { allowed, reason, progress } = checkEligibility(type);
-        const isSelected = scope === type;
-        return (
-            <button 
-                onClick={() => allowed ? setScope(type) : null}
-                disabled={!allowed}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all relative overflow-hidden ${!allowed ? 'opacity-70 bg-gray-50 border-gray-200 cursor-not-allowed' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}
-            >
-                {!allowed && (
-                    <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center backdrop-blur-[1px] z-10">
-                        <div className="bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500">
-                            <LockClosedIcon className="h-3 w-3" /> {reason}
-                        </div>
-                    </div>
-                )}
-                <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
-                <div className="text-left flex-1">
-                    <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
-                    <div className="text-xs text-gray-500">{subtitle}</div>
-                    {!allowed && progress !== undefined && progress < 100 && (
-                        <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
-                        </div>
-                    )}
-                </div>
-                {isSelected && allowed && <div className={`w-3 h-3 rounded-full ${colorClass.replace('text-', 'bg-')}`}></div>}
-            </button>
-        );
-    };
-
-    return (
-        <Transition.Root show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={onClose}>
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" />
-                <div className="fixed inset-0 flex items-center justify-center p-4">
-                    <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
-                        <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
-                            <div className="flex items-center gap-2 text-white"><SparklesIcon className="h-6 w-6" /><h3 className="font-bold text-lg">{scope === 'all-time' ? 'Deep Pattern Engine' : 'Analysis Wizard'}</h3></div>
-                            <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto">
-                            {step === 'select' && (
-                                <div className="space-y-4">
-                                    {loadingLimits ? <div className="text-center py-8 text-gray-400">Checking eligibility...</div> : (
-                                        <>
-                                            <p className="text-gray-600 text-sm text-center mb-6">Select a timeframe to analyze. The AI will compare your current progress against previous patterns.</p>
-                                            <SelectionCard type="weekly" title="Weekly Check-in" subtitle="Last 7 days vs Previous 7 days" icon={CalendarDaysIcon} colorClass="text-fuchsia-600" bgClass="bg-fuchsia-50" borderClass="border-fuchsia-500" />
-                                            <SelectionCard type="monthly" title="Monthly Review" subtitle="Last 30 days vs Previous 30 days" icon={ChartBarIcon} colorClass="text-purple-600" bgClass="bg-purple-50" borderClass="border-purple-500" />
-                                            <SelectionCard type="all-time" title="Deep Dive (90 Days)" subtitle="Identify relapse triggers & patterns" icon={GlobeAmericasIcon} colorClass="text-indigo-600" bgClass="bg-indigo-50" borderClass="border-indigo-500" />
-                                            <button onClick={handleStartAnalysis} disabled={!checkEligibility(scope).allowed} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">Begin Analysis</button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-
-                            {step === 'analyzing' && (
-                                <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                                    <div className="relative"><div className="animate-spin rounded-full h-16 w-16 border-b-2 border-fuchsia-600"></div>{scope === 'all-time' && <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-fuchsia-600">{deepProgress}%</div>}</div>
-                                    <h4 className="text-lg font-bold text-gray-900">{scope === 'all-time' ? 'Processing Vault...' : 'Consulting the Compass...'}</h4>
-                                </div>
-                            )}
-
-                            {step === 'results' && !deepError && (
-                                <div className="space-y-6 animate-fadeIn">
-                                    {scope === 'all-time' && deepResult ? (
-                                        <>
-                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h5 className="text-xs font-bold text-indigo-800 uppercase">Landscape</h5>
-                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                                        deepResult.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700' :
-                                                        deepResult.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700' :
-                                                        deepResult.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700' :
-                                                        'bg-red-100 text-red-700 border border-red-200'
-                                                    }`}>
-                                                        {deepResult.relapse_risk_level} Risk
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-indigo-900">{deepResult.pattern_summary}</p>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                                    <h5 className="text-[10px] font-bold text-amber-800 uppercase flex items-center gap-1 mb-2"><BoltIcon className="h-4 w-4" /> Triggers</h5>
-                                                    <ul className="text-xs text-amber-900 space-y-1">{deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}</ul>
-                                                </div>
-                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                    <h5 className="text-[10px] font-bold text-blue-800 uppercase flex items-center gap-1 mb-2"><ArrowPathIcon className="h-4 w-4" /> Velocity</h5>
-                                                    <p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p>
-                                                </div>
-                                                <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                                                    <h5 className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-1 mb-2"><LinkIcon className="h-4 w-4" /> Hidden Links</h5>
-                                                    <ul className="text-xs text-rose-900 space-y-1">{deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}</ul>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 mt-4">
-                                                <h5 className="text-xs font-bold text-purple-800 uppercase mb-3 flex items-center gap-2">
-                                                    <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
-                                                </h5>
-                                                <div className="space-y-2">
-                                                    {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-purple-900">
-                                                            <span>{action}</span>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}>
-                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : standardResult && (
-                                        <>
-                                            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border w-fit ${standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}>Trajectory: {standardResult.trajectory}</div>
-                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700">{standardResult.comparison_summary}</div>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                    <h5 className="text-[10px] font-bold text-blue-800 uppercase flex items-center gap-1 mb-1.5"><HashtagIcon className="h-3 w-3" /> Key Themes</h5>
-                                                    <ul className="text-xs text-blue-900 space-y-1">{standardResult.key_themes.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                                </div>
-                                                <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                                    <h5 className="text-[10px] font-bold text-green-800 uppercase flex items-center gap-1 mb-1.5"><TrophyIcon className="h-3 w-3" /> Wins</h5>
-                                                    <ul className="text-xs text-green-900 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                                </div>
-                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                    <h5 className="text-[10px] font-bold text-orange-800 uppercase flex items-center gap-1 mb-1.5"><ShieldExclamationIcon className="h-3 w-3" /> Risks</h5>
-                                                    <ul className="text-xs text-orange-900 space-y-1">{standardResult.blind_spots.map((w,i) => <li key={i}>• {w}</li>)}</ul>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2 flex items-center gap-2">
-                                                    <CheckCircleIcon className="h-4 w-4" /> Suggested Actions
-                                                </h5>
-                                                <div className="space-y-2">
-                                                    {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm text-fuchsia-900 bg-white p-2.5 rounded-lg border border-fuchsia-50 shadow-sm">
-                                                            <span>{action}</span>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}>
-                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">{saving ? 'Saving...' : 'Save to Insights Log'}</button>
-                                </div>
-                            )}
-                        </div>
-                    </Dialog.Panel>
-                </div>
-            </Dialog>
-        </Transition.Root>
-    );
-}
-'''
-
-# =============================================================================
-# 3. src/pages/InsightsLog.tsx
-# =============================================================================
-log_content = r'''import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { getInsightHistory, type SavedInsight } from '../lib/insights';
+workbooks_content = r'''import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { WORKBOOKS } from '../data/workbooks';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { useTaskOperations } from '../hooks/useTaskOperations'; 
-import { addDays } from 'date-fns';
 import { 
-    LightBulbIcon, 
-    SparklesIcon, 
-    CheckCircleIcon, 
-    PlusCircleIcon,
-    ShieldExclamationIcon,
-    TrophyIcon,
-    CalendarDaysIcon,
-    BookOpenIcon,
+    BookOpenIcon, 
+    StarIcon, 
+    HeartIcon, 
     AcademicCapIcon,
-    LinkIcon,
-    HashtagIcon,
-    BoltIcon
+    ChevronRightIcon,
+    DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
-interface InsightWithActions {
-    suggested_actions?: string[];
-    actionableSteps?: string[];
-    actionable_advice?: string[];
-    strengths?: string[];
-    risks?: string[];
-    key_themes?: string[];
-    hidden_correlations?: string[];
-    core_triggers?: string[];
-    emotional_velocity?: string;
-    relapse_risk_level?: string;
-    trajectory?: string;
-    pillars?: {
-        growth?: string;
-        blind_spots?: string;
-        understanding?: string;
-        emotional_resonance?: string;
-    };
+export default function Workbooks() {
+  const [activeTab, setActiveTab] = useState<'workbooks' | 'literature'>('workbooks');
+
+  const getTheme = (type: string) => {
+    switch (type) {
+      case 'general': return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-l-yellow-500', icon: StarIcon };
+      case 'steps': return { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-l-blue-600', icon: BookOpenIcon };
+      default: return { color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-l-purple-500', icon: HeartIcon };
+    }
+  };
+
+  return (
+    <div className={`pb-24 relative min-h-screen ${THEME.workbooks.page}`}>
+      
+      {/* HEADER */}
+      <div className="flex-shrink-0 z-10">
+          <VibrantHeader 
+            title="Recovery Library"
+            subtitle="Structured guides to process your journey."
+            icon={AcademicCapIcon}
+            fromColor={THEME.workbooks.header.from}
+            viaColor={THEME.workbooks.header.via}
+            toColor={THEME.workbooks.header.to}
+          />
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-30 space-y-6 flex flex-col">
+        
+        {/* TAB NAVIGATION */}
+        <div className="flex p-1 space-x-1 bg-emerald-100/50 rounded-xl mb-2 overflow-x-auto shadow-sm border border-emerald-200 backdrop-blur-sm">
+          <button
+            onClick={() => setActiveTab('workbooks')}
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
+              activeTab === 'workbooks'
+                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
+                : 'text-emerald-700 hover:bg-white/50'
+            }`}
+          >
+            <BookOpenIcon className="w-4 h-4" />
+            Workbooks
+          </button>
+          <button
+            onClick={() => setActiveTab('literature')}
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
+              activeTab === 'literature'
+                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
+                : 'text-emerald-700 hover:bg-white/50'
+            }`}
+          >
+            <DocumentTextIcon className="w-4 h-4" />
+            Literature
+          </button>
+        </div>
+
+        {/* WORKBOOKS CONTENT */}
+        {activeTab === 'workbooks' && (
+            <div className="space-y-4 animate-fadeIn">
+              {WORKBOOKS.map((workbook) => {
+                  const theme = getTheme(workbook.type);
+                  
+                  return (
+                      <Link 
+                          key={workbook.id} 
+                          to={`/workbooks/${workbook.id}`}
+                          className={`block relative group bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md ${theme.border} border-l-[6px]`}
+                      >
+                          <div className="flex items-start gap-4">
+                              <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
+                                  <theme.icon className="h-6 w-6" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-1">
+                                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                          {workbook.title}
+                                      </h3>
+                                      <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                      {workbook.description}
+                                  </p>
+                                  <div className="flex items-center gap-3">
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
+                                          {workbook.sections.length} Sections
+                                      </span>
+                                      {workbook.type === 'steps' && (
+                                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                              12-Step Compatible
+                                          </span>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                      </Link>
+                  );
+              })}
+            </div>
+        )}
+
+        {/* LITERATURE CONTENT (EMPTY STATE) */}
+        {activeTab === 'literature' && (
+            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl border border-dashed border-emerald-300 shadow-sm animate-fadeIn">
+                <div className="bg-emerald-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+                    <DocumentTextIcon className="h-8 w-8 text-emerald-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Coming Soon</h3>
+                <p className="text-gray-500 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
+                    Classic recovery literature, daily meditations, and reference texts are being prepared for your digital library.
+                </p>
+            </div>
+        )}
+
+      </div>
+    </div>
+  );
 }
+'''
 
-const getActions = (data: unknown): string[] => {
-    const insight = data as InsightWithActions;
-    if (insight.suggested_actions && Array.isArray(insight.suggested_actions)) return insight.suggested_actions;
-    if (insight.actionableSteps && Array.isArray(insight.actionableSteps)) return insight.actionableSteps;
-    if (insight.actionable_advice && Array.isArray(insight.actionable_advice)) return insight.actionable_advice;
-    return [];
-};
+# =============================================================================
+# 2. src/pages/WorkbookSession.tsx
+# =============================================================================
+session_content = r'''import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useEncryption } from '../contexts/EncryptionContext'; 
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { 
+    CheckCircleIcon, 
+    ArrowRightIcon,
+    SparklesIcon,
+    XMarkIcon
+} from '@heroicons/react/24/outline';
+import { getWorkbook, type WorkbookSection } from '../data/workbooks';
+import { getGeminiCoaching } from '../lib/gemini';
+import { useAutoSave } from '../hooks/useAutoSave';
 
-const getStrengths = (data: unknown): string[] => {
-    const insight = data as InsightWithActions;
-    if (insight.strengths && Array.isArray(insight.strengths)) return insight.strengths;
-    if (insight.pillars?.growth) return [insight.pillars.growth]; 
-    return [];
-};
-
-const getRisks = (data: unknown): string[] => {
-    const insight = data as InsightWithActions;
-    if (insight.risks && Array.isArray(insight.risks)) return insight.risks;
-    if (insight.pillars?.blind_spots) return [insight.pillars.blind_spots];
-    return [];
-};
-
-export default function InsightsLog() {
+export default function WorkbookSession() {
+    const { workbookId, sectionId } = useParams();
     const { user } = useAuth();
-    const { addTask } = useTaskOperations(); 
-    const [insights, setInsights] = useState<SavedInsight[]>([]);
+    const { decrypt } = useEncryption(); 
+    const navigate = useNavigate();
+
+    // Content State
+    const [section, setSection] = useState<WorkbookSection | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'journal' | 'workbook'>('all');
-    const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-    const loadData = useCallback(async () => {
-        if (!user) return;
-        try {
-            const data = await getInsightHistory(user.uid);
-            setInsights(data);
-        } catch (error) {
-            console.error("Failed to load insights log", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
+    // User Progress State
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const [answers, setAnswers] = useState<Record<string, string>>({}); // Cache for loaded answers
+    
+    // UI State
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const [aiCoachLoading, setAiCoachLoading] = useState(false);
+    const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
+    // 1. Load Workbook Content & User Progress
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        async function loadData() {
+            if (!user || !workbookId || !sectionId || !db) return;
 
-    const handleAddToTasks = async (action: string) => {
-        if (!user) return;
-        try {
-            const dueDate = addDays(new Date(), 7);
-            await addTask({
-                title: action,
-                recurrence: { type: 'once' },
-                priority: 'Medium',
-                dueDate: dueDate,
-                source: 'ai' 
-            });
-            setAddedActions(prev => new Set(prev).add(action));
-        } catch (e) {
-            console.error("Failed to add task", e);
+            try {
+                // A. Load Static Workbook JSON
+                const wb = getWorkbook(workbookId || '');
+                if (!wb) {
+                    navigate('/workbooks');
+                    return;
+                }
+
+                const sec = wb.sections.find(s => s.id === sectionId);
+                if (!sec) {
+                   navigate(`/workbooks/${workbookId}`);
+                   return;
+                }
+                setSection(sec);
+
+                // B. Load User Progress
+                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
+                const q = query(answersRef, where('workbookId', '==', workbookId));
+                const snapshot = await getDocs(q);
+                const loadedAnswers: Record<string, string> = {};
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    if (data.answer) {
+                        if (data.isEncrypted) {
+                            try {
+                                loadedAnswers[data.questionId] = await decrypt(data.answer);
+                            } catch {
+                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
+                            }
+                        } else {
+                            loadedAnswers[data.questionId] = data.answer;
+                        }
+                    }
+                }
+                setAnswers(loadedAnswers);
+                
+                // Initialize current answer based on first question
+                if (sec.questions.length > 0) {
+                    const firstQ = sec.questions[0];
+                    setCurrentAnswer(loadedAnswers[firstQ.id] || '');
+                }
+
+            } catch (error) {
+                console.error("Error loading session:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadData();
+    }, [user, workbookId, sectionId, navigate, decrypt]);
+
+    // Current Question Helpers
+    const currentQuestion = section?.questions[activeQuestionIndex];
+    const isIntroSlide = currentQuestion?.type === 'read_only';
+
+    // Update currentAnswer when question changes
+    useEffect(() => {
+        if (currentQuestion) {
+            setCurrentAnswer(answers[currentQuestion.id] || '');
+            setAiFeedback(null);
+        }
+    }, [activeQuestionIndex, currentQuestion, answers]);
+
+    // --- AUTO SAVE HOOK ---
+    const { status: saveStatus } = useAutoSave({
+        uid: user?.uid || '',
+        workbookId: workbookId || '',
+        sectionId: sectionId || '',
+        questionId: currentQuestion?.id || '',
+        value: currentAnswer
+    });
+
+    // 2. Handle Answer Input
+    const handleAnswerChange = (text: string) => {
+        setCurrentAnswer(text);
+        // Update local cache immediately for UI responsiveness
+        if (currentQuestion) {
+            setAnswers(prev => ({ ...prev, [currentQuestion.id]: text }));
         }
     };
 
-    const filteredInsights = insights.filter(item => filter === 'all' || item.type === filter);
+    // 3. Navigation
+    const handleNext = () => {
+        if (!section) return;
+        if (activeQuestionIndex < section.questions.length - 1) {
+            setActiveQuestionIndex(prev => prev + 1);
+        } else {
+            navigate(`/workbooks/${workbookId}`);
+        }
+    };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
+    const handlePrevious = () => {
+        if (activeQuestionIndex > 0) {
+            setActiveQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const handleGetCoaching = async () => {
+        if (!currentQuestion || !currentAnswer || currentAnswer.length < 10) return alert("Write a bit more first.");
+        setAiCoachLoading(true);
+        try {
+            const context = currentQuestion.context || currentQuestion.text; 
+            const feedback = await getGeminiCoaching(context, currentAnswer);
+            setAiFeedback(feedback);
+        } catch {
+            alert("Coach unavailable.");
+        } finally {
+            setAiCoachLoading(false);
+        }
+    };
+
+    if (loading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+
+    const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
 
     return (
-        <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
-            <VibrantHeader 
-                title="Insights" 
-                subtitle="Daily analysis and coaching history." 
-                icon={LightBulbIcon} 
-                fromColor={THEME.insights.header.from} 
-                viaColor={THEME.insights.header.via} 
-                toColor={THEME.insights.header.to} 
-            />
-
-            <div className="px-4 -mt-10 relative z-30">
-                <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
-                    {(['all', 'journal', 'workbook'] as const).map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setFilter(tab)}
-                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize tracking-wide ${
-                        filter === tab 
-                            ? 'bg-gradient-to-br from-fuchsia-600 to-rose-600 text-white shadow-md' 
-                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                        }`}
-                    >
-                        {tab}
+        // ZEN MODE CONTAINER: Fixed full screen, covers AppShell
+        <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
+            
+            {/* TOP BAR */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
-                    ))}
+                    <div className="flex flex-col">
+                        <h2 className="text-xs sm:text-sm font-bold text-gray-900">{section.title}</h2>
+                        <span className="text-[10px] sm:text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {/* Auto-Save Indicator */}
+                    <div className="flex items-center gap-1.5 text-xs font-medium transition-colors">
+                        {saveStatus === 'saving' && <span className="text-blue-500 animate-pulse">Saving...</span>}
+                        {saveStatus === 'saved' && <span className="text-green-600 flex items-center gap-1"><CheckCircleIcon className="h-4 w-4" /> Saved</span>}
+                        {saveStatus === 'error' && <span className="text-red-500">Save Failed</span>}
+                    </div>
+                    
+                    <div className="hidden sm:block w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-6 px-4 mt-6">
-                {filteredInsights.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
-                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <SparklesIcon className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900">No Insights Yet</h3>
+            {/* SCROLLABLE CONTENT WITH DYNAMIC FLEXBOX */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-slate-50">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full flex-1 flex flex-col min-h-0">
+                    
+                    {/* QUESTION / CONTENT (Shrink-0 protects it from the keyboard) */}
+                    <div className="prose prose-slate prose-base sm:prose-lg max-w-none mb-4 shrink-0">
+                        {isIntroSlide ? (
+                           <div className="text-center py-6 sm:py-10">
+                               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4 sm:mb-6">{section.title}</h1>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-8 sm:mb-10 text-left sm:text-center px-2">{currentQuestion.text}</div>
+                               <button 
+                                   onClick={handleNext}
+                                   className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+                               >
+                                   Begin <ArrowRightIcon className="h-5 w-5" />
+                               </button>
+                           </div>
+                        ) : (
+                           <div className="animate-fadeIn">
+                               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">{currentQuestion.text}</h3>
+                               {currentQuestion.context && (
+                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-sm sm:text-base">
+                                       <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5 inline mr-2 text-blue-500" />
+                                       {currentQuestion.context}
+                                   </blockquote>
+                               )}
+                           </div>
+                        )}
                     </div>
-                ) : (
-                    filteredInsights.map((insight) => {
-                        const insightData = insight as unknown as InsightWithActions;
-                        const actions = getActions(insight).slice(0, 3);
-                        const strengths = getStrengths(insight);
-                        const risks = getRisks(insight);
-                        
-                        const keyThemes = insightData.key_themes || [];
-                        const hiddenCorrelations = insightData.hidden_correlations || [];
-                        const triggers = insightData.core_triggers || [];
 
-                        return (
-                            <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
-                                    <div className="flex items-center gap-2">
-                                        {insight.type === 'journal' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase border border-blue-200">
-                                                <BookOpenIcon className="h-3 w-3" /> Journal
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 uppercase border border-purple-200">
-                                                <AcademicCapIcon className="h-3 w-3" /> Workbook
-                                            </span>
-                                        )}
-                                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                            <CalendarDaysIcon className="h-3 w-3" />
-                                            {insight.createdAt.toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        {insightData.relapse_risk_level && (
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                                insightData.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
-                                                insightData.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                                insightData.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                                                'bg-red-100 text-red-700 border-red-200'
-                                            }`}>
-                                                {insightData.relapse_risk_level} Risk
-                                            </span>
-                                        )}
-                                        {insightData.trajectory && (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200">
-                                                {insightData.trajectory}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                    {/* INPUT AREA WITH STICKY TOOLBAR (Flex-1 Min-H-0 allows dynamic shrinking) */}
+                    {!isIntroSlide && (
+                        <div className="animate-slideUp flex flex-col relative flex-1 min-h-0">
+                            
+                            {/* STICKY TOOLBAR (Shrink-0) */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-2 sm:py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-2 shrink-0">
+                                <button 
+                                    onClick={handlePrevious} 
+                                    disabled={activeQuestionIndex === 0}
+                                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                >
+                                    Back
+                                </button>
 
-                                <div className="p-5 space-y-5">
-                                    <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
-                                    
-                                    {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        
-                                        {strengths.length > 0 && (
-                                            <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                                <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                                </div>
-                                                <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {strengths.map((s, idx) => <li key={idx}>{s}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        
-                                        {risks.length > 0 && (
-                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
-                                                </div>
-                                                <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {risks.map((r, idx) => <li key={idx}>{r}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <button 
+                                        onClick={handleGetCoaching}
+                                        disabled={aiCoachLoading || currentAnswer.length < 10}
+                                        className="text-[10px] sm:text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-1.5 sm:py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </button>
 
-                                        {keyThemes.length > 0 && (
-                                            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <HashtagIcon className="h-4 w-4" /> Key Themes
-                                                </div>
-                                                <ul className="text-xs text-blue-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {keyThemes.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {hiddenCorrelations.length > 0 && (
-                                            <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                                                <div className="text-rose-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <LinkIcon className="h-4 w-4" /> Hidden Links
-                                                </div>
-                                                <ul className="text-xs text-rose-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {hiddenCorrelations.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {triggers.length > 0 && (
-                                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                                <div className="text-amber-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <BoltIcon className="h-4 w-4" /> Triggers
-                                                </div>
-                                                <ul className="text-xs text-amber-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {triggers.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                    </div>
-
-                                    {/* ACTION PLAN SECTION */}
-                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                                        <div className="text-purple-800 font-bold text-xs uppercase mb-3 flex items-center gap-1">
-                                            <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
-                                        </div>
-                                        <ul className="space-y-2">
-                                            {actions.map((step, idx) => {
-                                                const isAdded = addedActions.has(step);
-                                                return (
-                                                    <li key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-sm text-purple-900">
-                                                        <span>{step}</span>
-                                                        <button 
-                                                            onClick={() => !isAdded && handleAddToTasks(step)}
-                                                            disabled={isAdded}
-                                                            className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}
-                                                        >
-                                                            {isAdded ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
-                                                        </button>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    </div>
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 text-xs sm:text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                    >
+                                        {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
+                                        <ArrowRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </button>
                                 </div>
                             </div>
-                        );
-                    })
-                )}
+
+                            {/* AI FEEDBACK (Shrink-0 so it pushes the textarea down, but stays visible) */}
+                            {aiFeedback && (
+                                <div className="mb-2 bg-purple-50 p-4 sm:p-6 rounded-xl border border-purple-100 animate-fadeIn shrink-0">
+                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2 text-xs sm:text-sm">
+                                        <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5" /> Insight
+                                    </h4>
+                                    <p className="text-purple-800 leading-relaxed text-xs sm:text-sm">{aiFeedback}</p>
+                                </div>
+                            )}
+
+                            {/* TEXTAREA (Flex-1 Resize-None lets it fill available space without breaking layout) */}
+                            <textarea 
+                                value={currentAnswer}
+                                onChange={(e) => handleAnswerChange(e.target.value)}
+                                placeholder="Reflect here..."
+                                className="w-full flex-1 min-h-[150px] p-4 sm:p-6 rounded-b-xl border-2 border-gray-100 bg-white text-base sm:text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                autoFocus
+                            />
+                            
+                        </div>
+                    )}
+
+                </div>
             </div>
+
+            {/* Mobile Progress Bar (Moved to absolute bottom for mobile) */}
+            <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
+                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+            </div>
+
         </div>
     );
 }
@@ -846,8 +443,7 @@ def write_file(relative_path, content):
     print(f"✅ Surgically patched: {absolute_path}")
 
 if __name__ == "__main__":
-    print("🚀 Initiating UI & Schema Update...")
-    write_file("src/lib/insights.ts", insights_content)
-    write_file("src/components/journal/JournalAnalysisWizard.tsx", wizard_content)
-    write_file("src/pages/InsightsLog.tsx", log_content)
-    print("✨ Insights update complete. Bento grids and vibrant styling applied.")
+    print("🚀 Initiating Sector 6 UX Polish...")
+    write_file("src/pages/Workbooks.tsx", workbooks_content)
+    write_file("src/pages/WorkbookSession.tsx", session_content)
+    print("✨ Keyboard Flexbox bug resolved. Library routing established.")
