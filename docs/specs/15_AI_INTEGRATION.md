@@ -1,34 +1,31 @@
 # 🧠 Feature Spec: AI Integration & Intelligence Layer
 
-**Status:** Live (v4.0)
-**Stack:** Google Gemini 2.5 (Flash/Pro)
+**Status:** Live (v4.5)
+**Stack:** Google Gemini 3.1 & 2.5
 **Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
 
 ## 1. The Privacy Boundary
 **Rule:** AI analysis is strictly "Opt-In" and "Stateless".
 * Data is decrypted **in-browser**.
 * The plain text is sent to the Gemini API via a secure HTTPS request.
-* Gemini processes the data, returns the payload, and discards the prompt.
-* User data is **never** stored by Google to train public models.
+* Gemini processes the data, returns the payload, and discards the prompt. User data is **never** stored by Google to train public models.
 
-## 2. The Cascade Engine
+## 2. The Cascade & Model Optimization Engine
 **Location:** `src/lib/gemini.ts`
-To balance speed, cost, and reliability, the app utilizes a `MODEL_CASCADE`.
-* **Default Flow:** Attempts `gemini-2.5-flash` first for speed. If the API fails or rate-limits, it automatically catches the error and retries with `gemini-2.5-pro`, followed by `gemini-2.0-flash`.
-* **Exception:** Certain complex tasks (like `generateComparativeAnalysis` and `generateDeepPatternAnalysis`) explicitly force `gemini-2.5-pro` for deeper reasoning capabilities.
+To balance speed, cost, and advanced reasoning, MRT maps specific tasks to optimal models:
+
+* **The Heavy Lifter (gemini-3.1-pro-preview):** Used exclusively for high-context, deep-reasoning tasks. 
+    * Functions: `generateDeepPatternAnalysis` (90-day scans), `generateComparativeAnalysis`, `analyzeFullWorkbook`, and `analyzeSystemHealth`.
+* **The Speed Demon (gemini-2.5-flash-lite):** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
+    * Functions: `getGeminiCoaching` (2-sentence feedback) and `generateJournalAnalysis` (Sentiment/Tag extraction).
+* **The Multimodal Anchor (gemini-2.5-flash):** Hardcoded for `generateAudioAnalysis` (Voice-to-Vault) to ensure stable transcription.
+
+* **The Fallback Cascade:** If a specific model is not provided or fails due to rate limits, the system falls back through: `['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']`.
 
 ## 3. Strict JSON Enforcement
-To ensure the React UI can parse the AI's response predictably:
 * **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
-* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip any rogue markdown code blocks (e.g., ````json`) before passing to `JSON.parse()`.
+* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip rogue markdown code blocks.
 
 ## 4. Chunked Processing (Deep Pattern Analysis)
-**Location:** `src/hooks/useDeepPatternAnalysis.ts`
-* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread.
-* **Solution:** The app uses `processInChunks` (from `src/lib/utils.ts`) to decrypt entries in batches of 5, yielding to the main thread in between. This allows the progress bar to update smoothly from 20% to 70%.
-
-## 5. Telemetry & Auditing
-**Location:** `src/lib/analytics.ts`
-* Every successful AI call asynchronously triggers `logAIUsage`.
-* This writes a record to the `ai_logs` Firestore collection containing the user ID, model used, feature context (e.g., 'journal_analysis'), and token counts (prompt, candidate, total).
-* Admins monitor this via the Admin Dashboard.
+* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread on mobile devices.
+* **Solution:** The app uses `processInChunks` to decrypt entries in batches of 5, yielding to the main thread in between, driving a smooth UI progress bar.
