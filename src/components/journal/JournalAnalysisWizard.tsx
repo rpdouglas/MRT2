@@ -12,7 +12,9 @@ import {
     PlusCircleIcon,
     TrophyIcon,
     LockClosedIcon,
-    ShieldExclamationIcon
+    ShieldExclamationIcon,
+    LinkIcon,
+    HashtagIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
@@ -223,6 +225,10 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: deepResult.emotional_velocity,
                         blind_spots: deepResult.hidden_correlations.join(', ')
                     },
+                    core_triggers: deepResult.core_triggers,
+                    hidden_correlations: deepResult.hidden_correlations,
+                    emotional_velocity: deepResult.emotional_velocity,
+                    relapse_risk_level: deepResult.relapse_risk_level,
                     suggested_actions: deepResult.long_term_advice.slice(0, 3), 
                     createdAt: Timestamp.now(),
                     scope_context: 'Deep Pattern Recognition',
@@ -238,6 +244,8 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                         growth: standardResult.wins.join(', '),
                         blind_spots: standardResult.blind_spots.join(', ')
                     },
+                    key_themes: standardResult.key_themes,
+                    trajectory: standardResult.trajectory,
                     strengths: standardResult.wins,
                     risks: standardResult.blind_spots,
                     suggested_actions: standardResult.actionable_advice.slice(0, 3), 
@@ -321,18 +329,45 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                 <div className="space-y-6 animate-fadeIn">
                                     {scope === 'all-time' && deepResult ? (
                                         <>
-                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200"><h5 className="text-xs font-bold text-indigo-800 uppercase mb-2">Landscape</h5><p className="text-sm text-indigo-900">{deepResult.pattern_summary}</p></div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100"><h5 className="text-xs font-bold text-orange-800 uppercase flex items-center gap-1 mb-2"><BoltIcon className="h-4 w-4" /> Triggers</h5><ul className="text-xs text-orange-900 space-y-1">{deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}</ul></div>
-                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100"><h5 className="text-xs font-bold text-blue-800 uppercase flex items-center gap-1 mb-2"><ArrowPathIcon className="h-4 w-4" /> Velocity</h5><p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p></div>
+                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h5 className="text-xs font-bold text-indigo-800 uppercase">Landscape</h5>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                                        deepResult.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700' :
+                                                        deepResult.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                                        deepResult.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-red-100 text-red-700 border border-red-200'
+                                                    }`}>
+                                                        {deepResult.relapse_risk_level} Risk
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-indigo-900">{deepResult.pattern_summary}</p>
                                             </div>
-                                            <div className="bg-gray-900 text-white p-4 rounded-xl">
-                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Strategy</h5>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                                    <h5 className="text-[10px] font-bold text-amber-800 uppercase flex items-center gap-1 mb-2"><BoltIcon className="h-4 w-4" /> Triggers</h5>
+                                                    <ul className="text-xs text-amber-900 space-y-1">{deepResult.core_triggers.map((t, i) => <li key={i}>• {t}</li>)}</ul>
+                                                </div>
+                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                    <h5 className="text-[10px] font-bold text-blue-800 uppercase flex items-center gap-1 mb-2"><ArrowPathIcon className="h-4 w-4" /> Velocity</h5>
+                                                    <p className="text-xs text-blue-900">{deepResult.emotional_velocity}</p>
+                                                </div>
+                                                <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                                                    <h5 className="text-[10px] font-bold text-rose-800 uppercase flex items-center gap-1 mb-2"><LinkIcon className="h-4 w-4" /> Hidden Links</h5>
+                                                    <ul className="text-xs text-rose-900 space-y-1">{deepResult.hidden_correlations.map((c, i) => <li key={i}>• {c}</li>)}</ul>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 mt-4">
+                                                <h5 className="text-xs font-bold text-purple-800 uppercase mb-3 flex items-center gap-2">
+                                                    <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
+                                                </h5>
                                                 <div className="space-y-2">
                                                     {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-gray-800/50 p-2 rounded-lg">
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-purple-900">
                                                             <span>{action}</span>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full ${addedActions.has(action) ? 'text-green-400 bg-green-900/50' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}>
                                                                 {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
                                                             </button>
                                                         </div>
@@ -342,10 +377,14 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                         </>
                                     ) : standardResult && (
                                         <>
-                                            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border w-fit ${standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>Trajectory: {standardResult.trajectory}</div>
+                                            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border w-fit ${standardResult.trajectory === 'Improving' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}>Trajectory: {standardResult.trajectory}</div>
                                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700">{standardResult.comparison_summary}</div>
                                             
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                    <h5 className="text-[10px] font-bold text-blue-800 uppercase flex items-center gap-1 mb-1.5"><HashtagIcon className="h-3 w-3" /> Key Themes</h5>
+                                                    <ul className="text-xs text-blue-900 space-y-1">{standardResult.key_themes.map((w,i) => <li key={i}>• {w}</li>)}</ul>
+                                                </div>
                                                 <div className="bg-green-50 p-3 rounded-xl border border-green-100">
                                                     <h5 className="text-[10px] font-bold text-green-800 uppercase flex items-center gap-1 mb-1.5"><TrophyIcon className="h-3 w-3" /> Wins</h5>
                                                     <ul className="text-xs text-green-900 space-y-1">{standardResult.wins.map((w,i) => <li key={i}>• {w}</li>)}</ul>
@@ -357,13 +396,15 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             </div>
 
                                             <div className="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100">
-                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2 text-center">Suggested Actions</h5>
+                                                <h5 className="text-xs font-bold text-fuchsia-800 uppercase mb-2 flex items-center gap-2">
+                                                    <CheckCircleIcon className="h-4 w-4" /> Suggested Actions
+                                                </h5>
                                                 <div className="space-y-2">
                                                     {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
-                                                        <div key={i} className="flex items-center justify-between gap-2 text-xs text-fuchsia-900 bg-white/50 p-2 rounded-lg">
+                                                        <div key={i} className="flex items-center justify-between gap-2 text-sm text-fuchsia-900 bg-white p-2.5 rounded-lg border border-fuchsia-50 shadow-sm">
                                                             <span>{action}</span>
                                                             <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}>
-                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-4 w-4" /> : <PlusCircleIcon className="h-4 w-4" />}
+                                                                {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
                                                             </button>
                                                         </div>
                                                     ))}

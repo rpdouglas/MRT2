@@ -2,7 +2,7 @@
  * src/lib/insights.ts
  * GITHUB COMMENT:
  * [insights.ts]
- * UPDATED: Added 'strengths' field to InsightPayload to support Weekly/Monthly wins.
+ * UPDATED: Extended InsightPayload to natively support rich array data from Deep Dives.
  */
 import { 
   collection, 
@@ -24,7 +24,16 @@ export type InsightType = 'journal' | 'workbook';
 
 // Combined type for what we save to Firestore
 export type InsightPayload = 
-  | ({ type: 'journal'; strengths?: string[] } & AnalysisResult)
+  | ({ 
+      type: 'journal'; 
+      strengths?: string[];
+      key_themes?: string[];
+      hidden_correlations?: string[];
+      relapse_risk_level?: string;
+      trajectory?: string;
+      core_triggers?: string[];
+      emotional_velocity?: string;
+    } & AnalysisResult)
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
 
 // The hydrated object returned to the UI

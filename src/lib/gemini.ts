@@ -2,7 +2,10 @@
  * src/lib/gemini.ts
  * GITHUB COMMENT:
  * [gemini.ts]
- * TWEAK: Enforced brevity on 'emotional_velocity' prompt (Max 15 words) for Ticket 4.5.
+ * REFACTOR: Surgical realignment of AI models (March 2026).
+ * - Upgraded deep reasoning tasks to 'gemini-3.1-pro-preview'.
+ * - Downgraded low-reasoning tasks to 'gemini-2.5-flash-lite' for speed/cost.
+ * - Updated MODEL_CASCADE to prioritize 'gemini-3-flash-preview'.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
@@ -21,9 +24,9 @@ const GENERATION_CONFIG = {
 
 // --- Model Cascade Configuration ---
 const MODEL_CASCADE = [
+  'gemini-3-flash-preview', 
   'gemini-2.5-flash', 
-  'gemini-2.5-pro', 
-  'gemini-2.0-flash'
+  'gemini-2.5-flash-lite'
 ];
 
 // --- Interfaces ---
@@ -101,7 +104,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
         
         try {
             if (import.meta.env.DEV) {
-                // console.log(\`🤖 AI Attempt \${i + 1}/\${modelsToTry.length}: Using \${currentModelName}\`);
+                // console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
             const model = genAI.getGenerativeModel({ 
@@ -145,7 +148,7 @@ function cleanJSON(text: string): string {
  * Sends audio blob data to Gemini for transcription and analysis.
  */
 export async function generateAudioAnalysis(base64Audio: string, mimeType: string): Promise<AudioAnalysisResult> {
-    // UPDATED: Switched to 2.5 Flash as primary multimodal model
+    // Explicitly 2.5 Flash for multimodal stability
     const modelName = 'gemini-2.5-flash'; 
     const model = genAI.getGenerativeModel({ model: modelName });
 
@@ -215,7 +218,7 @@ export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHeal
     IMPORTANT: Return ONLY valid JSON. No Markdown.
     `;
 
-    const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-3.1-pro-preview');
     return JSON.parse(cleanJSON(text)) as SystemHealthAnalysis;
 }
 
@@ -242,7 +245,7 @@ export async function generateDeepPatternAnalysis(
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-3.1-pro-preview');
     return JSON.parse(cleanJSON(text)) as DeepPatternResult;
 }
 
@@ -290,11 +293,10 @@ export async function generateComparativeAnalysis(
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
-    // FIX: Forced 'gemini-2.5-pro' model to match working Deep Dive configuration
     const text = await generateWithCascade(
         systemPrompt + promptContext, 
         `comparative_analysis_${scope}`, 
-        'gemini-2.5-pro'
+        'gemini-3.1-pro-preview'
     );
     
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
@@ -316,7 +318,8 @@ export async function generateJournalAnalysis(content: string): Promise<AIAnalys
       Return ONLY raw JSON.
     `;
     
-    const text = await generateWithCascade(prompt, 'journal_analysis');
+    // Fast & cheap model for simple parsing tasks
+    const text = await generateWithCascade(prompt, 'journal_analysis', 'gemini-2.5-flash-lite');
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
@@ -349,7 +352,7 @@ export async function analyzeFullWorkbook(
     Return ONLY raw JSON.
     `;
 
-    const text = await generateWithCascade(prompt, 'workbook_analysis', 'gemini-2.5-pro');
+    const text = await generateWithCascade(prompt, 'workbook_analysis', 'gemini-3.1-pro-preview');
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
@@ -367,5 +370,6 @@ export async function getGeminiCoaching(
     Provide a brief, encouraging, and insightful comment (max 2 sentences). 
     `;
     
-    return await generateWithCascade(prompt, 'workbook_coach');
+    // Low latency model for instant chat-like feedback
+    return await generateWithCascade(prompt, 'workbook_coach', 'gemini-2.5-flash-lite');
 }
