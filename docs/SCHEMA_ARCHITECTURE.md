@@ -26,68 +26,34 @@ graph TD
 
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, Billing, & Settings.
-* **Fields:**
-    * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
-    * `sobrietyDate` (Timestamp): Metrics base.
-    * `role` (String): 'user' | 'admin'. Controls UI access.
-    * `tier` (String): 'free' | 'premium'. Controls feature access.
-    * `stripeCustomerId` (String): Reference for subscription management (Optional).
-    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
-    * `hasCompletedOnboarding` (Boolean): Determines if user needs forced routing to Profile setup.
-    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
+* **Fields:** `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `tier`, `sponsorName`, `lastExportAt`, `usage_limits` (Map).
 
 ### `journals/{entryId}`
 * **Purpose:** Daily logs, Vitality logs, and reflections.
-* **Fields:**
-    * `uid` (String): Owner ID.
-    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
-    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
-    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
-    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
-    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
-    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
+* **Fields:** `uid`, `content` (**ENCRYPTED BLOB**), `isEncrypted`, `moodScore` (Unencrypted), `sentiment`, `tags` (Unencrypted Array), `weather`.
 
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans.
 * **Encryption:** Unencrypted to allow background stats and streak evaluations.
-* **Fields:**
-    * `title` (String): Task name.
-    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
-    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
-    * `priority` (String): 'High' | 'Medium' | 'Low'.
-    * `status` (String): 'pending' | 'completed'.
-    * `currentStreak` (Int): Consecutive completions.
-    * `recurrence` (Map): The full `RecurrenceConfig` logic object (e.g., `{ type: 'monthly-relative', weekOfMonth: 1, dayOfWeek: 1 }`).
-    * `dueDate` & `lastCompletedAt` (Timestamp).
+* **Fields:** `title`, `category`, `source` ('manual' | 'ai'), `priority`, `status`, `currentStreak`, `recurrence` (Map), `dueDate`, `lastCompletedAt`.
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
 * **Fields:**
     * `type` (String): 'journal' | 'workbook'.
-    * `summary` (String): The AI's output.
-    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
-    * `strengths` & `risks` (Array): Listed points for UI rendering.
+    * `scope_context` (String): e.g., 'Deep Pattern Recognition'.
+    * `summary` (String): The AI's output narrative.
+    * `pillars` (Map): Legacy structural breakdown (understanding, growth, blind_spots).
+    * `key_themes` & `hidden_correlations` & `core_triggers` (Arrays): Extracted behavioral patterns.
+    * `relapse_risk_level` (String): 'Low' | 'Moderate' | 'High' | 'Critical'.
+    * `trajectory` (String): 'Improving' | 'Stable' | 'Declining' | 'Fluctuating'.
+    * `strengths` & `risks` (Arrays): Listed points for UI rendering.
     * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions.
 * **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:**
-    * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: Commit hash for version tracing.
-    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `vaultUnlocked`: Boolean.
-    * `route` & `userAgent`: Strings.
-
-### `service/{serviceId}` (Planned - Project 05)
-* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
+* **Fields:** `category`, `buildHash`, `environment`, `vaultUnlocked`, `route`, `userAgent`, `message`.
 
 ## 3. Query Strategy
 * **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.

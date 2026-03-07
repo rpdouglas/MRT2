@@ -1,9 +1,3 @@
-/**
- * src/pages/WorkbookSession.tsx
- * UPDATED: Zen Mode (Focus UI), Auto-Save Integration, Typography Plugin.
- * FIXED: Removed unused variables and invalid characters via Python generation.
- * UX: Replaced bottom nav with inline sticky toolbar for better mobile keyboard UX.
- */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -165,14 +159,14 @@ export default function WorkbookSession() {
         <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-hidden">
             
             {/* TOP BAR */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
+                <div className="flex items-center gap-3 sm:gap-4">
                     <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
-                        <XMarkIcon className="h-6 w-6" />
+                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                     <div className="flex flex-col">
-                        <h2 className="text-sm font-bold text-gray-900">{section.title}</h2>
-                        <span className="text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
+                        <h2 className="text-xs sm:text-sm font-bold text-gray-900">{section.title}</h2>
+                        <span className="text-[10px] sm:text-xs text-gray-400">Question {activeQuestionIndex + 1} of {section.questions.length}</span>
                     </div>
                 </div>
 
@@ -190,17 +184,16 @@ export default function WorkbookSession() {
                 </div>
             </div>
 
-            {/* SCROLLABLE CONTENT */}
-            <div className="flex-1 overflow-y-auto relative">
-                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            {/* SCROLLABLE CONTENT WITH DYNAMIC FLEXBOX */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-slate-50">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full flex-1 flex flex-col min-h-0">
                     
-                    {/* QUESTION / CONTENT */}
-                    <div className="prose prose-slate prose-lg max-w-none mb-8">
+                    {/* QUESTION / CONTENT (Shrink-0 protects it from the keyboard) */}
+                    <div className="prose prose-slate prose-base sm:prose-lg max-w-none mb-4 shrink-0">
                         {isIntroSlide ? (
-                           <div className="text-center py-10">
-                               <h1 className="text-3xl font-black text-gray-900 mb-6">{section.title}</h1>
-                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-10">{currentQuestion.text}</div>
-                               {/* Intro Slide specific Next Button */}
+                           <div className="text-center py-6 sm:py-10">
+                               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4 sm:mb-6">{section.title}</h1>
+                               <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-8 sm:mb-10 text-left sm:text-center px-2">{currentQuestion.text}</div>
                                <button 
                                    onClick={handleNext}
                                    className="inline-flex items-center gap-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
@@ -210,10 +203,10 @@ export default function WorkbookSession() {
                            </div>
                         ) : (
                            <div className="animate-fadeIn">
-                               <h3 className="text-xl font-bold text-gray-900 mb-4">{currentQuestion.text}</h3>
+                               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">{currentQuestion.text}</h3>
                                {currentQuestion.context && (
-                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-base">
-                                       <SparklesIcon className="h-5 w-5 inline mr-2 text-blue-500" />
+                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-sm sm:text-base">
+                                       <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5 inline mr-2 text-blue-500" />
                                        {currentQuestion.context}
                                    </blockquote>
                                )}
@@ -221,16 +214,16 @@ export default function WorkbookSession() {
                         )}
                     </div>
 
-                    {/* INPUT AREA WITH STICKY TOOLBAR */}
+                    {/* INPUT AREA WITH STICKY TOOLBAR (Flex-1 Min-H-0 allows dynamic shrinking) */}
                     {!isIntroSlide && (
-                        <div className="animate-slideUp flex flex-col relative">
+                        <div className="animate-slideUp flex flex-col relative flex-1 min-h-0">
                             
-                            {/* STICKY TOOLBAR */}
-                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-4">
+                            {/* STICKY TOOLBAR (Shrink-0) */}
+                            <div className="sticky top-0 z-20 flex justify-between items-center bg-slate-50/95 backdrop-blur-md py-2 sm:py-3 px-2 rounded-t-xl border-b border-gray-200 shadow-sm mb-2 shrink-0">
                                 <button 
                                     onClick={handlePrevious} 
                                     disabled={activeQuestionIndex === 0}
-                                    className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
+                                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg disabled:opacity-30 transition-colors"
                                 >
                                     Back
                                 </button>
@@ -239,45 +232,47 @@ export default function WorkbookSession() {
                                     <button 
                                         onClick={handleGetCoaching}
                                         disabled={aiCoachLoading || currentAnswer.length < 10}
-                                        className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors"
+                                        className="text-[10px] sm:text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 disabled:opacity-50 px-2 py-1.5 sm:py-2 rounded-lg hover:bg-purple-50 transition-colors"
                                     >
-                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-4 w-4" />
+                                        {aiCoachLoading ? "Thinking..." : "AI Insight"} <SparklesIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </button>
 
                                     <button 
                                         onClick={handleNext}
-                                        className="flex items-center gap-2 px-5 py-2 text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
+                                        className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 text-xs sm:text-sm bg-slate-900 text-white rounded-lg font-bold hover:bg-black transition-all shadow-md active:scale-95"
                                     >
                                         {activeQuestionIndex === section.questions.length - 1 ? 'Finish' : 'Next'} 
-                                        <ArrowRightIcon className="h-4 w-4" />
+                                        <ArrowRightIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </button>
                                 </div>
                             </div>
 
+                            {/* AI FEEDBACK (Shrink-0 so it pushes the textarea down, but stays visible) */}
+                            {aiFeedback && (
+                                <div className="mb-2 bg-purple-50 p-4 sm:p-6 rounded-xl border border-purple-100 animate-fadeIn shrink-0">
+                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2 text-xs sm:text-sm">
+                                        <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5" /> Insight
+                                    </h4>
+                                    <p className="text-purple-800 leading-relaxed text-xs sm:text-sm">{aiFeedback}</p>
+                                </div>
+                            )}
+
+                            {/* TEXTAREA (Flex-1 Resize-None lets it fill available space without breaking layout) */}
                             <textarea 
                                 value={currentAnswer}
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                                 placeholder="Reflect here..."
-                                className="w-full min-h-[40vh] p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                className="w-full flex-1 min-h-[150px] p-4 sm:p-6 rounded-b-xl border-2 border-gray-100 bg-white text-base sm:text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
                                 autoFocus
                             />
                             
-                            {/* AI FEEDBACK */}
-                            {aiFeedback && (
-                                <div className="mt-6 bg-purple-50 p-6 rounded-xl border border-purple-100 animate-fadeIn">
-                                    <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2">
-                                        <SparklesIcon className="h-5 w-5" /> Insight
-                                    </h4>
-                                    <p className="text-purple-800 leading-relaxed">{aiFeedback}</p>
-                                </div>
-                            )}
                         </div>
                     )}
 
                 </div>
             </div>
 
-            {/* Mobile Progress Bar (Moved from top to bottom for mobile only) */}
+            {/* Mobile Progress Bar (Moved to absolute bottom for mobile) */}
             <div className="sm:hidden w-full h-1 bg-gray-100 shrink-0">
                 <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
             </div>

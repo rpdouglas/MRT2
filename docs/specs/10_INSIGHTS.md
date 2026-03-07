@@ -1,29 +1,23 @@
 # 📐 Feature Spec: Insights Log
 
-**Status:** Live (v1.2)
+**Status:** Live (v2.0)
 **Context:** A timeline of AI-generated coaching and pattern analysis.
 
-## 1. Data Structure
+## 1. Data Structure (Expanded Schema)
 **Collection:** `insights`
-The log handles polymorphic data types:
+The log handles polymorphic data types with rich, AI-extracted arrays:
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `type` | String | 'journal' \| 'workbook' |
 | `summary` | String | AI narrative |
-| `pillars` | Map | Structured analysis (Growth, Blind Spots) |
+| `relapse_risk_level` | String | 'Low' \| 'Moderate' \| 'High' \| 'Critical' |
+| `trajectory` | String | 'Improving' \| 'Declining' etc. |
+| `hidden_correlations` | Array | Hidden links identified by Deep Pattern AI |
+| `key_themes` | Array | Recurring topics from Comparative analysis |
 | `suggested_actions` | Array | List of 3 recommended habits |
 
 ## 2. Features
-* **Polymorphic UI:** Renders different cards based on `type`.
-    * *Journal:* Shows Mood/Sentiment badges.
-    * *Workbook:* Shows Pillars (Understanding/Growth/Blind Spots).
-* **Action Integration:** "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date.
-* **Trend Indicators:** * `JournalInsights.tsx` calculates a rolling 30-day average mood.
-    * It compares [Day 0-30] vs [Day 31-60] to determine a trend direction (Improving, Declining, Stable).
-    * Displayed as a colored arrow on the Dashboard card.
-
-## 3. Verification
-* [ ] **Filtering:** Filter by "Journal" - do Workbook entries disappear?
-* [ ] **Action:** Click "Add to Quest". Does it appear in the Tasks list?
-* [ ] **Trend:** Add a high-mood journal entry for "Today". Does the average mood stat recalculate instantly?
+* **Bento Grid UI:** Renders the rich arrays into a high-density, multi-column "Bento Grid" using vibrant background colors (`bg-purple-50`, `bg-rose-50`, etc.) that align with the "Vibrant Momentum" design system.
+* **Action Integration:** "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date and the `ai` source tag.
+* **Graceful Degradation:** The UI safely checks for the presence of new arrays (`hidden_correlations`, etc.) and falls back cleanly for legacy insight documents that only utilized the generic `pillars` map.
