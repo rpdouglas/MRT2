@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Insights Log
 
-**Status:** Live (v2.0)
+**Status:** Live (v2.1)
 **Context:** A timeline of AI-generated coaching and pattern analysis.
 
 ## 1. Data Structure (Expanded Schema)
@@ -17,7 +17,10 @@ The log handles polymorphic data types with rich, AI-extracted arrays:
 | `key_themes` | Array | Recurring topics from Comparative analysis |
 | `suggested_actions` | Array | List of 3 recommended habits |
 
-## 2. Features
-* **Bento Grid UI:** Renders the rich arrays into a high-density, multi-column "Bento Grid" using vibrant background colors (`bg-purple-50`, `bg-rose-50`, etc.) that align with the "Vibrant Momentum" design system.
-* **Action Integration:** "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date and the `ai` source tag.
-* **Graceful Degradation:** The UI safely checks for the presence of new arrays (`hidden_correlations`, etc.) and falls back cleanly for legacy insight documents that only utilized the generic `pillars` map.
+## 2. UI Architecture & Navigation
+* **Collapsible Timeline:** To prevent cognitive overload, insights are passed through `groupItemsByYearAndMonth` and rendered as a grouped timeline. 
+* **Accordion Rows:** Each insight is wrapped in a `@headlessui/react` `<Disclosure>`. The collapsed header displays the Date, Scope Context, and Risk/Trajectory badges. 
+* **Bento Grid Panels:** Expanding the accordion reveals the high-density "Bento Grid" (Strengths, Risks, Key Themes, Hidden Links) using vibrant background colors (`bg-purple-50`, `bg-rose-50`) aligned with the "Vibrant Momentum" design system.
+
+## 3. Action Integration
+* "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date and the `ai` source tag. The UI explicitly disables these buttons upon click to prevent accidental duplicate task creation.
