@@ -1,62 +1,65 @@
 # 👥 Persona-Based Development Model
 
-Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, and technical environment.
+Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, fellowship culture, and technical environment.
 
 ## 🌍 The Users (The Recovery Journey)
-*Goal: Sobriety, Stability, and Growth*
 
 ### 1. "David" (The User in Crisis)
-* **Stage:** Day 1 to 30. Acute distress, high anxiety, cravings.
+* **Fellowship:** CA (Cocaine Anonymous)
+* **Stage:** Day 1 to 30. Relapsed after 2 years. Acute distress, high anxiety.
+* **Demographics:** 32, Tech-literate but currently cognitively overloaded.
+* **Environment:** Alone in his bedroom at 2 AM. Screen brightness is low.
 * **Goal:** De-escalate immediate urges. Access help instantly.
 * **UX Constraint:** **Zero Friction.**
     * *Rule:* No complex navigation. SOS button must be visible in < 1s.
-    * *Rule:* No login timeouts during active crisis usage.
-    * *Rule:* "Urge Log" must be accessible with 1 tap.
-* **Tech Needs:** Offline capability (PWA) is critical as they may be in poor signal areas.
+    * *Rule:* "Urge Log" and Voice-to-Vault must be accessible with 1 tap.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/david_headshot.png`
+    * `bio_feature`: `/assets/personas/david_bio.jpg`
+    * `full_body`: `/assets/personas/david_full.png`
+    * `looking_left`: `/assets/personas/david_left.png`
 
 ### 2. "Ned" (The Pink Cloud)
-* **Stage:** 30 to 90 Days. Optimistic, building habits, eager to track progress.
-* **Goal:** Gamification and streak tracking.
+* **Fellowship:** NA (Narcotics Anonymous)
+* **Stage:** 30 to 90 Days. Optimistic, manic energy, eager to track progress.
+* **Demographics:** 24, Digital Native. Expects high-fidelity UI and gamification.
+* **Environment:** At the gym, on the bus, constantly moving.
+* **Goal:** Gamification, clean-time tracking, and building daily habits.
 * **UX Constraint:** **Visual Reward.**
     * *Rule:* Dashboard must prominently display clean time/streaks.
     * *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
-    * *Rule:* Needs "Quick Add" for daily tasks to maintain momentum.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/ned_headshot.png`
+    * `bio_feature`: `/assets/personas/ned_bio.jpg`
+    * `full_body`: `/assets/personas/ned_full.png`
+    * `looking_left`: `/assets/personas/ned_left.png`
 
 ### 3. "Lisa" (The Service Superstar)
-* **Stage:** 7 Years (Maintenance). High-functioning, high-stress.
-* **Goal:** Manage sponsee commitments (Step 12) without burnout.
+* **Fellowship:** AA (Alcoholics Anonymous)
+* **Stage:** 7 Years (Maintenance). High-functioning, high-stress, sponsors 5 women.
+* **Demographics:** 45, Working professional, uses her phone primarily for communication/email.
+* **Environment:** In her car immediately after chairing a meeting.
+* **Goal:** Manage sponsee commitments (Step 12) without burning out.
 * **UX Constraint:** **Boundary Management.**
     * *Rule:* "Sponsee Dashboard" must organize commitments efficiently to reduce mental load.
-    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" to prevent compassion fatigue.
-    * *Rule:* UI must not be overwhelming or guilt-inducing; avoid complex scheduling tools that add stress.
+    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" (Vitality Module).
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/lisa_headshot.png`
+    * `bio_feature`: `/assets/personas/lisa_bio.jpg`
+    * `full_body`: `/assets/personas/lisa_full.png`
+    * `looking_left`: `/assets/personas/lisa_left.png`
 
-### 4. "Walt" (The Zen Master / Maintenance)
-* **Stage:** Years 1+. Stable, reflective, focused on service.
-* **Goal:** Deep journaling, analyzing long-term patterns, mentorship.
-* **UX Constraint:** **Data Sovereignty & Depth.**
-    * *Rule:* Export tools (PDF/JSON) must work perfectly for their archives.
-    * *Rule:* Encryption must be unbreakable but invisible.
-    * *Rule:* Features should focus on "Insights" and "Patterns" rather than simple streaks.
-
-## 🔐 Internal Actors (System & Security)
-
-### 5. "The Architect" (Admin/Developer)
-* **Goal:** Deploy safe code, manage schema, ensure uptime.
-* **Constraint:** **Zero-Knowledge Breach Prevention.**
-    * *Rule:* Never implement a feature that allows the server/admin to see the User PIN.
-    * *Rule:* Database maintenance scripts (migrations) must account for encrypted blobs.
-
-### 6. "The Recovery Coach" (The Gemini Agent)
-* **Role:** AI Analysis & Pattern Recognition.
-* **Goal:** Identify triggers in *decrypted* client-side text without storing the analysis permanently.
-* **Constraint:** **Privacy First.**
-    * *Rule:* AI never retains context between sessions.
-    * *Rule:* Data is analyzed in-memory or via secure stateless cloud functions, then discarded.
-
-## 📱 Hardware Contexts
-
-### 7. "The Mobile User" (Primary)
-* **Context:** 90% of usage is on mobile (PWA installed).
-* **Constraint:** **Thumb-Friendly UI.**
-    * *Rule:* Touch targets 44px+.
-    * *Rule:* Vitality logs (breathwork) must prevent screen sleep.
+### 4. "Walt" (The Zen Master)
+* **Fellowship:** Recovery Dharma
+* **Stage:** 35+ Years. Stable, reflective, focused on mindfulness and sangha.
+* **Demographics:** 68, Vietnam Vet. Prefers desktop/tablet. Lower tolerance for tiny touch targets.
+* **Environment:** Home office, morning coffee, using a tablet or desktop browser.
+* **Goal:** Deep journaling, analyzing long-term patterns, data sovereignty.
+* **UX Constraint:** **Data Sovereignty & Accessibility.**
+    * *Rule:* Touch targets must be 44px+. Text must be highly legible.
+    * *Rule:* Export tools (PDF/JSON) must work perfectly for his archives.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/walt_headshot.png`
+    * `bio_feature`: `/assets/personas/walt_bio.jpg`
+    * `full_body`: `/assets/personas/walt_full.png`
+    * `looking_left`: `/assets/personas/walt_left.png`
