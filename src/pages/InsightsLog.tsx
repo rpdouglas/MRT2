@@ -4,7 +4,9 @@ import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { useTaskOperations } from '../hooks/useTaskOperations'; 
-import { addDays } from 'date-fns';
+import { groupItemsByYearAndMonth } from '../lib/grouping';
+import { addDays, format } from 'date-fns';
+import { Disclosure, Transition } from '@headlessui/react';
 import { 
     LightBulbIcon, 
     SparklesIcon, 
@@ -17,10 +19,13 @@ import {
     AcademicCapIcon,
     LinkIcon,
     HashtagIcon,
-    BoltIcon
+    BoltIcon,
+    ChevronDownIcon,
+    ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
+    scope_context?: string;
     suggested_actions?: string[];
     actionableSteps?: string[];
     actionable_advice?: string[];
@@ -70,6 +75,10 @@ export default function InsightsLog() {
     const [filter, setFilter] = useState<'all' | 'journal' | 'workbook'>('all');
     const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
+    // Expand/Collapse State
+    const [expandedYears, setExpandedYears] = useState<Set<string>>(() => new Set([new Date().getFullYear().toString()]));
+    const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => new Set([`${new Date().getFullYear()}-${new Date().getMonth()}`]));
+
     const loadData = useCallback(async () => {
         if (!user) return;
         try {
@@ -103,7 +112,30 @@ export default function InsightsLog() {
         }
     };
 
+    const toggleYear = (year: string) => {
+        setExpandedYears(prev => {
+            const next = new Set(prev);
+            if (next.has(year)) next.delete(year);
+            else next.add(year);
+            return next;
+        });
+    };
+
+    const toggleMonth = (year: string, monthIndex: number) => {
+        const key = `${year}-${monthIndex}`;
+        setExpandedMonths(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
     const filteredInsights = insights.filter(item => filter === 'all' || item.type === filter);
+    
+    // Group Data
+    const groupedInsights = groupItemsByYearAndMonth(filteredInsights);
+    const sortedYears = Object.keys(groupedInsights).sort((a, b) => Number(b) - Number(a));
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading wisdom archive...</div>;
 
@@ -136,7 +168,7 @@ export default function InsightsLog() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-6 px-4 mt-6">
+            <div className="max-w-4xl mx-auto px-4 mt-8">
                 {filteredInsights.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
                         <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -145,144 +177,222 @@ export default function InsightsLog() {
                         <h3 className="text-lg font-bold text-gray-900">No Insights Yet</h3>
                     </div>
                 ) : (
-                    filteredInsights.map((insight) => {
-                        const insightData = insight as unknown as InsightWithActions;
-                        const actions = getActions(insight).slice(0, 3);
-                        const strengths = getStrengths(insight);
-                        const risks = getRisks(insight);
-                        
-                        const keyThemes = insightData.key_themes || [];
-                        const hiddenCorrelations = insightData.hidden_correlations || [];
-                        const triggers = insightData.core_triggers || [];
+                    <div className="space-y-6">
+                        {sortedYears.map(year => {
+                            const monthsInYear = groupedInsights[year];
+                            const sortedMonthIndexes = Object.keys(monthsInYear)
+                                .map(Number)
+                                .sort((a, b) => b - a);
+                            const yearTotal = sortedMonthIndexes.reduce((sum, mIndex) => sum + monthsInYear[mIndex].length, 0);
+                            const isYearExpanded = expandedYears.has(year);
 
-                        return (
-                            <div key={insight.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
-                                    <div className="flex items-center gap-2">
-                                        {insight.type === 'journal' ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase border border-blue-200">
-                                                <BookOpenIcon className="h-3 w-3" /> Journal
+                            return (
+                                <div key={year} className="mb-2">
+                                    <button 
+                                        onClick={() => toggleYear(year)} 
+                                        className="w-full flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded-lg transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-6 bg-fuchsia-800 rounded-full"></div>
+                                            <h2 className="text-xl font-black text-slate-800 tracking-tight">{year}</h2>
+                                            <span className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {isYearExpanded ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
                                             </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 uppercase border border-purple-200">
-                                                <AcademicCapIcon className="h-3 w-3" /> Workbook
-                                            </span>
-                                        )}
-                                        <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                            <CalendarDaysIcon className="h-3 w-3" />
-                                            {insight.createdAt.toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        {insightData.relapse_risk_level && (
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                                insightData.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
-                                                insightData.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                                insightData.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                                                'bg-red-100 text-red-700 border-red-200'
-                                            }`}>
-                                                {insightData.relapse_risk_level} Risk
-                                            </span>
-                                        )}
-                                        {insightData.trajectory && (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200">
-                                                {insightData.trajectory}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="p-5 space-y-5">
-                                    <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
-                                    
-                                    {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        
-                                        {strengths.length > 0 && (
-                                            <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                                <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                                </div>
-                                                <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {strengths.map((s, idx) => <li key={idx}>{s}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        
-                                        {risks.length > 0 && (
-                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
-                                                </div>
-                                                <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {risks.map((r, idx) => <li key={idx}>{r}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {keyThemes.length > 0 && (
-                                            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <HashtagIcon className="h-4 w-4" /> Key Themes
-                                                </div>
-                                                <ul className="text-xs text-blue-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {keyThemes.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {hiddenCorrelations.length > 0 && (
-                                            <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                                                <div className="text-rose-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <LinkIcon className="h-4 w-4" /> Hidden Links
-                                                </div>
-                                                <ul className="text-xs text-rose-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {hiddenCorrelations.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {triggers.length > 0 && (
-                                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                                <div className="text-amber-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                    <BoltIcon className="h-4 w-4" /> Triggers
-                                                </div>
-                                                <ul className="text-xs text-amber-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                    {triggers.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                    </div>
-
-                                    {/* ACTION PLAN SECTION */}
-                                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                                        <div className="text-purple-800 font-bold text-xs uppercase mb-3 flex items-center gap-1">
-                                            <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
                                         </div>
-                                        <ul className="space-y-2">
-                                            {actions.map((step, idx) => {
-                                                const isAdded = addedActions.has(step);
+                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+                                            {yearTotal} Insights
+                                        </span>
+                                    </button>
+
+                                    {isYearExpanded && (
+                                        <div className="mt-2 space-y-4">
+                                            {sortedMonthIndexes.map(monthIndex => {
+                                                const monthInsights = monthsInYear[monthIndex];
+                                                const monthName = format(new Date(Number(year), monthIndex), 'MMMM');
+                                                const isMonthExpanded = expandedMonths.has(`${year}-${monthIndex}`);
+
                                                 return (
-                                                    <li key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-sm text-purple-900">
-                                                        <span>{step}</span>
+                                                    <div key={`${year}-${monthIndex}`}>
                                                         <button 
-                                                            onClick={() => !isAdded && handleAddToTasks(step)}
-                                                            disabled={isAdded}
-                                                            className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}
+                                                            onClick={() => toggleMonth(year, monthIndex)} 
+                                                            className={`w-[calc(100%-1rem)] mx-auto flex items-center justify-between sticky top-0 z-10 backdrop-blur-sm py-2 px-3 mb-2 rounded-lg border shadow-sm transition-colors ${isMonthExpanded ? 'bg-fuchsia-50/95 border-fuchsia-200' : 'bg-white/95 border-gray-200 hover:bg-gray-50'}`}
                                                         >
-                                                            {isAdded ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                            <div className="flex items-center gap-2">
+                                                                {isMonthExpanded ? <ChevronDownIcon className="h-3 w-3 text-fuchsia-500" /> : <ChevronRightIcon className="h-3 w-3 text-gray-400" />}
+                                                                <div className="flex items-center gap-2">
+                                                                    <CalendarDaysIcon className={`h-4 w-4 ${isMonthExpanded ? 'text-fuchsia-600' : 'text-gray-400'}`} />
+                                                                    <h3 className={`text-sm font-bold uppercase tracking-wide ${isMonthExpanded ? 'text-fuchsia-900' : 'text-gray-600'}`}>{monthName}</h3>
+                                                                </div>
+                                                            </div>
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isMonthExpanded ? 'bg-fuchsia-200 text-fuchsia-800' : 'bg-gray-100 text-gray-500'}`}>
+                                                                {monthInsights.length}
+                                                            </span>
                                                         </button>
-                                                    </li>
+
+                                                        {isMonthExpanded && (
+                                                            <div className="ml-4 pl-3 sm:pl-6 border-l-2 border-fuchsia-100 py-2 space-y-4">
+                                                                {monthInsights.map(insight => {
+                                                                    const insightData = insight as unknown as InsightWithActions;
+                                                                    const actions = getActions(insight).slice(0, 3);
+                                                                    const strengths = getStrengths(insight);
+                                                                    const risks = getRisks(insight);
+                                                                    
+                                                                    const keyThemes = insightData.key_themes || [];
+                                                                    const hiddenCorrelations = insightData.hidden_correlations || [];
+                                                                    const triggers = insightData.core_triggers || [];
+                                                                    
+                                                                    const scopeContext = insightData.scope_context || (insight.type === 'journal' ? 'Journal Insight' : 'Workbook Insight');
+
+                                                                    return (
+                                                                        <Disclosure key={insight.id} as="div" className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                                                                            {({ open }) => (
+                                                                                <>
+                                                                                    <Disclosure.Button className="w-full flex justify-between items-center bg-gray-50/30 hover:bg-gray-50 px-4 py-3 sm:px-5 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 focus-visible:ring-inset">
+                                                                                        <div className="flex items-center gap-3">
+                                                                                            <div className={`p-2 rounded-xl border ${insight.type === 'journal' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
+                                                                                                {insight.type === 'journal' ? <BookOpenIcon className="h-4 w-4 sm:h-5 sm:w-5" /> : <AcademicCapIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <div className="text-sm font-bold text-gray-900 line-clamp-1">{scopeContext}</div>
+                                                                                                <div className="text-[10px] text-gray-500 font-medium">{insight.createdAt.toLocaleDateString()}</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2 sm:gap-3">
+                                                                                            {insightData.relapse_risk_level && (
+                                                                                                <span className={`hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                                                                                    insightData.relapse_risk_level === 'Low' ? 'bg-green-100 text-green-700 border-green-200' :
+                                                                                                    insightData.relapse_risk_level === 'Moderate' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                                                                    insightData.relapse_risk_level === 'High' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                                                                                                    'bg-red-100 text-red-700 border-red-200'
+                                                                                                }`}>
+                                                                                                    {insightData.relapse_risk_level} Risk
+                                                                                                </span>
+                                                                                            )}
+                                                                                            {insightData.trajectory && (
+                                                                                                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                                                                                    {insightData.trajectory}
+                                                                                                </span>
+                                                                                            )}
+                                                                                            <div className={`p-1.5 rounded-full transition-transform ${open ? 'bg-fuchsia-100 text-fuchsia-600 rotate-180' : 'bg-gray-100 text-gray-400'}`}>
+                                                                                                <ChevronDownIcon className="h-4 w-4" />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </Disclosure.Button>
+                                                                                    
+                                                                                    <Transition
+                                                                                        enter="transition duration-150 ease-out"
+                                                                                        enterFrom="transform scale-95 opacity-0"
+                                                                                        enterTo="transform scale-100 opacity-100"
+                                                                                        leave="transition duration-100 ease-out"
+                                                                                        leaveFrom="transform scale-100 opacity-100"
+                                                                                        leaveTo="transform scale-95 opacity-0"
+                                                                                    >
+                                                                                        <Disclosure.Panel className="p-4 sm:p-5 space-y-5 border-t border-gray-100 bg-white">
+                                                                                            <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
+                                                                                            
+                                                                                            {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
+                                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                                                                                
+                                                                                                {strengths.length > 0 && (
+                                                                                                    <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                                                                                                        <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <TrophyIcon className="h-4 w-4" /> Strengths & Wins
+                                                                                                        </div>
+                                                                                                        <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                                                                            {strengths.map((s, idx) => <li key={idx}>{s}</li>)}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                )}
+                                                                                                
+                                                                                                {risks.length > 0 && (
+                                                                                                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                                                                                                        <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
+                                                                                                        </div>
+                                                                                                        <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                                                                            {risks.map((r, idx) => <li key={idx}>{r}</li>)}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                                {keyThemes.length > 0 && (
+                                                                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                                                                        <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <HashtagIcon className="h-4 w-4" /> Key Themes
+                                                                                                        </div>
+                                                                                                        <ul className="text-xs text-blue-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                                                                            {keyThemes.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                                {hiddenCorrelations.length > 0 && (
+                                                                                                    <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                                                                                                        <div className="text-rose-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <LinkIcon className="h-4 w-4" /> Hidden Links
+                                                                                                        </div>
+                                                                                                        <ul className="text-xs text-rose-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                                                                            {hiddenCorrelations.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                                {triggers.length > 0 && (
+                                                                                                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                                                                                        <div className="text-amber-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <BoltIcon className="h-4 w-4" /> Triggers
+                                                                                                        </div>
+                                                                                                        <ul className="text-xs text-amber-900 leading-relaxed list-disc pl-4 space-y-1">
+                                                                                                            {triggers.map((w, idx) => <li key={idx}>{w}</li>)}
+                                                                                                        </ul>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                            </div>
+
+                                                                                            {/* ACTION PLAN SECTION */}
+                                                                                            {actions.length > 0 && (
+                                                                                                <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                                                                                    <div className="text-purple-800 font-bold text-xs uppercase mb-3 flex items-center gap-1">
+                                                                                                        <CheckCircleIcon className="h-4 w-4" /> Recommended Strategy
+                                                                                                    </div>
+                                                                                                    <ul className="space-y-2">
+                                                                                                        {actions.map((step, idx) => {
+                                                                                                            const isAdded = addedActions.has(step);
+                                                                                                            return (
+                                                                                                                <li key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-sm text-purple-900">
+                                                                                                                    <span>{step}</span>
+                                                                                                                    <button 
+                                                                                                                        onClick={() => !isAdded && handleAddToTasks(step)}
+                                                                                                                        disabled={isAdded}
+                                                                                                                        className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}
+                                                                                                                    >
+                                                                                                                        {isAdded ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                                                                                    </button>
+                                                                                                                </li>
+                                                                                                            );
+                                                                                                        })}
+                                                                                                    </ul>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </Disclosure.Panel>
+                                                                                    </Transition>
+                                                                                </>
+                                                                            )}
+                                                                        </Disclosure>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 );
                                             })}
-                                        </ul>
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        );
-                    })
+                            );
+                        })}
+                    </div>
                 )}
             </div>
         </div>
