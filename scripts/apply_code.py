@@ -7,116 +7,126 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 # =============================================================================
-# 1. docs/PERSONAS.md (Internal Developer & UX Guide)
+# 1. docs/ROADMAP.md
 # =============================================================================
-personas_content = r'''# 👥 Persona-Based Development Model
+roadmap_content = r'''# 🗺️ MRT Product Roadmap: "Forged in Fire"
 
-Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, fellowship culture, and technical environment.
+**Vision:** To build the world's most secure, persona-aware clinical recovery operating system.
 
-## 🌍 The Users (The Recovery Journey)
+## 📅 Q1/Q2 2026: Foundation & Polish (Completed)
+| Status | ID | Project Name | Owner | Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
+| 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
+| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
+| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search |
+| 🟢 **Done** | `PROJ-04.5`| **The Crucible** | Admin | Dogfooding, QA, & Virtuoso Log |
 
-### 1. "David" (The User in Crisis)
-* **Fellowship:** CA (Cocaine Anonymous)
-* **Stage:** Day 1 to 30. Relapsed after 2 years. Acute distress, high anxiety.
-* **Demographics:** 32, Tech-literate but currently cognitively overloaded.
-* **Environment:** Alone in his bedroom at 2 AM. Screen brightness is low.
-* **Goal:** De-escalate immediate urges. Access help instantly.
-* **UX Constraint:** **Zero Friction.**
-    * *Rule:* No complex navigation. SOS button must be visible in < 1s.
-    * *Rule:* "Urge Log" and Voice-to-Vault must be accessible with 1 tap.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/david_headshot.png`
-    * `bio_feature`: `/assets/personas/david_bio.jpg`
-    * `full_body`: `/assets/personas/david_full.png`
-    * `looking_left`: `/assets/personas/david_left.png`
+## 📅 Q3 2026: Launch & The Service Network (Active)
+| Status | ID | Project Name | Persona Focus | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟡 **Active** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing, and App Identity. |
+| ⚪ Planned | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep) & Push Notifications (`PROJ-11`). |
+| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex + "Secure Drop" P2P Sharing (`PROJ-12`). |
 
-### 2. "Ned" (The Pink Cloud)
-* **Fellowship:** NA (Narcotics Anonymous)
-* **Stage:** 30 to 90 Days. Optimistic, manic energy, eager to track progress.
-* **Demographics:** 24, Digital Native. Expects high-fidelity UI and gamification.
-* **Environment:** At the gym, on the bus, constantly moving.
-* **Goal:** Gamification, clean-time tracking, and building daily habits.
-* **UX Constraint:** **Visual Reward.**
-    * *Rule:* Dashboard must prominently display clean time/streaks.
-    * *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/ned_headshot.png`
-    * `bio_feature`: `/assets/personas/ned_bio.jpg`
-    * `full_body`: `/assets/personas/ned_full.png`
-    * `looking_left`: `/assets/personas/ned_left.png`
-
-### 3. "Lisa" (The Service Superstar)
-* **Fellowship:** AA (Alcoholics Anonymous)
-* **Stage:** 7 Years (Maintenance). High-functioning, high-stress, sponsors 5 women.
-* **Demographics:** 45, Working professional, uses her phone primarily for communication/email.
-* **Environment:** In her car immediately after chairing a meeting.
-* **Goal:** Manage sponsee commitments (Step 12) without burning out.
-* **UX Constraint:** **Boundary Management.**
-    * *Rule:* "Sponsee Dashboard" must organize commitments efficiently to reduce mental load.
-    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" (Vitality Module).
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/lisa_headshot.png`
-    * `bio_feature`: `/assets/personas/lisa_bio.jpg`
-    * `full_body`: `/assets/personas/lisa_full.png`
-    * `looking_left`: `/assets/personas/lisa_left.png`
-
-### 4. "Walt" (The Zen Master)
-* **Fellowship:** Recovery Dharma
-* **Stage:** 35+ Years. Stable, reflective, focused on mindfulness and sangha.
-* **Demographics:** 68, Vietnam Vet. Prefers desktop/tablet. Lower tolerance for tiny touch targets.
-* **Environment:** Home office, morning coffee, using a tablet or desktop browser.
-* **Goal:** Deep journaling, analyzing long-term patterns, data sovereignty.
-* **UX Constraint:** **Data Sovereignty & Accessibility.**
-    * *Rule:* Touch targets must be 44px+. Text must be highly legible.
-    * *Rule:* Export tools (PDF/JSON) must work perfectly for his archives.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/walt_headshot.png`
-    * `bio_feature`: `/assets/personas/walt_bio.jpg`
-    * `full_body`: `/assets/personas/walt_full.png`
-    * `looking_left`: `/assets/personas/walt_left.png`
+## 📅 Q4 2026: Crisis, Momentum, & Monetization (Planned)
+| Status | ID | Project Name | Persona Focus | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-10` | **Crisis & Momentum**| David / Ned | Interactive Urge Surfer + Financial Freedom Calculator (`PROJ-13`). |
+| ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal) + Encrypted Photo Media (`PROJ-06`). |
+| ⚪ Planned | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management (Free vs Premium), & Paywalls. |
 '''
 
 # =============================================================================
-# 2. docs/business/06_PERSONA_PLAYBOOK.md (Marketing Guide)
+# 2. docs/SPRINT_BOARD.md
 # =============================================================================
-playbook_content = r'''# 🎭 The Persona Playbook (Story-Driven Marketing)
+sprint_board_content = r'''# 🏃 Active Sprint Board
 
-**Strategy:** Recovery isn't a straight line; it's a million different stories. We market MRT by showing how it adapts to four distinct stages and fellowships of recovery.
+**Current Phase:** Sprint 5.0 (Active)
 
-## 1. David (The Fresh Starter - CA Focus)
-* **The Stage:** Day 1. Relapsed after 2 years sober.
-* **The Pain Point:** Crushing shame. Isolation. The physical anxiety of early detox.
-* **Internal Monologue:** *"I can't believe I'm back here. I can't look my sponsor in the eye. I need help but I'm too ashamed to speak."*
-* **The MRT Solution:** * **The Vault:** Absolute, Zero-Knowledge privacy to process his shame without judgment.
-    * **The SOS Button:** A 1-tap lifeline at 2 AM when cravings hit.
-* **Marketing Vibe:** "Sky Blue" - Hopeful, safe, a gentle reset. *What if the bravest first step you can take is a private one?*
+## ✅ Completed Sprints
+- [x] **Sprints 1-3:** Foundation, Auth, Journal Engine, Encryption.
+- [x] **Sprint 4.0:** Sector 4: The Ledger (Tasks) fully scaled and time-zone hardened.
+- [x] **Sprint 4.5:** Sector 5: The Pulse (Vitality) organic engine and haptics deployed.
+- [x] **Sprint 4.8:** "The Crucible: Dogfooding & Polish". Fixed mobile UX, grouped Insights UI, and aligned Gemini models.
 
-## 2. Ned (The Pink Cloud Pro - NA Focus)
-* **The Stage:** 90 Days. 
-* **The Pain Point:** Manic energy. Wants to fix his whole life today. High risk of overcommitting, crashing, and burning out.
-* **Internal Monologue:** *"I feel amazing! I'm going to the gym twice a day, going to 90 meetings in 90 days, and starting a business!"*
-* **The MRT Solution:**
-    * **The Ledger (Tasks):** Channels his wild energy into structured, grounded daily momentum.
-    * **Smart Resets:** Forgives missed tasks to prevent the shame-spiral of "schedule debt" when he inevitably drops a ball.
-* **Marketing Vibe:** Action-oriented, vibrant. Turning chaotic gratitude into grounded momentum.
+## 🟡 Sprint 5.0: The Expansion (Active)
+*Current Focus: Finalizing The GTM Engine, Privacy Tools, and Link Routing.*
 
-## 3. Lisa (The Service Superstar - AA Focus)
-* **The Stage:** 7 Years. Sponsors 5 women.
-* **The Pain Point:** Burnout. Running on fumes. Saving everyone else but neglecting her own Step 10 & 11 maintenance. Resentments building up.
-* **Internal Monologue:** *"I've been on the phone with sponsees for three hours. I'm exhausted, but if I don't help them, who will? I haven't meditated in weeks."*
-* **The MRT Solution:**
-    * **The Pulse (Breathwork):** Immediate somatic regulation to find quiet in the chaos.
-    * **The Vault:** A safe, locked place to vent her own resentments about the fellowship without violating her sponsees' trust.
-* **Marketing Vibe:** "Warm Amber" - Calm, self-care focused. *If service is key to recovery, is self-care the key to service?*
+### 🏃 In Progress (Active Sprint)
+- [ ] **PROJ-09.1:** Native `/links` Route (Social Media funnel bypassing Linktree).
+- [ ] **PROJ-09.2:** Account Deletion Flow (The "Right to be Forgotten" recursive Firestore wipe).
 
-## 4. Walt (The Grand Sponsor - Recovery Dharma Focus)
-* **The Stage:** 35+ Years. Vietnam Vet. 
-* **The Pain Point:** Subtle complacency. The shift from "maintaining sobriety" to "active spiritual growth." Hard to see his own patterns after decades.
-* **Internal Monologue:** *"I haven't had an urge to drink in 30 years, but why am I so irritable with my wife this month? What am I missing?"*
-* **The MRT Solution:**
-    * **The Compass (AI Insights):** Scans his entries to find hidden emotional velocity and blind spots he missed in his mindfulness practice.
-    * **Data Sovereignty:** Exporting his journals to leave a spiritual legacy.
-* **Marketing Vibe:** Deep wisdom, introspection. *How does technology support your path to deeper liberation?*
+### 🧊 Backlog (Up Next)
+- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
+- [ ] **PROJ-10:** Crisis & Momentum (Urge Surfer + Freedom Calculator)
+- [ ] **PROJ-14:** The Deep Mind (Local RAG + Rich Media support)
+- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
+- [ ] **PROJ-15:** The Checkout Engine (Stripe Integration & Paywalls)
+'''
+
+# =============================================================================
+# 3. docs/projects/15_MONETIZATION_ENGINE.md
+# =============================================================================
+monetization_content = r'''# 📁 Project 15: The Checkout Engine (Freemium)
+
+**Status:** ⚪ Planned
+**Primary Persona:** All 
+**Objective:** Implement Stripe billing, manage user subscription tiers (Free vs Premium), and gracefully enforce feature paywalls without inducing user stress.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** David (Crisis), I want the core tools (Journal, SOS, Pulse) to be completely free so I can get immediate help without a credit card.
+* **As** Walt/Lisa (Maintenance), I am willing to pay for advanced, cost-heavy features like unlimited AI pattern recognition, PDF exports, and the Service Rolodex to support the app's development.
+
+**Business Alignment:** Matches the `freemium.md` marketing strategy. Free users get 1 "Analysis Wizard" run per week. Premium users get unlimited access.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** Stripe manages all credit card data off-platform. We only store the `stripeCustomerId` and `tier` status in our database.
+* [x] **Encryption Strategy:** Billing metadata is unencrypted to allow server-side webhooks to update the account status without needing the user's PIN.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Firestore Collections Impacted:**
+* `users`: New fields for subscription management.
+
+**Types (`src/lib/db.ts`):**
+__FENCE__typescript
+export interface UserProfile {
+  // ... existing fields
+  tier?: 'free' | 'premium';
+  stripeCustomerId?: string;
+  subscriptionStatus?: 'active' | 'past_due' | 'canceled';
+  subscriptionPeriodEnd?: Timestamp;
+}
+__FENCE__
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Stripe Configuration & Webhooks (Backend)
+* Create Stripe products (Monthly / Annual).
+* Set up a Firebase Cloud Function to listen for Stripe Webhooks (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`).
+* Write webhook logic to update the `tier` and `subscriptionStatus` on the user's Firestore document.
+
+### Phase 2: Checkout UI & Portal (Frontend)
+* Create a `/premium` upgrade page outlining the benefits.
+* Implement Stripe Checkout redirect.
+* Implement Stripe Customer Portal redirect so users can easily cancel or update cards.
+
+### Phase 3: The Paywall Enforcers (Logic)
+* **The Compass:** Update `JournalAnalysisWizard.tsx` to check `userProfile.tier`. If `free`, enforce the `lastWeeklyInsight` timestamp check. If `premium`, bypass the check.
+* **The Rolodex:** Lock the `/service` route behind a Premium check.
+* **Data Sovereignty:** Ensure the JSON export remains free (core right), but PDF generation is restricted to Premium.
+
+### Phase 4: Graceful Degradation
+* **Somatic Check:** If a user's card fails and they drop to `free`, do NOT delete their Premium data (like Sponsee notes). Simply lock the UI to "Read Only" mode until they reactivate.
 '''
 
 def write_file(relative_path, content):
@@ -127,7 +137,8 @@ def write_file(relative_path, content):
     print(f"✅ Synced: {absolute_path}")
 
 if __name__ == "__main__":
-    print("🚀 Fleshing out Personas and Asset Metadata...")
-    write_file("docs/PERSONAS.md", personas_content)
-    write_file("docs/business/06_PERSONA_PLAYBOOK.md", playbook_content)
-    print("✨ Documentation successfully updated with Fellowship alignment and Empathy Mapping.")
+    print("🚀 Patching Strategic Gaps...")
+    write_file("docs/ROADMAP.md", roadmap_content)
+    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
+    write_file("docs/projects/15_MONETIZATION_ENGINE.md", monetization_content)
+    print("✨ Documentation successfully updated. Gaps patched.")

@@ -14,12 +14,13 @@
 ## 📅 Q3 2026: Launch & The Service Network (Active)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite into a high-converting Persona sales funnel. |
+| 🟡 **Active** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing, and App Identity. |
 | ⚪ Planned | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep) & Push Notifications (`PROJ-11`). |
 | ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex + "Secure Drop" P2P Sharing (`PROJ-12`). |
 
-## 📅 Q4 2026: Crisis, Momentum, & Intelligence (Planned)
+## 📅 Q4 2026: Crisis, Momentum, & Monetization (Planned)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-10` | **Crisis & Momentum**| David / Ned | Interactive Urge Surfer + Financial Freedom Calculator (`PROJ-13`). |
 | ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal) + Encrypted Photo Media (`PROJ-06`). |
+| ⚪ Planned | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management (Free vs Premium), & Paywalls. |
