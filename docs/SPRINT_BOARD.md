@@ -13,7 +13,7 @@
 
 ### 🏃 In Progress (Active Sprint)
 - [ ] **PROJ-09.1:** Native `/links` Route (Social Media funnel bypassing Linktree).
-- [ ] **PROJ-09.2:** Account Deletion Flow (The "Right to be Forgotten" recursive Firestore wipe).
+- [x] **PROJ-09.2:** Account Deletion Flow (The "Right to be Forgotten" recursive Firestore wipe).
 
 ### 🧊 Backlog (Up Next)
 - [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)

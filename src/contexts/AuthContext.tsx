@@ -1,7 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [AuthContext.tsx]
- * UPDATED: Added 'isAdmin' flag derived from the Firestore UserProfile.
+ * UPDATED: Added re-auth and account deletion methods to support the Right to be Forgotten flow.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
@@ -11,6 +11,10 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  deleteUser,
   type User 
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -24,6 +28,9 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   signupWithEmail: (email: string, pass: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
+  reauthenticateWithEmail: (password: string) => Promise<void>;
+  reauthenticateWithGoogle: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -94,6 +101,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
+  const reauthenticateWithEmail = async (password: string) => {
+      if (!auth || !user || !user.email) throw new Error("Not authenticated");
+      const credential = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, credential);
+  };
+
+  const reauthenticateWithGoogle = async () => {
+      if (!auth || !user) throw new Error("Not authenticated");
+      const provider = new GoogleAuthProvider();
+      provider.addScope('https://www.googleapis.com/auth/drive.file');
+      await reauthenticateWithPopup(user, provider);
+  };
+
+  const deleteAccount = async () => {
+      if (!auth || !user) throw new Error("Not authenticated");
+      await deleteUser(user);
+      setUser(null);
+  };
+
   const logout = async () => {
     if (!auth) return;
     await signOut(auth);
@@ -107,6 +133,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loginWithGoogle,
     signupWithEmail,
     loginWithEmail,
+    reauthenticateWithEmail,
+    reauthenticateWithGoogle,
+    deleteAccount,
     logout
   };
 

@@ -1,6 +1,6 @@
 # ☁️ Data Export & Cloud Sync
 
-You own your recovery data. MRT provides multiple ways to ensure you never lose it, even if you lose your phone.
+You own your recovery data. MRT provides multiple ways to ensure you never lose it, even if you lose your phone, or completely remove it if you wish to leave.
 
 ## 1. Google Drive Auto-Sync
 If you created your account using **Google Sign-In**, MRT can automatically back up your data.
@@ -17,5 +17,9 @@ You can manually export your data at any time from the **Profile -> Data** tab.
 ## 3. Import Legacy Data
 If you have a JSON backup file, you can upload it in the **Data** tab to merge old entries into your current timeline.
 
-## 4. Account Deletion
-You have the "Right to be Forgotten." Clicking **Log Out** at the bottom of your profile signs you out. If you wish to permanently destroy your account and wipe all data from our servers, contact support or use the deletion tools (coming soon).
+## 4. Account Deletion (The Right to be Forgotten)
+If you wish to permanently destroy your account and wipe all data from our servers, you can do so directly from the app.
+1. Navigate to **Profile -> Data**.
+2. Scroll down to the red **Danger Zone** and click **Request Account Deletion**.
+3. To protect against unauthorized deletion, the app will ask you to **verify your password** or **re-verify with Google**.
+4. Once verified, the app will cryptographically shred all of your journals, tasks, and settings before permanently deleting your account. **This action cannot be undone.**
