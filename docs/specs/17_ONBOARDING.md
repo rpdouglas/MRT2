@@ -1,7 +1,7 @@
 # 📐 Feature Spec: Onboarding & The Gates
 
-**Status:** Live (Sprint 1)
-**Access Level:** Free
+**Status:** Live (Sprint 5)
+**Access Level:** Free / Public
 
 ## 1. The "Why" (User Story)
 * **As a:** New user ("David" or "Ned")
@@ -21,11 +21,15 @@
 * Users can cleanly toggle between "Sign In" and "Create Account".
 * The "Create Account" tab dynamically reveals "Confirm Password" and "Privacy Guarantee" trust badges.
 
-### C. The Forced Redirect (The Trap)
+### C. The Native Link Tree (`/links`)
+* **Purpose:** A standalone, database-free public route designed to capture social media traffic (Instagram/TikTok bio links) and direct them to the app, the VitePress guide, or support.
+* **Architecture:** Bypasses the `PrivateRoute` wrapper. Uses hardcoded `LinkItem` data to ensure instantaneous load times even on poor 3G connections.
+
+### D. The Forced Redirect (The Trap)
 * **Logic:** Upon successful login/signup, the app checks `userProfile.hasCompletedOnboarding`.
 * **Action:** If `false` (or missing), the user is routed to `/profile`.
 * **Requirement:** They must enter a Display Name and Sobriety Date. Once saved, `hasCompletedOnboarding` is set to `true`, releasing them to the Dashboard.
 
 ## 3. Technical Architecture
 * **Data Model:** Checks and updates `users/{uid}` collection.
-* **Routing:** Uses React Router DOM inside a `useEffect` authentication listener.
+* **Routing:** Uses React Router DOM inside a `useEffect` authentication listener for private routes.
