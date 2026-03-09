@@ -1,6 +1,6 @@
 /**
  * src/App.tsx
- * UPDATED: PROJ-04 Sprint 3 (Removed UserGuide route, migrated to VitePress)
+ * UPDATED: Added /links public route for social media traffic (PROJ-09.1).
  */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { EncryptionProvider } from './contexts/EncryptionContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome'; 
+import Links from './pages/Links'; // NEW
 import Dashboard from './pages/Dashboard';
 import DebugTools from './pages/DebugTools';
 import Journal from './pages/Journal';
@@ -70,6 +71,7 @@ export default function App() {
                         {/* PUBLIC ROUTES */}
                         <Route path="/" element={<Welcome />} />
                         <Route path="/login" element={<Login />} />
+                        <Route path="/links" element={<Links />} />
                         
                         {/* PROTECTED ROUTES */}
                         <Route
