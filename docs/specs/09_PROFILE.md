@@ -1,13 +1,13 @@
 # 📐 Feature Spec: Profile & Data Sovereignty
 
-**Status:** Live (v2.0)
+**Status:** Live (v2.1)
 **Context:** User identity, settings, security, and data portability.
 
 ## 1. UI Architecture (The Tabbed View)
 The Profile is split into three distinct horizontal tabs to manage complexity and isolate sensitive flows:
 * **General:** Display Name, Sobriety Date, Sponsor Info. Also includes the prominent link to the external User Guide. *(Note: During initial onboarding, the app forces the user into this tab and hides the navigation until saved).*
 * **Security:** PIN Management and Vault Rotation flows.
-* **Data:** Google Drive Auto-Sync status, JSON Export, PDF Export, and Legacy Data Import.
+* **Data:** Google Drive Auto-Sync status, JSON Export, PDF Export, Legacy Data Import, and Account Deletion.
 
 ## 2. Support Network
 * **Fields:** `sponsorName`, `sponsorPhone`.
@@ -37,7 +37,18 @@ The Profile is split into three distinct horizontal tabs to manage complexity an
 * **Legacy Support:** Maps older data structures to the current schema automatically.
 * **Safety:** Flags imported entries as `isEncrypted: false`. The next time the user edits and saves them, they are encrypted with the active vault key.
 
-## 6. Verification
-* [ ] **Onboarding Lock:** Does a new user get forced to the General tab with the other tabs hidden?
-* [ ] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
-* [ ] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
+## 6. The Annihilation Engine (Account Deletion)
+**Philosophy:** The "Right to be Forgotten."
+* **Location:** `src/lib/deletion.ts` -> `executeTotalAccountAnnihilation`
+* **Firebase Constraint:** Firebase Auth throws `auth/requires-recent-login` for destructive actions if the session is stale.
+* **The Flow:**
+    1. User clicks "Request Account Deletion" in the Danger Zone.
+    2. A modal intercepts the request and forces **Re-Authentication** (Email/Password or Google OAuth) to refresh the token.
+    3. The client-side script recursively queries and chunks `batch.delete()` operations across `journals`, `tasks`, `insights`, `ai_logs`, `feedback`, and all user subcollections.
+    4. Once Firestore is completely scrubbed, `deleteUser()` is called to destroy the Auth record.
+
+## 7. Verification
+* [x] **Onboarding Lock:** Does a new user get forced to the General tab with the other tabs hidden?
+* [x] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
+* [x] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
+* [x] **Deletion:** Ensure deleting an account does not leave orphaned records in the `feedback` or `ai_logs` collections.

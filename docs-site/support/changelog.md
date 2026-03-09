@@ -2,6 +2,10 @@
 
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
+### v1.3.1 (The Privacy & Sovereignty Update)
+* **New:** **Right to be Forgotten:** You now have complete, automated control over your data. You can permanently delete your account directly from the Profile Data tab. The system will cryptographically shred all your encrypted journals, tasks, and analytics before removing your identity.
+* **Security:** Added a forced re-authentication step before account deletion to protect against unauthorized data destruction.
+
 ### v1.3.0 (The Wisdom & Intelligence Update)
 * **New:** **Gemini 3.1 Pro Upgrade:** The "Analysis Wizard" and "Compass" now utilize Google's latest Gemini 3.1 Pro model for incredibly deep, highly accurate pattern recognition across your journal and workbook history.
 * **New:** **Lightning Fast Coaching:** The "AI Insight" coach in workbooks now utilizes *Flash-Lite*, providing near-instantaneous feedback and guidance while you write.
