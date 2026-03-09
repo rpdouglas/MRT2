@@ -14,9 +14,9 @@
 ## 📅 Q3 2026: Launch & The Service Network (Active)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing, and App Identity. |
+| 🟢 **Done** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing, and App Identity. |
+| 🟡 **Active** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex + "Secure Drop" P2P Sharing (`PROJ-12`). |
 | ⚪ Planned | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep) & Push Notifications (`PROJ-11`). |
-| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex + "Secure Drop" P2P Sharing (`PROJ-12`). |
 
 ## 📅 Q4 2026: Crisis, Momentum, & Monetization (Planned)
 | Status | ID | Project Name | Persona Focus | Description |

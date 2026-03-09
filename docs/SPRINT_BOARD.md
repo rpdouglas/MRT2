@@ -9,15 +9,18 @@
 - [x] **Sprint 4.8:** "The Crucible: Dogfooding & Polish". Fixed mobile UX, grouped Insights UI, and aligned Gemini models.
 
 ## 🟡 Sprint 5.0: The Expansion (Active)
-*Current Focus: Finalizing The GTM Engine, Privacy Tools, and Link Routing.*
+*Current Focus: Transitioning from The GTM Engine to The Service Network.*
 
-### 🏃 In Progress (Active Sprint)
-- [ ] **PROJ-09.1:** Native `/links` Route (Social Media funnel bypassing Linktree).
+### ✅ Completed in this Sprint
+- [x] **PROJ-09.1:** Native `/links` Route (Social Media funnel bypassing Linktree).
 - [x] **PROJ-09.2:** Account Deletion Flow (The "Right to be Forgotten" recursive Firestore wipe).
+- [x] **PROJ-09:** The GTM Engine (VitePress Rewrite, Personas, & Public Landing Page).
+
+### 🏃 In Progress (Active Focus)
+- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
 
 ### 🧊 Backlog (Up Next)
-- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
+- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
 - [ ] **PROJ-10:** Crisis & Momentum (Urge Surfer + Freedom Calculator)
 - [ ] **PROJ-14:** The Deep Mind (Local RAG + Rich Media support)
-- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
 - [ ] **PROJ-15:** The Checkout Engine (Stripe Integration & Paywalls)
