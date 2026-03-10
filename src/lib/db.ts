@@ -1,6 +1,6 @@
 /**
  * src/lib/db.ts
- * UPDATED: Added hasCompletedOnboarding to UserProfile for Sprint 1 Ticket 1.3.
+ * UPDATED: Added Stripe monetization fields and tier tracking for PROJ-15.
  */
 import { 
   doc, 
@@ -63,6 +63,11 @@ export interface UserProfile {
     lastMonthlyInsight?: Timestamp;
     lastDeepDive?: Timestamp;
   };
+  // NEW: Monetization Fields
+  tier?: 'free' | 'premium';
+  stripeCustomerId?: string;
+  subscriptionStatus?: 'active' | 'past_due' | 'canceled';
+  subscriptionPeriodEnd?: Timestamp;
 }
 
 export interface JournalTemplate {
@@ -108,13 +113,12 @@ export interface Task {
   source?: 'manual' | 'ai'; 
 }
 
-// PROMOTED INTERFACE (Project 03)
 export interface WorkbookAnswer {
   uid: string;
   workbookId: string;
   sectionId: string;
   questionId: string;
-  answer: string; // Encrypted Ciphertext
+  answer: string; 
   isEncrypted: boolean;
   updatedAt: Timestamp | Date;
 }
@@ -154,7 +158,8 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       createdAt: Timestamp.now(),
       lastLogin: Timestamp.now(),
       role: 'user',
-      hasCompletedOnboarding: false
+      hasCompletedOnboarding: false,
+      tier: 'free' // Default new users to free tier
     };
     await setDoc(userRef, newProfile);
     return newProfile;
@@ -258,23 +263,18 @@ export async function fetchAllUserData(uid: string): Promise<FullUserData> {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;
 
-  // 1. Profile
   const profile = await getProfile(uid);
 
-  // 2. Journals
   const journalsQ = query(collection(database, 'journals'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
   const journalsSnap = await getDocs(journalsQ);
   const journals = journalsSnap.docs.map(d => ({ id: d.id, ...d.data() } as JournalEntry));
 
-  // 3. Tasks
   const tasksQ = query(collection(database, 'tasks'), where('uid', '==', uid));
   const tasksSnap = await getDocs(tasksQ);
   const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as Task));
 
-  // 4. Templates
   const templates = await getUserTemplates(uid);
 
-  // 5. Workbook Answers
   const wbQ = query(collection(database, 'users', uid, 'workbook_answers'));
   const wbSnap = await getDocs(wbQ);
   const workbookAnswers = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
