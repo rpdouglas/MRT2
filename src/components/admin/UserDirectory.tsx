@@ -1,142 +1,209 @@
-/**
- * src/components/admin/UserDirectory.tsx
- * GITHUB COMMENT:
- * [UserDirectory.tsx]
- * FIX: Resolved implicit 'any' type errors for strict mode compliance.
- */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
+import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
+import type { UserProfile } from '../../lib/db';
 import { 
-    collection, 
-    getDocs, 
-    updateDoc, 
-    doc, 
-    type Firestore,
-    Timestamp 
-} from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { TableVirtuoso } from 'react-virtuoso';
-import { 
-    UserCircleIcon, 
-    ClockIcon, 
-    MagnifyingGlassIcon 
-} from '@heroicons/react/24/outline';
-
-interface UserMeta {
-    uid: string;
-    email: string;
-    displayName: string;
-    role?: 'user' | 'admin';
-    lastLogin?: Timestamp;
-    createdAt?: Timestamp;
-}
+    StarIcon, 
+    CheckCircleIcon, 
+    UserIcon,
+    ArrowPathIcon,
+    ClockIcon,
+    ShieldCheckIcon,
+    UserMinusIcon
+} from '@heroicons/react/24/solid';
 
 export default function UserDirectory() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const queryClient = useQueryClient();
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const { data: users = [], isLoading } = useQuery({
-        queryKey: ['admin_users'],
-        queryFn: async () => {
-            if (!db) return [];
-            const database: Firestore = db;
-            const snap = await getDocs(collection(database, 'users'));
-            const data = snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserMeta));
-            // Sort Descending by Last Login
-            return data.sort((a, b) => {
-                const timeA = a.lastLogin?.toMillis() || 0;
-                const timeB = b.lastLogin?.toMillis() || 0;
-                return timeB - timeA;
-            });
-        }
-    });
-
-    const toggleRole = async (uid: string, currentRole?: string) => {
+    const fetchUsers = async () => {
         if (!db) return;
-        if (!confirm(`Are you sure you want to change this user's role?`)) return;
-
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        setLoading(true);
+        const database: Firestore = db;
         try {
-            await updateDoc(doc(db, 'users', uid), { role: newRole });
-            queryClient.invalidateQueries({ queryKey: ['admin_users'] });
-        } catch (e) {
-            console.error("Failed to update role", e);
-            alert("Error updating role.");
+            const usersRef = collection(database, 'users');
+            const q = query(usersRef, orderBy('lastLogin', 'desc'));
+            const snapshot = await getDocs(q);
+            const loadedUsers = snapshot.docs.map(d => d.data() as UserProfile);
+            setUsers(loadedUsers);
+        } catch (err: unknown) {
+            console.error("Failed to fetch users", err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const filteredUsers = users.filter((u: UserMeta) => 
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        u.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
-    if (isLoading) return <div className="p-8 text-center text-gray-400">Loading directory...</div>;
+    // --- ROLE MANAGEMENT ---
+    const handleUpdateRole = async (uid: string, newRole: 'admin' | 'user') => {
+        if (!db) return;
+        const confirmMsg = newRole === 'admin' 
+            ? "Promote this user to Admin? They will have full access to this dashboard." 
+            : "Demote this user to standard User?";
+        if (!window.confirm(confirmMsg)) return;
+
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { role: newRole });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+        } catch (err: unknown) {
+            console.error("Failed to update role", err);
+            alert("Failed to update user role.");
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // --- TIER MANAGEMENT ---
+    const handleGrantVIP = async (uid: string) => {
+        if (!db) return;
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { tier: 'premium', tierSource: 'manual' });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'premium', tierSource: 'manual' } : u));
+        } catch (err: unknown) {
+            console.error("Failed to grant VIP", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleRevokeVIP = async (uid: string) => {
+        if (!db) return;
+        if (!window.confirm("Revoke VIP access?")) return;
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { tier: 'free', tierSource: null });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'free', tierSource: undefined } : u));
+        } catch (err: unknown) {
+            console.error("Failed to revoke VIP", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const renderTierBadge = (user: UserProfile) => {
+        if (user.tier === 'premium') {
+            if (user.tierSource === 'manual') {
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                        <StarIcon className="h-3 w-3" /> VIP
+                    </span>
+                );
+            }
+            return (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <CheckCircleIcon className="h-3 w-3" /> Supporter
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                <UserIcon className="h-3 w-3 text-gray-400" /> Free
+            </span>
+        );
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12">
+                <ArrowPathIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+                <p className="text-gray-500 font-medium">Loading user directory...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden h-[600px] flex flex-col">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center gap-4 shrink-0">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                    <UserCircleIcon className="h-5 w-5 text-indigo-600" />
-                    User Directory ({users.length})
-                </h3>
-                <div className="relative">
-                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 absolute left-3 top-2.5" />
-                    <input 
-                        type="text" 
-                        placeholder="Search users..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-64"
-                    />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
+                    <p className="text-sm text-gray-500">Full management of roles, tiers, and activity.</p>
+                </div>
+                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                    {users.length} Total Users
                 </div>
             </div>
 
-            <div className="flex-1">
-                <TableVirtuoso
-                    data={filteredUsers}
-                    fixedHeaderContent={() => (
-                        <tr className="bg-gray-50 text-gray-500 font-medium text-sm text-left">
-                            <th className="px-6 py-3">User</th>
-                            <th className="px-6 py-3">Role</th>
-                            <th className="px-6 py-3">Last Active</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
-                    )}
-                    itemContent={(_index, user) => (
-                        <>
-                            <td className="px-6 py-4">
-                                <div className="font-bold text-gray-900">{user.displayName || 'Unknown'}</div>
-                                <div className="text-xs text-gray-500">{user.email}</div>
-                                <div className="text-[10px] text-gray-400 font-mono mt-0.5 select-all">{user.uid}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                                    user.role === 'admin' 
-                                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                                        : 'bg-gray-100 text-gray-600 border-gray-200'
-                                }`}>
-                                    {user.role === 'admin' ? 'Admin' : 'User'}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">
-                                <div className="flex items-center gap-1.5">
-                                    <ClockIcon className="h-4 w-4 text-gray-400" />
-                                    {user.lastLogin 
-                                        ? new Date(user.lastLogin.toDate()).toLocaleDateString() 
-                                        : 'Never'}
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                                <button 
-                                    onClick={() => toggleRole(user.uid, user.role)}
-                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
-                                >
-                                    {user.role === 'admin' ? 'Demote' : 'Promote'}
-                                </button>
-                            </td>
-                        </>
-                    )}
-                />
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {users.map((u) => (
+                            <tr key={u.uid} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
+                                            {u.role === 'admin' && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">Admin</span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {u.createdAt ? u.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                        <ClockIcon className="h-4 w-4 text-gray-400" />
+                                        {u.lastLogin ? u.lastLogin.toDate().toLocaleDateString() : 'Never'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {renderTierBadge(u)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {actionLoading === u.uid ? (
+                                        <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
+                                    ) : (
+                                        <div className="flex justify-end gap-3">
+                                            {/* Role Toggles */}
+                                            {u.role === 'admin' ? (
+                                                <button onClick={() => handleUpdateRole(u.uid, 'user')} className="text-gray-400 hover:text-red-600 transition-colors" title="Demote to User">
+                                                    <UserMinusIcon className="h-5 w-5" />
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => handleUpdateRole(u.uid, 'admin')} className="text-gray-400 hover:text-blue-600 transition-colors" title="Promote to Admin">
+                                                    <ShieldCheckIcon className="h-5 w-5" />
+                                                </button>
+                                            )}
+
+                                            {/* Tier Toggles */}
+                                            {u.tier === 'premium' && u.tierSource === 'manual' ? (
+                                                <button onClick={() => handleRevokeVIP(u.uid)} className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                    Revoke VIP
+                                                </button>
+                                            ) : u.tier !== 'premium' ? (
+                                                <button onClick={() => handleGrantVIP(u.uid)} className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                    Grant VIP
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

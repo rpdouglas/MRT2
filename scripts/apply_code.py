@@ -7,193 +7,218 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 # =============================================================================
-# 1. docs/SCHEMA_ARCHITECTURE.md
+# RESTORATION: src/components/admin/UserDirectory.tsx
 # =============================================================================
-schema_content = r'''# 🗄️ Schema Architecture & Data Graph
+user_directory_content = r'''import { useState, useEffect } from 'react';
+import { db } from '../../lib/firebase';
+import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
+import type { UserProfile } from '../../lib/db';
+import { 
+    StarIcon, 
+    CheckCircleIcon, 
+    UserIcon,
+    ArrowPathIcon,
+    ClockIcon,
+    ShieldCheckIcon,
+    UserMinusIcon
+} from '@heroicons/react/24/solid';
 
-**Storage Engine:** Cloud Firestore (NoSQL)
-**Encryption Strategy:** Client-Side AES-GCM (Content fields only)
+export default function UserDirectory() {
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-## 1. High-Level Topology
+    const fetchUsers = async () => {
+        if (!db) return;
+        setLoading(true);
+        const database: Firestore = db;
+        try {
+            const usersRef = collection(database, 'users');
+            const q = query(usersRef, orderBy('lastLogin', 'desc'));
+            const snapshot = await getDocs(q);
+            const loadedUsers = snapshot.docs.map(d => d.data() as UserProfile);
+            setUsers(loadedUsers);
+        } catch (err: unknown) {
+            console.error("Failed to fetch users", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-__FENCE__mermaid
-graph TD
-    root[🔥 Firestore Root]
-    
-    root --> users[📂 users]
-    users --> userDoc[📄 User Profile]
-    userDoc --> workbook_progress[📂 workbook_progress]
-    userDoc --> templates[📂 templates]
-    userDoc --> checkout_sessions[📂 checkout_sessions - STRIPE]
-    userDoc --> subscriptions[📂 subscriptions - STRIPE]
-    
-    root --> journals[📂 journals]
-    root --> tasks[📂 tasks]
-    root --> insights[📂 insights]
-    root --> ai_logs[📂 ai_logs]
-    root --> feedback[📂 feedback]
-__FENCE__
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
-## 2. Collection Definitions
+    // --- ROLE MANAGEMENT ---
+    const handleUpdateRole = async (uid: string, newRole: 'admin' | 'user') => {
+        if (!db) return;
+        const confirmMsg = newRole === 'admin' 
+            ? "Promote this user to Admin? They will have full access to this dashboard." 
+            : "Demote this user to standard User?";
+        if (!window.confirm(confirmMsg)) return;
 
-### `users/{uid}`
-* **Purpose:** Profile, Auth, & Settings.
-* **Fields:**
-    * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness.
-    * `sobrietyDate` (Timestamp): Metrics base.
-    * `role` (String): 'user' | 'admin'.
-    * `tier` (String): 'free' | 'premium'. (Monetization status).
-    * `usage_limits` (Map): AI throttling caps.
-* **Subcollections (Stripe Managed):**
-    * `checkout_sessions`: Client writes here to trigger Stripe Checkout.
-    * `subscriptions`: Webhook writes here to verify active payment status.
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { role: newRole });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+        } catch (err: unknown) {
+            console.error("Failed to update role", err);
+            alert("Failed to update user role.");
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
-### `journals/{entryId}`
-* **Purpose:** Daily logs, Vitality logs, and reflections.
-* **Fields:** `uid`, `content` (**ENCRYPTED BLOB**), `moodScore` (Unencrypted), `tags` (Array), `weather`.
+    // --- TIER MANAGEMENT ---
+    const handleGrantVIP = async (uid: string) => {
+        if (!db) return;
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { tier: 'premium', tierSource: 'manual' });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'premium', tierSource: 'manual' } : u));
+        } catch (err: unknown) {
+            console.error("Failed to grant VIP", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
-### `tasks/{taskId}`
-* **Purpose:** Gamification, Habits, and AI Action Plans.
-* **Encryption:** Unencrypted to allow background stats and streak evaluations.
+    const handleRevokeVIP = async (uid: string) => {
+        if (!db) return;
+        if (!window.confirm("Revoke VIP access?")) return;
+        setActionLoading(uid);
+        try {
+            const userRef = doc(db, 'users', uid);
+            await updateDoc(userRef, { tier: 'free', tierSource: null });
+            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'free', tierSource: undefined } : u));
+        } catch (err: unknown) {
+            console.error("Failed to revoke VIP", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
-### `insights/{insightId}`
-* **Purpose:** AI-generated analysis of journals/workbooks.
-* **Fields:** `type`, `summary`, `relapse_risk_level`, `trajectory`, `suggested_actions`.
+    const renderTierBadge = (user: UserProfile) => {
+        if (user.tier === 'premium') {
+            if (user.tierSource === 'manual') {
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                        <StarIcon className="h-3 w-3" /> VIP
+                    </span>
+                );
+            }
+            return (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <CheckCircleIcon className="h-3 w-3" /> Supporter
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                <UserIcon className="h-3 w-3 text-gray-400" /> Free
+            </span>
+        );
+    };
 
-### `feedback/{reportId}`
-* **Purpose:** User bug reports and suggestions.
-* **Encryption:** **NONE** (To allow debugging without user PIN).
-'''
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12">
+                <ArrowPathIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+                <p className="text-gray-500 font-medium">Loading user directory...</p>
+            </div>
+        );
+    }
 
-# =============================================================================
-# 2. docs/MASTER_PLAN.md
-# =============================================================================
-master_plan_content = r'''# 🗺️ Master Project Plan & Sprint Architecture
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
+                    <p className="text-sm text-gray-500">Full management of roles, tiers, and activity.</p>
+                </div>
+                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                    {users.length} Total Users
+                </div>
+            </div>
 
-**Vision:** To build the world's most secure, persona-aware clinical recovery operating system.
-**Current Phase:** V2 Commercial Launch (Monetization Rollout).
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {users.map((u) => (
+                            <tr key={u.uid} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
+                                            {u.role === 'admin' && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">Admin</span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {u.createdAt ? u.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                        <ClockIcon className="h-4 w-4 text-gray-400" />
+                                        {u.lastLogin ? u.lastLogin.toDate().toLocaleDateString() : 'Never'}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {renderTierBadge(u)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {actionLoading === u.uid ? (
+                                        <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
+                                    ) : (
+                                        <div className="flex justify-end gap-3">
+                                            {/* Role Toggles */}
+                                            {u.role === 'admin' ? (
+                                                <button onClick={() => handleUpdateRole(u.uid, 'user')} className="text-gray-400 hover:text-red-600 transition-colors" title="Demote to User">
+                                                    <UserMinusIcon className="h-5 w-5" />
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => handleUpdateRole(u.uid, 'admin')} className="text-gray-400 hover:text-blue-600 transition-colors" title="Promote to Admin">
+                                                    <ShieldCheckIcon className="h-5 w-5" />
+                                                </button>
+                                            )}
 
----
-
-## 🏗️ PART 1: The Macro Roadmap (Quarterly View)
-
-| Status | ID | Project Name | Persona Focus | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟢 **Done** | `PROJ-01-09` | **Foundation & GTM** | Universal | Core app, Crypto, Account Deletion, Landing Pages. |
-| 🟡 **Active**| `PROJ-15` | **The Checkout Engine**| Universal | Stripe Integration, Tier Management, & PROD Rollout. |
-| ⚪ Planned | `PROJ-07` | **The Launch Engine** | Universal | TWA Android Wrapper, Play Store Assets, & Compliance. |
-| 🧊 **V3** | `PROJ-05` | **The Service Network** | Lisa (Sponsor) | *V3:* Encrypted Sponsee Rolodex + Step-work tracking. |
-| 🧊 **V3** | `PROJ-10` | **Crisis & Momentum** | David / Ned | *V3:* Interactive Urge Surfer + Financial Freedom Calculator. |
-| 🧊 **V3** | `PROJ-14` | **The Deep Mind** | Walt (Zen) | *V3:* Local RAG (Chat with your Journal) + Encrypted Photo Media. |
-
----
-
-## 🔬 PART 2: Project Deep Dives & Sprint Projections
-
-### 💳 PROJ-15: The Checkout Engine (Active)
-*Implementing the Freemium model to cover AI and server costs.*
-* **Sprint 6.0: Stripe & Webhooks (Backend - DEV)** (🟢 Done)
-* **Sprint 6.1: Paywall & Graceful Degradation (Frontend)** (🟢 Done)
-* **Sprint 6.2: Production Rollout & PR (Active)**
-  * Merge feature branch into `main`.
-  * Create Live Mode Products in Stripe Dashboard.
-  * Install Firebase Stripe Extension in PROD Firebase Project.
-  * Configure Live Webhooks and update PROD GitHub Action Secrets.
-
-### 🚀 PROJ-07: The Launch Engine (Next)
-*Moving from a browser PWA to the Google Play Store.*
-* **Sprint 7.0: Android TWA Wrapping (Engineering)**
-  * Generate and host the `/.well-known/assetlinks.json` file.
-  * Compile the React PWA into a signed Android `.aab` via Bubblewrap.
-* **Sprint 7.1: Play Store Compliance & Assets (Ops)**
-  * Draft the Play Store Data Privacy declarations.
-  * Generate feature graphics and localized screenshots.
-
----
-
-## 📋 PART 3: Current Sprint Board (Micro View)
-
-**Current Phase:** Sprint 6.0 (Active)
-
-### ✅ Recently Completed 
-- [x] **PROJ-15:** DEV Stripe Webhooks & Firebase Extension Integration.
-- [x] **PROJ-15:** Paywall UI (`<PremiumGate>`) & Frontend Logic.
-- [x] **PROJ-15:** Hardened Firestore Rules against client-side spoofing.
-
-### 🏃 In Progress (Sprint 6.2 - Production Rollout)
-- [ ] **PROJ-15:** PR `feature/stripe_integration` into `main`.
-- [ ] **PROJ-15:** Setup Stripe "Live Mode" (Product & Live Price ID).
-- [ ] **PROJ-15:** Install Firebase Stripe Extension in PROD project (`mrt2-app-prod`).
-- [ ] **PROJ-15:** Configure Live Webhook Secrets in PROD.
-'''
-
-# =============================================================================
-# 3. docs/SPRINT_BOARD.md
-# =============================================================================
-sprint_board_content = r'''# 🏃 Active Sprint Board
-
-**Current Phase:** Sprint 6.0 (Active)
-
-## ✅ Completed Sprints
-- [x] **Sprints 1-4:** Foundation, Auth, Journal Engine, Encryption, Tasks, Vitality.
-- [x] **Sprint 5.0:** The GTM Engine (Links Route, Account Deletion, VitePress).
-
-## 🟡 Sprint 6.0: The Checkout Engine (Active)
-*Current Focus: Moving the Stripe Integration from DEV to PRODUCTION.*
-
-### ✅ Completed in this Sprint
-- [x] **PROJ-15:** Phase 1: Stripe Configuration & Webhooks (Backend DEV).
-- [x] **PROJ-15:** Phase 2: Checkout UI & Portal (Frontend).
-- [x] **PROJ-15:** Phase 3: The Paywall Enforcers (Logic & Context).
-
-### 🏃 In Progress (Active Focus)
-- [ ] **PROJ-15:** Phase 4: Create Pull Request to `main`.
-- [ ] **PROJ-15:** Phase 4: Configure Stripe "Live Mode" (Get Live Price ID).
-- [ ] **PROJ-15:** Phase 4: Install Firebase Stripe Extension to `mrt2-app-prod`.
-- [ ] **PROJ-15:** Phase 4: Set Live Webhook and update GitHub Action `.env` secrets.
-
-## 🧊 Backlog (Up Next)
-- [ ] **PROJ-07:** The Launch Engine (Android TWA & Play Store)
-- [ ] **PROJ-05:** The Service Network (V3 Release)
-'''
-
-# =============================================================================
-# 4. docs/projects/15_MONETIZATION_ENGINE.md
-# =============================================================================
-monetization_content = r'''# 📁 Project 15: The Checkout Engine (Freemium)
-
-**Status:** 🟡 Active
-**Primary Persona:** All 
-**Objective:** Implement Stripe billing, manage user subscription tiers (Free vs Premium), and gracefully enforce feature paywalls without inducing user stress.
-
-## 2. Security & Zero-Knowledge Audit 🛡️
-* [x] **Data Sensitivity:** Stripe manages all credit card data off-platform. We only store the `stripeCustomerId` and `tier` status.
-* [x] **Encryption Strategy:** Billing metadata is unencrypted to allow server-side webhooks to update the account status without needing the user's PIN.
-* [x] **Firestore Rules:** Subcollections `checkout_sessions` and `subscriptions` strictly locked down to prevent client-side spoofing.
-
-## 4. Implementation Phases 🏗️
-
-### Phase 1: Stripe Configuration & Webhooks (DEV Backend) - [x] DONE
-* [x] Create Stripe products (Monthly / Annual) in Test Mode.
-* [x] Set up Firebase "Run Payments with Stripe" Extension in DEV.
-* [x] Configure Stripe Webhook Secrets to securely update `subscriptions` subcollection.
-
-### Phase 2: Checkout UI & Portal (Frontend) - [x] DONE
-* [x] Create a `/premium` upgrade page outlining the benefits.
-* [x] Implement Stripe Checkout redirect via `checkout_sessions`.
-* [x] Implement Stripe Customer Portal redirect via `ext-firestore-stripe-payments-createPortalLink`.
-
-### Phase 3: The Paywall Enforcers (Logic) - [x] DONE
-* [x] **The Compass:** Updated `JournalAnalysisWizard.tsx` to check `userTier`. Bypasses limits for premium users.
-* [x] **Data Sovereignty:** Wrapped PDF Generation button in `<PremiumGate>` wrapper.
-* [x] **Auth Context:** Real-time `onSnapshot` listener attached to the user's `subscriptions` collection for instant unlocks.
-
-### Phase 4: Production Rollout (Active) - [ ] IN PROGRESS
-* [ ] **PR:** Merge feature branch into `main`.
-* [ ] **Live Stripe Data:** Toggle Stripe to Live Mode, create Product, extract Live `price_` ID.
-* [ ] **PROD Infrastructure:** Deploy Firebase rules to PROD and install the Stripe Extension in the PROD Firebase project.
-* [ ] **CI/CD Secrets:** Update GitHub Actions with the Live Stripe Price ID.
+                                            {/* Tier Toggles */}
+                                            {u.tier === 'premium' && u.tierSource === 'manual' ? (
+                                                <button onClick={() => handleRevokeVIP(u.uid)} className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                    Revoke VIP
+                                                </button>
+                                            ) : u.tier !== 'premium' ? (
+                                                <button onClick={() => handleGrantVIP(u.uid)} className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                    Grant VIP
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
 '''
 
 def write_file(relative_path, content):
@@ -201,12 +226,7 @@ def write_file(relative_path, content):
     os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
     with open(absolute_path, "w", encoding="utf-8") as f:
         f.write(content.replace("__FENCE__", FENCE).strip() + "\n")
-    print(f"✅ Synced: {absolute_path}")
+    print(f"✅ Restoration Complete: {absolute_path}")
 
 if __name__ == "__main__":
-    print("🚀 Running Post-Sprint Documentation Sync (v2: Production Staging)...")
-    write_file("docs/SCHEMA_ARCHITECTURE.md", schema_content)
-    write_file("docs/MASTER_PLAN.md", master_plan_content)
-    write_file("docs/SPRINT_BOARD.md", sprint_board_content)
-    write_file("docs/projects/15_MONETIZATION_ENGINE.md", monetization_content)
-    print("✨ Documentation perfectly aligned. Staged for Production Rollout.")
+    write_file("src/components/admin/UserDirectory.tsx", user_directory_content)

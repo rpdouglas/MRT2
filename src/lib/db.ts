@@ -1,6 +1,6 @@
 /**
  * src/lib/db.ts
- * UPDATED: Added Stripe monetization fields and tier tracking for PROJ-15.
+ * UPDATED: Added tierSource for Admin VIP Management.
  */
 import { 
   doc, 
@@ -63,8 +63,9 @@ export interface UserProfile {
     lastMonthlyInsight?: Timestamp;
     lastDeepDive?: Timestamp;
   };
-  // NEW: Monetization Fields
+  // Monetization Fields
   tier?: 'free' | 'premium';
+  tierSource?: 'stripe' | 'manual'; // Tracks VIP grants vs real payments
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled';
   subscriptionPeriodEnd?: Timestamp;
