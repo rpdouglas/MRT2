@@ -1,6 +1,6 @@
 /**
  * src/App.tsx
- * UPDATED: Added /links public route for social media traffic (PROJ-09.1).
+ * UPDATED: Added /premium route for the Checkout Engine (PROJ-15).
  */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { EncryptionProvider } from './contexts/EncryptionContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome'; 
-import Links from './pages/Links'; // NEW
+import Links from './pages/Links'; 
 import Dashboard from './pages/Dashboard';
 import DebugTools from './pages/DebugTools';
 import Journal from './pages/Journal';
@@ -28,6 +28,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); // NEW
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({
@@ -168,6 +169,15 @@ export default function App() {
                         element={
                             <PrivateRoute>
                                 <Profile />
+                            </PrivateRoute>
+                        }
+                        />
+
+                        <Route
+                        path="/premium"
+                        element={
+                            <PrivateRoute>
+                                <PremiumUpgrade />
                             </PrivateRoute>
                         }
                         />

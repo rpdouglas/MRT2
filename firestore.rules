@@ -19,21 +19,41 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
-    // UPDATED: Checks for Custom Claim 'admin'
+    // Checks for Custom Claim 'admin'
     function isAdmin() {
       return request.auth != null && request.auth.token.admin == true;
     }
 
     // --- COLLECTION RULES ---
 
-    // 1. User Profiles (Root Document Only)
+    // 1. User Profiles & Subcollections
     match /users/{userId} {
+      // Profile Document
       allow read, write: if isOwner(userId) || isAdmin();
-    }
 
-    // 1b. User Subcollections (The Vault)
-    match /users/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      // Safe Subcollections (User Managed)
+      match /workbook_answers/{answerId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /templates/{templateId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Stripe Extension Subcollections (Backend Managed)
+      // Users create the session request, backend fills in the URL.
+      match /checkout_sessions/{id} {
+        allow create, read: if isOwner(userId);
+        allow update, delete: if false; 
+      }
+      // Users can read their status, but CANNOT fake a subscription.
+      match /subscriptions/{id} {
+        allow read: if isOwner(userId);
+        allow write: if false; 
+      }
+      match /payments/{id} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
     }
 
     // 2. Journals (Root Collection)
@@ -72,11 +92,9 @@ service cloud.firestore {
         allow read, update, delete: if isResourceOwner();
     }
 
-    // 8. Feedback & Bug Reports (New for v1.6+)
+    // 8. Feedback & Bug Reports
     match /feedback/{reportId} {
-      // Authenticated users can submit feedback
       allow create: if request.auth != null;
-      // Only admins can read/manage feedback to protect user privacy
       allow read, update, delete: if isAdmin();
     }
   }
