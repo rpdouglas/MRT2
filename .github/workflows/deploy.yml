@@ -1,15 +1,4 @@
-import os
-
-# FENCE pattern to protect markdown backticks
-FENCE = chr(96) * 3
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-
-# =============================================================================
-# FIX: .github/workflows/deploy.yml
-# =============================================================================
-deploy_yaml_content = r'''name: Deploy to Firebase (Secure)
+name: Deploy to Firebase (Secure)
 
 on:
   push:
@@ -163,14 +152,3 @@ jobs:
           firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
           projectId: "${{ env.FIREBASE_PROJECT_ID }}"
           channelId: live
-'''
-
-def write_file(relative_path, content):
-    absolute_path = os.path.join(PROJECT_ROOT, relative_path)
-    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
-    with open(absolute_path, "w", encoding="utf-8") as f:
-        f.write(content.replace("__FENCE__", FENCE).strip() + "\n")
-    print(f"✅ GitHub Action Pipeline Updated: {absolute_path}")
-
-if __name__ == "__main__":
-    write_file(".github/workflows/deploy.yml", deploy_yaml_content)
