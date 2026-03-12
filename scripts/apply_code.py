@@ -7,218 +7,51 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 # =============================================================================
-# RESTORATION: src/components/admin/UserDirectory.tsx
+# 1. docs/SCHEMA_ARCHITECTURE.md (Updated for tierSource)
 # =============================================================================
-user_directory_content = r'''import { useState, useEffect } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
-import type { UserProfile } from '../../lib/db';
-import { 
-    StarIcon, 
-    CheckCircleIcon, 
-    UserIcon,
-    ArrowPathIcon,
-    ClockIcon,
-    ShieldCheckIcon,
-    UserMinusIcon
-} from '@heroicons/react/24/solid';
+schema_content = r'''# 🗄️ Schema Architecture & Data Graph
 
-export default function UserDirectory() {
-    const [users, setUsers] = useState<UserProfile[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
+## 2. Collection Definitions
 
-    const fetchUsers = async () => {
-        if (!db) return;
-        setLoading(true);
-        const database: Firestore = db;
-        try {
-            const usersRef = collection(database, 'users');
-            const q = query(usersRef, orderBy('lastLogin', 'desc'));
-            const snapshot = await getDocs(q);
-            const loadedUsers = snapshot.docs.map(d => d.data() as UserProfile);
-            setUsers(loadedUsers);
-        } catch (err: unknown) {
-            console.error("Failed to fetch users", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+### `users/{uid}`
+* **Purpose:** Profile, Auth, & Settings.
+* **Fields:**
+    * `tier` (String): 'free' | 'premium'.
+    * `tierSource` (String): 'stripe' | 'manual'. // NEW: Differentiates between paid and comped.
+    * `role` (String): 'user' | 'admin'.
+    * `lastLogin` (Timestamp): Tracked for retention metrics.
+    * `createdAt` (Timestamp): Date the user joined the platform.
+'''
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+# =============================================================================
+# 2. docs/MASTER_PLAN.md (Updated for Admin Rollout)
+# =============================================================================
+master_plan_content = r'''# 🗺️ Master Project Plan
 
-    // --- ROLE MANAGEMENT ---
-    const handleUpdateRole = async (uid: string, newRole: 'admin' | 'user') => {
-        if (!db) return;
-        const confirmMsg = newRole === 'admin' 
-            ? "Promote this user to Admin? They will have full access to this dashboard." 
-            : "Demote this user to standard User?";
-        if (!window.confirm(confirmMsg)) return;
+## 📋 PART 3: Current Sprint Board
 
-        setActionLoading(uid);
-        try {
-            const userRef = doc(db, 'users', uid);
-            await updateDoc(userRef, { role: newRole });
-            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
-        } catch (err: unknown) {
-            console.error("Failed to update role", err);
-            alert("Failed to update user role.");
-        } finally {
-            setActionLoading(null);
-        }
-    };
+### ✅ Recently Completed (Sprint 6.2)
+- [x] **PROJ-15:** Stripe Webhooks & Firebase Extension Integration.
+- [x] **PROJ-15:** Admin VIP Dashboard (Approach C: Tier Source Architecture).
+- [x] **PROJ-15:** Interactive Role Management (Promote/Demote triggers).
 
-    // --- TIER MANAGEMENT ---
-    const handleGrantVIP = async (uid: string) => {
-        if (!db) return;
-        setActionLoading(uid);
-        try {
-            const userRef = doc(db, 'users', uid);
-            await updateDoc(userRef, { tier: 'premium', tierSource: 'manual' });
-            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'premium', tierSource: 'manual' } : u));
-        } catch (err: unknown) {
-            console.error("Failed to grant VIP", err);
-        } finally {
-            setActionLoading(null);
-        }
-    };
+### 🏃 In Progress (Sprint 6.3 - Final Production Prep)
+- [ ] **PROJ-15:** Create Pull Request from `feature/monetization` to `main`.
+- [ ] **PROJ-15:** Deploy Live Stripe Products and update PROD Secrets.
+'''
 
-    const handleRevokeVIP = async (uid: string) => {
-        if (!db) return;
-        if (!window.confirm("Revoke VIP access?")) return;
-        setActionLoading(uid);
-        try {
-            const userRef = doc(db, 'users', uid);
-            await updateDoc(userRef, { tier: 'free', tierSource: null });
-            setUsers(prev => prev.map(u => u.uid === uid ? { ...u, tier: 'free', tierSource: undefined } : u));
-        } catch (err: unknown) {
-            console.error("Failed to revoke VIP", err);
-        } finally {
-            setActionLoading(null);
-        }
-    };
+# =============================================================================
+# 3. docs/projects/15_MONETIZATION_ENGINE.md
+# =============================================================================
+monetization_content = r'''# 📁 Project 15: The Checkout Engine (Freemium)
 
-    const renderTierBadge = (user: UserProfile) => {
-        if (user.tier === 'premium') {
-            if (user.tierSource === 'manual') {
-                return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                        <StarIcon className="h-3 w-3" /> VIP
-                    </span>
-                );
-            }
-            return (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                    <CheckCircleIcon className="h-3 w-3" /> Supporter
-                </span>
-            );
-        }
-        return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                <UserIcon className="h-3 w-3 text-gray-400" /> Free
-            </span>
-        );
-    };
+## 4. Implementation Phases
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12">
-                <ArrowPathIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Loading user directory...</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
-                    <p className="text-sm text-gray-500">Full management of roles, tiers, and activity.</p>
-                </div>
-                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                    {users.length} Total Users
-                </div>
-            </div>
-
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((u) => (
-                            <tr key={u.uid} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
-                                            {u.role === 'admin' && (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">Admin</span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {u.createdAt ? u.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                        <ClockIcon className="h-4 w-4 text-gray-400" />
-                                        {u.lastLogin ? u.lastLogin.toDate().toLocaleDateString() : 'Never'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {renderTierBadge(u)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    {actionLoading === u.uid ? (
-                                        <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
-                                    ) : (
-                                        <div className="flex justify-end gap-3">
-                                            {/* Role Toggles */}
-                                            {u.role === 'admin' ? (
-                                                <button onClick={() => handleUpdateRole(u.uid, 'user')} className="text-gray-400 hover:text-red-600 transition-colors" title="Demote to User">
-                                                    <UserMinusIcon className="h-5 w-5" />
-                                                </button>
-                                            ) : (
-                                                <button onClick={() => handleUpdateRole(u.uid, 'admin')} className="text-gray-400 hover:text-blue-600 transition-colors" title="Promote to Admin">
-                                                    <ShieldCheckIcon className="h-5 w-5" />
-                                                </button>
-                                            )}
-
-                                            {/* Tier Toggles */}
-                                            {u.tier === 'premium' && u.tierSource === 'manual' ? (
-                                                <button onClick={() => handleRevokeVIP(u.uid)} className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold">
-                                                    Revoke VIP
-                                                </button>
-                                            ) : u.tier !== 'premium' ? (
-                                                <button onClick={() => handleGrantVIP(u.uid)} className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold">
-                                                    Grant VIP
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
-                                            )}
-                                        </div>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
+### Phase 4: Admin VIP & Production Rollout - [🟡 IN PROGRESS]
+* [x] **Admin Override:** Implement Approach C (Tier Source) to allow manual comping.
+* [x] **Retention Monitoring:** Surface `lastLogin` and `createdAt` in Admin UI.
+* [x] **Role Security:** Hardened Admin promotion/demotion workflow with safety confirms.
+* [ ] **Final PR:** Merge Stripe & Admin features into `main`.
 '''
 
 def write_file(relative_path, content):
@@ -226,7 +59,11 @@ def write_file(relative_path, content):
     os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
     with open(absolute_path, "w", encoding="utf-8") as f:
         f.write(content.replace("__FENCE__", FENCE).strip() + "\n")
-    print(f"✅ Restoration Complete: {absolute_path}")
+    print(f"✅ Synced: {absolute_path}")
 
 if __name__ == "__main__":
-    write_file("src/components/admin/UserDirectory.tsx", user_directory_content)
+    print("🚀 Running Post-Sprint Documentation Sync...")
+    write_file("docs/SCHEMA_ARCHITECTURE.md", schema_content)
+    write_file("docs/MASTER_PLAN.md", master_plan_content)
+    write_file("docs/projects/15_MONETIZATION_ENGINE.md", monetization_content)
+    print("✨ Documentation successfully updated with Admin VIP context.")

@@ -38,12 +38,12 @@ export default function UserDirectory() {
         fetchUsers();
     }, []);
 
-    // --- ROLE MANAGEMENT ---
     const handleUpdateRole = async (uid: string, newRole: 'admin' | 'user') => {
         if (!db) return;
         const confirmMsg = newRole === 'admin' 
-            ? "Promote this user to Admin? They will have full access to this dashboard." 
-            : "Demote this user to standard User?";
+            ? "CRITICAL: Promote this user to Admin? They will have full access to system metadata." 
+            : "Demote this user? They will lose all administrative dashboard access.";
+        
         if (!window.confirm(confirmMsg)) return;
 
         setActionLoading(uid);
@@ -53,13 +53,12 @@ export default function UserDirectory() {
             setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
         } catch (err: unknown) {
             console.error("Failed to update role", err);
-            alert("Failed to update user role.");
+            alert("Role update failed.");
         } finally {
             setActionLoading(null);
         }
     };
 
-    // --- TIER MANAGEMENT ---
     const handleGrantVIP = async (uid: string) => {
         if (!db) return;
         setActionLoading(uid);
@@ -125,7 +124,7 @@ export default function UserDirectory() {
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <div>
                     <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
-                    <p className="text-sm text-gray-500">Full management of roles, tiers, and activity.</p>
+                    <p className="text-sm text-gray-500">Manage account access, roles, and monetization.</p>
                 </div>
                 <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                     {users.length} Total Users
@@ -151,7 +150,9 @@ export default function UserDirectory() {
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
                                             {u.role === 'admin' && (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">Admin</span>
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">
+                                                    Admin
+                                                </span>
                                             )}
                                         </div>
                                         <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
@@ -174,28 +175,42 @@ export default function UserDirectory() {
                                         <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
                                     ) : (
                                         <div className="flex justify-end gap-3">
-                                            {/* Role Toggles */}
-                                            {u.role === 'admin' ? (
-                                                <button onClick={() => handleUpdateRole(u.uid, 'user')} className="text-gray-400 hover:text-red-600 transition-colors" title="Demote to User">
-                                                    <UserMinusIcon className="h-5 w-5" />
-                                                </button>
-                                            ) : (
-                                                <button onClick={() => handleUpdateRole(u.uid, 'admin')} className="text-gray-400 hover:text-blue-600 transition-colors" title="Promote to Admin">
-                                                    <ShieldCheckIcon className="h-5 w-5" />
-                                                </button>
-                                            )}
-
-                                            {/* Tier Toggles */}
+                                            {/* Tier Management Actions */}
                                             {u.tier === 'premium' && u.tierSource === 'manual' ? (
-                                                <button onClick={() => handleRevokeVIP(u.uid)} className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                <button 
+                                                    onClick={() => handleRevokeVIP(u.uid)} 
+                                                    className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
+                                                >
                                                     Revoke VIP
                                                 </button>
                                             ) : u.tier !== 'premium' ? (
-                                                <button onClick={() => handleGrantVIP(u.uid)} className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold">
+                                                <button 
+                                                    onClick={() => handleGrantVIP(u.uid)} 
+                                                    className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
+                                                >
                                                     Grant VIP
                                                 </button>
                                             ) : (
                                                 <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
+                                            )}
+
+                                            {/* Unified Role Management Icons */}
+                                            {u.role === 'admin' ? (
+                                                <button 
+                                                    onClick={() => handleUpdateRole(u.uid, 'user')} 
+                                                    className="text-gray-400 hover:text-red-600 transition-colors" 
+                                                    title="Demote to User"
+                                                >
+                                                    <UserMinusIcon className="h-5 w-5" />
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleUpdateRole(u.uid, 'admin')} 
+                                                    className="text-gray-400 hover:text-blue-600 transition-colors" 
+                                                    title="Promote to Admin"
+                                                >
+                                                    <ShieldCheckIcon className="h-5 w-5" />
+                                                </button>
                                             )}
                                         </div>
                                     )}
