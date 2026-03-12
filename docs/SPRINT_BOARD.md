@@ -1,26 +1,25 @@
 # 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 5.0 (Active)
+**Current Phase:** Sprint 6.0 (Active)
 
 ## ✅ Completed Sprints
-- [x] **Sprints 1-3:** Foundation, Auth, Journal Engine, Encryption.
-- [x] **Sprint 4.0:** Sector 4: The Ledger (Tasks) fully scaled and time-zone hardened.
-- [x] **Sprint 4.5:** Sector 5: The Pulse (Vitality) organic engine and haptics deployed.
-- [x] **Sprint 4.8:** "The Crucible: Dogfooding & Polish". Fixed mobile UX, grouped Insights UI, and aligned Gemini models.
+- [x] **Sprints 1-4:** Foundation, Auth, Journal Engine, Encryption, Tasks, Vitality.
+- [x] **Sprint 5.0:** The GTM Engine (Links Route, Account Deletion, VitePress).
 
-## 🟡 Sprint 5.0: The Expansion (Active)
-*Current Focus: Transitioning from The GTM Engine to The Service Network.*
+## 🟡 Sprint 6.0: The Checkout Engine (Active)
+*Current Focus: Moving the Stripe Integration from DEV to PRODUCTION.*
 
 ### ✅ Completed in this Sprint
-- [x] **PROJ-09.1:** Native `/links` Route (Social Media funnel bypassing Linktree).
-- [x] **PROJ-09.2:** Account Deletion Flow (The "Right to be Forgotten" recursive Firestore wipe).
-- [x] **PROJ-09:** The GTM Engine (VitePress Rewrite, Personas, & Public Landing Page).
+- [x] **PROJ-15:** Phase 1: Stripe Configuration & Webhooks (Backend DEV).
+- [x] **PROJ-15:** Phase 2: Checkout UI & Portal (Frontend).
+- [x] **PROJ-15:** Phase 3: The Paywall Enforcers (Logic & Context).
 
 ### 🏃 In Progress (Active Focus)
-- [ ] **PROJ-05:** The Service Network (Encrypted Rolodex + Secure Drop)
+- [ ] **PROJ-15:** Phase 4: Create Pull Request to `main`.
+- [ ] **PROJ-15:** Phase 4: Configure Stripe "Live Mode" (Get Live Price ID).
+- [ ] **PROJ-15:** Phase 4: Install Firebase Stripe Extension to `mrt2-app-prod`.
+- [ ] **PROJ-15:** Phase 4: Set Live Webhook and update GitHub Action `.env` secrets.
 
-### 🧊 Backlog (Up Next)
-- [ ] **PROJ-07:** The Launch Engine (TWA Wrapper + Push Notifications)
-- [ ] **PROJ-10:** Crisis & Momentum (Urge Surfer + Freedom Calculator)
-- [ ] **PROJ-14:** The Deep Mind (Local RAG + Rich Media support)
-- [ ] **PROJ-15:** The Checkout Engine (Stripe Integration & Paywalls)
+## 🧊 Backlog (Up Next)
+- [ ] **PROJ-07:** The Launch Engine (Android TWA & Play Store)
+- [ ] **PROJ-05:** The Service Network (V3 Release)

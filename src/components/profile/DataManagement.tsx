@@ -1,7 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [DataManagement.tsx]
- * FEAT: Implemented Right to be Forgotten account deletion flow with session re-authentication.
+ * FEAT: Wrapped PDF Export button in PremiumGate to enforce Supporter tier limits.
  */
 import React, { useState, useRef, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,7 @@ import { importLegacyJournals } from '../../lib/importer';
 import { executeTotalAccountAnnihilation } from '../../lib/deletion';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
+import PremiumGate from '../PremiumGate';
 import { 
     ArrowDownTrayIcon, 
     ArrowUpTrayIcon, 
@@ -158,7 +159,6 @@ export default function DataManagement() {
         setDeleteProgressMsg('Verifying secure session...');
 
         try {
-            // 1. Refresh Authentication Token
             if (isGoogleUser) {
                 await reauthenticateWithGoogle();
             } else {
@@ -170,11 +170,9 @@ export default function DataManagement() {
                 await reauthenticateWithEmail(deletePassword);
             }
 
-            // 2. Eradicate all Firestore Data
             setDeleteProgressMsg('Locating and destroying all database records...');
             await executeTotalAccountAnnihilation(user.uid, (msg) => setDeleteProgressMsg(msg));
 
-            // 3. Delete Firebase Auth User
             setDeleteProgressMsg('Removing authentication profile...');
             await deleteAccount();
 
@@ -252,22 +250,24 @@ export default function DataManagement() {
                         <button 
                             onClick={() => handleExport('json')}
                             disabled={exporting}
-                            className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group"
+                            className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group w-full"
                         >
                             <CodeBracketSquareIcon className="h-8 w-8 text-gray-400 group-hover:text-blue-600 mb-2" />
                             <span className="font-bold text-gray-700 group-hover:text-blue-700">JSON Backup</span>
                             <span className="text-xs text-gray-400">Machine-readable format</span>
                         </button>
 
-                        <button 
-                            onClick={() => handleExport('pdf')}
-                            disabled={exporting}
-                            className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all group"
-                        >
-                            <DocumentTextIcon className="h-8 w-8 text-gray-400 group-hover:text-red-600 mb-2" />
-                            <span className="font-bold text-gray-700 group-hover:text-red-700">PDF Document</span>
-                            <span className="text-xs text-gray-400">Readable format</span>
-                        </button>
+                        <PremiumGate fallbackMode="button_swap" customMessage="Unlock PDF Exports">
+                            <button 
+                                onClick={() => handleExport('pdf')}
+                                disabled={exporting}
+                                className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-all group w-full"
+                            >
+                                <DocumentTextIcon className="h-8 w-8 text-gray-400 group-hover:text-red-600 mb-2" />
+                                <span className="font-bold text-gray-700 group-hover:text-red-700">PDF Document</span>
+                                <span className="text-xs text-gray-400">Readable format</span>
+                            </button>
+                        </PremiumGate>
                     </div>
                 )}
 

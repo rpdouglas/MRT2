@@ -25,6 +25,7 @@ import { subDays, isAfter, isBefore, addDays, differenceInDays } from 'date-fns'
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 import { useTaskOperations } from '../../hooks/useTaskOperations'; 
 import { type UserProfile } from '../../lib/db';
+import { useNavigate } from 'react-router-dom';
 
 interface WizardProps {
     isOpen: boolean;
@@ -38,6 +39,7 @@ interface EligibilityStatus {
     allowed: boolean;
     reason?: string;
     progress?: number; 
+    requiresUpgrade?: boolean;
 }
 
 interface SelectionCardProps {
@@ -51,8 +53,9 @@ interface SelectionCardProps {
 }
 
 export default function JournalAnalysisWizard({ isOpen, onClose, entries }: WizardProps) {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, userTier } = useAuth();
     const { addTask } = useTaskOperations(); 
+    const navigate = useNavigate();
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
     
@@ -95,7 +98,9 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     }, [isOpen, loadUsageLimits]);
 
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
-        if (isAdmin) return { allowed: true };
+        // Supporter Tier Bypass
+        if (isAdmin || userTier === 'premium') return { allowed: true };
+        
         const entryCount = entries.length;
         const now = new Date();
 
@@ -106,7 +111,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             if (usageProfile?.lastWeeklyInsight) {
                 const lastRun = usageProfile.lastWeeklyInsight.toDate();
                 const diff = differenceInDays(now, lastRun);
-                if (diff < 7) return { allowed: false, reason: `Available in ${7 - diff} days`, progress: 100 };
+                if (diff < 7) return { allowed: false, reason: `Available in ${7 - diff} days. Upgrade to unlock.`, progress: 100, requiresUpgrade: true };
             }
         } 
         
@@ -118,14 +123,14 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             if (lastRunTimestamp) {
                 const lastRun = lastRunTimestamp.toDate();
                 const diff = differenceInDays(now, lastRun);
-                if (diff < 30) return { allowed: false, reason: `Available in ${30 - diff} days`, progress: 100 };
+                if (diff < 30) return { allowed: false, reason: `Available in ${30 - diff} days. Upgrade to unlock.`, progress: 100, requiresUpgrade: true };
             }
         }
         return { allowed: true };
     };
 
     const stampUsage = async (targetScope: AnalysisScope) => {
-        if (!user || !db || isAdmin) return;
+        if (!user || !db || isAdmin || userTier === 'premium') return;
         const updateField = targetScope === 'weekly' ? 'usage_limits.lastWeeklyInsight' : targetScope === 'monthly' ? 'usage_limits.lastMonthlyInsight' : 'usage_limits.lastDeepDive';
         try {
             await updateDoc(doc(db, 'users', user.uid), { [updateField]: Timestamp.now() });
@@ -182,7 +187,8 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
 
     const handleStartAnalysis = async () => {
         const status = checkEligibility(scope);
-        if (!status.allowed && !isAdmin) return;
+        if (!status.allowed && userTier !== 'premium') return;
+        
         if (scope === 'all-time') {
             setStep('analyzing');
             setAddedActions(new Set());
@@ -262,33 +268,46 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     };
 
     const SelectionCard = ({ type, title, subtitle, icon: Icon, colorClass, borderClass, bgClass }: SelectionCardProps) => {
-        const { allowed, reason, progress } = checkEligibility(type);
+        const { allowed, reason, progress, requiresUpgrade } = checkEligibility(type);
         const isSelected = scope === type;
+        
         return (
-            <button 
-                onClick={() => allowed ? setScope(type) : null}
-                disabled={!allowed}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all relative overflow-hidden ${!allowed ? 'opacity-70 bg-gray-50 border-gray-200 cursor-not-allowed' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}
-            >
-                {!allowed && (
-                    <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center backdrop-blur-[1px] z-10">
-                        <div className="bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200 flex items-center gap-2 text-xs font-bold text-gray-500">
-                            <LockClosedIcon className="h-3 w-3" /> {reason}
+            <div className={`w-full relative overflow-hidden rounded-xl border-2 transition-all ${!allowed ? 'bg-gray-50 border-gray-200' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}>
+                
+                {/* UPGRADE OVERLAY */}
+                {!allowed && requiresUpgrade && (
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-4">
+                        <div className="bg-amber-100 px-3 py-1 rounded-full mb-2 border border-amber-200">
+                            <LockClosedIcon className="h-4 w-4 text-amber-600 inline mr-1" />
+                            <span className="text-xs font-bold text-amber-800 uppercase">Limit Reached</span>
                         </div>
+                        <button onClick={() => navigate('/premium')} className="text-xs font-bold text-blue-600 hover:underline">
+                            Upgrade to Supporter Tier to unlock unlimited scans.
+                        </button>
                     </div>
                 )}
-                <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
-                <div className="text-left flex-1">
-                    <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
-                    <div className="text-xs text-gray-500">{subtitle}</div>
-                    {!allowed && progress !== undefined && progress < 100 && (
-                        <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
-                        </div>
-                    )}
-                </div>
-                {isSelected && allowed && <div className={`w-3 h-3 rounded-full ${colorClass.replace('text-', 'bg-')}`}></div>}
-            </button>
+
+                <button 
+                    onClick={() => allowed ? setScope(type) : null}
+                    disabled={!allowed}
+                    className={`w-full flex items-center gap-4 p-4 text-left ${!allowed ? 'opacity-40 cursor-not-allowed' : ''}`}
+                >
+                    <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
+                    <div className="flex-1">
+                        <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
+                        <div className="text-xs text-gray-500">{subtitle}</div>
+                        {!allowed && progress !== undefined && progress < 100 && !requiresUpgrade && (
+                            <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        )}
+                        {!allowed && !requiresUpgrade && reason && (
+                             <div className="text-[10px] font-bold text-gray-400 mt-1">{reason}</div>
+                        )}
+                    </div>
+                    {isSelected && allowed && <div className={`w-3 h-3 rounded-full ${colorClass.replace('text-', 'bg-')}`}></div>}
+                </button>
+            </div>
         );
     };
 
@@ -312,7 +331,10 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                                             <SelectionCard type="weekly" title="Weekly Check-in" subtitle="Last 7 days vs Previous 7 days" icon={CalendarDaysIcon} colorClass="text-fuchsia-600" bgClass="bg-fuchsia-50" borderClass="border-fuchsia-500" />
                                             <SelectionCard type="monthly" title="Monthly Review" subtitle="Last 30 days vs Previous 30 days" icon={ChartBarIcon} colorClass="text-purple-600" bgClass="bg-purple-50" borderClass="border-purple-500" />
                                             <SelectionCard type="all-time" title="Deep Dive (90 Days)" subtitle="Identify relapse triggers & patterns" icon={GlobeAmericasIcon} colorClass="text-indigo-600" bgClass="bg-indigo-50" borderClass="border-indigo-500" />
-                                            <button onClick={handleStartAnalysis} disabled={!checkEligibility(scope).allowed} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">Begin Analysis</button>
+                                            
+                                            <button onClick={handleStartAnalysis} disabled={!checkEligibility(scope).allowed} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">
+                                                Begin Analysis
+                                            </button>
                                         </>
                                     )}
                                 </div>

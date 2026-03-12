@@ -1,7 +1,7 @@
 /**
  * GITHUB COMMENT:
  * [AuthContext.tsx]
- * UPDATED: Added re-auth and account deletion methods to support the Right to be Forgotten flow.
+ * UPDATED: Added active subcollection listener for the Stripe Extension.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
@@ -17,13 +17,15 @@ import {
   deleteUser,
   type User 
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  userTier: 'free' | 'premium';
   driveAccessToken: string | null;
   loginWithGoogle: () => Promise<void>;
   signupWithEmail: (email: string, pass: string) => Promise<void>;
@@ -47,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userTier, setUserTier] = useState<'free' | 'premium'>('free');
   const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,26 +58,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribeSubscriptions: Unsubscribe | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       try {
         if (currentUser) {
           const profile = await getOrCreateUserProfile(currentUser);
           setUser(currentUser);
           setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
+          
+          // Phase 2: Listen directly to the Stripe extension's 'subscriptions' subcollection
+          if (db) {
+             const subsRef = collection(db, 'users', currentUser.uid, 'subscriptions');
+             const q = query(subsRef, where('status', 'in', ['active', 'trialing']));
+             
+             unsubscribeSubscriptions = onSnapshot(q, (snapshot) => {
+                 if (!snapshot.empty) {
+                     setUserTier('premium');
+                 } else {
+                     // Fallback to static profile tier just in case, but default free
+                     setUserTier(profile.tier || 'free');
+                 }
+             }, (error) => {
+                 console.error("Subscription listener error:", error);
+                 setUserTier('free');
+             });
+          } else {
+             setUserTier(profile.tier || 'free');
+          }
+
         } else {
           setUser(null);
           setIsAdmin(false);
+          setUserTier('free');
           setDriveAccessToken(null);
+          if (unsubscribeSubscriptions) {
+              unsubscribeSubscriptions();
+          }
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
         setUser(currentUser); 
+        setUserTier('free');
       } finally {
         setLoading(false);
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSubscriptions) {
+          unsubscribeSubscriptions();
+      }
+    };
   }, []);
 
   const loginWithGoogle = async () => {
@@ -118,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!auth || !user) throw new Error("Not authenticated");
       await deleteUser(user);
       setUser(null);
+      setUserTier('free');
   };
 
   const logout = async () => {
@@ -129,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     isAdmin,
+    userTier,
     driveAccessToken,
     loginWithGoogle,
     signupWithEmail,
