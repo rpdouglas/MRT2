@@ -1,4 +1,15 @@
-import { useState } from 'react';
+import os
+
+# FENCE pattern to protect markdown backticks
+FENCE = chr(96) * 3
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# =============================================================================
+# SURGICAL FIX: src/pages/PremiumUpgrade.tsx
+# =============================================================================
+premium_upgrade_content = r'''import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import VibrantHeader from '../components/VibrantHeader';
@@ -72,9 +83,10 @@ export default function PremiumUpgrade() {
     const handleManageSubscription = async () => {
         setIsManaging(true);
         try {
-            // SURGICAL FIX: Explicitly target the northamerica-northeast1 region
-            const functions = getFunctions(undefined, 'northamerica-northeast1');
+            const functions = getFunctions();
             
+            // SURGICAL FIX: Ensure the function name matches the extension instance ID
+            // Default is 'ext-firestore-stripe-payments-createPortalLink'
             const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
             
             const { data } = await createPortalLink({
@@ -89,8 +101,8 @@ export default function PremiumUpgrade() {
             }
         } catch (err: unknown) {
             setIsManaging(false);
-            console.error("Portal Error Detail:", err);
-            alert("Billing Portal Error: If you haven't subscribed yet, please use 'Become a Supporter' first to create your Stripe customer record.");
+            console.error("Portal Error:", err);
+            alert("Unable to open the billing portal. This usually happens if no Stripe Customer exists yet for this user. Try subscribing first!");
         }
     };
 
@@ -167,3 +179,14 @@ export default function PremiumUpgrade() {
         </div>
     );
 }
+'''
+
+def write_file(relative_path, content):
+    absolute_path = os.path.join(PROJECT_ROOT, relative_path)
+    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
+    with open(absolute_path, "w", encoding="utf-8") as f:
+        f.write(content.replace("__FENCE__", FENCE).strip() + "\n")
+    print(f"✅ Surgically Fixed: {absolute_path}")
+
+if __name__ == "__main__":
+    write_file("src/pages/PremiumUpgrade.tsx", premium_upgrade_content)
