@@ -1,10 +1,3 @@
-/**
- * src/components/ErrorBoundary.tsx
- * GITHUB COMMENT:
- * [ErrorBoundary.tsx]
- * UPDATED: Integrated Firestore logging for client-side crashes.
- * FEATURE: Telemetry for Admin Dashboard 'System Health' view.
- */
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { db } from "../lib/firebase";
@@ -31,6 +24,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    
+    // Triage Bug Fix: Catch Vite PWA Chunk Loading Errors
+    const msg = error.message.toLowerCase();
+    if (msg.includes('dynamically imported module') || msg.includes('failed to fetch')) {
+        console.warn("Chunk load error detected. Reloading to fetch latest assets...");
+        window.location.reload();
+        return;
+    }
     
     // Attempt to log to Firestore (Telemetry)
     if (db) {
