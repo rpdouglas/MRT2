@@ -30,3 +30,9 @@ project_codebase.txt
 project_codebase.txt
 apply_code.py
 ./scripts/apply_code.py
+
+# Android & Bubblewrap Build Files
+android-build/
+*.keystore
+*.aab
+*.apk
