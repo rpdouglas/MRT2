@@ -72,9 +72,7 @@ export default function PremiumUpgrade() {
     const handleManageSubscription = async () => {
         setIsManaging(true);
         try {
-            // SURGICAL FIX: Explicitly target the northamerica-northeast1 region
             const functions = getFunctions(undefined, 'northamerica-northeast1');
-            
             const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
             
             const { data } = await createPortalLink({
@@ -135,7 +133,7 @@ export default function PremiumUpgrade() {
                     <div className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700 flex flex-col relative overflow-hidden transform md:-translate-y-4">
                         <div className="relative z-10 mb-6">
                             <span className="text-amber-400 font-bold tracking-widest uppercase text-xs">Supporter</span>
-                            <h3 className="text-3xl font-black text-white mt-1">$4.99 <span className="text-lg text-slate-400 font-medium">/mo</span></h3>
+                            <h3 className="text-3xl font-black text-white mt-1">$3.99 <span className="text-lg text-slate-400 font-medium">/mo</span></h3>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1 relative z-10 text-sm text-slate-200">
                             <li className="flex items-start gap-3"><SparklesIcon className="h-5 w-5 text-amber-500 shrink-0" /><span><strong>Unlimited AI Deep Dives</strong></span></li>

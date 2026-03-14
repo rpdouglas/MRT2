@@ -1,13 +1,8 @@
-/**
- * src/components/SobrietyHero.tsx
- * GITHUB COMMENT:
- * [SobrietyHero.tsx]
- * UX: Micro-margin squeeze. Reduced grid gaps and padding around date numbers to eliminate final dead space (Ticket 2.3).
- */
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { toPng } from 'html-to-image';
 
 interface SobrietyHeroProps {
     date?: Timestamp | Date | null;
@@ -21,12 +16,39 @@ interface SobrietyHeroProps {
 }
 
 export default function SobrietyHero({ date, levelData, archetype }: SobrietyHeroProps) {
+    const heroRef = useRef<HTMLDivElement>(null);
+
     // Calculate Time Stats
     const stats = useMemo(() => {
         if (!date) return null;
         const startDate = date instanceof Date ? date : date.toDate();
         return calculateSobrietyDuration(startDate);
     }, [date]);
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!heroRef.current) return;
+        try {
+            const dataUrl = await toPng(heroRef.current, { cacheBust: true, pixelRatio: 2 });
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], 'mrt-milestone.png', { type: 'image/png' });
+
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'My Recovery Milestone',
+                    text: 'Tracking my journey with My Recovery Toolkit. 🛡️',
+                    files: [file]
+                });
+            } else {
+                const link = document.createElement('a');
+                link.download = 'mrt-milestone.png';
+                link.href = dataUrl;
+                link.click();
+            }
+        } catch (err) {
+            console.error('Failed to share image', err);
+        }
+    };
 
     if (!stats) {
         return (
@@ -38,7 +60,16 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
     }
 
     return (
-        <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
+        <div ref={heroRef} className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
+            {/* Share Button (Hidden during image export natively by html-to-image if we wanted, but leaving it looks fine) */}
+            <button
+                onClick={handleShare}
+                className="absolute top-3 right-3 z-20 p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                title="Share Milestone"
+            >
+                <ShareIcon className="h-4 w-4 text-white" />
+            </button>
+
             {/* Dynamic Background Texture */}
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             {/* Decorative Glow */}

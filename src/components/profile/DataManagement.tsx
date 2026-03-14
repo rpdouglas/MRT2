@@ -1,8 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [DataManagement.tsx]
- * FEAT: Wrapped PDF Export button in PremiumGate to enforce Supporter tier limits.
- */
 import React, { useState, useRef, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
@@ -15,6 +10,7 @@ import { executeTotalAccountAnnihilation } from '../../lib/deletion';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import PremiumGate from '../PremiumGate';
+import VaultGate from '../VaultGate';
 import { 
     ArrowDownTrayIcon, 
     ArrowUpTrayIcon, 
@@ -22,7 +18,6 @@ import {
     CodeBracketSquareIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
-    LockClosedIcon,
     CloudArrowUpIcon,
     TrashIcon,
     ArrowPathIcon,
@@ -43,7 +38,6 @@ export default function DataManagement() {
     const [importing, setImporting] = useState(false);
     const [importStatus, setImportStatus] = useState<string | null>(null);
 
-    // Account Deletion State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteStep, setDeleteStep] = useState<'confirm' | 'reauth' | 'shredding'>('confirm');
     const [deletePassword, setDeletePassword] = useState('');
@@ -80,7 +74,6 @@ export default function DataManagement() {
         try {
             const rawData = await fetchAllUserData(user.uid);
             setProgress(10);
-
             const cleanData = await prepareDataForExport(rawData, (p) => setProgress(10 + Math.floor(p * 0.8)));
             
             let blob: Blob;
@@ -142,7 +135,6 @@ export default function DataManagement() {
         }
     };
 
-    // --- DELETION FLOW LOGIC ---
     const handleInitiateDelete = () => {
         setDeleteStep('confirm');
         setDeleteError(null);
@@ -237,15 +229,7 @@ export default function DataManagement() {
                     </span>
                 </p>
 
-                {!isVaultUnlocked ? (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
-                        <LockClosedIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600 mb-3">Vault is locked. Please unlock to decrypt data.</p>
-                        <button disabled className="bg-gray-300 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-not-allowed">
-                            Unlock Required
-                        </button>
-                    </div>
-                ) : (
+                <VaultGate>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button 
                             onClick={() => handleExport('json')}
@@ -269,7 +253,7 @@ export default function DataManagement() {
                             </button>
                         </PremiumGate>
                     </div>
-                )}
+                </VaultGate>
 
                 {exporting && (
                     <div className="mt-4">
