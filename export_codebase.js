@@ -1,7 +1,8 @@
 /**
  * GITHUB COMMENT:
  * [export_codebase.js]
- * CONTEXT MANAGEMENT EDITION (v4.0)
+ * CONTEXT MANAGEMENT EDITION (v4.0.1)
+ * FIX: Updated ignore logic to prevent partial string matches (e.g., '.git' blocking '.github').
  * UPGRADE: Implemented CLI targeting. E.g., `node export_codebase.js src/components`
  * UPGRADE: Implemented strict Whitelisting. Default run only targets root files, src, docs, docs-site, and .github.
  * FIX: Added aggressive path-based ignores to block massive cache directories like .vitepress/cache.
@@ -59,10 +60,14 @@ function isBinaryFile(filePath) {
 function shouldIgnorePath(relativePath, fileName) {
   if (ALWAYS_IGNORE_FILES.includes(fileName)) return true;
   
-  // Check if the path contains any of our aggressive ignore strings
   const normalizedPath = relativePath.replace(/\\/g, '/');
   for (const ignore of AGGRESSIVE_IGNORE_PATHS) {
-    if (normalizedPath.includes(ignore)) return true;
+    // Use path boundaries to prevent partial matches (e.g., '.git' matching '.github')
+    // Escape dots in the ignore string so they are treated as literal dots
+    const escapedIgnore = ignore.replace(/\./g, '\\.');
+    const regex = new RegExp(`(^|/)${escapedIgnore}(/|$)`);
+    
+    if (regex.test(normalizedPath)) return true;
   }
   return false;
 }
@@ -108,7 +113,7 @@ async function runExport() {
   const userTargets = process.argv.slice(2);
   const isTargetedRun = userTargets.length > 0;
   
-  console.log(`🚀 Starting Codebase Export (v4.0)...`);
+  console.log(`🚀 Starting Codebase Export (v4.0.1)...`);
   
   let filesToProcess = [];
 

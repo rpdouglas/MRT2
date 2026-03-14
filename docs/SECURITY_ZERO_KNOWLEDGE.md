@@ -32,13 +32,6 @@
 * **Action:** The `EncryptionContext` sets `globalKey = null` and explicitly deletes the PIN from `sessionStorage`.
 * **Result:** Even if an attacker gains physical access to the unlocked computer or browser console after the fact, they cannot decrypt data without the user re-entering the PIN.
 
-### 🧨 Emergency Reset (Crypto-Shredding)
-* **Trigger:** User forgets PIN or wants a hard reset.
-* **Action:**
-    1. The app deletes the `encryptionSalt` and `pinVerifier` from Firestore.
-    2. **Consequence:** Without the salt, the original key can never be derived again. All existing encrypted data becomes mathematical garbage (permanently inaccessible).
-    3. **Recovery:** The user must establish a new PIN and start fresh (or import a backup).
-
 ## 3. AI Privacy Boundary
 When a user asks for AI Analysis:
 1. Data is decrypted **in the browser**.
@@ -54,19 +47,20 @@ When a user asks for AI Analysis:
     * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
     * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
 
-## 5. PIN Management & Rotation Protocol (Sprint 2)
-Because the user's PIN mathematically derives their encryption key, changing a PIN is a highly sensitive operation.
+## 5. PIN Management & Rotation Protocol
+Because the user's PIN mathematically derives their encryption key, changing a PIN is a highly sensitive operation managed by `src/lib/rotation.ts`.
 
 ### A. Changing a Known PIN (Rotation)
 If the user knows their current PIN and wants to change it:
-1.  **Unlock:** User enters *Current PIN* to derive *Current Key*.
-2.  **Fetch & Decrypt:** App downloads ALL encrypted documents (`journals`, `workbooks`, `service`) and decrypts them into memory.
+1.  **Unlock:** User enters *Current PIN* to validate against the `pinVerifier`.
+2.  **Fetch & Decrypt:** App downloads ALL encrypted documents (`journals`, `workbooks`) into memory.
 3.  **Generate:** User enters *New PIN*. App generates a *New Salt* and derives a *New Key*.
-4.  **Re-Encrypt:** App re-encrypts all in-memory plain text with the *New Key*.
-5.  **Commit:** App uploads the *New Salt*, *New Verifier*, and all *New Ciphertext* documents to Firestore in a batched transaction.
+4.  **Re-Encrypt & Chunking:** App re-encrypts all data. **Crucially**, it utilizes `processInChunks` to process 20 documents at a time. This yields the main thread to update the React progress bar, preventing UI freezing on mobile devices.
+5.  **Commit:** App uploads the new documents to Firestore in batches of 450 to respect Firebase transactional limits.
+6.  **Rollback:** If the network drops mid-flight, the `catch` block restores the old `globalKey` in memory to prevent session corruption.
 
 ### B. Resetting a Lost PIN (Crypto-Shredding)
 If the user forgot their PIN, rotation is mathematically impossible.
-1.  **Warning:** The app must display a severe warning that resetting will permanently destroy existing secure data.
-2.  **Action:** App deletes `encryptionSalt` and `pinVerifier` from the user profile, AND deletes all existing documents in `journals` and `workbook_answers`.
-3.  **Result:** The user starts completely fresh. (If they set up Google Drive Auto-Sync, they still possess a plain-text JSON backup off-platform).
+1.  **Warning:** The user triggers "Reset Vault" in the Profile Security tab. The app displays a severe warning.
+2.  **Action/Shredding:** App executes a massive batch-delete of all existing documents in `journals` and `workbook_answers`, AND deletes the `encryptionSalt` from the user profile.
+3.  **Result:** The old ciphertexts are destroyed, preventing orphaned, unreadable data from bloating the database. The user starts completely fresh.

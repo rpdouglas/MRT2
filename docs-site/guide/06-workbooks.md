@@ -12,8 +12,8 @@ When you open the Workbooks page, you will see two tabs:
 * The interface is optimized for mobile devices; the question will always stay pinned to the top of your screen even when your keyboard is open.
 * As you type your answers, look at the top right of the screen. The app **Auto-Saves** and encrypts your work every 2 seconds.
 
-## AI Coaching
-Stuck on a tough question (like Step 4 resentments)? Type your initial thoughts, then click the **"AI Insight"** button in the sticky toolbar. The Recovery Coach will provide gentle, instantaneous feedback to help you dig deeper.
+## The Insight Engine
+Stuck on a tough question (like Step 4 resentments)? Type your initial thoughts, then click the **"AI Insight"** button in the sticky toolbar. The Insight Engine will provide gentle, instantaneous reflection to help you dig deeper.
 
 ## Asking the Compass
 From the main Workbook menu, click the floating **"Consult Compass"** button.
