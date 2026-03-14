@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "ca.myrecoverytoolkit.app",
+    "sha256_cert_fingerprints": [
+      "19:DD:6D:9D:6D:1A:E5:79:18:31:D6:66:3F:EB:F9:FE:34:A1:88:AB:A2:A2:98:B7:68:CC:A6:14:38:6F:78:E0"
+    ]
+  }
+}]
