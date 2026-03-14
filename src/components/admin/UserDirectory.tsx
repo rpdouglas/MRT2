@@ -9,7 +9,8 @@ import {
     ArrowPathIcon,
     ClockIcon,
     ShieldCheckIcon,
-    UserMinusIcon
+    UserMinusIcon,
+    ArrowDownTrayIcon
 } from '@heroicons/react/24/solid';
 
 export default function UserDirectory() {
@@ -88,6 +89,19 @@ export default function UserDirectory() {
         }
     };
 
+    const handleExportCSV = () => {
+        let csv = 'UID,Email,DisplayName,Role,Tier,Joined,LastActive\n';
+        users.forEach(u => {
+            const joined = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : '';
+            const active = u.lastLogin?.toDate ? u.lastLogin.toDate().toISOString() : '';
+            csv += `${u.uid},${u.email || ''},${u.displayName || ''},${u.role || 'user'},${u.tier || 'free'},${joined},${active}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'mrt_users.csv'; a.click();
+    };
+
     const renderTierBadge = (user: UserProfile) => {
         if (user.tier === 'premium') {
             if (user.tierSource === 'manual') {
@@ -119,106 +133,133 @@ export default function UserDirectory() {
         );
     }
 
+    // Calculate Analytics
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const newSignups = users.filter(u => u.createdAt?.toDate && u.createdAt.toDate() > thirtyDaysAgo).length;
+    const dau = users.filter(u => u.lastLogin?.toDate && u.lastLogin.toDate() > oneDayAgo).length;
+
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
-                    <p className="text-sm text-gray-500">Manage account access, roles, and monetization.</p>
+        <div className="space-y-6">
+            
+            {/* USER ANALYTICS HERO */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center">
+                    <span className="text-2xl font-black text-blue-600">{users.length}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase">Total Users</span>
                 </div>
-                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                    {users.length} Total Users
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center">
+                    <span className="text-2xl font-black text-emerald-600">{dau}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase">Daily Active (24h)</span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center">
+                    <span className="text-2xl font-black text-purple-600">{newSignups}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase">New (30 Days)</span>
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((u) => (
-                            <tr key={u.uid} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
-                                            {u.role === 'admin' && (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">
-                                                    Admin
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {u.createdAt ? u.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                        <ClockIcon className="h-4 w-4 text-gray-400" />
-                                        {u.lastLogin ? u.lastLogin.toDate().toLocaleDateString() : 'Never'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {renderTierBadge(u)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    {actionLoading === u.uid ? (
-                                        <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
-                                    ) : (
-                                        <div className="flex justify-end gap-3">
-                                            {/* Tier Management Actions */}
-                                            {u.tier === 'premium' && u.tierSource === 'manual' ? (
-                                                <button 
-                                                    onClick={() => handleRevokeVIP(u.uid)} 
-                                                    className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
-                                                >
-                                                    Revoke VIP
-                                                </button>
-                                            ) : u.tier !== 'premium' ? (
-                                                <button 
-                                                    onClick={() => handleGrantVIP(u.uid)} 
-                                                    className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
-                                                >
-                                                    Grant VIP
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
-                                            )}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
+                        <p className="text-sm text-gray-500">Manage account access, roles, and monetization.</p>
+                    </div>
+                    <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
+                        <ArrowDownTrayIcon className="h-4 w-4" /> Export CSV
+                    </button>
+                </div>
 
-                                            {/* Unified Role Management Icons */}
-                                            {u.role === 'admin' ? (
-                                                <button 
-                                                    onClick={() => handleUpdateRole(u.uid, 'user')} 
-                                                    className="text-gray-400 hover:text-red-600 transition-colors" 
-                                                    title="Demote to User"
-                                                >
-                                                    <UserMinusIcon className="h-5 w-5" />
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => handleUpdateRole(u.uid, 'admin')} 
-                                                    className="text-gray-400 hover:text-blue-600 transition-colors" 
-                                                    title="Promote to Admin"
-                                                >
-                                                    <ShieldCheckIcon className="h-5 w-5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {users.map((u) => (
+                                <tr key={u.uid} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium text-gray-900">{u.displayName || 'Anonymous'}</span>
+                                                {u.role === 'admin' && (
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase border border-blue-200">
+                                                        Admin
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-gray-500">{u.email || u.uid.slice(0, 8)}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                            <ClockIcon className="h-4 w-4 text-gray-400" />
+                                            {u.lastLogin?.toDate ? u.lastLogin.toDate().toLocaleDateString() : 'Never'}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {renderTierBadge(u)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        {actionLoading === u.uid ? (
+                                            <ArrowPathIcon className="h-5 w-5 text-gray-400 animate-spin ml-auto" />
+                                        ) : (
+                                            <div className="flex justify-end gap-3">
+                                                {/* Tier Management Actions */}
+                                                {u.tier === 'premium' && u.tierSource === 'manual' ? (
+                                                    <button 
+                                                        onClick={() => handleRevokeVIP(u.uid)} 
+                                                        className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
+                                                    >
+                                                        Revoke VIP
+                                                    </button>
+                                                ) : u.tier !== 'premium' ? (
+                                                    <button 
+                                                        onClick={() => handleGrantVIP(u.uid)} 
+                                                        className="text-purple-700 hover:text-purple-900 bg-purple-50 px-3 py-1 rounded-md text-xs font-bold transition-colors"
+                                                    >
+                                                        Grant VIP
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-400 italic py-1">Stripe-Managed</span>
+                                                )}
+
+                                                {/* Unified Role Management Icons */}
+                                                {u.role === 'admin' ? (
+                                                    <button 
+                                                        onClick={() => handleUpdateRole(u.uid, 'user')} 
+                                                        className="text-gray-400 hover:text-red-600 transition-colors" 
+                                                        title="Demote to User"
+                                                    >
+                                                        <UserMinusIcon className="h-5 w-5" />
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => handleUpdateRole(u.uid, 'admin')} 
+                                                        className="text-gray-400 hover:text-blue-600 transition-colors" 
+                                                        title="Promote to Admin"
+                                                    >
+                                                        <ShieldCheckIcon className="h-5 w-5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

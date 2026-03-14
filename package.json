@@ -15,7 +15,7 @@
     "docs:dev": "vitepress dev docs-site",
     "docs:build": "vitepress build docs-site",
     "test:once": "vitest run",
-  "check": "npm run lint && npm run test:once && npm run build"
+    "check": "npm run lint && npm run test:once && npm run build"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
@@ -31,6 +31,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.1",
+    "html-to-image": "^1.11.13",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.561.0",

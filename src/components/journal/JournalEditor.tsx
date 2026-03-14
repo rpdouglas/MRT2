@@ -1,10 +1,3 @@
-/**
- * src/components/journal/JournalEditor.tsx
- * GITHUB COMMENT:
- * [JournalEditor.tsx]
- * REFACTOR: Extracted DEFAULT_TEMPLATES to src/data/journalTemplates.ts (Ticket 4.6).
- * UPDATE: Aligned template selection logic to use 'content' property instead of 'text'.
- */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
@@ -20,16 +13,15 @@ import {
     TagIcon,
     XMarkIcon,
     MicrophoneIcon,
-    FaceSmileIcon
+    FaceSmileIcon,
+    LockClosedIcon
 } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
-import { DEFAULT_TEMPLATES } from '../../data/journalTemplates'; // NEW IMPORT
+import { DEFAULT_TEMPLATES } from '../../data/journalTemplates';
 import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
 import type { AudioAnalysisResult } from '../../lib/gemini';
-
-// --- Types ---
 
 interface JournalDocData {
     tags?: string[];
@@ -58,21 +50,17 @@ interface JournalEditorProps {
 }
 
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
-  const { user } = useAuth();
+  const { user, userTier } = useAuth();
   const { encrypt } = useEncryption();
   const { addJournal, updateJournal } = useJournalOperations();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Editor Ref for Markdown insertion
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // --- SMART DEFAULT MOOD LOGIC ---
   const getSmartMood = () => {
       if (initialEntry) return initialEntry.moodScore;
-      
       const cache = queryClient.getQueryData<JournalEntry[]>(['journals']);
-      
       if (!cache || cache.length === 0) return 5;
 
       const recent = cache
@@ -80,12 +68,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
         .slice(0, 7);
       
       if (recent.length === 0) return 5;
-
       const sum = recent.reduce((acc: number, curr: JournalEntry) => acc + curr.moodScore, 0);
       return Math.round(sum / recent.length);
   };
 
-  // State
   const [newEntry, setNewEntry] = useState('');
   const [mood, setMood] = useState(getSmartMood); 
   const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
@@ -93,30 +79,22 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const [saving, setSaving] = useState(false); 
   const [weatherLoading, setWeatherLoading] = useState(false);
   
-  // Tag State
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
-  // Template State
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
-
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-
-  // --- Helper Functions ---
 
   const fetchLocalWeather = useCallback(async () => {
     setWeatherLoading(true);
     try {
       const data = await getCurrentWeather();
       if (data) {
-        setWeather({
-          temp: Math.round(data.temp),
-          condition: data.condition
-        });
+        setWeather({ temp: Math.round(data.temp), condition: data.condition });
       }
     } catch (e) {
       console.warn("Failed to auto-load weather", e);
@@ -138,12 +116,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   const loadUserTags = useCallback(async () => {
     if (!user || !db) return;
     try {
-        const q = query(
-            collection(db, 'journals'),
-            where('uid', '==', user.uid),
-            orderBy('createdAt', 'desc'),
-            limit(50)
-        );
+        const q = query(collection(db, 'journals'), where('uid', '==', user.uid), orderBy('createdAt', 'desc'), limit(50));
         const snapshot = await getDocs(q);
         const tagSet = new Set<string>();
         snapshot.docs.forEach(doc => {
@@ -159,18 +132,15 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
   }, [user]);
 
   const handleTemplateSelect = useCallback((tId: string) => {
-    // 1. Check Standard Templates (from new data file)
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
-        setNewEntry(defTemplate.content); // UPDATED: uses .content
+        setNewEntry(defTemplate.content); 
         setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
         setActiveTemplate(null);
         return;
     }
 
-    // 2. Check Custom User Templates
     const custTemplate = customTemplates.find(t => t.id === tId) as ExtendedJournalTemplate | undefined;
-    
     if (custTemplate) {
         if (custTemplate.content) {
             setNewEntry(custTemplate.content);
@@ -184,14 +154,11 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
         }
     } else {
-        // 3. Reset / Free Write
         setActiveTemplate(null);
         setNewEntry('');
         setTags([]);
     }
   }, [customTemplates]); 
-
-  // --- Effects ---
 
   useEffect(() => {
     if (!user) return;
@@ -205,9 +172,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setNewEntry(initialEntry.content);
       setMood(initialEntry.moodScore);
       setTags(initialEntry.tags || []);
-      if (initialEntry.weather) {
-        setWeather(initialEntry.weather);
-      }
+      if (initialEntry.weather) setWeather(initialEntry.weather);
       setActiveTemplate(null);
     } else {
       setNewEntry('');
@@ -216,10 +181,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setFormAnswers([]);
       setWeather(null);
       fetchLocalWeather(); 
-
-      if (initialTemplateId) {
-          handleTemplateSelect(initialTemplateId);
-      }
+      if (initialTemplateId) handleTemplateSelect(initialTemplateId);
     }
   }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
 
@@ -241,13 +203,9 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     setShowSuggestions(false);
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
-  };
+  const removeTag = (tagToRemove: string) => setTags(tags.filter(t => t !== tagToRemove));
 
-  const filteredSuggestions = availableTags.filter(t => 
-    t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)
-  );
+  const filteredSuggestions = availableTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t));
 
   const handleAudioComplete = (result: AudioAnalysisResult) => {
       setNewEntry(prev => (prev ? prev + "\n\n" + result.transcription : result.transcription));
@@ -262,11 +220,9 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
     const isFormValid = activeTemplate && formAnswers.some(a => a.trim() !== '');
     const isTextValid = !activeTemplate && newEntry.trim() !== '';
-
     if (!isFormValid && !isTextValid) return;
 
     setSaving(true);
-
     let plainContent = newEntry;
     if (activeTemplate) {
         plainContent = `**${activeTemplate.name}**\n\n`;
@@ -278,7 +234,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     try {
       let contentToSave = plainContent;
       let isEncrypted = false;
-
       try {
         contentToSave = await encrypt(plainContent);
         isEncrypted = true;
@@ -290,22 +245,9 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       }
 
       if (initialEntry) {
-        await updateJournal({ 
-            id: initialEntry.id, 
-            content: contentToSave, 
-            moodScore: mood, 
-            tags: tags, 
-            isEncrypted: isEncrypted 
-        });
+        await updateJournal({ id: initialEntry.id, content: contentToSave, moodScore: mood, tags: tags, isEncrypted: isEncrypted });
       } else {
-        await addJournal({
-          content: contentToSave,
-          moodScore: mood,
-          sentiment: 'Pending', 
-          weather: weather, 
-          tags: tags,
-          isEncrypted: isEncrypted
-        });
+        await addJournal({ content: contentToSave, moodScore: mood, sentiment: 'Pending', weather: weather, tags: tags, isEncrypted: isEncrypted });
       }
 
       setNewEntry('');
@@ -324,10 +266,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-180px)] md:h-[600px] relative">
-        
-        {/* === SECTION 1: FIXED HEADER === */}
         <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center gap-3 shrink-0">
-             {/* LEFT: Weather Widget */}
              <div>
                  {weather ? (
                     <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-gray-200 shadow-sm">
@@ -341,81 +280,56 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     </div>
                 ) : (
                     !initialEntry && (
-                        <button 
-                            type="button" 
-                            onClick={fetchLocalWeather} 
-                            disabled={weatherLoading}
-                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-white hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
-                        >
-                            {weatherLoading ? (
-                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
-                            ) : (
-                                <MapPinIcon className="h-3 w-3" />
-                            )}
+                        <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 bg-white hover:bg-blue-50 px-2 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm">
+                            {weatherLoading ? <ArrowPathIcon className="h-3 w-3 animate-spin" /> : <MapPinIcon className="h-3 w-3" />}
                             <span>Add Weather</span>
                         </button>
                     )
                 )}
              </div>
 
-             {/* RIGHT: Template Controls */}
              <div className="flex items-center gap-2">
                  <div className="relative">
                      <select 
                         onChange={(e) => handleTemplateSelect(e.target.value)}
-                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white max-w-[140px] sm:max-w-none"
+                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white w-48 text-ellipsis overflow-hidden"
                         defaultValue=""
                         disabled={!!initialEntry} 
                     >
                         <option value="" disabled>Choose Template...</option>
                         <option value="none">Free Write</option>
                         <optgroup label="Standard">
-                            {DEFAULT_TEMPLATES.map(t => (
-                                <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
+                            {DEFAULT_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </optgroup>
                         {customTemplates.length > 0 && (
                             <optgroup label="My Templates">
-                                {customTemplates.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                ))}
+                                {customTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </optgroup>
                         )}
                     </select>
                  </div>
 
                  <button 
-                    onClick={() => navigate('/templates')}
+                    onClick={() => userTier === 'premium' ? navigate('/templates') : navigate('/premium')}
                     className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
-                    title="Manage Templates"
+                    title={userTier === 'premium' ? "Manage Templates" : "Premium Feature: Custom Templates"}
                  >
-                    <Cog6ToothIcon className="h-5 w-5" />
+                    {userTier === 'premium' ? <Cog6ToothIcon className="h-5 w-5" /> : <LockClosedIcon className="h-5 w-5 text-amber-500" />}
                  </button>
              </div>
         </div>
         
-        {/* === SECTION 2: SCROLLABLE EDITOR BODY === */}
         <div className="flex-1 overflow-y-auto p-4">
             {isVoiceMode ? (
                 <div className="h-full flex items-center justify-center">
-                    <AudioRecorder 
-                        onAnalysisComplete={handleAudioComplete}
-                        onCancel={() => setIsVoiceMode(false)}
-                    />
+                    <AudioRecorder onAnalysisComplete={handleAudioComplete} onCancel={() => setIsVoiceMode(false)} />
                 </div>
             ) : activeTemplate ? (
                 <div className="space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100 min-h-full">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
-                        <button 
-                            type="button" 
-                            onClick={() => setActiveTemplate(null)}
-                            className="text-xs text-blue-500 hover:text-blue-700 underline"
-                        >
-                            Switch to Text Mode
-                        </button>
+                        <button type="button" onClick={() => setActiveTemplate(null)} className="text-xs text-blue-500 hover:text-blue-700 underline">Switch to Text Mode</button>
                     </div>
-                    
                     {activeTemplate.prompts.map((prompt, idx) => (
                         <div key={idx}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
@@ -444,17 +358,11 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
             )}
         </div>
 
-        {/* === SECTION 3: STICKY COMMAND TOOLBAR === */}
         <div className="border-t border-gray-200 bg-gray-50/95 backdrop-blur-sm p-3 shrink-0 flex flex-col gap-3">
-            
-            {/* Row 1: Mood Slider (Compact) */}
             <div className="flex items-center gap-3 px-2">
                 <FaceSmileIcon className={`h-5 w-5 ${mood >= 7 ? 'text-green-600' : mood <= 4 ? 'text-red-500' : 'text-yellow-600'}`} />
                 <input 
-                    type="range" 
-                    min="1" 
-                    max="10" 
-                    value={mood}
+                    type="range" min="1" max="10" value={mood}
                     onChange={(e) => setMood(Number(e.target.value))}
                     className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
@@ -463,10 +371,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                 </span>
             </div>
 
-            {/* Row 2: Tags & Actions */}
             <div className="flex items-center gap-2">
-                
-                {/* Tag Input - CRITICAL FIX: min-w-0 added to prevent flex overflow */}
                 <div className="relative flex-1 min-w-0 group">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
                         <TagIcon className="h-4 w-4 text-gray-400 shrink-0" />
@@ -474,18 +379,12 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                             {tags.map(tag => (
                                 <span key={tag} className="flex-shrink-0 flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap">
                                     {tag}
-                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                                        <XMarkIcon className="h-3 w-3" />
-                                    </button>
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900"><XMarkIcon className="h-3 w-3" /></button>
                                 </span>
                             ))}
                             <input 
-                                type="text" 
-                                value={tagInput}
-                                onChange={(e) => {
-                                    setTagInput(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
+                                type="text" value={tagInput}
+                                onChange={(e) => { setTagInput(e.target.value); setShowSuggestions(true); }}
                                 onKeyDown={handleAddTag}
                                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                 placeholder={tags.length === 0 ? "Add tags..." : ""}
@@ -493,45 +392,21 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                             />
                         </div>
                     </div>
-
-                    {/* Autocomplete Suggestions */}
                     {showSuggestions && tagInput && filteredSuggestions.length > 0 && (
                         <div className="absolute bottom-full left-0 mb-2 w-full max-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 max-h-32 overflow-y-auto z-50">
                             {filteredSuggestions.map(tag => (
-                                <button
-                                    key={tag}
-                                    type="button"
-                                    className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                                    onClick={() => addTag(tag)}
-                                >
-                                    {tag}
-                                </button>
+                                <button key={tag} type="button" className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors" onClick={() => addTag(tag)}>{tag}</button>
                             ))}
                         </div>
                     )}
                 </div>
 
-                {/* Mic Button */}
-                <button
-                    type="button"
-                    onClick={() => setIsVoiceMode(true)}
-                    className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-colors flex-shrink-0"
-                    title="Voice Note"
-                >
+                <button type="button" onClick={() => setIsVoiceMode(true)} className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-colors flex-shrink-0" title="Voice Note">
                     <MicrophoneIcon className="h-5 w-5" />
                 </button>
 
-                {/* Save Button (Swapped to CheckIcon) */}
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 flex items-center gap-1"
-                >
-                    {saving ? (
-                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <CheckIcon className="h-4 w-4" />
-                    )}
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 flex items-center gap-1">
+                    {saving ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckIcon className="h-4 w-4" />}
                     <span className="hidden sm:inline">{initialEntry ? 'Update' : 'Save'}</span>
                 </button>
             </div>

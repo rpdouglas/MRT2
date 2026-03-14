@@ -13,14 +13,14 @@ import {
     CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import PremiumGate from '../components/PremiumGate';
 
-// Local Type Definition
 interface JournalTemplate {
     id: string;
     uid: string;
     name: string;
     content?: string; 
-    prompts?: string[]; // Legacy support
+    prompts?: string[]; 
     defaultTags: string[];
     createdAt: Timestamp;
 }
@@ -32,7 +32,6 @@ export default function TemplateEditor() {
     const [templates, setTemplates] = useState<JournalTemplate[]>([]);
     const [loading, setLoading] = useState(true);
     
-    // Editor State
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [name, setName] = useState('');
@@ -43,7 +42,6 @@ export default function TemplateEditor() {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // FIX: Hoisted above useEffect and wrapped in useCallback
     const loadTemplates = useCallback(async () => {
         if (!user || !db) return;
         setLoading(true);
@@ -62,10 +60,8 @@ export default function TemplateEditor() {
     useEffect(() => {
         if (!user) return;
         loadTemplates();
-        console.log("Template Editor V2 Loaded");
-    }, [user, loadTemplates]); // FIX: Added dependency
+    }, [user, loadTemplates]); 
 
-    // --- Toolbar Helpers ---
     const insertText = (before: string, after: string = '') => {
         const textarea = textareaRef.current;
         if (!textarea) return;
@@ -81,7 +77,6 @@ export default function TemplateEditor() {
         
         setContent(newText);
         
-        // Reset focus and cursor
         setTimeout(() => {
             textarea.focus();
             const newCursorPos = start + before.length + selection.length + after.length;
@@ -89,7 +84,6 @@ export default function TemplateEditor() {
         }, 0);
     };
 
-    // --- Tag Helpers ---
     const handleAddTag = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -103,11 +97,9 @@ export default function TemplateEditor() {
 
     const removeTag = (t: string) => setTags(tags.filter(tag => tag !== t));
 
-    // --- CRUD Operations ---
     const handleEdit = (t: JournalTemplate) => {
         setEditId(t.id);
         setName(t.name);
-        // Convert legacy templates to text if needed
         const textContent = t.content || (t.prompts ? t.prompts.map(p => `**${p}**\n\n`).join('') : '');
         setContent(textContent);
         setTags(t.defaultTags || []);
@@ -137,7 +129,6 @@ export default function TemplateEditor() {
         e.preventDefault();
         if (!user || !db) return;
 
-        // Clean data
         const cleanTags = tags.map(t => t.trim()).filter(t => t !== '').map(t => t.startsWith('#') ? t : `#${t}`);
 
         if (!name || content.trim() === '') {
@@ -149,7 +140,7 @@ export default function TemplateEditor() {
         const templateData = {
             uid: user.uid,
             name,
-            content, // Saving as Free Text
+            content, 
             defaultTags: cleanTags,
             updatedAt: Timestamp.now()
         };
@@ -187,12 +178,9 @@ export default function TemplateEditor() {
 
     if (loading) return <div className="p-8">Loading templates...</div>;
 
-    // --- EDITOR VIEW ---
     if (isEditing) {
         return (
             <div className="max-w-4xl mx-auto p-4 space-y-6">
-                
-                {/* Header / Nav */}
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/journal')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
@@ -203,8 +191,6 @@ export default function TemplateEditor() {
                 </div>
 
                 <form onSubmit={handleSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
-                    
-                    {/* Name Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
                         <input 
@@ -216,28 +202,18 @@ export default function TemplateEditor() {
                         />
                     </div>
 
-                    {/* Content Editor */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-sm font-medium text-gray-700">Template Structure</label>
                             <span className="text-xs text-gray-400">Markdown Supported</span>
                         </div>
                         
-                        {/* Toolbar */}
                         <div className="flex items-center gap-2 mb-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                            <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading">
-                                <HashtagIcon className="h-4 w-4" />
-                            </button>
-                            <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">
-                                B
-                            </button>
+                            <button type="button" onClick={() => insertText('### ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Heading"><HashtagIcon className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => insertText('**', '**')} className="px-2 py-1 text-sm font-bold hover:bg-white hover:shadow-sm rounded text-gray-600" title="Bold">B</button>
                             <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                            <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox">
-                                <CheckCircleIcon className="h-4 w-4" />
-                            </button>
-                            <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List">
-                                <ListBulletIcon className="h-4 w-4" />
-                            </button>
+                            <button type="button" onClick={() => insertText('- [ ] ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Checkbox"><CheckCircleIcon className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => insertText('1. ')} className="p-1.5 hover:bg-white hover:shadow-sm rounded text-gray-600" title="Ordered List"><ListBulletIcon className="h-4 w-4" /></button>
                         </div>
 
                         <textarea 
@@ -250,16 +226,13 @@ export default function TemplateEditor() {
                         />
                     </div>
 
-                    {/* Default Tags */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
                         <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
                             {tags.map(tag => (
                                 <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
                                     {tag}
-                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
-                                        <XMarkIcon className="h-3 w-3" />
-                                    </button>
+                                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900"><XMarkIcon className="h-3 w-3" /></button>
                                 </span>
                             ))}
                             <input 
@@ -273,84 +246,55 @@ export default function TemplateEditor() {
                         </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                        <button 
-                            type="button" 
-                            onClick={() => { setIsEditing(false); resetForm(); }}
-                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            type="submit"
-                            disabled={saving}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
-                        >
-                            {saving ? 'Saving...' : 'Save Template'}
-                        </button>
+                        <button type="button" onClick={() => { setIsEditing(false); resetForm(); }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">Cancel</button>
+                        <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50">{saving ? 'Saving...' : 'Save Template'}</button>
                     </div>
-
                 </form>
             </div>
         );
     }
 
-    // --- LIST VIEW ---
     return (
-        <div className="max-w-3xl mx-auto space-y-6 p-4">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button onClick={() => navigate('/journal')} className="text-gray-500 hover:text-gray-900 lg:hidden">
-                   <ArrowLeftIcon className="h-5 w-5" />
-                </button>
-                <h1 className="text-2xl font-bold text-gray-900">Manage Templates</h1>
-              </div>
-              <button 
-                 onClick={handleCreate}
-                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-              >
-                 <PlusIcon className="h-5 w-5" />
-                 Create New
-              </button>
-           </div>
+        <PremiumGate fallbackMode="lock_overlay" customMessage="Custom templates are a Supporter Tier feature. Upgrade to customize your journal experience.">
+            <div className="max-w-3xl mx-auto space-y-6 p-4">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/journal')} className="text-gray-500 hover:text-gray-900 lg:hidden">
+                        <ArrowLeftIcon className="h-5 w-5" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900">Manage Templates</h1>
+                  </div>
+                  <button onClick={handleCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                     <PlusIcon className="h-5 w-5" /> Create New
+                  </button>
+               </div>
 
-           <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
-              {templates.length === 0 ? (
-                 <div className="p-8 text-center text-gray-500">
-                    You haven't created any custom templates yet.
-                 </div>
-              ) : (
-                 <ul className="divide-y divide-gray-100">
-                    {templates.map((t) => (
-                       <li key={t.id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition">
-                          <div>
-                             <h3 className="font-semibold text-gray-900">{t.name}</h3>
-                             <p className="text-sm text-gray-500 mt-1">
-                                {t.defaultTags.length > 0 ? t.defaultTags.join(', ') : 'No default tags'}
-                             </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                             <button 
-                                onClick={() => handleEdit(t)}
-                                className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition"
-                                title="Edit"
-                             >
-                                <PencilSquareIcon className="h-5 w-5" />
-                             </button>
-                             <button 
-                                onClick={() => handleDelete(t.id)}
-                                className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition"
-                                title="Delete"
-                             >
-                                <TrashIcon className="h-5 w-5" />
-                             </button>
-                          </div>
-                       </li>
-                    ))}
-                 </ul>
-              )}
-           </div>
-        </div>
+               <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+                  {templates.length === 0 ? (
+                     <div className="p-8 text-center text-gray-500">You haven't created any custom templates yet.</div>
+                  ) : (
+                     <ul className="divide-y divide-gray-100">
+                        {templates.map((t) => (
+                           <li key={t.id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition">
+                              <div>
+                                 <h3 className="font-semibold text-gray-900">{t.name}</h3>
+                                 <p className="text-sm text-gray-500 mt-1">{t.defaultTags.length > 0 ? t.defaultTags.join(', ') : 'No default tags'}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <button onClick={() => handleEdit(t)} className="p-2 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition" title="Edit">
+                                    <PencilSquareIcon className="h-5 w-5" />
+                                 </button>
+                                 <button onClick={() => handleDelete(t.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition" title="Delete">
+                                    <TrashIcon className="h-5 w-5" />
+                                 </button>
+                              </div>
+                           </li>
+                        ))}
+                     </ul>
+                  )}
+               </div>
+            </div>
+        </PremiumGate>
     );
 }
