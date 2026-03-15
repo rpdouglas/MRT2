@@ -27,28 +27,28 @@ graph TD
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, & Settings.
 * **Fields:**
-    * `tier` (String): 'free' | 'premium'.
-    * `tierSource` (String): 'stripe' | 'manual'. // NEW: Differentiates between paid and comped.
-    * `role` (String): 'user' | 'admin'.
-    * `lastLogin` (Timestamp): Tracked for retention metrics.
-    * `createdAt` (Timestamp): Date the user joined the platform.
     * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
+    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness.
     * `sobrietyDate` (Timestamp): Metrics base.
+    * `role` (String): 'user' | 'admin'. Controls UI access.
     * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
     * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
+    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI.
+    * `tier` / `tierSource`: Monetization access tracking.
+    * `substanceCost` (Number): Used for Financial Freedom calculator.
+    * `costFrequency` (String): 'daily' | 'weekly' | 'monthly'.
+    * `currencySymbol` (String): User's local currency symbol.
 
 ### `journals/{entryId}`
-* **Purpose:** Daily logs, Vitality logs, and reflections.
+* **Purpose:** Daily logs, Vitality logs, Urge Surfing reflections.
 * **Fields:**
     * `uid` (String): Owner ID.
     * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
     * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
     * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
-    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
-    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
-    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
+    * `sentiment` (String): AI-derived sentiment.
+    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Crisis Avoided"]`).
+    * `weather` (Map): Snapshot of environment.
 
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans.
@@ -68,27 +68,13 @@ graph TD
 * **Fields:**
     * `type` (String): 'journal' | 'workbook'.
     * `summary` (String): The AI's output.
-    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
+    * `pillars` (Map): Structured breakdown.
     * `strengths` & `risks` (Array): Listed points for UI rendering.
-    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
+    * `suggested_actions` (Array): Recommended tasks.
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions.
 * **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:**
-    * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: Commit hash for version tracing.
-    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `vaultUnlocked`: Boolean.
-    * `route` & `userAgent`: Strings.
-
-### `service/{serviceId}` [PLANNED - Sprint 7]
-* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
 
 ## 3. Query Strategy
 * **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
