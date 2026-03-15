@@ -36,3 +36,4 @@ android-build/
 *.keystore
 *.aab
 *.apk
+mrt-release.keystore

@@ -1,8 +1,11 @@
 import { useMemo, useRef } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { CalendarDaysIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ShareIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { calculateSavings } from '../lib/financial';
 import { toPng } from 'html-to-image';
+import type { UserProfile } from '../lib/db';
+import { Link } from 'react-router-dom';
 
 interface SobrietyHeroProps {
     date?: Timestamp | Date | null;
@@ -13,9 +16,10 @@ interface SobrietyHeroProps {
         progressPercent: number;
     };
     archetype?: string;
+    userProfile?: UserProfile | null;
 }
 
-export default function SobrietyHero({ date, levelData, archetype }: SobrietyHeroProps) {
+export default function SobrietyHero({ date, levelData, archetype, userProfile }: SobrietyHeroProps) {
     const heroRef = useRef<HTMLDivElement>(null);
 
     // Calculate Time Stats
@@ -24,6 +28,12 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
         const startDate = date instanceof Date ? date : date.toDate();
         return calculateSobrietyDuration(startDate);
     }, [date]);
+
+    // Calculate Financial Savings using strictly tested pure function
+    const totalSaved = useMemo(() => {
+        if (!userProfile?.substanceCost || !stats) return null;
+        return calculateSavings(userProfile.substanceCost, userProfile.costFrequency, stats.totalDays);
+    }, [userProfile, stats]);
 
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -60,8 +70,8 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
     }
 
     return (
-        <div ref={heroRef} className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20">
-            {/* Share Button (Hidden during image export natively by html-to-image if we wanted, but leaving it looks fine) */}
+        <div ref={heroRef} className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20 w-full">
+            {/* Share Button */}
             <button
                 onClick={handleShare}
                 className="absolute top-3 right-3 z-20 p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
@@ -77,7 +87,7 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
 
             <div className="relative z-10 flex flex-col h-full justify-between">
                 
-                {/* Main Counters (Squeezed Margins & Padding) */}
+                {/* Main Counters */}
                 <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30">
                     <div className="px-1">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
@@ -93,20 +103,17 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                     </div>
                 </div>
 
-                {/* Unified Footer: Gamification & Total Days (Squeezed Separator) */}
+                {/* Unified Footer */}
                 {levelData && archetype && (
-                    <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                    <div className="mt-3 pt-3 border-t border-white/20 space-y-2.5">
                         
-                        {/* Gamification Stats (Single Row - SCALED UP) */}
+                        {/* Gamification Stats */}
                         <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
-                            {/* Left: Rank & Level */}
                             <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                                 <span className="truncate">Rank: {archetype}</span>
                                 <span className="opacity-50">|</span>
                                 <span>LVL: {levelData.level}</span>
                             </div>
-                            
-                            {/* Right: Progress & XP */}
                             <div className="text-right shrink-0">
                                 <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
                                 <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
@@ -123,11 +130,25 @@ export default function SobrietyHero({ date, levelData, archetype }: SobrietyHer
                             </div>
                         </div>
 
-                        {/* Total Days (SCALED UP & MIRRORED ICONS) */}
-                        <div className="pt-1 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
-                            <CalendarDaysIcon className="h-4 w-4" />
-                            <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
-                            <CalendarDaysIcon className="h-4 w-4" />
+                        {/* Metrics Row (Days & Financial) */}
+                        <div className="pt-1 flex items-center justify-between text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <CalendarDaysIcon className="h-4 w-4" />
+                                <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
+                            </div>
+                            
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                {totalSaved !== null ? (
+                                    <>
+                                       <BanknotesIcon className="h-4 w-4" />
+                                       <span>Saved: <span className="font-mono font-bold text-emerald-100 ml-1">{userProfile?.currencySymbol || '$'}{totalSaved.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span></span>
+                                    </>
+                                ) : (
+                                    <Link to="/profile" className="text-white hover:text-emerald-100 flex items-center gap-1 transition-colors underline decoration-white/50 underline-offset-2">
+                                        <BanknotesIcon className="h-4 w-4" /> Setup Financial Freedom
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

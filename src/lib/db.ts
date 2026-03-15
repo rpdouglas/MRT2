@@ -1,6 +1,6 @@
 /**
  * src/lib/db.ts
- * UPDATED: Added tierSource for Admin VIP Management.
+ * UPDATED: Replaced dailySubstanceCost with flexible substanceCost and costFrequency.
  */
 import { 
   doc, 
@@ -24,7 +24,6 @@ import { db } from "./firebase";
 import type { User } from "firebase/auth";
 import type { RecurrenceConfig } from "./dateUtils";
 
-// --- GENERIC CONVERTER ---
 export const createConverter = <T extends object>() => ({
   toFirestore(data: WithFieldValue<T>): DocumentData {
     return data;
@@ -42,8 +41,6 @@ export const createConverter = <T extends object>() => ({
     return { id: snapshot.id, ...converted } as T;
   },
 });
-
-// --- INTERFACES ---
 
 export interface UserProfile {
   uid: string;
@@ -63,12 +60,15 @@ export interface UserProfile {
     lastMonthlyInsight?: Timestamp;
     lastDeepDive?: Timestamp;
   };
-  // Monetization Fields
   tier?: 'free' | 'premium';
-  tierSource?: 'stripe' | 'manual'; // Tracks VIP grants vs real payments
+  tierSource?: 'stripe' | 'manual';
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled';
   subscriptionPeriodEnd?: Timestamp;
+  // Financial Freedom Fields (PROJ-10 Refactor)
+  substanceCost?: number;
+  costFrequency?: 'daily' | 'weekly' | 'monthly';
+  currencySymbol?: string;
 }
 
 export interface JournalTemplate {
@@ -124,8 +124,6 @@ export interface WorkbookAnswer {
   updatedAt: Timestamp | Date;
 }
 
-// --- PROFILE FUNCTIONS ---
-
 export async function getProfile(uid: string): Promise<UserProfile | null> {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;
@@ -160,7 +158,7 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       lastLogin: Timestamp.now(),
       role: 'user',
       hasCompletedOnboarding: false,
-      tier: 'free' // Default new users to free tier
+      tier: 'free'
     };
     await setDoc(userRef, newProfile);
     return newProfile;
@@ -184,8 +182,6 @@ export async function updateSobrietyDate(uid: string, date: Date) {
     sobrietyDate: Timestamp.fromDate(date)
   });
 }
-
-// --- TEMPLATE FUNCTIONS ---
 
 export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
   if (!db) throw new Error("Database not initialized");
@@ -224,8 +220,6 @@ export async function deleteUserTemplate(uid: string, templateId: string) {
   await deleteDoc(docRef);
 }
 
-// --- JOURNAL FUNCTIONS ---
-
 export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;
@@ -249,8 +243,6 @@ export const getJournalHistory = async (uid: string) => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as JournalEntry));
 };
-
-// --- DATA SOVEREIGNTY (EXPORT) ---
 
 export interface FullUserData {
   profile: UserProfile | null;

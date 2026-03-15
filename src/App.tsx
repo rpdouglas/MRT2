@@ -1,7 +1,3 @@
-/**
- * src/App.tsx
- * UPDATED: Added /premium route for the Checkout Engine (PROJ-15).
- */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,7 +24,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); // NEW
+const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); 
+const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({
@@ -140,6 +137,15 @@ export default function App() {
                         element={
                             <PrivateRoute>
                             <Vitality />
+                            </PrivateRoute>
+                        }
+                        />
+
+                        <Route
+                        path="/tools/urge-surfer"
+                        element={
+                            <PrivateRoute>
+                            <UrgeSurfer />
                             </PrivateRoute>
                         }
                         />
