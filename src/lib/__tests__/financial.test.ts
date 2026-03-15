@@ -1,9 +1,4 @@
-import os
-
-FENCE = chr(96) * 3
-
-FILES = {
-    "src/lib/__tests__/financial.test.ts": r"""/**
+/**
  * src/lib/__tests__/financial.test.ts
  * QA: Strict mathematical verification for the Financial Freedom engine.
  */
@@ -40,15 +35,3 @@ describe('💰 Financial Math Engine', () => {
         expect(calculateSavings(20, null, 5)).toBe(100);
     });
 });
-"""
-}
-
-def apply_fixes():
-    for filepath, raw_content in FILES.items():
-        content = raw_content.replace('__FENCE__', FENCE)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"✅ Surgically patched: {filepath}")
-
-if __name__ == "__main__":
-    apply_fixes()

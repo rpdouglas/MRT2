@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { CalendarDaysIcon, ShareIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
+import { calculateSavings } from '../lib/financial';
 import { toPng } from 'html-to-image';
 import type { UserProfile } from '../lib/db';
 import { Link } from 'react-router-dom';
@@ -28,15 +29,10 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
         return calculateSobrietyDuration(startDate);
     }, [date]);
 
-    // Calculate Financial Savings
+    // Calculate Financial Savings using strictly tested pure function
     const totalSaved = useMemo(() => {
         if (!userProfile?.substanceCost || !stats) return null;
-        const cost = userProfile.substanceCost;
-        let dailyCost = cost;
-        if (userProfile.costFrequency === 'weekly') dailyCost = cost / 7;
-        if (userProfile.costFrequency === 'monthly') dailyCost = cost / 30.44; 
-
-        return dailyCost * stats.totalDays;
+        return calculateSavings(userProfile.substanceCost, userProfile.costFrequency, stats.totalDays);
     }, [userProfile, stats]);
 
     const handleShare = async (e: React.MouseEvent) => {
