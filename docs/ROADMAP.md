@@ -16,11 +16,11 @@
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing. |
-| 🟡 **Active** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
-| ⚪ Planned | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep). |
+| 🟢 **Done** | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management, Supporter Gate. |
+| 🟡 **Active** | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep). |
+| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
 
-## 📅 Q4 2026: The Deep Mind & Monetization (Planned)
+## 📅 Q4 2026: The Deep Mind (Planned)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal). |
-| 🟡 **Active** | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management. |
