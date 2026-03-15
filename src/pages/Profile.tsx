@@ -1,10 +1,3 @@
-/**
- * src/pages/Profile.tsx
- * GITHUB COMMENT:
- * [Profile.tsx]
- * FEAT: Implemented PIN Rotation and Crypto-Shredding logic in Security Tab (Ticket 2.5).
- * FIX: Resolved unused variable in catch block.
- */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
@@ -15,7 +8,6 @@ import VibrantHeader from '../components/VibrantHeader';
 import DataManagement from '../components/profile/DataManagement';
 import { 
   UserCircleIcon, 
-  ArrowLeftOnRectangleIcon,
   UserGroupIcon,
   IdentificationIcon,
   ShieldCheckIcon,
@@ -23,7 +15,9 @@ import {
   KeyIcon,
   TrashIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  BanknotesIcon,
+  ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import { useNavigate } from 'react-router-dom';
@@ -41,11 +35,16 @@ export default function Profile() {
   // Tab State
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
-  // Form State
+  // Form State (General)
   const [displayName, setDisplayName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState('');
   const [sponsorName, setSponsorName] = useState('');
   const [sponsorPhone, setSponsorPhone] = useState('');
+  
+  // Form State (Financial)
+  const [substanceCost, setSubstanceCost] = useState('');
+  const [costFrequency, setCostFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [currencySymbol, setCurrencySymbol] = useState('$');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,6 +71,10 @@ export default function Profile() {
           }
           setSponsorName(data.sponsorName || '');
           setSponsorPhone(data.sponsorPhone || '');
+          
+          setSubstanceCost(data.substanceCost ? data.substanceCost.toString() : '');
+          setCostFrequency(data.costFrequency || 'daily');
+          setCurrencySymbol(data.currencySymbol || '$');
           
           if (!data.hasCompletedOnboarding) {
               setIsOnboarding(true);
@@ -116,6 +119,9 @@ export default function Profile() {
         sobrietyDate: sobrietyTimestamp,
         sponsorName,  
         sponsorPhone,
+        substanceCost: substanceCost ? parseFloat(substanceCost) : 0,
+        costFrequency,
+        currencySymbol,
         hasCompletedOnboarding: true
       });
 
@@ -264,9 +270,55 @@ export default function Profile() {
                         <p className="mt-1 text-xs text-gray-500">Used to calculate your recovery stats on the dashboard.</p>
                     </div>
 
+                    {/* Financial Freedom Settings (PROJ-10 Refactor) */}
                     <div className="pt-4 border-t border-gray-100">
                         <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <UserGroupIcon className="h-4 w-4 text-emerald-600" /> Support Network
+                            <BanknotesIcon className="h-4 w-4 text-emerald-600" /> Financial Freedom Tracker
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Currency</label>
+                                <input 
+                                    type="text" 
+                                    value={currencySymbol} 
+                                    onChange={e => setCurrencySymbol(e.target.value)} 
+                                    maxLength={3} 
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" 
+                                    placeholder="$" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Usage Cost</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    min="0"
+                                    value={substanceCost} 
+                                    onChange={e => setSubstanceCost(e.target.value)} 
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" 
+                                    placeholder="e.g. 15.00" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Frequency</label>
+                                <select 
+                                    value={costFrequency} 
+                                    onChange={e => setCostFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')} 
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                >
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p className="mt-2 text-[10px] text-gray-400">Track how much money you save by staying clean on your dashboard.</p>
+                    </div>
+
+                    {/* Support Network */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <UserGroupIcon className="h-4 w-4 text-purple-600" /> Support Network
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -276,7 +328,7 @@ export default function Profile() {
                                     placeholder="Sponsor, Therapist, etc."
                                     value={sponsorName}
                                     onChange={(e) => setSponsorName(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border"
                                 />
                             </div>
                             <div>
@@ -286,7 +338,7 @@ export default function Profile() {
                                     placeholder="+1 555-0199"
                                     value={sponsorPhone}
                                     onChange={(e) => setSponsorPhone(e.target.value)}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border"
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border"
                                 />
                                 <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
                             </div>
