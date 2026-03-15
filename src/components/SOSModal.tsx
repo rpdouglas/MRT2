@@ -1,9 +1,3 @@
-/**
- * src/components/SOSModal.tsx
- * GITHUB COMMENT:
- * [SOSModal.tsx]
- * FIX: Resolved Firestore type mismatch error by ensuring db is typed as Firestore.
- */
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
@@ -13,7 +7,8 @@ import {
   HeartIcon,
   PencilSquareIcon,
   UserGroupIcon,
-  ChatBubbleOvalLeftIcon
+  ChatBubbleOvalLeftIcon,
+  PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,7 +30,6 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
       if (isOpen && user && db) {
           const fetchSponsor = async () => {
               try {
-                  // Explicitly cast db to Firestore to satisfy TS
                   const database = db as Firestore;
                   const ref = doc(database, 'users', user.uid);
                   const snap = await getDoc(ref);
@@ -115,7 +109,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                 {/* OPTIONS GRID */}
                 <div className="grid gap-4">
                     
-                    {/* OPTION 0: SPONSOR CONNECT (New Feature) */}
+                    {/* OPTION 0: SPONSOR CONNECT */}
                     {sponsorPhone && (
                         <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                              <h4 className="font-bold text-emerald-900 flex items-center gap-2 mb-2">
@@ -163,21 +157,35 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                         </div>
                     </div>
 
-                    {/* OPTION 2: BREATHE */}
+                    {/* OPTION 2: URGE SURFER (PROJ-10) */}
+                    <button 
+                        onClick={() => handleNavigation('/tools/urge-surfer')}
+                        className="group bg-indigo-50 p-4 rounded-xl border border-indigo-100 hover:border-indigo-300 transition-all text-left"
+                    >
+                        <h4 className="font-bold text-indigo-900 flex items-center gap-2 mb-1">
+                            <PuzzlePieceIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            Urge Surfer
+                        </h4>
+                        <p className="text-sm text-indigo-700">
+                            A 5-minute interactive grounding technique. Ride the wave, don't fight it.
+                        </p>
+                    </button>
+
+                    {/* OPTION 3: BREATHE */}
                     <button 
                         onClick={() => handleNavigation('/vitality')}
                         className="group bg-blue-50 p-4 rounded-xl border border-blue-100 hover:border-blue-300 transition-all text-left"
                     >
                         <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-1">
                             <HeartIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                            Ride the Wave (Breathwork)
+                            Somatic Anchor
                         </h4>
                         <p className="text-sm text-blue-700">
                             De-escalate your nervous system with 4-7-8 breathing. This feeling will pass.
                         </p>
                     </button>
 
-                    {/* OPTION 3: JOURNAL (Urge Log) */}
+                    {/* OPTION 4: JOURNAL (Urge Log) */}
                     <button 
                         onClick={() => handleNavigation('/journal?template=urge_log')}
                         className="group bg-purple-50 p-4 rounded-xl border border-purple-100 hover:border-purple-300 transition-all text-left"

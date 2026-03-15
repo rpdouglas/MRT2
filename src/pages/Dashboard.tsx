@@ -1,9 +1,3 @@
-/**
- * src/pages/Dashboard.tsx
- * GITHUB COMMENT:
- * [Dashboard.tsx]
- * UX: Rebranded "Recovery Games" placeholder to "Recovery Tools" (PROJ-08).
- */
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,19 +35,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
+import type { UserProfile } from '../lib/db';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
   const { user } = useAuth();
   
-  // Lazy init the daily slogan
   const [slogan] = useState(() => {
       const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
       return RECOVERY_SLOGANS[randomIndex];
   });
 
-  // --- QUERY 1: USER PROFILE ---
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.uid],
     queryFn: async () => {
@@ -66,7 +59,6 @@ export default function Dashboard() {
     refetchOnMount: 'always', 
   });
 
-  // --- QUERY 2: JOURNALS ---
   const { data: journals = [], isLoading: journalLoading } = useQuery({
     queryKey: ['journals', user?.uid],
     queryFn: async () => {
@@ -87,7 +79,6 @@ export default function Dashboard() {
     refetchOnMount: 'always', 
   });
 
-  // --- QUERY 3: TASKS ---
   const { data: tasks = [], isLoading: taskLoading } = useQuery({
     queryKey: ['tasks', user?.uid],
     queryFn: async () => {
@@ -101,7 +92,6 @@ export default function Dashboard() {
     refetchOnMount: 'always', 
   });
 
-  // --- QUERY 4: WORKBOOKS ---
   const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
     queryKey: ['workbooks', user?.uid],
     queryFn: async () => {
@@ -115,13 +105,13 @@ export default function Dashboard() {
     refetchOnMount: 'always', 
   });
 
-  // --- CALCULATE STATS ---
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
-        const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate);
+        // Safe check for Timestamp vs Date object
+        const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate as unknown as string);
         const diffTime = Math.abs(new Date().getTime() - start.getTime());
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
@@ -146,7 +136,8 @@ export default function Dashboard() {
         workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
         vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
         level,
-        showBackup
+        showBackup,
+        daysClean
     };
   }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading]);
 
@@ -169,12 +160,13 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 2. FLOATING HERO: Clean Time + Gamification Unified */}
+      {/* 2. FLOATING HERO */}
       <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
          <SobrietyHero 
             date={userProfile?.sobrietyDate} 
             levelData={stats.level.levelData}
             archetype={stats.level.archetype}
+            userProfile={userProfile as UserProfile}
          />
       </div>
 
@@ -199,7 +191,6 @@ export default function Dashboard() {
         {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
             
-            {/* 1. JOURNAL */}
             <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <ChartBarIcon className="h-16 w-16 rotate-12" />
@@ -223,7 +214,6 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 2. HABITS */}
             <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <FireIcon className="h-16 w-16 rotate-12" />
@@ -247,7 +237,6 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 3. VITALITY */}
             <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <HeartIcon className="h-16 w-16 rotate-12" />
@@ -271,7 +260,6 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 4. WISDOM */}
             <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <SparklesIcon className="h-16 w-16 rotate-12" />
@@ -295,7 +283,6 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            {/* 5. SERVICE PORTAL (Placeholder) */}
             <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
                 <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
                     <UserGroupIcon className="h-16 w-16 rotate-12" />
@@ -314,24 +301,23 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* 6. RECOVERY TOOLS (Placeholder - PROJ-08) */}
-            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
-                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
+            <Link to="/tools/urge-surfer" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 group-hover:rotate-12 transition-transform">
                     <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
-                            <PuzzlePieceIcon className="h-4 w-4 text-slate-500" />
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
+                            <PuzzlePieceIcon className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-sm font-bold uppercase tracking-wider">Tools</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Tools</span>
                     </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
-                        Coming Soon
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-sky-100 flex items-center gap-1">
+                        <SparklesIcon className="h-3 w-3" /> Active
                     </div>
-                    <p className="text-[10px] leading-tight pr-2">CBT exercises & mindfulness aids.</p>
+                    <p className="text-[10px] leading-tight pr-2 font-medium text-sky-50">Urge Surfing & Grounding</p>
                 </div>
-            </div>
+            </Link>
 
         </div>
 
