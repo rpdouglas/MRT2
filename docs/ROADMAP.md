@@ -18,9 +18,12 @@
 | 🟢 **Done** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing. |
 | 🟢 **Done** | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management, Supporter Gate. |
 | 🟡 **Active** | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep). |
+| 🟡 **Active** | `PROJ-16` | **Investor Readiness** | Founders | SAFE, Incorporation, Pitch Deck. |
+| 🟡 **Active** | `PROJ-17` | **Pre-Launch Polish** | All | AI Cost Shield, Viral Watermark, UX. |
 | ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
 
-## 📅 Q4 2026: The Deep Mind (Planned)
+## 📅 Q4 2026: The Deep Mind & Command (Planned)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal). |
+| ⚪ Planned | `PROJ-18` | **The Command Center** | Admin | Desktop-Optimized Deep Analytics. |
