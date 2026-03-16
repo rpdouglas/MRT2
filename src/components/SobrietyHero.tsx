@@ -41,8 +41,8 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
         if (!heroRef.current) return;
         try {
             setIsExporting(true);
-            // Allow React to flush the state change to the DOM to render the watermark
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Allow React to flush the state change and DOM resize before snapshot
+            await new Promise(resolve => setTimeout(resolve, 150));
             
             const dataUrl = await toPng(heroRef.current, { cacheBust: true, pixelRatio: 2 });
             const blob = await (await fetch(dataUrl)).blob();
@@ -77,7 +77,10 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
     }
 
     return (
-        <div ref={heroRef} className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20 w-full">
+        <div 
+            ref={heroRef} 
+            className={`bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20 w-full ${isExporting ? 'aspect-square p-6 sm:p-8 transition-none' : ''}`}
+        >
             {/* Share Button (Hidden during export to keep it clean) */}
             {!isExporting && (
                 <button
@@ -97,7 +100,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
             <div className="relative z-10 flex flex-col h-full justify-between">
                 
                 {/* Main Counters */}
-                <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30">
+                <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30 pt-2">
                     <div className="px-1">
                         <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
                         <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
@@ -161,16 +164,25 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                         </div>
                     </div>
                 )}
-            </div>
 
-            {/* VIRAL WATERMARK (Visible only during HTML-to-Image Export) */}
-            {isExporting && (
-                <div className="absolute bottom-2 left-0 right-0 text-center z-50 animate-fadeIn pointer-events-none">
-                    <span className="bg-black/40 text-white/90 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md shadow-sm border border-white/10">
-                        myrecoverytoolkit.ca
-                    </span>
-                </div>
-            )}
+                {/* VIRAL WATERMARK (Square Expansion Footer) */}
+                {isExporting && (
+                    <div className="mt-auto pt-6 flex flex-col items-center justify-end pb-2">
+                        <div className="bg-white p-2.5 rounded-2xl shadow-xl mb-3">
+                            <img 
+                                src="/pwa-192x192.png" 
+                                alt="MRT Logo" 
+                                className="h-12 w-12 object-contain" 
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                        </div>
+                        <h2 className="text-xl font-black tracking-tight mb-2 drop-shadow-md">My Recovery Toolkit</h2>
+                        <span className="text-[10px] font-bold uppercase tracking-widest bg-black/30 px-4 py-1.5 rounded-full border border-white/20 shadow-sm">
+                            myrecoverytoolkit.ca
+                        </span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
