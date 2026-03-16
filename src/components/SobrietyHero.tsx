@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { CalendarDaysIcon, ShareIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
@@ -21,6 +21,7 @@ interface SobrietyHeroProps {
 
 export default function SobrietyHero({ date, levelData, archetype, userProfile }: SobrietyHeroProps) {
     const heroRef = useRef<HTMLDivElement>(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Calculate Time Stats
     const stats = useMemo(() => {
@@ -39,6 +40,10 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
         e.stopPropagation();
         if (!heroRef.current) return;
         try {
+            setIsExporting(true);
+            // Allow React to flush the state change to the DOM to render the watermark
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             const dataUrl = await toPng(heroRef.current, { cacheBust: true, pixelRatio: 2 });
             const blob = await (await fetch(dataUrl)).blob();
             const file = new File([blob], 'mrt-milestone.png', { type: 'image/png' });
@@ -57,6 +62,8 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
             }
         } catch (err) {
             console.error('Failed to share image', err);
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -71,14 +78,16 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
     return (
         <div ref={heroRef} className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20 w-full">
-            {/* Share Button */}
-            <button
-                onClick={handleShare}
-                className="absolute top-3 right-3 z-20 p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                title="Share Milestone"
-            >
-                <ShareIcon className="h-4 w-4 text-white" />
-            </button>
+            {/* Share Button (Hidden during export to keep it clean) */}
+            {!isExporting && (
+                <button
+                    onClick={handleShare}
+                    className="absolute top-3 right-3 z-20 p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                    title="Share Milestone"
+                >
+                    <ShareIcon className="h-4 w-4 text-white" />
+                </button>
+            )}
 
             {/* Dynamic Background Texture */}
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
@@ -153,6 +162,15 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                     </div>
                 )}
             </div>
+
+            {/* VIRAL WATERMARK (Visible only during HTML-to-Image Export) */}
+            {isExporting && (
+                <div className="absolute bottom-2 left-0 right-0 text-center z-50 animate-fadeIn pointer-events-none">
+                    <span className="bg-black/40 text-white/90 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md shadow-sm border border-white/10">
+                        myrecoverytoolkit.ca
+                    </span>
+                </div>
+            )}
         </div>
     );
 }

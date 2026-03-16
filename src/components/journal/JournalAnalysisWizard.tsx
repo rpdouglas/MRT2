@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, type ElementType } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
     SparklesIcon, 
@@ -17,15 +17,16 @@ import {
     HashtagIcon
 } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
 import type { JournalEntry } from './JournalEditor';
-import { subDays, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
+import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 import { useTaskOperations } from '../../hooks/useTaskOperations'; 
-import { type UserProfile } from '../../lib/db';
+import { useRateLimits } from '../../hooks/useRateLimits';
 import { useNavigate } from 'react-router-dom';
+import type { ElementType } from 'react';
 
 interface WizardProps {
     isOpen: boolean;
@@ -53,14 +54,13 @@ interface SelectionCardProps {
 }
 
 export default function JournalAnalysisWizard({ isOpen, onClose, entries }: WizardProps) {
-    const { user, isAdmin, userTier } = useAuth();
+    const { user, userTier } = useAuth();
     const { addTask } = useTaskOperations(); 
+    const { checkEligibility: checkRateLimit, stampUsage, loadingLimits } = useRateLimits();
     const navigate = useNavigate();
+    
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
-    
-    const [usageProfile, setUsageProfile] = useState<UserProfile['usage_limits'] | null>(null);
-    const [loadingLimits, setLoadingLimits] = useState(false);
     
     const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
     
@@ -74,76 +74,37 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const [saving, setSaving] = useState(false);
     const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-    const loadUsageLimits = useCallback(async () => {
-        if (!user || !db) return;
-        setLoadingLimits(true);
-        try {
-            const snap = await getDoc(doc(db, 'users', user.uid));
-            if (snap.exists()) {
-                const data = snap.data() as UserProfile;
-                setUsageProfile(data.usage_limits || {});
-            }
-        } catch (e) {
-            console.error("Failed to load limits", e);
-        } finally {
-            setLoadingLimits(false);
-        }
-    }, [user]);
-
     useEffect(() => {
         if (isOpen) {
-            loadUsageLimits();
             setStep('select');
         }
-    }, [isOpen, loadUsageLimits]);
+    }, [isOpen]);
 
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
-        // Supporter Tier Bypass
-        if (isAdmin || userTier === 'premium') return { allowed: true };
-        
         const entryCount = entries.length;
-        const now = new Date();
 
-        if (targetScope === 'weekly') {
-            if (entryCount < 7) {
-                return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
-            }
-            if (usageProfile?.lastWeeklyInsight) {
-                const lastRun = usageProfile.lastWeeklyInsight.toDate();
-                const diff = differenceInDays(now, lastRun);
-                if (diff < 7) return { allowed: false, reason: `Available in ${7 - diff} days. Upgrade to unlock.`, progress: 100, requiresUpgrade: true };
-            }
-        } 
-        
-        if (targetScope === 'monthly' || targetScope === 'all-time') {
-            if (entryCount < 30) {
-                return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
-            }
-            const lastRunTimestamp = targetScope === 'monthly' ? usageProfile?.lastMonthlyInsight : usageProfile?.lastDeepDive;
-            if (lastRunTimestamp) {
-                const lastRun = lastRunTimestamp.toDate();
-                const diff = differenceInDays(now, lastRun);
-                if (diff < 30) return { allowed: false, reason: `Available in ${30 - diff} days. Upgrade to unlock.`, progress: 100, requiresUpgrade: true };
-            }
+        // 1. Check strict data volume requirements
+        if (targetScope === 'weekly' && entryCount < 7) {
+            return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
         }
+        if ((targetScope === 'monthly' || targetScope === 'all-time') && entryCount < 30) {
+            return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
+        }
+
+        // 2. Check cost-shield rate limits
+        const rateLimit = checkRateLimit(targetScope);
+        if (!rateLimit.allowed) {
+            return { allowed: false, reason: rateLimit.reason, progress: 100, requiresUpgrade: true };
+        }
+
         return { allowed: true };
-    };
-
-    const stampUsage = async (targetScope: AnalysisScope) => {
-        if (!user || !db || isAdmin || userTier === 'premium') return;
-        const updateField = targetScope === 'weekly' ? 'usage_limits.lastWeeklyInsight' : targetScope === 'monthly' ? 'usage_limits.lastMonthlyInsight' : 'usage_limits.lastDeepDive';
-        try {
-            await updateDoc(doc(db, 'users', user.uid), { [updateField]: Timestamp.now() });
-            loadUsageLimits(); 
-        } catch (e) {
-            console.error("Failed to stamp usage token", e);
-        }
     };
 
     const runStandardAnalysis = async () => {
         setStep('analyzing');
         setAddedActions(new Set());
         await stampUsage(scope);
+        
         try {
             const now = new Date();
             let currentSet: JournalEntry[] = [];
@@ -281,8 +242,8 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                             <LockClosedIcon className="h-4 w-4 text-amber-600 inline mr-1" />
                             <span className="text-xs font-bold text-amber-800 uppercase">Limit Reached</span>
                         </div>
-                        <button onClick={() => navigate('/premium')} className="text-xs font-bold text-blue-600 hover:underline">
-                            Upgrade to Supporter Tier to unlock unlimited scans.
+                        <button onClick={() => navigate('/premium')} className="text-xs font-bold text-blue-600 hover:underline text-center">
+                            {reason}
                         </button>
                     </div>
                 )}

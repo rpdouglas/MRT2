@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -10,10 +10,11 @@ import {
   getDocs, 
   doc, 
   getDoc, 
+  updateDoc,
   Timestamp,
   type Firestore 
 } from 'firebase/firestore';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   calculateJournalStats, 
   calculateTaskStats, 
@@ -31,21 +32,28 @@ import {
   HeartIcon, 
   ArrowDownTrayIcon,
   UserGroupIcon,
-  PuzzlePieceIcon
+  PuzzlePieceIcon,
+  InformationCircleIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
+import { useBuildInfo } from '../lib/versioning';
 
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const meta = useBuildInfo();
   
   const [slogan] = useState(() => {
       const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
       return RECOVERY_SLOGANS[randomIndex];
   });
+
+  const [showChangelogToast, setShowChangelogToast] = useState(false);
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -53,11 +61,27 @@ export default function Dashboard() {
         if (!user || !db) return null;
         const ref = doc(db, 'users', user.uid);
         const snap = await getDoc(ref);
-        return snap.exists() ? snap.data() : null;
+        return snap.exists() ? (snap.data() as UserProfile) : null;
     },
     enabled: !!user,
     refetchOnMount: 'always', 
   });
+
+  // Changelog Beacon Logic
+  useEffect(() => {
+      if (userProfile && db && user) {
+          if (!userProfile.lastSeenBuildHash) {
+              // Legacy Fallback: Silently stamp the hash so they don't get spammed on first mount
+              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
+              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
+          } else if (userProfile.lastSeenBuildHash !== meta.globalHash) {
+              // New release detected
+              setShowChangelogToast(true);
+              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
+              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
+          }
+      }
+  }, [userProfile, meta.globalHash, user, queryClient]);
 
   const { data: journals = [], isLoading: journalLoading } = useQuery({
     queryKey: ['journals', user?.uid],
@@ -110,7 +134,6 @@ export default function Dashboard() {
 
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
-        // Safe check for Timestamp vs Date object
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate as unknown as string);
         const diffTime = Math.abs(new Date().getTime() - start.getTime());
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -172,6 +195,28 @@ export default function Dashboard() {
 
       {/* 3. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+
+        {/* CHANGELOG TOAST BEACON */}
+        {showChangelogToast && (
+            <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-slideDown">
+                <div className="flex items-center gap-3">
+                    <div className="bg-fuchsia-100 p-2 rounded-full text-fuchsia-700 shrink-0">
+                        <InformationCircleIcon className="h-5 w-5" />
+                    </div>
+                    <div className="text-xs text-fuchsia-900 leading-tight">
+                        <strong>Update Released!</strong> Tap to see what's new.
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <a href="https://rpdouglas.github.io/MRT2/support/changelog" target="_blank" rel="noopener noreferrer" className="text-xs font-bold bg-fuchsia-600 text-white px-3 py-1.5 rounded-lg hover:bg-fuchsia-700 whitespace-nowrap transition-colors">
+                        View
+                    </a>
+                    <button onClick={() => setShowChangelogToast(false)} className="p-1 text-fuchsia-400 hover:text-fuchsia-600">
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+                </div>
+            </div>
+        )}
         
         {/* Backup Alert */}
         {stats.showBackup && (
