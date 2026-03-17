@@ -1,6 +1,6 @@
 # 📖 Feature Specification: The Journal (The Vault)
 
-**Status:** Live (v2.2)
+**Status:** Live (v2.3)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)
 **Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
 
@@ -14,112 +14,28 @@ The Journal functionality is split into three distinct views via `JournalTabs.ts
 
 ### A. Write (The Editor - "Sticky Studio")
 * **Layout:** A flexible column layout with a persistent **Command Toolbar** at the bottom.
-    * **Header:** Contextual info (Date, Weather).
-    * **Body:** Scrollable textarea for distraction-free writing.
-    * **Toolbar (Sticky):** Houses the Mood Slider, Tag Input, Voice Mic, and Save Checkmark. This ensures controls never overlap text or require scrolling to access.
-* **Smart Defaults:**
-    * **Mood:** Initializes to the average of the user's last 7 entries (via `getSmartMood`) rather than a static "5".
-* **Input Methods:**
-    * **Text:** Rich-text inputs.
-    * **Voice-to-Vault:** `AudioRecorder.tsx` captures audio, sends it to Gemini 2.5 Flash for transcription + sentiment analysis, and auto-fills the editor.
-* **Templates:**
-    * **Source:** `src/data/journalTemplates.ts`.
-    * **Data Structure:** ```typescript
-      interface StaticJournalTemplate { id: string; name: string; content: string; tags: string[]; }
-      ```
-    * **Available Templates:**
-        1. **Morning Intention:** Focuses on surrender and daily priorities.
-        2. **Nightly Inventory:** A 12-step style review of resentments and fears.
-        3. **Urge Log (SOS):** Includes a HALT checklist (Hungry, Angry, Lonely, Tired) and "Play the Tape Forward" prompt.
-        4. **Meeting Reflection:** Structured notes for service work.
+* **Input Methods:** Text and Voice-to-Vault (audio transcribed and analyzed via Gemini 2.5 Flash).
+* **Templates:** Sourced from `src/data/journalTemplates.ts` or user-defined custom templates (Premium feature).
 
 ### B. History (The Timeline)
-* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking.
-* **Grouping:** Hierarchical grouping by **Year** -> **Month** (e.g., 2026 -> March).
-    * **Defaults:** The Current Year and Current Month are expanded by default. All past periods are collapsed to reduce cognitive load.
-    * **Interaction:** Tapping a Year or Month header toggles visibility of its contents.
-* **The Memory Engine (Search):**
-    * **Mechanism:** A client-side search bar filters entries *after* they are decrypted in memory.
-    * **Behavior:** Searching automatically expands all groups to show matching results.
-* **Visuals:** Each card displays Mood Badge, Weather Icon, and Encryption Status.
-* **Actions:** Edit, Delete, and Share (decrypts to clipboard/native share sheet).
+* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking, grouped by Year and Month.
+* **The Memory Engine (Search):** Client-side search bar filters entries *after* they are decrypted in memory.
 
 ### C. Insights (The Dashboard)
-* **Source:** `JournalInsights.tsx`
-* **Data Scope:** Rolling 90-day window from local IndexedDB/Firestore cache.
-* **Visualizations:**
-    1.  **Emotional Velocity (Area Chart):** A gradient-filled area chart showing mood fluctuation over the last 14 active days, overlaid with temperature data to detect seasonal patterns.
-    2.  **Weekly Rhythm (Baseline vs. Reality):** A comparative chart showing:
-        * **Ghost Line (Dotted):** Average mood for the *Previous 30 Days*.
-        * **Solid Bar:** Average mood for the *Current 30 Days*.
-        * *Insight:* If the bar is higher than the line, the user is trending up.
-    3.  **Interactive Word Cloud:** Frequency analysis of entry content.
-        * **Smart Filters:** Automatically excludes boilerplate words (e.g., "Check-in", "Morning").
-        * **User Blocklist:** Users can click the "Eye Slash" icon to open `ManageWordCloudModal` and hide specific words from the cloud locally (persisted in `localStorage`).
-        * *Interaction:* Clicking a word routes the user to the History tab and auto-populates the search filter with that word.
+* **Visualizations:** Emotional Velocity (Area Chart), Weekly Rhythm, and an Interactive Word Cloud with a local storage blocklist.
 
 ---
 
 ## 3. Advanced AI Features
 
-### 🧠 The Analysis Wizard
+### 🧠 The Analysis Wizard (Cost Shield Enabled)
 * **Component:** `JournalAnalysisWizard.tsx`
-* **Concept:** A "on-demand" recovery coach that reads decrypted history to find patterns.
-* **Scopes:**
-    * **Weekly:** Last 7 days vs Previous 7 days.
-    * **Monthly:** Last 30 days vs Previous 30 days.
-    * **Deep Dive:** All-time / 90-day pattern recognition.
-* **Usage Limits:** Controlled via `UserProfile.usage_limits` to manage API costs (e.g., 1 Deep Dive per month).
-* **Output:** Generates a `ComparativeAnalysisResult` which is saved to the `insights` collection.
-* **Actionable:** Users can click suggested actions to add them directly to their **Tasks/Quests**.
+* **Concept:** An "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Usage Limits (Rate Limiting):** Controlled via `useRateLimits.ts` reading `UserProfile.usage_limits`.
+    * **Free Tier:** Limited to 1 Weekly/Monthly Analysis per 7/30 days, and 1 Deep Dive per 30 days. Requires a minimum entry count (7 for weekly, 30 for monthly/deep dive).
+    * **Premium Tier:** Unlimited access (bypasses the timestamp checks).
+* **Output:** Generates a `ComparativeAnalysisResult` or `DeepPatternResult` which is saved to the `insights` collection.
 
 ### 🎙️ Voice-to-Vault
 * **Component:** `AudioRecorder.tsx`
-* **Flow:**
-    1.  User records audio (MediaRecorder API).
-    2.  Audio Blob converted to Base64.
-    3.  Sent to Gemini 2.5 Flash (Multimodal).
-    4.  **Result:** Returns Transcription + Mood Score + Smart Tags.
-    5.  **Populates:** The Editor state.
-
----
-
-## 4. Technical Architecture
-
-### Data Flow & Encryption
-```mermaid
-sequenceDiagram
-    participant User
-    participant App (React)
-    participant Hook (useJournalOperations)
-    participant Crypto (Lib)
-    participant Firestore
-
-    Note over App, Firestore: WRITE FLOW
-    User->>App: Types "I feel anxious" and clicks Save
-    App->>Hook: addJournal(plainText)
-    Hook->>Crypto: encrypt(plainText, Key)
-    Crypto-->>Hook: Returns "IV:Ciphertext"
-    Hook->>Firestore: addDoc({ content: "IV:Ciphertext", isEncrypted: true })
-    Firestore-->>Hook: Success
-    Hook->>App: Invalidates Query Cache (Refetch History)
-```
-
-### Database Schema (Journal Specific)
-**Collection:** `journals`
-| Field | Type | Description | Encryption |
-| :--- | :--- | :--- | :--- |
-| `uid` | String | Owner ID | No |
-| `content` | String | The body text | **YES (AES-GCM)** |
-| `moodScore` | Number | 1-10 Integer | No (For Stats) |
-| `tags` | Array | e.g. `["Anxiety", "Work"]` | No (For Filtering) |
-| `weather` | Map | `{ temp: 22, condition: "Rain" }` | No |
-| `isEncrypted` | Bool | Flag for legacy data handling | No |
-| `createdAt` | Timestamp | Creation Time | No |
-
----
-
-## 5. Verification (QA)
-* [x] **Unit Test:** `src/hooks/__tests__/useJournalOperations.test.ts` verifies cache invalidation signals.
-* [x] **UX Polish:** Verified "Sticky Studio" layout handles overflow correctly and mic button does not block text.
-* [x] **Navigation:** Verified Month/Year grouping allows easy access to old entries without infinite scrolling.
+* **Flow:** Records audio -> Converts to Base64 -> Sent to Gemini 2.5 Flash -> Returns Transcription + Mood Score + Smart Tags.

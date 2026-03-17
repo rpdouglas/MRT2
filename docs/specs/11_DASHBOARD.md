@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v2.2)
+**Status:** Live (v2.3)
 **Architecture:** Client-Side Aggregator
 **Primary Code:** `src/pages/Dashboard.tsx`
 
@@ -10,37 +10,18 @@ The Dashboard is the central command center. It aggregates data from all other m
 ## 2. Technical Architecture
 
 ### A. Data Aggregation
-The Dashboard executes 4 concurrent queries on mount:
-1.  **Profile:** Fetches `sobrietyDate`, `displayName` (for reactivity), and `lastExportAt`.
-2.  **Journals:** Fetches *all* history to calculate streaks and consistency.
-3.  **Tasks:** Fetches active tasks to calculate "Fire" scores.
-4.  **Workbooks:** Fetches answer count for "Wisdom" score.
+The Dashboard executes concurrent queries on mount via React Query to fetch Profile, Journals, Tasks, and Workbook answers, triggering the Gamification engine.
 
-**Performance Note:** Queries are set to `refetchOnMount: 'always'` to ensure gamification stats update immediately after a user performs an action in another tab.
-
-### B. The Calculation Engine
-Inside a `useMemo` hook, the Dashboard passes raw data to the **Gamification Engine** (`src/lib/gamification.ts`) to derive:
-* **User Level:** Based on total XP from all sources.
-* **Archetype:** (Scholar, Doer, Monk, etc.) based on activity distribution.
-* **Streaks:** Current consecutive activity chains.
+### B. The Changelog Beacon (Update Notification)
+* **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
+* **Trigger:** If the hashes mismatch, an animated toast drops down notifying the user of a new release, linking to the VitePress changelog.
+* **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash, preventing future spam. Legacy users without a hash silently receive the current hash on mount.
 
 ### C. The Backup Sentinel
-* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`.
-* **Trigger:** If > 7 days since last export.
-* **UI:** Displays an amber "Backup Needed" alert card linking to the Profile.
+* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`. If > 7 days, displays an amber "Backup Needed" alert.
 
 ## 3. UI Components
-* **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons and a dynamic daily recovery Slogan as the subtitle.
-* **Unified Identity Hero (`SobrietyHero.tsx`):** A highly dense, asymmetrical textured card displaying:
-  * "Clean Time" (Years/Months/Days) with `leading-none` for tight vertical rhythm.
-  * A single-row gamification footer combining Rank, Level, Progress Bar, and XP.
-  * Mirrored Calendar icons wrapping the Total Days counter.
-* **Bento Grid:** 6-tile layout linking to core modules:
-  * **Active Modules:** Journal (Streak & Consistency), Habits (Rate & Fire Score), Vitality (Bio-Streak & Logs), Wisdom (Mastery % & Total Score).
-  * **Teaser Modules:** Service Portal and Recovery Tools (Rendered with 50% opacity and 'Coming Soon' state).
-
-## 4. Verification Checklist
-* [ ] **Clean Time:** Change sobriety date in Profile. Does Dashboard update?
-* [ ] **Gamification:** Complete a task. Does the "Fire" score in the Bento Grid increment?
-* [ ] **Backup Alert:** If new user (no export), is the amber alert visible?
-* [ ] **Responsiveness:** Does the single-row Gamification footer gracefully truncate on devices narrower than 350px (e.g., iPhone SE)?
+* **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
+* **Unified Identity Hero (`SobrietyHero.tsx`):** Displays clean time and gamification.
+    * **Viral Watermark:** When the user clicks the Share icon, the `html-to-image` export temporarily renders a square aspect ratio and injects a "myrecoverytoolkit.ca" watermark at the bottom of the exported image for marketing visibility.
+* **Bento Grid:** 6-tile layout linking to core modules.

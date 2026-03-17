@@ -2,6 +2,12 @@
 
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
+### v1.6.0 (The Pre-Launch Polish Update)
+* **New:** **Viral Watermark:** When exporting your Sobriety Hero milestone to an image, it now beautifully formats into a square aspect ratio perfect for Instagram/Facebook sharing, complete with a subtle MRT watermark.
+* **New:** **Changelog Beacon:** You'll now receive a friendly toast notification on your dashboard when a new update is released.
+* **New:** **Contextual Help:** Added a quick-access help icon to the main navigation header so you can easily access this User Guide from anywhere.
+* **Improvement:** **AI Cost Shield:** Implemented clear rate-limiting for AI Analysis Wizard usage on the Free Tier, while maintaining unlimited access for Premium Supporters.
+
 ### v1.5.0 (The Supporter Update)
 * **New:** **MRT Supporter Tier:** We have officially launched our Premium "Supporter" tier. By upgrading, you not only unlock unlimited AI Deep Dives, custom Journal Templates, and PDF Exports, but you also help keep the core crisis tools completely free for users who need them most.
 * **New:** **Manage Subscription:** Seamless, secure integration with Stripe to manage your subscription directly from your Profile.
