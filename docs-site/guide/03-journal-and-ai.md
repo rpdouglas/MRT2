@@ -14,7 +14,15 @@ Navigate to the **History** tab to view past entries.
 * **Search:** Use the top search bar to filter by keyword or tag. Searching automatically expands all groups to show every matching result.
 * **Share:** Click the "Share" icon on any card to decrypt it and copy it to your clipboard for a sponsor or therapist.
 
-## 3. Insights & Analytics
+## 3. AI Analysis Wizard (The Compass)
+Click the floating **Analyze** button to have the AI review your past entries and generate an actionable recovery strategy.
+
+### Usage Limits
+To protect the system and ensure fair usage, AI analysis is governed by your tier:
+* **Standard (Free) Tier:** Limited to 1 Weekly Analysis per week, 1 Monthly Analysis per month, and 1 Deep Pattern scan per month.
+* **Supporter (Premium) Tier:** Unlimited, on-demand access to all AI pattern recognition tools.
+
+## 4. Insights & Analytics
 Navigate to the **Insights** tab to view your data visually.
 
 ### 📊 Emotional Velocity

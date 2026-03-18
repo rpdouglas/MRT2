@@ -6,10 +6,10 @@
 - [x] **Sprints 1-4:** Foundation, Auth, Journal Engine, Tasks, Vitality.
 - [x] **Sprint 5.0:** The GTM Engine (Links Route, Account Deletion, VitePress).
 - [x] **Sprint 6.0/6.5:** Crisis Tools (Urge Surfer, Financials) & Monetization Engine (Stripe Live).
-- [x] **Sprint 7.0 (Partial):** Android Play Store TWA (Bubblewrap CLI initialized, `twa-manifest.json` configured, `.aab` generated securely).
+- [x] **Sprint 7.0:** Android Play Store TWA (Bubblewrap CLI initialized, `.aab` generated).
 
 ## ⏳ Waiting On (External Blockers)
-- [ ] **ServiceOntario:** Awaiting NUANS Reservation Number (1 Business Day) to finalize Incorporation.
+- [ ] **ServiceOntario:** Awaiting NUANS Reservation Number to finalize Incorporation.
 - [ ] **Launch Lab:** Awaiting reply to initial intake email for EIR assignment.
 
 ## 🟡 Sprint 7.1: Investor Readiness (PROJ-16)
@@ -21,14 +21,15 @@
 - [ ] **PROJ-16:** Finalize ServiceOntario Incorporation (pending NUANS).
 - [ ] **PROJ-16:** Take $25 of remaining capital to Staples to print and bind physical decks.
 
-## 🟡 Sprint 7.2: Pre-Launch Polish (PROJ-17)
+## 🟢 Sprint 7.2: Pre-Launch Polish (PROJ-17) - COMPLETED
 *Current Focus: High-impact UX and security fixes requested during Beta Testing.*
 
-### 🏃 In Progress (Active Focus)
-- [ ] **PROJ-17:** Implement AI Rate Limiting (Cost Shield) based on user tier.
-- [ ] **PROJ-17:** Inject MRT Viral Watermark into `SobrietyHero` image export.
-- [ ] **PROJ-17:** Add Contextual Help Icon (Question Mark) to `VibrantHeader.tsx`.
-- [ ] **PROJ-17:** Implement Changelog "Toast" beacon on login via `buildHash` tracking.
+### ✅ Completed
+- [x] **PROJ-17:** Implement AI Rate Limiting (Cost Shield) based on user tier.
+- [x] **PROJ-17:** Inject MRT Viral Watermark into `SobrietyHero` image export.
+- [x] **PROJ-17:** Add Contextual Help Icon (Question Mark) to `VibrantHeader.tsx`.
+- [x] **PROJ-17:** Implement Changelog "Toast" beacon on login via `buildHash` tracking.
+- [x] **PROJ-17:** Remove duplicate GitHub Action workflow causing double deployments.
 
 ## 🧊 Backlog (Up Next)
 - [ ] **PROJ-05:** The Service Network (Sponsee Rolodex - "Lisa" Persona).
