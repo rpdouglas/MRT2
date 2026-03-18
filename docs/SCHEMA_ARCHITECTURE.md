@@ -33,8 +33,9 @@ graph TD
     * `role` (String): 'user' | 'admin'. Controls UI access.
     * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
     * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI.
-    * `tier` / `tierSource`: Monetization access tracking.
+    * `lastSeenBuildHash` (String): Used to trigger Changelog update toasts.
+    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastMonthlyInsight`, `lastDeepDive`) to throttle AI usage for free tier users.
+    * `tier` / `tierSource`: Monetization access tracking ('free' | 'premium').
     * `substanceCost` (Number): Used for Financial Freedom calculator.
     * `costFrequency` (String): 'daily' | 'weekly' | 'monthly'.
     * `currencySymbol` (String): User's local currency symbol.

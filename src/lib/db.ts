@@ -1,7 +1,3 @@
-/**
- * src/lib/db.ts
- * UPDATED: Replaced dailySubstanceCost with flexible substanceCost and costFrequency.
- */
 import { 
   doc, 
   getDoc, 
@@ -55,6 +51,7 @@ export interface UserProfile {
   sponsorName?: string;
   sponsorPhone?: string;
   hasCompletedOnboarding?: boolean;
+  lastSeenBuildHash?: string;
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -65,7 +62,6 @@ export interface UserProfile {
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled';
   subscriptionPeriodEnd?: Timestamp;
-  // Financial Freedom Fields (PROJ-10 Refactor)
   substanceCost?: number;
   costFrequency?: 'daily' | 'weekly' | 'monthly';
   currencySymbol?: string;

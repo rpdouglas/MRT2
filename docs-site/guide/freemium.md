@@ -8,11 +8,12 @@ Designed for immediate relief, habit building, and finding stability.
 * **The Ledger:** Unlimited task and habit tracking with "Smart Resets."
 * **The Horizon:** Full dashboard tracking for clean time and gamification streaks.
 * **The Pulse:** Unlimited somatic tracking (Fuel, Movement) and 4-7-8 Breathwork.
-* **AI Access:** 1 free "Analysis Wizard" deep-dive per week.
+* **AI Access (Metered):** Limited to 1 Weekly Check-in per week, 1 Monthly Review per month, and 1 Deep Pattern Scan per month.
 
 ## 🌟 MRT Premium (Supporter)
 Designed for users in the maintenance phase looking for deep insights, and sponsors managing commitments.
-* **Unlimited AI Compass:** Unlimited, on-demand Gemini 2.5 pattern recognition and deep-dive journal analysis.
-* **The Digital Rolodex (Service Module):** A securely encrypted system to track sponsee step work, contact info, and meeting times.
+* **Unlimited AI Compass:** Unlimited, on-demand Gemini pattern recognition and deep-dive journal analysis.
+* **Custom Templates:** Build and save your own Markdown-powered journal structures.
+* **The Digital Rolodex (Service Module):** A securely encrypted system to track sponsee step work, contact info, and meeting times *(Coming Soon)*.
 * **Cloud Auto-Sync:** Automated, invisible JSON backups to your personal Google Drive.
 * **PDF Exports:** Generate beautiful, formatted reports of your journal history for therapy or sponsorship sessions.

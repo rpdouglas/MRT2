@@ -1,11 +1,5 @@
-/**
- * src/components/VibrantHeader.tsx
- * GITHUB COMMENT:
- * [VibrantHeader.tsx]
- * UX: Added global symmetry by mirroring the icon on the right side of the title (Ticket 2.3).
- */
 import { useLayout } from '../contexts/LayoutContext';
-import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import type { ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,16 +7,16 @@ interface VibrantHeaderProps {
   title: string;
   subtitle: string;
   icon?: ElementType;
-  fromColor: string; // e.g. "from-blue-600"
-  viaColor: string;  // e.g. "via-indigo-600"
-  toColor: string;   // e.g. "to-purple-600"
+  fromColor: string;
+  viaColor: string;  
+  toColor: string;   
   percentage?: number;
   percentageColor?: string;
   backLink?: string; 
 }
 
 const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
-  const radius = 24; // Slightly smaller for the compact header
+  const radius = 24; 
   const stroke = 4;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -111,7 +105,6 @@ export default function VibrantHeader({
         {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
         <div className="shrink-0 flex flex-col items-center text-center px-2">
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
-            {/* MIRRORED ICONS */}
             {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
             {title}
             {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
@@ -121,7 +114,7 @@ export default function VibrantHeader({
           </p>
         </div>
 
-        {/* Right: SOS & Stats (Flex-1 anchors right side) */}
+        {/* Right: Help, SOS & Stats (Flex-1 anchors right side) */}
         <div className="flex-1 flex items-center justify-end gap-3">
           {/* Progress Ring (Optional) */}
           {percentage !== undefined && (
@@ -129,6 +122,17 @@ export default function VibrantHeader({
                 <ProgressRing percentage={percentage} colorHex={percentageColor} />
              </div>
           )}
+
+          {/* Contextual Help Icon */}
+          <a 
+            href="https://rpdouglas.github.io/MRT2/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md shadow-sm border border-white/10 active:scale-95"
+            aria-label="Help & Documentation"
+          >
+            <QuestionMarkCircleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+          </a>
 
           {/* SOS Button */}
           <button 
