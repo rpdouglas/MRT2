@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { CalendarDaysIcon, ShareIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
 import { calculateSavings } from '../lib/financial';
-import { getMilestone, getMilestoneLabel } from '../lib/milestones';
+import { getMilestone, getMilestoneLabel, getMilestoneImage } from '../lib/milestones';
 import { toPng } from 'html-to-image';
 import type { UserProfile } from '../lib/db';
 import { Link } from 'react-router-dom';
@@ -39,16 +39,30 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
     const activeMilestone = stats ? getMilestone(stats.totalDays) : null;
     const activeMilestoneLabel = stats ? getMilestoneLabel(stats.totalDays) : '';
+    const activeMilestoneImage = stats ? getMilestoneImage(stats.totalDays) : null;
+
+    // --- THE PRELOADER FIX ---
+    // Forces the browser to fetch the milestone image into cache silently on mount 
+    // so it renders instantly when html-to-image takes the snapshot.
+    useEffect(() => {
+        if (activeMilestoneImage) {
+            const img = new Image();
+            img.src = activeMilestoneImage;
+        }
+    }, [activeMilestoneImage]);
 
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!heroRef.current) return;
         try {
             setIsExporting(true);
-            // Allow React to flush the state change and DOM resize before snapshot
-            await new Promise(resolve => setTimeout(resolve, 150));
             
-            const dataUrl = await toPng(heroRef.current, { cacheBust: true, pixelRatio: 2 });
+            // Give React time to flush the DOM, and allow cached images to paint
+            await new Promise(resolve => setTimeout(resolve, 250));
+            
+            // FIX: Removed cacheBust: true to allow the preloaded image to be used
+            const dataUrl = await toPng(heroRef.current, { pixelRatio: 2 });
+            
             const blob = await (await fetch(dataUrl)).blob();
             const file = new File([blob], 'mrt-milestone.png', { type: 'image/png' });
 
@@ -107,18 +121,31 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
             <div className="relative z-10 flex flex-col h-full justify-between">
                 
-                {/* VIRAL WATERMARK (HEADER) */}
+                {/* VIRAL WATERMARK & MEDALLION (HEADER) */}
                 {isExporting && (
                     <div className="flex flex-col items-center justify-start pb-4 animate-fadeIn">
-                        <div className="bg-white p-2.5 rounded-2xl shadow-xl mb-3">
-                            <img 
-                                src="/pwa-192x192.png" 
-                                alt="MRT Logo" 
-                                className="h-10 w-10 object-contain" 
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                            />
-                        </div>
-                        <h2 className="text-2xl font-black tracking-tight drop-shadow-md">My Recovery Toolkit</h2>
+                        {activeMilestoneImage ? (
+                            <div className="mb-2 drop-shadow-2xl">
+                                <img 
+                                    src={activeMilestoneImage} 
+                                    alt={`${activeMilestoneLabel} Milestone Medallion`} 
+                                    className="h-32 w-32 object-contain" 
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="bg-white p-2.5 rounded-2xl shadow-xl mb-3">
+                                    <img 
+                                        src="/pwa-192x192.png" 
+                                        alt="MRT Logo" 
+                                        className="h-10 w-10 object-contain" 
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                </div>
+                                <h2 className="text-2xl font-black tracking-tight drop-shadow-md">My Recovery Toolkit</h2>
+                            </>
+                        )}
                     </div>
                 )}
 

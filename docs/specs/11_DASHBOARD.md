@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v2.3)
+**Status:** Live (v2.4)
 **Architecture:** Client-Side Aggregator
 **Primary Code:** `src/pages/Dashboard.tsx`
 
@@ -15,13 +15,12 @@ The Dashboard executes concurrent queries on mount via React Query to fetch Prof
 ### B. The Changelog Beacon (Update Notification)
 * **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
 * **Trigger:** If the hashes mismatch, an animated toast drops down notifying the user of a new release, linking to the VitePress changelog.
-* **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash, preventing future spam. Legacy users without a hash silently receive the current hash on mount.
-
-### C. The Backup Sentinel
-* **Logic:** Compares `userProfile.lastExportAt` to `Date.now()`. If > 7 days, displays an amber "Backup Needed" alert.
+* **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash.
 
 ## 3. UI Components
 * **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
 * **Unified Identity Hero (`SobrietyHero.tsx`):** Displays clean time and gamification.
-    * **Viral Watermark:** When the user clicks the Share icon, the `html-to-image` export temporarily renders a square aspect ratio and injects a "myrecoverytoolkit.ca" watermark at the bottom of the exported image for marketing visibility.
+    * **Milestone Transformation:** If the user's `daysClean` matches a major milestone (e.g., 30, 90, 365), the UI swaps the gamification progress bar for a highly visible "Milestone Reached" banner that pulses to draw attention to the Share icon.
+    * **Confetti Celebration:** On milestone days, the Dashboard triggers `react-confetti`. A `sessionStorage` key (`mrt_milestone_X_played`) ensures it only plays once per session to prevent UI annoyance upon returning to the hub.
+    * **Viral Watermark:** When exporting via `html-to-image`, the component temporarily shifts to an `aspect-square` layout and injects the MRT logo and website URL for marketing visibility.
 * **Bento Grid:** 6-tile layout linking to core modules.

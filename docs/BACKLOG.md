@@ -12,18 +12,19 @@
 
 ## 🏆 Social & Fellowship Challenges (PROJ-21)
 * **Feature:** "90 in 90" Meeting Tracker & Friend Challenges.
-* **Complexity:** High (Requires secure multiplayer networking, public vs private profile boundaries).
-* **Source:** User Feedback (March 2026).
+* **Complexity:** High (Requires secure multiplayer networking).
 
 ## 🧠 Insights Statistics Tab (PROJ-22)
-* **Feature:** A data visualization tab within the Insights module (e.g., "Most Common Triggers this Year", "AI Coach Accuracy").
+* **Feature:** A data visualization tab within the Insights module.
 * **Complexity:** High (Requires decrypting and aggregating dozens of nested JSON arrays).
-* **Source:** User Feedback (March 2026).
+
+## 🧪 The QA Sentinel (PROJ-23)
+* **Feature:** Automated E2E Testing Pipeline (Playwright + Firebase Emulators).
+
+## 🖼️ The Asset Engine (PROJ-24)
+* **Feature:** Centralized, strictly-typed Asset Dictionary and WebP conversion.
+* **Description:** Eliminates hardcoded image paths and reduces bundle size.
 
 ## 📸 Media Support
 * **Feature:** Photo Attachments in Journal.
 * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64 -> Firestore).
-* **Dependency:** Firestore Storage Rules.
-
-## 👤 Demo / Trial Mode
-* **Feature:** "Try it now" button on Login page using Firebase Anonymous Auth.
