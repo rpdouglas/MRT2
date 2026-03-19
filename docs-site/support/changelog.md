@@ -1,5 +1,12 @@
 # 🚀 Changelog
 
+### v1.8.0 (The Medallion Update)
+* **New:** **Monthly Milestones:** Added unique, high-fidelity circular recovery medallions for every month of the first year of sobriety.
+* **Improvement:** **Reliable Sharing:** Implemented an image pre-loader in the Sobriety Hero to ensure medallions appear perfectly in social media exports.
+* **Dev:** **Asset Pipeline:** Created Python-based automation for segmenting and processing transparent PWA assets.
+
+
+
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
 ### v1.7.0 (The Virality Update)
