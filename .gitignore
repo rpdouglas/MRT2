@@ -37,3 +37,5 @@ android-build/
 *.aab
 *.apk
 mrt-release.keystore
+scripts/list_assets.py
+scripts/apply_code.py
