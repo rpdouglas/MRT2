@@ -15,6 +15,7 @@ import {
   type Firestore 
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Confetti from 'react-confetti';
 import { 
   calculateJournalStats, 
   calculateTaskStats, 
@@ -22,6 +23,7 @@ import {
   calculateVitalityStats,
   calculateUserLevel
 } from '../lib/gamification';
+import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import { 
@@ -54,6 +56,23 @@ export default function Dashboard() {
   });
 
   const [showChangelogToast, setShowChangelogToast] = useState(false);
+  
+  // Confetti State
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [recycleConfetti, setRecycleConfetti] = useState(true);
+  const [windowSize, setWindowSize] = useState({
+      width: typeof window !== 'undefined' ? window.innerWidth : 0,
+      height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
+
+  // Handle window resize for Confetti
+  useEffect(() => {
+      const handleResize = () => {
+          setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: userProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -164,13 +183,50 @@ export default function Dashboard() {
     };
   }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading]);
 
+  // Milestone Confetti Logic
+  useEffect(() => {
+      if (stats?.daysClean) {
+          const milestone = getMilestone(stats.daysClean);
+          if (milestone) {
+              const playedKey = `mrt_milestone_${stats.daysClean}_played`;
+              if (!sessionStorage.getItem(playedKey)) {
+                  setShowConfetti(true);
+                  sessionStorage.setItem(playedKey, 'true');
+                  
+                  // Stop recycling after 5 seconds to gracefully end
+                  setTimeout(() => {
+                      setRecycleConfetti(false);
+                  }, 5000);
+                  
+                  // Completely unmount after 10 seconds to free memory
+                  setTimeout(() => {
+                      setShowConfetti(false);
+                  }, 10000);
+              }
+          }
+      }
+  }, [stats?.daysClean]);
+
   const loading = journalLoading || taskLoading || workbookLoading || profileLoading;
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page}`}>
+    <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page} relative`}>
       
+      {/* CONFETTI LAYER (High Z-Index, pointer-events-none) */}
+      {showConfetti && (
+          <div className="fixed inset-0 pointer-events-none z-[100]">
+              <Confetti 
+                  width={windowSize.width} 
+                  height={windowSize.height} 
+                  recycle={recycleConfetti} 
+                  numberOfPieces={400} 
+                  gravity={0.15} 
+              />
+          </div>
+      )}
+
       {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 

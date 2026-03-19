@@ -6,24 +6,21 @@
 | Status | ID | Project Name | Owner | Impact |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-01` | **Security Hardening** | Admin | Critical Security Fixes |
-| 🟢 **Done** | `PROJ-02` | **Task List Revamp** | Admin | High-Dopamine UX, Optimistic UI |
-| 🟢 **Done** | `PROJ-03` | **Wisdom (Workbook) Polish** | Admin | Premium Reading Experience |
-| 🟢 **Done** | `PROJ-04` | **The Frictionless Core** | Admin | Auth, UX Bugs, Search |
 | 🟢 **Done** | `PROJ-04.5`| **The Crucible** | Admin | Dogfooding, QA, & Virtuoso Log |
 | 🟢 **Done** | `PROJ-10` | **Crisis & Momentum**| Admin | Urge Surfer + Financial Calculator |
 
-## 📅 Q3 2026: Launch & The Service Network (Active)
+## 📅 Q3 2026: Launch & The Funding Round (Completed)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟢 **Done** | `PROJ-09` | **The GTM Engine** | All | VitePress rewrite, `/links` Native routing. |
-| 🟢 **Done** | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management, Supporter Gate. |
+| 🟢 **Done** | `PROJ-15` | **The Checkout Engine**| All | Stripe Integration, Tier Management. |
 | 🟢 **Done** | `PROJ-17` | **Pre-Launch Polish** | All | AI Cost Shield, Viral Watermark, UX. |
-| 🟡 **Active** | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep). |
-| 🟡 **Active** | `PROJ-16` | **Investor Readiness** | Founders | SAFE, Incorporation, Pitch Deck. |
-| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
+| 🟢 **Done** | `PROJ-16` | **Investor Readiness** | CEO | Incorporated, secured $50k funding. |
 
-## 📅 Q4 2026: The Deep Mind & Command (Planned)
+## 📅 Q4 2026: The Road to 5,000 (Active)
 | Status | ID | Project Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-14` | **The Deep Mind** | Walt | Local RAG (Chat with your Journal). |
-| ⚪ Planned | `PROJ-18` | **The Command Center** | Admin | Desktop-Optimized Deep Analytics. |
+| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition & B2B Pitch strategy. |
+| 🟡 **Active** | `PROJ-07` | **The Launch Engine** | All | TWA Android Wrapper (Play Store Prep). |
+| 🟡 **Active** | `PROJ-20` | **Virality & Polish** | Ned | Milestone sharing and AI Task clarity. |
+| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
