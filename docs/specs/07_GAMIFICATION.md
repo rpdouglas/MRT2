@@ -1,21 +1,17 @@
-# 📐 Feature Spec: Gamification Engine
+# 📐 Feature Spec: Gamification Engine (Updated)
 
-**Status:** Live (v1.6)
-**Architecture:** Stateless / On-demand Calculation
+**Status:** Live (v1.8)
+**Asset Engine:** 12-Medallion Circular Pipeline active.
 
 ## 1. XP Economy
 | Action | XP Value |
 | :--- | :--- |
 | Journal Entry | 25 XP (+10 for length) |
 | Task Completion | 10 (Low) / 25 (Med) / 50 (High) |
-| Workbook Answer | 15 XP |
-| Chapter Mastered | Status Milestone (Calculated locally) |
-| Vitality Log | 15 XP |
-| Clean Milestone | 500 XP (per 30 days) |
+| Clean Milestone | 500 XP (per 30 days) + Medallion Badge |
 
-## 2. Streak Logic
-* **Journal Streak:** Consecutive days (Local Time).
-* **Habit Fire:** Cumulative sum of ALL active recurring task streaks. This rewards building multiple habits simultaneously.
-
-## 3. Archetypes
-Derived from dominant XP source: Scholar (Workbooks), Doer (Tasks), Monk (Vitality), Philosopher (Journal).
+## 2. Milestone Assets
+The following medallions are dynamically rendered in `SobrietyHero.tsx`:
+- 30, 60, 90 Days
+- 4 through 11 Months
+- 1 Year

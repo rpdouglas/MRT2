@@ -81,8 +81,13 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = 
                     )}
 
                     {taskDate && (
-                        <span className={`text-[10px] font-medium ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                        <span className={`flex items-center gap-1 text-[10px] font-medium ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
                             {isOverdue ? 'Overdue' : `Due: ${format(taskDate, 'MMM d')}`}
+                            {task.source === 'ai' && !isOverdue && (
+                                <span className="bg-purple-50 text-purple-600 border border-purple-100 px-1 py-0.5 rounded-[4px] font-bold" title="Auto-scheduled by AI">
+                                    +7 Days
+                                </span>
+                            )}
                         </span>
                     )}
 
