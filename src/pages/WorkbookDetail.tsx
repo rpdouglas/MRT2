@@ -37,7 +37,7 @@ export default function WorkbookDetail() {
   const { workbookId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { decrypt } = useEncryption(); // Added for AI analysis
+  const { decrypt } = useEncryption(); 
   const workbook = getWorkbook(workbookId || '');
 
   // Data State
@@ -179,10 +179,12 @@ export default function WorkbookDetail() {
         // Explicitly add 'type: workbook' to match InsightPayload
         await saveInsight(user.uid, { type: 'workbook', ...insight });
         setSavingInsight(false); 
-        // Optional: Add toast here
+        setShowResult(false);
+        alert("Insight successfully saved to your Wisdom Log!");
     } catch (error) {
         console.error("Failed to save log", error);
         setSavingInsight(false);
+        alert("Failed to save. Please try again.");
     }
   };
 
