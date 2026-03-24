@@ -105,9 +105,9 @@ export default function VibrantHeader({
         {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
         <div className="shrink-0 flex flex-col items-center text-center px-2">
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
-            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
+            {Icon && <Icon className="h-6 w-6 text-white/90" />}
             {title}
-            {Icon && <Icon className="h-6 w-6 text-white/90 animate-pulse" />}
+            {Icon && <Icon className="h-6 w-6 text-white/90" />}
           </h1>
           <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide">
             {subtitle}

@@ -3,6 +3,7 @@
  * GITHUB COMMENT:
  * [AppShell.tsx]
  * FIX: Replaced broken favicon-32x32.png with pwa-192x192.png for sidebar icon stability (Ticket 4.4).
+ * FIX: Added solid white background to the sidebar logo for better contrast.
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -149,7 +150,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-gradient-to-b from-blue-700 to-blue-900 transition-all shadow-2xl">
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
                    <div className="flex items-center gap-3 text-white font-bold text-[17px] tracking-tight whitespace-nowrap">
-                      <div className="bg-white/10 p-1.5 rounded-lg shrink-0">
+                      <div className="bg-white shadow-sm p-1.5 rounded-lg shrink-0">
                         {/* FIX: Updated Icon Path */}
                         <img src="/pwa-192x192.png" alt="MRT Logo" className="h-6 w-6 object-contain" />
                       </div>
