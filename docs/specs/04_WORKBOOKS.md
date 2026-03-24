@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Wisdom (Workbooks & Library)
 
-**Status:** Live (v2.0)
+**Status:** Live (v2.1)
 **Storage:** `users/{uid}/workbook_answers/{workbookId_questionId}`
 
 ## 1. Data Structure
@@ -10,7 +10,7 @@ To prevent state conflicts, each answer is stored as an individual document.
 
 ## 2. The Library Hub (`Workbooks.tsx`)
 The main entry point is structured via a dual-tab navigation system:
-* **Workbooks Tab:** Renders the interactive, 12-Step and Buddhist logic flows.
+* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks (e.g., Women for Recovery).
 * **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.
 
 ## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)
