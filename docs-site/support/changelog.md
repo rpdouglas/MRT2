@@ -3,6 +3,8 @@
 ### v1.9.1 (The Polish Update)
 * **Fix:** **Wisdom Log Synchronization:** Resolved an issue where Workbook AI Compass insights were successfully generating but failing to render visually in the Insights Log.
 * **Improvement:** **Action Plan Routing:** Adding a suggested task directly from a Workbook insight now correctly routes it to the AI Action Plan tab.
+* **UI Polish:** **Journal Editor:** Optimized the template selector dropdown to ensure it scales cleanly on smaller mobile devices (like the Galaxy S21).
+* **UI Polish:** **Header & Navigation:** Refined the header pulse animations to reduce visual distraction and improved the contrast of the main navigation logo.
 
 ### v1.9.0 (The Content Expansion Update)
 * **New:** **Women for Recovery Workbook:** Added a completely new, 8-section specialty workbook focused on self-discovery, emotional awareness, boundaries, and overdose survival reframing.

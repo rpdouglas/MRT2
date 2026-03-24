@@ -9,9 +9,9 @@
 
 ## 🟡 Sprint 8.4: The Polish Update (Active)
 - [x] **Fix:** Workbook AI results not saving to Insights Log / UI rendering properly.
-- [ ] **Fix:** S21 mobile template dropdown visibility.
-- [ ] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
-- [ ] **Fix:** Add white background to Nav Menu Logo.
+- [x] **Fix:** S21 mobile template dropdown visibility.
+- [x] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
+- [x] **Fix:** Add white background to Nav Menu Logo.
 - [ ] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
 - [ ] **Feature:** Admin terminology update ("Users" -> "Friends").
 
