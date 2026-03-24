@@ -1,11 +1,13 @@
 # 🚀 Changelog
 
+### v1.9.0 (The Content Expansion Update)
+* **New:** **Women for Recovery Workbook:** Added a completely new, 8-section specialty workbook focused on self-discovery, emotional awareness, boundaries, and overdose survival reframing.
+* **Improvement:** **Specialty Themes:** Added a dedicated 'specialty' workbook category that triggers a unique purple (Heart) UI theme to distinguish it from traditional 12-Step or Dharma paths.
+
 ### v1.8.0 (The Medallion Update)
 * **New:** **Monthly Milestones:** Added unique, high-fidelity circular recovery medallions for every month of the first year of sobriety.
 * **Improvement:** **Reliable Sharing:** Implemented an image pre-loader in the Sobriety Hero to ensure medallions appear perfectly in social media exports.
 * **Dev:** **Asset Pipeline:** Created Python-based automation for segmenting and processing transparent PWA assets.
-
-
 
 Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
 
