@@ -8,7 +8,7 @@
 - [x] **Sprint 8.3:** Content Expansion. Integrated "Women for Recovery" specialty workbook with tailored UI routing.
 
 ## 🟡 Sprint 8.4: The Polish Update (Active)
-- [ ] **Fix:** Journal AI results not saving to Insights Log.
+- [x] **Fix:** Workbook AI results not saving to Insights Log / UI rendering properly.
 - [ ] **Fix:** S21 mobile template dropdown visibility.
 - [ ] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
 - [ ] **Fix:** Add white background to Nav Menu Logo.

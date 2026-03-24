@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+### v1.9.1 (The Polish Update)
+* **Fix:** **Wisdom Log Synchronization:** Resolved an issue where Workbook AI Compass insights were successfully generating but failing to render visually in the Insights Log.
+* **Improvement:** **Action Plan Routing:** Adding a suggested task directly from a Workbook insight now correctly routes it to the AI Action Plan tab.
+
 ### v1.9.0 (The Content Expansion Update)
 * **New:** **Women for Recovery Workbook:** Added a completely new, 8-section specialty workbook focused on self-discovery, emotional awareness, boundaries, and overdose survival reframing.
 * **Improvement:** **Specialty Themes:** Added a dedicated 'specialty' workbook category that triggers a unique purple (Heart) UI theme to distinguish it from traditional 12-Step or Dharma paths.

@@ -57,6 +57,7 @@ const getStrengths = (data: unknown): string[] => {
     const insight = data as InsightWithActions;
     if (insight.strengths && Array.isArray(insight.strengths)) return insight.strengths;
     if (insight.pillars?.growth) return [insight.pillars.growth]; 
+    if (insight.pillars?.emotional_resonance) return [insight.pillars.emotional_resonance];
     return [];
 };
 
@@ -236,6 +237,7 @@ export default function InsightsLog() {
                                                                     const actions = getActions(insight).slice(0, 3);
                                                                     const strengths = getStrengths(insight);
                                                                     const risks = getRisks(insight);
+                                                                    const understanding = insightData.pillars?.understanding;
                                                                     
                                                                     const keyThemes = insightData.key_themes || [];
                                                                     const hiddenCorrelations = insightData.hidden_correlations || [];
@@ -293,6 +295,15 @@ export default function InsightsLog() {
                                                                                             {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
                                                                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                                                                                 
+                                                                                                {understanding && (
+                                                                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                                                                                        <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
+                                                                                                            <AcademicCapIcon className="h-4 w-4" /> Understanding
+                                                                                                        </div>
+                                                                                                        <p className="text-xs text-blue-900 leading-relaxed">{understanding}</p>
+                                                                                                    </div>
+                                                                                                )}
+
                                                                                                 {strengths.length > 0 && (
                                                                                                     <div className="bg-green-50 p-3 rounded-xl border border-green-100">
                                                                                                         <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
