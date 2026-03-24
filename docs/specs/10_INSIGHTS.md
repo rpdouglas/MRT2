@@ -1,18 +1,19 @@
 # 📐 Feature Spec: Insights Log
 
-**Status:** Live (v2.1)
+**Status:** Live (v2.2)
 **Context:** A timeline of AI-generated coaching and pattern analysis.
 
 ## 1. Data Structure (Expanded Schema)
 **Collection:** `insights`
-The log handles polymorphic data types with rich, AI-extracted arrays:
+The log handles polymorphic data types with rich, AI-extracted arrays depending on the source:
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `type` | String | 'journal' \| 'workbook' |
 | `summary` | String | AI narrative |
-| `relapse_risk_level` | String | 'Low' \| 'Moderate' \| 'High' \| 'Critical' |
-| `trajectory` | String | 'Improving' \| 'Declining' etc. |
+| `relapse_risk_level` | String | 'Low' \| 'Moderate' \| 'High' \| 'Critical' (Journal Deep Dives) |
+| `trajectory` | String | 'Improving' \| 'Declining' etc. (Journal Reviews) |
+| `pillars` | Map | Contains `understanding`, `emotional_resonance`, and `blind_spots` (Workbook reviews). |
 | `hidden_correlations` | Array | Hidden links identified by Deep Pattern AI |
 | `key_themes` | Array | Recurring topics from Comparative analysis |
 | `suggested_actions` | Array | List of 3 recommended habits |

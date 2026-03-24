@@ -292,7 +292,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                  <div className="relative">
                      <select 
                         onChange={(e) => handleTemplateSelect(e.target.value)}
-                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white w-48 text-ellipsis overflow-hidden"
+                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white w-[130px] sm:w-48 text-ellipsis overflow-hidden"
                         defaultValue=""
                         disabled={!!initialEntry} 
                     >
@@ -405,7 +405,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
                     <MicrophoneIcon className="h-5 w-5" />
                 </button>
 
-                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 disabled:opacity-50 flex-shrink-0 flex items-center gap-1">
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95 flex-shrink-0 flex items-center gap-1 disabled:opacity-50">
                     {saving ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckIcon className="h-4 w-4" />}
                     <span className="hidden sm:inline">{initialEntry ? 'Update' : 'Save'}</span>
                 </button>
