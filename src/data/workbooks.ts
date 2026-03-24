@@ -1,10 +1,18 @@
-// src/data/workbooks.ts
+/**
+ * src/data/workbooks.ts
+ * GITHUB COMMENT:
+ * [workbooks.ts]
+ * FEAT: Integrated the new 'Women for Recovery' workbook.
+ * TYPE: Expanded Workbook type to include 'specialty' to trigger the purple UI theme.
+ * CONTENT: Adapted workbook Section 8 to use 'Overdose & Survival Reframe' language per project standards.
+ */
 
 export interface Question {
   id: string;
   text: string;
   context?: string; // Optional context/quote from literature (The Insight)
   type?: 'input' | 'read_only'; // Defaults to 'input' if undefined
+  helperText?: string;
 }
 
 export interface WorkbookSection {
@@ -18,18 +26,10 @@ export interface Workbook {
   id: string;
   title: string;
   description: string;
-  type: 'linear' | 'steps' | 'general';
+  type: 'linear' | 'steps' | 'general' | 'specialty';
   sections: WorkbookSection[];
+  estimatedTime?: string;
 }
-
-// Helper to generate generic questions for sections we don't fully populate in this snippet
-//const generateQuestions = (count: number, prefix: string): Question[] => {
-//  return Array.from({ length: count }).map((_, i) => ({
-//    id: `${prefix}_q${i + 1}`,
-//    text: `Question ${i + 1}: Reflection point regarding ${prefix.replace(/_/g, ' ')}.`,
-//    type: 'input'
-//  }));
-//};
 
 // --- 1. GENERAL RECOVERY WORKBOOK (25 Questions) ---
 const generalQuestions: Question[] = [
@@ -570,6 +570,149 @@ const dharmaSections: WorkbookSection[] = [
   { id: 'rd_path_3', title: 'Part III: Discipline', description: 'Right Effort, Mindfulness, & Concentration', questions: eightfoldPart3 },
 ];
 
+// --- 4. WOMEN FOR RECOVERY WORKBOOK ---
+const womensRecoverySections: WorkbookSection[] = [
+  {
+    id: 'wr_intro',
+    title: 'Introduction',
+    description: 'Welcome to your recovery journey.',
+    questions: [
+      {
+        id: 'wr_intro_1',
+        type: 'read_only',
+        text: `Welcome to your recovery journey. This workbook is designed to guide you through a process of self-discovery, emotional awareness, and intentional growth as you build a foundation for lasting change. Take these sections at your own pace, and remember to approach your answers with honesty and self-compassion.`
+      }
+    ]
+  },
+  {
+    id: 'wr_s1',
+    title: 'Section 1: Awareness - Breaking the Pattern',
+    description: 'Observe your behaviors without judgment.',
+    questions: [
+      {
+        id: 'wr_s1_intro',
+        type: 'read_only',
+        text: 'This section helps you slow down and observe your behaviors without judgment. Awareness is the first step in change-before anything can shift, it must be seen clearly.'
+      },
+      { id: 'wr_s1_q1', type: 'input', text: 'Describe a recent moment when you felt the urge to use. What happened just before, during, and after?' },
+      { id: 'wr_s1_q2', type: 'input', text: 'What emotions tend to show up right before you feel the urge? Trace them as far back as you can.' },
+      { id: 'wr_s1_q3', type: 'input', text: 'What are you truly seeking in those moments (relief, escape, connection, numbness)?' },
+      { id: 'wr_s1_q4', type: 'input', text: 'If your urge could speak, what would it say to you?' }
+    ]
+  },
+  {
+    id: 'wr_s2',
+    title: 'Section 2: Self-Image Reset',
+    description: 'Reshape how you see yourself at your core.',
+    questions: [
+      {
+        id: 'wr_s2_intro',
+        type: 'read_only',
+        text: 'Recovery is not just about stopping a behavior-it\'s about becoming someone new. This section focuses on reshaping how you see yourself at your core.'
+      },
+      { id: 'wr_s2_q1', type: 'input', text: 'Write down the beliefs you currently hold about yourself. Where did each belief originate?' },
+      { id: 'wr_s2_q2', type: 'input', text: 'Which of these beliefs feel inherited rather than chosen?' },
+      { id: 'wr_s2_q3', type: 'input', text: 'Describe the version of you that exists beyond addiction. What does she believe about herself?' },
+      { id: 'wr_s2_q4', type: 'input', text: 'Write a new identity statement beginning with: \'I am a woman who...\'' }
+    ]
+  },
+  {
+    id: 'wr_s3',
+    title: 'Section 3: Emotional Patterns',
+    description: 'Explore your emotional world and how it shapes your actions.',
+    questions: [
+      {
+        id: 'wr_s3_intro',
+        type: 'read_only',
+        text: 'Many behaviors are rooted in emotions we haven\'t learned to process. This section explores your emotional world and how it shapes your actions.'
+      },
+      { id: 'wr_s3_q1', type: 'input', text: 'Which emotions do you avoid the most? What happens when you try to feel them?' },
+      { id: 'wr_s3_q2', type: 'input', text: 'Recall a childhood or early memory connected to one of these emotions.' },
+      { id: 'wr_s3_q3', type: 'input', text: 'How do your current coping strategies protect you? How do they limit you?' },
+      { id: 'wr_s3_q4', type: 'input', text: 'What would it look like to sit with discomfort instead of escaping it?' }
+    ]
+  },
+  {
+    id: 'wr_s4',
+    title: 'Section 4: Thought Rewiring',
+    description: 'Identify and gently challenge the patterns that keep you stuck.',
+    questions: [
+      {
+        id: 'wr_s4_intro',
+        type: 'read_only',
+        text: 'Your thoughts shape your reality. This section helps you identify and gently challenge the patterns that keep you stuck, replacing them with more supportive beliefs.'
+      },
+      { id: 'wr_s4_q1', type: 'input', text: 'Identify three recurring negative thoughts. When do they appear?' },
+      { id: 'wr_s4_q2', type: 'input', text: 'For each thought, ask: Is this absolutely true? What evidence contradicts it?' },
+      { id: 'wr_s4_q3', type: 'input', text: 'Rewrite each thought into something both compassionate and realistic.' },
+      { id: 'wr_s4_q4', type: 'input', text: 'How does your body feel when you believe the old thought vs the new one?' }
+    ]
+  },
+  {
+    id: 'wr_s5',
+    title: 'Section 5: Daily Practices',
+    description: 'Build daily habits that reinforce your new identity.',
+    questions: [
+      {
+        id: 'wr_s5_intro',
+        type: 'read_only',
+        text: 'Lasting change comes from small, consistent actions. This section focuses on building daily habits that reinforce your new identity.'
+      },
+      { id: 'wr_s5_q1', type: 'input', text: 'What small daily action would move you toward the person you want to become?' },
+      { id: 'wr_s5_q2', type: 'input', text: 'At the end of each day, list three things you did well, no matter how small.' },
+      { id: 'wr_s5_q3', type: 'input', text: 'Track your emotional state daily. What patterns do you begin to notice?' },
+      { id: 'wr_s5_q4', type: 'input', text: 'What does consistency mean to you, and where do you struggle with it?' }
+    ]
+  },
+  {
+    id: 'wr_s6',
+    title: 'Section 6: Relationships & Boundaries',
+    description: 'Understand where you need protection, clarity, and change.',
+    questions: [
+      {
+        id: 'wr_s6_intro',
+        type: 'read_only',
+        text: 'Your environment and relationships deeply influence your recovery. This section helps you understand where you need protection, clarity, and change.'
+      },
+      { id: 'wr_s6_q1', type: 'input', text: 'List the relationships in your life. Which feel energizing vs draining?' },
+      { id: 'wr_s6_q2', type: 'input', text: 'Where do you say yes when you mean no? What are you afraid would happen if you said no?' },
+      { id: 'wr_s6_q3', type: 'input', text: 'Describe a recent interaction where you abandoned your own needs.' },
+      { id: 'wr_s6_q4', type: 'input', text: 'What is one boundary you can begin practicing this week?' }
+    ]
+  },
+  {
+    id: 'wr_s7',
+    title: 'Section 7: Future Self',
+    description: 'Define and connect with the person you are becoming.',
+    questions: [
+      {
+        id: 'wr_s7_intro',
+        type: 'read_only',
+        text: 'Recovery becomes stronger when you are moving toward something meaningful. This section helps you define and connect with the person you are becoming.'
+      },
+      { id: 'wr_s7_q1', type: 'input', text: 'Imagine your life one year from now in recovery. Describe it in detail.' },
+      { id: 'wr_s7_q2', type: 'input', text: 'What qualities does your future self embody? What habits does she practice daily?' },
+      { id: 'wr_s7_q3', type: 'input', text: 'What would make your future self proud of you today?' }
+    ]
+  },
+  {
+    id: 'wr_s8',
+    title: 'Section 8: Overdose & Survival Reframe',
+    description: 'Build resilience and self-compassion after a severe setback.',
+    questions: [
+      {
+        id: 'wr_s8_intro',
+        type: 'read_only',
+        text: 'Setbacks can become powerful teachers when approached with curiosity instead of shame. This section helps you build resilience and self-compassion.'
+      },
+      { id: 'wr_s8_q1', type: 'input', text: 'If you\'ve experienced an overdose, what did it teach you about your needs or vulnerabilities?' },
+      { id: 'wr_s8_q2', type: 'input', text: 'What warning signs did you notice beforehand?' },
+      { id: 'wr_s8_q3', type: 'input', text: 'How can you respond with compassion instead of self-judgment?' },
+      { id: 'wr_s8_q4', type: 'input', text: 'Who will you reach out to, or what coping tool will you lean on, the next time you feel at risk?' }
+    ]
+  }
+];
+
 // --- MASTER REGISTRY ---
 export const WORKBOOKS: Workbook[] = [
   {
@@ -592,6 +735,13 @@ export const WORKBOOKS: Workbook[] = [
     description: 'Buddhist-inspired path to recovery focusing on the Four Noble Truths and Eightfold Path.',
     type: 'steps',
     sections: dharmaSections
+  },
+  {
+    id: 'womens_recovery',
+    title: 'Women for Recovery Workbook',
+    description: 'A guided process of self-discovery, emotional awareness, and intentional growth as you build a foundation for lasting change.',
+    type: 'specialty',
+    sections: womensRecoverySections
   }
 ];
 
