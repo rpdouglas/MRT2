@@ -12,7 +12,7 @@
 - [x] **Fix:** S21 mobile template dropdown visibility.
 - [x] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
 - [x] **Fix:** Add white background to Nav Menu Logo.
-- [ ] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
+- [x] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
 - [ ] **Feature:** Admin terminology update ("Users" -> "Friends").
 
 ## 🟡 Sprint 8.0: The Road to 5,000 (Active)

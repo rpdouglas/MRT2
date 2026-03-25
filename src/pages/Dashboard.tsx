@@ -46,7 +46,7 @@ import { useBuildInfo } from '../lib/versioning';
 const TOTAL_WORKBOOK_QUESTIONS = 45;
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, driveAccessToken } = useAuth();
   const queryClient = useQueryClient();
   const meta = useBuildInfo();
   
@@ -170,7 +170,9 @@ export default function Dashboard() {
     
     // eslint-disable-next-line react-hooks/purity
     const nowMs = Date.now(); 
-    const showBackup = !lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000);
+    
+    // Suppress the warning if the user has an active Google Drive token (auto-sync is handling it)
+    const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
 
     return {
         journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
@@ -181,7 +183,7 @@ export default function Dashboard() {
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading]);
+  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken]);
 
   // Milestone Confetti Logic
   useEffect(() => {
