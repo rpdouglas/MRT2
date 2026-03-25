@@ -8,7 +8,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
-import { getMessaging } from "firebase-admin/messaging";
+import { getMessaging, TokenMessage } from "firebase-admin/messaging";
 
 // Initialize the Admin SDK
 initializeApp();
@@ -41,7 +41,7 @@ export const dailyBeacon = onSchedule({
     timeoutSeconds: 300,
     memory: "512MiB",
     region: "northamerica-northeast1" // Matching your existing functions
-}, async (event) => {
+}, async () => {
     logger.info("Starting Daily Beacon execution...", { time: new Date().toISOString() });
 
     try {
@@ -59,7 +59,7 @@ export const dailyBeacon = onSchedule({
         const startOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
         // We will collect all messages to send in a single batch
-        const messagesToSend: any[] = [];
+        const messagesToSend: TokenMessage[] = [];
         const staleTokensMap = new Map<string, string[]>(); // uid -> tokens[]
 
         for (const userDoc of usersSnap.docs) {
