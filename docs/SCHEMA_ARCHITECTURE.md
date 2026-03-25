@@ -26,69 +26,23 @@ graph TD
 
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, & Settings.
-* **Fields:**
-    * `encryptionSalt` (String): Public salt needed to derive key.
-    * `pinVerifier` (String): Hash(PIN + Salt) to verify PIN correctness without storing it.
-    * `sobrietyDate` (Timestamp): Metrics base.
-    * `role` (String): 'user' | 'admin'. Controls UI access.
-    * `sponsorName` & `sponsorPhone` (String): Unencrypted. Used for SOS dialer.
-    * `lastExportAt` (Timestamp): Used for the 7-day Backup Reminder.
-    * `lastSeenBuildHash` (String): Used to trigger Changelog update toasts.
-    * `usage_limits` (Map): Timestamps (`lastWeeklyInsight`, `lastDeepDive`) to throttle AI costs.
-    * `fcmTokens` (Array): **NEW** Push notification device tokens for Cloud Messaging.
-    * `timezone` (String): **NEW** User's local timezone for cron job alignment.
+* **Fields:** `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens`, `timezone`, etc.
 
 ### `journals/{entryId}`
-* **Purpose:** Daily logs, Vitality logs, and reflections.
+* **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.
 * **Fields:**
     * `uid` (String): Owner ID.
     * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
+        * *Note for Virtual Modules:* For SMART CBT Tools, the decrypted plain text is actually a **Stringified JSON Object** containing `{ metadata: {...}, data: {...} }`. The UI parses this JSON after decryption.
     * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
     * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
-    * `sentiment` (String): AI-derived sentiment (e.g. 'Positive', 'Negative').
-    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]`).
-    * `weather` (Map): Snapshot of environment `{ temp, condition }`.
+    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]` or `["SMART Tool", "CBA"]`).
 
 ### `tasks/{taskId}`
-* **Purpose:** Gamification, Habits, and AI Action Plans.
-* **Encryption:** Unencrypted to allow background stats and streak evaluations.
-* **Fields:**
-    * `title` (String): Task name.
-    * `category` (String): 'Recovery' | 'Health' | 'Life' | 'Work'.
-    * `source` (String): 'manual' | 'ai'. (AI tasks map to the Action Plan tab).
-    * `priority` (String): 'High' | 'Medium' | 'Low'.
-    * `status` (String): 'pending' | 'completed'.
-    * `currentStreak` (Int): Consecutive completions.
-    * `recurrence` (Map): Logic for repetition.
-    * `dueDate` & `lastCompletedAt` (Timestamp).
+* **Purpose:** Gamification, Habits, and AI Action Plans. (Unencrypted for streak evaluation).
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
-* **Fields:**
-    * `type` (String): 'journal' | 'workbook'.
-    * `summary` (String): The AI's output.
-    * `pillars` (Map): Structured breakdown (understanding, growth, blind_spots).
-    * `strengths` & `risks` (Array): Listed points for UI rendering.
-    * `suggested_actions` (Array): 3 specific strings to be converted into Tasks.
 
 ### `feedback/{reportId}`
-* **Purpose:** User bug reports and suggestions.
-* **Encryption:** **NONE** (To allow debugging without user PIN).
-* **Fields:**
-    * `category`: 'bug' | 'suggestion' | 'content'.
-    * `buildHash`: Commit hash for version tracing.
-    * `environment`: 'DEV' | 'UAT' | 'PRODUCTION'.
-    * `vaultUnlocked`: Boolean.
-    * `route` & `userAgent`: Strings.
-
-### `service/{serviceId}` (Planned - Project 05)
-* **Purpose:** "Digital Rolodex" for sponsors to manage sponsees/commitments.
-* **Fields:**
-    * `type` (String): 'sponsee' | 'commitment'.
-    * `name`, `contactInfo`, `notes` (Strings): **ENCRYPTED**.
-    * `status` (String): 'Active' | 'Alumni' (Unencrypted for filtering).
-    * `nextMeeting` (Timestamp): **UNENCRYPTED** (Allows push notifications).
-
-## 3. Query Strategy
-* **Journal History:** Query by `uid`, order by `createdAt`. Requires client-side decryption loop.
-* **Stats:** Query `moodScore` (Journal) or `completed` (Tasks) directly for dashboards (fast, no decrypt needed).
+* **Purpose:** User bug reports and suggestions. (Unencrypted).

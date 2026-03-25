@@ -375,7 +375,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <Link to="/tools/urge-surfer" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">
+            <Link to="/tools" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 group-hover:rotate-12 transition-transform">
                     <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
                 </div>
@@ -387,7 +387,7 @@ export default function Dashboard() {
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-sky-100 flex items-center gap-1">
                         <SparklesIcon className="h-3 w-3" /> Active
                     </div>
-                    <p className="text-[10px] leading-tight pr-2 font-medium text-sky-50">Urge Surfing & Grounding</p>
+                    <p className="text-[10px] leading-tight pr-2 font-medium text-sky-50">CBT & Grounding Exercises</p>
                 </div>
             </Link>
 
