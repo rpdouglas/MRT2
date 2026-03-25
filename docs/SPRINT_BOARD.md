@@ -8,6 +8,7 @@
 - [x] **Sprint 8.3:** Content Expansion. Integrated "Women for Recovery" specialty workbook with tailored UI routing.
 
 ## 🟡 Sprint 8.4: The Polish Update (Active)
+- [x] **Feature:** PROJ-26 The Beacon (Firebase Cloud Messaging, backend cron job, PWA push notifications).
 - [x] **Fix:** Workbook AI results not saving to Insights Log / UI rendering properly.
 - [x] **Fix:** S21 mobile template dropdown visibility.
 - [x] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).

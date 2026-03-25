@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "mrt2-app-prod",
+    "dev": "mrt2-app-dev"
+  },
+  "targets": {},
+  "etags": {}
+}

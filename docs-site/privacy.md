@@ -2,7 +2,7 @@
 
 **My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured at `www.myrecoverytoolkit.ca`.
 
-**Last Updated:** February 2026
+**Last Updated:** March 2026
 
 ## 1. Our Core Philosophy: Zero-Knowledge Encryption
 MRT is built on a **Zero-Knowledge Architecture**.
@@ -18,6 +18,7 @@ To operate the service and generate dashboards, the following data is stored in 
 * **Authentication:** Email address and User ID.
 * **Usage Stats:** App performance, activity streaks, and XP points.
 * **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). 
+* **Device Tokens:** If you opt-in to Push Notifications, we securely store your device FCM token to deliver generic reminders (e.g., "You have tasks due today"). These tokens contain no personal information and are automatically deleted if you disable notifications.
 
 ### B. User Generated Content (Encrypted)
 The following data is encrypted *before* it leaves your device via AES-GCM:
