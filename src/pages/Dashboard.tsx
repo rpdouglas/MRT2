@@ -26,6 +26,7 @@ import {
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
+import NotificationBanner from '../components/NotificationBanner';
 import { 
   HomeIcon, 
   FireIcon, 
@@ -49,6 +50,9 @@ export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
   const queryClient = useQueryClient();
   const meta = useBuildInfo();
+  
+  // Evaluate current time purely once on mount to satisfy react-hooks/purity
+  const [nowMs] = useState(() => Date.now());
   
   const [slogan] = useState(() => {
       const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
@@ -90,12 +94,11 @@ export default function Dashboard() {
   useEffect(() => {
       if (userProfile && db && user) {
           if (!userProfile.lastSeenBuildHash) {
-              // Legacy Fallback: Silently stamp the hash so they don't get spammed on first mount
               updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
               queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
           } else if (userProfile.lastSeenBuildHash !== meta.globalHash) {
-              // New release detected
-              setShowChangelogToast(true);
+              // FIX: Wrap in setTimeout to avoid synchronous setState inside useEffect
+              setTimeout(() => setShowChangelogToast(true), 0);
               updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
               queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
           }
@@ -154,7 +157,7 @@ export default function Dashboard() {
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
         const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate as unknown as string);
-        const diffTime = Math.abs(new Date().getTime() - start.getTime());
+        const diffTime = Math.abs(nowMs - start.getTime());
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
@@ -167,11 +170,6 @@ export default function Dashboard() {
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
-    
-    // eslint-disable-next-line react-hooks/purity
-    const nowMs = Date.now(); 
-    
-    // Suppress the warning if the user has an active Google Drive token (auto-sync is handling it)
     const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
 
     return {
@@ -183,7 +181,7 @@ export default function Dashboard() {
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken]);
+  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {
@@ -192,18 +190,11 @@ export default function Dashboard() {
           if (milestone) {
               const playedKey = `mrt_milestone_${stats.daysClean}_played`;
               if (!sessionStorage.getItem(playedKey)) {
-                  setShowConfetti(true);
+                  // FIX: Wrap in setTimeout to avoid synchronous setState inside useEffect
+                  setTimeout(() => setShowConfetti(true), 0);
                   sessionStorage.setItem(playedKey, 'true');
-                  
-                  // Stop recycling after 5 seconds to gracefully end
-                  setTimeout(() => {
-                      setRecycleConfetti(false);
-                  }, 5000);
-                  
-                  // Completely unmount after 10 seconds to free memory
-                  setTimeout(() => {
-                      setShowConfetti(false);
-                  }, 10000);
+                  setTimeout(() => setRecycleConfetti(false), 5000);
+                  setTimeout(() => setShowConfetti(false), 10000);
               }
           }
       }
@@ -216,16 +207,10 @@ export default function Dashboard() {
   return (
     <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page} relative`}>
       
-      {/* CONFETTI LAYER (High Z-Index, pointer-events-none) */}
+      {/* CONFETTI LAYER */}
       {showConfetti && (
           <div className="fixed inset-0 pointer-events-none z-[100]">
-              <Confetti 
-                  width={windowSize.width} 
-                  height={windowSize.height} 
-                  recycle={recycleConfetti} 
-                  numberOfPieces={400} 
-                  gravity={0.15} 
-              />
+              <Confetti width={windowSize.width} height={windowSize.height} recycle={recycleConfetti} numberOfPieces={400} gravity={0.15} />
           </div>
       )}
 
@@ -253,6 +238,9 @@ export default function Dashboard() {
 
       {/* 3. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+
+        {/* PUSH NOTIFICATION OPT-IN (PROJ-26) */}
+        <NotificationBanner />
 
         {/* CHANGELOG TOAST BEACON */}
         {showChangelogToast && (
@@ -293,23 +281,19 @@ export default function Dashboard() {
 
         {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
-            
             <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
                     <ChartBarIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <ChartBarIcon className="h-4 w-4 text-white" />
-                        </div>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><ChartBarIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.journal.streak}</div>
                         <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
                     </div>
-                    
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
                         <span className="text-base font-bold opacity-75">Consistency</span>
                         <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
@@ -323,16 +307,13 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <FireIcon className="h-4 w-4 text-white" />
-                        </div>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><FireIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.task.fire}</div>
                         <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
                     </div>
-
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
                         <span className="text-base font-bold opacity-75">Rate</span>
                         <span className="text-base font-bold">{stats.task.rate}%</span>
@@ -346,16 +327,13 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <HeartIcon className="h-4 w-4 text-white" />
-                        </div>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><HeartIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
                         <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
                     </div>
-
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
                         <span className="text-base font-bold opacity-75">Logs</span>
                         <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
@@ -369,16 +347,13 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <SparklesIcon className="h-4 w-4 text-white" />
-                        </div>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><SparklesIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
                         <div className="text-3xl font-black">{stats.workbook.completion}%</div>
                         <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
                     </div>
-
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
                         <span className="text-base font-bold opacity-75">Score</span>
                         <span className="text-base font-bold">{stats.workbook.wisdom}</span>
@@ -392,14 +367,10 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
-                            <UserGroupIcon className="h-4 w-4 text-slate-500" />
-                        </div>
+                        <div className="p-1.5 bg-slate-300/50 rounded-lg"><UserGroupIcon className="h-4 w-4 text-slate-500" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider">Service</span>
                     </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
-                        Coming Soon
-                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">Coming Soon</div>
                     <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
                 </div>
             </div>
@@ -410,9 +381,7 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <PuzzlePieceIcon className="h-4 w-4 text-white" />
-                        </div>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><PuzzlePieceIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Tools</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-sky-100 flex items-center gap-1">
@@ -423,7 +392,6 @@ export default function Dashboard() {
             </Link>
 
         </div>
-
       </div>
     </div>
   );
