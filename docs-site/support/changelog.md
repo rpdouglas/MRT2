@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+### v1.10.0 (The Beacon Update)
+* **New:** **Daily Reminders & Milestone Alerts:** Staying on track just got a little easier. You can now opt-in to receive gentle, daily push notifications directly to your device! Get notified the moment you hit a new recovery milestone, or receive a quiet reminder if you have pending habits left to complete for the day.
+* **Security:** **Zero-Knowledge Push Engine:** As always, your privacy is absolute. Our new notification engine only knows *that* you have tasks to do, never *what* those tasks are. Your journal entries remain securely encrypted on your device.
+* **Improvement:** **Dead-Token Pruning:** Added automated database hygiene routines to respect the right-to-be-forgotten when users revoke device permissions.
+
 ### v1.9.1 (The Polish Update)
 * **Fix:** **Wisdom Log Synchronization:** Resolved an issue where Workbook AI Compass insights were successfully generating but failing to render visually in the Insights Log.
 * **Improvement:** **Action Plan Routing:** Adding a suggested task directly from a Workbook insight now correctly routes it to the AI Action Plan tab.

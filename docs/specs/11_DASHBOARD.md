@@ -22,6 +22,7 @@ The Dashboard executes concurrent queries on mount via React Query to fetch Prof
 * **Trigger:** If the last export is older than 7 days AND the user does not have an active `driveAccessToken` (Google Drive Auto-Sync), an amber warning banner appears prompting them to perform a manual JSON export.
 
 ## 3. UI Components
+* **Notification Banner (`NotificationBanner.tsx`):** A contextual opt-in for Push Notifications (PROJ-26). It strictly adheres to iOS constraints, suppressing the prompt unless the PWA is installed standalone.
 * **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
 * **Unified Identity Hero (`SobrietyHero.tsx`):** Displays clean time and gamification.
     * **Milestone Transformation:** If the user's `daysClean` matches a major milestone (e.g., 30, 90, 365), the UI swaps the gamification progress bar for a highly visible "Milestone Reached" banner that pulses to draw attention to the Share icon.
