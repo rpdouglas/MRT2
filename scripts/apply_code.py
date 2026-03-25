@@ -26,7 +26,7 @@ def main():
 - [x] **Fix:** S21 mobile template dropdown visibility.
 - [x] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
 - [x] **Fix:** Add white background to Nav Menu Logo.
-- [ ] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
+- [x] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
 - [ ] **Feature:** Admin terminology update ("Users" -> "Friends").
 
 ## 🟡 Sprint 8.0: The Road to 5,000 (Active)
@@ -45,6 +45,7 @@ def main():
 * **Improvement:** **Action Plan Routing:** Adding a suggested task directly from a Workbook insight now correctly routes it to the AI Action Plan tab.
 * **UI Polish:** **Journal Editor:** Optimized the template selector dropdown to ensure it scales cleanly on smaller mobile devices (like the Galaxy S21).
 * **UI Polish:** **Header & Navigation:** Refined the header pulse animations to reduce visual distraction and improved the contrast of the main navigation logo.
+* **UX Polish:** **Smart Backup Alerts:** The Dashboard will now intelligently hide the "Manual Backup Needed" warning for users who have Cloud Auto-Sync enabled via Google Drive.
 
 ### v1.9.0 (The Content Expansion Update)
 * **New:** **Women for Recovery Workbook:** Added a completely new, 8-section specialty workbook focused on self-discovery, emotional awareness, boundaries, and overdose survival reframing.
@@ -84,6 +85,75 @@ Stay up to date with the latest features, fixes, and improvements to My Recovery
 
 ### v1.0.0 (Initial Launch)
 * **Feature:** Initial Public Release with Zero-Knowledge Client-Side Encryption (AES-GCM).
+""")
+
+    # 3. Update Dashboard Tech Spec
+    update_file('docs/specs/11_DASHBOARD.md', r"""# 📐 Feature Spec: Dashboard (The Hub)
+
+**Status:** Live (v2.5)
+**Architecture:** Client-Side Aggregator
+**Primary Code:** `src/pages/Dashboard.tsx`
+
+## 1. Overview
+The Dashboard is the central command center. It aggregates data from all other modules (Journal, Tasks, Workbooks, Vitality) to generate a real-time "Health Snapshot" of the user's recovery, emphasizing high density and immediate visual feedback.
+
+## 2. Technical Architecture
+
+### A. Data Aggregation
+The Dashboard executes concurrent queries on mount via React Query to fetch Profile, Journals, Tasks, and Workbook answers, triggering the Gamification engine.
+
+### B. The Changelog Beacon (Update Notification)
+* **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
+* **Trigger:** If the hashes mismatch, an animated toast drops down notifying the user of a new release, linking to the VitePress changelog.
+* **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash.
+
+### C. Smart Backup Alerts
+* **Logic:** The dashboard monitors the `lastExportAt` timestamp on the user's profile.
+* **Trigger:** If the last export is older than 7 days AND the user does not have an active `driveAccessToken` (Google Drive Auto-Sync), an amber warning banner appears prompting them to perform a manual JSON export.
+
+## 3. UI Components
+* **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
+* **Unified Identity Hero (`SobrietyHero.tsx`):** Displays clean time and gamification.
+    * **Milestone Transformation:** If the user's `daysClean` matches a major milestone (e.g., 30, 90, 365), the UI swaps the gamification progress bar for a highly visible "Milestone Reached" banner that pulses to draw attention to the Share icon.
+    * **Confetti Celebration:** On milestone days, the Dashboard triggers `react-confetti`. A `sessionStorage` key (`mrt_milestone_X_played`) ensures it only plays once per session to prevent UI annoyance upon returning to the hub.
+    * **Viral Watermark:** When exporting via `html-to-image`, the component temporarily shifts to an `aspect-square` layout and injects the MRT logo and website URL for marketing visibility.
+* **Bento Grid:** 6-tile layout linking to core modules.
+""")
+
+    # 4. Update Dashboard User Guide
+    update_file('docs-site/guide/02-dashboard.md', r"""# 🌅 The Horizon Dashboard
+
+Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
+
+## 1. The Identity & Momentum Card
+At the very top of your dashboard is your unified Identity Card. 
+* **Clean Time:** Tracks your exact sobriety time in Years, Months, and Days. 
+* **Gamification Rank:** Right below your time, you will see your current Level, Archetype (e.g., Scholar, Doer, Monk), and your XP Progress Bar.
+* **Financial Freedom:** If configured, the bottom right will show exactly how much money you have saved since your sobriety date.
+  > **💡 Pro Tip:** You can configure your daily, weekly, or monthly substance cost in **Profile -> General** to activate the Financial Freedom tracker.
+
+## 2. Crisis Tools (Urge Surfer & SOS)
+If you are experiencing a craving or a panic attack, tap the red **Warning Triangle (SOS)** in the top right corner of the dashboard header.
+* **Urge Surfer:** A 5-minute interactive grounding tool that uses the 5-4-3-2-1 method. It helps you "ride the wave" of a craving without fighting it.
+* **Call Sponsor:** One-tap access to call or WhatsApp your sponsor (configurable in Profile).
+* **Emergency Lines:** Instant routing to the 988 Lifeline or 911.
+
+## 3. Smart Data Alerts & Changelog
+* **Backup Needed:** Because your data is encrypted with Zero-Knowledge architecture, we cannot recover it for you. If it has been more than 7 days since your last export, the Dashboard will politely remind you to download a backup. *(Note: If you have Google Drive Auto-Sync enabled in your Profile, this warning is hidden as the app handles it for you).*
+* **Changelog Beacon:** When we release a new feature or bug fix, a small banner will appear at the top of your dashboard to let you know what's new.
+
+## 4. The Bento Grid
+Quickly view your active streaks and completion rates across your core pillars:
+* **Journal:** View your consecutive day streak and weekly consistency.
+* **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
+* **Vitality:** View your biological regulation streak.
+* **Wisdom:** View your workbook mastery percentage.
+* **Tools:** Access the Urge Surfer and grounding exercises.
+
+## 5. The Gamification Engine
+Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
+* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), and logging vitality metrics.
+* **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
 """)
 
     print("\n🎉 Post-Sprint Audit Complete. System state is synced.")

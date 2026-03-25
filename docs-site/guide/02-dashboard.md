@@ -15,7 +15,11 @@ If you are experiencing a craving or a panic attack, tap the red **Warning Trian
 * **Call Sponsor:** One-tap access to call or WhatsApp your sponsor (configurable in Profile).
 * **Emergency Lines:** Instant routing to the 988 Lifeline or 911.
 
-## 3. The Bento Grid
+## 3. Smart Data Alerts & Changelog
+* **Backup Needed:** Because your data is encrypted with Zero-Knowledge architecture, we cannot recover it for you. If it has been more than 7 days since your last export, the Dashboard will politely remind you to download a backup. *(Note: If you have Google Drive Auto-Sync enabled in your Profile, this warning is hidden as the app handles it for you).*
+* **Changelog Beacon:** When we release a new feature or bug fix, a small banner will appear at the top of your dashboard to let you know what's new.
+
+## 4. The Bento Grid
 Quickly view your active streaks and completion rates across your core pillars:
 * **Journal:** View your consecutive day streak and weekly consistency.
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
@@ -23,7 +27,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Wisdom:** View your workbook mastery percentage.
 * **Tools:** Access the Urge Surfer and grounding exercises.
 
-## 4. The Gamification Engine
+## 5. The Gamification Engine
 Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
 * **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), and logging vitality metrics.
 * **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
