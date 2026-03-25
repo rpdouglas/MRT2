@@ -6,444 +6,157 @@ def update_file(filepath, content):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content.replace('__FENCE__', FENCE))
-    print(f"✅ Repaired: {filepath}")
+    print(f"✅ Synchronized: {filepath}")
 
 def main():
-    print("🚀 Initiating Google Drive Sync Warning Fix...\n")
+    print("🚀 Initiating Post-Sprint Doc Sync...\n")
 
-    update_file('src/pages/Dashboard.tsx', r"""import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  updateDoc,
-  Timestamp,
-  type Firestore 
-} from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import Confetti from 'react-confetti';
-import { 
-  calculateJournalStats, 
-  calculateTaskStats, 
-  calculateWorkbookStats, 
-  calculateVitalityStats,
-  calculateUserLevel
-} from '../lib/gamification';
-import { getMilestone } from '../lib/milestones';
-import VibrantHeader from '../components/VibrantHeader';
-import SobrietyHero from '../components/SobrietyHero';
-import { 
-  HomeIcon, 
-  FireIcon, 
-  ChartBarIcon, 
-  SparklesIcon, 
-  HeartIcon, 
-  ArrowDownTrayIcon,
-  UserGroupIcon,
-  PuzzlePieceIcon,
-  InformationCircleIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import { THEME } from '../lib/theme';
-import { RECOVERY_SLOGANS } from '../data/slogans';
-import type { UserProfile } from '../lib/db';
-import { useBuildInfo } from '../lib/versioning';
+    # 1. Update Sprint Board
+    update_file('docs/SPRINT_BOARD.md', r"""# 🏃 Active Sprint Board
 
-const TOTAL_WORKBOOK_QUESTIONS = 45;
+**Current Phase:** Sprint 8.4 (The Polish Update)
 
-export default function Dashboard() {
-  const { user, driveAccessToken } = useAuth();
-  const queryClient = useQueryClient();
-  const meta = useBuildInfo();
-  
-  const [slogan] = useState(() => {
-      const randomIndex = Math.floor(Math.random() * RECOVERY_SLOGANS.length);
-      return RECOVERY_SLOGANS[randomIndex];
-  });
+## ✅ Completed Sprints
+- [x] **Sprint 8.1:** Virality & Polish (PROJ-20). Milestone confetti, AI task badges.
+- [x] **Sprint 8.2:** Medallion Pipeline (PROJ-24). Refined circular chips + transparency automation.
+- [x] **Sprint 8.3:** Content Expansion. Integrated "Women for Recovery" specialty workbook with tailored UI routing.
 
-  const [showChangelogToast, setShowChangelogToast] = useState(false);
-  
-  // Confetti State
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [recycleConfetti, setRecycleConfetti] = useState(true);
-  const [windowSize, setWindowSize] = useState({
-      width: typeof window !== 'undefined' ? window.innerWidth : 0,
-      height: typeof window !== 'undefined' ? window.innerHeight : 0,
-  });
+## 🟡 Sprint 8.4: The Polish Update (Active)
+- [x] **Fix:** Workbook AI results not saving to Insights Log / UI rendering properly.
+- [x] **Fix:** S21 mobile template dropdown visibility.
+- [x] **Fix:** Remove distracting flashing pulse from global header icon (keep only on SOS).
+- [x] **Fix:** Add white background to Nav Menu Logo.
+- [x] **Fix:** Suppress "Backup Needed" warning for Google Drive auto-sync users.
+- [ ] **Feature:** Admin terminology update ("Users" -> "Friends").
 
-  // Handle window resize for Confetti
-  useEffect(() => {
-      const handleResize = () => {
-          setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-      };
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return null;
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-        return snap.exists() ? (snap.data() as UserProfile) : null;
-    },
-    enabled: !!user,
-    refetchOnMount: 'always', 
-  });
-
-  // Changelog Beacon Logic
-  useEffect(() => {
-      if (userProfile && db && user) {
-          if (!userProfile.lastSeenBuildHash) {
-              // Legacy Fallback: Silently stamp the hash so they don't get spammed on first mount
-              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
-              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
-          } else if (userProfile.lastSeenBuildHash !== meta.globalHash) {
-              // New release detected
-              setShowChangelogToast(true);
-              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
-              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
-          }
-      }
-  }, [userProfile, meta.globalHash, user, queryClient]);
-
-  const { data: journals = [], isLoading: journalLoading } = useQuery({
-    queryKey: ['journals', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return [];
-        const database: Firestore = db;
-        const q = query(
-            collection(database, 'journals'), 
-            where('uid', '==', user.uid),
-            orderBy('createdAt', 'desc')
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({
-            ...d.data(),
-            createdAt: d.data().createdAt
-        }));
-    },
-    enabled: !!user,
-    refetchOnMount: 'always', 
-  });
-
-  const { data: tasks = [], isLoading: taskLoading } = useQuery({
-    queryKey: ['tasks', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return [];
-        const database: Firestore = db;
-        const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
-        const snap = await getDocs(q);
-        return snap.docs.map(d => d.data());
-    },
-    enabled: !!user,
-    refetchOnMount: 'always', 
-  });
-
-  const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
-    queryKey: ['workbooks', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return 0;
-        const database: Firestore = db;
-        const q = query(collection(database, 'users', user.uid, 'workbook_answers'));
-        const snap = await getDocs(q);
-        return snap.size;
-    },
-    enabled: !!user,
-    refetchOnMount: 'always', 
-  });
-
-  const stats = useMemo(() => {
-    if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
-
-    let daysClean = 0;
-    if (userProfile?.sobrietyDate) {
-        const start = userProfile.sobrietyDate.toDate ? userProfile.sobrietyDate.toDate() : new Date(userProfile.sobrietyDate as unknown as string);
-        const diffTime = Math.abs(new Date().getTime() - start.getTime());
-        daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const jStats = calculateJournalStats(journals as any);
-    const tStats = calculateTaskStats(tasks as any);
-    const wStats = calculateWorkbookStats(workbookCount, TOTAL_WORKBOOK_QUESTIONS);
-    const vStats = calculateVitalityStats(journals as any);
-    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
-
-    const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
-    
-    // eslint-disable-next-line react-hooks/purity
-    const nowMs = Date.now(); 
-    
-    // Suppress the warning if the user has an active Google Drive token (auto-sync is handling it)
-    const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
-
-    return {
-        journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
-        task: { rate: tStats.completionRate, fire: tStats.habitFire },
-        workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
-        vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
-        level,
-        showBackup,
-        daysClean
-    };
-  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken]);
-
-  // Milestone Confetti Logic
-  useEffect(() => {
-      if (stats?.daysClean) {
-          const milestone = getMilestone(stats.daysClean);
-          if (milestone) {
-              const playedKey = `mrt_milestone_${stats.daysClean}_played`;
-              if (!sessionStorage.getItem(playedKey)) {
-                  setShowConfetti(true);
-                  sessionStorage.setItem(playedKey, 'true');
-                  
-                  // Stop recycling after 5 seconds to gracefully end
-                  setTimeout(() => {
-                      setRecycleConfetti(false);
-                  }, 5000);
-                  
-                  // Completely unmount after 10 seconds to free memory
-                  setTimeout(() => {
-                      setShowConfetti(false);
-                  }, 10000);
-              }
-          }
-      }
-  }, [stats?.daysClean]);
-
-  const loading = journalLoading || taskLoading || workbookLoading || profileLoading;
-
-  if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
-
-  return (
-    <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page} relative`}>
-      
-      {/* CONFETTI LAYER (High Z-Index, pointer-events-none) */}
-      {showConfetti && (
-          <div className="fixed inset-0 pointer-events-none z-[100]">
-              <Confetti 
-                  width={windowSize.width} 
-                  height={windowSize.height} 
-                  recycle={recycleConfetti} 
-                  numberOfPieces={400} 
-                  gravity={0.15} 
-              />
-          </div>
-      )}
-
-      {/* 1. FIXED HEADER */}
-      <div className="flex-shrink-0 z-10">
-        <VibrantHeader 
-            title="Dashboard" 
-            subtitle={slogan}
-            icon={HomeIcon}
-            fromColor={THEME.dashboard.header.from}
-            viaColor={THEME.dashboard.header.via}
-            toColor={THEME.dashboard.header.to}
-        />
-      </div>
-
-      {/* 2. FLOATING HERO */}
-      <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
-         <SobrietyHero 
-            date={userProfile?.sobrietyDate} 
-            levelData={stats.level.levelData}
-            archetype={stats.level.archetype}
-            userProfile={userProfile as UserProfile}
-         />
-      </div>
-
-      {/* 3. SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
-
-        {/* CHANGELOG TOAST BEACON */}
-        {showChangelogToast && (
-            <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-slideDown">
-                <div className="flex items-center gap-3">
-                    <div className="bg-fuchsia-100 p-2 rounded-full text-fuchsia-700 shrink-0">
-                        <InformationCircleIcon className="h-5 w-5" />
-                    </div>
-                    <div className="text-xs text-fuchsia-900 leading-tight">
-                        <strong>Update Released!</strong> Tap to see what's new.
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <a href="https://rpdouglas.github.io/MRT2/support/changelog" target="_blank" rel="noopener noreferrer" className="text-xs font-bold bg-fuchsia-600 text-white px-3 py-1.5 rounded-lg hover:bg-fuchsia-700 whitespace-nowrap transition-colors">
-                        View
-                    </a>
-                    <button onClick={() => setShowChangelogToast(false)} className="p-1 text-fuchsia-400 hover:text-fuchsia-600">
-                        <XMarkIcon className="h-5 w-5" />
-                    </button>
-                </div>
-            </div>
-        )}
-        
-        {/* Backup Alert */}
-        {stats.showBackup && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <div className="bg-amber-100 p-2 rounded-full text-amber-700">
-                <ArrowDownTrayIcon className="h-5 w-5" />
-              </div>
-              <div className="text-xs text-amber-900">
-                <strong>Backup Needed:</strong> It's been a week since your last save.
-              </div>
-            </div>
-            <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
-          </div>
-        )}
-
-        {/* 6-TILE BENTO GRID */}
-        <div className="grid grid-cols-2 gap-4">
-            
-            <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <ChartBarIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <ChartBarIcon className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.journal.streak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
-                    </div>
-                    
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Consistency</span>
-                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
-                    </div>
-                </div>
-            </Link>
-
-            <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <FireIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <FireIcon className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.task.fire}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
-                    </div>
-
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Rate</span>
-                        <span className="text-base font-bold">{stats.task.rate}%</span>
-                    </div>
-                </div>
-            </Link>
-
-            <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <HeartIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <HeartIcon className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
-                    </div>
-
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Logs</span>
-                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
-                    </div>
-                </div>
-            </Link>
-
-            <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <SparklesIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <SparklesIcon className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
-                    </div>
-
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Score</span>
-                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
-                    </div>
-                </div>
-            </Link>
-
-            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
-                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
-                    <UserGroupIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-300/50 rounded-lg">
-                            <UserGroupIcon className="h-4 w-4 text-slate-500" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider">Service</span>
-                    </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">
-                        Coming Soon
-                    </div>
-                    <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
-                </div>
-            </div>
-
-            <Link to="/tools/urge-surfer" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 group-hover:rotate-12 transition-transform">
-                    <PuzzlePieceIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <PuzzlePieceIcon className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Tools</span>
-                    </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-sky-100 flex items-center gap-1">
-                        <SparklesIcon className="h-3 w-3" /> Active
-                    </div>
-                    <p className="text-[10px] leading-tight pr-2 font-medium text-sky-50">Urge Surfing & Grounding</p>
-                </div>
-            </Link>
-
-        </div>
-
-      </div>
-    </div>
-  );
-}
+## 🟡 Sprint 8.0: The Road to 5,000 (Active)
+- [ ] **Admin:** Receive $50,000 funding tranche.
+- [ ] **PROJ-07:** Finalize Android App Store deployment.
+- [ ] **Web Infra:** Move VitePress to docs.myrecoverytoolkit.ca.
+- [ ] **Web Infra:** Landing page mobile polish & "About Us" section.
+- [ ] **Assets:** Create company letterhead and slide deck master.
 """)
 
-    print("\n🎉 Fix Complete! The 'Backup Needed' warning will now intelligently hide for users relying on automated Google Drive cloud sync.")
+    # 2. Update Changelog
+    update_file('docs-site/support/changelog.md', r"""# 🚀 Changelog
+
+### v1.9.1 (The Polish Update)
+* **Fix:** **Wisdom Log Synchronization:** Resolved an issue where Workbook AI Compass insights were successfully generating but failing to render visually in the Insights Log.
+* **Improvement:** **Action Plan Routing:** Adding a suggested task directly from a Workbook insight now correctly routes it to the AI Action Plan tab.
+* **UI Polish:** **Journal Editor:** Optimized the template selector dropdown to ensure it scales cleanly on smaller mobile devices (like the Galaxy S21).
+* **UI Polish:** **Header & Navigation:** Refined the header pulse animations to reduce visual distraction and improved the contrast of the main navigation logo.
+* **UX Polish:** **Smart Backup Alerts:** The Dashboard will now intelligently hide the "Manual Backup Needed" warning for users who have Cloud Auto-Sync enabled via Google Drive.
+
+### v1.9.0 (The Content Expansion Update)
+* **New:** **Women for Recovery Workbook:** Added a completely new, 8-section specialty workbook focused on self-discovery, emotional awareness, boundaries, and overdose survival reframing.
+* **Improvement:** **Specialty Themes:** Added a dedicated 'specialty' workbook category that triggers a unique purple (Heart) UI theme to distinguish it from traditional 12-Step or Dharma paths.
+
+### v1.8.0 (The Medallion Update)
+* **New:** **Monthly Milestones:** Added unique, high-fidelity circular recovery medallions for every month of the first year of sobriety.
+* **Improvement:** **Reliable Sharing:** Implemented an image pre-loader in the Sobriety Hero to ensure medallions appear perfectly in social media exports.
+* **Dev:** **Asset Pipeline:** Created Python-based automation for segmenting and processing transparent PWA assets.
+
+Stay up to date with the latest features, fixes, and improvements to My Recovery Toolkit.
+
+### v1.7.0 (The Virality Update)
+* **New:** **Milestone Celebrations:** Hitting major clean-time milestones (30 days, 6 months, 1 year) now triggers a celebratory confetti burst on your dashboard and transforms your Sobriety Hero card into a highly shareable badge.
+* **Improvement:** **AI Task Clarity:** Tasks generated by the AI Compass or Analysis Wizard now feature a clear "+7 Days" badge in your Action Plan to help you track when they were scheduled.
+* **Improvement:** The image export tool now formats your milestones into a perfect square for seamless sharing on Instagram and Facebook.
+
+### v1.6.0 (The Pre-Launch Polish Update)
+* **New:** **Changelog Beacon:** You'll now receive a friendly toast notification on your dashboard when a new update is released.
+* **New:** **Contextual Help:** Added a quick-access help icon to the main navigation header so you can easily access this User Guide from anywhere.
+* **Improvement:** **AI Cost Shield:** Implemented clear rate-limiting for AI Analysis Wizard usage on the Free Tier, while maintaining unlimited access for Premium Supporters.
+
+### v1.5.0 (The Supporter Update)
+* **New:** **MRT Supporter Tier:** We have officially launched our Premium "Supporter" tier. By upgrading, you not only unlock unlimited AI Deep Dives, custom Journal Templates, and PDF Exports, but you also help keep the core crisis tools completely free for users who need them most.
+* **New:** **Manage Subscription:** Seamless, secure integration with Stripe to manage your subscription directly from your Profile.
+
+### v1.4.0 (The Momentum & Crisis Update)
+* **New:** **Financial Freedom Tracker:** You can now enter your historical substance cost in your Profile. The dashboard will automatically calculate and display exactly how much money you've saved by staying clean.
+* **New:** **The Urge Surfer:** Added a 5-minute interactive somatic grounding tool (accessible via the SOS menu and Tools tile). This feature uses the 5-4-3-2-1 method to help you ride out intense cravings, securely logging your victory to your journal when the wave passes.
+
+### v1.3.1 (The Privacy & Marketing Update)
+* **New:** **Right to be Forgotten:** You now have complete, automated control over your data. You can permanently delete your account directly from the Profile Data tab.
+* **New:** **Native Link Tree:** Added a beautifully designed public `/links` page to easily share the app.
+
+### v1.3.0 (The Wisdom & Intelligence Update)
+* **New:** **Gemini 3.1 Pro Upgrade:** The "Analysis Wizard" and "Compass" now utilize Google's latest Gemini 3.1 Pro model.
+
+### v1.0.0 (Initial Launch)
+* **Feature:** Initial Public Release with Zero-Knowledge Client-Side Encryption (AES-GCM).
+""")
+
+    # 3. Update Dashboard Tech Spec
+    update_file('docs/specs/11_DASHBOARD.md', r"""# 📐 Feature Spec: Dashboard (The Hub)
+
+**Status:** Live (v2.5)
+**Architecture:** Client-Side Aggregator
+**Primary Code:** `src/pages/Dashboard.tsx`
+
+## 1. Overview
+The Dashboard is the central command center. It aggregates data from all other modules (Journal, Tasks, Workbooks, Vitality) to generate a real-time "Health Snapshot" of the user's recovery, emphasizing high density and immediate visual feedback.
+
+## 2. Technical Architecture
+
+### A. Data Aggregation
+The Dashboard executes concurrent queries on mount via React Query to fetch Profile, Journals, Tasks, and Workbook answers, triggering the Gamification engine.
+
+### B. The Changelog Beacon (Update Notification)
+* **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
+* **Trigger:** If the hashes mismatch, an animated toast drops down notifying the user of a new release, linking to the VitePress changelog.
+* **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash.
+
+### C. Smart Backup Alerts
+* **Logic:** The dashboard monitors the `lastExportAt` timestamp on the user's profile.
+* **Trigger:** If the last export is older than 7 days AND the user does not have an active `driveAccessToken` (Google Drive Auto-Sync), an amber warning banner appears prompting them to perform a manual JSON export.
+
+## 3. UI Components
+* **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
+* **Unified Identity Hero (`SobrietyHero.tsx`):** Displays clean time and gamification.
+    * **Milestone Transformation:** If the user's `daysClean` matches a major milestone (e.g., 30, 90, 365), the UI swaps the gamification progress bar for a highly visible "Milestone Reached" banner that pulses to draw attention to the Share icon.
+    * **Confetti Celebration:** On milestone days, the Dashboard triggers `react-confetti`. A `sessionStorage` key (`mrt_milestone_X_played`) ensures it only plays once per session to prevent UI annoyance upon returning to the hub.
+    * **Viral Watermark:** When exporting via `html-to-image`, the component temporarily shifts to an `aspect-square` layout and injects the MRT logo and website URL for marketing visibility.
+* **Bento Grid:** 6-tile layout linking to core modules.
+""")
+
+    # 4. Update Dashboard User Guide
+    update_file('docs-site/guide/02-dashboard.md', r"""# 🌅 The Horizon Dashboard
+
+Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
+
+## 1. The Identity & Momentum Card
+At the very top of your dashboard is your unified Identity Card. 
+* **Clean Time:** Tracks your exact sobriety time in Years, Months, and Days. 
+* **Gamification Rank:** Right below your time, you will see your current Level, Archetype (e.g., Scholar, Doer, Monk), and your XP Progress Bar.
+* **Financial Freedom:** If configured, the bottom right will show exactly how much money you have saved since your sobriety date.
+  > **💡 Pro Tip:** You can configure your daily, weekly, or monthly substance cost in **Profile -> General** to activate the Financial Freedom tracker.
+
+## 2. Crisis Tools (Urge Surfer & SOS)
+If you are experiencing a craving or a panic attack, tap the red **Warning Triangle (SOS)** in the top right corner of the dashboard header.
+* **Urge Surfer:** A 5-minute interactive grounding tool that uses the 5-4-3-2-1 method. It helps you "ride the wave" of a craving without fighting it.
+* **Call Sponsor:** One-tap access to call or WhatsApp your sponsor (configurable in Profile).
+* **Emergency Lines:** Instant routing to the 988 Lifeline or 911.
+
+## 3. Smart Data Alerts & Changelog
+* **Backup Needed:** Because your data is encrypted with Zero-Knowledge architecture, we cannot recover it for you. If it has been more than 7 days since your last export, the Dashboard will politely remind you to download a backup. *(Note: If you have Google Drive Auto-Sync enabled in your Profile, this warning is hidden as the app handles it for you).*
+* **Changelog Beacon:** When we release a new feature or bug fix, a small banner will appear at the top of your dashboard to let you know what's new.
+
+## 4. The Bento Grid
+Quickly view your active streaks and completion rates across your core pillars:
+* **Journal:** View your consecutive day streak and weekly consistency.
+* **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
+* **Vitality:** View your biological regulation streak.
+* **Wisdom:** View your workbook mastery percentage.
+* **Tools:** Access the Urge Surfer and grounding exercises.
+
+## 5. The Gamification Engine
+Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
+* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), and logging vitality metrics.
+* **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
+""")
+
+    print("\n🎉 Post-Sprint Audit Complete. System state is synced.")
 
 if __name__ == "__main__":
     main()

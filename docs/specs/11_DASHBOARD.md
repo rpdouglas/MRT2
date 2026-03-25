@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v2.4)
+**Status:** Live (v2.5)
 **Architecture:** Client-Side Aggregator
 **Primary Code:** `src/pages/Dashboard.tsx`
 
@@ -16,6 +16,10 @@ The Dashboard executes concurrent queries on mount via React Query to fetch Prof
 * **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
 * **Trigger:** If the hashes mismatch, an animated toast drops down notifying the user of a new release, linking to the VitePress changelog.
 * **Resolution:** Dismissing or viewing the toast updates the user's profile with the new hash.
+
+### C. Smart Backup Alerts
+* **Logic:** The dashboard monitors the `lastExportAt` timestamp on the user's profile.
+* **Trigger:** If the last export is older than 7 days AND the user does not have an active `driveAccessToken` (Google Drive Auto-Sync), an amber warning banner appears prompting them to perform a manual JSON export.
 
 ## 3. UI Components
 * **Header:** True flex-centered `VibrantHeader` displaying globally mirrored icons, a dynamic daily recovery Slogan, and the Contextual Help icon.
