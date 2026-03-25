@@ -1,0 +1,102 @@
+/**
+ * src/lib/types/smart.ts
+ * PROJ-27: The CBT Engine
+ * Strict type definitions for SMART Recovery tools to ensure consistent data structure
+ * within the zero-knowledge journal storage.
+ */
+
+export type SmartToolType = 
+    | 'CBA' 
+    | 'ABC' 
+    | 'DENTS' 
+    | 'FIVE_QUESTIONS' 
+    | 'LIFESTYLE_BALANCE' 
+    | 'PERSONIFY' 
+    | 'SELF_COMPASSION' 
+    | 'SMART_GOAL' 
+    | 'BOUNDARIES';
+
+export interface SmartToolMetadata {
+    type: SmartToolType;
+    version: string;
+    lastSaved: string; // ISO String
+}
+
+export interface CBAPayload {
+    behavior: string;
+    advantagesDoing: string[];
+    disadvantagesDoing: string[];
+    advantagesStopping: string[];
+    disadvantagesStopping: string[];
+}
+
+export interface ABCPayload {
+    activatingEvent: string;
+    beliefs: string;
+    consequences: string;
+    dispute: string;
+    effectiveBelief: string;
+}
+
+export interface DENTSPayload {
+    deny: string;
+    escape: string;
+    neutralize: string;
+    tasks: string;
+    swap: string;
+}
+
+export interface FiveQuestionsPayload {
+    q1: string;
+    q2: string;
+    q3: string;
+    q4: string;
+    q5: string;
+}
+
+export interface LifestyleBalancePayload {
+    physical: number;
+    mental: number;
+    relationships: number;
+    work: number;
+    spiritual: number;
+    leisure: number;
+}
+
+export interface PersonifyPayload {
+    personas: Array<{
+        id: number;
+        name: string;
+        action: string;
+        result: string;
+    }>;
+}
+
+export interface SelfCompassionPayload {
+    kindness: string;
+    humanity: string;
+    mindfulness: string;
+}
+
+export interface SmartGoalPayload {
+    specific: string;
+    measurable: string;
+    achievable: string;
+    realistic: string;
+    timeBound: string;
+    tasks: Array<{
+        id: number;
+        text: string;
+        completed: boolean;
+    }>;
+}
+
+export interface BoundariesPayload {
+    boundaries: Array<{
+        id: number;
+        who: string;
+        what: string;
+        how: string;
+        type: 'Small' | 'Large';
+    }>;
+}
