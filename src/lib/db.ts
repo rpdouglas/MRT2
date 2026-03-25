@@ -65,6 +65,9 @@ export interface UserProfile {
   substanceCost?: number;
   costFrequency?: 'daily' | 'weekly' | 'monthly';
   currencySymbol?: string;
+  // --- NEW: PROJ-26 (The Beacon) ---
+  fcmTokens?: string[];
+  timezone?: string;
 }
 
 export interface JournalTemplate {
@@ -154,7 +157,9 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
       lastLogin: Timestamp.now(),
       role: 'user',
       hasCompletedOnboarding: false,
-      tier: 'free'
+      tier: 'free',
+      fcmTokens: [],
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
     await setDoc(userRef, newProfile);
     return newProfile;
