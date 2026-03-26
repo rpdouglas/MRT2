@@ -1,6 +1,6 @@
 # 🔒 Privacy Policy for My Recovery Toolkit (MRT)
 
-**Last Updated:** February 13, 2026
+**Last Updated:** March 2026
 
 **My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
 
@@ -18,6 +18,7 @@ To operate the service, the following data is stored in plain text:
 * **Authentication:** Email address and User ID (via Firebase Auth).
 * **Usage Stats:** App performance, error logs, and activity streaks (e.g., "User logged in today").
 * **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). We use these to generate charts/graphs.
+* **Device Tokens:** If you opt-in to Push Notifications, we securely store your device FCM token to deliver generic reminders (e.g., "You have tasks due today"). These tokens contain no personal information and are automatically deleted if you disable notifications.
 
 ### B. User Generated Content (Encrypted)
 The following data is encrypted *before* it leaves your device:
@@ -33,7 +34,7 @@ MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysi
 
 ## 4. Data Storage & Third Parties
 We use trusted third-party infrastructure to host the app:
-* **Google Firebase:** Hosts the database, authentication, and static files.
+* **Google Firebase:** Hosts the database, authentication, push notifications, and static files.
 * **Google Generative AI:** Provides the intelligence for analysis features.
 
 ## 5. Data Sovereignty

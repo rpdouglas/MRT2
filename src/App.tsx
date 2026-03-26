@@ -25,6 +25,12 @@ const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); 
+const ToolsHub = lazy(() => import('./pages/ToolsHub'));
+const CBATool = lazy(() => import('./components/smart_tools/CBATool').then(m => ({ default: m.CBATool })));
+const ABCTool = lazy(() => import('./components/smart_tools/ABCTool').then(m => ({ default: m.ABCTool })));
+const DentsTool = lazy(() => import('./components/smart_tools/DentsTool').then(m => ({ default: m.DentsTool })));
+const PersonifyTool = lazy(() => import('./components/smart_tools/PersonifyTool').then(m => ({ default: m.PersonifyTool })));
+const LifestyleBalanceTool = lazy(() => import('./components/smart_tools/LifestyleBalanceTool').then(m => ({ default: m.LifestyleBalanceTool })));
 const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 
 // --- QUERY CLIENT ---
@@ -142,10 +148,68 @@ export default function App() {
                         />
 
                         <Route
+                        path="/tools"
+                        element={
+                            <PrivateRoute>
+                            <ToolsHub />
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
                         path="/tools/urge-surfer"
                         element={
                             <PrivateRoute>
                             <UrgeSurfer />
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/cba"
+                        element={
+                            <PrivateRoute>
+                            <VaultGate>
+                                <CBATool />
+                            </VaultGate>
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/abc"
+                        element={
+                            <PrivateRoute>
+                            <VaultGate>
+                                <ABCTool />
+                            </VaultGate>
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/dents"
+                        element={
+                            <PrivateRoute>
+                            <VaultGate>
+                                <DentsTool />
+                            </VaultGate>
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/personify"
+                        element={
+                            <PrivateRoute>
+                            <VaultGate>
+                                <PersonifyTool />
+                            </VaultGate>
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/lifestyle-balance"
+                        element={
+                            <PrivateRoute>
+                            <VaultGate>
+                                <LifestyleBalanceTool />
+                            </VaultGate>
                             </PrivateRoute>
                         }
                         />
