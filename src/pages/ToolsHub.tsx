@@ -2,6 +2,9 @@
  * src/pages/ToolsHub.tsx
  * PROJ-27: The CBT Engine
  * Central routing directory for all interactive recovery tools.
+ * GITHUB COMMENT:
+ * [src/pages/ToolsHub.tsx]
+ * FEAT: PROJ-28 Integrated 'The Resentment Burner' into the Tools Hub directory.
  */
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
@@ -12,7 +15,8 @@ import {
     ArrowPathIcon,
     BoltIcon,
     UserCircleIcon,
-    ChartPieIcon
+    ChartPieIcon,
+    FireIcon
 } from '@heroicons/react/24/outline';
 
 const TOOLS = [
@@ -25,6 +29,17 @@ const TOOLS = [
         color: 'text-indigo-600',
         bg: 'bg-indigo-50',
         border: 'border-l-indigo-500',
+        status: 'active'
+    },
+    {
+        id: 'resentment-burner',
+        title: 'The Resentment Burner',
+        description: 'An ephemeral, secure space to vent toxic thoughts and literally watch them burn away. No data is ever saved.',
+        path: '/tools/resentment-burner',
+        icon: FireIcon,
+        color: 'text-red-600',
+        bg: 'bg-red-50',
+        border: 'border-l-red-500',
         status: 'active'
     },
     {

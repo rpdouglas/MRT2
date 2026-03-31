@@ -1,3 +1,9 @@
+/**
+ * GITHUB COMMENT:
+ * [src/App.tsx]
+ * FEAT: PROJ-28 Registered lazy-loaded route for The Resentment Burner.
+ * Placed within PrivateRoute, outside of VaultGate (ephemeral tool requires no encryption keys).
+ */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -32,6 +38,7 @@ const DentsTool = lazy(() => import('./components/smart_tools/DentsTool').then(m
 const PersonifyTool = lazy(() => import('./components/smart_tools/PersonifyTool').then(m => ({ default: m.PersonifyTool })));
 const LifestyleBalanceTool = lazy(() => import('./components/smart_tools/LifestyleBalanceTool').then(m => ({ default: m.LifestyleBalanceTool })));
 const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
+const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({
@@ -160,6 +167,14 @@ export default function App() {
                         element={
                             <PrivateRoute>
                             <UrgeSurfer />
+                            </PrivateRoute>
+                        }
+                        />
+                        <Route
+                        path="/tools/resentment-burner"
+                        element={
+                            <PrivateRoute>
+                            <ResentmentBurner />
                             </PrivateRoute>
                         }
                         />
