@@ -1,22 +1,4 @@
-import os
-
-def write_file(filepath, content):
-    directory = os.path.dirname(filepath)
-    if directory:
-        os.makedirs(directory, exist_ok=True)
-    
-    # Safely replace the FENCE placeholder with markdown backticks
-    FENCE = chr(96) * 3
-    final_content = content.replace('__FENCE__', FENCE)
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(final_content)
-    print(f"✅ Successfully wrote {filepath}")
-
-def main():
-    print("🚑 Executing Surgical Fix: Resolving TS2307 for virtual PWA module...")
-
-    toast_component = r"""/// <reference types="vite-plugin-pwa/client" />
+/// <reference types="vite-plugin-pwa/client" />
 import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -87,9 +69,3 @@ export const PWAUpdateToast: React.FC = () => {
     </div>
   );
 };
-"""
-
-    write_file('src/components/ui/PWAUpdateToast.tsx', toast_component)
-
-if __name__ == "__main__":
-    main()
