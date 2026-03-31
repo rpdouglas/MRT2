@@ -4,11 +4,9 @@
 
 @layer base {
   body {
-    /* REMOVED: bg-blue-50 to allow individual pages to set their own atmosphere */
     @apply text-slate-800 antialiased;
   }
   
-  /* Reset headings to be bold and dark blue by default */
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold text-blue-900;
   }

@@ -1,5 +1,8 @@
 # 🚀 Changelog
 
+### v1.12.0 (The Catharsis Update)
+* **New:** **The Resentment Burner:** A secure, ephemeral safe space to vent toxic thoughts. Watch your resentments literally burn away into ash and embers through a hardware-accelerated combustion engine. Zero data is ever saved to the cloud or your device.
+
 ### v1.11.0 (The CBT Engine Update)
 * **New:** **The Tools Hub:** We've built a centralized directory for interactive recovery exercises, accessible directly from the Dashboard.
 * **New:** **Cost Benefit Analysis (CBA):** A beautifully redesigned 4-quadrant interactive grid to help you logically weigh the pros and cons of an urge before acting on it.

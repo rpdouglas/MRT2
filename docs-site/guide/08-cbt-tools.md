@@ -7,6 +7,14 @@ From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the
 
 ---
 
+## 🔥 The Resentment Burner
+**When to use it:** When you are experiencing acute anger, resentment, or a toxic thought loop that you need to physically release.
+
+This tool is a completely **ephemeral safe space**. Type your resentment onto the physical notebook paper. When you click "Burn", a hardware-accelerated combustion engine literally burns the paper and text into ash. 
+* **Zero Traces:** This tool explicitly bypasses the Vault. No data is ever synced, saved, or stored. Once it burns, it is permanently wiped from your device's memory.
+
+---
+
 ## ⚖️ Cost Benefit Analysis (CBA)
 **When to use it:** When you are experiencing a strong urge to relapse and your brain is telling you "it won't be that bad."
 
@@ -51,5 +59,5 @@ A 5-minute interactive grounding timer that uses the 5-4-3-2-1 somatic method to
 ---
 
 ## 🔒 Privacy & Saving
-Every time you complete a CBT tool, click **Save to Journal**. 
+Every time you complete a CBT tool (except the Resentment Burner), click **Save to Journal**. 
 The app wraps your answers in **Zero-Knowledge Encryption** and saves them to your Journal History. Tools like *Personify* and *Lifestyle Balance* will securely load your previous session so you can update them over time.

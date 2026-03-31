@@ -1,6 +1,6 @@
 # 📐 Feature Spec: The CBT Engine (SMART Tools)
 
-**Status:** Live (v1.11.0)
+**Status:** Live (v1.12.0)
 **Architecture:** Virtual Module (Abstracted Journal Interface) + Render Props
 **Primary Code:** `src/components/smart_tools/`
 
@@ -27,6 +27,7 @@ A generic wrapper component (`SmartToolContainer<T>`) handles all complex logic,
 * **D.E.N.T.S. Strategy:** An Acronym Vertical Stack with distinct, vibrant background tints for pre-planning escape routes.
 * **Personify & Disarm:** A "Rogue's Gallery" card grid leveraging Narrative Therapy to externalize the addictive voice.
 * **Lifestyle Balance:** An interactive "Wheel of Life" radar chart (powered by `recharts`) that maps 6 core life categories to geometric shapes, immediately highlighting holistic imbalances.
+* **The Resentment Burner:** An ephemeral journaling tool featuring a layer-based SVG combustion engine. **Crucial Difference:** This tool explicitly bypasses `SmartToolContainer` and Firestore entirely to guarantee absolute zero-knowledge data destruction upon execution.
 
 ## 4. Routing
-* **Tools Hub (`/tools`):** A centralized directory replacing the hardcoded Urge Surfer dashboard link.
+* **Tools Hub (`/tools`):** A centralized directory routing to all cognitive behavioral tools and ephemeral grounding exercises.
