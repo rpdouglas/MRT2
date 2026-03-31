@@ -1,8 +1,3 @@
-import os
-
-FENCE = chr(96) * 3
-
-FILE_CONTENT = r"""
 /**
  * GITHUB COMMENT:
  * [src/components/smart_tools/ResentmentBurner.tsx]
@@ -256,18 +251,3 @@ export default function ResentmentBurner() {
         </div>
     );
 }
-"""
-
-def write_files():
-    os.makedirs("scripts", exist_ok=True)
-    os.makedirs("src/components/smart_tools", exist_ok=True)
-    
-    path = "src/components/smart_tools/ResentmentBurner.tsx"
-    safe_content = FILE_CONTENT.replace(FENCE, '```')
-    
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(safe_content.strip() + "\n")
-    print(f"✅ Successfully expanded the paper to 12 lines in {path}")
-
-if __name__ == "__main__":
-    write_files()
