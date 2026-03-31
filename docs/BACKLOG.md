@@ -1,11 +1,21 @@
-# 🧊 Feature Backlog
+# 🧊 Feature Backlog (The Icebox)
 
-**Storage:** Ideas that are approved but deferred to keep the current Sprint focused.
+**Storage:** Ideas and feature requests that are approved but deferred. Do not pull into `ACTIVE_CYCLE.md` until prioritized.
 
-## 🏆 Social & Fellowship Challenges (PROJ-21)
-* **Feature:** "90 in 90" Meeting Tracker & Friend Challenges.
-* **Complexity:** High (Requires secure multiplayer networking). Deferred until 5,000 user milestone.
+## 🏃 Integrations & Wearables
+* **Feature:** HealthConnect / Apple HealthKit API integration for Sleep and Step data.
+* **Complexity:** Extremely High. Deferred until post-seed funding/legal review.
+
+## 🎮 Gamification & UI
+* **Feature:** Sims-style KPI Gauges (Expanded Vitality Rings).
+* **Complexity:** Medium. Deferred to prevent UI clutter during initial growth phase.
+* **Feature:** Daily Recovery Puzzles (Crosswords/Word Search).
+* **Decision:** Rejected/Deferred indefinitely. We are a toolkit, not a gaming app.
+
+## 🏆 Social & Fellowship
+* **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
+* **Complexity:** High (Requires secure multiplayer networking). Deferred to 5,000 user milestone.
 
 ## 📸 Media Support
 * **Feature:** Photo Attachments in Journal.
-* **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64 -> Firestore).
+* **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64).
