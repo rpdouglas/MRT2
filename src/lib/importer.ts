@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [importer.ts]
- * UPDATED: Strictly typed IncomingEntry to handle both legacy and full-backup formats.
- * Added support for isEncrypted: false flag to ensure re-imported data is prepared for the new vault key.
- */
 import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 

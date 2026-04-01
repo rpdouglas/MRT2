@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ElementType } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
@@ -51,6 +51,40 @@ const getRisks = (data: unknown): string[] => {
     if (insight.risks && Array.isArray(insight.risks)) return insight.risks;
     if (insight.pillars?.blind_spots) return [insight.pillars.blind_spots];
     return [];
+};
+
+// Reusable component to eliminate JSX duplication
+const InsightBlock = ({ 
+    show, title, icon: Icon, content, theme 
+}: { 
+    show: boolean, title: string, icon: ElementType, content: string | string[], theme: 'blue' | 'green' | 'orange' | 'rose' | 'amber' 
+}) => {
+    if (!show) return null;
+
+    const themes = {
+        blue: { bg: 'bg-blue-50 border-blue-100', text: 'text-blue-900', title: 'text-blue-800' },
+        green: { bg: 'bg-green-50 border-green-100', text: 'text-green-900', title: 'text-green-800' },
+        orange: { bg: 'bg-orange-50 border-orange-100', text: 'text-orange-900', title: 'text-orange-800' },
+        rose: { bg: 'bg-rose-50 border-rose-100', text: 'text-rose-900', title: 'text-rose-800' },
+        amber: { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-900', title: 'text-amber-800' }
+    };
+
+    const t = themes[theme];
+
+    return (
+        <div className={`${t.bg} p-3 rounded-xl border`}>
+            <div className={`${t.title} font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1`}>
+                <Icon className="h-4 w-4" /> {title}
+            </div>
+            {Array.isArray(content) ? (
+                <ul className={`${t.text} text-xs leading-relaxed list-disc pl-4 space-y-1`}>
+                    {content.map((item, idx) => <li key={idx}>{item}</li>)}
+                </ul>
+            ) : (
+                <p className={`${t.text} text-xs leading-relaxed`}>{content}</p>
+            )}
+        </div>
+    );
 };
 
 export default function InsightsLog() {
@@ -277,76 +311,15 @@ export default function InsightsLog() {
                                                                                         <Disclosure.Panel className="p-4 sm:p-5 space-y-5 border-t border-gray-100 bg-white">
                                                                                             <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
                                                                                             
-                                                                                            {/* DYNAMIC GRID BASED ON AVAILABLE DATA */}
                                                                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                                                                                                
-                                                                                                {understanding && (
-                                                                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                                                                        <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <AcademicCapIcon className="h-4 w-4" /> Understanding
-                                                                                                        </div>
-                                                                                                        <p className="text-xs text-blue-900 leading-relaxed">{understanding}</p>
-                                                                                                    </div>
-                                                                                                )}
-
-                                                                                                {strengths.length > 0 && (
-                                                                                                    <div className="bg-green-50 p-3 rounded-xl border border-green-100">
-                                                                                                        <div className="text-green-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <TrophyIcon className="h-4 w-4" /> Strengths & Wins
-                                                                                                        </div>
-                                                                                                        <ul className="text-xs text-green-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                                                                            {strengths.map((s, idx) => <li key={idx}>{s}</li>)}
-                                                                                                        </ul>
-                                                                                                    </div>
-                                                                                                )}
-                                                                                                
-                                                                                                {risks.length > 0 && (
-                                                                                                    <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                                                                                        <div className="text-orange-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <ShieldExclamationIcon className="h-4 w-4" /> Risk Analysis
-                                                                                                        </div>
-                                                                                                        <ul className="text-xs text-orange-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                                                                            {risks.map((r, idx) => <li key={idx}>{r}</li>)}
-                                                                                                        </ul>
-                                                                                                    </div>
-                                                                                                )}
-
-                                                                                                {keyThemes.length > 0 && (
-                                                                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                                                                                        <div className="text-blue-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <HashtagIcon className="h-4 w-4" /> Key Themes
-                                                                                                        </div>
-                                                                                                        <ul className="text-xs text-blue-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                                                                            {keyThemes.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                                                                        </ul>
-                                                                                                    </div>
-                                                                                                )}
-
-                                                                                                {hiddenCorrelations.length > 0 && (
-                                                                                                    <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
-                                                                                                        <div className="text-rose-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <LinkIcon className="h-4 w-4" /> Hidden Links
-                                                                                                        </div>
-                                                                                                        <ul className="text-xs text-rose-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                                                                            {hiddenCorrelations.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                                                                        </ul>
-                                                                                                    </div>
-                                                                                                )}
-
-                                                                                                {triggers.length > 0 && (
-                                                                                                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                                                                                                        <div className="text-amber-800 font-bold text-[10px] uppercase mb-1.5 flex items-center gap-1">
-                                                                                                            <BoltIcon className="h-4 w-4" /> Triggers
-                                                                                                        </div>
-                                                                                                        <ul className="text-xs text-amber-900 leading-relaxed list-disc pl-4 space-y-1">
-                                                                                                            {triggers.map((w, idx) => <li key={idx}>{w}</li>)}
-                                                                                                        </ul>
-                                                                                                    </div>
-                                                                                                )}
-
+                                                                                                <InsightBlock show={!!understanding} title="Understanding" icon={AcademicCapIcon} content={understanding || ''} theme="blue" />
+                                                                                                <InsightBlock show={strengths.length > 0} title="Strengths & Wins" icon={TrophyIcon} content={strengths} theme="green" />
+                                                                                                <InsightBlock show={risks.length > 0} title="Risk Analysis" icon={ShieldExclamationIcon} content={risks} theme="orange" />
+                                                                                                <InsightBlock show={keyThemes.length > 0} title="Key Themes" icon={HashtagIcon} content={keyThemes} theme="blue" />
+                                                                                                <InsightBlock show={hiddenCorrelations.length > 0} title="Hidden Links" icon={LinkIcon} content={hiddenCorrelations} theme="rose" />
+                                                                                                <InsightBlock show={triggers.length > 0} title="Triggers" icon={BoltIcon} content={triggers} theme="amber" />
                                                                                             </div>
 
-                                                                                            {/* ACTION PLAN SECTION */}
                                                                                             {actions.length > 0 && (
                                                                                                 <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
                                                                                                     <div className="text-purple-800 font-bold text-xs uppercase mb-3 flex items-center gap-1">

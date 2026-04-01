@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [VaultGate.tsx]
- * CLEANUP: Removed unused 'err' variable and redundant eslint-disable directives.
- * MAINTAINED: Recovery Wizard UI and Emergency Reset flow logic.
- */
 import React, { useState } from 'react';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { LockClosedIcon, KeyIcon, ShieldCheckIcon, ExclamationCircleIcon, ExclamationTriangleIcon, TrashIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';

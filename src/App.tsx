@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [src/App.tsx]
- * FEAT: PROJ-28 Registered lazy-loaded route for The Resentment Burner.
- * Placed within PrivateRoute, outside of VaultGate (ephemeral tool requires no encryption keys).
- */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

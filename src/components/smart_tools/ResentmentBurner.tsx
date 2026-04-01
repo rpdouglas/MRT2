@@ -1,8 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [src/components/smart_tools/ResentmentBurner.tsx]
- * FIX: Expanded textarea from 9 to 12 rows per user request to allow for longer resentment entries on the physical paper UI.
- */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import VibrantHeader from '../VibrantHeader';

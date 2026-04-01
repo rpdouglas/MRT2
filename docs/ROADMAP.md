@@ -14,6 +14,7 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Universal CBT/Stoic/Mindfulness prompted journaling templates (No fellowship-specific text). |
+| ⚪ Planned | `PROJ-29` | **Enterprise DevOps** | Admin | Migrate GitHub Actions to OpenID Connect (OIDC) keyless authentication and enforce SHA-pinning for supply chain security. |
 
 ## ⚪ LATER (Strategic Epics)
 *Approved concepts requiring further technical scoping.*

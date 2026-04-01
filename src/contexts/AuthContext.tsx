@@ -1,8 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [AuthContext.tsx]
- * UPDATED: Added active subcollection listener for the Stripe Extension.
- */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser, type User } from 'firebase/auth';
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';

@@ -14,9 +14,10 @@
 *Core feature work for the current cycle.*
 - [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
 - [ ] **PROJ-18:** Scaffold `/admin/telemetry` UI to track Gemini API usage and user flow.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) in Workbooks hub.
+- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) and Recovery Community Centers (RCCs) for employment/training resources in Workbooks hub (Recovery Capital integration).
 
 ## 🧹 Chores & Tech Debt
 - [ ] Increase Nav Icon sizes by 25% (Accessibility).
 - [ ] Fix Nav Logo white background issue.
 - [ ] Wire up Changelog Beacon alert in Dashboard.
+- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState` and `<form action={...}>`.

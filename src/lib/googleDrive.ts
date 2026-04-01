@@ -1,10 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [googleDrive.ts]
- * NEW: Lightweight Google Drive REST API wrapper.
- * - Handles file search, creation, and multipart updates.
- * - Uses 'drive.file' scope for least-privilege security.
- */
 const GOOGLE_DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const GOOGLE_DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
 

@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [TemplateEditor.tsx]
- * FIX: Resolved ESLint warnings/errors regarding 'any' type and React hook dependencies.
- * REFACTOR: Wrapped loadTemplates in useCallback and hoisted above useEffect to satisfy exhaustive-deps.
- */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
