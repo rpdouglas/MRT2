@@ -33,27 +33,16 @@ export async function executeCryptoShredding(uid: string) {
     // 1. Delete Journals
     const jQ = query(collection(database, 'journals'), where('uid', '==', uid));
     const jSnap = await getDocs(jQ);
-    jSnap.docs.forEach(d => {
-        currentBatch.delete(d.ref);
-        opCount++;
-        if (opCount >= 450) commitBatch();
-    });
+    jSnap.docs.forEach(d => { currentBatch.delete(d.ref); opCount++; if (opCount >= 450) commitBatch(); });
 
     // 2. Delete Workbooks
     const wQ = query(collection(database, 'users', uid, 'workbook_answers'));
     const wSnap = await getDocs(wQ);
-    wSnap.docs.forEach(d => {
-        currentBatch.delete(d.ref);
-        opCount++;
-        if (opCount >= 450) commitBatch();
-    });
+    wSnap.docs.forEach(d => { currentBatch.delete(d.ref); opCount++; if (opCount >= 450) commitBatch(); });
 
     // 3. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
-    currentBatch.update(pRef, {
-        encryptionSalt: deleteField(),
-        pinVerifier: deleteField()
-    });
+    currentBatch.update(pRef, { encryptionSalt: deleteField(), pinVerifier: deleteField() });
     opCount++;
     commitBatch();
 
@@ -169,10 +158,7 @@ export async function executePinRotation(
         });
 
         const pRef = doc(database, 'users', uid);
-        currentBatch.update(pRef, {
-            encryptionSalt: newSalt,
-            pinVerifier: newVerifier
-        });
+        currentBatch.update(pRef, { encryptionSalt: newSalt, pinVerifier: newVerifier });
         opCount++;
         commitBatch();
 

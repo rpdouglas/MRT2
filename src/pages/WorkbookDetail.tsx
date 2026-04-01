@@ -10,28 +10,11 @@ import { addTask } from '../lib/tasks';
 import { saveInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { 
-    PlayCircleIcon, 
-    CheckCircleIcon, 
-    SparklesIcon,
-    ArrowPathIcon,
-    PlusCircleIcon,
-    LightBulbIcon,
-    ShieldExclamationIcon,
-    AcademicCapIcon,
-    BookmarkIcon,
-    BookOpenIcon
-} from '@heroicons/react/24/outline';
+import { PlayCircleIcon, CheckCircleIcon, SparklesIcon, ArrowPathIcon, PlusCircleIcon, LightBulbIcon, ShieldExclamationIcon, AcademicCapIcon, BookmarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 
 // Define a proper interface for workbook answer data to avoid 'any'
-interface WorkbookAnswer {
-  workbookId: string;
-  sectionId: string;
-  questionId: string;
-  answer: string;
-  uid: string;
-}
+interface WorkbookAnswer { workbookId: string; sectionId: string; questionId: string; answer: string; uid: string; }
 
 export default function WorkbookDetail() {
   const { workbookId } = useParams();
@@ -136,38 +119,24 @@ export default function WorkbookDetail() {
                 try {
                     const plain = await decrypt(rawAnswer);
                     return { ...entry, answer: plain };
-                } catch (e) {
-                    console.error("Decryption failed during analysis", e);
-                    return { ...entry, answer: "[Redacted/Error]" };
-                }
+                } catch (e) { console.error("Decryption failed during analysis", e); return { ...entry, answer: "[Redacted/Error]" }; }
             }
             return entry;
         }));
         // -----------------------
 
-        if (docsToAnalyze.length === 0) {
-            alert("No entries found for this selection. Try completing some questions first.");
-            setAnalyzing(false);
-            return;
-        }
+        if (docsToAnalyze.length === 0) { alert("No entries found for this selection. Try completing some questions first."); setAnalyzing(false); return; }
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
         
         // Pass contextTitle to the AI function so it's used
         const result = await analyzeWorkbookContent(contextTitle, [{ question: "Combined Context", answer: textContent }]);
         
-        if (result) {
-            setInsight(result);
-            setShowWizard(false);
-            setShowResult(true);
-        } else {
+        if (result) { setInsight(result); setShowWizard(false); setShowResult(true); } else {
             alert("Analysis failed. Please try again.");
         }
 
-    } catch (error) {
-        console.error(error);
-        alert("An error occurred during analysis.");
-    } finally {
+    } catch (error) { console.error(error); alert("An error occurred during analysis."); } finally {
         setAnalyzing(false);
     }
   };
@@ -181,11 +150,7 @@ export default function WorkbookDetail() {
         setSavingInsight(false); 
         setShowResult(false);
         alert("Insight successfully saved to your Wisdom Log!");
-    } catch (error) {
-        console.error("Failed to save log", error);
-        setSavingInsight(false);
-        alert("Failed to save. Please try again.");
-    }
+    } catch (error) { console.error("Failed to save log", error); setSavingInsight(false); alert("Failed to save. Please try again."); }
   };
 
   const handleAddToHabits = async (action: string) => {

@@ -16,27 +16,18 @@ export async function requestNotificationPermission(uid: string): Promise<boolea
         }
 
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.log("Notification permission not granted.");
-            return false;
-        }
+        if (permission !== 'granted') { console.log("Notification permission not granted."); return false; }
 
         const messaging = getMessaging(app);
         
         // VAPID KEY generated from Firebase Console -> Project Settings -> Cloud Messaging
         const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-        if (!vapidKey) {
-            console.error("Missing VITE_FIREBASE_VAPID_KEY in environment variables.");
-            return false;
-        }
+        if (!vapidKey) { console.error("Missing VITE_FIREBASE_VAPID_KEY in environment variables."); return false; }
 
         // Get the token, using the Service Worker registered by Vite PWA if available
         const registration = await navigator.serviceWorker.getRegistration();
         
-        const currentToken = await getToken(messaging, { 
-            vapidKey,
-            serviceWorkerRegistration: registration 
-        });
+        const currentToken = await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
 
         if (currentToken && db) {
             // Save token to Firestore to allow Cloud Functions to address this specific device
@@ -49,12 +40,6 @@ export async function requestNotificationPermission(uid: string): Promise<boolea
             });
             console.log("Device securely registered for notifications.");
             return true;
-        } else {
-            console.log("No registration token available.");
-            return false;
-        }
-    } catch (error) {
-        console.error('An error occurred while retrieving token. ', error);
-        return false;
-    }
+        } else { console.log("No registration token available."); return false; }
+    } catch (error) { console.error('An error occurred while retrieving token. ', error); return false; }
 }

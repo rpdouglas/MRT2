@@ -9,10 +9,7 @@ import { MicrophoneIcon, StopIcon, ArrowPathIcon, XMarkIcon } from '@heroicons/r
 import { blobToBase64 } from '../../lib/utils';
 import { generateAudioAnalysis, type AudioAnalysisResult } from '../../lib/gemini';
 
-interface AudioRecorderProps {
-    onAnalysisComplete: (result: AudioAnalysisResult) => void;
-    onCancel: () => void;
-}
+interface AudioRecorderProps { onAnalysisComplete: (result: AudioAnalysisResult) => void; onCancel: () => void; }
 
 export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
@@ -61,10 +58,7 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
                 setRecordingTime(prev => prev + 1);
             }, 1000);
 
-        } catch (err) {
-            console.error("Microphone access denied:", err);
-            setError("Could not access microphone. Please check permissions.");
-        }
+        } catch (err) { console.error("Microphone access denied:", err); setError("Could not access microphone. Please check permissions."); }
     };
 
     const stopRecording = () => {
@@ -95,11 +89,7 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
     };
 
     // Format seconds to MM:SS
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
+    const formatTime = (seconds: number) => { const mins = Math.floor(seconds / 60); const secs = seconds % 60; return `${mins}:${secs.toString().padStart(2, '0')}`; };
 
     return (
         <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center space-y-6 animate-fadeIn">

@@ -7,22 +7,7 @@ import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { addDays, format } from 'date-fns';
 import { Disclosure, Transition } from '@headlessui/react';
-import { 
-    LightBulbIcon, 
-    SparklesIcon, 
-    CheckCircleIcon, 
-    PlusCircleIcon,
-    ShieldExclamationIcon,
-    TrophyIcon,
-    CalendarDaysIcon,
-    BookOpenIcon,
-    AcademicCapIcon,
-    LinkIcon,
-    HashtagIcon,
-    BoltIcon,
-    ChevronDownIcon,
-    ChevronRightIcon
-} from '@heroicons/react/24/outline';
+import { LightBulbIcon, SparklesIcon, CheckCircleIcon, PlusCircleIcon, ShieldExclamationIcon, TrophyIcon, CalendarDaysIcon, BookOpenIcon, AcademicCapIcon, LinkIcon, HashtagIcon, BoltIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
     scope_context?: string;

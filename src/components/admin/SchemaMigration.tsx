@@ -7,19 +7,8 @@
  */
 import { useState } from 'react';
 import { db } from '../../lib/firebase';
-import { 
-    collection, 
-    query, 
-    where, 
-    getDocs, 
-    writeBatch,
-    type Firestore 
-} from 'firebase/firestore';
-import { 
-    CircleStackIcon, 
-    ArrowPathIcon,
-    CheckCircleIcon
-} from '@heroicons/react/24/outline';
+import { collection, query, where, getDocs, writeBatch, type Firestore } from 'firebase/firestore';
+import { CircleStackIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface SchemaMigrationProps {
     uid: string;
@@ -59,11 +48,7 @@ export default function SchemaMigration({ uid }: SchemaMigrationProps) {
                 // Future schema migrations can be added here
             });
 
-            if (updatedCount === 0) {
-                setStatus("Schema is up to date. No migration needed.");
-                setLoading(false);
-                return;
-            }
+            if (updatedCount === 0) { setStatus("Schema is up to date. No migration needed."); setLoading(false); return; }
 
             if (operationCounter > 0) {
                 await batch.commit();
@@ -71,10 +56,7 @@ export default function SchemaMigration({ uid }: SchemaMigrationProps) {
 
             setStatus(`Successfully migrated ${updatedCount} legacy records to v4.5 schema.`);
 
-        } catch (e) {
-            console.error("Migration failed", e);
-            setStatus("Migration failed. Check console.");
-        } finally {
+        } catch (e) { console.error("Migration failed", e); setStatus("Migration failed. Check console."); } finally {
             setLoading(false);
         }
     };

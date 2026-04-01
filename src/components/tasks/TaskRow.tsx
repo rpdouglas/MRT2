@@ -1,10 +1,4 @@
-import { 
-    CheckCircleIcon as CheckCircleOutline, 
-    TrashIcon, 
-    PencilSquareIcon, 
-    ArrowPathIcon, 
-    SparklesIcon
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon as CheckCircleOutline, TrashIcon, PencilSquareIcon, ArrowPathIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import type { Task } from '../../lib/tasks';
 import { getRecurrenceLabel } from '../../lib/dateUtils';
@@ -19,12 +13,7 @@ interface TaskRowProps {
     isLogView?: boolean;
 }
 
-const toDate = (val: Date | Timestamp | undefined | null): Date | null => {
-    if (!val) return null;
-    if (val instanceof Timestamp) return val.toDate();
-    if (val instanceof Date) return val;
-    return null;
-}
+const toDate = (val: Date | Timestamp | undefined | null): Date | null => { if (!val) return null; if (val instanceof Timestamp) return val.toDate(); if (val instanceof Date) return val; return null; }
 
 export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = false }: TaskRowProps) {
     const today = startOfDay(new Date());

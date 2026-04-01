@@ -5,18 +5,7 @@
  * REFACTOR: Extracted chart logic from AdminDashboard.
  * PURPOSE: Visualizes AI token usage and model distribution.
  */
-import { 
-    BarChart, 
-    Bar, 
-    XAxis, 
-    YAxis, 
-    Tooltip, 
-    ResponsiveContainer, 
-    PieChart, 
-    Pie, 
-    Cell, 
-    Legend
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Timestamp } from 'firebase/firestore';
 
 export interface AIUsageLog {

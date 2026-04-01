@@ -8,20 +8,14 @@ import { useState, useEffect } from 'react';
 import { XMarkIcon, ArrowDownTrayIcon, ShareIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 // Correctly extend global interfaces via merging
-declare global {
-    interface Navigator {
-        standalone?: boolean;
-    }
+declare global { interface Navigator { standalone?: boolean; }
     interface Window {
         MSStream?: unknown;
     }
 }
 
 // TypeScript interface for the non-standard beforeinstallprompt event
-interface BeforeInstallPromptEvent extends Event {
-    prompt: () => Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-}
+interface BeforeInstallPromptEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>; }
 
 export default function PWAInstallBanner() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -74,10 +68,7 @@ export default function PWAInstallBanner() {
         setDeferredPrompt(null);
     };
 
-    const handleDismiss = () => {
-        setIsVisible(false);
-        localStorage.setItem('pwa_install_dismissed', 'true');
-    };
+    const handleDismiss = () => { setIsVisible(false); localStorage.setItem('pwa_install_dismissed', 'true'); };
 
     if (!isVisible) return null;
 

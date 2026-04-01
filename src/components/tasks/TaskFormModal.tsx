@@ -6,11 +6,7 @@
  */
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  XMarkIcon, 
-  CalendarIcon, 
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { RecurrenceConfig, RecurrenceType } from '../../lib/dateUtils';
 import { Timestamp } from 'firebase/firestore';
 
@@ -38,12 +34,7 @@ interface IncomingTask {
     frequency?: string; 
 }
 
-interface TaskFormModalProps {
-  isOpen: boolean;
-  initialTask: IncomingTask | null; 
-  onClose: () => void;
-  onSave: (data: TaskFormData) => Promise<void>;
-}
+interface TaskFormModalProps { isOpen: boolean; initialTask: IncomingTask | null; onClose: () => void; onSave: (data: TaskFormData) => Promise<void>; }
 
 export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: TaskFormModalProps) {
   const [title, setTitle] = useState('');
@@ -107,19 +98,9 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
             type: recurrenceType
         };
 
-        if (recurrenceType === 'monthly-relative') {
-            config.weekOfMonth = relWeek;
-            config.dayOfWeek = relDay;
-        }
+        if (recurrenceType === 'monthly-relative') { config.weekOfMonth = relWeek; config.dayOfWeek = relDay; }
 
-        await onSave({
-            id: initialTask?.id,
-            title,
-            category,
-            priority,
-            dueDate,
-            recurrence: config
-        });
+        await onSave({ id: initialTask?.id, title, category, priority, dueDate, recurrence: config });
         onClose();
     } catch (error) {
         console.error("Failed to save task", error);

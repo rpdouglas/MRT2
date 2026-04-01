@@ -26,8 +26,7 @@ import {
     ComputerDesktopIcon,
     SparklesIcon,
     ArrowPathIcon,
-    CheckBadgeIcon,
-   // WrenchScrewdriverIcon
+    CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 
 interface ErrorLog {

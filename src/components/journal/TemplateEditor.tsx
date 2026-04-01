@@ -8,16 +8,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, getDocs, Timestamp } from 'firebase/firestore';
-import { 
-    ArrowLeftIcon, 
-    PlusIcon, 
-    TrashIcon, 
-    PencilSquareIcon,
-    XMarkIcon,
-    ListBulletIcon,
-    HashtagIcon, 
-    CheckCircleIcon
-} from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlusIcon, TrashIcon, PencilSquareIcon, XMarkIcon, ListBulletIcon, HashtagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 
 // Local Type Definition
@@ -65,11 +56,7 @@ export default function TemplateEditor() {
         }
     }, [user]);
 
-    useEffect(() => {
-        if (!user) return;
-        loadTemplates();
-        console.log("Template Editor V2 Loaded"); 
-    }, [user, loadTemplates]); // FIX: Added loadTemplates to dependencies
+    useEffect(() => { if (!user) return; loadTemplates(); console.log("Template Editor V2 Loaded"); }, [user, loadTemplates]); // FIX: Added loadTemplates to dependencies
 
     // --- Toolbar Helpers ---
     const insertText = (before: string, after: string = '') => {
@@ -120,13 +107,7 @@ export default function TemplateEditor() {
         setIsEditing(true);
     };
 
-    const handleCreate = () => {
-        setEditId('');
-        setName('');
-        setContent('');
-        setTags([]);
-        setIsEditing(true);
-    };
+    const handleCreate = () => { setEditId(''); setName(''); setContent(''); setTags([]); setIsEditing(true); };
 
     const handleDelete = async (id: string) => {
         if (!confirm("Delete this template?")) return;
@@ -169,11 +150,7 @@ export default function TemplateEditor() {
                     ...templateData,
                     createdAt: Timestamp.now()
                 });
-                setTemplates([...templates, { 
-                    id: docRef.id, 
-                    ...templateData, 
-                    createdAt: Timestamp.now() 
-                } as JournalTemplate]);
+                setTemplates([...templates, { id: docRef.id, ...templateData, createdAt: Timestamp.now() } as JournalTemplate]);
             }
             setIsEditing(false);
             resetForm();
@@ -184,12 +161,7 @@ export default function TemplateEditor() {
         }
     };
 
-    const resetForm = () => {
-        setEditId(null);
-        setName('');
-        setContent('');
-        setTags([]);
-    };
+    const resetForm = () => { setEditId(null); setName(''); setContent(''); setTags([]); };
 
     if (loading) return <div className="p-8">Loading templates...</div>;
 

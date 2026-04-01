@@ -7,25 +7,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  collection, 
-  query, 
-  where, 
-  limit, 
-  getDocs 
-} from 'firebase/firestore';
-import { 
-    generateSalt, 
-    generateKey, 
-    computePinHash,
-    encrypt, 
-    decrypt, 
-    clearKey, 
-    isVaultUnlocked as checkLibUnlocked 
-} from '../lib/crypto';
+import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { generateSalt, generateKey, computePinHash, encrypt, decrypt, clearKey, isVaultUnlocked as checkLibUnlocked } from '../lib/crypto';
 import { executeCryptoShredding, executePinRotation } from '../lib/rotation';
 
 const SESSION_PIN_KEY = 'mrt_vault_pin';
@@ -87,10 +70,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                         const userDocRef = doc(db, 'users', user.uid);
                         await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
                         setVerifier(newVerifier);
-                    } catch (e) {
-                        console.warn("Legacy Verification Failed", e);
-                        return true; 
-                    }
+                    } catch (e) { console.warn("Legacy Verification Failed", e); return true; }
                 }
             } else {
                  const newVerifier = await computePinHash(pin, currentSalt);
@@ -104,18 +84,10 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         sessionStorage.setItem(SESSION_PIN_KEY, pin);
         return true;
 
-      } catch (error) {
-          console.error("Unlock logic failed", error);
-          return false;
-      }
+      } catch (error) { console.error("Unlock logic failed", error); return false; }
   }, [user]);
 
-  useEffect(() => {
-    async function checkVaultStatus() {
-      if (!user || !db) {
-        setVaultLoading(false);
-        return;
-      }
+  useEffect(() => { async function checkVaultStatus() { if (!user || !db) { setVaultLoading(false); return; }
       
       try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -171,10 +143,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setIsVaultUnlocked(true);
       sessionStorage.setItem(SESSION_PIN_KEY, pin);
 
-    } catch (error) {
-      console.error("Vault setup failed:", error);
-      throw error;
-    } finally {
+    } catch (error) { console.error("Vault setup failed:", error); throw error; } finally {
       setVaultLoading(false);
     }
   };
@@ -193,10 +162,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setIsVaultUnlocked(false);
       setSalt(null);
       setVerifier(null);
-    } catch (error) {
-      console.error("Vault reset failed:", error);
-      throw error;
-    } finally {
+    } catch (error) { console.error("Vault reset failed:", error); throw error; } finally {
       setVaultLoading(false);
     }
   };
@@ -211,21 +177,11 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     sessionStorage.setItem(SESSION_PIN_KEY, newPin);
   };
 
-  const unlockVault = async (pin: string): Promise<boolean> => {
-    if (!salt || !user || !db) return false;
-    return await performUnlock(pin, salt, verifier);
-  };
+  const unlockVault = async (pin: string): Promise<boolean> => { if (!salt || !user || !db) return false; return await performUnlock(pin, salt, verifier); };
 
-  const lockVault = useCallback(() => {
-    clearKey();
-    sessionStorage.removeItem(SESSION_PIN_KEY);
-    setIsVaultUnlocked(false);
-  }, []);
+  const lockVault = useCallback(() => { clearKey(); sessionStorage.removeItem(SESSION_PIN_KEY); setIsVaultUnlocked(false); }, []);
 
-  const handleEncrypt = useCallback(async (text: string) => {
-    if (!checkLibUnlocked()) throw new Error("Vault is locked");
-    return await encrypt(text);
-  }, []);
+  const handleEncrypt = useCallback(async (text: string) => { if (!checkLibUnlocked()) throw new Error("Vault is locked"); return await encrypt(text); }, []);
 
   const handleDecrypt = useCallback(async (text: string) => {
     return await decrypt(text);

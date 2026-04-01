@@ -8,10 +8,7 @@
 const GOOGLE_DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const GOOGLE_DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
 
-interface DriveFile {
-  id: string;
-  name: string;
-}
+interface DriveFile { id: string; name: string; }
 
 export async function findBackupFile(accessToken: string): Promise<string | null> {
   const query = encodeURIComponent("name = 'mrt_backup.json' and trashed = false");
@@ -24,11 +21,7 @@ export async function findBackupFile(accessToken: string): Promise<string | null
   return data.files.length > 0 ? data.files[0].id : null;
 }
 
-export async function uploadBackupToDrive(accessToken: string, jsonData: string, fileId?: string): Promise<boolean> {
-  const metadata = {
-    name: 'mrt_backup.json',
-    mimeType: 'application/json',
-  };
+export async function uploadBackupToDrive(accessToken: string, jsonData: string, fileId?: string): Promise<boolean> { const metadata = { name: 'mrt_backup.json', mimeType: 'application/json', };
 
   const boundary = 'mrt_backup_boundary';
   const delimiter = `\r\n--${boundary}\r\n`;
@@ -44,12 +37,7 @@ export async function uploadBackupToDrive(accessToken: string, jsonData: string,
 
   const method = fileId ? 'PATCH' : 'POST';
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': `multipart/related; boundary=${boundary}`,
-    },
+  const response = await fetch(url, { method, headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}`, },
     body,
   });
 

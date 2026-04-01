@@ -34,18 +34,9 @@ export interface WorkbookStats {
     masterCompletion: number; // % of total questions
 }
 
-export interface VitalityStats {
-    bioStreak: number;
-    totalLogs: number;
-}
+export interface VitalityStats { bioStreak: number; totalLogs: number; }
 
-export interface LevelData {
-    level: number;
-    title: string;
-    currentXP: number;
-    nextLevelXP: number;
-    progressPercent: number;
-}
+export interface LevelData { level: number; title: string; currentXP: number; nextLevelXP: number; progressPercent: number; }
 
 export interface UserStats {
     totalXP: number;
@@ -54,28 +45,14 @@ export interface UserStats {
 }
 
 // Minimal interfaces for input data to avoid 'any'
-interface ScorableJournal {
-    tags?: string[];
-    content?: string;
-    moodScore?: number;
-    createdAt: { toDate: () => Date } | Date | Timestamp; 
-}
+interface ScorableJournal { tags?: string[]; content?: string; moodScore?: number; createdAt: { toDate: () => Date } | Date | Timestamp; }
 
-interface ScorableTask {
-    status?: string;
-    priority?: 'High' | 'Medium' | 'Low';
-    completed?: boolean;
-    currentStreak?: number;
-}
+interface ScorableTask { status?: string; priority?: 'High' | 'Medium' | 'Low'; completed?: boolean; currentStreak?: number; }
 
 // --- HELPER FUNCTIONS ---
 
 // Helper to check if two dates are the same day
-const isSameDay = (d1: Date, d2: Date) => {
-  return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
-};
+const isSameDay = (d1: Date, d2: Date) => { return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate(); };
 
 const getTitle = (level: number): string => {
     if (level >= 50) return "Elder / Sponsor";
@@ -184,11 +161,7 @@ export const calculateUserLevel = (
         else if (maxVal === xpBreakdown.reflection) archetype = "Philosopher";
     }
 
-    return {
-        totalXP: Math.floor(xp),
-        levelData: calculateLevel(xp),
-        archetype
-    };
+    return { totalXP: Math.floor(xp), levelData: calculateLevel(xp), archetype };
 };
 
 export const calculateJournalStats = (journals: ScorableJournal[]): GamificationStats => {
@@ -267,10 +240,7 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
     const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
 
     // 5. Total Words
-    const totalWords = journals.reduce((acc, curr) => {
-        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0;
-        return acc + words;
-    }, 0);
+    const totalWords = journals.reduce((acc, curr) => { const words = curr.content ? curr.content.trim().split(/\s+/).length : 0; return acc + words; }, 0);
 
     return {
         streakDays: currentStreak,
@@ -282,10 +252,7 @@ export const calculateJournalStats = (journals: ScorableJournal[]): Gamification
     };
 };
 
-export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
-    if (!tasks || tasks.length === 0) {
-        return { completionRate: 0, habitFire: 0 };
-    }
+export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => { if (!tasks || tasks.length === 0) { return { completionRate: 0, habitFire: 0 }; }
 
     const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
     const completionRate = Math.round((completed / tasks.length) * 100);
@@ -293,20 +260,13 @@ export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
     // FIX: CHANGED FROM 'MAX STREAK' TO 'SUM OF STREAKS'
     // This ensures new habits immediately contribute to the score.
     let totalMomentum = 0;
-    tasks.forEach(t => {
-        if (t.currentStreak && t.currentStreak > 0) {
-            totalMomentum += t.currentStreak;
-        }
+    tasks.forEach(t => { if (t.currentStreak && t.currentStreak > 0) { totalMomentum += t.currentStreak; }
     });
 
     return { completionRate, habitFire: totalMomentum };
 };
 
-export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
-    return {
-        wisdomScore: answersSnapshotSize,
-        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
-    };
+export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => { return { wisdomScore: answersSnapshotSize, masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100) };
 };
 
 export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {

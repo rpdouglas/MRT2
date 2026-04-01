@@ -6,20 +6,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import VibrantHeader from '../VibrantHeader';
-import { 
-    FireIcon, 
-    CheckCircleIcon,
-    ArrowLeftIcon,
-    ShieldExclamationIcon
-} from '@heroicons/react/24/outline';
+import { FireIcon, CheckCircleIcon, ArrowLeftIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 
-interface Ember {
-    id: number;
-    left: number;
-    delay: number;
-    duration: number;
-    drift: string;
-}
+interface Ember { id: number; left: number; delay: number; duration: number; drift: string; }
 
 export default function ResentmentBurner() {
     const navigate = useNavigate();
@@ -74,11 +63,7 @@ export default function ResentmentBurner() {
         setIsBurning(true);
     };
 
-    const handleReset = () => {
-        setIsBurned(false);
-        setText('');
-        setEmbers([]);
-    };
+    const handleReset = () => { setIsBurned(false); setText(''); setEmbers([]); };
 
     const scaleAmount = 1 - (burnProgress * 0.15);
 

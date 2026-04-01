@@ -69,10 +69,7 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
                     if (docData.isEncrypted) {
                         try {
                             content = await decrypt(docData.content);
-                        } catch (e) {
-                            console.error("Decryption failed for an entry:", e);
-                            content = "[Skipped: Decryption Error]";
-                        }
+                        } catch (e) { console.error("Decryption failed for an entry:", e); content = "[Skipped: Decryption Error]"; }
                     }
                     const date = docData.createdAt?.toDate ? docData.createdAt.toDate() : new Date();
                     return `Date: ${date.toLocaleDateString()}\nMood: ${docData.moodScore}\nContent: ${content}`;
@@ -93,26 +90,12 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
             setResult(aiResult);
             setProgress(100);
 
-        } catch (err) {
-            console.error("Deep Pattern Analysis Failed:", err);
-            setError("Analysis failed. Please try again later.");
-        } finally {
+        } catch (err) { console.error("Deep Pattern Analysis Failed:", err); setError("Analysis failed. Please try again later."); } finally {
             setLoading(false);
         }
     }, [user, decrypt]);
 
-    const reset = () => {
-        setResult(null);
-        setError(null);
-        setProgress(0);
-    };
+    const reset = () => { setResult(null); setError(null); setProgress(0); };
 
-    return {
-        analyze,
-        loading,
-        progress,
-        result,
-        error,
-        reset
-    };
+    return { analyze, loading, progress, result, error, reset };
 }

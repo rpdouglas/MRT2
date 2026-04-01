@@ -16,11 +16,7 @@ export interface WeatherData {
   location: string; // We'll just store "Lat/Lon" or a generic name for now
 }
 
-export async function getCurrentWeather(): Promise<WeatherData | null> {
-  if (!navigator.geolocation) {
-    console.warn("Geolocation not supported");
-    return null;
-  }
+export async function getCurrentWeather(): Promise<WeatherData | null> { if (!navigator.geolocation) { console.warn("Geolocation not supported"); return null; }
 
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
@@ -43,15 +39,9 @@ export async function getCurrentWeather(): Promise<WeatherData | null> {
             condition: getWeatherCondition(weather.weathercode),
             location: 'Local' // We could use a reverse geocoding API here later if needed
           });
-        } catch (error) {
-          console.error("Error fetching weather:", error);
-          resolve(null);
-        }
+        } catch (error) { console.error("Error fetching weather:", error); resolve(null); }
       },
-      (error) => {
-        console.warn("Location permission denied or failed", error);
-        resolve(null);
-      }
+      (error) => { console.warn("Location permission denied or failed", error); resolve(null); }
     );
   });
 }

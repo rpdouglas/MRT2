@@ -1,20 +1,10 @@
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  XMarkIcon, 
-  PlusIcon,
-  CalendarDaysIcon,
-  ArrowPathIcon,
-  FlagIcon
-} from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, CalendarDaysIcon, ArrowPathIcon, FlagIcon } from '@heroicons/react/24/outline';
 import { addTask, type Frequency, type Priority } from '../lib/tasks';
 import { useAuth } from '../contexts/AuthContext';
 
-interface CreateTaskModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onTaskAdded: () => void;
-}
+interface CreateTaskModalProps { isOpen: boolean; onClose: () => void; onTaskAdded: () => void; }
 
 export default function CreateTaskModal({ isOpen, onClose, onTaskAdded }: CreateTaskModalProps) {
   const { user } = useAuth();

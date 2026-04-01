@@ -1,21 +1,8 @@
 import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  DevicePhoneMobileIcon,
-  BookOpenIcon,
-  PlayCircleIcon,
-  EnvelopeIcon
-} from '@heroicons/react/24/outline';
+import { DevicePhoneMobileIcon, BookOpenIcon, PlayCircleIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 
-interface LinkItem {
-  id: string;
-  title: string;
-  subtitle?: string;
-  url: string;
-  isExternal: boolean;
-  icon: ElementType;
-  colorClass: string;
-}
+interface LinkItem { id: string; title: string; subtitle?: string; url: string; isExternal: boolean; icon: ElementType; colorClass: string; }
 
 const LINKS: LinkItem[] = [
   {

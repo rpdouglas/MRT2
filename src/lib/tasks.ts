@@ -2,17 +2,7 @@
  * src/lib/tasks.ts
  * UPDATED: Re-architected toggleTask and addTask to properly handle RecurrenceConfig.
  */
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  Timestamp 
-} from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
 import type { Task as TaskInterface } from "./db";
@@ -107,10 +97,7 @@ export async function getUserTasks(uid: string) {
             }
 
             const taskRef = doc(db, COLLECTION, task.id!);
-            await updateDoc(taskRef, {
-                currentStreak: newStreak,
-                dueDate: Timestamp.fromDate(today)
-            });
+            await updateDoc(taskRef, { currentStreak: newStreak, dueDate: Timestamp.fromDate(today) });
 
             task.currentStreak = newStreak;
             task.dueDate = today; 
@@ -165,16 +152,10 @@ export async function toggleTask(task: Task, isCompleting: boolean) {
 }
 
 // 4. DELETE
-export async function deleteTask(id: string) {
-  if (!db) throw new Error("Database not initialized");
-  await deleteDoc(doc(db, COLLECTION, id));
-}
+export async function deleteTask(id: string) { if (!db) throw new Error("Database not initialized"); await deleteDoc(doc(db, COLLECTION, id)); }
 
 // 5. UPDATE
-export async function updateTask(id: string, updates: Partial<Task>) {
-  if (!db) throw new Error("Database not initialized");
-  await updateDoc(doc(db, COLLECTION, id), updates);
-}
+export async function updateTask(id: string, updates: Partial<Task>) { if (!db) throw new Error("Database not initialized"); await updateDoc(doc(db, COLLECTION, id), updates); }
 
 // 6. GET COMPLETED TODAY
 export async function getCompletedTasksForToday(uid: string) {

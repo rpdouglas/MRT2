@@ -25,13 +25,7 @@ interface SmartToolContainerProps<T extends object> {
     }) => React.ReactNode;
 }
 
-export function SmartToolContainer<T extends object>({ 
-    toolType, 
-    toolLabel, 
-    initialData,
-    resumeSession = false,
-    children 
-}: SmartToolContainerProps<T>) {
+export function SmartToolContainer<T extends object>({ toolType, toolLabel, initialData, resumeSession = false, children }: SmartToolContainerProps<T>) {
     const { user } = useAuth();
     const { isVaultUnlocked, encrypt, decrypt } = useEncryption();
     const { addJournal, updateJournal } = useJournalOperations();
@@ -94,10 +88,7 @@ export function SmartToolContainer<T extends object>({
         return () => { isMounted = false; };
     }, [resumeSession, isVaultUnlocked, user, toolType, decrypt, isInitializing]);
 
-    const updateData = useCallback((newData: Partial<T>) => {
-        setData(prev => ({ ...prev, ...newData }));
-        setHasUnsavedChanges(true);
-    }, []);
+    const updateData = useCallback((newData: Partial<T>) => { setData(prev => ({ ...prev, ...newData })); setHasUnsavedChanges(true); }, []);
 
     const handleSave = async () => {
         if (!isVaultUnlocked) return;
@@ -142,10 +133,7 @@ export function SmartToolContainer<T extends object>({
 
             setLastSaved(new Date());
             setHasUnsavedChanges(false);
-        } catch (error: unknown) {
-            console.error(`[SmartToolContainer] Save failed for ${toolType}:`, error);
-            alert("Failed to save tool to journal.");
-        } finally {
+        } catch (error: unknown) { console.error(`[SmartToolContainer] Save failed for ${toolType}:`, error); alert("Failed to save tool to journal."); } finally {
             setIsSavingLocal(false);
         }
     };

@@ -4,12 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext'; 
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { 
-    CheckCircleIcon, 
-    ArrowRightIcon,
-    SparklesIcon,
-    XMarkIcon
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ArrowRightIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 import { useAutoSave } from '../hooks/useAutoSave';
@@ -47,10 +42,7 @@ export default function WorkbookSession() {
                 }
 
                 const sec = wb.sections.find(s => s.id === sectionId);
-                if (!sec) {
-                   navigate(`/workbooks/${workbookId}`);
-                   return;
-                }
+                if (!sec) { navigate(`/workbooks/${workbookId}`); return; }
                 setSection(sec);
 
                 // B. Load User Progress
@@ -76,10 +68,7 @@ export default function WorkbookSession() {
                 setAnswers(loadedAnswers);
                 
                 // Initialize current answer based on first question
-                if (sec.questions.length > 0) {
-                    const firstQ = sec.questions[0];
-                    setCurrentAnswer(loadedAnswers[firstQ.id] || '');
-                }
+                if (sec.questions.length > 0) { const firstQ = sec.questions[0]; setCurrentAnswer(loadedAnswers[firstQ.id] || ''); }
 
             } catch (error) {
                 console.error("Error loading session:", error);
@@ -95,11 +84,7 @@ export default function WorkbookSession() {
     const isIntroSlide = currentQuestion?.type === 'read_only';
 
     // Update currentAnswer when question changes
-    useEffect(() => {
-        if (currentQuestion) {
-            setCurrentAnswer(answers[currentQuestion.id] || '');
-            setAiFeedback(null);
-        }
+    useEffect(() => { if (currentQuestion) { setCurrentAnswer(answers[currentQuestion.id] || ''); setAiFeedback(null); }
     }, [activeQuestionIndex, currentQuestion, answers]);
 
     // --- AUTO SAVE HOOK ---
@@ -121,19 +106,12 @@ export default function WorkbookSession() {
     };
 
     // 3. Navigation
-    const handleNext = () => {
-        if (!section) return;
-        if (activeQuestionIndex < section.questions.length - 1) {
-            setActiveQuestionIndex(prev => prev + 1);
-        } else {
+    const handleNext = () => { if (!section) return; if (activeQuestionIndex < section.questions.length - 1) { setActiveQuestionIndex(prev => prev + 1); } else {
             navigate(`/workbooks/${workbookId}`);
         }
     };
 
-    const handlePrevious = () => {
-        if (activeQuestionIndex > 0) {
-            setActiveQuestionIndex(prev => prev - 1);
-        }
+    const handlePrevious = () => { if (activeQuestionIndex > 0) { setActiveQuestionIndex(prev => prev - 1); }
     };
 
     const handleGetCoaching = async () => {

@@ -4,15 +4,7 @@
  * [insights.ts]
  * UPDATED: Extended InsightPayload to natively support rich array data from Deep Dives.
  */
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  Timestamp 
-} from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
 
@@ -37,11 +29,7 @@ export type InsightPayload =
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
 
 // The hydrated object returned to the UI
-export type SavedInsight = InsightPayload & {
-  id: string;
-  uid: string;
-  createdAt: Date;
-};
+export type SavedInsight = InsightPayload & { id: string; uid: string; createdAt: Date; };
 
 /**
  * Saves a new AI Insight to Firestore.

@@ -7,20 +7,8 @@
  */
 import { useState } from 'react';
 import { db } from '../../lib/firebase';
-import { 
-    collection, 
-    query, 
-    where, 
-    getDocs, 
-    writeBatch, 
-    doc,
-    type Firestore 
-} from 'firebase/firestore';
-import { 
-    DocumentDuplicateIcon, 
-    ArrowPathIcon,
-    CheckCircleIcon
-} from '@heroicons/react/24/outline';
+import { collection, query, where, getDocs, writeBatch, doc, type Firestore } from 'firebase/firestore';
+import { DocumentDuplicateIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface DeduplicationToolProps {
     uid: string;
@@ -59,11 +47,7 @@ export default function DeduplicationTool({ uid }: DeduplicationToolProps) {
             }
           });
     
-          if (duplicates.length === 0) {
-            setStatus("No duplicates found.");
-            setLoading(false);
-            return;
-          }
+          if (duplicates.length === 0) { setStatus("No duplicates found."); setLoading(false); return; }
     
           setStatus(`Found ${duplicates.length} duplicates. Deleting in batches...`);
     
@@ -84,10 +68,7 @@ export default function DeduplicationTool({ uid }: DeduplicationToolProps) {
           if (count > 0) await batch.commit();
     
           setStatus(`Success! Removed ${duplicates.length} duplicate entries.`);
-        } catch (e) {
-          console.error(e);
-          setStatus("Error running deduplication.");
-        } finally {
+        } catch (e) { console.error(e); setStatus("Error running deduplication."); } finally {
           setLoading(false);
         }
     };

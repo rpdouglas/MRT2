@@ -5,12 +5,7 @@ import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { 
-  PencilSquareIcon, 
-  ClockIcon, 
-  ChartBarIcon, 
-  BookOpenIcon 
-} from '@heroicons/react/24/outline';
+import { PencilSquareIcon, ClockIcon, ChartBarIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
 export default function Journal() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -32,18 +27,9 @@ export default function Journal() {
     });
   };
 
-  const handleEdit = (entry: JournalEntry) => {
-    setEditingEntry(entry);
-    handleTabChange('write');
-  };
+  const handleEdit = (entry: JournalEntry) => { setEditingEntry(entry); handleTabChange('write'); };
 
-  const handleEntrySaved = () => {
-    setEditingEntry(null);
-    setSearchParams(prev => {
-        prev.delete('template');
-        prev.set('tab', 'history');
-        return prev;
-    });
+  const handleEntrySaved = () => { setEditingEntry(null); setSearchParams(prev => { prev.delete('template'); prev.set('tab', 'history'); return prev; });
   };
 
   return (

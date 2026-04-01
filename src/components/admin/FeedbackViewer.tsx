@@ -9,8 +9,8 @@ import {
     ClipboardList,
     ChevronUpIcon,
     InboxIcon,
-    Search,     // WAS: MagnifyingGlassIcon
-    Archive     // WAS: ArchiveBoxIcon
+    Search,
+    Archive
 } from 'lucide-react';
 
 interface FeedbackReport {
@@ -92,7 +92,7 @@ const FeedbackViewer: React.FC = () => {
   };
 
   const sendToGitHub = (report: FeedbackReport) => {
-    const repoUrl = "[https://github.com/rpdouglas/MRT2/issues/new](https://github.com/rpdouglas/MRT2/issues/new)";
+    const repoUrl = "https://github.com/rpdouglas/MRT2/issues/new";
     const title = encodeURIComponent(`[${report.category?.toUpperCase() || 'BUG'}] Issue reported on ${report.route || 'unknown'}`);
     
     const bodyMarkdown = `
