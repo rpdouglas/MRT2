@@ -2,6 +2,10 @@
 
 **Storage:** Ideas and feature requests that are approved but deferred. Do not pull into `ACTIVE_CYCLE.md` until prioritized.
 
+## 📈 Viral Growth & Marketing (The Market Gap)
+* **Feature:** Secure Milestone Share Cards (Instagram/Facebook export).
+* **Complexity:** Medium. Generates an anonymized, branded image (using the UI's Vibrant Momentum aesthetic) of the user's clean time to safely share on social media. Satisfies the "Identity Signaling" psychological trigger without compromising the vault.
+
 ## 🏃 Integrations & Wearables
 * **Feature:** HealthConnect / Apple HealthKit API integration for Sleep and Step data.
 * **Complexity:** Extremely High. Deferred until post-seed funding/legal review.

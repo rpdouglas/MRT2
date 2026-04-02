@@ -11,15 +11,17 @@ graph TD
     
     root --> users[📂 users]
     users --> userDoc[📄 User Profile]
-    userDoc --> workbook_progress[📂 workbook_progress]
+    userDoc --> workbook_answers[📂 workbook_answers]
     userDoc --> templates[📂 templates]
+    userDoc --> checkout_sessions[💳 checkout_sessions]
+    userDoc --> subscriptions[💳 subscriptions]
     
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
     root --> insights[📂 insights]
     root --> ai_logs[📂 ai_logs]
     root --> feedback[📂 feedback]
-    root --> service[📂 service (Planned)]
+    root --> service[📂 service]
 ```
 
 ## 2. Collection Definitions

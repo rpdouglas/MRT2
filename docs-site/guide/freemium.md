@@ -17,3 +17,9 @@ Designed for users in the maintenance phase looking for deep insights, and spons
 * **The Digital Rolodex (Service Module):** A securely encrypted system to track sponsee step work, contact info, and meeting times *(Coming Soon)*.
 * **Cloud Auto-Sync:** Automated, invisible JSON backups to your personal Google Drive.
 * **PDF Exports:** Generate beautiful, formatted reports of your journal history for therapy or sponsorship sessions.
+
+## 🔓 How to Upgrade
+If you encounter a premium feature, you will see a **Premium Gate** (a blurred overlay with a Lock icon or a golden "Supporter Feature" button). 
+1. Click on any locked feature or navigate directly to **Profile -> Upgrade**.
+2. You will be redirected to a secure Stripe Checkout portal.
+3. Once completed, your app will automatically unlock all Premium features without needing to restart.
