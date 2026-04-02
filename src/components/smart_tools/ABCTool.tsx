@@ -6,15 +6,7 @@
 
 import React from 'react';
 import { SmartToolContainer } from './SmartToolContainer';
-import { 
-    ArrowDownIcon,
-    BoltIcon,
-    ChatBubbleBottomCenterTextIcon,
-    ExclamationTriangleIcon,
-    ShieldExclamationIcon,
-    LightBulbIcon,
-    InformationCircleIcon
-} from '@heroicons/react/24/outline';
+import { ArrowDownIcon, BoltIcon, ChatBubbleBottomCenterTextIcon, ExclamationTriangleIcon, ShieldExclamationIcon, LightBulbIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import type { ABCPayload } from '../../lib/types/smart';
 
 const EXPLANATION = "The ABC model (from REBT) teaches us that an Activating Event doesn't directly cause our Consequences (feelings/actions). Instead, it's our Beliefs about the event that cause our reactions. By Disputing irrational beliefs, we can create an Effective new philosophy.";

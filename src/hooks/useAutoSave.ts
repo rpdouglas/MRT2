@@ -10,13 +10,7 @@ import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { useEncryption } from '../contexts/EncryptionContext';
 import type { WorkbookAnswer } from '../lib/db';
 
-interface AutoSaveProps {
-    uid: string;
-    workbookId: string;
-    sectionId: string;
-    questionId: string;
-    value: string;
-}
+interface AutoSaveProps { uid: string; workbookId: string; sectionId: string; questionId: string; value: string; }
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -56,15 +50,8 @@ export function useAutoSave({ uid, workbookId, sectionId, questionId, value }: A
             const ref = doc(db, 'users', uid, 'workbook_answers', docId);
             await setDoc(ref, payload, { merge: true });
 
-            if (isMounted.current) {
-                setStatus('saved');
-                setLastSavedAt(new Date());
-                lastSavedValue.current = textToSave;
-            }
-        } catch (error) {
-            console.error("Auto-save failed:", error);
-            if (isMounted.current) setStatus('error');
-        }
+            if (isMounted.current) { setStatus('saved'); setLastSavedAt(new Date()); lastSavedValue.current = textToSave; }
+        } catch (error) { console.error("Auto-save failed:", error); if (isMounted.current) setStatus('error'); }
     }, [uid, workbookId, sectionId, questionId, encrypt]);
 
     // Debounce Effect

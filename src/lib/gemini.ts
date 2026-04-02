@@ -15,12 +15,7 @@ import { logAIUsage } from './analytics';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
 // --- Configuration ---
-const GENERATION_CONFIG = {
-  temperature: 0.7,
-  topP: 0.8,
-  topK: 40,
-  maxOutputTokens: 8192,
-};
+const GENERATION_CONFIG = { temperature: 0.7, topP: 0.8, topK: 40, maxOutputTokens: 8192, };
 
 // --- Model Cascade Configuration ---
 const MODEL_CASCADE = [
@@ -31,13 +26,7 @@ const MODEL_CASCADE = [
 
 // --- Interfaces ---
 
-export interface AIAnalysisResult {
-    sentiment: 'Positive' | 'Neutral' | 'Negative';
-    moodScore: number;
-    summary: string;
-    actionableSteps: string[];
-    risks: string[];
-}
+export interface AIAnalysisResult { sentiment: 'Positive' | 'Neutral' | 'Negative'; moodScore: number; summary: string; actionableSteps: string[]; risks: string[]; }
 // Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
@@ -107,10 +96,7 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
                 // console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
             }
 
-            const model = genAI.getGenerativeModel({ 
-                model: currentModelName, 
-                generationConfig: GENERATION_CONFIG 
-            });
+            const model = genAI.getGenerativeModel({ model: currentModelName, generationConfig: GENERATION_CONFIG });
             
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -187,10 +173,7 @@ export async function generateAudioAnalysis(base64Audio: string, mimeType: strin
 
         return JSON.parse(cleanJSON(text)) as AudioAnalysisResult;
 
-    } catch (error) {
-        console.error("Audio Analysis Failed:", error);
-        throw new Error("Failed to process audio.");
-    }
+    } catch (error) { console.error("Audio Analysis Failed:", error); throw new Error("Failed to process audio."); }
 }
 
 export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHealthAnalysis> {

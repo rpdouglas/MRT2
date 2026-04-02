@@ -14,10 +14,7 @@ describe('💰 Financial Math Engine', () => {
         expect(calculateSavings(-15, 'daily', 10)).toBe(0);
     });
 
-    it('2. should calculate daily savings accurately', () => {
-        expect(calculateSavings(15, 'daily', 10)).toBe(150);
-        expect(calculateSavings(5.50, 'daily', 2)).toBe(11);
-    });
+    it('2. should calculate daily savings accurately', () => { expect(calculateSavings(15, 'daily', 10)).toBe(150); expect(calculateSavings(5.50, 'daily', 2)).toBe(11); });
 
     it('3. should calculate weekly savings accurately', () => {
         // $70 per week = $10 per day. 10 days = $100

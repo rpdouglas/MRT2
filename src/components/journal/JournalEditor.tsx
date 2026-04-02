@@ -5,17 +5,7 @@ import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-import { 
-    CheckIcon,
-    Cog6ToothIcon,
-    MapPinIcon,
-    ArrowPathIcon,
-    TagIcon,
-    XMarkIcon,
-    MicrophoneIcon,
-    FaceSmileIcon,
-    LockClosedIcon
-} from '@heroicons/react/24/outline';
+import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { DEFAULT_TEMPLATES } from '../../data/journalTemplates';
 import { getCurrentWeather } from '../../lib/weather';
@@ -23,10 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
 import type { AudioAnalysisResult } from '../../lib/gemini';
 
-interface JournalDocData {
-    tags?: string[];
-    [key: string]: unknown;
-}
+interface JournalDocData { tags?: string[]; [key: string]: unknown; }
 
 export interface JournalEntry {
   id: string;
@@ -43,11 +30,7 @@ interface ExtendedJournalTemplate extends JournalTemplate {
     content?: string;
 }
 
-interface JournalEditorProps {
-  initialEntry: JournalEntry | null;
-  initialTemplateId?: string | null;
-  onSaveComplete: () => void;
-}
+interface JournalEditorProps { initialEntry: JournalEntry | null; initialTemplateId?: string | null; onSaveComplete: () => void; }
 
 export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
   const { user, userTier } = useAuth();
@@ -103,12 +86,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     }
   }, []);
 
-  const loadCustomTemplates = useCallback(async () => {
-    if (!user) return;
-    try {
-        const t = await getUserTemplates(user.uid);
-        setCustomTemplates(t);
-    } catch (e) {
+  const loadCustomTemplates = useCallback(async () => { if (!user) return; try { const t = await getUserTemplates(user.uid); setCustomTemplates(t); } catch (e) {
         console.error("Failed to load templates", e);
     }
   }, [user]);
@@ -153,19 +131,10 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
             setNewEntry('');
             setTags(prev => [...new Set([...prev, ...(custTemplate.defaultTags || [])])]);
         }
-    } else {
-        setActiveTemplate(null);
-        setNewEntry('');
-        setTags([]);
-    }
+    } else { setActiveTemplate(null); setNewEntry(''); setTags([]); }
   }, [customTemplates]); 
 
-  useEffect(() => {
-    if (!user) return;
-    loadCustomTemplates();
-    loadUserTags();
-    if (!initialEntry) fetchLocalWeather(); 
-  }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
+  useEffect(() => { if (!user) return; loadCustomTemplates(); loadUserTags(); if (!initialEntry) fetchLocalWeather(); }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
 
   useEffect(() => {
     if (initialEntry) {
@@ -185,20 +154,12 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
     }
   }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
 
-  const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addTag(tagInput);
-    } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+  const handleAddTag = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
         setTags(prev => prev.slice(0, -1));
     }
   };
 
-  const addTag = (tagName: string) => {
-    const cleanTag = tagName.trim().replace(/^#/, '');
-    if (cleanTag && !tags.includes(cleanTag)) {
-        setTags([...tags, cleanTag]);
-    }
+  const addTag = (tagName: string) => { const cleanTag = tagName.trim().replace(/^#/, ''); if (cleanTag && !tags.includes(cleanTag)) { setTags([...tags, cleanTag]); }
     setTagInput('');
     setShowSuggestions(false);
   };
@@ -256,10 +217,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       setMood(getSmartMood());
       setTags([]);
       onSaveComplete();
-    } catch (error) {
-      console.error("Error saving entry:", error);
-      alert("Failed to save entry.");
-    } finally {
+    } catch (error) { console.error("Error saving entry:", error); alert("Failed to save entry."); } finally {
       setSaving(false);
     }
   };

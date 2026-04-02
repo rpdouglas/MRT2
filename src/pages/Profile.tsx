@@ -6,19 +6,7 @@ import { Timestamp } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth'; 
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
-import { 
-  UserCircleIcon, 
-  UserGroupIcon,
-  IdentificationIcon,
-  ShieldCheckIcon,
-  CircleStackIcon,
-  KeyIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  BanknotesIcon,
-  ArrowLeftOnRectangleIcon
-} from '@heroicons/react/24/outline';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
@@ -76,25 +64,15 @@ export default function Profile() {
           setCostFrequency(data.costFrequency || 'daily');
           setCurrencySymbol(data.currencySymbol || '$');
           
-          if (!data.hasCompletedOnboarding) {
-              setIsOnboarding(true);
-              setActiveTab('general'); 
-          }
-        } else {
-          setIsOnboarding(true);
-          setActiveTab('general');
-        }
+          if (!data.hasCompletedOnboarding) { setIsOnboarding(true); setActiveTab('general'); }
+        } else { setIsOnboarding(true); setActiveTab('general'); }
         setLoading(false);
       }
     }
     loadProfile();
   }, [user]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
+  const handleLogout = async () => { try { await logout(); navigate('/login'); } catch (error) {
       console.error('Failed to log out', error);
     }
   };
@@ -136,10 +114,7 @@ export default function Profile() {
       } else {
           setMessage({ type: 'success', text: 'Profile updated successfully' });
       }
-    } catch (error) {
-      console.error(error);
-      setMessage({ type: 'error', text: 'Failed to update profile' });
-    } finally {
+    } catch (error) { console.error(error); setMessage({ type: 'error', text: 'Failed to update profile' }); } finally {
       setSaving(false);
     }
   };
@@ -162,14 +137,7 @@ export default function Profile() {
           setOldPin('');
           setNewPin('');
           setConfirmPin('');
-      } catch (err: unknown) {
-          const error = err as Error;
-          if (error.message === 'INCORRECT_PIN') {
-              setRotError("Current PIN is incorrect.");
-          } else {
-              setRotError("An error occurred during rotation. State rolled back securely.");
-              console.error(error);
-          }
+      } catch (err: unknown) { const error = err as Error; if (error.message === 'INCORRECT_PIN') { setRotError("Current PIN is incorrect."); } else { setRotError("An error occurred during rotation. State rolled back securely."); console.error(error); }
       } finally {
           setIsRotating(false);
       }
@@ -184,11 +152,7 @@ export default function Profile() {
           await resetVault();
           alert("Vault has been permanently destroyed. You may now generate a new one.");
           window.location.reload();
-      } catch (e) {
-          console.error("Hard reset failed", e);
-          alert("Reset failed. Check connection.");
-          setIsRotating(false);
-      } 
+      } catch (e) { console.error("Hard reset failed", e); alert("Reset failed. Check connection."); setIsRotating(false); } 
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;

@@ -22,33 +22,20 @@ vi.mock('../../contexts/EncryptionContext', () => ({
 }));
 
 // NEW MOCK: Fixes the 'useLayout must be used within a LayoutProvider' error inside VibrantHeader
-vi.mock('../../contexts/LayoutContext', () => ({
-    useLayout: vi.fn(() => ({
-        toggleSidebar: vi.fn(),
-        toggleSOS: vi.fn(),
-        isOnline: true
-    }))
+vi.mock('../../contexts/LayoutContext', () => ({ useLayout: vi.fn(() => ({ toggleSidebar: vi.fn(), toggleSOS: vi.fn(), isOnline: true }))
 }));
 
 const mockRequestWakeLock = vi.fn();
 const mockReleaseWakeLock = vi.fn();
 
-vi.mock('../../hooks/useWakeLock', () => ({
-    useWakeLock: vi.fn(() => ({
-        requestWakeLock: mockRequestWakeLock,
-        releaseWakeLock: mockReleaseWakeLock
-    }))
+vi.mock('../../hooks/useWakeLock', () => ({ useWakeLock: vi.fn(() => ({ requestWakeLock: mockRequestWakeLock, releaseWakeLock: mockReleaseWakeLock }))
 }));
 
 const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } }
 });
 
-describe('🌊 UrgeSurfer Lifecycle & Safety', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        vi.useFakeTimers();
-    });
+describe('🌊 UrgeSurfer Lifecycle & Safety', () => { beforeEach(() => { vi.clearAllMocks(); vi.useFakeTimers(); });
 
     afterEach(() => {
         vi.useRealTimers();

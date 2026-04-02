@@ -5,14 +5,7 @@ import VibrantHeader from '../components/VibrantHeader';
 import { db } from '../lib/firebase';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { 
-    SparklesIcon, 
-    CheckCircleIcon, 
-    ShieldCheckIcon,
-    DocumentChartBarIcon,
-    UserGroupIcon,
-    ArrowPathIcon
-} from '@heroicons/react/24/outline';
+import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, UserGroupIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function PremiumUpgrade() {
     const { user, userTier } = useAuth();
@@ -63,10 +56,7 @@ export default function PremiumUpgrade() {
                 }
             });
 
-        } catch (err: unknown) {
-            setIsSubscribing(false);
-            alert(`Failed to initialize checkout: ${(err as Error).message}`);
-        }
+        } catch (err: unknown) { setIsSubscribing(false); alert(`Failed to initialize checkout: ${(err as Error).message}`); }
     };
 
     const handleManageSubscription = async () => {

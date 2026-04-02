@@ -11,37 +11,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
-import { 
-    collection, 
-    query, 
-    where, 
-    orderBy, 
-    getDocs, 
-    Timestamp, 
-    type Firestore 
-} from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { groupItemsByYearAndMonth } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
 import { Virtuoso } from 'react-virtuoso';
 import { format } from 'date-fns'; 
-import { 
-    TrashIcon, 
-    PencilSquareIcon, 
-    ShieldExclamationIcon, 
-    ShareIcon, 
-    CheckIcon, 
-    SparklesIcon, 
-    SunIcon, 
-    CloudIcon, 
-    BoltIcon, 
-    MagnifyingGlassIcon,
-    XMarkIcon,
-    ChevronDownIcon, 
-    ChevronRightIcon,
-    CalendarDaysIcon
-} from '@heroicons/react/24/outline';
+import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
@@ -83,10 +60,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   });
 
   // Default: Current Month of Current Year is expanded (Format: "YYYY-M")
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => {
-      const now = new Date();
-      return new Set([`${now.getFullYear()}-${now.getMonth()}`]);
-  });
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => { const now = new Date(); return new Set([`${now.getFullYear()}-${now.getMonth()}`]); });
 
   // Search Param State
   const searchQuery = searchParams.get('search') || '';
@@ -221,11 +195,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this entry?')) return;
-    try {
-      await deleteJournal(id);
-    } catch (error) {
+  const handleDelete = async (id: string) => { if (!confirm('Delete this entry?')) return; try { await deleteJournal(id); } catch (error) {
       console.error(error);
     }
   };
@@ -237,11 +207,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     if (navigator.share) {
         try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
     }
-    try {
-        await navigator.clipboard.writeText(textToShare);
-        setCopiedId(entry.id);
-        setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) { console.error('Failed to copy', err); }
+    try { await navigator.clipboard.writeText(textToShare); setCopiedId(entry.id); setTimeout(() => setCopiedId(null), 2000); } catch (err) { console.error('Failed to copy', err); }
   };
 
   if (isLoading) return <div className="text-center py-10 text-gray-400">Loading History...</div>;

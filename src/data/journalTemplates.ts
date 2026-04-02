@@ -4,12 +4,7 @@
  * Content is formatted in Markdown.
  */
 
-export interface StaticJournalTemplate {
-    id: string;
-    name: string;
-    content: string;
-    tags: string[];
-}
+export interface StaticJournalTemplate { id: string; name: string; content: string; tags: string[]; }
 
 export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
     {

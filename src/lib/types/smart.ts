@@ -30,53 +30,18 @@ export interface CBAPayload {
     disadvantagesStopping: string[];
 }
 
-export interface ABCPayload {
-    activatingEvent: string;
-    beliefs: string;
-    consequences: string;
-    dispute: string;
-    effectiveBelief: string;
+export interface ABCPayload { activatingEvent: string; beliefs: string; consequences: string; dispute: string; effectiveBelief: string; }
+
+export interface DENTSPayload { deny: string; escape: string; neutralize: string; tasks: string; swap: string; }
+
+export interface FiveQuestionsPayload { q1: string; q2: string; q3: string; q4: string; q5: string; }
+
+export interface LifestyleBalancePayload { physical: number; mental: number; relationships: number; work: number; spiritual: number; leisure: number; }
+
+export interface PersonifyPayload { personas: Array<{ id: number; name: string; action: string; result: string; }>;
 }
 
-export interface DENTSPayload {
-    deny: string;
-    escape: string;
-    neutralize: string;
-    tasks: string;
-    swap: string;
-}
-
-export interface FiveQuestionsPayload {
-    q1: string;
-    q2: string;
-    q3: string;
-    q4: string;
-    q5: string;
-}
-
-export interface LifestyleBalancePayload {
-    physical: number;
-    mental: number;
-    relationships: number;
-    work: number;
-    spiritual: number;
-    leisure: number;
-}
-
-export interface PersonifyPayload {
-    personas: Array<{
-        id: number;
-        name: string;
-        action: string;
-        result: string;
-    }>;
-}
-
-export interface SelfCompassionPayload {
-    kindness: string;
-    humanity: string;
-    mindfulness: string;
-}
+export interface SelfCompassionPayload { kindness: string; humanity: string; mindfulness: string; }
 
 export interface SmartGoalPayload {
     specific: string;
@@ -91,12 +56,5 @@ export interface SmartGoalPayload {
     }>;
 }
 
-export interface BoundariesPayload {
-    boundaries: Array<{
-        id: number;
-        who: string;
-        what: string;
-        how: string;
-        type: 'Small' | 'Large';
-    }>;
+export interface BoundariesPayload { boundaries: Array<{ id: number; who: string; what: string; how: string; type: 'Small' | 'Large'; }>;
 }

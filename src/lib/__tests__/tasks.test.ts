@@ -34,10 +34,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     };
 });
 
-describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+describe('📋 Tasks Engine (Smart Reset & Streaks)', () => { beforeEach(() => { vi.clearAllMocks(); });
 
     describe('getUserTasks - Lazy Evaluation', () => {
         it('should penalize streak and reset due date for missed recurring tasks', async () => {
@@ -132,22 +129,14 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => {
             );
         });
 
-        it('should decrement streak when unchecking (undo)', async () => {
-            const mockTask = {
-                id: 'task_4',
-                currentStreak: 5,
-                frequency: 'daily',
-            } as unknown as Task;
+        it('should decrement streak when unchecking (undo)', async () => { const mockTask = { id: 'task_4', currentStreak: 5, frequency: 'daily', } as unknown as Task;
 
             await toggleTask(mockTask, false);
             
             // Verify updateDoc was called with streak = 4
             expect(firestore.updateDoc).toHaveBeenCalledWith(
                 undefined,
-                expect.objectContaining({
-                    currentStreak: 4,
-                    status: 'pending'
-                })
+                expect.objectContaining({ currentStreak: 4, status: 'pending' })
             );
         });
     });

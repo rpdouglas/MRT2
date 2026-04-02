@@ -2,17 +2,7 @@ import { useState, useMemo, useEffect, Fragment } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, type Firestore, Timestamp } from 'firebase/firestore';
-import { 
-    PlusIcon, 
-    ClipboardDocumentListIcon,
-    CalendarIcon,
-    ClockIcon,
-    SparklesIcon,
-    ArchiveBoxIcon,
-    ExclamationTriangleIcon,
-    ChevronDownIcon,
-    ChevronRightIcon
-} from '@heroicons/react/24/outline';
+import { PlusIcon, ClipboardDocumentListIcon, CalendarIcon, ClockIcon, SparklesIcon, ArchiveBoxIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Virtuoso } from 'react-virtuoso';
 import VibrantHeader from '../components/VibrantHeader';
@@ -31,12 +21,7 @@ type HistoryItem =
     | { type: 'header-month'; title: string; year: string; monthIndex: number; count: number } 
     | { type: 'task'; data: Task };
 
-const toDate = (val: Date | Timestamp | undefined | null): Date | null => {
-    if (!val) return null;
-    if (val instanceof Timestamp) return val.toDate();
-    if (val instanceof Date) return val;
-    return null;
-}
+const toDate = (val: Date | Timestamp | undefined | null): Date | null => { if (!val) return null; if (val instanceof Timestamp) return val.toDate(); if (val instanceof Date) return val; return null; }
 
 export default function Tasks() {
     const { user } = useAuth();
@@ -58,10 +43,7 @@ export default function Tasks() {
     const [expandedYears, setExpandedYears] = useState<Set<string>>(() => {
         return new Set([new Date().getFullYear().toString()]);
     });
-    const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => {
-        const now = new Date();
-        return new Set([`${now.getFullYear()}-${now.getMonth()}`]);
-    });
+    const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => { const now = new Date(); return new Set([`${now.getFullYear()}-${now.getMonth()}`]); });
 
     useEffect(() => {
         if (!user || !db) return;
@@ -114,10 +96,7 @@ export default function Tasks() {
                 return isAI;
             }
 
-            if (isManual) {
-                if (activeTab === 'this_week') {
-                    return isBefore(date, nextWeekBoundary);
-                }
+            if (isManual) { if (activeTab === 'this_week') { return isBefore(date, nextWeekBoundary); }
                 if (activeTab === 'later') {
                     return !isBefore(date, nextWeekBoundary);
                 }
@@ -182,10 +161,7 @@ export default function Tasks() {
                         count: monthEntries.length 
                     });
 
-                    if (expandedMonths.has(`${year}-${monthIndex}`)) {
-                        monthEntries.forEach(entry => {
-                            result.push({ type: 'task', data: entry as unknown as Task });
-                        });
+                    if (expandedMonths.has(`${year}-${monthIndex}`)) { monthEntries.forEach(entry => { result.push({ type: 'task', data: entry as unknown as Task }); });
                     }
                 });
             }
@@ -219,10 +195,7 @@ export default function Tasks() {
         }
     };
 
-    const handleEdit = (task: Task) => {
-        setEditingTask(task);
-        setIsModalOpen(true);
-    };
+    const handleEdit = (task: Task) => { setEditingTask(task); setIsModalOpen(true); };
 
     const handleDelete = (id: string) => {
         if (confirm("Delete this task?")) deleteTask(id);
@@ -266,18 +239,12 @@ export default function Tasks() {
         toggleTask(params);
     };
 
-    const confirmFutureToggle = () => {
-        if (pendingFutureTask) {
-            toggleTask(pendingFutureTask);
-        }
+    const confirmFutureToggle = () => { if (pendingFutureTask) { toggleTask(pendingFutureTask); }
         setIsFutureModalOpen(false);
         setPendingFutureTask(null);
     };
 
-    const cancelFutureToggle = () => {
-        setIsFutureModalOpen(false);
-        setPendingFutureTask(null);
-    };
+    const cancelFutureToggle = () => { setIsFutureModalOpen(false); setPendingFutureTask(null); };
 
     if (loading) return <div className="p-10 text-center text-gray-400">Loading ledger...</div>;
 

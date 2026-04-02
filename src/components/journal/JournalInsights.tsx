@@ -32,10 +32,10 @@ import {
     CalendarDaysIcon,
     ArrowTrendingUpIcon,
     ArrowTrendingDownIcon,
-    EyeSlashIcon // NEW
+    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import { format, subDays, getDay, startOfDay } from 'date-fns';
-import ManageWordCloudModal from './ManageWordCloudModal'; // NEW
+import ManageWordCloudModal from './ManageWordCloudModal';
 
 // --- TYPES ---
 

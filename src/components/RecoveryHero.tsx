@@ -1,46 +1,14 @@
 import { Link } from 'react-router-dom';
-import { 
-    FireIcon, 
-    ClipboardDocumentCheckIcon,
-    ChartBarIcon, 
-    SparklesIcon,
-    BoltIcon,
-    AcademicCapIcon,
-    BookOpenIcon,
-    ShieldCheckIcon,
-    HeartIcon
-} from '@heroicons/react/24/outline';
+import { FireIcon, ClipboardDocumentCheckIcon, ChartBarIcon, SparklesIcon, BoltIcon, AcademicCapIcon, BookOpenIcon, ShieldCheckIcon, HeartIcon } from '@heroicons/react/24/outline';
 
-interface RecoveryHeroProps {
-    userName: string;
-    daysClean: number;
-    journalStats: {
-        streak: number;
-        consistency: number;
-    };
-    taskStats: {
-        fire: number;
-        rate: number;
-    };
-    workbookStats: {
-        wisdom: number;
-        completion: number;
-    };
-    vitalityStats: { 
-        bioStreak: number;
-        totalLogs: number;
-    };
+interface RecoveryHeroProps { userName: string; daysClean: number; journalStats: { streak: number; consistency: number; };
+    taskStats: { fire: number; rate: number; };
+    workbookStats: { wisdom: number; completion: number; };
+    vitalityStats: { bioStreak: number; totalLogs: number; };
     // Removed onSOSClick prop as button is removed
 }
 
-export default function RecoveryHero({ 
-    userName, 
-    daysClean, 
-    journalStats, 
-    taskStats, 
-    workbookStats,
-    vitalityStats
-}: RecoveryHeroProps) {
+export default function RecoveryHero({ userName, daysClean, journalStats, taskStats, workbookStats, vitalityStats }: RecoveryHeroProps) {
   return (
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
          {/* Background Decoration */}

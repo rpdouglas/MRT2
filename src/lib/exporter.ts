@@ -6,10 +6,7 @@ import type { jsPDF } from 'jspdf';
 import type { UserOptions } from 'jspdf-autotable';
 
 // Type definition for jspdf-autotable extension
-interface jsPDFWithAutoTable extends jsPDF {
-  lastAutoTable: {
-    finalY: number;
-  };
+interface jsPDFWithAutoTable extends jsPDF { lastAutoTable: { finalY: number; };
   autoTable: (options: UserOptions) => void;
 }
 
@@ -74,20 +71,13 @@ export async function prepareDataForExport(
     (p) => onProgress(80 + Math.floor(p * 0.2)) // Map to 80-100% range
   );
 
-  return {
-    ...data,
-    journals: decryptedJournals,
-    workbookAnswers: decryptedWorkbooks
-  };
+  return { ...data, journals: decryptedJournals, workbookAnswers: decryptedWorkbooks };
 }
 
 /**
  * Generates a JSON file blob.
  */
-export function generateJSON(data: FullUserData): Blob {
-  const jsonStr = JSON.stringify(data, null, 2);
-  return new Blob([jsonStr], { type: "application/json" });
-}
+export function generateJSON(data: FullUserData): Blob { const jsonStr = JSON.stringify(data, null, 2); return new Blob([jsonStr], { type: "application/json" }); }
 
 /**
  * Generates a formatted PDF using jsPDF (Dynamic Import).
@@ -162,11 +152,7 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
     ];
   });
 
-  autoTable(doc, {
-    startY: 25,
-    head: [['Title', 'Category', 'Priority', 'Frequency', 'Status']],
-    body: taskRows,
-  });
+  autoTable(doc, { startY: 25, head: [['Title', 'Category', 'Priority', 'Frequency', 'Status']], body: taskRows, });
 
   return doc.output('blob');
 }

@@ -6,14 +6,7 @@
 
 import React from 'react';
 import { SmartToolContainer } from './SmartToolContainer';
-import { 
-    HandRaisedIcon, 
-    ArrowRightOnRectangleIcon, 
-    ShieldExclamationIcon, 
-    ClipboardDocumentCheckIcon, 
-    ArrowPathIcon, 
-    InformationCircleIcon 
-} from '@heroicons/react/24/outline';
+import { HandRaisedIcon, ArrowRightOnRectangleIcon, ShieldExclamationIcon, ClipboardDocumentCheckIcon, ArrowPathIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import type { DENTSPayload } from '../../lib/types/smart';
 
 const EXPLANATION = "The D.E.N.T.S. strategy helps you pre-plan for high-risk situations (like a party or a stressful family gathering). Fill this out before you go, so you have a concrete escape and distraction plan if an urge strikes.";
@@ -74,14 +67,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({
     );
 };
 
-export const DentsTool: React.FC = () => {
-    const initialData: DENTSPayload = {
-        deny: '',
-        escape: '',
-        neutralize: '',
-        tasks: '',
-        swap: ''
-    };
+export const DentsTool: React.FC = () => { const initialData: DENTSPayload = { deny: '', escape: '', neutralize: '', tasks: '', swap: '' };
 
     return (
         <SmartToolContainer<DENTSPayload>

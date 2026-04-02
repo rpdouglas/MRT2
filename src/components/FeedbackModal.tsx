@@ -1,24 +1,13 @@
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-    ChatBubbleLeftEllipsisIcon, 
-    XMarkIcon, 
-    BugAntIcon, 
-    LightBulbIcon, 
-    DocumentTextIcon,
-    PaperAirplaneIcon,
-    ExclamationCircleIcon
-} from '@heroicons/react/24/outline';
+import { ChatBubbleLeftEllipsisIcon, XMarkIcon, BugAntIcon, LightBulbIcon, DocumentTextIcon, PaperAirplaneIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { useBuildInfo } from '../lib/versioning';
 import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-interface FeedbackModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
+interface FeedbackModalProps { isOpen: boolean; onClose: () => void; }
 
 type Category = 'bug' | 'suggestion' | 'content';
 
@@ -52,11 +41,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             });
             
             setIsSuccess(true);
-            setTimeout(() => {
-                setIsSuccess(false);
-                setMessage('');
-                onClose();
-            }, 2000);
+            setTimeout(() => { setIsSuccess(false); setMessage(''); onClose(); }, 2000);
         } catch (error) {
             console.error("Feedback submission failed:", error);
             alert("Failed to send feedback. It will sync when you are back online.");

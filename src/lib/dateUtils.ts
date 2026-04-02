@@ -1,12 +1,5 @@
 // src/lib/dateUtils.ts
-import { 
-    addMonths, 
-    addYears, 
-    differenceInDays, 
-    differenceInMonths, 
-    differenceInYears,
-    startOfDay
-} from 'date-fns';
+import { addMonths, addYears, differenceInDays, differenceInMonths, differenceInYears, startOfDay } from 'date-fns';
 
 export type RecurrenceType = 'once' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'monthly-relative';
 
@@ -19,12 +12,7 @@ export interface RecurrenceConfig {
   dayOfWeek?: number; // 0-6 (for monthly-relative)
 }
 
-export interface SobrietyDuration {
-    years: number;
-    months: number;
-    days: number;
-    totalDays: number;
-}
+export interface SobrietyDuration { years: number; months: number; days: number; totalDays: number; }
 
 /**
  * Calculates the breakdown of time since a sobriety date.

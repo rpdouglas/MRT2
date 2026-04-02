@@ -3,14 +3,7 @@ import { Link } from 'react-router-dom';
 import { WORKBOOKS } from '../data/workbooks';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { 
-    BookOpenIcon, 
-    StarIcon, 
-    HeartIcon, 
-    AcademicCapIcon,
-    ChevronRightIcon,
-    DocumentTextIcon
-} from '@heroicons/react/24/outline';
+import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 export default function Workbooks() {
   const [activeTab, setActiveTab] = useState<'workbooks' | 'literature'>('workbooks');

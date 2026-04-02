@@ -1,29 +1,9 @@
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  getDocs, 
-  deleteDoc, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  Timestamp, 
-  type Firestore, 
-  type QueryDocumentSnapshot, 
-  type DocumentData, 
-  type WithFieldValue
-} from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, query, where, orderBy, Timestamp, type Firestore, type QueryDocumentSnapshot, type DocumentData, type WithFieldValue } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
 import type { RecurrenceConfig } from "./dateUtils";
 
-export const createConverter = <T extends object>() => ({
-  toFirestore(data: WithFieldValue<T>): DocumentData {
-    return data;
-  },
+export const createConverter = <T extends object>() => ({ toFirestore(data: WithFieldValue<T>): DocumentData { return data; },
   fromFirestore(snapshot: QueryDocumentSnapshot): T {
     const data = snapshot.data();
     const converted = Object.fromEntries(
@@ -70,12 +50,7 @@ export interface UserProfile {
   timezone?: string;
 }
 
-export interface JournalTemplate {
-  id: string;
-  name: string;
-  prompts: string[]; 
-  defaultTags: string[]; 
-}
+export interface JournalTemplate { id: string; name: string; prompts: string[]; defaultTags: string[]; }
 
 export interface JournalEntry {
   id?: string;

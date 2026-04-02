@@ -2,43 +2,15 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  updateDoc,
-  Timestamp,
-  type Firestore 
-} from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Confetti from 'react-confetti';
-import { 
-  calculateJournalStats, 
-  calculateTaskStats, 
-  calculateWorkbookStats, 
-  calculateVitalityStats,
-  calculateUserLevel
-} from '../lib/gamification';
+import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats, calculateUserLevel } from '../lib/gamification';
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
-import { 
-  HomeIcon, 
-  FireIcon, 
-  ChartBarIcon, 
-  SparklesIcon, 
-  HeartIcon, 
-  ArrowDownTrayIcon,
-  UserGroupIcon,
-  PuzzlePieceIcon,
-  InformationCircleIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, UserGroupIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
@@ -64,16 +36,10 @@ export default function Dashboard() {
   // Confetti State
   const [showConfetti, setShowConfetti] = useState(false);
   const [recycleConfetti, setRecycleConfetti] = useState(true);
-  const [windowSize, setWindowSize] = useState({
-      width: typeof window !== 'undefined' ? window.innerWidth : 0,
-      height: typeof window !== 'undefined' ? window.innerHeight : 0,
-  });
+  const [windowSize, setWindowSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 0, height: typeof window !== 'undefined' ? window.innerHeight : 0, });
 
   // Handle window resize for Confetti
-  useEffect(() => {
-      const handleResize = () => {
-          setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-      };
+  useEffect(() => { const handleResize = () => { setWindowSize({ width: window.innerWidth, height: window.innerHeight }); };
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
   }, []);

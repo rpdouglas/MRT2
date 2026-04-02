@@ -1,13 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { 
-    generateKey, 
-    encrypt, 
-    decrypt, 
-    clearKey, 
-    isVaultUnlocked, 
-    generateSalt,
-    computePinHash 
-} from './crypto';
+import { generateKey, encrypt, decrypt, clearKey, isVaultUnlocked, generateSalt, computePinHash } from './crypto';
 
 describe('🛡️ Zero-Knowledge Security Engine', () => {
 
@@ -26,11 +18,7 @@ describe('🛡️ Zero-Knowledge Security Engine', () => {
         expect(salt1.length).toBeGreaterThan(10);
     });
 
-    it('should derive a key and unlock the vault', async () => {
-        expect(isVaultUnlocked()).toBe(false);
-        await generateKey(TEST_PIN, TEST_SALT);
-        expect(isVaultUnlocked()).toBe(true);
-    });
+    it('should derive a key and unlock the vault', async () => { expect(isVaultUnlocked()).toBe(false); await generateKey(TEST_PIN, TEST_SALT); expect(isVaultUnlocked()).toBe(true); });
 
     it('should successfully encrypt and decrypt text (Round Trip)', async () => {
         await generateKey(TEST_PIN, TEST_SALT);

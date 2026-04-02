@@ -1,17 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { 
-    calculateUserLevel, 
-    calculateJournalStats, 
-    calculateTaskStats 
-} from '../gamification';
+import { calculateUserLevel, calculateJournalStats, calculateTaskStats } from '../gamification';
 import { Timestamp } from 'firebase/firestore';
 
 // Helper to mock dates easily
-const mockDate = (daysAgo: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() - daysAgo);
-    return d;
-};
+const mockDate = (daysAgo: number) => { const d = new Date(); d.setDate(d.getDate() - daysAgo); return d; };
 
 // Helper to mock Timestamp
 const mockTimestamp = (daysAgo: number) => {

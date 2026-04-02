@@ -67,10 +67,7 @@ export function useTaskOperations() {
             }
             return { previousTasks };
         },
-        onError: (_err, _newVar, context) => {
-            if (context?.previousTasks) {
-                queryClient.setQueryData(queryKey, context.previousTasks);
-            }
+        onError: (_err, _newVar, context) => { if (context?.previousTasks) { queryClient.setQueryData(queryKey, context.previousTasks); }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
@@ -127,10 +124,7 @@ export function useTaskOperations() {
             }
             return { previousTasks };
         },
-        onError: (_err, _vars, context) => {
-            if (context?.previousTasks) {
-                queryClient.setQueryData(queryKey, context.previousTasks);
-            }
+        onError: (_err, _vars, context) => { if (context?.previousTasks) { queryClient.setQueryData(queryKey, context.previousTasks); }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
@@ -138,10 +132,7 @@ export function useTaskOperations() {
     });
 
     // --- 3. DELETE TASK ---
-    const deleteTaskMutation = useMutation({
-        mutationFn: async (taskId: string) => {
-            await TaskLib.deleteTask(taskId);
-        },
+    const deleteTaskMutation = useMutation({ mutationFn: async (taskId: string) => { await TaskLib.deleteTask(taskId); },
         onMutate: async (taskId) => {
             await queryClient.cancelQueries({ queryKey });
             const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
@@ -151,10 +142,7 @@ export function useTaskOperations() {
             }
             return { previousTasks };
         },
-        onError: (_err, _vars, context) => {
-            if (context?.previousTasks) {
-                queryClient.setQueryData(queryKey, context.previousTasks);
-            }
+        onError: (_err, _vars, context) => { if (context?.previousTasks) { queryClient.setQueryData(queryKey, context.previousTasks); }
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });

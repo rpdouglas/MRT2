@@ -7,21 +7,7 @@
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  XMarkIcon, 
-  HomeIcon, 
-  BookOpenIcon, 
-  UserCircleIcon, 
-  ArrowLeftOnRectangleIcon, 
-  ClipboardDocumentListIcon, 
-  AcademicCapIcon, 
-  HeartIcon, 
-  LightBulbIcon,
-  CommandLineIcon,
-  WifiIcon,
-  LockClosedIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/react/24/outline';
+import { XMarkIcon, HomeIcon, BookOpenIcon, UserCircleIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentListIcon, AcademicCapIcon, HeartIcon, LightBulbIcon, CommandLineIcon, WifiIcon, LockClosedIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
@@ -55,11 +41,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleLock = () => {
-      lockVault();
-      setSidebarOpen(false);
-      navigate('/dashboard');
-  };
+  const handleLock = () => { lockVault(); setSidebarOpen(false); navigate('/dashboard'); };
 
   const performAutoBackup = useCallback(async () => {
     if (!user || !db || !driveAccessToken || !isVaultUnlocked || !isOnline) return;
@@ -93,11 +75,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
   }, [user, driveAccessToken, isVaultUnlocked, isOnline]);
 
-  useEffect(() => {
-    if (isVaultUnlocked && driveAccessToken && isOnline) {
-      const timer = setTimeout(() => {
-        performAutoBackup();
-      }, 10000);
+  useEffect(() => { if (isVaultUnlocked && driveAccessToken && isOnline) { const timer = setTimeout(() => { performAutoBackup(); }, 10000);
       return () => clearTimeout(timer);
     }
   }, [isVaultUnlocked, driveAccessToken, performAutoBackup, isOnline]);

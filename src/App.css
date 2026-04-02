@@ -1,69 +1,26 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 /* --- PROJ-28: Resentment Burner Animations --- */
 @keyframes burn-away {
   0% { 
       filter: blur(0px); 
       transform: scale(1); 
       opacity: 1; 
-      color: #1e293b; /* slate-800 */
+      color: #1e293b;
       background-color: #fff; 
   }
   30% { 
       filter: blur(1px); 
       transform: scale(0.98); 
       opacity: 0.9; 
-      color: #9f1239; /* rose-800 */
-      background-color: #ffedd5; /* orange-50 */
+      color: #9f1239;
+      background-color: #ffedd5;
       box-shadow: 0 0 30px rgba(234, 88, 12, 0.6); 
   }
   60% { 
       filter: blur(4px); 
       transform: scale(0.95); 
       opacity: 0.6; 
-      color: #52525b; /* zinc-600 (ash) */
-      background-color: #e4e4e7; /* zinc-200 */
+      color: #52525b;
+      background-color: #e4e4e7;
       box-shadow: 0 0 10px rgba(82, 82, 91, 0.3); 
   }
   100% { 
@@ -78,5 +35,5 @@
 
 .animate-burn {
   animation: burn-away 2.5s ease-in-out forwards;
-  pointer-events: none; /* Prevent interaction while burning */
+  pointer-events: none;
 }

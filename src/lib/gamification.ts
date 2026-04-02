@@ -1,4 +1,3 @@
-// src/lib/gamification.ts
 import { Timestamp } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
@@ -34,18 +33,9 @@ export interface WorkbookStats {
     masterCompletion: number; // % of total questions
 }
 
-export interface VitalityStats {
-    bioStreak: number;
-    totalLogs: number;
-}
+export interface VitalityStats { bioStreak: number; totalLogs: number; }
 
-export interface LevelData {
-    level: number;
-    title: string;
-    currentXP: number;
-    nextLevelXP: number;
-    progressPercent: number;
-}
+export interface LevelData { level: number; title: string; currentXP: number; nextLevelXP: number; progressPercent: number; }
 
 export interface UserStats {
     totalXP: number;
@@ -54,27 +44,22 @@ export interface UserStats {
 }
 
 // Minimal interfaces for input data to avoid 'any'
-interface ScorableJournal {
-    tags?: string[];
-    content?: string;
-    moodScore?: number;
-    createdAt: { toDate: () => Date } | Date | Timestamp; 
-}
+interface ScorableJournal { tags?: string[]; content?: string; moodScore?: number; createdAt: { toDate: () => Date } | Date | Timestamp; }
 
-interface ScorableTask {
-    status?: string;
-    priority?: 'High' | 'Medium' | 'Low';
-    completed?: boolean;
-    currentStreak?: number;
-}
+interface ScorableTask { status?: string; priority?: 'High' | 'Medium' | 'Low'; completed?: boolean; currentStreak?: number; }
 
 // --- HELPER FUNCTIONS ---
 
 // Helper to check if two dates are the same day
-const isSameDay = (d1: Date, d2: Date) => {
-  return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
+const isSameDay = (d1: Date, d2: Date) => { 
+    return d1.getFullYear() === d2.getFullYear() && 
+           d1.getMonth() === d2.getMonth() && 
+           d1.getDate() === d2.getDate(); 
+};
+
+// Helper to safely extract Date from Firestore Timestamp or Date object
+const getNormalizedDate = (createdAt: { toDate: () => Date } | Date | Timestamp): Date => {
+    return createdAt instanceof Date ? createdAt : (createdAt as Timestamp).toDate();
 };
 
 const getTitle = (level: number): string => {
@@ -114,11 +99,54 @@ const calculateLevel = (xp: number): LevelData => {
     };
 };
 
+// DRY Helper to calculate consecutive day streaks
+const calculateConsecutiveStreak = (entries: ScorableJournal[]): number => {
+    if (!entries || entries.length === 0) return 0;
+
+    const today = new Date();
+    const uniqueDays = new Set<string>();
+    
+    entries.forEach(j => {
+        const d = getNormalizedDate(j.createdAt);
+        uniqueDays.add(d.toDateString());
+    });
+
+    const sortedDates = Array.from(uniqueDays)
+        .map(d => new Date(d))
+        .sort((a, b) => b.getTime() - a.getTime());
+
+    if (sortedDates.length === 0) return 0;
+
+    let currentStreak = 0;
+    const lastPostDate = sortedDates[0];
+
+    const postedToday = isSameDay(lastPostDate, today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const postedYesterday = isSameDay(lastPostDate, yesterday);
+
+    if (postedToday || postedYesterday) {
+        currentStreak = 1;
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = sortedDates[i];
+            const next = sortedDates[i+1];
+            
+            const diffTime = Math.abs(current.getTime() - next.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return currentStreak;
+};
+
 // --- CORE CALCULATORS ---
 
-/**
- * Calculates the holistic User Level and Archetype based on all recovery data.
- */
 export const calculateUserLevel = (
     journals: ScorableJournal[], 
     tasks: ScorableTask[], 
@@ -134,7 +162,6 @@ export const calculateUserLevel = (
         
         // Vitality Check (Different Bucket)
         if (j.tags && j.tags.includes('Vitality')) {
-            // Vitality logs count towards vitality, not reflection
             xpBreakdown.vitality += XP_VALUES.VITALITY_LOG;
             xp += XP_VALUES.VITALITY_LOG;
             return; 
@@ -176,7 +203,6 @@ export const calculateUserLevel = (
     const maxVal = Math.max(xpBreakdown.wisdom, xpBreakdown.action, xpBreakdown.vitality, xpBreakdown.reflection);
     let archetype = "Balanced";
     
-    // Simple logic: if one category clearly dominates
     if (maxVal > 0) {
         if (maxVal === xpBreakdown.wisdom) archetype = "Scholar";
         else if (maxVal === xpBreakdown.action) archetype = "Doer";
@@ -184,178 +210,65 @@ export const calculateUserLevel = (
         else if (maxVal === xpBreakdown.reflection) archetype = "Philosopher";
     }
 
-    return {
-        totalXP: Math.floor(xp),
-        levelData: calculateLevel(xp),
-        archetype
-    };
+    return { totalXP: Math.floor(xp), levelData: calculateLevel(xp), archetype };
 };
 
 export const calculateJournalStats = (journals: ScorableJournal[]): GamificationStats => {
     if (!journals || journals.length === 0) {
-        return { 
-            streakDays: 0, 
-            totalEntries: 0, 
-            averageMood: 0, 
-            journalStreak: 0, 
-            consistencyRate: 0, 
-            totalWords: 0 
-        };
+        return { streakDays: 0, totalEntries: 0, averageMood: 0, journalStreak: 0, consistencyRate: 0, totalWords: 0 };
     }
 
-    // Sort descending (newest first)
-    // Safely handle Firestore Timestamps vs Date objects
     const sorted = [...journals].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
+        const dateA = getNormalizedDate(a.createdAt);
+        const dateB = getNormalizedDate(b.createdAt);
         return dateB.getTime() - dateA.getTime();
     });
     
     const today = new Date();
-    
-    // 1. Total Entries
     const totalEntries = journals.length;
-
-    // 2. Average Mood
     const moodSum = journals.reduce((acc, curr) => acc + (curr.moodScore || 0), 0);
     const averageMood = totalEntries > 0 ? parseFloat((moodSum / totalEntries).toFixed(1)) : 0;
+    const currentStreak = calculateConsecutiveStreak(journals);
 
-    // 3. Journal Streak
-    let currentStreak = 0;
-    
-    // Check if posted today
-    const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
-    
-    const postedToday = isSameDay(lastPostDate, today);
-    // If not posted today, check if posted yesterday to maintain streak
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const postedYesterday = isSameDay(lastPostDate, yesterday);
-
-    if (postedToday || postedYesterday) {
-        currentStreak = 1;
-        // Iterate backwards to count consecutive days
-        const uniqueDays = new Set<string>();
-        journals.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
-            uniqueDays.add(d.toDateString());
-        });
-        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-        
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-            const current = sortedDates[i];
-            const next = sortedDates[i+1];
-            
-            // Difference in days
-            const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) {
-                currentStreak++;
-            } else {
-                break;
-            }
-        }
-    }
-
-    // 4. Consistency (Entries / Week)
     const oldestEntry = sorted[sorted.length - 1];
-    const firstDate = oldestEntry.createdAt instanceof Date ? oldestEntry.createdAt : (oldestEntry.createdAt as Timestamp).toDate();
+    const firstDate = getNormalizedDate(oldestEntry.createdAt);
     const timeSpanDays = Math.max(1, (today.getTime() - firstDate.getTime()) / (1000 * 3600 * 24));
     const weeksActive = Math.ceil(timeSpanDays / 7);
     const consistencyRate = parseFloat((totalEntries / weeksActive).toFixed(1));
 
-    // 5. Total Words
-    const totalWords = journals.reduce((acc, curr) => {
-        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0;
-        return acc + words;
+    const totalWords = journals.reduce((acc, curr) => { 
+        const words = curr.content ? curr.content.trim().split(/\s+/).length : 0; 
+        return acc + words; 
     }, 0);
 
-    return {
-        streakDays: currentStreak,
-        totalEntries,
-        averageMood,
-        journalStreak: currentStreak,
-        consistencyRate,
-        totalWords
-    };
+    return { streakDays: currentStreak, totalEntries, averageMood, journalStreak: currentStreak, consistencyRate, totalWords };
 };
 
-export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
-    if (!tasks || tasks.length === 0) {
-        return { completionRate: 0, habitFire: 0 };
-    }
+export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => { 
+    if (!tasks || tasks.length === 0) return { completionRate: 0, habitFire: 0 }; 
 
     const completed = tasks.filter(t => t.completed || t.status === 'completed').length;
     const completionRate = Math.round((completed / tasks.length) * 100);
 
-    // FIX: CHANGED FROM 'MAX STREAK' TO 'SUM OF STREAKS'
-    // This ensures new habits immediately contribute to the score.
     let totalMomentum = 0;
-    tasks.forEach(t => {
-        if (t.currentStreak && t.currentStreak > 0) {
-            totalMomentum += t.currentStreak;
-        }
+    tasks.forEach(t => { 
+        if (t.currentStreak && t.currentStreak > 0) totalMomentum += t.currentStreak; 
     });
 
     return { completionRate, habitFire: totalMomentum };
 };
 
-export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => {
-    return {
-        wisdomScore: answersSnapshotSize,
-        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100)
-    };
+export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => { 
+    return { wisdomScore: answersSnapshotSize, masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100) };
 };
 
 export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {
     if (!journals) return { bioStreak: 0, totalLogs: 0 };
-
-    // Filter for entries tagged 'Vitality'
     const vitalityLogs = journals.filter(j => j.tags && j.tags.includes('Vitality'));
-    
     if (vitalityLogs.length === 0) return { bioStreak: 0, totalLogs: 0 };
 
-    // 1. Total Logs
     const totalLogs = vitalityLogs.length;
-
-    // 2. Bio Streak (Same logic as Journal Streak)
-    const sorted = [...vitalityLogs].sort((a, b) => {
-        const dateA = a.createdAt instanceof Date ? a.createdAt : (a.createdAt as Timestamp).toDate();
-        const dateB = b.createdAt instanceof Date ? b.createdAt : (b.createdAt as Timestamp).toDate();
-        return dateB.getTime() - dateA.getTime();
-    });
-    const today = new Date();
-    
-    let currentStreak = 0;
-    const firstEntry = sorted[0];
-    const lastPostDate = firstEntry.createdAt instanceof Date ? firstEntry.createdAt : (firstEntry.createdAt as Timestamp).toDate();
-    
-    const postedToday = isSameDay(lastPostDate, today);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const postedYesterday = isSameDay(lastPostDate, yesterday);
-
-    if (postedToday || postedYesterday) {
-        currentStreak = 1;
-        const uniqueDays = new Set<string>();
-        vitalityLogs.forEach(j => {
-            const d = j.createdAt instanceof Date ? j.createdAt : (j.createdAt as Timestamp).toDate();
-            uniqueDays.add(d.toDateString());
-        });
-        const sortedDates = Array.from(uniqueDays).map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-        
-        for (let i = 0; i < sortedDates.length - 1; i++) {
-            const current = sortedDates[i];
-            const next = sortedDates[i+1];
-            const diffTime = Math.abs(current.getTime() - next.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) currentStreak++;
-            else break;
-        }
-    }
+    const currentStreak = calculateConsecutiveStreak(vitalityLogs);
 
     return { bioStreak: currentStreak, totalLogs };
 };

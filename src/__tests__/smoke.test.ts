@@ -7,10 +7,7 @@ import { describe, it, expect } from 'vitest';
  * * Real unit tests for Crypto and Components will be added in Phase 3.
  */
 
-describe('System Sanity Check', () => {
-  it('should pass this basic truth test', () => {
-    expect(true).toBe(true);
-  });
+describe('System Sanity Check', () => { it('should pass this basic truth test', () => { expect(true).toBe(true); });
 
   it('should verify basic math capability', () => {
     expect(1 + 1).toBe(2);

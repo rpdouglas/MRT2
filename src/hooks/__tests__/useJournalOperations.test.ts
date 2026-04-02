@@ -102,12 +102,7 @@ describe('📓 useJournalOperations Hook', () => {
         expect(firestore.collection).toHaveBeenCalledWith(expect.anything(), 'journals');
         expect(firestore.addDoc).toHaveBeenCalledWith(
             undefined, // Collection ref (mocked return of collection())
-            expect.objectContaining({
-                uid: 'test-user-123',
-                content: payload.content,
-                moodScore: 8,
-                isEncrypted: true
-            })
+            expect.objectContaining({ uid: 'test-user-123', content: payload.content, moodScore: 8, isEncrypted: true })
         );
 
         // Verify Cache Invalidation (Critical for Ticket 3.1 Fix)
@@ -137,10 +132,7 @@ describe('📓 useJournalOperations Hook', () => {
         expect(firestore.doc).toHaveBeenCalledWith(expect.anything(), 'journals', 'journal-123');
         expect(firestore.updateDoc).toHaveBeenCalledWith(
             'mock-doc-ref',
-            expect.objectContaining({
-                content: 'Updated Content',
-                moodScore: 5
-            })
+            expect.objectContaining({ content: 'Updated Content', moodScore: 5 })
         );
 
         // Verify Cache Invalidation
