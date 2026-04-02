@@ -1,21 +1,6 @@
-/**
- * GITHUB COMMENT:
- * [VaultGate.tsx]
- * CLEANUP: Removed unused 'err' variable and redundant eslint-disable directives.
- * MAINTAINED: Recovery Wizard UI and Emergency Reset flow logic.
- */
 import React, { useState } from 'react';
 import { useEncryption } from '../contexts/EncryptionContext';
-import { 
-  LockClosedIcon, 
-  KeyIcon, 
-  ShieldCheckIcon, 
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  TrashIcon,
-  ArrowUpTrayIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+import { LockClosedIcon, KeyIcon, ShieldCheckIcon, ExclamationCircleIcon, ExclamationTriangleIcon, TrashIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface VaultGateProps {
   children: React.ReactNode;
@@ -60,10 +45,7 @@ export default function VaultGate({ children }: VaultGateProps) {
       setPin('');
       setError('');
       window.location.reload();
-    } catch (e) {
-      console.error("Reset failed", e);
-      setError("Reset failed. Please check connection.");
-    } finally {
+    } catch (e) { console.error("Reset failed", e); setError("Reset failed. Please check connection."); } finally {
       setIsSubmitting(false);
     }
   };
@@ -75,10 +57,7 @@ export default function VaultGate({ children }: VaultGateProps) {
         setError("PIN must be at least 4 digits.");
         return;
       }
-      if (pin !== confirmPin) {
-        setError("PINs do not match.");
-        return;
-      }
+      if (pin !== confirmPin) { setError("PINs do not match."); return; }
       setIsSubmitting(true);
       try {
         await setupVault(pin);

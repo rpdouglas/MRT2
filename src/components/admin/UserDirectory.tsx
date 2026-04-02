@@ -2,16 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
 import type { UserProfile } from '../../lib/db';
-import { 
-    StarIcon, 
-    CheckCircleIcon, 
-    UserIcon,
-    ArrowPathIcon,
-    ClockIcon,
-    ShieldCheckIcon,
-    UserMinusIcon,
-    ArrowDownTrayIcon
-} from '@heroicons/react/24/solid';
+import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 
 export default function UserDirectory() {
     const [users, setUsers] = useState<UserProfile[]>([]);
@@ -52,10 +43,7 @@ export default function UserDirectory() {
             const userRef = doc(db, 'users', uid);
             await updateDoc(userRef, { role: newRole });
             setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
-        } catch (err: unknown) {
-            console.error("Failed to update role", err);
-            alert("Role update failed.");
-        } finally {
+        } catch (err: unknown) { console.error("Failed to update role", err); alert("Role update failed."); } finally {
             setActionLoading(null);
         }
     };

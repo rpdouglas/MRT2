@@ -20,11 +20,7 @@ interface LayoutContextType {
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function useLayout() {
-  const context = useContext(LayoutContext);
-  if (context === undefined) {
-    throw new Error('useLayout must be used within a LayoutProvider');
-  }
+export function useLayout() { const context = useContext(LayoutContext); if (context === undefined) { throw new Error('useLayout must be used within a LayoutProvider'); }
   return context;
 }
 
@@ -49,15 +45,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
   const toggleSOS = () => setIsSOSOpen(prev => !prev);
 
-  const value = {
-    sidebarOpen,
-    setSidebarOpen,
-    isSOSOpen,
-    setIsSOSOpen,
-    toggleSidebar,
-    toggleSOS,
-    isOnline
-  };
+  const value = { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSidebar, toggleSOS, isOnline };
 
   return (
     <LayoutContext.Provider value={value}>

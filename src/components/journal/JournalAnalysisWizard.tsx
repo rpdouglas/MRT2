@@ -1,21 +1,6 @@
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-    SparklesIcon, 
-    XMarkIcon, 
-    CalendarDaysIcon, 
-    ChartBarIcon, 
-    GlobeAmericasIcon, 
-    CheckCircleIcon, 
-    ArrowPathIcon,
-    BoltIcon,
-    PlusCircleIcon,
-    TrophyIcon,
-    LockClosedIcon,
-    ShieldExclamationIcon,
-    LinkIcon,
-    HashtagIcon
-} from '@heroicons/react/24/outline';
+import { SparklesIcon, XMarkIcon, CalendarDaysIcon, ChartBarIcon, GlobeAmericasIcon, CheckCircleIcon, ArrowPathIcon, BoltIcon, PlusCircleIcon, TrophyIcon, LockClosedIcon, ShieldExclamationIcon, LinkIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,20 +13,11 @@ import { useRateLimits } from '../../hooks/useRateLimits';
 import { useNavigate } from 'react-router-dom';
 import type { ElementType } from 'react';
 
-interface WizardProps {
-    isOpen: boolean;
-    onClose: () => void;
-    entries: JournalEntry[]; 
-}
+interface WizardProps { isOpen: boolean; onClose: () => void; entries: JournalEntry[]; }
 
 type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
 
-interface EligibilityStatus {
-    allowed: boolean;
-    reason?: string;
-    progress?: number; 
-    requiresUpgrade?: boolean;
-}
+interface EligibilityStatus { allowed: boolean; reason?: string; progress?: number; requiresUpgrade?: boolean; }
 
 interface SelectionCardProps {
     type: AnalysisScope;
@@ -74,10 +50,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     const [saving, setSaving] = useState(false);
     const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-    useEffect(() => {
-        if (isOpen) {
-            setStep('select');
-        }
+    useEffect(() => { if (isOpen) { setStep('select'); }
     }, [isOpen]);
 
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
@@ -130,20 +103,12 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
             const currentTxt = formatSet(currentSet);
             const prevTxt = formatSet(previousSet);
 
-            if (!currentTxt) {
-                alert("Not enough journal data for this period.");
-                setStep('select');
-                return;
-            }
+            if (!currentTxt) { alert("Not enough journal data for this period."); setStep('select'); return; }
 
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
             setStandardResult(analysis);
             setStep('results');
-        } catch (error) {
-            console.error(error);
-            alert("Analysis failed.");
-            setStep('select');
-        }
+        } catch (error) { console.error(error); alert("Analysis failed."); setStep('select'); }
     };
 
     const handleStartAnalysis = async () => {

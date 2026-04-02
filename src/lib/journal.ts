@@ -8,7 +8,7 @@ import {
   Timestamp,
   deleteDoc,
   doc,
-  updateDoc // <--- Added this
+  updateDoc
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { WeatherData } from "./weather";

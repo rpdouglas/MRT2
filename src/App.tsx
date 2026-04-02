@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [src/App.tsx]
- * FEAT: PROJ-28 Registered lazy-loaded route for The Resentment Burner.
- * Placed within PrivateRoute, outside of VaultGate (ephemeral tool requires no encryption keys).
- */
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -41,13 +35,7 @@ const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
 
 // --- QUERY CLIENT ---
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            staleTime: 1000 * 60 * 5, 
-            retry: 1,
-            refetchOnWindowFocus: false
-        }
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
     }
 });
 
@@ -85,196 +73,96 @@ export default function App() {
                         <Route path="/links" element={<Links />} />
                         
                         {/* PROTECTED ROUTES */}
-                        <Route
-                        path="/dashboard"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/dashboard" element={<PrivateRoute>
                             <Dashboard />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
-                        <Route
-                        path="/journal"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/journal" element={<PrivateRoute>
                             <VaultGate>
                                 <Journal />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
-                        <Route
-                        path="/tasks"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/tasks" element={<PrivateRoute>
                             <Tasks />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
-                        <Route
-                        path="/workbooks"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/workbooks" element={<PrivateRoute>
                                 <VaultGate>
                                 <Workbooks />
                                 </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/workbooks/:workbookId"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/workbooks/:workbookId" element={<PrivateRoute>
                             <VaultGate>
                                 <WorkbookDetail />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/workbooks/:workbookId/session/:sectionId"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/workbooks/:workbookId/session/:sectionId" element={<PrivateRoute>
                             <VaultGate>
                                 <WorkbookSession />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
-                        <Route
-                        path="/vitality"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/vitality" element={<PrivateRoute>
                             <Vitality />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
 
-                        <Route
-                        path="/tools"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/tools" element={<PrivateRoute>
                             <ToolsHub />
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/urge-surfer"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/urge-surfer" element={<PrivateRoute>
                             <UrgeSurfer />
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/resentment-burner"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/resentment-burner" element={<PrivateRoute>
                             <ResentmentBurner />
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/cba"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/cba" element={<PrivateRoute>
                             <VaultGate>
                                 <CBATool />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/abc"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/abc" element={<PrivateRoute>
                             <VaultGate>
                                 <ABCTool />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/dents"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/dents" element={<PrivateRoute>
                             <VaultGate>
                                 <DentsTool />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/personify"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/personify" element={<PrivateRoute>
                             <VaultGate>
                                 <PersonifyTool />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
-                        <Route
-                        path="/tools/lifestyle-balance"
-                        element={
-                            <PrivateRoute>
+                            </PrivateRoute>} />
+                        <Route path="/tools/lifestyle-balance" element={<PrivateRoute>
                             <VaultGate>
                                 <LifestyleBalanceTool />
                             </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
 
-                        <Route
-                        path="/insights"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/insights" element={<PrivateRoute>
                                 <VaultGate>
                                 <InsightsLog />
                                 </VaultGate>
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
 
-                        <Route
-                        path="/templates"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/templates" element={<PrivateRoute>
                             <TemplateEditor />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
-                        <Route
-                        path="/profile"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/profile" element={<PrivateRoute>
                                 <Profile />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
 
-                        <Route
-                        path="/premium"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/premium" element={<PrivateRoute>
                                 <PremiumUpgrade />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
 
-                        <Route
-                        path="/admin"
-                        element={
-                            <PrivateRoute>
+                        <Route path="/admin" element={<PrivateRoute>
                                 <AdminDashboard />
-                            </PrivateRoute>
-                        }
-                        />
+                            </PrivateRoute>} />
                         
                         {/* DEBUG TOOLS (Dev Only) */}
                         <Route path="/debug" element={<PrivateRoute><DebugTools /></PrivateRoute>} />

@@ -1,23 +1,11 @@
 // src/lib/versioning.ts
 import buildInfoRaw from '../build-info.json';
 
-export interface BuildMeta {
-    env: 'DEV' | 'UAT' | 'PRODUCTION';
-    branch: string;
-    globalHash: string;
-    coreHash: string;
-    buildTime: string;
-}
+export interface BuildMeta { env: 'DEV' | 'UAT' | 'PRODUCTION'; branch: string; globalHash: string; coreHash: string; buildTime: string; }
 
-export interface PageVersion {
-    hash: string;
-    lastModified: string;
-}
+export interface PageVersion { hash: string; lastModified: string; }
 
-export interface BuildManifest {
-    meta: BuildMeta;
-    pages: Record<string, PageVersion>;
-}
+export interface BuildManifest { meta: BuildMeta; pages: Record<string, PageVersion>; }
 
 // Type-cast the raw JSON to our interface
 const buildInfo = buildInfoRaw as unknown as BuildManifest;

@@ -13,23 +13,10 @@ import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  ArrowRightIcon,
-  PlayCircleIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+import { ArrowRightIcon, PlayCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 // --- Interfaces & Data ---
-interface PersonaData {
-  id: string;
-  name: string;
-  title: string;
-  stage: string;
-  headshot: string;
-  bio: string;
-  videoId: string;
-  color: string;
-}
+interface PersonaData { id: string; name: string; title: string; stage: string; headshot: string; bio: string; videoId: string; color: string; }
 
 const PERSONAS: PersonaData[] = [
   { 

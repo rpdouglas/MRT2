@@ -1,24 +1,10 @@
 // src/lib/workbooks.ts
 
-export interface Question {
-  id: string;
-  text: string;
-  helperText?: string;
-}
+export interface Question { id: string; text: string; helperText?: string; }
 
-export interface Section {
-  id: string;
-  title: string;
-  questions: Question[];
-}
+export interface Section { id: string; title: string; questions: Question[]; }
 
-export interface Workbook {
-  id: string;
-  title: string;
-  description: string;
-  sections: Section[];
-  estimatedTime?: string;
-}
+export interface Workbook { id: string; title: string; description: string; sections: Section[]; estimatedTime?: string; }
 
 // DATA: You can expand this or move to Firestore later
 const WORKBOOKS: Workbook[] = [
@@ -70,7 +56,4 @@ export async function getWorkbookById(id: string): Promise<Workbook | undefined>
   return WORKBOOKS.find(wb => wb.id === id);
 }
 
-export async function getAllWorkbooks(): Promise<Workbook[]> {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    return WORKBOOKS;
-}
+export async function getAllWorkbooks(): Promise<Workbook[]> { await new Promise(resolve => setTimeout(resolve, 50)); return WORKBOOKS; }

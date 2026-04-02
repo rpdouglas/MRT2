@@ -59,17 +59,7 @@ const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?:
   );
 };
 
-export default function VibrantHeader({
-  title,
-  subtitle,
-  icon: Icon,
-  fromColor,
-  viaColor,
-  toColor,
-  percentage,
-  percentageColor,
-  backLink
-}: VibrantHeaderProps) {
+export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, viaColor, toColor, percentage, percentageColor, backLink }: VibrantHeaderProps) {
   const { toggleSidebar, toggleSOS } = useLayout();
   const navigate = useNavigate();
 

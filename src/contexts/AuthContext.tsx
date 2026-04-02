@@ -1,22 +1,5 @@
-/**
- * GITHUB COMMENT:
- * [AuthContext.tsx]
- * UPDATED: Added active subcollection listener for the Stripe Extension.
- */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  reauthenticateWithPopup,
-  deleteUser,
-  type User 
-} from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser, type User } from 'firebase/auth';
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
@@ -39,11 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-}
+export function useAuth() { const context = useContext(AuthContext); if (!context) throw new Error('useAuth must be used within an AuthProvider'); return context; }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -79,10 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                      // Fallback to static profile tier just in case, but default free
                      setUserTier(profile.tier || 'free');
                  }
-             }, (error) => {
-                 console.error("Subscription listener error:", error);
-                 setUserTier('free');
-             });
+             }, (error) => { console.error("Subscription listener error:", error); setUserTier('free'); });
           } else {
              setUserTier(profile.tier || 'free');
           }
@@ -96,20 +72,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               unsubscribeSubscriptions();
           }
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setUser(currentUser); 
-        setUserTier('free');
-      } finally {
+      } catch (error) { console.error("Error fetching user profile:", error); setUser(currentUser); setUserTier('free'); } finally {
         setLoading(false);
       }
     });
 
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeSubscriptions) {
-          unsubscribeSubscriptions();
-      }
+    return () => { unsubscribeAuth(); if (unsubscribeSubscriptions) { unsubscribeSubscriptions(); }
     };
   }, []);
 
@@ -132,10 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await getOrCreateUserProfile(result.user);
   };
 
-  const loginWithEmail = async (email: string, pass: string) => {
-    if (!auth) throw new Error("Auth not initialized");
-    await signInWithEmailAndPassword(auth, email, pass);
-  };
+  const loginWithEmail = async (email: string, pass: string) => { if (!auth) throw new Error("Auth not initialized"); await signInWithEmailAndPassword(auth, email, pass); };
 
   const reauthenticateWithEmail = async (password: string) => {
       if (!auth || !user || !user.email) throw new Error("Not authenticated");
@@ -150,17 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await reauthenticateWithPopup(user, provider);
   };
 
-  const deleteAccount = async () => {
-      if (!auth || !user) throw new Error("Not authenticated");
-      await deleteUser(user);
-      setUser(null);
-      setUserTier('free');
-  };
+  const deleteAccount = async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); };
 
-  const logout = async () => {
-    if (!auth) return;
-    await signOut(auth);
-  };
+  const logout = async () => { if (!auth) return; await signOut(auth); };
 
   const value = {
     user,

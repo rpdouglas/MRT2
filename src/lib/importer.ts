@@ -1,9 +1,3 @@
-/**
- * GITHUB COMMENT:
- * [importer.ts]
- * UPDATED: Strictly typed IncomingEntry to handle both legacy and full-backup formats.
- * Added support for isEncrypted: false flag to ensure re-imported data is prepared for the new vault key.
- */
 import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -18,10 +12,7 @@ export interface NewJournalEntry {
   isEncrypted: boolean;
 }
 
-interface WeatherObject {
-  temp: number;
-  condition: string;
-}
+interface WeatherObject { temp: number; condition: string; }
 
 interface IncomingEntry {
   text?: string;
@@ -98,10 +89,7 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
           rawEntries = [json as IncomingEntry];
         }
 
-        if (rawEntries.length === 0) {
-          resolve({ success: 0, errors: 0 });
-          return;
-        }
+        if (rawEntries.length === 0) { resolve({ success: 0, errors: 0 }); return; }
 
         let batch = writeBatch(db);
         let operationCount = 0;
@@ -122,10 +110,7 @@ export async function importLegacyJournals(uid: string, file: File): Promise<{ s
               batch = writeBatch(db);
               operationCount = 0;
             }
-          } catch (err) {
-            console.error("Skipping invalid entry:", err);
-            errorCount++;
-          }
+          } catch (err) { console.error("Skipping invalid entry:", err); errorCount++; }
         }
 
         if (operationCount > 0) {

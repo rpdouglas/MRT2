@@ -8,16 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import { 
-    PuzzlePieceIcon, 
-    ScaleIcon,
-    ShieldExclamationIcon,
-    ArrowPathIcon,
-    BoltIcon,
-    UserCircleIcon,
-    ChartPieIcon,
-    FireIcon
-} from '@heroicons/react/24/outline';
+import { PuzzlePieceIcon, ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon, ChartPieIcon, FireIcon } from '@heroicons/react/24/outline';
 
 const TOOLS = [
     {

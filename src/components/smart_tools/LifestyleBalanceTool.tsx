@@ -7,24 +7,12 @@
 import React from 'react';
 import { SmartToolContainer } from './SmartToolContainer';
 import { InformationCircleIcon, ChartPieIcon } from '@heroicons/react/24/outline';
-import { 
-    Radar, 
-    RadarChart, 
-    PolarGrid, 
-    PolarAngleAxis, 
-    PolarRadiusAxis, 
-    ResponsiveContainer 
-} from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import type { LifestyleBalancePayload } from '../../lib/types/smart';
 
 const EXPLANATION = "The Lifestyle Balance Pie (Wheel of Life) helps identify areas of neglect. Imagine your life as a tire: if one section is a '1' and another is a '10', the tire is flat and the ride is bumpy. A bumpy ride creates stress, making you vulnerable to relapse. Aim for a well-rounded shape rather than a jagged one.";
 
-interface CategoryDef {
-    key: keyof LifestyleBalancePayload;
-    label: string;
-    description: string;
-    color: string;
-}
+interface CategoryDef { key: keyof LifestyleBalancePayload; label: string; description: string; color: string; }
 
 const CATEGORIES: CategoryDef[] = [
     { key: 'physical', label: 'Physical', description: 'Exercise, sleep, diet, medical care.', color: 'text-rose-500' },
@@ -46,12 +34,7 @@ export const LifestyleBalanceTool: React.FC = () => {
         leisure: 5
     };
 
-    const formatChartData = (data: LifestyleBalancePayload) => {
-        return CATEGORIES.map(cat => ({
-            subject: cat.label,
-            score: data[cat.key],
-            fullMark: 10
-        }));
+    const formatChartData = (data: LifestyleBalancePayload) => { return CATEGORIES.map(cat => ({ subject: cat.label, score: data[cat.key], fullMark: 10 }));
     };
 
     return (

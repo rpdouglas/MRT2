@@ -1,10 +1,6 @@
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-    XMarkIcon, 
-    EyeSlashIcon, 
-    PlusIcon 
-} from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeSlashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface ManageWordCloudModalProps {
     isOpen: boolean;
@@ -14,13 +10,7 @@ interface ManageWordCloudModalProps {
     onRemoveWord: (word: string) => void;
 }
 
-export default function ManageWordCloudModal({ 
-    isOpen, 
-    onClose, 
-    blockedWords, 
-    onAddWord, 
-    onRemoveWord 
-}: ManageWordCloudModalProps) {
+export default function ManageWordCloudModal({ isOpen, onClose, blockedWords, onAddWord, onRemoveWord }: ManageWordCloudModalProps) {
     const [newWord, setNewWord] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {

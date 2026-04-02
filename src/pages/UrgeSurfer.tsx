@@ -15,8 +15,8 @@ import {
     EyeIcon,
     HandRaisedIcon,
     SpeakerWaveIcon,
-    SparklesIcon, // Replacing FireIcon for smell as it makes more sense visually
-    FaceSmileIcon // Replacing HeartIcon for taste
+    SparklesIcon,
+    FaceSmileIcon
 } from '@heroicons/react/24/outline';
 
 const SURF_DURATION_SECONDS = 300; // 5 minutes

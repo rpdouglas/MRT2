@@ -6,24 +6,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { 
-    HeartIcon, 
-    FireIcon, 
-    BeakerIcon, 
-    BoltIcon,     
-    CheckCircleIcon,
-    PlayIcon,
-    PauseIcon,
-    ArrowPathIcon,
-    SparklesIcon,
-    AdjustmentsHorizontalIcon
-} from '@heroicons/react/24/outline';
+import { HeartIcon, FireIcon, BeakerIcon, BoltIcon, CheckCircleIcon, PlayIcon, PauseIcon, ArrowPathIcon, SparklesIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 
-interface VitalityLog {
-    id: string;
-    tags: string[];
-    createdAt: Timestamp;
-}
+interface VitalityLog { id: string; tags: string[]; createdAt: Timestamp; }
 
 interface CachedJournal {
     moodScore?: number;
@@ -33,10 +18,7 @@ type VitalityTab = 'move' | 'fuel' | 'breath';
 type BreathPhase = 'Idle' | 'Inhale' | 'Hold' | 'Exhale' | 'Hold (Empty)';
 type BreathPatternType = '4-7-8' | '4-4-4-4' | 'custom';
 
-const PRESETS = {
-    '4-7-8': [4, 7, 8, 0],
-    '4-4-4-4': [4, 4, 4, 4]
-};
+const PRESETS = { '4-7-8': [4, 7, 8, 0], '4-4-4-4': [4, 4, 4, 4] };
 
 // Haptic Engine
 const triggerHaptic = (type: 'inhale' | 'hold' | 'exhale') => {
@@ -165,10 +147,7 @@ export default function Vitality() {
                 createdAt: Timestamp.now()
             });
             triggerHaptic('hold'); // Celebration buzz
-        } catch (e) {
-            console.error(e);
-            alert("Failed to save entry.");
-        } finally {
+        } catch (e) { console.error(e); alert("Failed to save entry."); } finally {
             setSaving(false);
         }
     };
@@ -213,19 +192,7 @@ export default function Vitality() {
             setBreathPhase('Inhale');
             setVisualState({ scale: 1.5, duration });
             triggerHaptic('inhale');
-        } else if (index === 1) {
-            setBreathPhase('Hold');
-            setVisualState({ scale: 1.5, duration });
-            triggerHaptic('hold');
-        } else if (index === 2) {
-            setBreathPhase('Exhale');
-            setVisualState({ scale: 0.8, duration });
-            triggerHaptic('exhale');
-        } else if (index === 3) {
-            setBreathPhase('Hold (Empty)');
-            setVisualState({ scale: 0.8, duration });
-            triggerHaptic('hold');
-        }
+        } else if (index === 1) { setBreathPhase('Hold'); setVisualState({ scale: 1.5, duration }); triggerHaptic('hold'); } else if (index === 2) { setBreathPhase('Exhale'); setVisualState({ scale: 0.8, duration }); triggerHaptic('exhale'); } else if (index === 3) { setBreathPhase('Hold (Empty)'); setVisualState({ scale: 0.8, duration }); triggerHaptic('hold'); }
     }, []);
 
     const startEngine = useCallback(() => {
@@ -256,10 +223,7 @@ export default function Vitality() {
                     nextIdx = (nextIdx + 1) % 4;
                 }
                 applyPhase(nextIdx, patternRef.current);
-            } else {
-                timeLeftRef.current -= 1;
-                setPhaseTimeLeft(timeLeftRef.current);
-            }
+            } else { timeLeftRef.current -= 1; setPhaseTimeLeft(timeLeftRef.current); }
         }, 1000);
 
     }, [breathPattern, customPattern, requestWakeLock, applyPhase]);

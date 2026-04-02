@@ -36,14 +36,7 @@ vi.mock('../../contexts/EncryptionContext', () => ({
     useEncryption: vi.fn()
 }));
 
-describe('💾 useAutoSave Engine', () => {
-    const defaultProps = {
-        uid: 'user123',
-        workbookId: 'wb1',
-        sectionId: 'sec1',
-        questionId: 'q1',
-        value: ''
-    };
+describe('💾 useAutoSave Engine', () => { const defaultProps = { uid: 'user123', workbookId: 'wb1', sectionId: 'sec1', questionId: 'q1', value: '' };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -55,10 +48,7 @@ describe('💾 useAutoSave Engine', () => {
         } as unknown as ReturnType<typeof EncryptionContext.useEncryption>);
     });
 
-    afterEach(() => {
-        vi.clearAllTimers();
-        vi.useRealTimers();
-    });
+    afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
     it('1. should initialize in an idle state', () => {
         const { result } = renderHook(() => useAutoSave(defaultProps));
@@ -66,12 +56,7 @@ describe('💾 useAutoSave Engine', () => {
         expect(result.current.lastSavedAt).toBeNull();
     });
 
-    it('2. should not trigger save if value is empty', () => {
-        renderHook(() => useAutoSave({ ...defaultProps, value: '   ' }));
-        
-        act(() => {
-            vi.advanceTimersByTime(3000);
-        });
+    it('2. should not trigger save if value is empty', () => { renderHook(() => useAutoSave({ ...defaultProps, value: ' ' })); act(() => { vi.advanceTimersByTime(3000); });
         
         expect(firestore.setDoc).not.toHaveBeenCalled();
     });

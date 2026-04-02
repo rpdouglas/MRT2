@@ -1,24 +1,12 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  PhoneIcon, 
-  XMarkIcon, 
-  ExclamationTriangleIcon, 
-  HeartIcon,
-  PencilSquareIcon,
-  UserGroupIcon,
-  ChatBubbleOvalLeftIcon,
-  PuzzlePieceIcon
-} from '@heroicons/react/24/outline';
+import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, type Firestore } from 'firebase/firestore';
 
-interface SOSModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+interface SOSModalProps { isOpen: boolean; onClose: () => void; }
 
 export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   const { user } = useAuth();
@@ -46,10 +34,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
       }
   }, [isOpen, user]);
 
-  const handleNavigation = (path: string) => {
-    onClose();
-    navigate(path);
-  };
+  const handleNavigation = (path: string) => { onClose(); navigate(path); };
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>

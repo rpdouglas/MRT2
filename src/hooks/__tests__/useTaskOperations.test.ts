@@ -17,12 +17,7 @@ vi.mock('../../contexts/AuthContext', () => ({
     useAuth: vi.fn()
 }));
 
-vi.mock('../../lib/tasks', () => ({
-    addTask: vi.fn(),
-    toggleTask: vi.fn(),
-    deleteTask: vi.fn(),
-    updateTask: vi.fn(),
-}));
+vi.mock('../../lib/tasks', () => ({ addTask: vi.fn(), toggleTask: vi.fn(), deleteTask: vi.fn(), updateTask: vi.fn(), }));
 
 const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } }
@@ -89,9 +84,6 @@ describe('📋 useTaskOperations (Optimistic UI)', () => {
         }
 
         // ROLLBACK: Status should be 'pending' again
-        await waitFor(() => {
-            const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]);
-            expect(cached?.[0].status).toBe('pending');
-        });
+        await waitFor(() => { const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]); expect(cached?.[0].status).toBe('pending'); });
     });
 });

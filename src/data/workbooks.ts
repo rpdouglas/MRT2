@@ -15,12 +15,7 @@ export interface Question {
   helperText?: string;
 }
 
-export interface WorkbookSection {
-  id: string;
-  title: string;
-  description?: string;
-  questions: Question[];
-}
+export interface WorkbookSection { id: string; title: string; description?: string; questions: Question[]; }
 
 export interface Workbook {
   id: string;

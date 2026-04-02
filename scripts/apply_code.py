@@ -1,81 +1,23 @@
 import os
 
-def write_file(filepath, content):
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    
-    # Safely replace the FENCE placeholder with markdown backticks
-    FENCE = chr(96) * 3
-    final_content = content.replace('__FENCE__', FENCE)
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(final_content)
-    print(f"✅ Successfully wrote {filepath}")
+FENCE = chr(96) * 3
 
-def main():
-    print("🚀 Initiating shift to Continuous Momentum Methodology (2026-W14)...")
+def write_file(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content.replace('@@@', FENCE))
+    print(f"✅ Synced: {path}")
 
-    # 1. The Lean Roadmap
-    roadmap = r"""# 🗺️ MRT Product Roadmap: "Continuous Momentum"
-
-**Methodology:** Lean (Now / Next / Later)
-
-## 🟢 NOW (Active Cycle Focus)
-*Projects currently in active development and unblocking growth.*
-| Status | ID | Project Name | Persona | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
-| 🟡 **Active** | `PROJ-18` | **Command Center** | Admin | Desktop-Optimized Admin Analytics for AI cost metrics and user flow telemetry. |
-
-## 🟡 NEXT (Up Next)
-*Fully scoped projects awaiting engineering bandwidth.*
-| Status | ID | Project Name | Persona | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Universal CBT/Stoic/Mindfulness prompted journaling templates (No fellowship-specific text). |
-
-## ⚪ LATER (Strategic Epics)
-*Approved concepts requiring further technical scoping.*
-| Status | ID | Project Name | Persona | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-22` | **Insights Stats** | Walt | Data visualization tab within the Insights module. |
-| ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
-| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
-
-## ✅ RECENTLY SHIPPED
-* `PROJ-28` The Resentment Burner (SVG Combustion Engine)
-* `PROJ-27` The CBT Engine (SMART Tools integration)
-* `PROJ-26` The Beacon (Push Notifications)
-"""
-
-    # 2. The Active Cycle (Replacing SPRINT_BOARD.md)
-    active_cycle = r"""# 🏃 Active Development Cycle
-
-**Current Phase:** Cycle 2026-W14
-**Methodology:** ISO Year-Week Continuous Delivery
-
-## 🚨 Triage & Hotfixes (Priority 1)
-*Issues bypassing the backlog to protect user retention.*
-- [ ] **[BUG]** Dashboard load speed optimization (Check Firestore indexes & React Query caching).
-- [ ] **[BUG]** PWA Workbox cache collision (Fix deploy refresh requiring 3-4 reloads).
-- [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
-- [ ] **[UX]** Rename global variables/UI text from "Users" to "Friends" (Peer-to-peer alignment).
-
-## 🛠️ Active Projects (Priority 2)
-*Core feature work for the current cycle.*
-- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **PROJ-18:** Scaffold `/admin/telemetry` UI to track Gemini API usage and user flow.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) in Workbooks hub.
-
-## 🧹 Chores & Tech Debt
-- [ ] Increase Nav Icon sizes by 25% (Accessibility).
-- [ ] Fix Nav Logo white background issue.
-- [ ] Wire up Changelog Beacon alert in Dashboard.
-"""
-
-    # 3. The Re-organized Backlog
-    backlog = r"""# 🧊 Feature Backlog (The Icebox)
+# ==========================================
+# 1. UPDATE THE BACKLOG (Adding Viral Loop)
+# ==========================================
+BACKLOG_CONTENT = r"""# 🧊 Feature Backlog (The Icebox)
 
 **Storage:** Ideas and feature requests that are approved but deferred. Do not pull into `ACTIVE_CYCLE.md` until prioritized.
+
+## 📈 Viral Growth & Marketing (The Market Gap)
+* **Feature:** Secure Milestone Share Cards (Instagram/Facebook export).
+* **Complexity:** Medium. Generates an anonymized, branded image (using the UI's Vibrant Momentum aesthetic) of the user's clean time to safely share on social media. Satisfies the "Identity Signaling" psychological trigger without compromising the vault.
 
 ## 🏃 Integrations & Wearables
 * **Feature:** HealthConnect / Apple HealthKit API integration for Sleep and Step data.
@@ -96,102 +38,143 @@ def main():
 * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64).
 """
 
-    # 4. Updating AI Initialization Prompt
-    prompt_init = r"""# 🤖 AI Session Initialization Prompt (v3.2)
+# ==========================================
+# 2. UPDATE THE ROADMAP (Adding New Specs)
+# ==========================================
+ROADMAP_CONTENT = r"""# 🗺️ MRT Product Roadmap: "Continuous Momentum"
 
-**Role:** Principal Software Architect & Product Manager.
+**Methodology:** Lean (Now / Next / Later)
 
-**1. Load Technical Context:**
-* **Stack:** React 19, Vite, Tailwind v4, Firebase, Gemini 2.5, VitePress (Docs).
-* **Security:** Zero-Knowledge (AES-GCM). *Never output user data in plain text.*
-* **Reference:** Read `docs/CONTEXT_DUMP.md`.
+## 🟢 NOW (Active Cycle Focus)
+*Projects currently in active development and unblocking growth.*
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
+| 🟡 **Active** | `PROJ-18` | **Command Center** | Admin | Desktop-Optimized Admin Analytics for AI cost metrics and user flow telemetry. |
 
-**2. Core Technical Values (The MRT Standard):**
-* **Type Strictness (CRITICAL):** NO `any` types. Use `unknown` and cast via interfaces.
-* **Linting strictness:** Prefix intentionally unused arguments with an underscore (e.g., `_index`). Delete all unused imports immediately.
-* **Date Safety:** Use JS `Date` for logic/UI and Firestore `Timestamp` for storage. Always normalize using `toDate()` helpers.
-* **Safe Delivery Protocol:** Always use Python scripts with raw strings to generate files. Never use Bash.
+## 🟡 NEXT (Up Next)
+*Fully scoped projects awaiting engineering bandwidth.*
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Universal CBT/Stoic/Mindfulness prompted journaling templates (No fellowship-specific text). |
+| ⚪ Planned | `PROJ-29` | **Enterprise DevOps** | Admin | Migrate GitHub Actions to OpenID Connect (OIDC) keyless authentication and enforce SHA-pinning for supply chain security. |
+| ⚪ Planned | `PROJ-30` | **Data Sovereignty Engine** | Walt | Formalize the local decryption and structured export (JSON/PDF) protocol for legacy users. |
 
-**3. Load Project Context:**
-* **Reference:** Read `docs/ACTIVE_CYCLE.md` to see immediate priorities and hotfixes for the current week.
-* **Reference:** Read `docs/ROADMAP.md` for high-level Now/Next/Later goals.
+## ⚪ LATER (Strategic Epics)
+*Approved concepts requiring further technical scoping.*
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-22` | **Insights Stats** | Walt | Data visualization tab within the Insights module. |
+| ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
+| ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. |
+| ⚪ Planned | `PROJ-31` | **Crypto Chunking Pipeline** | Admin | Refactor PIN rotation to handle 10,000+ encrypted documents via background chunking to prevent UI thread lock. |
 
-**Your Goal:**
-You are executing a specific task within an **Active Cycle**. Do not deviate from the weekly goals or compromise the Technical Core Values.
-
-**Reply:** 'MRT Platform Loaded. Technical guardrails active. Ready for Task.'
+## ✅ RECENTLY SHIPPED
+* `PROJ-28` The Resentment Burner (SVG Combustion Engine)
+* `PROJ-27` The CBT Engine (SMART Tools integration)
+* `PROJ-26` The Beacon (Push Notifications)
 """
 
-    # 5. Updating AI Audit Prompt
-    prompt_audit = r"""# 🛡️ Phase Completion & Audit Prompt
+# ==========================================
+# 3. CREATE DATA SOVEREIGNTY SPEC (PROJ-30)
+# ==========================================
+EXPORT_SPEC_CONTENT = r"""# 📁 Project 30: The Data Sovereignty Engine (Export)
 
-**Trigger:** You have finished coding and testing a task or hotfix.
-
-**Task:**
-1. **Security Scan:** Check for `console.log` or weak types (`any`).
-2. **PM Update:** Generate a Python script (`update_pm.py`) to:
-    * Mark tasks as `[x]` in `docs/ACTIVE_CYCLE.md`.
-    * If a whole Epic is done, move it to the Shipped section in `docs/ROADMAP.md`.
-    * Update `docs/CHANGELOG.md` with technical details.
-
-**Output:**
-* Audit Report.
-* `update_pm.py` script.
-"""
-
-    # 6. Updating Post-Sprint Audit Prompt (Now Post-Cycle)
-    prompt_post_cycle = r"""# 🛡️ Master Post-Cycle Audit & Sync Prompt (v4.1)
-
-**Trigger:** Run this at the end of the week (e.g., Friday afternoon) before creating a Pull Request to `main`.
-**Goal:** Ensure the Code, Architecture Specs, User Guides, and Project Boards are in perfect synchronization.
+**Status:** ⚪ Planned
+**Primary Persona:** Walt (The Zen Master)
+**Objective:** Establish a formal, zero-knowledge pathway for users to export decades of encrypted data into highly readable local files (PDF/JSON) without unencrypted data ever touching an external server.
 
 ---
 
-**Role:** Lead DevOps Engineer & Principal Technical Writer.
-
-**Input:**
-1. **Codebase Dump:** I will provide the full `src/`, `docs/`, and `docs-site/` directories.
-2. **Context:** A brief summary of the hotfixes and features completed this cycle.
-
-**Your Task:** Execute the following 4 phases in order.
-
-### PHASE 1: Security & Quality Gate (The Code)
-Scan the provided `src/` code for immediate pre-merge red flags:
-* **Zero-Knowledge Check:** Are there any new `console.log` statements logging user data? Are there any unencrypted writes to secure collections?
-* **Type Safety:** Are there any explicit `any` types that sneaked in?
-
-### PHASE 2: Drift Detection (The Documentation)
-1. **Schema Drift (`docs/SCHEMA_ARCHITECTURE.md`):** Does the schema match the exact payloads being sent to Firestore?
-2. **Technical Spec Drift (`docs/specs/`):** Do the feature specs accurately reflect new logic?
-3. **User Guide Drift (`docs-site/guide/`):** Do the VitePress guides reflect current UI flows?
-4. **12-Step Compliance Drift (`docs/business/05_12_STEP_COMPLIANCE.md`):** Ensure no prohibited terms (e.g., "AI Sponsor") are used.
-
-### PHASE 3: Project Management Sync
-Review the active work:
-1. **Active Cycle (`docs/ACTIVE_CYCLE.md`):** Identify which tasks are complete. Draft the template for next week's cycle (e.g., `Cycle 2026-W15`).
-2. **Roadmap (`docs/ROADMAP.md`):** Promote items from NEXT to NOW if bandwidth opens up.
-3. **Changelog (`docs-site/support/changelog.md`):** Draft release notes.
-
-### PHASE 4: The Universal Sync Script
-*Output Format:* Produce a single table summarizing the drift, followed by a **Python script** (`scripts/sync_cycle_state.py`) that overwrites all drifted markdown files in one go.
-
-**Strict Scripting Constraints:**
-* **Markdown Protection (CRITICAL):** Define `FENCE = chr(96) * 3` at the top of the Python script. Use `__FENCE__` as a placeholder in your raw Python string. Use `.replace('__FENCE__', FENCE)` to safely write the files.
+## 1. The Executive Summary
+**User Story:** * **As** Walt, I want to export my entire journal history to a PDF so that I can print it, review it with my therapist, or store it offline securely.
+**Competitive Gap:** Many apps hold data hostage to ensure retention. We use "Data Sovereignty" as a core marketing pillar. Proving users can easily extract their lives builds ultimate trust.
 
 ---
-**Reply:** 'MRT Audit Engine Loaded. Awaiting Codebase and Cycle Summary to begin the Post-Cycle Sync.'
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** Critical. This touches every single decrypted thought a user has logged.
+* [x] **Encryption Strategy:** Data is fetched as `ciphertext` from Firestore. It MUST be decrypted strictly in browser memory. 
+* [x] **File Generation:** Files (JSON/PDF) must be compiled using Blob/ArrayBuffer entirely client-side. The file must trigger a direct `<a>` download. No third-party PDF-generation APIs can be used.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Libraries Introduced:**
+* `jspdf` & `jspdf-autotable` (For client-side PDF generation)
+
+**Types (`src/lib/export.ts`):**
+@@@typescript
+export interface ExportPayload {
+    user: UserProfile;
+    journals: DecryptedJournalEntry[];
+    tasks: Task[];
+    workbooks: DecryptedWorkbookAnswer[];
+    timestamp: string;
+}
+@@@
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: The Extraction Engine
+* Build a query to fetch all documents where `uid == currentUser`.
+* Pipe the payloads through the `crypto.ts` decryptor.
+
+### Phase 2: The Formatter
+* **JSON:** Serialize the `ExportPayload` and trigger a `Blob` download.
+* **PDF:** Use `jspdf` to create a beautiful, "Zen-styled" document. Include a title page, table of contents, and chronological journal entries.
+
+### Phase 3: Edge Cases
+* [ ] What happens if the user has 5,000 journals? The PDF generator will crash the browser. We must implement a date-range selector (e.g., "Export 2025") for heavy users.
+
 """
 
-    # Execute File Writes
-    write_file('docs/ROADMAP.md', roadmap)
-    write_file('docs/ACTIVE_CYCLE.md', active_cycle)
-    write_file('docs/BACKLOG.md', backlog)
-    write_file('docs/prompts/INITIALIZATION.md', prompt_init)
-    write_file('docs/prompts/AUDIT.md', prompt_audit)
-    write_file('docs/prompts/POST_SPRINT_AUDIT.md', prompt_post_cycle)
+# ==========================================
+# 4. CREATE CRYPTO SCALING SPEC (PROJ-31)
+# ==========================================
+CRYPTO_SPEC_CONTENT = r"""# 📁 Project 31: The Crypto Chunking Pipeline
 
-    print("\n✅ Shift to 'Continuous Momentum' Methodology Complete.")
-    print("⚠️  ACTION REQUIRED: Please manually delete the old 'docs/SPRINT_BOARD.md' file.")
+**Status:** ⚪ Planned
+**Primary Persona:** The Architect (Admin)
+**Objective:** Scale the AES-GCM Key Rotation engine so it can seamlessly decrypt and re-encrypt 10,000+ records without crashing mobile browsers or freezing the UI.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** the System Architect, I want to ensure that a power-user with 5 years of daily entries can securely change their PIN without their phone running out of memory and corrupting their database.
+**Competitive Gap:** Scaling true Zero-Knowledge encryption is notoriously difficult. By solving this, we create a massive technical moat against competitors who rely on simple server-side DB encryption.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** Critical. This touches the master PIN rotation cycle.
+* [x] **Encryption Strategy:** Uses `src/lib/crypto.ts`. Requires handling the `Old Key` and `New Key` simultaneously in memory.
+
+---
+
+## 3. Implementation Phases 🏗️
+
+### Phase 1: The Chunking Algorithm
+* Rewrite `executePinRotation` in `src/lib/rotation.ts` to utilize a Generator function or recursive `setTimeout`/`requestAnimationFrame` loop.
+* **Batch Size:** Set hard limit to processing 50 documents per tick.
+
+### Phase 2: UI Feedback (The Progress Bar)
+* Update the Security Profile tab to listen to a new `rotationProgress` state.
+* If a user has a massive database, the UI must show "Encrypting batch 4 of 200... Please keep app open."
+
+### Phase 3: Transaction Safety (Rollbacks)
+* If the app closes midway through a rotation, the database is in a split state (some docs use Key A, some use Key B). 
+* **Migration Flag:** Add a `keyVersion` field to documents during rotation. If a failure occurs, the app must detect the split state on next login and resume the chunking process automatically.
+
+"""
 
 if __name__ == "__main__":
-    main()
+    print("🚀 Initiating Governance Synchronization...")
+    write_file("docs/BACKLOG.md", BACKLOG_CONTENT)
+    write_file("docs/ROADMAP.md", ROADMAP_CONTENT)
+    write_file("docs/specs/19_DATA_EXPORT.md", EXPORT_SPEC_CONTENT)
+    write_file("docs/specs/20_CRYPTO_SCALING.md", CRYPTO_SPEC_CONTENT)
+    print("🎉 All governance documents updated. Run `npm run build` when ready.")

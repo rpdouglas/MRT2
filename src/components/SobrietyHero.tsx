@@ -44,11 +44,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
     // --- THE PRELOADER FIX ---
     // Forces the browser to fetch the milestone image into cache silently on mount 
     // so it renders instantly when html-to-image takes the snapshot.
-    useEffect(() => {
-        if (activeMilestoneImage) {
-            const img = new Image();
-            img.src = activeMilestoneImage;
-        }
+    useEffect(() => { if (activeMilestoneImage) { const img = new Image(); img.src = activeMilestoneImage; }
     }, [activeMilestoneImage]);
 
     const handleShare = async (e: React.MouseEvent) => {

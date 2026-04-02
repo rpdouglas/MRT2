@@ -8,11 +8,7 @@
 import { db } from './firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
-export interface TokenUsage {
-    promptTokens: number;
-    candidatesTokens: number;
-    totalTokens: number;
-}
+export interface TokenUsage { promptTokens: number; candidatesTokens: number; totalTokens: number; }
 
 export interface AILogEntry {
     uid: string;
@@ -45,13 +41,7 @@ export async function logAIUsage(
             totalTokens: usage?.totalTokenCount || 0
         };
 
-        const entry: AILogEntry = {
-            uid,
-            model,
-            context,
-            timestamp: Timestamp.now(),
-            usage: usageData
-        };
+        const entry: AILogEntry = { uid, model, context, timestamp: Timestamp.now(), usage: usageData };
 
         // Fire and forget - do not await
         addDoc(collection(db, 'ai_logs'), entry).catch(err => {

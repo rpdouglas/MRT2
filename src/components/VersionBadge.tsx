@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { useBuildInfo, usePageVersion, getEnvColor } from '../lib/versioning';
-import { 
-    CpuChipIcon, 
-    CodeBracketIcon, 
-    ClockIcon,
-    ServerIcon
-} from '@heroicons/react/24/outline';
+import { CpuChipIcon, CodeBracketIcon, ClockIcon, ServerIcon } from '@heroicons/react/24/outline';
 
 interface VersionBadgeProps {
     pageName?: string; // Optional: Pass the current page name to get granular versioning

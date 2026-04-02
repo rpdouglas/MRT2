@@ -5,23 +5,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { 
-  collection, 
-  query, 
-  getDocs, 
-  orderBy, 
-  limit, 
-} from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { 
-  CommandLineIcon, 
-  UserGroupIcon, 
-  CpuChipIcon, 
-  ServerIcon,
-  WrenchScrewdriverIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/react/24/outline';
+import { CommandLineIcon, UserGroupIcon, CpuChipIcon, ServerIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { Navigate } from 'react-router-dom';
 
 // Sub-components

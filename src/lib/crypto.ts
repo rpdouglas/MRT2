@@ -134,10 +134,7 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
 /**
  * Generates a random salt for new users.
  */
-export function generateSalt(): string {
-  const salt = window.crypto.getRandomValues(new Uint8Array(SALT_SIZE));
-  return btoa(String.fromCharCode(...salt));
-}
+export function generateSalt(): string { const salt = window.crypto.getRandomValues(new Uint8Array(SALT_SIZE)); return btoa(String.fromCharCode(...salt)); }
 
 /**
  * Clears the key from memory (Lock Vault).

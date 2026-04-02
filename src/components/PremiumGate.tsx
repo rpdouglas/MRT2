@@ -3,11 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LockClosedIcon, SparklesIcon } from '@heroicons/react/24/solid';
 
-interface PremiumGateProps {
-    children: React.ReactNode;
-    fallbackMode?: 'hide' | 'lock_overlay' | 'button_swap';
-    customMessage?: string;
-}
+interface PremiumGateProps { children: React.ReactNode; fallbackMode?: 'hide' | 'lock_overlay' | 'button_swap'; customMessage?: string; }
 
 export default function PremiumGate({ children, fallbackMode = 'button_swap', customMessage }: PremiumGateProps) {
     const { userTier } = useAuth();

@@ -11,18 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import PremiumGate from '../PremiumGate';
 import VaultGate from '../VaultGate';
-import { 
-    ArrowDownTrayIcon, 
-    ArrowUpTrayIcon, 
-    DocumentTextIcon, 
-    CodeBracketSquareIcon,
-    ExclamationTriangleIcon,
-    CheckCircleIcon,
-    CloudArrowUpIcon,
-    TrashIcon,
-    ArrowPathIcon,
-    XMarkIcon
-} from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, DocumentTextIcon, CodeBracketSquareIcon, ExclamationTriangleIcon, CheckCircleIcon, CloudArrowUpIcon, TrashIcon, ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function DataManagement() {
     const { user, driveAccessToken, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount } = useAuth();
@@ -83,10 +72,7 @@ export default function DataManagement() {
             if (format === 'json') {
                 blob = generateJSON(cleanData);
                 filename = `mrt-backup-${dateStr}.json`;
-            } else {
-                blob = await generatePDF(cleanData);
-                filename = `mrt-journal-${dateStr}.pdf`;
-            }
+            } else { blob = await generatePDF(cleanData); filename = `mrt-journal-${dateStr}.pdf`; }
             setProgress(100);
 
             const url = window.URL.createObjectURL(blob);
@@ -103,10 +89,7 @@ export default function DataManagement() {
             await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
             loadLastExportDate();
 
-        } catch (error) {
-            console.error("Export failed", error);
-            setExportError("Failed to generate export. Check console.");
-        } finally {
+        } catch (error) { console.error("Export failed", error); setExportError("Failed to generate export. Check console."); } finally {
             setTimeout(() => setExporting(false), 2000);
         }
     };
@@ -127,20 +110,12 @@ export default function DataManagement() {
           const result = await importLegacyJournals(user.uid, file);
           setImportStatus(`Success! Imported ${result.success} entries. (${result.errors} skipped)`);
           if (fileInputRef.current) fileInputRef.current.value = '';
-        } catch (error) {
-          console.error("Import failed", error);
-          setImportStatus('Error: Import failed. Check console for details.');
-        } finally {
+        } catch (error) { console.error("Import failed", error); setImportStatus('Error: Import failed. Check console for details.'); } finally {
           setImporting(false);
         }
     };
 
-    const handleInitiateDelete = () => {
-        setDeleteStep('confirm');
-        setDeleteError(null);
-        setDeletePassword('');
-        setIsDeleteModalOpen(true);
-    };
+    const handleInitiateDelete = () => { setDeleteStep('confirm'); setDeleteError(null); setDeletePassword(''); setIsDeleteModalOpen(true); };
 
     const handleReAuthAndDelete = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();

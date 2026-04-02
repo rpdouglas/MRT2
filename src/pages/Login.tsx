@@ -11,25 +11,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
 import { doc, getDoc, type Firestore } from 'firebase/firestore';
-import { 
-    ShieldCheckIcon, 
-    EnvelopeIcon, 
-    LockClosedIcon,
-    KeyIcon,
-    ExclamationTriangleIcon,
-    SparklesIcon,
-    ArrowRightOnRectangleIcon
-} from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, EnvelopeIcon, LockClosedIcon, KeyIcon, ExclamationTriangleIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 // --- Interfaces & Data ---
-interface Persona {
-  id: string;
-  name: string;
-  title: string;
-  stage: string;
-  image: string;
-  color: string;
-}
+interface Persona { id: string; name: string; title: string; stage: string; image: string; color: string; }
 
 const PERSONAS: Persona[] = [
   { id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', image: '/personas/david.jpg', color: 'bg-blue-500' },
@@ -85,11 +70,7 @@ export default function Login() {
       setIsSubmitting(true);
       await loginWithGoogle();
       // Routing is handled by the useEffect above once user state changes
-    } catch (error) {
-      console.error(error);
-      setError('Failed to sign in with Google.');
-      setIsSubmitting(false);
-    }
+    } catch (error) { console.error(error); setError('Failed to sign in with Google.'); setIsSubmitting(false); }
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -103,22 +84,11 @@ export default function Login() {
         return;
     }
     
-    if (!isLogin && password !== confirmPass) {
-        setError("Passwords do not match.");
-        setIsSubmitting(false);
-        return;
-    }
+    if (!isLogin && password !== confirmPass) { setError("Passwords do not match."); setIsSubmitting(false); return; }
 
-    if (password.length < 6) {
-        setError("Password should be at least 6 characters.");
-        setIsSubmitting(false);
-        return;
-    }
+    if (password.length < 6) { setError("Password should be at least 6 characters."); setIsSubmitting(false); return; }
 
-    try {
-      if (isLogin) {
-        await loginWithEmail(email, password);
-      } else {
+    try { if (isLogin) { await loginWithEmail(email, password); } else {
         await signupWithEmail(email, password);
       }
       // Routing is handled by the useEffect above once user state changes

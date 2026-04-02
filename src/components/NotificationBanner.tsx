@@ -8,10 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { requestNotificationPermission } from '../lib/messaging';
 import { BellAlertIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-declare global {
-    interface Navigator {
-        standalone?: boolean;
-    }
+declare global { interface Navigator { standalone?: boolean; }
 }
 
 export default function NotificationBanner() {
@@ -58,11 +55,7 @@ export default function NotificationBanner() {
         setLoading(false);
     };
 
-    const handleDismiss = () => {
-        if (!user) return;
-        localStorage.setItem(`mrt_notif_dismissed_${user.uid}`, 'true');
-        setIsVisible(false);
-    };
+    const handleDismiss = () => { if (!user) return; localStorage.setItem(`mrt_notif_dismissed_${user.uid}`, 'true'); setIsVisible(false); };
 
     if (!isVisible) return null;
 

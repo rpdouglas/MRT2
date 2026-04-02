@@ -6,33 +6,14 @@
 
 import React, { useState } from 'react';
 import { SmartToolContainer } from './SmartToolContainer';
-import { 
-    InformationCircleIcon,
-    PlusIcon,
-    TrashIcon,
-    PencilSquareIcon,
-    CheckIcon,
-    XMarkIcon,
-    UserCircleIcon,
-    ShieldCheckIcon,
-    ExclamationTriangleIcon
-} from '@heroicons/react/24/outline';
+import { InformationCircleIcon, PlusIcon, TrashIcon, PencilSquareIcon, CheckIcon, XMarkIcon, UserCircleIcon, ShieldCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import type { PersonifyPayload } from '../../lib/types/smart';
 
 const EXPLANATION = "Narrative Therapy uses 'externalization' to create emotional distance from addiction. By giving your addictive voice a name and character (e.g., 'The Negotiator', 'The Victim'), you separate your True Self from the urges. This makes it easier to observe the lies it tells and disarm them with the truth.";
 
-interface Persona {
-    id: number;
-    name: string;
-    action: string;
-    result: string;
-}
+interface Persona { id: number; name: string; action: string; result: string; }
 
-interface PersonaCardProps {
-    persona: Persona;
-    onUpdate: (updatedPersona: Persona) => void;
-    onDelete: (id: number) => void;
-}
+interface PersonaCardProps { persona: Persona; onUpdate: (updatedPersona: Persona) => void; onDelete: (id: number) => void; }
 
 const PersonaCard: React.FC<PersonaCardProps> = ({ persona, onUpdate, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -51,12 +32,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ persona, onUpdate, onDelete }
         setIsEditing(false);
     };
 
-    const handleCancel = () => {
-        setEditName(persona.name);
-        setEditAction(persona.action);
-        setEditResult(persona.result);
-        setIsEditing(false);
-    };
+    const handleCancel = () => { setEditName(persona.name); setEditAction(persona.action); setEditResult(persona.result); setIsEditing(false); };
 
     if (isEditing) {
         return (
@@ -149,10 +125,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ persona, onUpdate, onDelete }
     );
 };
 
-export const PersonifyTool: React.FC = () => {
-    const initialData: PersonifyPayload = {
-        personas: []
-    };
+export const PersonifyTool: React.FC = () => { const initialData: PersonifyPayload = { personas: [] };
 
     const [newName, setNewName] = useState('');
     const [newAction, setNewAction] = useState('');
@@ -183,16 +156,10 @@ export const PersonifyTool: React.FC = () => {
                     setIsAdding(false);
                 };
 
-                const handleUpdatePersona = (updated: Persona) => {
-                    updateData({
-                        personas: data.personas.map(p => p.id === updated.id ? updated : p)
-                    });
+                const handleUpdatePersona = (updated: Persona) => { updateData({ personas: data.personas.map(p => p.id === updated.id ? updated : p) });
                 };
 
-                const handleDeletePersona = (id: number) => {
-                    updateData({
-                        personas: data.personas.filter(p => p.id !== id)
-                    });
+                const handleDeletePersona = (id: number) => { updateData({ personas: data.personas.filter(p => p.id !== id) });
                 };
 
                 return (
