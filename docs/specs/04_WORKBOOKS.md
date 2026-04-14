@@ -10,7 +10,8 @@ To prevent state conflicts, each answer is stored as an individual document.
 
 ## 2. The Library Hub (`Workbooks.tsx`)
 The main entry point is structured via a dual-tab navigation system:
-* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks (e.g., Women for Recovery).
+* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks.
+    * **Core Asset:** Includes the fully populated "Women for Recovery" workbook. (This asset is active in the codebase and should be heavily utilized in Go-To-Market campaigns targeting the "Lisa" persona).
 * **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.
 
 ## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)

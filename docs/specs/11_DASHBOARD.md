@@ -1,16 +1,18 @@
 # 📐 Feature Spec: Dashboard (The Hub)
 
-**Status:** Live (v2.5)
-**Architecture:** Client-Side Aggregator
-**Primary Code:** `src/pages/Dashboard.tsx`
+**Status:** Live (v2.6)
+**Architecture:** Client-Side Aggregator with Bounded Queries
+**Primary Code:** `src/pages/Dashboard.tsx`, `src/hooks/useDashboardData.ts`
 
 ## 1. Overview
 The Dashboard is the central command center. It aggregates data from all other modules (Journal, Tasks, Workbooks, Vitality) to generate a real-time "Health Snapshot" of the user's recovery, emphasizing high density and immediate visual feedback.
 
 ## 2. Technical Architecture
 
-### A. Data Aggregation
-The Dashboard executes concurrent queries on mount via React Query to fetch Profile, Journals, Tasks, and Workbook answers, triggering the Gamification engine.
+### A. Data Aggregation (O(1) Load Time)
+To prevent mobile browser crashes and massive data payloads for long-term users, the Dashboard executes concurrent bounded queries (capped at 30 days via `useDashboardData.ts`). 
+* It fetches Profile, Journals, Tasks, and Workbook answers utilizing `staleTime` caching.
+* The Gamification engine safely evaluates active streaks and "Clean Time" within this window using strictly unencrypted metadata (tags, status, createdAt), completely bypassing AES-GCM decryption on the initial render.
 
 ### B. The Changelog Beacon (Update Notification)
 * **Logic:** Compares the active build hash (`useBuildInfo().globalHash`) against the user's `lastSeenBuildHash` stored in Firestore.
