@@ -120,9 +120,12 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
         { name: "AES-GCM", iv },
         globalKey,
         data
-      );
+      ).catch((e) => { console.error("Decryption failed:", e); return "[Locked Content - Verify PIN]"; });
 
-      return new TextDecoder().decode(decryptedBuffer);
+      if (typeof decryptedBuffer === 'string') {
+            return decryptedBuffer;
+        }
+        return new TextDecoder().decode(decryptedBuffer);
 
   } catch (error) {
       console.error("Decryption failed:", error);

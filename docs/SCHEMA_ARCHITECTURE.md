@@ -15,6 +15,7 @@ graph TD
     userDoc --> templates[📂 templates]
     userDoc --> checkout_sessions[💳 checkout_sessions]
     userDoc --> subscriptions[💳 subscriptions]
+    userDoc --> payments[💳 payments]
     
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
