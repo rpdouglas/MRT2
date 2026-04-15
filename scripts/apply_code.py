@@ -22,12 +22,13 @@ files_to_update = {
 - [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) and Recovery Community Centers (RCCs) for employment/training resources in Workbooks hub.
 
 ## 🧹 Chores & Tech Debt
-- [ ] Increase Nav Icon sizes by 25% (Accessibility).
-- [ ] Fix Nav Logo white background issue.
+- [x] Increase Nav Icon sizes by 25% (Accessibility) -> *Scoped to the main MRT Logo to preserve flexbox layouts.*
+- [x] Fix Nav Logo white background issue.
 - [ ] Wire up Changelog Beacon alert in Dashboard.
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **[UI]** Nav Logo Visibility Polish -> *Fixed background and scaled logo up by 33% (v1.1.2).*
 - [x] **[HOTFIX]** Admin Inbox Schema Alignment -> *Restored onSnapshot listener and aligned interface to fix empty rendering (v1.1.1).*
 - [x] **[FEAT]** Admin Inbox Workflow Upgrade -> *Added 'Backlog' status, purple UI tier, and updated TS interfaces (v1.1.0).*
 - [x] **[BUG]** PWA Workbox cache collision -> *Resolved via PWAUpdateBeacon and Prompt strategy.*
@@ -36,6 +37,10 @@ files_to_update = {
 """,
 
     "docs-site/support/changelog.md": r"""# 🚀 Changelog
+
+## [v1.1.2] - 2026-04-15
+### Fixed & Optimized (UI Polish)
+- **Brand Visibility:** Scaled up the main MRT navigation logo by ~33% to improve visual hierarchy and accessibility for older devices, and resolved an issue with transparent logo backgrounds causing contrast issues in the sidebar.
 
 ## [v1.1.1] - 2026-04-15
 ### Fixed & Optimized (Hotfix)
@@ -60,7 +65,7 @@ files_to_update = {
 }
 
 def sync_post_sprint():
-    print(f"[{FENCE}] Initiating MRT Post-Cycle Sync for v1.1.1 Hotfix [{FENCE}]")
+    print(f"[{FENCE}] Initiating MRT Post-Cycle Sync for v1.1.2 UI Polish [{FENCE}]")
     for filepath, content in files_to_update.items():
         os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
         safe_content = content.replace('___FENCE___', FENCE)
