@@ -129,7 +129,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  {user.photoURL ? (<img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700 border-2 border-white/20" />) : (<UserCircleIcon className="h-8 w-8 text-blue-200" />)}
                                  <div className="flex flex-col truncate">
                                      <span className="sr-only">Your profile</span>
-                                     <span aria-hidden="true">{user.displayName || 'User'}</span>
+                                     <span aria-hidden="true">{user.displayName || 'Friend'}</span>
                                      <span className="text-xs text-blue-300 font-normal truncate opacity-80">{user.email}</span>
                                  </div>
                              </div>

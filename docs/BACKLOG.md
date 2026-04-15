@@ -3,8 +3,7 @@
 **Storage:** Ideas and feature requests that are approved but deferred. Do not pull into `ACTIVE_CYCLE.md` until prioritized.
 
 ## 📈 Viral Growth & Marketing (The Market Gap)
-* **Feature:** Secure Milestone Share Cards (Instagram/Facebook export).
-* **Complexity:** Medium. Generates an anonymized, branded image (using the UI's Vibrant Momentum aesthetic) of the user's clean time to safely share on social media. Satisfies the "Identity Signaling" psychological trigger without compromising the vault.
+* *(Moved to Active Roadmap: PROJ-32 Viral Export Engine)*
 
 ## 🏃 Integrations & Wearables
 * **Feature:** HealthConnect / Apple HealthKit API integration for Sleep and Step data.
@@ -15,6 +14,10 @@
 * **Complexity:** Medium. Deferred to prevent UI clutter during initial growth phase.
 * **Feature:** Daily Recovery Puzzles (Crosswords/Word Search).
 * **Decision:** Rejected/Deferred indefinitely. We are a toolkit, not a gaming app.
+
+## 📢 System & Engagement
+* **Feature:** Changelog Beacon (Dashboard Alert).
+* **Complexity:** Low. A non-intrusive, dismissible banner (localStorage or Firestore-backed) to notify users of recent platform updates without forcing modals. Deferred to maintain strict frictionless UX on the dashboard.
 
 ## 🏆 Social & Fellowship
 * **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
