@@ -12,7 +12,7 @@ import { CommandLineIcon, UserGroupIcon, CpuChipIcon, ServerIcon, WrenchScrewdri
 import { Navigate } from 'react-router-dom';
 
 // Sub-components
-import UserDirectory from '../components/admin/UserDirectory';
+import FriendsDirectory from '../components/admin/FriendsDirectory';
 import ErrorLogViewer from '../components/admin/ErrorLogViewer';
 import AnalyticsCharts, { type AIUsageLog } from '../components/admin/AnalyticsCharts';
 import DeduplicationTool from '../components/admin/DeduplicationTool';
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
         )}
 
         {/* --- TAB 2: USERS --- */}
-        {activeTab === 'users' && <UserDirectory />}
+        {activeTab === 'users' && <FriendsDirectory />}
 
         {/* --- TAB 3: HEALTH --- */}
         {activeTab === 'health' && <ErrorLogViewer />}

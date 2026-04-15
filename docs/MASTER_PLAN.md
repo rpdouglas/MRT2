@@ -16,3 +16,6 @@ We are currently in **Sprint 8.0**.
 - [ ] Open Corporate Bank Account.
 - [ ] Secure incoming capital transfer.
 - [ ] Finalize App Store Deployment (PROJ-07).
+- [ ] Procure Cyber Liability Insurance (Crucial before onboarding 5,000 users).
+- [ ] Procure Professional Liability (E&O) Insurance.
+- [ ] Schedule Legal Review of `TERMS_OF_SERVICE.md` and `PRIVACY_POLICY.md` for Canadian/US compliance.

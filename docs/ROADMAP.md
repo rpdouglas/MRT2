@@ -7,12 +7,15 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
+| 🟡 **Active** | `PROJ-32` | **Viral Export Engine** | Ned | Secure Milestone Share Cards combining clean time and non-sensitive AI insights. |
 | 🟡 **Active** | `PROJ-18` | **Command Center** | Admin | Desktop-Optimized Admin Analytics for AI cost metrics and user flow telemetry. |
+| 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |
 
 ## 🟡 NEXT (Up Next)
 *Fully scoped projects awaiting engineering bandwidth.*
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs at 10k+ scale. |
 | ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Elevated to unblock Sponsor viral loop). |
 | ⚪ Planned | `PROJ-31` | **Crypto Chunking Pipeline** | Admin | Refactor PIN rotation to handle 10,000+ encrypted documents via background chunking to prevent UI thread lock. (Prerequisite for Data Sovereignty). |
 | ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Universal CBT/Stoic/Mindfulness prompted journaling templates (No fellowship-specific text). |
@@ -23,6 +26,7 @@
 *Approved concepts requiring further technical scoping.*
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt/Lisa | System that analyzes the Insights collection to generate proactive warning tasks based on historical emotional velocity. |
 | ⚪ Planned | `PROJ-22` | **Insights Stats** | Walt | Data visualization tab within the Insights module. |
 | ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
 

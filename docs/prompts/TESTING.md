@@ -1,4 +1,4 @@
-# 🧪 QA & Verification Prompt (v3.1)
+# 🧪 QA & Verification Prompt (v3.2)
 
 **Role:** Senior SDET & Technical Writer.
 **Task:** Verify the code delivered and enforce the Documentation-Driven QA loop.
@@ -9,15 +9,16 @@
 
 ## Part 1: Automated Verification (The Engine)
 1. **Unit Tests:** Generate Vitest specs for core logic.
-    * **React Query Async Rule (CRITICAL):** If testing an optimistic UI update (`onMutate`), you MUST wrap your assertions in `await waitFor(() => { ... })` to account for the microtask gap. Synchronous checks will fail.
-    * **Strict Types:** Do not mock with `as any`. Use `as unknown as MyType`.
+    * **React Query Async Rule (CRITICAL):** Wrap optimistic UI assertions in `await waitFor(() => { ... })`.
+    * **Strict Types:** Use `as unknown as MyType`.
 2. **Regression:** Does this break any existing data boundaries (`crypto.ts`)?
+3. **E2E Golden Paths (Playwright):** If this feature alters a core user flow (Authentication, Vault Unlocking, Journaling), generate a headless Playwright test script to verify the DOM elements and Firebase Emulator interactions.
 
 ## Part 2: Manual Verification (The UX)
-Provide a strict "Smoke Test" checklist for the developer using the Persona Lens:
+Provide a strict "Smoke Test" checklist using the Persona Lens:
 * **The Subway Test:** How does this feature behave if Wi-Fi drops mid-action?
 * **The Gremlin Test:** What happens if the user inputs extreme edge-case data?
 * **The Crisis Test:** Is the UI frictionless enough for "David" (high-anxiety user)?
 
 ## Part 3: Documentation Sync
-Generate the VitePress Markdown file for the User Guide, formatting it with standard sections (Overview, How to Use, FAQ). Use the Python `FENCE` variable trick to output the markdown safely.
+Generate the VitePress Markdown file for the User Guide. Use the Python `FENCE` variable trick to output the markdown safely.

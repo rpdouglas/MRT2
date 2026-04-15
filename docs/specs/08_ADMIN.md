@@ -16,9 +16,9 @@ The system uses a "Defense in Depth" approach:
 * **Source:** `client_errors` collection.
 * **Feature:** `ErrorLogViewer` visualizes crash reports and uses Gemini to suggest fixes.
 
-### B. User Directory
+### B. Friends Directory (formerly User Directory)
 * **Source:** `users` collection.
-* **Feature:** Searchable list of all users. Allows toggling the `role` field.
+* **Feature:** Searchable list of all friends on the platform. Allows toggling the `role` field. (Note: The UI displays 'Friends' to align with fellowship traditions, while the database retains the 'users' collection structure).
 
 ### C. Feedback Inbox (New)
 * **Source:** `feedback` collection.
