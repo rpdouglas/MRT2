@@ -125,7 +125,7 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
       if (typeof decryptedBuffer === 'string') {
             return decryptedBuffer;
         }
-        return new TextDecoder().decode(decryptedBuffer);
+        if (typeof decryptedBuffer === 'string') return decryptedBuffer; return new TextDecoder().decode(decryptedBuffer);
 
   } catch (error) {
       console.error("Decryption failed:", error);
