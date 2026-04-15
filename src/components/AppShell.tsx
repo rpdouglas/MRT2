@@ -1,9 +1,6 @@
 /**
  * src/components/AppShell.tsx
- * GITHUB COMMENT:
- * [AppShell.tsx]
- * FIX: Replaced broken favicon-32x32.png with pwa-192x192.png for sidebar icon stability (Ticket 4.4).
- * FIX: Added solid white background to the sidebar logo for better contrast.
+ * FEAT: Integrated PWAUpdateBeacon for controlled service worker updates (PROJ-19).
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -20,6 +17,7 @@ import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
 import PWAInstallBanner from './PWAInstallBanner';
 import FeedbackModal from './FeedbackModal';
+import { PWAUpdateBeacon } from './PWAUpdateBeacon'; 
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, isOnline } = useLayout();
@@ -27,35 +25,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
   const { isVaultUnlocked, lockVault } = useEncryption();
-
-  // Local State for Feedback
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const handleLogout = async () => {
-    try {
-      setSidebarOpen(false); 
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Failed to log out', error);
-    }
+    try { setSidebarOpen(false); await logout(); navigate('/login'); } 
+    catch (error) { console.error('Failed to log out', error); }
   };
 
   const handleLock = () => { lockVault(); setSidebarOpen(false); navigate('/dashboard'); };
 
   const performAutoBackup = useCallback(async () => {
     if (!user || !db || !driveAccessToken || !isVaultUnlocked || !isOnline) return;
-    const database: Firestore = db;
-
     try {
-      const userRef = doc(database, 'users', user.uid);
+      const userRef = doc(db as Firestore, 'users', user.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) return;
-
-      const userData = userSnap.data();
-      const lastExport = userData.lastExportAt as Timestamp | undefined;
+      
+      const lastExport = userSnap.data().lastExportAt as Timestamp | undefined;
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-
       if (lastExport && lastExport.toMillis() > sevenDaysAgo) return;
 
       const rawData = await fetchAllUserData(user.uid);
@@ -70,14 +57,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
         await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
         console.log("Background Auto-Backup Successful");
       }
-    } catch (e) {
-      console.error("Auto-backup failed silently:", e);
-    }
+    } catch (e) { console.error("Auto-backup failed silently:", e); }
   }, [user, driveAccessToken, isVaultUnlocked, isOnline]);
 
-  useEffect(() => { if (isVaultUnlocked && driveAccessToken && isOnline) { const timer = setTimeout(() => { performAutoBackup(); }, 10000);
-      return () => clearTimeout(timer);
-    }
+  useEffect(() => { 
+      if (isVaultUnlocked && driveAccessToken && isOnline) { 
+          const timer = setTimeout(() => { performAutoBackup(); }, 10000);
+          return () => clearTimeout(timer);
+      }
   }, [isVaultUnlocked, driveAccessToken, performAutoBackup, isOnline]);
 
   const navigation = [
@@ -89,47 +76,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
     { name: 'Insights', href: '/insights', icon: LightBulbIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
-
-  if (isAdmin) {
-    navigation.push({ name: 'Admin', href: '/admin', icon: CommandLineIcon });
-  }
+  if (isAdmin) navigation.push({ name: 'Admin', href: '/admin', icon: CommandLineIcon });
 
   return (
     <div className="min-h-screen relative">
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
-      
-      {/* INTEGRATED FEEDBACK MODAL */}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
-
-      {/* OFFLINE INDICATOR */}
       {!isOnline && (
           <div className="bg-red-600 text-white text-xs font-bold text-center py-2 px-4 fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 shadow-md animate-slideDown">
               <WifiIcon className="h-4 w-4" />
               <span>You are offline. Data will save locally and sync when connection returns.</span>
           </div>
       )}
-
-      {/* PWA INSTALL BANNER */}
       <PWAInstallBanner />
+      <PWAUpdateBeacon />
 
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={setSidebarOpen}>
           <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" />
           <div className="fixed inset-0 flex">
-            <Transition.Child
-              as={Fragment}
-              enter="transition ease-in-out duration-300 transform"
-              enterFrom="-translate-x-full"
-              enterTo="translate-x-0"
-              leave="transition ease-in-out duration-300 transform"
-              leaveFrom="translate-x-0"
-              leaveTo="-translate-x-full"
-            >
+            <Transition.Child as={Fragment} enter="transition ease-in-out duration-300 transform" enterFrom="-translate-x-full" enterTo="translate-x-0" leave="transition ease-in-out duration-300 transform" leaveFrom="translate-x-0" leaveTo="-translate-x-full">
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-gradient-to-b from-blue-700 to-blue-900 transition-all shadow-2xl">
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
                    <div className="flex items-center gap-3 text-white font-bold text-[17px] tracking-tight whitespace-nowrap">
                       <div className="bg-white shadow-sm p-1.5 rounded-lg shrink-0">
-                        {/* FIX: Updated Icon Path */}
                         <img src="/pwa-192x192.png" alt="MRT Logo" className="h-6 w-6 object-contain" />
                       </div>
                       My Recovery Toolkit
@@ -139,39 +109,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
-
                 <nav className="flex flex-1 flex-col px-6 pb-4 mt-8">
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
                         {navigation.map((item) => (
                           <li key={item.name}>
-                            <Link
-                              to={item.href}
-                              onClick={() => setSidebarOpen(false)}
-                              className={`group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-all ${
-                                location.pathname === item.href
-                                  ? 'bg-blue-600/50 text-white shadow-inner border border-blue-500/30'
-                                  : 'text-blue-100 hover:text-white hover:bg-blue-800'
-                              }`}
-                            >
-                              <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                              {item.name}
+                            <Link to={item.href} onClick={() => setSidebarOpen(false)} className={`group flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-all ${ location.pathname === item.href ? 'bg-blue-600/50 text-white shadow-inner border border-blue-500/30' : 'text-blue-100 hover:text-white hover:bg-blue-800' }`}>
+                              <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />{item.name}
                             </Link>
                           </li>
                         ))}
                       </ul>
                     </li>
-                    
                     <li className="mt-auto">
                       <div className="flex flex-col gap-2 pt-6 border-t border-blue-500/30">
                           {user && (
                              <div className="flex items-center gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-white bg-blue-800/50 border border-blue-700/50">
-                                 {user.photoURL ? (
-                                     <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700 border-2 border-white/20" />
-                                 ) : (
-                                     <UserCircleIcon className="h-8 w-8 text-blue-200" />
-                                 )}
+                                 {user.photoURL ? (<img src={user.photoURL} alt="" className="h-8 w-8 rounded-full bg-blue-700 border-2 border-white/20" />) : (<UserCircleIcon className="h-8 w-8 text-blue-200" />)}
                                  <div className="flex flex-col truncate">
                                      <span className="sr-only">Your profile</span>
                                      <span aria-hidden="true">{user.displayName || 'User'}</span>
@@ -179,33 +134,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
                                  </div>
                              </div>
                           )}
-
-                          {/* FEEDBACK TRIGGER */}
-                          <button
-                              onClick={() => { setSidebarOpen(false); setIsFeedbackOpen(true); }}
-                              className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
-                          >
-                              <ChatBubbleLeftRightIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
-                              Send Feedback
+                          <button onClick={() => { setSidebarOpen(false); setIsFeedbackOpen(true); }} className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors">
+                              <ChatBubbleLeftRightIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />Send Feedback
                           </button>
-                          
-                          {/* LOCK VAULT BUTTON */}
                           {isVaultUnlocked && (
-                            <button
-                                onClick={handleLock}
-                                className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors"
-                            >
-                                <LockClosedIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />
-                                Lock Vault
+                            <button onClick={handleLock} className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-100 hover:bg-blue-800 hover:text-white w-full transition-colors">
+                                <LockClosedIcon className="h-6 w-6 shrink-0 text-blue-300 group-hover:text-white" aria-hidden="true" />Lock Vault
                             </button>
                           )}
-
-                          <button
-                            onClick={handleLogout}
-                            className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors"
-                          >
-                            <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                             Log out
+                          <button onClick={handleLogout} className="group -mx-2 flex gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 text-blue-200 hover:bg-red-500/20 hover:text-red-200 w-full transition-colors">
+                            <ArrowLeftOnRectangleIcon className="h-6 w-6 shrink-0" aria-hidden="true" />Log out
                           </button>
                       </div>
                     </li>
@@ -216,7 +154,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </Dialog>
       </Transition.Root>
-
       <main className={`min-h-screen ${!isOnline ? 'pt-10' : ''}`}>
           {children}
       </main>
