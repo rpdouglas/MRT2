@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.1.2] - 2026-04-15
+### Fixed & Optimized (UI Polish)
+- **Brand Visibility:** Scaled up the main MRT navigation logo by ~33% to improve visual hierarchy and accessibility for older devices, and resolved an issue with transparent logo backgrounds causing contrast issues in the sidebar.
+
 ## [v1.1.1] - 2026-04-15
 ### Fixed & Optimized (Hotfix)
 - **Admin Inbox Data Pipeline:** Resolved a schema mismatch where the frontend UI expected fields (`description`, `type`) that did not align with the production database (`message`, `category`). This fixed a bug where the inbox appeared empty.
