@@ -1,25 +1,24 @@
 # 🏃 Active Development Cycle
 
-**Current Phase:** Cycle 2026-W14
+**Current Phase:** Cycle 2026-W15
 **Methodology:** ISO Year-Week Continuous Delivery
 
 ## 🚨 Triage & Hotfixes (Priority 1)
 *Issues bypassing the backlog to protect user retention.*
 - [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
-- [ ] **[UX]** Rename global variables/UI text from "Users" to "Friends" (Peer-to-peer alignment).
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
 - [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **PROJ-18:** Polish & Deploy `/admin/telemetry` UI to track Gemini API usage and user flow (Recharts already integrated).
+- [ ] **PROJ-32:** Viral Export Engine (Secure Milestone Share Cards).
+- [ ] **PROJ-18:** Polish & Deploy `/admin/telemetry` UI to track Gemini API usage.
 - [ ] **[BILLING]** Implement and test Stripe Webhook handlers to automatically provision premium roles upon checkout.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) and Recovery Community Centers (RCCs) for employment/training resources in Workbooks hub.
+- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.).
 
 ## 🧹 Chores & Tech Debt
-- [x] Increase Nav Icon sizes by 25% (Accessibility) -> *Scoped to the main MRT Logo to preserve flexbox layouts.*
-- [x] Fix Nav Logo white background issue.
-- [ ] Wire up Changelog Beacon alert in Dashboard.
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
+- [ ] **[SRE]** Verify Gemini Rate Limiting logic (`useRateLimits.ts`) blocks excessive API calls for Free Tier.
+- [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).
 
 ## ✅ Resolved This Cycle
 - [x] **[UI]** Nav Logo Visibility Polish -> *Fixed background and scaled logo up by 33% (v1.1.2).*

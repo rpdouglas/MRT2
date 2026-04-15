@@ -4,7 +4,7 @@ import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } f
 import type { UserProfile } from '../../lib/db';
 import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 
-export default function UserDirectory() {
+export default function FriendsDirectory() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -151,7 +151,7 @@ export default function UserDirectory() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">User Directory</h2>
+                        <h2 className="text-lg font-bold text-gray-900">Friends Directory</h2>
                         <p className="text-sm text-gray-500">Manage account access, roles, and monetization.</p>
                     </div>
                     <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
@@ -163,7 +163,7 @@ export default function UserDirectory() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Friend</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
