@@ -1,11 +1,16 @@
 # 🚀 Changelog
 
+## [v1.1.1] - 2026-04-15
+### Fixed & Optimized (Hotfix)
+- **Admin Inbox Data Pipeline:** Resolved a schema mismatch where the frontend UI expected fields (`description`, `type`) that did not align with the production database (`message`, `category`). This fixed a bug where the inbox appeared empty.
+- **Real-Time Synchronization:** Restored the `onSnapshot` Firebase listener in the Admin Inbox, ensuring tickets update instantly across all connected administrative dashboards when statuses (like moving to Backlog) are changed.
+
 ## [v1.1.0] - 2026-04-15
 ### Added
 - **Admin Workflow Upgrade:** Introduced a dedicated "Backlog" tier to the Admin Inbox. Feedback and feature requests can now be triaged into a resting state (Backlog) before active development begins (Investigating), keeping the "New" queue clean and actionable.
 
-### Fixed & Optimized (v1.0.2 Hotfixes)
-- **TypeScript Strictness:** Resolved optional prop drilling errors in the Admin Dashboard and fortified Firebase `Firestore` instance casting for the ticketing system.
+### Fixed & Optimized
+- **TypeScript Strictness:** Fortified Firebase `Firestore` instance casting for the ticketing system.
 - **PWA Cache Collision (PROJ-19):** Shifted the Service Worker update strategy from aggressive auto-updating to a deterministic user prompt (`PWAUpdateBeacon`). 
 - **SRE Stability Patches:** Resolved a strict TypeScript compilation error in the `crypto.ts` fallback logic and purged unused ESLint directives.
 
