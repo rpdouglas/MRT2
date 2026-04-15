@@ -16,12 +16,13 @@
 - [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.) and Recovery Community Centers (RCCs) for employment/training resources in Workbooks hub.
 
 ## 🧹 Chores & Tech Debt
-- [ ] Increase Nav Icon sizes by 25% (Accessibility).
-- [ ] Fix Nav Logo white background issue.
+- [x] Increase Nav Icon sizes by 25% (Accessibility) -> *Scoped to the main MRT Logo to preserve flexbox layouts.*
+- [x] Fix Nav Logo white background issue.
 - [ ] Wire up Changelog Beacon alert in Dashboard.
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **[UI]** Nav Logo Visibility Polish -> *Fixed background and scaled logo up by 33% (v1.1.2).*
 - [x] **[HOTFIX]** Admin Inbox Schema Alignment -> *Restored onSnapshot listener and aligned interface to fix empty rendering (v1.1.1).*
 - [x] **[FEAT]** Admin Inbox Workflow Upgrade -> *Added 'Backlog' status, purple UI tier, and updated TS interfaces (v1.1.0).*
 - [x] **[BUG]** PWA Workbox cache collision -> *Resolved via PWAUpdateBeacon and Prompt strategy.*
