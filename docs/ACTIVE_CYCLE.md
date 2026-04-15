@@ -5,8 +5,6 @@
 
 ## 🚨 Triage & Hotfixes (Priority 1)
 *Issues bypassing the backlog to protect user retention.*
-- [x] **[BUG]** Dashboard load speed optimization (Check Firestore indexes & React Query caching). -> *Resolved via 30-day bounded queries and composite indexing.*
-- [ ] **[BUG]** PWA Workbox cache collision (Fix deploy refresh requiring 3-4 reloads).
 - [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
 - [ ] **[UX]** Rename global variables/UI text from "Users" to "Friends" (Peer-to-peer alignment).
 
@@ -22,3 +20,8 @@
 - [ ] Fix Nav Logo white background issue.
 - [ ] Wire up Changelog Beacon alert in Dashboard.
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState` and `<form action={...}>`.
+
+## ✅ Resolved This Cycle
+- [x] **[BUG]** PWA Workbox cache collision -> *Resolved via PWAUpdateBeacon and Prompt strategy.*
+- [x] **[BUG]** Dashboard load speed optimization -> *Resolved via 30-day bounded queries and composite indexing.*
+- [x] **[SRE]** Zero-Knowledge Vault Stability -> *Patched void promise chains and TextDecoder unhandled exceptions.*
