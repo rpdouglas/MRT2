@@ -1,6 +1,9 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { CalendarDaysIcon, ShareIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ShareIcon, BanknotesIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { useQuery } from '@tanstack/react-query';
+import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
 import { calculateSavings } from '../lib/financial';
 import { getMilestone, getMilestoneLabel, getMilestoneImage } from '../lib/milestones';
@@ -23,6 +26,29 @@ interface SobrietyHeroProps {
 export default function SobrietyHero({ date, levelData, archetype, userProfile }: SobrietyHeroProps) {
     const heroRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
+
+    // Fetch latest AI insight for export card safely in the background
+    const { data: latestInsight } = useQuery({
+        queryKey: ['latest-insight', userProfile?.uid],
+        queryFn: async () => {
+            if (!userProfile?.uid || !db) return null;
+            const insightsRef = collection(db as Firestore, 'insights');
+            const q = query(
+                insightsRef,
+                where('uid', '==', userProfile.uid),
+                where('type', 'in', ['journal', 'workbook']),
+                orderBy('createdAt', 'desc'),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) return null;
+            return snapshot.docs[0].data() as { summary: string };
+        },
+        enabled: !!userProfile?.uid,
+        staleTime: 1000 * 60 * 5, // Cache for 5 minutes to prevent redundant reads
+    });
+
+    const displayInsight = latestInsight?.summary || "Growing stronger every day.";
 
     // Calculate Time Stats
     const stats = useMemo(() => {
@@ -233,6 +259,12 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                 {/* VIRAL WATERMARK (FOOTER) */}
                 {isExporting && (
                     <div className="flex flex-col items-center justify-end pt-6 animate-fadeIn">
+                        <div className="flex items-start gap-2 mb-4 max-w-[90%] bg-black/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm shadow-inner">
+                            <SparklesIcon className="h-5 w-5 text-white/90 shrink-0 mt-0.5 animate-pulse" aria-hidden="true" />
+                            <p className="text-white/90 text-sm font-medium drop-shadow-sm italic leading-snug text-left">
+                                "{displayInsight}"
+                            </p>
+                        </div>
                         <span className="text-[10px] font-bold uppercase tracking-widest bg-black/30 px-4 py-1.5 rounded-full border border-white/20 shadow-sm">
                             myrecoverytoolkit.ca
                         </span>
