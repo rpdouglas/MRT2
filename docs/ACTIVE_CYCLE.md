@@ -1,6 +1,6 @@
 # 🏃 Active Development Cycle
 
-**Current Phase:** Cycle 2026-W15
+**Current Phase:** Cycle 2026-W16
 **Methodology:** ISO Year-Week Continuous Delivery
 
 ## 🚨 Triage & Hotfixes (Priority 1)
@@ -10,7 +10,6 @@
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
 - [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **PROJ-32:** Viral Export Engine (Secure Milestone Share Cards).
 - [ ] **PROJ-18:** Polish & Deploy `/admin/telemetry` UI to track Gemini API usage.
 - [ ] **[BILLING]** Implement and test Stripe Webhook handlers to automatically provision premium roles upon checkout.
 - [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.).
@@ -21,6 +20,7 @@
 - [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).
 
 ## ✅ Resolved This Cycle
+- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*
 - [x] **[UI]** Nav Logo Visibility Polish -> *Fixed background and scaled logo up by 33% (v1.1.2).*
 - [x] **[HOTFIX]** Admin Inbox Schema Alignment -> *Restored onSnapshot listener and aligned interface to fix empty rendering (v1.1.1).*
 - [x] **[FEAT]** Admin Inbox Workflow Upgrade -> *Added 'Backlog' status, purple UI tier, and updated TS interfaces (v1.1.0).*
