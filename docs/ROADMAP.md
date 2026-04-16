@@ -17,7 +17,7 @@
 | ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs at 10k+ scale. |
 | ⚪ Planned | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Elevated to unblock Sponsor viral loop). |
 | ⚪ Planned | `PROJ-31` | **Crypto Chunking Pipeline** | Admin | Refactor PIN rotation to handle 10,000+ encrypted documents via background chunking to prevent UI thread lock. (Prerequisite for Data Sovereignty). |
-| ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Universal CBT/Stoic/Mindfulness prompted journaling templates (No fellowship-specific text). |
+| ⚪ Planned | `PROJ-25` | **The Daily Oracle** | Walt / Ned | Daily prompted journaling templates & aggregated daily reflections (Vague 12-step, Dharma, Stoic). |
 | ⚪ Planned | `PROJ-29` | **Enterprise DevOps** | Admin | Migrate GitHub Actions to OpenID Connect (OIDC) keyless authentication and enforce SHA-pinning for supply chain security. |
 | ⚪ Planned | `PROJ-30` | **Data Sovereignty Engine** | Walt | Formalize the local decryption and structured export (JSON/PDF) protocol for legacy users. |
 
@@ -30,6 +30,7 @@
 | ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
 
 ## ✅ RECENTLY SHIPPED
+* `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
 * `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
 * `PROJ-28` The Resentment Burner (SVG Combustion Engine)
 * `PROJ-27` The CBT Engine (SMART Tools integration)

@@ -38,12 +38,14 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.dailyBeacon = void 0;
+exports.syncStripeSubscription = exports.dailyBeacon = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const logger = __importStar(require("firebase-functions/logger"));
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
+const firestore_2 = require("firebase-functions/v2/firestore");
+const auth_1 = require("firebase-admin/auth");
 // Initialize the Admin SDK
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
@@ -194,6 +196,46 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
     }
     catch (error) {
         logger.error("Error executing Daily Beacon", error);
+    }
+});
+// --- PROJ-BILLING: Stripe Subscription Synchronization ---
+// SRE Note: First-time deployment to a new project requires ~2 mins for Eventarc IAM propagation.
+exports.syncStripeSubscription = (0, firestore_2.onDocumentWritten)({
+    document: "users/{userId}/subscriptions/{subscriptionId}",
+    region: "northamerica-northeast1"
+}, async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+        logger.info("No data associated with the event.");
+        return;
+    }
+    const beforeData = snapshot.before.data();
+    const afterData = snapshot.after.data();
+    const beforeStatus = beforeData === null || beforeData === void 0 ? void 0 : beforeData.status;
+    const afterStatus = afterData === null || afterData === void 0 ? void 0 : afterData.status;
+    // Idempotency check: only act if the status actually changed
+    if (beforeStatus === afterStatus) {
+        logger.info(`Status unchanged (${afterStatus}) for subscription ${event.params.subscriptionId}. Exiting.`);
+        return;
+    }
+    const userId = event.params.userId;
+    // Consider active or trialing as Premium
+    const isPremium = afterStatus === "active" || afterStatus === "trialing";
+    const newTier = isPremium ? "premium" : "free";
+    logger.info(`Updating user ${userId} to tier: ${newTier} (Stripe Status: ${afterStatus || 'deleted'})`);
+    try {
+        // 1. Update Firestore Profile
+        const userRef = db.collection("users").doc(userId);
+        await userRef.update({
+            tier: newTier,
+            tierSource: "Stripe-Managed"
+        });
+        // 2. Update Firebase Auth Custom Claims (JWT Token)
+        await (0, auth_1.getAuth)().setCustomUserClaims(userId, { premium: isPremium });
+        logger.info(`Successfully provisioned ${newTier} access for ${userId}.`);
+    }
+    catch (error) {
+        logger.error(`Failed to provision access for user ${userId}`, error);
     }
 });
 //# sourceMappingURL=index.js.map
