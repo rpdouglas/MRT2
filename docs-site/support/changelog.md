@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.1.5] - 2026-04-16
+### Added & Upgraded (Monetization Engine)
+- **Feature [BILLING]:** MRT is now fully monetized! Implemented the backend Stripe synchronization pipeline.
+- **Infrastructure:** Configured Eventarc and 2nd-gen Cloud Functions to listen for Firebase Stripe Extension events, automatically upgrading users to the `premium` tier and generating secure Firebase Auth JWT custom claims without requiring manual developer intervention.
+
+
 ## [v1.1.4] - 2026-04-15
 ### Added & Upgraded (Viral Export Engine)
 - **Feature (PROJ-32):** Launched the completed Viral Export Engine! The `SobrietyHero` milestone cards now securely query your latest abstract AI insight and inject it into your shareable image alongside your clean-time gamification stats. 
