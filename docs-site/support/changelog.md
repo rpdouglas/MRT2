@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.1.4] - 2026-04-15
+### Added & Upgraded (Viral Export Engine)
+- **Feature (PROJ-32):** Launched the completed Viral Export Engine! The `SobrietyHero` milestone cards now securely query your latest abstract AI insight and inject it into your shareable image alongside your clean-time gamification stats. 
+- **Security:** Zero-Knowledge compliance strictly maintained. The export engine automatically buffers the UI to prevent unencrypted DOM flashes and only shares high-level thematic insights, protecting raw journal data.
+
+
 ## [v1.1.3] - 2026-04-15
 ### Added & Upgraded (The Fellowship Alignment)
 - **UX Alignment:** Codebase-wide sweep renaming "Users" to "Friends" in the presentation layer (e.g., `FriendsDirectory.tsx`) to better align with peer-to-peer 12-step fellowship traditions, while safely preserving underlying database architecture.
