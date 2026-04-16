@@ -9,6 +9,8 @@ import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getMessaging, TokenMessage } from "firebase-admin/messaging";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 // Initialize the Admin SDK
 initializeApp();
@@ -184,3 +186,55 @@ export const dailyBeacon = onSchedule({
         logger.error("Error executing Daily Beacon", error);
     }
 });
+
+
+// --- PROJ-BILLING: Stripe Subscription Synchronization ---
+// SRE Note: First-time deployment to a new project requires ~2 mins for Eventarc IAM propagation.
+export const syncStripeSubscription = onDocumentWritten(
+    {
+        document: "users/{userId}/subscriptions/{subscriptionId}",
+        region: "northamerica-northeast1"
+    },
+    async (event) => {
+        const snapshot = event.data;
+        if (!snapshot) {
+            logger.info("No data associated with the event.");
+            return;
+        }
+
+        const beforeData = snapshot.before.data();
+        const afterData = snapshot.after.data();
+
+        const beforeStatus = beforeData?.status;
+        const afterStatus = afterData?.status;
+
+        // Idempotency check: only act if the status actually changed
+        if (beforeStatus === afterStatus) {
+            logger.info(`Status unchanged (${afterStatus}) for subscription ${event.params.subscriptionId}. Exiting.`);
+            return;
+        }
+
+        const userId = event.params.userId;
+        // Consider active or trialing as Premium
+        const isPremium = afterStatus === "active" || afterStatus === "trialing";
+        const newTier = isPremium ? "premium" : "free";
+
+        logger.info(`Updating user ${userId} to tier: ${newTier} (Stripe Status: ${afterStatus || 'deleted'})`);
+
+        try {
+            // 1. Update Firestore Profile
+            const userRef = db.collection("users").doc(userId);
+            await userRef.update({
+                tier: newTier,
+                tierSource: "Stripe-Managed"
+            });
+
+            // 2. Update Firebase Auth Custom Claims (JWT Token)
+            await getAuth().setCustomUserClaims(userId, { premium: isPremium });
+            
+            logger.info(`Successfully provisioned ${newTier} access for ${userId}.`);
+        } catch (error) {
+            logger.error(`Failed to provision access for user ${userId}`, error);
+        }
+    }
+);
