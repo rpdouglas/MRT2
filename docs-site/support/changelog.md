@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.1.8] - 2026-04-17
+### 📊 Admin & SRE (Runway Protection)
+- **Feature [PROJ-18]:** Deployed the Command Center Telemetry Dashboard (`/admin/telemetry`). Provides real-time visual analytics of Gemini API token burn and model distribution (Flash vs Pro) utilizing Recharts.
+- **SRE Update:** Upgraded the `useRateLimits` hook with an optimistic UI lock to strictly prevent API race conditions from free-tier users spam-clicking analysis actions.
+
+
 ## [v1.1.7] - 2026-04-17
 ### 🚑 Hotfixes & Infrastructure
 - **Bug Fix [PROJ-26]:** Resolved a critical issue in the `dailyBeacon` system where users were not receiving push notifications for tasks due "today" due to a timezone boundary parsing error.
