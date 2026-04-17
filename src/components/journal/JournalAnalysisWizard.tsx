@@ -1,3 +1,5 @@
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { SparklesIcon, XMarkIcon, CalendarDaysIcon, ChartBarIcon, GlobeAmericasIcon, CheckCircleIcon, ArrowPathIcon, BoltIcon, PlusCircleIcon, TrophyIcon, LockClosedIcon, ShieldExclamationIcon, LinkIcon, HashtagIcon } from '@heroicons/react/24/outline';
@@ -10,7 +12,6 @@ import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 import { useTaskOperations } from '../../hooks/useTaskOperations'; 
 import { useRateLimits } from '../../hooks/useRateLimits';
-import { useNavigate } from 'react-router-dom';
 import type { ElementType } from 'react';
 
 interface WizardProps { isOpen: boolean; onClose: () => void; entries: JournalEntry[]; }
@@ -29,11 +30,13 @@ interface SelectionCardProps {
     bgClass: string;
 }
 
-export default function JournalAnalysisWizard({ isOpen, onClose, entries }: WizardProps) {
+export default function JournalAnalysisWizard({
+isOpen, onClose, entries }: WizardProps) {
+  const navigate = useNavigate();
+
     const { user, userTier } = useAuth();
     const { addTask } = useTaskOperations(); 
     const { checkEligibility: checkRateLimit, stampUsage, loadingLimits } = useRateLimits();
-    const navigate = useNavigate();
     
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
@@ -137,6 +140,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
                 source: 'ai' 
             });
             setAddedActions(prev => new Set(prev).add(action));
+      toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
         } catch (e) {
             console.error("Failed to add task", e);
         }
@@ -194,6 +198,7 @@ export default function JournalAnalysisWizard({ isOpen, onClose, entries }: Wiza
     };
 
     const SelectionCard = ({ type, title, subtitle, icon: Icon, colorClass, borderClass, bgClass }: SelectionCardProps) => {
+
         const { allowed, reason, progress, requiresUpgrade } = checkEligibility(type);
         const isSelected = scope === type;
         

@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -60,6 +61,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ErrorBoundary>
+        <Toaster position="bottom-center" theme="light" />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
             <EncryptionProvider>

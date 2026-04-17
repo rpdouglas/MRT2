@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,8 +18,9 @@ import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 interface WorkbookAnswer { workbookId: string; sectionId: string; questionId: string; answer: string; uid: string; }
 
 export default function WorkbookDetail() {
-  const { workbookId } = useParams();
   const navigate = useNavigate();
+
+  const { workbookId } = useParams();
   const { user } = useAuth();
   const { decrypt } = useEncryption(); 
   const workbook = getWorkbook(workbookId || '');
@@ -160,6 +162,7 @@ export default function WorkbookDetail() {
         dueDate.setDate(dueDate.getDate() + 3);
         await addTask(user.uid, action, { type: 'once' }, 'High', dueDate, 'ai');
         setAddedActions(prev => new Set(prev).add(action));
+      toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
     } catch (e) {
         console.error(e);
     }
