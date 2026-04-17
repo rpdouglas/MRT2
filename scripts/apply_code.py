@@ -1,42 +1,25 @@
 import os
 
-# FENCE pattern to protect markdown code blocks during generation
 FENCE = chr(96) * 3
 
 patches = [
     {
         "filepath": "docs/ACTIVE_CYCLE.md",
-        "old_block": r"""## 🧹 Chores & Tech Debt
-- [ ] **[UX]** Journal Insights: Add confirmation toast/modal when adding an AI insight to tasks (Triage Report 4/16).
-- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
-- [ ] **[SRE]** Verify Gemini Rate Limiting logic (`useRateLimits.ts`) blocks excessive API calls for Free Tier.
-- [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).""",
-        "new_block": r"""## 🧹 Chores & Tech Debt
-- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
-- [ ] **[SRE]** Verify Gemini Rate Limiting logic (`useRateLimits.ts`) blocks excessive API calls for Free Tier.
-- [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07)."""
+        "old_block": r"""## 🚨 Triage & Hotfixes (Priority 1)
+*Issues bypassing the backlog to protect user retention.*
+- [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
+- [ ] **[BUG]** Push Notifications failing to fire (Triage Report 4/16).""",
+        "new_block": r"""## 🚨 Triage & Hotfixes (Priority 1)
+*Issues bypassing the backlog to protect user retention.*
+- [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`."""
     },
     {
         "filepath": "docs/ACTIVE_CYCLE.md",
         "old_block": r"""## ✅ Resolved This Cycle
-- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*
-- [x] **[BILLING]** Stripe Integration -> *Deployed Firestore trigger to provision premium JWT claims upon successful checkout.*""",
+- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*""",
         "new_block": r"""## ✅ Resolved This Cycle
-- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*
-- [x] **[BILLING]** Stripe Integration -> *Deployed Firestore trigger to provision premium JWT claims upon successful checkout.*
-- [x] **[UX]** Global Actionable Toasts -> *Implemented non-blocking `sonner` notifications for AI task ingestion.*"""
-    },
-    {
-        "filepath": "docs/ROADMAP.md",
-        "old_block": r"""## ✅ RECENTLY SHIPPED
-* `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
-* `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
-* `PROJ-28` The Resentment Burner (SVG Combustion Engine)""",
-        "new_block": r"""## ✅ RECENTLY SHIPPED
-* `[UX]` Global Actionable Toasts (Sonner Provider Architecture)
-* `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
-* `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
-* `PROJ-28` The Resentment Burner (SVG Combustion Engine)"""
+- [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*
+- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*"""
     }
 ]
 
@@ -44,33 +27,32 @@ def append_changelog():
     changelog_path = "docs-site/support/changelog.md"
     new_entry = r"""# 🚀 Changelog
 
-## [v1.1.6] - 2026-04-16
-### UX/UI Refinements (Quality of Life)
-- **Feature [UX]:** Introduced a modern, non-blocking global toast notification system utilizing `sonner`.
-- **Workflow Improvement:** Converting an AI Insight from the Journal History or Workbooks into a tracked task now triggers an actionable toast, allowing users to rapidly batch-add tasks or navigate directly to their Task Ledger with a single click.
+## [v1.1.7] - 2026-04-17
+### 🚑 Hotfixes & Infrastructure
+- **Bug Fix [PROJ-26]:** Resolved a critical issue in the `dailyBeacon` system where users were not receiving push notifications for tasks due "today" due to a timezone boundary parsing error.
+- **System Update:** Upgraded FCM push notification payloads to utilize the modern HTTP v1 `webpush` spec, ensuring notifications reliably launch the PWA dashboard on Android and iOS devices.
 
 """
     if os.path.exists(changelog_path):
         with open(changelog_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Prevent double-appending
-        if "## [v1.1.6]" not in content:
+        if "## [v1.1.7]" not in content:
             content = content.replace("# 🚀 Changelog\n", new_entry)
             with open(changelog_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ Successfully appended v1.1.6 to: {changelog_path}")
+            print(f"✅ Successfully appended v1.1.7 to: {changelog_path}")
         else:
-            print(f"ℹ️ v1.1.6 already exists in {changelog_path}")
+            print(f"ℹ️ v1.1.7 already exists in {changelog_path}")
     else:
-        # Fallback if the file doesn't exist
+        # Fallback if the file doesn't exist yet
         os.makedirs(os.path.dirname(changelog_path), exist_ok=True)
         with open(changelog_path, 'w', encoding='utf-8') as f:
             f.write(new_entry)
-        print(f"✅ Created and appended v1.1.6 to: {changelog_path}")
+        print(f"✅ Created and appended v1.1.7 to: {changelog_path}")
 
 def apply_patches():
-    print(f"[{FENCE}] Initiating Cycle State Synchronization for UX Toast Launch [{FENCE}]")
+    print(f"[{FENCE}] Initiating Cycle State Synchronization for Hotfix v1.1.7 [{FENCE}]")
     
     for patch in patches:
         filepath = patch["filepath"]
@@ -90,7 +72,7 @@ def apply_patches():
             print(f"⚠️ Warning: Target block not found in {filepath}. It may have already been updated.")
             
     append_changelog()
-    print("\n🚀 Cycle Boards Updated. v1.1.6 is ready for PR.")
+    print("\n🚀 Cycle Boards Updated. Ready for PR.")
 
 if __name__ == "__main__":
     apply_patches()

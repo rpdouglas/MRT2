@@ -59,6 +59,7 @@ export const dailyBeacon = onSchedule({
 
         const now = new Date();
         const startOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const endOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
         // We will collect all messages to send in a single batch
         const messagesToSend: TokenMessage[] = [];
@@ -97,7 +98,7 @@ export const dailyBeacon = onSchedule({
                 const tasksSnap = await db.collection("tasks")
                     .where("uid", "==", uid)
                     .where("status", "==", "pending")
-                    .where("dueDate", "<=", Timestamp.fromDate(now))
+                    .where("dueDate", "<=", Timestamp.fromDate(endOfTodayUTC))
                     .get();
 
                 if (!tasksSnap.empty) {
@@ -117,7 +118,12 @@ export const dailyBeacon = onSchedule({
                             body,
                         },
                         data: {
-                            click_action: "/dashboard" // PWA routing
+                            click_action: "/dashboard" // Legacy PWA routing fallback
+                        },
+                        webpush: {
+                            fcmOptions: {
+                                link: "/dashboard" // Standardized HTTP v1 PWA routing
+                            }
                         }
                     });
                 });

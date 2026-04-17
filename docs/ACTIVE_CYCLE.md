@@ -6,7 +6,6 @@
 ## 🚨 Triage & Hotfixes (Priority 1)
 *Issues bypassing the backlog to protect user retention.*
 - [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
-- [ ] **[BUG]** Push Notifications failing to fire (Triage Report 4/16).
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
@@ -20,6 +19,7 @@
 - [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).
 
 ## ✅ Resolved This Cycle
+- [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*
 - [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*
 - [x] **[BILLING]** Stripe Integration -> *Deployed Firestore trigger to provision premium JWT claims upon successful checkout.*
 - [x] **[UX]** Global Actionable Toasts -> *Implemented non-blocking `sonner` notifications for AI task ingestion.*

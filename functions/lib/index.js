@@ -92,6 +92,7 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
         }
         const now = new Date();
         const startOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const endOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
         // We will collect all messages to send in a single batch
         const messagesToSend = [];
         const staleTokensMap = new Map(); // uid -> tokens[]
@@ -124,7 +125,7 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
                 const tasksSnap = await db.collection("tasks")
                     .where("uid", "==", uid)
                     .where("status", "==", "pending")
-                    .where("dueDate", "<=", firestore_1.Timestamp.fromDate(now))
+                    .where("dueDate", "<=", firestore_1.Timestamp.fromDate(endOfTodayUTC))
                     .get();
                 if (!tasksSnap.empty) {
                     title = "Keep the Fire Alive 🔥";
@@ -142,7 +143,12 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
                             body,
                         },
                         data: {
-                            click_action: "/dashboard" // PWA routing
+                            click_action: "/dashboard" // Legacy PWA routing fallback
+                        },
+                        webpush: {
+                            fcmOptions: {
+                                link: "/dashboard" // Standardized HTTP v1 PWA routing
+                            }
                         }
                     });
                 });
