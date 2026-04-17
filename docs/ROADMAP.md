@@ -7,7 +7,6 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
-| 🟡 **Active** | `PROJ-18` | **Command Center** | Admin | Desktop-Optimized Admin Analytics for AI cost metrics and user flow telemetry. |
 | 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |
 
 ## 🟡 NEXT (Up Next)
@@ -30,6 +29,7 @@
 | ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
 * `[UX]` Global Actionable Toasts (Sonner Provider Architecture)
 * `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
 * `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
