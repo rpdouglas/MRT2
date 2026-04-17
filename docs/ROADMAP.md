@@ -30,6 +30,7 @@
 | ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
 
 ## ✅ RECENTLY SHIPPED
+* `[UX]` Global Actionable Toasts (Sonner Provider Architecture)
 * `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
 * `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
 * `PROJ-28` The Resentment Burner (SVG Combustion Engine)

@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.1.6] - 2026-04-16
+### UX/UI Refinements (Quality of Life)
+- **Feature [UX]:** Introduced a modern, non-blocking global toast notification system utilizing `sonner`.
+- **Workflow Improvement:** Converting an AI Insight from the Journal History or Workbooks into a tracked task now triggers an actionable toast, allowing users to rapidly batch-add tasks or navigate directly to their Task Ledger with a single click.
+
+
 ## [v1.1.5] - 2026-04-16
 ### Added & Upgraded (Monetization Engine)
 - **Feature [BILLING]:** MRT is now fully monetized! Implemented the backend Stripe synchronization pipeline.
