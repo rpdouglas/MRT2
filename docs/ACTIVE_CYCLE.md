@@ -5,7 +5,7 @@
 
 ## 🚨 Triage & Hotfixes (Priority 1)
 *Issues bypassing the backlog to protect user retention.*
-- [ ] **[BUG]** Move VitePress docs to `docs.myrecoverytoolkit.ca`.
+*(Queue Empty)*
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
@@ -17,6 +17,7 @@
 - [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).
 
 ## ✅ Resolved This Cycle
+- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*
 - [x] **[SRE]** PROJ-18: Admin Telemetry -> *Deployed `/admin/telemetry` with bounded 30-day Firestore queries and Recharts token burn visualization (v1.1.8).*
 - [x] **[SRE]** API Rate Limiting -> *Injected optimistic UI lock into `useRateLimits.ts` to prevent race-condition API spam.*
 - [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*

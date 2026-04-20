@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.1.9] - 2026-04-19
+### 🛠️ Infrastructure & Routing
+- **DevOps:** Successfully migrated the MRT documentation hub to a dedicated custom domain (`docs.myrecoverytoolkit.ca`) using GitHub Pages CNAME routing. This fully isolates the documentation Service Worker from the main PWA caching engine.
+
+
 ## [v1.1.8] - 2026-04-17
 ### 📊 Admin & SRE (Runway Protection)
 - **Feature [PROJ-18]:** Deployed the Command Center Telemetry Dashboard (`/admin/telemetry`). Provides real-time visual analytics of Gemini API token burn and model distribution (Flash vs Pro) utilizing Recharts.
