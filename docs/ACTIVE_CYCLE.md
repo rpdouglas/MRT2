@@ -10,7 +10,6 @@
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
 - [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.).
 
 ## 🧹 Chores & Tech Debt
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.

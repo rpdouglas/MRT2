@@ -4,6 +4,15 @@ import { WORKBOOKS } from '../data/workbooks';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { Globe, BookOpen, ExternalLink } from 'lucide-react';
+
+const FELLOWSHIP_RESOURCES = [
+  { name: 'Alcoholics Anonymous', desc: 'Traditional 12-step fellowship.', official: 'https://www.aa.org', lit: 'https://www.aa.org/the-big-book' },
+  { name: 'Narcotics Anonymous', desc: '12-step fellowship for all addictions.', official: 'https://www.na.org', lit: 'https://www.na.org/recovery-literature/' },
+  { name: 'SMART Recovery', desc: 'CBT-based mutual support.', official: 'https://smartrecovery.org', lit: 'https://smartrecovery.org/smart-recovery-toolbox/' },
+  { name: 'Recovery Dharma', desc: 'Buddhist-inspired path.', official: 'https://recoverydharma.org', lit: 'https://recoverydharma.org/book/' },
+  { name: 'Women for Sobriety', desc: 'Empowerment-based support.', official: 'https://womenforsobriety.org', lit: 'https://womenforsobriety.org/catalog/' }
+];
 
 export default function Workbooks() {
   const [activeTab, setActiveTab] = useState<'workbooks' | 'literature'>('workbooks');
@@ -55,7 +64,7 @@ export default function Workbooks() {
             }`}
           >
             <DocumentTextIcon className="w-4 h-4" />
-            Literature
+            Fellowships
           </button>
         </div>
 
@@ -103,16 +112,31 @@ export default function Workbooks() {
             </div>
         )}
 
-        {/* LITERATURE CONTENT (EMPTY STATE) */}
+        {/* LITERATURE CONTENT (FELLOWSHIP RESOURCES DIRECTORY) */}
         {activeTab === 'literature' && (
-            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl border border-dashed border-emerald-300 shadow-sm animate-fadeIn">
-                <div className="bg-emerald-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
-                    <DocumentTextIcon className="h-8 w-8 text-emerald-500" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+              {FELLOWSHIP_RESOURCES.map((fellowship) => (
+                <div key={fellowship.name} className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-emerald-200/50 flex flex-col h-full hover:shadow-md transition-shadow">
+                  <h3 className="text-lg font-bold text-emerald-900">{fellowship.name}</h3>
+                  <p className="text-sm text-emerald-700/80 mt-1 mb-4 flex-grow">{fellowship.desc}</p>
+                  <div className="flex flex-col gap-2 mt-auto">
+                    <a href={fellowship.official} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-emerald-50 transition-colors text-emerald-800 group border border-emerald-100">
+                      <div className="flex items-center gap-3">
+                        <Globe className="w-4 h-4 text-emerald-500" />
+                        <span className="font-medium text-sm">Official Website</span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
+                    </a>
+                    <a href={fellowship.lit} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-emerald-50 transition-colors text-emerald-800 group border border-emerald-100">
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="w-4 h-4 text-emerald-500" />
+                        <span className="font-medium text-sm">Core Literature</span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
+                    </a>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Coming Soon</h3>
-                <p className="text-gray-500 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-                    Classic recovery literature, daily meditations, and reference texts are being prepared for your digital library.
-                </p>
+              ))}
             </div>
         )}
 

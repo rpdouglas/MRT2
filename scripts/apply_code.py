@@ -3,60 +3,41 @@ import os
 FENCE = chr(96) * 3
 
 patches = [
-    # Remove from Priority 2
+    # 1. Clear from Active Projects
     {
         "filepath": "docs/ACTIVE_CYCLE.md",
-        "old_block": r"""- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **PROJ-18:** Polish & Deploy `/admin/telemetry` UI to track Gemini API usage.
+        "old_block": r"""## 🛠️ Active Projects (Priority 2)
+*Core feature work for the current cycle.*
+- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
 - [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.).""",
-        "new_block": r"""- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.)."""
+        "new_block": r"""## 🛠️ Active Projects (Priority 2)
+*Core feature work for the current cycle.*
+- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic."""
     },
-    # Remove from Chores
-    {
-        "filepath": "docs/ACTIVE_CYCLE.md",
-        "old_block": r"""- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
-- [ ] **[SRE]** Verify Gemini Rate Limiting logic (`useRateLimits.ts`) blocks excessive API calls for Free Tier.
-- [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07).""",
-        "new_block": r"""- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
-- [ ] **[DEVOPS]** Generate `/.well-known/assetlinks.json` for TWA Play Store Verification (PROJ-07)."""
-    },
-    # Add to Resolved
+    # 2. Add to Resolved This Cycle
     {
         "filepath": "docs/ACTIVE_CYCLE.md",
         "old_block": r"""## ✅ Resolved This Cycle
-- [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*""",
+- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*""",
         "new_block": r"""## ✅ Resolved This Cycle
-- [x] **[SRE]** PROJ-18: Admin Telemetry -> *Deployed `/admin/telemetry` with bounded 30-day Firestore queries and Recharts token burn visualization (v1.1.8).*
-- [x] **[SRE]** API Rate Limiting -> *Injected optimistic UI lock into `useRateLimits.ts` to prevent race-condition API spam.*
-- [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*"""
+- [x] **[COMPLIANCE]** Fellowship Routing -> *Injected 'Find a Meeting' locators into SOSModal and overhauled Workbooks tab into a Fellowship Directory (v1.1.10).*
+- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*"""
     },
-    # Remove PROJ-18 from ROADMAP NOW section
+    # 3. Update the Workbooks Spec
     {
-        "filepath": "docs/ROADMAP.md",
-        "old_block": r"""| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
-| 🟡 **Active** | `PROJ-18` | **Command Center** | Admin | Desktop-Optimized Admin Analytics for AI cost metrics and user flow telemetry. |
-| 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |""",
-        "new_block": r"""| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
-| 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |"""
-    },
-    # Add PROJ-18 to ROADMAP RECENTLY SHIPPPED
-    {
-        "filepath": "docs/ROADMAP.md",
-        "old_block": r"""## ✅ RECENTLY SHIPPED
-* `[UX]` Global Actionable Toasts (Sonner Provider Architecture)""",
-        "new_block": r"""## ✅ RECENTLY SHIPPED
-* `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
-* `[UX]` Global Actionable Toasts (Sonner Provider Architecture)"""
+        "filepath": "docs/specs/04_WORKBOOKS.md",
+        "old_block": r"""* **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.""",
+        "new_block": r"""* **Fellowships Tab:** A dedicated directory featuring outbound links to official websites and core literature for major recovery modalities (AA, NA, SMART, Recovery Dharma, WFS)."""
     }
 ]
 
 def safe_update_changelog():
     changelog_path = "docs-site/support/changelog.md"
-    new_entry = r"""## [v1.1.8] - 2026-04-17
-### 📊 Admin & SRE (Runway Protection)
-- **Feature [PROJ-18]:** Deployed the Command Center Telemetry Dashboard (`/admin/telemetry`). Provides real-time visual analytics of Gemini API token burn and model distribution (Flash vs Pro) utilizing Recharts.
-- **SRE Update:** Upgraded the `useRateLimits` hook with an optimistic UI lock to strictly prevent API race conditions from free-tier users spam-clicking analysis actions.
+    new_entry = r"""## [v1.1.10] - 2026-04-20
+### ⚖️ Compliance & Resources
+- **Lifeline:** Added a progressive-disclosure "Find a Meeting" locator to the SOS Modal for urgent crisis support.
+- **Library:** Transformed the Workbooks 'Literature' tab into a comprehensive 'Fellowships' directory with direct links to official websites and core literature (AA, NA, SMART, Recovery Dharma, WFS).
+- **Security:** Enforced `noopener noreferrer` boundary on all outbound links to prevent tab-nabbing.
 
 """
     if os.path.exists(changelog_path):
@@ -72,13 +53,13 @@ def safe_update_changelog():
                 
         if header_index != -1:
             # Check if we already inserted it to avoid duplicates
-            if not any("## [v1.1.8]" in line for line in lines):
+            if not any("## [v1.1.10]" in line for line in lines):
                 lines.insert(header_index + 1, "\n" + new_entry)
                 with open(changelog_path, 'w', encoding='utf-8') as f:
                     f.writelines(lines)
-                print(f"✅ Safely prepended v1.1.8 to: {changelog_path}")
+                print(f"✅ Safely prepended v1.1.10 to: {changelog_path}")
             else:
-                print(f"ℹ️ v1.1.8 already exists in {changelog_path}")
+                print(f"ℹ️ v1.1.10 already exists in {changelog_path}")
         else:
             print(f"⚠️ Could not find '# 🚀 Changelog' header in {changelog_path}. Skipping append.")
     else:
@@ -105,7 +86,7 @@ def apply_patches():
             print(f"⚠️ Warning: Target block not found in {filepath}. It may have already been updated.")
             
     safe_update_changelog()
-    print("\n🚀 Project Boards and Logs Synchronized. Ready for PR.")
+    print("\n🚀 Project Boards and Specs Synchronized. Ready for PR.")
 
 if __name__ == "__main__":
     apply_patches()
