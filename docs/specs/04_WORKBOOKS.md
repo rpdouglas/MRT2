@@ -12,7 +12,7 @@ To prevent state conflicts, each answer is stored as an individual document.
 The main entry point is structured via a dual-tab navigation system:
 * **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks.
     * **Core Asset:** Includes the fully populated "Women for Recovery" workbook. (This asset is active in the codebase and should be heavily utilized in Go-To-Market campaigns targeting the "Lisa" persona).
-* **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.
+* **Fellowships Tab:** A dedicated directory featuring outbound links to official websites and core literature for major recovery modalities (AA, NA, SMART, Recovery Dharma, WFS).
 
 ## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)
 * **Zen Mode:** A full-screen, distraction-free reading layer using `@tailwindcss/typography`.

@@ -1,5 +1,12 @@
 # 🚀 Changelog
 
+## [v1.1.10] - 2026-04-20
+### ⚖️ Compliance & Resources
+- **Lifeline:** Added a progressive-disclosure "Find a Meeting" locator to the SOS Modal for urgent crisis support.
+- **Library:** Transformed the Workbooks 'Literature' tab into a comprehensive 'Fellowships' directory with direct links to official websites and core literature (AA, NA, SMART, Recovery Dharma, WFS).
+- **Security:** Enforced `noopener noreferrer` boundary on all outbound links to prevent tab-nabbing.
+
+
 ## [v1.1.8] - 2026-04-17
 ### 📊 Admin & SRE (Runway Protection)
 - **Feature [PROJ-18]:** Deployed the Command Center Telemetry Dashboard (`/admin/telemetry`). Provides real-time visual analytics of Gemini API token burn and model distribution (Flash vs Pro) utilizing Recharts.
