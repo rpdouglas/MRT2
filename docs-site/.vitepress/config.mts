@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "My Recovery Toolkit",
   description: "Documentation and User Guide",
-  base: '/MRT2/',
+  base: '/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
