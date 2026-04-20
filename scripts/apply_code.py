@@ -40,7 +40,7 @@ patches = [
         "new_block": r"""| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
 | 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |"""
     },
-    # Add PROJ-18 to ROADMAP RECENTLY SHIPPED
+    # Add PROJ-18 to ROADMAP RECENTLY SHIPPPED
     {
         "filepath": "docs/ROADMAP.md",
         "old_block": r"""## ✅ RECENTLY SHIPPED
