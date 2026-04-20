@@ -1,92 +1,95 @@
 import os
+import re
 
 FENCE = chr(96) * 3
 
-patches = [
-    # 1. Clear from Active Projects
-    {
-        "filepath": "docs/ACTIVE_CYCLE.md",
-        "old_block": r"""## 🛠️ Active Projects (Priority 2)
+def sync_active_cycle():
+    print(f"[{FENCE}] Syncing ACTIVE_CYCLE.md [{FENCE}]")
+    target_file = "docs/ACTIVE_CYCLE.md"
+    
+    new_content = r"""# 🏃 Active Development Cycle
+
+**Current Phase:** Cycle 2026-W16
+**Methodology:** ISO Year-Week Continuous Delivery
+
+## 🚨 Triage & Hotfixes (Priority 1)
+*Issues bypassing the backlog to protect user retention.*
+*(Queue Empty)*
+
+## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
 - [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic.
-- [ ] **Compliance:** Add outbound links to specific modalities (Recovery Dharma, WFS, etc.).""",
-        "new_block": r"""## 🛠️ Active Projects (Priority 2)
-*Core feature work for the current cycle.*
-- [ ] **PROJ-19:** Design smoother mobile landing page & "About Us" section for top-of-funnel traffic."""
-    },
-    # 2. Add to Resolved This Cycle
-    {
-        "filepath": "docs/ACTIVE_CYCLE.md",
-        "old_block": r"""## ✅ Resolved This Cycle
-- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*""",
-        "new_block": r"""## ✅ Resolved This Cycle
+- [⛔ BLOCKED] **PROJ-07:** Play Store TWA (Waiting on DUNS Number for Google Play Developer Account verification).
+
+## 🧹 Chores & Tech Debt
+- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
+
+## ✅ Resolved This Cycle
 - [x] **[COMPLIANCE]** Fellowship Routing -> *Injected 'Find a Meeting' locators into SOSModal and overhauled Workbooks tab into a Fellowship Directory (v1.1.10).*
-- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*"""
-    },
-    # 3. Update the Workbooks Spec
-    {
-        "filepath": "docs/specs/04_WORKBOOKS.md",
-        "old_block": r"""* **Literature Tab:** A placeholder for upcoming classic reading materials and daily meditations.""",
-        "new_block": r"""* **Fellowships Tab:** A dedicated directory featuring outbound links to official websites and core literature for major recovery modalities (AA, NA, SMART, Recovery Dharma, WFS)."""
-    }
-]
-
-def safe_update_changelog():
-    changelog_path = "docs-site/support/changelog.md"
-    new_entry = r"""## [v1.1.10] - 2026-04-20
-### ⚖️ Compliance & Resources
-- **Lifeline:** Added a progressive-disclosure "Find a Meeting" locator to the SOS Modal for urgent crisis support.
-- **Library:** Transformed the Workbooks 'Literature' tab into a comprehensive 'Fellowships' directory with direct links to official websites and core literature (AA, NA, SMART, Recovery Dharma, WFS).
-- **Security:** Enforced `noopener noreferrer` boundary on all outbound links to prevent tab-nabbing.
-
+- [x] **[DEVOPS]** Docs Architecture -> *Migrated VitePress documentation to `docs.myrecoverytoolkit.ca` via GitHub Pages custom domain routing (v1.1.9).*
+- [x] **[SRE]** PROJ-18: Admin Telemetry -> *Deployed `/admin/telemetry` with bounded 30-day Firestore queries and Recharts token burn visualization (v1.1.8).*
+- [x] **[SRE]** API Rate Limiting -> *Injected optimistic UI lock into `useRateLimits.ts` to prevent race-condition API spam.*
+- [x] **[HOTFIX]** Push Notification Engine -> *Resolved PWA routing and timezone boundary bugs in `dailyBeacon` function (v1.1.7).*
+- [x] **[FEAT]** PROJ-32: Viral Export Engine -> *Injected non-sensitive AI insights securely into SobrietyHero export cards.*
+- [x] **[BILLING]** Stripe Integration -> *Deployed Firestore trigger to provision premium JWT claims upon successful checkout.*
 """
-    if os.path.exists(changelog_path):
-        with open(changelog_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            
-        # Find the line index of the main header
-        header_index = -1
-        for i, line in enumerate(lines):
-            if line.strip().startswith("# 🚀 Changelog"):
-                header_index = i
-                break
-                
-        if header_index != -1:
-            # Check if we already inserted it to avoid duplicates
-            if not any("## [v1.1.10]" in line for line in lines):
-                lines.insert(header_index + 1, "\n" + new_entry)
-                with open(changelog_path, 'w', encoding='utf-8') as f:
-                    f.writelines(lines)
-                print(f"✅ Safely prepended v1.1.10 to: {changelog_path}")
-            else:
-                print(f"ℹ️ v1.1.10 already exists in {changelog_path}")
-        else:
-            print(f"⚠️ Could not find '# 🚀 Changelog' header in {changelog_path}. Skipping append.")
-    else:
-        print(f"⚠️ {changelog_path} does not exist. Skipping append.")
+    if os.path.exists(target_file):
+        with open(target_file, 'w', encoding='utf-8') as f:
+            f.write(new_content.strip() + "\n")
+        print(f"✅ {target_file} updated.")
 
-def apply_patches():
-    print(f"[{FENCE}] Initiating Master Close & Audit Sync [{FENCE}]")
+def sync_master_plan():
+    print(f"[{FENCE}] Syncing MASTER_PLAN.md [{FENCE}]")
+    target_file = "docs/MASTER_PLAN.md"
     
-    for patch in patches:
-        filepath = patch["filepath"]
-        if not os.path.exists(filepath):
-            print(f"⚠️ Warning: File not found: {filepath}")
-            continue
-            
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-            
-        if patch["old_block"] in content:
-            new_content = content.replace(patch["old_block"], patch["new_block"])
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            print(f"✅ Successfully patched: {filepath}")
-        else:
-            print(f"⚠️ Warning: Target block not found in {filepath}. It may have already been updated.")
-            
-    safe_update_changelog()
-    print("\n🚀 Project Boards and Specs Synchronized. Ready for PR.")
+    if not os.path.exists(target_file): return
+    
+    with open(target_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    old_block = r"""- [ ] Finalize App Store Deployment (PROJ-07)."""
+    new_block = r"""- [ ] Acquire DUNS Number to unblock Google Play Developer Account creation.
+- [⛔] Finalize App Store Deployment (PROJ-07) - *Blocked by DUNS.*"""
+    
+    if old_block in content:
+        content = content.replace(old_block, new_block)
+        with open(target_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"✅ {target_file} updated.")
+
+def sync_roadmap():
+    print(f"[{FENCE}] Syncing ROADMAP.md [{FENCE}]")
+    target_file = "docs/ROADMAP.md"
+    
+    if not os.path.exists(target_file): return
+    
+    with open(target_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Update PROJ-07 Status
+    content = content.replace(
+        r"| 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |",
+        r"| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |"
+    )
+
+    # Inject new ideas from gap analysis into LATER Epic
+    new_epics = r"""| ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers and emotional velocity immediately following a relapse. |
+| ⚪ Planned | `PROJ-36` | **Restitution Dashboard** | Ned | Visual UI widget for tracking financial savings and "Time Recovered" using existing `financial.ts` logic. |
+| ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation allowing a sponsee to share an encrypted 4th-step inventory directly to a sponsor's device in person. |"""
+    
+    if "The Autopsy Engine" not in content:
+        content = content.replace(
+            r"| ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |",
+            r"| ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |" + "\n" + new_epics
+        )
+        
+    with open(target_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"✅ {target_file} updated.")
 
 if __name__ == "__main__":
-    apply_patches()
+    print(f"[{FENCE}] Initiating Governance Synchronization [{FENCE}]")
+    sync_active_cycle()
+    sync_master_plan()
+    sync_roadmap()
+    print(f"\n🚀 Governance files perfectly aligned with current state.")
