@@ -1,3 +1,4 @@
+import { MapPin, ExternalLink } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
@@ -9,6 +10,7 @@ import { doc, getDoc, type Firestore } from 'firebase/firestore';
 interface SOSModalProps { isOpen: boolean; onClose: () => void; }
 
 export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
+  const [showMeetings, setShowMeetings] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sponsorName, setSponsorName] = useState<string | null>(null);
@@ -204,7 +206,47 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                   )}
                 </div>
 
-              </Dialog.Panel>
+              
+        {/* Find A Meeting Accordion */}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <button 
+            onClick={() => setShowMeetings(!showMeetings)}
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors text-slate-700"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-indigo-100 text-indigo-600">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <span className="font-bold">Find a Meeting</span>
+            </div>
+            <span className="text-sm font-medium text-slate-400">{showMeetings ? 'Hide' : 'Show'}</span>
+          </button>
+
+          {showMeetings && (
+            <div className="mt-3 flex flex-col gap-2 animate-fadeIn">
+              {[
+                { name: 'Alcoholics Anonymous (AA)', url: 'https://www.aa.org/find-aa' },
+                { name: 'Narcotics Anonymous (NA)', url: 'https://www.na.org/meetingsearch/' },
+                { name: 'SMART Recovery', url: 'https://meetings.smartrecovery.org/meetings/' },
+                { name: 'Recovery Dharma', url: 'https://recoverydharma.org/meetings/' },
+                { name: 'Women for Sobriety', url: 'https://womenforsobriety.org/meetings/' }
+              ].map((meeting) => (
+                <a 
+                  key={meeting.name}
+                  href={meeting.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all text-slate-600 group"
+                >
+                  <span className="font-medium text-sm">{meeting.name}</span>
+                  <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+</Dialog.Panel>
             </Transition.Child>
           </div>
         </div>
