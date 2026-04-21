@@ -15,7 +15,8 @@ We are currently in **Sprint 8.0**.
 ### 🏃 Immediate Action Items
 - [ ] Open Corporate Bank Account.
 - [ ] Secure incoming capital transfer.
-- [ ] Finalize App Store Deployment (PROJ-07).
+- [ ] Acquire DUNS Number to unblock Google Play Developer Account creation.
+- [⛔] Finalize App Store Deployment (PROJ-07) - *Blocked by DUNS.*
 - [ ] Procure Cyber Liability Insurance (Crucial before onboarding 5,000 users).
 - [ ] Procure Professional Liability (E&O) Insurance.
 - [ ] Schedule Legal Review of `TERMS_OF_SERVICE.md` and `PRIVACY_POLICY.md` for Canadian/US compliance.

@@ -7,7 +7,7 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
-| 🟡 **Active** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. |
+| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
 
 ## 🟡 NEXT (Up Next)
 *Fully scoped projects awaiting engineering bandwidth.*
@@ -27,6 +27,9 @@
 | ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt/Lisa | System that analyzes the Insights collection to generate proactive warning tasks based on historical emotional velocity. |
 | ⚪ Planned | `PROJ-22` | **Insights Stats** | Walt | Data visualization tab within the Insights module. |
 | ⚪ Planned | `PROJ-23` | **The QA Sentinel** | Admin | E2E Testing Pipeline (Playwright) for scaling safety. |
+| ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers and emotional velocity immediately following a relapse. |
+| ⚪ Planned | `PROJ-36` | **Restitution Dashboard** | Ned | Visual UI widget for tracking financial savings and "Time Recovered" using existing `financial.ts` logic. |
+| ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation allowing a sponsee to share an encrypted 4th-step inventory directly to a sponsor's device in person. |
 
 ## ✅ RECENTLY SHIPPED
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
