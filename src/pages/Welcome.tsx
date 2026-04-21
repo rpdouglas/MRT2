@@ -57,7 +57,7 @@ export default function Welcome() {
   const { user, loading, loginWithGoogle } = auth;
   const [isSignUp, setIsSignUp] = useState(true);
 
-  // Smart Redirect: If user is already logged in, skip the splash page
+  // Smart Redirect: If user is already logged in, skip the splash page entirely
   useEffect(() => {
     if (!loading && user) {
       navigate('/dashboard');
