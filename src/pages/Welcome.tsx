@@ -3,53 +3,53 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 
+import { ASSETS } from '../data/assets';
+
 // ----------------------------------------------------------------------
-// ASSET DICTIONARY: Single source of truth for WebP marketing assets
+// PAGE CONTENT: Human-readable text, descriptions, and metadata
 // ----------------------------------------------------------------------
-const ASSETS = {
-  hero: {
-    dashboard: '/Marketing/Screenshots/scn_dashboard.webp',
-    cleanTime: '/Marketing/Screenshots/scn_dashboard_02_clean_time.webp'
+const PERSONA_CONTENT = [
+  { 
+    id: 'david', 
+    name: 'David', 
+    title: 'The Fresh Start',
+    quote: '"A completely private space to start over."',
+    headshot: ASSETS.personas.david_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_journal_write,
+    color: 'bg-blue-50 text-blue-600',
+    altDesc: 'David, representing early recovery users seeking privacy.'
   },
-  personas: [
-    { 
-      id: 'david', 
-      name: 'David', 
-      title: 'The Fresh Start',
-      quote: '"A completely private space to start over."',
-      headshot: '/Marketing/david_headshot.webp', 
-      screen: '/Marketing/Screenshots/scn_journal_write.webp',
-      color: 'bg-blue-50 text-blue-600'
-    },
-    { 
-      id: 'ned', 
-      name: 'Ned', 
-      title: 'The Pink Cloud',
-      quote: '"Turning manic energy into grounded momentum."',
-      headshot: '/Marketing/ned_headshot.webp', 
-      screen: '/Marketing/Screenshots/scn_tasks_this_week.webp',
-      color: 'bg-cyan-50 text-cyan-600'
-    },
-    { 
-      id: 'lisa', 
-      name: 'Lisa', 
-      title: 'The Service Superstar',
-      quote: '"Self-care tools to prevent burnout."',
-      headshot: '/Marketing/lisa_headshot.webp', 
-      screen: '/Marketing/Screenshots/scn_vitality_breath.webp',
-      color: 'bg-amber-50 text-amber-600'
-    },
-    { 
-      id: 'walt', 
-      name: 'Walt', 
-      title: 'The Zen Master',
-      quote: '"Finding hidden patterns with AI analysis."',
-      headshot: '/Marketing/walt_headshot.webp', 
-      screen: '/Marketing/Screenshots/scn_journal_ai_wizard.webp',
-      color: 'bg-fuchsia-50 text-fuchsia-600'
-    }
-  ]
-} as const;
+  { 
+    id: 'ned', 
+    name: 'Ned', 
+    title: 'The Pink Cloud',
+    quote: '"Turning manic energy into grounded momentum."',
+    headshot: ASSETS.personas.ned_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_tasks_this_week,
+    color: 'bg-cyan-50 text-cyan-600',
+    altDesc: 'Ned, representing users building daily habits and structure.'
+  },
+  { 
+    id: 'lisa', 
+    name: 'Lisa', 
+    title: 'The Service Superstar',
+    quote: '"Self-care tools to prevent burnout."',
+    headshot: ASSETS.personas.lisa_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_vitality_breath,
+    color: 'bg-amber-50 text-amber-600',
+    altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.'
+  },
+  { 
+    id: 'walt', 
+    name: 'Walt', 
+    title: 'The Zen Master',
+    quote: '"Finding hidden patterns with AI analysis."',
+    headshot: ASSETS.personas.walt_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_journal_ai_wizard,
+    color: 'bg-fuchsia-50 text-fuchsia-600',
+    altDesc: 'Walt, representing long-term users seeking AI insight.'
+  }
+];
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -87,21 +87,49 @@ export default function Welcome() {
       {/* 2. THE HERO SECTION */}
       <section className="relative min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-2 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white overflow-hidden">
         
+        {/* BRAND HEADER */}
+        <header className="absolute top-0 w-full px-6 py-6 flex items-start justify-between z-40 pointer-events-none">
+          {/* Empty spacer to balance flex alignment */}
+          <div className="w-20 sm:w-24 hidden sm:block"></div>
+          
+          {/* Centered Brand Lockup */}
+          <div className="flex flex-col items-center gap-0 pointer-events-auto absolute left-1/2 -translate-x-1/2 top-3">
+            <img 
+              src={ASSETS.raw_assets.mRT_Logo_Transparent} 
+              alt="MRT Logo" 
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-xl -mb-1 sm:-mb-2" 
+              onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
+            />
+            <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-widest uppercase text-center whitespace-nowrap">
+              MY RECOVERY TOOLKIT
+            </span>
+          </div>
+
+          {/* Spacer for mobile where we don't have the left block */}
+          <div className="w-1 sm:hidden"></div>
+
+          <button 
+            onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })} 
+            className="pointer-events-auto text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors bg-white/50 backdrop-blur-sm px-5 py-2.5 rounded-full border border-slate-200/50 shadow-sm z-50 relative"
+          >
+            Sign In
+          </button>
+        </header>
+
         {/* Hero Text */}
-        <div className="flex flex-col justify-center px-6 py-16 lg:p-20 z-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100/50 text-blue-700 font-semibold text-sm mb-8 w-fit backdrop-blur-sm border border-blue-200/50">
+        <div className="flex flex-col justify-center px-6 pt-36 pb-16 lg:p-20 lg:pt-44 z-20">
+          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-blue-100/50 text-blue-700 font-semibold text-sm mb-2 w-fit backdrop-blur-sm border border-blue-200/50">
             <Lock className="w-4 h-4" />
-            <span>100% Private Workspace</span>
+            <span>The safest place to do the hardest work.</span>
           </div>
           
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
-            Recovery is a <br className="hidden lg:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">High-Performance</span> <br />
-            Lifestyle.
+            Recovery principles, <br className="hidden lg:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">backed by real tools.</span>
           </h1>
           
           <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
-            Journal securely, track your habits without shame, and uncover hidden emotional patterns with a private toolkit built for the real work of recovery.
+            Go far beyond basic day-counting. Use a completely encrypted workspace to analyze your journal entries, monitor your vitality, and discover the hidden patterns driving your journey forward.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
@@ -124,7 +152,7 @@ export default function Welcome() {
           {/* The Devices */}
           <div className="relative w-full max-w-md aspect-[9/16] transform -rotate-2 hover:rotate-0 transition-transform duration-700 ease-out">
             <img 
-              src={ASSETS.hero.dashboard} 
+              src={ASSETS.marketing.screenshots.scn_dashboard} 
               alt="MRT Dashboard Interface" 
               fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover rounded-[2.5rem] shadow-2xl ring-1 ring-slate-900/5 bg-white"
@@ -132,7 +160,7 @@ export default function Welcome() {
             />
             {/* Floating Badge */}
             <img 
-              src={ASSETS.hero.cleanTime} 
+              src={ASSETS.marketing.screenshots.scn_dashboard_02_clean_time} 
               alt="Clean Time Chip" 
               loading="lazy"
               className="absolute -bottom-6 -left-6 w-48 object-contain rounded-2xl shadow-xl ring-1 ring-white/50 transform rotate-6 animate-float"
@@ -154,7 +182,7 @@ export default function Welcome() {
 
         {/* Carousel Container */}
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {ASSETS.personas.map((persona) => (
+          {PERSONA_CONTENT.map((persona) => (
             <article 
               key={persona.id} 
               className="snap-center shrink-0 w-[85vw] sm:w-[400px] bg-slate-50 rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col"
