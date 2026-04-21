@@ -1,246 +1,313 @@
-/**
- * src/pages/Welcome.tsx
- * GITHUB COMMENT:
- * [Welcome.tsx]
- * FEAT: Redesigned landing page to modern Asymmetrical Layout (Sprint 1 - Ticket 1.1).
- * FEAT: Left column focuses on App Identity & Notebook LM Video demo.
- * FEAT: Built interactive Persona Grid with hover-bios and modal video players.
- * FIX: Centered Logo/Title/Blurb and moved CTA button below the video player.
- * UX: Reduced top padding and vertical spacing to pull content above the fold on desktop.
- * FIX: Updated image paths to /Marketing/ folder and aligned the bottom of the grid with the CTA button.
- */
-import { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Dialog, Transition } from '@headlessui/react';
-import { ArrowRightIcon, PlayCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 
-// --- Interfaces & Data ---
-interface PersonaData { id: string; name: string; title: string; stage: string; headshot: string; bio: string; videoId: string; color: string; }
+import { ASSETS } from '../data/assets';
 
-const PERSONAS: PersonaData[] = [
+// ----------------------------------------------------------------------
+// PAGE CONTENT: Human-readable text, descriptions, and metadata
+// ----------------------------------------------------------------------
+const PERSONA_CONTENT = [
   { 
-    id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', 
-    headshot: '/Marketing/david_headshot.png', bio: '/Marketing/david_bio.jpg', 
-    videoId: 'Fg_j-OB5rKo', color: 'bg-blue-600' 
+    id: 'david', 
+    name: 'David', 
+    title: 'The Fresh Start',
+    quote: '"A completely private space to start over."',
+    headshot: ASSETS.personas.david_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_journal_write,
+    color: 'bg-blue-50 text-blue-600',
+    altDesc: 'David, representing early recovery users seeking privacy.'
   },
   { 
-    id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', 
-    headshot: '/Marketing/ned_headshot.png', bio: '/Marketing/ned_bio.jpg', 
-    videoId: 'XVme0G5vNIw', color: 'bg-emerald-500' 
+    id: 'ned', 
+    name: 'Ned', 
+    title: 'The Pink Cloud',
+    quote: '"Turning manic energy into grounded momentum."',
+    headshot: ASSETS.personas.ned_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_tasks_this_week,
+    color: 'bg-cyan-50 text-cyan-600',
+    altDesc: 'Ned, representing users building daily habits and structure.'
   },
   { 
-    id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', 
-    headshot: '/Marketing/lisa_headshot.png', bio: '/Marketing/lisa_bio.jpg', 
-    videoId: 'sPVdX2atLwI', color: 'bg-purple-600' 
+    id: 'lisa', 
+    name: 'Lisa', 
+    title: 'The Service Superstar',
+    quote: '"Self-care tools to prevent burnout."',
+    headshot: ASSETS.personas.lisa_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_vitality_breath,
+    color: 'bg-amber-50 text-amber-600',
+    altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.'
   },
   { 
-    id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', 
-    headshot: '/Marketing/walt_headshot.png', bio: '/Marketing/walt_bio.jpg', 
-    videoId: 'JUv8jdG4wTE', color: 'bg-amber-600' 
+    id: 'walt', 
+    name: 'Walt', 
+    title: 'The Zen Master',
+    quote: '"Finding hidden patterns with AI analysis."',
+    headshot: ASSETS.personas.walt_headshot, 
+    screen: ASSETS.marketing.screenshots.scn_journal_ai_wizard,
+    color: 'bg-fuchsia-50 text-fuchsia-600',
+    altDesc: 'Walt, representing long-term users seeking AI insight.'
   }
 ];
 
 export default function Welcome() {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  
-  // State for the Video Modal
-  const [selectedPersona, setSelectedPersona] = useState<PersonaData | null>(null);
+  const auth = useAuth() as { user: unknown; loading: boolean; loginWithGoogle?: () => Promise<void> };
+  const { user, loading, loginWithGoogle } = auth;
+  const [isSignUp, setIsSignUp] = useState(true);
 
-  // Smart Redirect: If user is already logged in, skip the splash page
+  // Smart Redirect: If user is already logged in, skip the splash page entirely
   useEffect(() => {
     if (!loading && user) {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  if (loading) return null; // Avoid flicker
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Wire to useAuth() hook and executePinRotation / setup
+    // For now, route directly to login flow or dashboard
+    navigate('/dashboard');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200">
       
-      {/* MAIN CONTAINER: 60/40 Asymmetrical Split (Using items-stretch to match column heights) */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 lg:py-10 flex flex-col lg:flex-row gap-12 lg:gap-16 items-stretch">
+      {/* 1. THE TRUST BAR (Sticky) */}
+      <div className="sticky top-0 w-full bg-slate-900 text-white py-3 px-4 flex items-center justify-center gap-3 text-xs sm:text-sm font-medium z-50 shadow-md">
+        <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+        <span className="text-center">
+          Zero-Knowledge Encryption. <span className="hidden sm:inline">Even our developers can't read your journal.</span>
+        </span>
+      </div>
+
+      {/* 2. THE HERO SECTION */}
+      <section className="relative min-h-[100dvh] flex flex-col lg:grid lg:grid-cols-2 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white overflow-hidden">
         
-        {/* === LEFT COLUMN: BRAND & DEMO (60%) === */}
-        <div className="w-full lg:w-[55%] flex flex-col items-center text-center space-y-5 lg:space-y-6 h-full">
-            
-            {/* Header Lockup (Centered, Single Line, Matched Heights) */}
-            <div className="flex items-center justify-center gap-3 sm:gap-5 w-full">
-                <img 
-                    src="/maskable-icon-512x512.png" 
-                    alt="MRT Logo" 
-                    className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 object-cover shrink-0" 
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/pwa-192x192.png'; }}
-                />
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 leading-none whitespace-nowrap">
-                    My Recovery Toolkit
-                </h1>
-            </div>
-
-            {/* Blurb (Centered) */}
-            <p className="text-lg sm:text-xl text-slate-600 font-medium leading-relaxed max-w-xl mx-auto">
-                Turn the noise of recovery into clear, actionable steps. Safely untangle your thoughts, spot emotional triggers before they lead to relapse, and build a life you don't want to escape from. Your private companion for the journey home.
-            </p>
-
-            {/* Platform Demo Video */}
-            <div className="w-full relative mt-2">
-                <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-[2.5rem] -z-10 blur-xl opacity-70"></div>
-                <div className="bg-white p-2 sm:p-3 rounded-3xl shadow-xl border border-slate-200 relative z-10">
-                    <div className="aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden shadow-inner">
-                        <iframe 
-                            className="w-full h-full"
-                            src="https://www.youtube.com/embed/BgQSM98W50I?rel=0&modestbranding=1" 
-                            title="My Recovery Toolkit Platform Overview" 
-                            frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowFullScreen
-                        ></iframe>
-                    </div>
-                </div>
-            </div>
-
-            {/* CTA Button (mt-auto pushes it to the absolute bottom of the flex column) */}
-            <div className="w-full pt-2 mt-auto">
-                <button
-                    onClick={() => navigate('/login')}
-                    className="flex w-full justify-center items-center gap-3 px-8 py-4 bg-blue-600 text-white text-lg font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0"
-                >
-                    Begin Your Journey <ArrowRightIcon className="h-5 w-5 stroke-2" />
-                </button>
-            </div>
-        </div>
-
-        {/* === RIGHT COLUMN: INTERACTIVE PERSONAS (40%) === */}
-        <div className="w-full lg:w-[45%] flex flex-col pt-4 lg:pt-0 h-full">
-            <div className="mb-6 border-b border-slate-200 pb-5 text-center lg:text-left">
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">Who is this for?</h2>
-                <p className="text-slate-500 font-medium text-sm sm:text-base">We meet you exactly where you are. Tap to hear their stories.</p>
-            </div>
-
-            {/* 2x2 Grid (mt-auto pushes the grid to the absolute bottom, aligning with the CTA button) */}
-            <div className="mt-auto grid grid-cols-2 gap-4 sm:gap-6">
-              {PERSONAS.map((p) => (
-                <div 
-                  key={p.id}
-                  onClick={() => setSelectedPersona(p)}
-                  className="relative aspect-square rounded-3xl overflow-hidden shadow-md border border-slate-200 cursor-pointer group bg-slate-100"
-                >
-                  {/* Base Headshot */}
-                  <img 
-                    src={p.headshot} 
-                    alt={p.name} 
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out group-hover:opacity-0 z-10" 
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  
-                  {/* Bio Image (Revealed on Desktop Hover) */}
-                  <img 
-                    src={p.bio} 
-                    alt={`${p.name} Bio`} 
-                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 ease-in-out group-hover:opacity-100 z-20 scale-105 group-hover:scale-100" 
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-
-                  {/* Play Overlay */}
-                  <div className="absolute inset-0 z-30 bg-gradient-to-t from-slate-900/90 via-slate-900/10 to-transparent flex flex-col justify-end p-4 sm:p-5 transition-colors duration-500 group-hover:from-slate-900/95">
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                         <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                             <PlayCircleIcon className="h-10 w-10 sm:h-12 sm:w-12 text-white drop-shadow-lg scale-90 group-hover:scale-100 transition-transform" />
-                         </div>
-                     </div>
-                     <div className="relative transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                        <span className={`inline-block px-2.5 py-1 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wide mb-1.5 text-white shadow-sm ${p.color}`}>
-                            {p.stage}
-                        </span>
-                        <h3 className="font-black text-white leading-none text-lg sm:text-xl drop-shadow-md">{p.name}</h3>
-                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-        </div>
-
-      </div>
-
-      {/* Simple Footer text below main container */}
-      <div className="w-full text-center pb-8 text-xs font-medium text-slate-400">
-          Secure • Private • Encrypted
-      </div>
-
-      {/* === PERSONA VIDEO MODAL === */}
-      <Transition appear show={selectedPersona !== null} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setSelectedPersona(null)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95 translate-y-4"
-                enterTo="opacity-100 scale-100 translate-y-0"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100 translate-y-0"
-                leaveTo="opacity-0 scale-95 translate-y-4"
-              >
-                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-[2rem] bg-slate-50 text-left align-middle shadow-2xl transition-all border border-slate-200">
-                  
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center px-6 py-5 bg-white border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                          <span className={`w-3.5 h-3.5 rounded-full shadow-sm ${selectedPersona?.color}`}></span>
-                          <Dialog.Title as="h3" className="text-xl font-black text-slate-900 tracking-tight">
-                            {selectedPersona?.name}'s Story
-                          </Dialog.Title>
-                      </div>
-                      <button
-                        type="button"
-                        className="rounded-full p-2 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 focus:outline-none transition-colors"
-                        onClick={() => setSelectedPersona(null)}
-                      >
-                        <XMarkIcon className="h-6 w-6 stroke-2" aria-hidden="true" />
-                      </button>
-                  </div>
-
-                  <div className="p-4 sm:p-6 bg-slate-100">
-                      {/* Mobile Only: Show Bio Image above video since they can't hover to read it */}
-                      <div className="lg:hidden mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-white">
-                          {selectedPersona && <img src={selectedPersona.bio} alt={`${selectedPersona.name} Bio`} className="w-full h-auto object-cover" />}
-                      </div>
-
-                      {/* Universal: The Video Player */}
-                      <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800 relative">
-                          {selectedPersona && (
-                              <iframe 
-                                  className="absolute inset-0 w-full h-full"
-                                  src={`https://www.youtube.com/embed/${selectedPersona.videoId}?autoplay=1&rel=0&modestbranding=1`} 
-                                  title={`${selectedPersona.name}'s Story`}
-                                  frameBorder="0" 
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                  allowFullScreen
-                              ></iframe>
-                          )}
-                      </div>
-                  </div>
-                  
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
+        {/* BRAND HEADER */}
+        <header className="absolute top-0 w-full px-6 py-6 flex items-start justify-between z-40 pointer-events-none">
+          {/* Empty spacer to balance flex alignment */}
+          <div className="w-20 sm:w-24 hidden sm:block"></div>
+          
+          {/* Centered Brand Lockup */}
+          <div className="flex flex-col items-center gap-0 pointer-events-auto absolute left-1/2 -translate-x-1/2 top-3">
+            <img 
+              src={ASSETS.raw_assets.mRT_Logo_Transparent} 
+              alt="MRT Logo" 
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-xl -mb-1 sm:-mb-2" 
+              onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
+            />
+            <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-widest uppercase text-center whitespace-nowrap">
+              MY RECOVERY TOOLKIT
+            </span>
           </div>
-        </Dialog>
-      </Transition>
+
+          {/* Spacer for mobile where we don't have the left block */}
+          <div className="w-1 sm:hidden"></div>
+
+          <button 
+            onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })} 
+            className="pointer-events-auto text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors bg-white/50 backdrop-blur-sm px-5 py-2.5 rounded-full border border-slate-200/50 shadow-sm z-50 relative"
+          >
+            Sign In
+          </button>
+        </header>
+
+        {/* Hero Text */}
+        <div className="flex flex-col justify-center px-6 pt-36 pb-16 lg:p-20 lg:pt-44 z-20">
+          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-blue-100/50 text-blue-700 font-semibold text-sm mb-2 w-fit backdrop-blur-sm border border-blue-200/50">
+            <Lock className="w-4 h-4" />
+            <span>The safest place to do the hardest work.</span>
+          </div>
+          
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
+            Recovery principles, <br className="hidden lg:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">backed by real tools.</span>
+          </h1>
+          
+          <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
+            Go far beyond basic day-counting. Use a completely encrypted workspace to analyze your journal entries, monitor your vitality, and discover the hidden patterns driving your journey forward.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button 
+              onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-slate-900/20"
+            >
+              Begin Journey
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+
+        {/* Hero Bento Graphic */}
+        <div className="relative flex-1 flex items-center justify-center p-6 min-h-[50vh] lg:min-h-full z-10 perspective-1000">
+          {/* Abstract glowing orbs */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl mix-blend-multiply"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/4 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl mix-blend-multiply"></div>
+          
+          {/* The Devices */}
+          <div className="relative w-full max-w-md aspect-[9/16] transform -rotate-2 hover:rotate-0 transition-transform duration-700 ease-out">
+            <img 
+              src={ASSETS.marketing.screenshots.scn_dashboard} 
+              alt="MRT Dashboard Interface" 
+              fetchPriority="high"
+              className="absolute inset-0 w-full h-full object-cover rounded-[2.5rem] shadow-2xl ring-1 ring-slate-900/5 bg-white"
+              onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
+            />
+            {/* Floating Badge */}
+            <img 
+              src={ASSETS.marketing.screenshots.scn_dashboard_02_clean_time} 
+              alt="Clean Time Chip" 
+              loading="lazy"
+              className="absolute -bottom-6 -left-6 w-48 object-contain rounded-2xl shadow-xl ring-1 ring-white/50 transform rotate-6 animate-float"
+              style={{ animation: 'float 6s ease-in-out infinite' }}
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 3. THE PERSONA CAROUSEL (CSS Scroll Snap) */}
+      <section className="py-24 bg-white relative">
+        <div className="max-w-7xl mx-auto px-6 mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">Meet the Toolkit</h2>
+          <p className="text-lg text-slate-500 max-w-2xl">
+            Recovery isn't a straight line. MRT transforms to provide exactly the tools you need, right when you need them.
+          </p>
+        </div>
+
+        {/* Carousel Container */}
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {PERSONA_CONTENT.map((persona) => (
+            <article 
+              key={persona.id} 
+              className="snap-center shrink-0 w-[85vw] sm:w-[400px] bg-slate-50 rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <img 
+                  src={persona.headshot} 
+                  alt={persona.name} 
+                  loading="lazy"
+                  className="w-16 h-16 rounded-full object-cover shadow-sm bg-white"
+                  onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
+                />
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">{persona.name}</h3>
+                  <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${persona.color}`}>
+                    {persona.title}
+                  </span>
+                </div>
+              </div>
+              <p className="text-slate-600 italic mb-8 font-medium">
+                {persona.quote}
+              </p>
+              <div className="mt-auto relative rounded-2xl overflow-hidden shadow-lg border border-slate-200/50 bg-white">
+                <img 
+                  src={persona.screen} 
+                  alt={`${persona.name} App Interface`} 
+                  loading="lazy"
+                  className="w-full aspect-[4/3] object-cover object-top"
+                  onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. THE AUTH CARD (Conversion Zone) */}
+      <section id="auth-section" className="relative py-24 px-4 overflow-hidden bg-slate-900">
+        {/* Background glowing effects */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-900 to-slate-900"></div>
+        
+        <div className="relative max-w-md mx-auto w-full backdrop-blur-2xl bg-white/10 border border-white/20 shadow-2xl rounded-[2rem] p-6 sm:p-10" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2.5rem)' }}>
+          
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {isSignUp ? 'Create Your Vault' : 'Welcome Back'}
+            </h2>
+            <p className="text-slate-300 text-sm">
+              {isSignUp ? 'Start your secure journey today.' : 'Enter your credentials to unlock.'}
+            </p>
+          </div>
+
+          {/* Auth Form Embed */}
+          <form onSubmit={handleAuthSubmit} className="flex flex-col gap-4">
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-800/50 border border-slate-700 text-white px-4 py-3.5 rounded-xl placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-slate-800/50 border border-slate-700 text-white px-4 py-3.5 rounded-xl placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+            
+            <button 
+              type="submit" 
+              className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-500 transition-colors mt-2 shadow-lg shadow-blue-900/20"
+            >
+              {isSignUp ? 'Initialize Toolkit' : 'Unlock Vault'}
+            </button>
+          </form>
+
+          {/* Google Auth Separator */}
+          <div className="flex items-center gap-4 mt-6">
+            <div className="h-px bg-slate-700/50 flex-1"></div>
+            <span className="text-slate-400 text-sm font-medium">Or</span>
+            <div className="h-px bg-slate-700/50 flex-1"></div>
+          </div>
+
+          {/* Google Button */}
+          <button 
+            type="button"
+            className="w-full bg-white text-slate-900 font-bold text-lg py-3.5 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-3 mt-6 shadow-lg shadow-white/5"
+            onClick={async () => {
+              try {
+                if (loginWithGoogle) {
+                  await loginWithGoogle();
+                  // Redirection is handled automatically by the useEffect above
+                } else {
+                  console.error('Google Sign-In method not found in AuthContext');
+                }
+              } catch (err) {
+                console.error('Auth error:', err);
+              }
+            }}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          {/* Toggle State */}
+          <div className="mt-8 text-center">
+            <button 
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
+            </button>
+          </div>
+
+        </div>
+      </section>
 
     </div>
   );

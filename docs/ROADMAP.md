@@ -6,7 +6,6 @@
 *Projects currently in active development and unblocking growth.*
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `PROJ-19` | **Road to 5,000** | CEO | 6-month User Acquisition strategy. Includes Landing Page overhaul & PWA caching fixes. |
 | ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
 
 ## 🟡 NEXT (Up Next)
@@ -32,6 +31,8 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation allowing a sponsee to share an encrypted 4th-step inventory directly to a sponsor's device in person. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
+* `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
 * `[UX]` Global Actionable Toasts (Sonner Provider Architecture)
 * `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
