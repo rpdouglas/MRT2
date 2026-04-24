@@ -1,65 +1,129 @@
 import os
-import re
 
 FENCE = chr(96) * 3
 
-def update_file(filepath, old_text, new_text, use_regex=False):
-    if not os.path.exists(filepath):
-        print(f"⚠️ Warning: Could not find {filepath}")
-        return False
-        
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-        
-    if use_regex:
-        new_content = re.sub(old_text, new_text, content, flags=re.DOTALL)
-        if new_content == content:
-             print(f"⚠️ Warning: Regex match failed in {filepath}")
-             return False
-        content = new_content
-    else:
-        if old_text not in content:
-            print(f"⚠️ Warning: Exact string match failed in {filepath}")
-            return False
-        content = content.replace(old_text, new_text)
-        
+def write_file(filepath, content):
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
-    print(f"✅ Synced: {filepath}")
-    return True
+    print(f"✅ Generated: {filepath}")
 
-def apply_patch():
-    print(f"[{FENCE}] Initiating Post-Sprint PM Sync [{FENCE}]")
+def rebuild_governance():
+    print(f"[{FENCE}] Initiating Governance Restructure (The 4 Waves) [{FENCE}]")
 
-    # 1. Update ACTIVE_CYCLE.md
-    active_cycle = "docs/ACTIVE_CYCLE.md"
-    update_file(
-        active_cycle,
-        "- [ ] **PROJ-19:** Design smoother mobile landing page & \"About Us\" section for top-of-funnel traffic.",
-        "- [x] **PROJ-19:** Design smoother mobile landing page & \"About Us\" section for top-of-funnel traffic."
-    )
-    
-    # Add PROJ-19 and PROJ-24 to Resolved list
-    resolved_hook = "## ✅ Resolved This Cycle"
-    new_resolved = "## ✅ Resolved This Cycle\n- [x] **[UX]** PROJ-19: Landing Page -> *Overhauled top-of-funnel with Vibrant Momentum scroll-snapping layout and Google Auth.*\n- [x] **[DEVOPS]** PROJ-24: Asset Engine -> *Deployed strict-typed ASSETS dictionary and batch WebP compression pipeline.*"
-    update_file(active_cycle, resolved_hook, new_resolved)
+    # -------------------------------------------------------------------------
+    # 1. BUSINESS_OPS.md (Replaces MASTER_PLAN.md)
+    # -------------------------------------------------------------------------
+    business_ops_content = r"""# 🏢 Business Operations & Scaling (PROJ-19)
 
-    # 2. Update ROADMAP.md
-    roadmap = "docs/ROADMAP.md"
-    # Remove PROJ-19 from Active
-    proj19_regex = r"\| 🟡 \*\*Active\*\* \| `PROJ-19` \| \*\*Road to 5,000\*\* \| CEO \| 6-month User Acquisition strategy\. Includes Landing Page overhaul & PWA caching fixes\. \|\n"
-    update_file(roadmap, proj19_regex, "", use_regex=True)
-    
-    # Add to Shipped
-    shipped_hook = "## ✅ RECENTLY SHIPPED"
-    new_shipped = "## ✅ RECENTLY SHIPPED\n* `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)\n* `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)"
-    update_file(roadmap, shipped_hook, new_shipped)
+**Focus:** Non-software tasks required to reach 5,000 users.
 
-    # 3. Update PROJ-24 Status
-    proj24_spec = "docs/projects/24_ASSET_ENGINE.md"
-    update_file(proj24_spec, "**Status:** ⚪ Planned", "**Status:** 🟢 Done")
+## 📋 The "Road to 5,000" Strategy
+1. **Capital Allocation:** How much of the $50k goes to paid acquisition (TikTok/Reddit Ads) vs. operations (servers, APIs, legal).
+2. **Viral Loops:** Leveraging the newly built "Sobriety Hero Watermark" to drive organic social sharing.
+3. **Frictionless Onboarding:** Continuously monitoring the drop-off rate between `/login` and `/dashboard`.
 
-    print("\n🚀 PM Boards synchronized. Next step: Execute Schema and User Guide updates.")
+## 🏃 Immediate Administrative Action Items
+- [ ] Open Corporate Bank Account.
+- [ ] Secure incoming capital transfer.
+- [ ] Acquire DUNS Number to unblock Google Play Developer Account creation.
+- [ ] Procure Cyber Liability Insurance (Crucial before onboarding 5,000 users).
+- [ ] Procure Professional Liability (E&O) Insurance.
+- [ ] Schedule Legal Review of `TERMS_OF_SERVICE.md` and `PRIVACY_POLICY.md` for Canadian/US compliance.
+"""
+    write_file("docs/BUSINESS_OPS.md", business_ops_content)
+
+    # Clean up the old MASTER_PLAN.md to prevent AI confusion
+    if os.path.exists("docs/MASTER_PLAN.md"):
+        os.remove("docs/MASTER_PLAN.md")
+        print("🗑️ Removed deprecated: docs/MASTER_PLAN.md")
+
+    # -------------------------------------------------------------------------
+    # 2. ROADMAP.md (The Unified Master Plan - 4 Waves)
+    # -------------------------------------------------------------------------
+    roadmap_content = r"""# 🗺️ MRT Product Roadmap: "The 4 Waves"
+
+**Methodology:** Strategic Waves (Prioritizing User Acquisition & Retention)
+
+## 🌊 Wave 1: Acquisition & Friction (Weeks 1–6)
+*The immediate goal: Stop users from abandoning the app on Day 1 by removing the "Security Tax."*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟡 **Queued** | `NEW` | **Deferred Vault Lock** | David | Allow "Skip PIN initially" during onboarding. Let users experience the app before forcing Zero-Knowledge setup. |
+| 🟡 **Queued** | `NEW` | **The Daily Pledge** | David / Ned | A simple, unencrypted daily check-in to build habit loops instantly. |
+| 🟡 **Queued** | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
+| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
+
+## 🌊 Wave 2: Retention & Community (Weeks 7–16)
+*The secondary goal: Keep users past Day 30 through peer support and shame-free resets.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `NEW` | **Privacy-Preserving Community** | All | Opt-in, pseudonymized social feed moderated by Gemini. (Requires heavy Zero-Knowledge schema design). |
+| ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers immediately following a relapse. |
+| ⚪ Planned | `NEW` | **Multi-Addiction Clocks** | All | Tracking multiple habits/substances simultaneously. |
+
+## 🌊 Wave 3: Platform Maturity & Sponsors (Weeks 17–26)
+*The third goal: Capture the "Lisa" (Sponsor) and "Walt" (Long-term) demographics.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). |
+| ⏸️ **Paused** | `PROJ-31` | **Crypto Chunking Pipeline** | Admin | Refactor PIN rotation to handle 10,000+ encrypted documents via background chunking. |
+| ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt / Lisa | AI analysis of Insights collection to generate proactive warning tasks. |
+| ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
+
+## 🌊 Wave 4: Enterprise & Ecosystem (Weeks 27–52)
+*The final goal: Defensible technical moats and B2B expansion.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-30` | **Data Sovereignty Engine** | Walt | Formalize the local decryption and structured export (JSON/PDF) protocol. |
+| ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
+
+## ✅ RECENTLY SHIPPED
+* `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
+* `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
+* `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
+* `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
+* `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
+"""
+    write_file("docs/ROADMAP.md", roadmap_content)
+
+    # -------------------------------------------------------------------------
+    # 3. BACKLOG.md (The Persona Icebox)
+    # -------------------------------------------------------------------------
+    backlog_content = r"""# 🧊 Feature Backlog (The Persona Icebox)
+
+**Storage:** Ideas and feature requests that are approved but deferred. Tagged by Persona to ensure we are building for specific psychological needs, not just adding features.
+
+## 👤 David (The User in Crisis)
+* **Feature:** Harm Reduction Mode.
+  * **Concept:** A toggle that shifts the app's language from "Abstinence" to "Management" (e.g., tracking drinks per week instead of days since last drink).
+  * **Status:** Deferred to post-Wave 2.
+* **Feature:** Clinical Telehealth Off-Ramps (MAT Resources).
+  * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
+
+## 👤 Ned (The Pink Cloud)
+* **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
+  * **Concept:** Gamified attendance tracking.
+  * **Complexity:** High (Requires secure multiplayer networking). Deferred to 5,000 user milestone.
+* **Feature:** Sleep Log / Wearable Integration.
+  * **Concept:** Apple HealthKit API integration to correlate sleep debt with cravings.
+  * **Complexity:** Extremely High. Deferred to Wave 4.
+
+## 👤 Lisa (The Service Superstar)
+* **Feature:** Accountability Partner Mode.
+  * **Concept:** A read-only "Listener" view where a sponsor can see a sponsee's clean time and public mood graph (without seeing encrypted journal entries).
+
+## 👤 Walt (The Zen Master)
+* **Feature:** Photo Attachments in Journal.
+  * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64). Deferred indefinitely.
+"""
+    write_file("docs/BACKLOG.md", backlog_content)
+
+    print(f"\n🚀 Governance documentation successfully restructured.")
 
 if __name__ == "__main__":
-    apply_patch()
+    rebuild_governance()

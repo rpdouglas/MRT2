@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: "My Recovery Toolkit",
-  description: "Documentation and User Guide",
+  description: "Privacy-first 12-step recovery toolkit and secure journaling guide.",
   base: '/',
   themeConfig: {
     nav: [
