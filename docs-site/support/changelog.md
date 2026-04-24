@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.2.0] - 2026-04-22
+### ✨ Major UX & Architecture Overhaul
+- **Feature [PROJ-19]:** Overhauled the top-of-funnel acquisition flow. Deployed the 'Vibrant Momentum' mobile-first landing page with an integrated glassmorphic AuthCard and native Google OAuth context.
+- **Feature [PROJ-24]:** Deployed the Asset Engine. Implemented an automated WebP compression pipeline and auto-generated, strictly-typed `ASSETS` dictionary to eliminate 404s and optimize First Contentful Paint (FCP).
+- **UI Polish:** Scaled and tightened the brand header lockup, replaced external placeholders with offline SVGs, and updated marketing copy to target high-intent users.
+
 ## [v1.1.10] - 2026-04-20
 ### ⚖️ Compliance & Resources
 - **Lifeline:** Added a progressive-disclosure "Find a Meeting" locator to the SOS Modal for urgent crisis support.
