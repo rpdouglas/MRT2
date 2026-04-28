@@ -64,3 +64,11 @@ If the user forgot their PIN, rotation is mathematically impossible.
 1.  **Warning:** The user triggers "Reset Vault" in the Profile Security tab. The app displays a severe warning.
 2.  **Action/Shredding:** App executes a massive batch-delete of all existing documents in `journals` and `workbook_answers`, AND deletes the `encryptionSalt` from the user profile.
 3.  **Result:** The old ciphertexts are destroyed, preventing orphaned, unreadable data from bloating the database. The user starts completely fresh.
+
+
+
+## Key Rotation (Zero-Knowledge)
+PIN rotation is an asynchronous, chunked process running in 50-document batches using Firestore cursors. 
+
+**Fail-Safe Rollback:**
+If a network drop occurs mid-rotation, the ```try/catch``` block successfully ensures the ```globalKey``` strictly reverts to the ```oldPin``` state in memory, preventing permanent data lockouts. The old and new AES-GCM keys are rotated sequentially within the chunking loop, never leaving the localized ```lib/rotation.ts``` scope.
