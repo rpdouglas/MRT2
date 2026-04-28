@@ -40,6 +40,8 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
+* `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
 * `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
 * `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
