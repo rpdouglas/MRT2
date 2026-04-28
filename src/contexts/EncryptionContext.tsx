@@ -3,6 +3,7 @@
  * GITHUB COMMENT:
  * [EncryptionContext.tsx]
  * FEAT: Integrated executePinRotation and executeCryptoShredding for Ticket 2.5.
+ * FEAT: PROJ-39 Deferred Vault Lock (Context Gatekeeper Bypass)
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
@@ -17,6 +18,7 @@ interface EncryptionContextType {
   isVaultSet: boolean;
   isVaultUnlocked: boolean;
   vaultLoading: boolean;
+  hasDeferredVault: boolean;
   unlockVault: (pin: string) => Promise<boolean>;
   setupVault: (pin: string) => Promise<void>;
   resetVault: () => Promise<void>;
@@ -42,6 +44,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   
   const [isVaultSet, setIsVaultSet] = useState(false);
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [hasDeferredVault, setHasDeferredVault] = useState(false);
   const [vaultLoading, setVaultLoading] = useState(true);
   
   const [salt, setSalt] = useState<string | null>(null);
@@ -87,7 +90,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       } catch (error) { console.error("Unlock logic failed", error); return false; }
   }, [user]);
 
-  useEffect(() => { async function checkVaultStatus() { if (!user || !db) { setVaultLoading(false); return; }
+  useEffect(() => { 
+    async function checkVaultStatus() { 
+      if (!user || !db) { setVaultLoading(false); return; }
       
       try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -106,6 +111,10 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
             if (cachedPin) {
                 await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
             }
+          } else if (data.hasDeferredVault) {
+            setIsVaultSet(false);
+            setHasDeferredVault(true);
+            setIsVaultUnlocked(true); // Gatekeeper bypass enabled
           } else {
             setIsVaultSet(false);
           }
@@ -134,13 +143,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       const userDocRef = doc(db, 'users', user.uid);
       await setDoc(userDocRef, { 
           encryptionSalt: newSalt,
-          pinVerifier: newVerifier
+          pinVerifier: newVerifier,
+          hasDeferredVault: false // Turn off bypass once proper vault is set
       }, { merge: true });
 
       setSalt(newSalt);
       setVerifier(newVerifier);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
+      setHasDeferredVault(false);
       sessionStorage.setItem(SESSION_PIN_KEY, pin);
 
     } catch (error) { console.error("Vault setup failed:", error); throw error; } finally {
@@ -152,14 +163,13 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     if (!user || !db) return;
     try {
       setVaultLoading(true);
-      
-      // Massive batch delete of all encrypted documents
       await executeCryptoShredding(user.uid);
       
       clearKey();
       sessionStorage.removeItem(SESSION_PIN_KEY);
       setIsVaultSet(false);
       setIsVaultUnlocked(false);
+      setHasDeferredVault(false);
       setSalt(null);
       setVerifier(null);
     } catch (error) { console.error("Vault reset failed:", error); throw error; } finally {
@@ -177,11 +187,21 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     sessionStorage.setItem(SESSION_PIN_KEY, newPin);
   };
 
-  const unlockVault = async (pin: string): Promise<boolean> => { if (!salt || !user || !db) return false; return await performUnlock(pin, salt, verifier); };
+  const unlockVault = async (pin: string): Promise<boolean> => { 
+    if (!salt || !user || !db) return false; 
+    return await performUnlock(pin, salt, verifier); 
+  };
 
-  const lockVault = useCallback(() => { clearKey(); sessionStorage.removeItem(SESSION_PIN_KEY); setIsVaultUnlocked(false); }, []);
+  const lockVault = useCallback(() => { 
+    clearKey(); 
+    sessionStorage.removeItem(SESSION_PIN_KEY); 
+    setIsVaultUnlocked(false); 
+  }, []);
 
-  const handleEncrypt = useCallback(async (text: string) => { if (!checkLibUnlocked()) throw new Error("Vault is locked"); return await encrypt(text); }, []);
+  const handleEncrypt = useCallback(async (text: string) => { 
+    if (!checkLibUnlocked()) throw new Error("Vault is locked"); 
+    return await encrypt(text); 
+  }, []);
 
   const handleDecrypt = useCallback(async (text: string) => {
     return await decrypt(text);
@@ -191,6 +211,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     isVaultSet,
     isVaultUnlocked,
     vaultLoading,
+    hasDeferredVault,
     unlockVault,
     setupVault,
     resetVault,

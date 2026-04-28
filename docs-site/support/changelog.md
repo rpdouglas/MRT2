@@ -1,5 +1,15 @@
 # 🚀 Changelog
 
+## [v1.3.0] - 2026-04-28
+### Added
+- **Frictionless Onboarding:** Added a "Skip for Now" option to the Vault Setup screen, allowing users in distress to access tools immediately without memorizing a PIN (PROJ-39).
+- **Security Banners:** Added persistent warnings when the Vault is operating in an unencrypted state.
+
+### Changed
+- **Zero-Knowledge Pipeline:** Upgraded the `executePinRotation` system to utilize cursor-based pagination (`limit(50)` + `startAfter`), preventing UI freezes when encrypting large datasets (PROJ-31).
+- **Test Suite:** Resolved complex context mocking issues within the Vitest suite (`VaultGate.test.tsx`).
+
+
 ## [v1.2.0] - 2026-04-22
 ### ✨ Major UX & Architecture Overhaul
 - **Feature [PROJ-19]:** Overhauled the top-of-funnel acquisition flow. Deployed the 'Vibrant Momentum' mobile-first landing page with an integrated glassmorphic AuthCard and native Google OAuth context.
