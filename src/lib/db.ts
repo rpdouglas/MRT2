@@ -19,6 +19,7 @@ export const createConverter = <T extends object>() => ({ toFirestore(data: With
 });
 
 export interface UserProfile {
+  hasDeferredVault?: boolean;
   uid: string;
   email: string | null;
   displayName: string | null;

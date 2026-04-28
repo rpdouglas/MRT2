@@ -18,5 +18,6 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-39:** Deferred Vault Lock -> Added 'Skip for Now' onboarding bypass.
 *(Queue Empty)*
 *(Queue Empty)*

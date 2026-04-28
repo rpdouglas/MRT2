@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { LockClosedIcon, KeyIcon, ShieldCheckIcon, ExclamationCircleIcon, ExclamationTriangleIcon, TrashIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { updateProfileData } from '../lib/db';
+import { useAuth } from '../contexts/AuthContext';
 
 interface VaultGateProps {
   children: React.ReactNode;
@@ -8,6 +10,7 @@ interface VaultGateProps {
 
 export default function VaultGate({ children }: VaultGateProps) {
   const { isVaultSet, isVaultUnlocked, vaultLoading, unlockVault, setupVault, resetVault } = useEncryption();
+  const { user } = useAuth();
   
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -110,6 +113,21 @@ export default function VaultGate({ children }: VaultGateProps) {
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-md disabled:opacity-50 active:scale-95"
                 >
                     {isSubmitting ? 'Generating Vault...' : 'Secure My Journal'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (user?.uid) {
+                      setIsSubmitting(true);
+                      await updateProfileData(user.uid, { hasDeferredVault: true });
+                      window.location.reload();
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-transparent text-gray-500 font-bold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Skip for Now (Try the App)
                 </button>
             </form>
         </div>
