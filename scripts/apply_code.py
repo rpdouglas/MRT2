@@ -1,30 +1,50 @@
 #!/usr/bin/env python3
 import os
 
-def fix_changelog_version():
-    filepaths = [
-        "docs-site/support/changelog.md",
-        "docs/CHANGELOG.md"
-    ]
-    
-    fixed = False
-    for filepath in filepaths:
-        if os.path.exists(filepath):
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            if "[v1.13.0]" in content:
-                # Replace the incorrect version with the correct semantic version
-                content = content.replace("[v1.13.0]", "[v1.3.0]")
-                
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(content)
-                print(f"✅ Corrected version from v1.13.0 to v1.3.0 in {filepath}")
-                fixed = True
+FENCE = chr(96) * 3
 
-    if not fixed:
-        print("⚠️ Could not find [v1.13.0] in the changelog files.")
+def update_approval_prompt_v5():
+    filepath = os.path.join("docs", "prompts", "APPROVAL.md")
+    
+    content = f"""
+# ✅ Execution Prompt (The Builder v5.0 - The Mandatory Cat Gate)
+
+**Instructions:** Execute ONLY after the Plan is approved.
+
+---
+
+**Decision:** I approve the plan. Proceed with **Phase Execution**.
+
+### 🛑 THE MANDATORY CAT GATE (CRITICAL)
+Before you generate any Python scripts to modify existing files, you MUST verify you have the exact, current code for those specific files.
+* **If you are modifying an existing file:** You MUST STOP and ask me to `cat` the file and paste it into the chat. 
+* **Do NOT** rely on bulk workspace dumps or previous memory. 
+* **Reply exactly with:** "I need the exact current contents of `[filename]` before I can safely patch it. Please paste it below."
+
+### THE "CLEAN CODE" PROTOCOL (Execute only after Cat Gate is passed)
+
+1.  **The "Safe Delivery" Rule:**
+    * You **MUST** generate a **Python script** (`scripts/update_feature.py`) to write the files. 
+    * **Full File Overwrite:** You must provide the **ENTIRE, COMPLETE file content** within your Python script, perfectly merged with the code I just pasted.
+    * **Markdown Protection:** Define `FENCE = chr(96) * 3` at the top of your Python script. Use ``` inside your raw strings where markdown code blocks go. In your write function, use `.replace('```', FENCE)` before saving.
+
+2.  **Anti-Regression Checks:**
+    * **Unused Imports:** If you remove a UI element, you MUST remove its import.
+    * **Strict Types:** Ensure all new props/functions have defined types. **ABSOLUTELY NO `any` TYPES.** Use `unknown` or generics if necessary. 
+    * **Icon Library Check:** Verify you are importing from the correct library (`@heroicons/react/24/outline` vs `solid`).
+
+3.  **Deliverable:**
+    * The Python Script (`scripts/update_feature.py`).
+    * **Manual Verification:** List `npm run build` and `npm run check` as required steps.
+
+**Go.**
+"""
+
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, "w") as f:
+        f.write(content.strip() + "\n")
+        
+    print(f"✅ Updated: {filepath} to v5.0 (The Mandatory Cat Gate)")
 
 if __name__ == "__main__":
-    print("Fixing Semantic Versioning...")
-    fix_changelog_version()
+    update_approval_prompt_v5()
