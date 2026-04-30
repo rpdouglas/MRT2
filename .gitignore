@@ -39,3 +39,4 @@ android-build/
 mrt-release.keystore
 scripts/list_assets.py
 scripts/apply_code.py
+export_src_lib-src_hooks-src_data.txt
