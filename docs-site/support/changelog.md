@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.3.1] - 2026-04-30
+### Fixed & Optimized (Testing Infrastructure)
+- **Feature [PROJ-40]:** Completed a comprehensive Test Suite Audit to secure core logic ahead of the React 19 scaling initiatives.
+- **Test Suite Overhaul:** Established a robust Vitest testing pipeline covering core pure functions (milestone calculations, timeline grouping) and strict boundary components (`PremiumGate`). Ensures zero regressions in gamification accuracy and monetization UX.
+
 ## [v1.3.0] - 2026-04-28
 ### Added
 - **Frictionless Onboarding:** Added a "Skip for Now" option to the Vault Setup screen, allowing users in distress to access tools immediately without memorizing a PIN (PROJ-39).

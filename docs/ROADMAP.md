@@ -27,7 +27,6 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). |
-| ⏸️ **Paused** | `PROJ-31` | **Crypto Chunking Pipeline** | Admin | Refactor PIN rotation to handle 10,000+ encrypted documents via background chunking. |
 | ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt / Lisa | AI analysis of Insights collection to generate proactive warning tasks. |
 | ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
 
@@ -40,7 +39,8 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
-* `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
+* `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
+* `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
 * `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
 * `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
 * `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
