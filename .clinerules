@@ -1,0 +1,23 @@
+# MRT (My Recovery Toolkit) Project Architecture Rules
+
+## Core Directives
+1. Strictly adhere to the existing codebase. Do not pull patterns, file names, or architectural decisions from outside this repository.
+2. Code Output: When writing or updating code, present code as COMPLETE FILES, never as partial snippet updates or using `// ...rest of code` comments.
+3. Spec-Driven Development: Read the `/docs/specs` directory for feature requirements before implementing changes.
+
+## Tech Stack
+- Frontend: React 19, Vite, Tailwind CSS v4, TypeScript.
+- Backend/Infrastructure: Firebase 12 (Auth, Firestore, Hosting), Google Gemini API.
+- Architecture: Offline-first PWA utilizing TanStack Query for offline persistence and syncing.
+
+## Security & Encryption Boundary (CRITICAL)
+- Zero-Knowledge Policy: Client-side AES-GCM zero-knowledge encryption is the absolute boundary. 
+- Plain text sensitive data (Journals, Workbook Answers, Service notes) NEVER leaves the client device. 
+- Keys are derived via PBKDF2 (PIN + Salt).
+- Never send unencrypted sensitive data to Firestore. Always respect the `src/lib/crypto.ts` pipeline.
+
+## Coding Standards
+- Strict Typing: ZERO `any` types. Use strict TypeScript interfaces. Use `unknown` and cast via interfaces if necessary.
+- Database: No magic strings; rely on established Firestore collection names (`journals`, `tasks`, `insights`, `users`, `feedback`).
+- Time Handling: Use standard JS `Date` for local UI logic and Firestore `Timestamp` strictly for backend storage. Always normalize using `.toDate()` helpers.
+- Anti-Regression: Clean up unused imports and prefix intentionally unused callback arguments with an underscore (e.g., `_index`).
