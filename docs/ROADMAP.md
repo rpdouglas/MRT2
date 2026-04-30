@@ -8,7 +8,7 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | 🟡 **Queued** | `NEW` | **Deferred Vault Lock** | David | Allow "Skip PIN initially" during onboarding. Let users experience the app before forcing Zero-Knowledge setup. |
-| 🟡 **Queued** | `NEW` | **The Daily Pledge** | David / Ned | A simple, unencrypted daily check-in to build habit loops instantly. |
+| ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 3-column Quick Action Bar replacing the static daily pledge. |
 | 🟡 **Queued** | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
 | ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
 
@@ -39,6 +39,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
 * `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
 * `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)

@@ -29,7 +29,7 @@ export async function addTask(
   recurrence: RecurrenceConfig, 
   priority: Priority, 
   startDate: Date,
-  source: 'manual' | 'ai' = 'manual'
+  source: Task['source'] = 'manual'
 ) {
   if (!db) throw new Error("Database not initialized");
   

@@ -4,11 +4,16 @@
 1. Strictly adhere to the existing codebase. Do not pull patterns, file names, or architectural decisions from outside this repository.
 2. Code Output: When writing or updating code, present code as COMPLETE FILES, never as partial snippet updates or using `// ...rest of code` comments.
 3. Spec-Driven Development: Read the `/docs/specs` directory for feature requirements before implementing changes.
+4. Ask Before Acting: If required context, files, or patterns are unclear or missing, STOP and ask for clarification before writing code.
+
+---
 
 ## Tech Stack
 - Frontend: React 19, Vite, Tailwind CSS v4, TypeScript.
 - Backend/Infrastructure: Firebase 12 (Auth, Firestore, Hosting), Google Gemini API.
 - Architecture: Offline-first PWA utilizing TanStack Query for offline persistence and syncing.
+
+---
 
 ## Security & Encryption Boundary (CRITICAL)
 - Zero-Knowledge Policy: Client-side AES-GCM zero-knowledge encryption is the absolute boundary. 
@@ -16,8 +21,85 @@
 - Keys are derived via PBKDF2 (PIN + Salt).
 - Never send unencrypted sensitive data to Firestore. Always respect the `src/lib/crypto.ts` pipeline.
 
+### Encryption Handling Rules
+- Encrypt data BEFORE any Firestore write.
+- Decrypt data ONLY at the UI/render boundary.
+- NEVER store decrypted sensitive data in global state, React Query cache, or context.
+- NEVER log decrypted sensitive data to console.
+- AI requests MUST NOT include raw sensitive content unless explicitly approved and sanitized.
+
+---
+
+## Data Flow Rules
+- All server state MUST flow through TanStack Query.
+- React Query is the single source of truth for remote data.
+- Avoid duplicating server data in local React state unless strictly necessary.
+- All mutations must:
+  - support optimistic updates where appropriate
+  - handle rollback on failure
+  - be safe for offline execution
+
+---
+
+## Offline-First Rules
+- All writes must succeed without network connectivity.
+- Firestore mutations must be designed to sync safely when connection resumes.
+- Avoid blocking UI on network responses.
+- Handle retry scenarios gracefully and idempotently.
+
+---
+
+## Firestore & Database Rules
+- No magic strings; rely on established collection names (`journals`, `tasks`, `insights`, `users`, `feedback`).
+- Do not introduce new collections without justification.
+- Use Firestore `Timestamp` for backend storage only.
+- Convert timestamps using `.toDate()` before UI usage.
+
+---
+
+## AI Integration Rules
+- AI (Google Gemini API) must only receive:
+  - non-sensitive metadata OR
+  - explicitly approved, sanitized content
+- Never send encrypted blobs to AI.
+- Never send raw sensitive user data without explicit instruction.
+- AI responses must be treated as untrusted input and validated before use.
+
+---
+
 ## Coding Standards
-- Strict Typing: ZERO `any` types. Use strict TypeScript interfaces. Use `unknown` and cast via interfaces if necessary.
-- Database: No magic strings; rely on established Firestore collection names (`journals`, `tasks`, `insights`, `users`, `feedback`).
-- Time Handling: Use standard JS `Date` for local UI logic and Firestore `Timestamp` strictly for backend storage. Always normalize using `.toDate()` helpers.
-- Anti-Regression: Clean up unused imports and prefix intentionally unused callback arguments with an underscore (e.g., `_index`).
+- Strict Typing: ZERO `any` types. Use strict TypeScript interfaces.
+- Use `unknown` where needed and safely narrow types.
+- Clean up unused imports.
+- Prefix intentionally unused variables with `_`.
+
+---
+
+## UX & Performance Rules
+- Prioritize speed and low cognitive load.
+- Maximize responsiveness in critical flows (especially crisis/urge interactions).
+- Avoid heavy UI logic or blocking operations in render paths.
+- Minimize re-renders and unnecessary state updates.
+
+---
+
+## Incremental Development Rules
+- Implement features in small, verifiable steps.
+- Do not introduce large, unreviewed changes.
+- Reuse existing hooks, utilities, and patterns whenever possible.
+
+---
+
+## Failure & Safety Rules
+- Do not silently fail on critical operations.
+- Always handle error states explicitly.
+- Ensure UI remains stable under:
+  - offline conditions
+  - partial data
+  - failed mutations
+
+---
+
+## Anti-Regression
+- Do not break existing features while adding new ones.
+- Ensure compatibility with existing encryption, Firestore schema, and React Query logic.

@@ -34,6 +34,11 @@ export default function Profile() {
   const [costFrequency, setCostFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [currencySymbol, setCurrencySymbol] = useState('$');
 
+  // Form State (Anchor Notifications)
+  const [notifyCheckIn, setNotifyCheckIn] = useState(true);
+  const [notifyReading, setNotifyReading] = useState(true);
+  const [notifyIntent, setNotifyIntent] = useState(true);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isOnboarding, setIsOnboarding] = useState(false);
@@ -63,6 +68,10 @@ export default function Profile() {
           setSubstanceCost(data.substanceCost ? data.substanceCost.toString() : '');
           setCostFrequency(data.costFrequency || 'daily');
           setCurrencySymbol(data.currencySymbol || '$');
+          
+          setNotifyCheckIn(data.anchorSettings?.notifyCheckIn ?? true);
+          setNotifyReading(data.anchorSettings?.notifyReading ?? true);
+          setNotifyIntent(data.anchorSettings?.notifyIntent ?? true);
           
           if (!data.hasCompletedOnboarding) { setIsOnboarding(true); setActiveTab('general'); }
         } else { setIsOnboarding(true); setActiveTab('general'); }
@@ -102,6 +111,20 @@ export default function Profile() {
         currencySymbol,
         hasCompletedOnboarding: true
       });
+
+      try {
+        const { doc, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+        if (db) {
+            await updateDoc(doc(db, "users", user.uid), {
+                "anchorSettings.notifyCheckIn": notifyCheckIn,
+                "anchorSettings.notifyReading": notifyReading,
+                "anchorSettings.notifyIntent": notifyIntent
+            });
+        }
+      } catch (err) {
+        console.warn("Failed to update anchor settings", err);
+      }
 
       try {
           await updateProfile(user, { displayName });
@@ -307,6 +330,28 @@ export default function Profile() {
                                 <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Anchor Notifications */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <IdentificationIcon className="h-4 w-4 text-amber-600" /> Anchor Notifications
+                        </h4>
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-3">
+                                <input type="checkbox" checked={notifyCheckIn} onChange={e => setNotifyCheckIn(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                <span className="text-sm font-medium text-gray-700">Daily Check-In Badge</span>
+                            </label>
+                            <label className="flex items-center gap-3">
+                                <input type="checkbox" checked={notifyReading} onChange={e => setNotifyReading(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                <span className="text-sm font-medium text-gray-700">Daily Reading Badge</span>
+                            </label>
+                            <label className="flex items-center gap-3">
+                                <input type="checkbox" checked={notifyIntent} onChange={e => setNotifyIntent(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                <span className="text-sm font-medium text-gray-700">Daily Intent Badge</span>
+                            </label>
+                        </div>
+                        <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor.</p>
                     </div>
 
                     {message && (

@@ -49,6 +49,13 @@ export interface UserProfile {
   // --- NEW: PROJ-26 (The Beacon) ---
   fcmTokens?: string[];
   timezone?: string;
+  anchorSettings?: {
+    notifyCheckIn: boolean;
+    notifyReading: boolean;
+    notifyIntent: boolean;
+    lastReadingDate?: string;
+    defaultFellowship?: string;
+  };
 }
 
 export interface JournalTemplate { id: string; name: string; prompts: string[]; defaultTags: string[]; }
@@ -86,7 +93,7 @@ export interface Task {
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
   lastCompletedAt?: Timestamp | Date | null; 
-  source?: 'manual' | 'ai'; 
+  source?: 'manual' | 'ai' | 'anchor_intent'; 
 }
 
 export interface WorkbookAnswer {
