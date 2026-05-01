@@ -1,0 +1,2494 @@
+CONTEXT EXPORT - 2026-05-01T12:20:58.212Z
+Mode: Targeted (/docs/)
+
+### TABLE OF CONTENTS ###
+- docs/ACTIVE_CYCLE.md
+- docs/BACKLOG.md
+- docs/BUSINESS_OPS.md
+- docs/CONTEXT_DUMP.md
+- docs/DEPLOYMENT.md
+- docs/PERSONAS.md
+- docs/ROADMAP.md
+- docs/SCHEMA_ARCHITECTURE.md
+- docs/SECURITY_ZERO_KNOWLEDGE.md
+- docs/legal/PRIVACY_POLICY.md
+- docs/legal/TERMS_OF_SERVICE.md
+- docs/projects/00_TEMPLATE.md
+- docs/projects/05_SERVICE_MODULE.md
+- docs/projects/20_CRYPTO_SCALING.md
+- docs/projects/23_QA_SENTINEL.md
+- docs/projects/24_ASSET_ENGINE.md
+- docs/projects/27_SMART_TOOLS.md
+- docs/projects/38_URGE_INTERVENTION.md
+- docs/projects/39_DEFERRED_VAULT_LOCK.md
+- docs/projects/40_TEST_SUITE_AUDIT.md
+- docs/projects/41_DYNAMIC_ANCHOR.md
+- docs/prompts/APPROVAL.md
+- docs/prompts/FIX.md
+- docs/prompts/INGESTION.md
+- docs/prompts/INITIALIZATION.md
+- docs/prompts/PLANNING.md
+- docs/prompts/POST_SPRINT_AUDIT.md
+- docs/prompts/READ_STATE.md
+- docs/prompts/TESTING.md
+- docs/prompts/TICKET_CLOSE.md
+- docs/specs/01_JOURNAL.md
+- docs/specs/02_SERVICE.md
+- docs/specs/03_ADMIN.md
+- docs/specs/04_WORKBOOKS.md
+- docs/specs/05_TASKS.md
+- docs/specs/06_VITALITY.md
+- docs/specs/07_GAMIFICATION.md
+- docs/specs/08_ADMIN.md
+- docs/specs/09_PROFILE.md
+- docs/specs/10_INSIGHTS.md
+- docs/specs/11_DASHBOARD.md
+- docs/specs/12_USER_GUIDE.md
+- docs/specs/13_INFRASTRUCTURE.md
+- docs/specs/14_FEEDBACK.md
+- docs/specs/15_AI_INTEGRATION.md
+- docs/specs/16_CLOUD_SYNC.md
+- docs/specs/17_ONBOARDING.md
+- docs/specs/18_CBT_ENGINE.md
+- docs/specs/19_DATA_EXPORT.md
+- docs/specs/20_CRYPTO_SCALING.md
+- docs/templates/USER_GUIDE.md
+
+### FILE CONTENTS ###
+
+<file path="docs/ACTIVE_CYCLE.md">
+# 🏃 Active Development Cycle
+
+**Current Phase:** Cycle 2026-W17 (Sprint 9.0)
+**Methodology:** ISO Year-Week Continuous Delivery
+
+## 🚨 Triage & Hotfixes (Priority 1)
+*Issues bypassing the backlog to protect user retention.*
+*(Queue Empty)*
+
+## 🛠️ Active Projects (Priority 2)
+*Core feature work for the current cycle.*
+- [ ] **PROJ-05:** The Service Network -> Build encrypted Sponsee Rolodex to unblock organic viral growth.
+- [⛔ BLOCKED] **PROJ-07:** Play Store TWA (Waiting on DUNS Number for Google Play Developer Account verification).
+
+## 🧹 Chores & Tech Debt
+- [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
+
+## ✅ Resolved This Cycle
+- [x] **PROJ-41:** Dynamic Anchor -> Replaced static 'Daily Pledge' with a circadian-aware, 3-column quick action bar on the dashboard.
+- [x] **PROJ-40:** Test Suite Audit -> Comprehensive review of Vitest pipeline.
+- [x] **PROJ-31:** Crypto Chunking Pipeline -> Refactor PIN rotation to handle 10k+ docs without UI thread locking.
+- [x] **PROJ-39:** Deferred Vault Lock -> Added 'Skip for Now' onboarding bypass.
+*(Queue Empty)*
+*(Queue Empty)*
+
+</file>
+
+<file path="docs/BACKLOG.md">
+# 🧊 Feature Backlog (The Persona Icebox)
+
+**Storage:** Ideas and feature requests that are approved but deferred. Tagged by Persona to ensure we are building for specific psychological needs, not just adding features.
+
+## 👤 David (The User in Crisis)
+* **Feature:** Harm Reduction Mode.
+  * **Concept:** A toggle that shifts the app's language from "Abstinence" to "Management" (e.g., tracking drinks per week instead of days since last drink).
+  * **Status:** Deferred to post-Wave 2.
+* **Feature:** Clinical Telehealth Off-Ramps (MAT Resources).
+  * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
+
+## 👤 Ned (The Pink Cloud)
+* **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
+  * **Concept:** Gamified attendance tracking.
+  * **Complexity:** High (Requires secure multiplayer networking). Deferred to 5,000 user milestone.
+* **Feature:** Sleep Log / Wearable Integration.
+  * **Concept:** Apple HealthKit API integration to correlate sleep debt with cravings.
+  * **Complexity:** Extremely High. Deferred to Wave 4.
+
+## 👤 Lisa (The Service Superstar)
+* **Feature:** Accountability Partner Mode.
+  * **Concept:** A read-only "Listener" view where a sponsor can see a sponsee's clean time and public mood graph (without seeing encrypted journal entries).
+
+## 👤 Walt (The Zen Master)
+* **Feature:** Photo Attachments in Journal.
+  * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64). Deferred indefinitely.
+
+</file>
+
+<file path="docs/BUSINESS_OPS.md">
+# 🏢 Business Operations & Scaling (PROJ-19)
+
+**Focus:** Non-software tasks required to reach 5,000 users.
+
+## 📋 The "Road to 5,000" Strategy
+1. **Capital Allocation:** How much of the $50k goes to paid acquisition (TikTok/Reddit Ads) vs. operations (servers, APIs, legal).
+2. **Viral Loops:** Leveraging the newly built "Sobriety Hero Watermark" to drive organic social sharing.
+3. **Frictionless Onboarding:** Continuously monitoring the drop-off rate between `/login` and `/dashboard`.
+
+## 🏃 Immediate Administrative Action Items
+- [ ] Open Corporate Bank Account.
+- [ ] Secure incoming capital transfer.
+- [ ] Acquire DUNS Number to unblock Google Play Developer Account creation.
+- [ ] Procure Cyber Liability Insurance (Crucial before onboarding 5,000 users).
+- [ ] Procure Professional Liability (E&O) Insurance.
+- [ ] Schedule Legal Review of `TERMS_OF_SERVICE.md` and `PRIVACY_POLICY.md` for Canadian/US compliance.
+
+</file>
+
+<file path="docs/CONTEXT_DUMP.md">
+# 🧠 MRT: Platform Context
+**Stack:** React 19 + Vite + Tailwind v4 + Firebase + Gemini 2.5
+**Security:** Zero-Knowledge (AES-GCM Client-Side)
+**Version:** v1.0.0 (Production)
+
+## 🏗️ Architectural Pillars
+
+### 1. Zero-Knowledge Security
+* **Boundary:** `src/lib/crypto.ts` is the absolute boundary.
+* **Rule:** Plain text sensitive data (Journals, Workbook Answers) **NEVER** leaves the client device.
+* **Mechanism:** Data is encrypted with a key derived from `User PIN + Salt` (PBKDF2).
+
+### 2. Offline-First PWA
+* **State:** We use `TanStack Query` with local state to handle flaky connections.
+* **Sync:** The "Online/Offline" indicator (`LayoutContext`) informs the user of sync status.
+
+### 3. AI Isolation
+* **Model:** Gemini 2.5 Flash / Pro.
+* **Flow:** Data is decrypted on the client -> Sent to Gemini API -> Result displayed/saved.
+* **Privacy:** Prompts are stateless. No training on user data.
+
+### 4. Business Model (Freemium)
+* **Free Tier:** Core tools (Journaling, Tasks, Horizon Dashboard, Vitality/Breathwork). Designed for immediate crisis de-escalation.
+* **Premium Tier:** Advanced features (Unlimited AI Compass insights, Service Module/Sponsee Rolodex, PDF Exports). Paywalls apply here.
+
+## 🎨 Design System (Vibrant Momentum)
+**Philosophy:** "Recovery is a high-performance lifestyle."
+**Visuals:** High-saturation gradients, 100dvh layouts, glassmorphism.
+
+### Module Themes (Atmospheric Tinting)
+| Module | Persona Match | Gradient Source | Glow (Shadow) | Vibe |
+| :--- | :--- | :--- | :--- | :--- |
+| **Dashboard** | David (Crisis) | Sky → Blue | `bg-slate-200` | Hope & Clarity |
+| **Tasks** | Ned (Pink Cloud) | Cyan → Teal | `bg-cyan-200` | Energy & Action |
+| **Service** | Lisa (Service) | Rose → Amber | `bg-orange-200` | Warmth & Connection |
+| **Insights** | Walt (Zen) | Fuchsia → Rose | `bg-fuchsia-200` | Mystical & AI |
+| **Vitality** | Universal | Rose → Amber | `bg-orange-200` | Somatic Health |
+
+## 🛠️ Coding Standards
+* **Strict Typing:** No `any`. Interfaces for `JournalEntry` and `Task` are mandatory.
+* **No Magic Strings:** Use constants for Collection Names.
+* **Environment:** All secrets via `import.meta.env`.
+
+</file>
+
+<file path="docs/DEPLOYMENT.md">
+# ☁️ Deployment & Development
+
+**Platform:** Firebase Hosting
+**Pipeline:** GitHub Actions (Multi-Environment)
+**Dev Environment:** GitHub Codespaces (Recommended)
+
+## 1. Development Environment (Codespaces)
+We have migrated to **GitHub Codespaces** to ensure a consistent, secure dev environment.
+
+* **Config:** `.devcontainer/devcontainer.json`
+* **Auto-Setup:** The `setup.sh` script automatically installs Node 20, Firebase Tools, and extensions.
+* **Secrets:**
+    * **Method:** Secrets are injected from GitHub Codespaces Settings.
+    * **Boot Logic:** The setup script reads these secrets and generates a local `.env` file automatically.
+
+## 2. Environment Strategy
+We use a **Promotion Pipeline**: `DEV` -> `UAT` -> `PROD`.
+
+| Environment | Branch | Firebase Project | URL |
+| :--- | :--- | :--- | :--- |
+| **DEV** | `feature/*` | `mrt2-app-dev` | (Preview URLs) |
+| **UAT** | `release/*` | `mrt2-app-uat` | `mrt2-app-uat.web.app` |
+| **PROD** | `main` | `mrt2-app-prod` | `www.myrecoverytoolkit.ca` |
+
+## 3. The Build Pipeline (Secrets Security)
+We use a "Nuclear Fix" strategy for environment variables in CI/CD to prevent Vite from missing keys.
+
+* **Logic:** The pipeline does *not* rely on shell variables passing through to the build.
+* **Mechanism:** The Action explicitly **writes a physical .env file** to the runner's disk immediately before the build step, populated with secrets from GitHub Actions.
+* **Admin Access:** The `FIREBASE_SERVICE_ACCOUNT` is decoded from Base64 into a temporary JSON file for the deploy step, then destroyed.
+
+## 4. Deployment Commands
+**Manual Deploy (Emergencies only):**
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+</file>
+
+<file path="docs/PERSONAS.md">
+# 👥 Persona-Based Development Model
+
+Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, fellowship culture, and technical environment.
+
+## 🌍 The Users (The Recovery Journey)
+
+### 1. "David" (The User in Crisis)
+* **Fellowship:** CA (Cocaine Anonymous)
+* **Stage:** Day 1 to 30. Relapsed after 2 years. Acute distress, high anxiety.
+* **Demographics:** 32, Tech-literate but currently cognitively overloaded.
+* **Environment:** Alone in his bedroom at 2 AM. Screen brightness is low.
+* **Goal:** De-escalate immediate urges. Access help instantly.
+* **UX Constraint:** **Zero Friction.**
+    * *Rule:* No complex navigation. SOS button must be visible in < 1s.
+    * *Rule:* "Urge Log" and Voice-to-Vault must be accessible with 1 tap.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/david_headshot.png`
+    * `bio_feature`: `/assets/personas/david_bio.jpg`
+    * `full_body`: `/assets/personas/david_full.png`
+    * `looking_left`: `/assets/personas/david_left.png`
+
+### 2. "Ned" (The Pink Cloud)
+* **Fellowship:** NA (Narcotics Anonymous)
+* **Stage:** 30 to 90 Days. Optimistic, manic energy, eager to track progress.
+* **Demographics:** 24, Digital Native. Expects high-fidelity UI and gamification.
+* **Environment:** At the gym, on the bus, constantly moving.
+* **Goal:** Gamification, clean-time tracking, and building daily habits.
+* **UX Constraint:** **Visual Reward.**
+    * *Rule:* Dashboard must prominently display clean time/streaks.
+    * *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/ned_headshot.png`
+    * `bio_feature`: `/assets/personas/ned_bio.jpg`
+    * `full_body`: `/assets/personas/ned_full.png`
+    * `looking_left`: `/assets/personas/ned_left.png`
+
+### 3. "Lisa" (The Service Superstar)
+* **Fellowship:** AA (Alcoholics Anonymous)
+* **Stage:** 7 Years (Maintenance). High-functioning, high-stress, sponsors 5 women.
+* **Demographics:** 45, Working professional, uses her phone primarily for communication/email.
+* **Environment:** In her car immediately after chairing a meeting.
+* **Goal:** Manage sponsee commitments (Step 12) without burning out.
+* **UX Constraint:** **Boundary Management.**
+    * *Rule:* "Sponsee Dashboard" must organize commitments efficiently to reduce mental load.
+    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" (Vitality Module).
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/lisa_headshot.png`
+    * `bio_feature`: `/assets/personas/lisa_bio.jpg`
+    * `full_body`: `/assets/personas/lisa_full.png`
+    * `looking_left`: `/assets/personas/lisa_left.png`
+
+### 4. "Walt" (The Zen Master)
+* **Fellowship:** Recovery Dharma
+* **Stage:** 35+ Years. Stable, reflective, focused on mindfulness and sangha.
+* **Demographics:** 68, Vietnam Vet. Prefers desktop/tablet. Lower tolerance for tiny touch targets.
+* **Environment:** Home office, morning coffee, using a tablet or desktop browser.
+* **Goal:** Deep journaling, analyzing long-term patterns, data sovereignty.
+* **UX Constraint:** **Data Sovereignty & Accessibility.**
+    * *Rule:* Touch targets must be 44px+. Text must be highly legible.
+    * *Rule:* Export tools (PDF/JSON) must work perfectly for his archives.
+* **Asset Metadata (VitePress/Marketing):**
+    * `headshot`: `/assets/personas/walt_headshot.png`
+    * `bio_feature`: `/assets/personas/walt_bio.jpg`
+    * `full_body`: `/assets/personas/walt_full.png`
+    * `looking_left`: `/assets/personas/walt_left.png`
+
+</file>
+
+<file path="docs/ROADMAP.md">
+# 🗺️ MRT Product Roadmap: "The 4 Waves"
+
+**Methodology:** Strategic Waves (Prioritizing User Acquisition & Retention)
+
+## 🌊 Wave 1: Acquisition & Friction (Weeks 1–6)
+*The immediate goal: Stop users from abandoning the app on Day 1 by removing the "Security Tax."*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| 🟡 **Queued** | `NEW` | **Deferred Vault Lock** | David | Allow "Skip PIN initially" during onboarding. Let users experience the app before forcing Zero-Knowledge setup. |
+| ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 3-column Quick Action Bar replacing the static daily pledge. |
+| 🟡 **Queued** | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
+| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
+
+## 🌊 Wave 2: Retention & Community (Weeks 7–16)
+*The secondary goal: Keep users past Day 30 through peer support and shame-free resets.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `NEW` | **Privacy-Preserving Community** | All | Opt-in, pseudonymized social feed moderated by Gemini. (Requires heavy Zero-Knowledge schema design). |
+| ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers immediately following a relapse. |
+| ⚪ Planned | `NEW` | **Multi-Addiction Clocks** | All | Tracking multiple habits/substances simultaneously. |
+
+## 🌊 Wave 3: Platform Maturity & Sponsors (Weeks 17–26)
+*The third goal: Capture the "Lisa" (Sponsor) and "Walt" (Long-term) demographics.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). |
+| ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt / Lisa | AI analysis of Insights collection to generate proactive warning tasks. |
+| ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
+
+## 🌊 Wave 4: Enterprise & Ecosystem (Weeks 27–52)
+*The final goal: Defensible technical moats and B2B expansion.*
+
+| Status | ID | Project Name | Persona | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ⚪ Planned | `PROJ-30` | **Data Sovereignty Engine** | Walt | Formalize the local decryption and structured export (JSON/PDF) protocol. |
+| ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
+
+## ✅ RECENTLY SHIPPED
+* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
+* `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
+* `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
+* `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
+* `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
+* `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
+* `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
+* `[BILLING]` Stripe Webhook & Premium Provisioning Pipeline
+* `PROJ-32` The Viral Export Engine (AI Insight Milestone Cards)
+
+</file>
+
+<file path="docs/SCHEMA_ARCHITECTURE.md">
+# 🗄️ Schema Architecture & Data Graph
+
+**Storage Engine:** Cloud Firestore (NoSQL)
+**Encryption Strategy:** Client-Side AES-GCM (Content fields only)
+
+## 1. High-Level Topology
+
+```mermaid
+graph TD
+    root[🔥 Firestore Root]
+    
+    root --> users[📂 users]
+    users --> userDoc[📄 User Profile]
+    userDoc --> workbook_answers[📂 workbook_answers]
+    userDoc --> templates[📂 templates]
+    userDoc --> checkout_sessions[💳 checkout_sessions]
+    userDoc --> subscriptions[💳 subscriptions]
+    userDoc --> payments[💳 payments]
+    
+    root --> journals[📂 journals]
+    root --> tasks[📂 tasks]
+    root --> insights[📂 insights]
+    root --> ai_logs[📂 ai_logs]
+    root --> feedback[📂 feedback]
+    root --> service[📂 service]
+```
+
+## 2. Collection Definitions
+
+### `users/{uid}`
+* **Purpose:** Profile, Auth, & Settings.
+* **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens`, `timezone`, `anchorSettings` (Object), etc.
+
+### `journals/{entryId}`
+* **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
+        * *Note for Virtual Modules:* For SMART CBT Tools, the decrypted plain text is actually a **Stringified JSON Object** containing `{ metadata: {...}, data: {...} }`. The UI parses this JSON after decryption.
+    * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
+    * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
+    * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]` or `["SMART Tool", "CBA"]`).
+
+### `tasks/{taskId}`
+* **Purpose:** Gamification, Habits, and AI Action Plans. (Unencrypted for streak evaluation).
+
+### `insights/{insightId}`
+* **Purpose:** AI-generated analysis of journals/workbooks.
+
+### `feedback/{reportId}`
+* **Purpose:** User bug reports and suggestions. (Unencrypted).
+
+</file>
+
+<file path="docs/SECURITY_ZERO_KNOWLEDGE.md">
+# 🛡️ Security Model: Zero-Knowledge Architecture
+
+**Philosophy:** "We cannot leak what we cannot read."
+
+## 1. The Encryption Lifecycle
+
+### A. Setup (Vault Creation)
+1. User enters 4-digit PIN.
+2. App generates random 16-byte `Salt`.
+3. App derives `Key` using PBKDF2 (100k iterations).
+4. App creates `Verifier` = Hash(PIN + Salt).
+5. App sends `Salt` and `Verifier` to Firestore. 
+6. **Session Caching:** The user's PIN is temporarily cached in the browser's `sessionStorage`. This prevents the user from having to re-enter their PIN every time they navigate between pages, while ensuring the PIN is automatically wiped by the OS the moment the browser tab is closed.
+
+### B. Storage (Writing Data)
+1. User types "I feel anxious today."
+2. App checks memory for `Key`. (If missing, it attempts to derive it from the `sessionStorage` PIN, or prompts the user).
+3. App generates random `IV` (Initialization Vector).
+4. App encrypts text via AES-GCM -> `Ciphertext`.
+5. App sends string `IV:Ciphertext` to Firestore.
+
+### C. Retrieval (Reading Data)
+1. App fetches document from Firestore.
+2. App splits `IV:Ciphertext`.
+3. App uses `Key` to decrypt.
+4. Plain text renders in React.
+
+## 2. Vault Control Features
+
+### 🔒 Vault Locking (Memory Clearing)
+* **Trigger:** User clicks "Lock Vault" in the sidebar or closes the tab.
+* **Action:** The `EncryptionContext` sets `globalKey = null` and explicitly deletes the PIN from `sessionStorage`.
+* **Result:** Even if an attacker gains physical access to the unlocked computer or browser console after the fact, they cannot decrypt data without the user re-entering the PIN.
+
+## 3. AI Privacy Boundary
+When a user asks for AI Analysis:
+1. Data is decrypted **in the browser**.
+2. Plain text is sent to Gemini API via HTTPS.
+3. Gemini processes data statelessly.
+4. Response is returned.
+5. **Critical:** We do NOT train models on this data.
+
+## 4. Third-Party Data (The Service Model)
+* **Context:** Users like "Lisa" store data about *other people* (Sponsees).
+* **Rule:** This is a **Digital Rolodex**, not a Social Network.
+* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
+    * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
+    * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
+
+## 5. PIN Management & Rotation Protocol
+Because the user's PIN mathematically derives their encryption key, changing a PIN is a highly sensitive operation managed by `src/lib/rotation.ts`.
+
+### A. Changing a Known PIN (Rotation)
+If the user knows their current PIN and wants to change it:
+1.  **Unlock:** User enters *Current PIN* to validate against the `pinVerifier`.
+2.  **Fetch & Decrypt:** App downloads ALL encrypted documents (`journals`, `workbooks`) into memory.
+3.  **Generate:** User enters *New PIN*. App generates a *New Salt* and derives a *New Key*.
+4.  **Re-Encrypt & Chunking:** App re-encrypts all data. **Crucially**, it utilizes `processInChunks` to process 20 documents at a time. This yields the main thread to update the React progress bar, preventing UI freezing on mobile devices.
+5.  **Commit:** App uploads the new documents to Firestore in batches of 450 to respect Firebase transactional limits.
+6.  **Rollback:** If the network drops mid-flight, the `catch` block restores the old `globalKey` in memory to prevent session corruption.
+
+### B. Resetting a Lost PIN (Crypto-Shredding)
+If the user forgot their PIN, rotation is mathematically impossible.
+1.  **Warning:** The user triggers "Reset Vault" in the Profile Security tab. The app displays a severe warning.
+2.  **Action/Shredding:** App executes a massive batch-delete of all existing documents in `journals` and `workbook_answers`, AND deletes the `encryptionSalt` from the user profile.
+3.  **Result:** The old ciphertexts are destroyed, preventing orphaned, unreadable data from bloating the database. The user starts completely fresh.
+
+
+
+## Key Rotation (Zero-Knowledge)
+PIN rotation is an asynchronous, chunked process running in 50-document batches using Firestore cursors. 
+
+**Fail-Safe Rollback:**
+If a network drop occurs mid-rotation, the ```try/catch``` block successfully ensures the ```globalKey``` strictly reverts to the ```oldPin``` state in memory, preventing permanent data lockouts. The old and new AES-GCM keys are rotated sequentially within the chunking loop, never leaving the localized ```lib/rotation.ts``` scope.
+
+</file>
+
+<file path="docs/legal/PRIVACY_POLICY.md">
+# 🔒 Privacy Policy for My Recovery Toolkit (MRT)
+
+**Last Updated:** March 2026
+
+**My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
+
+## 1. Our Core Philosophy: Zero-Knowledge Encryption
+MRT is built on a **Zero-Knowledge Architecture**.
+* **Your Private Data:** Your Journal entries, Workbook answers, and Sponsee notes are encrypted on your device using a key derived from your PIN.
+* **Our Access:** We (the developers) and our cloud providers (Firebase/Google) **cannot decrypt or read this data**. It is stored as mathematical gibberish (`ciphertext`) on our servers.
+* **Your Responsibility:** Because we do not have your encryption key, **we cannot recover your data if you lose your PIN.**
+
+## 2. Information We Collect
+We collect data in two categories:
+
+### A. Account & Metadata (Unencrypted)
+To operate the service, the following data is stored in plain text:
+* **Authentication:** Email address and User ID (via Firebase Auth).
+* **Usage Stats:** App performance, error logs, and activity streaks (e.g., "User logged in today").
+* **Non-Sensitive Content:** Task titles, Mood scores (1-10), and Vitality tags (e.g., "Movement", "Breath"). We use these to generate charts/graphs.
+* **Device Tokens:** If you opt-in to Push Notifications, we securely store your device FCM token to deliver generic reminders (e.g., "You have tasks due today"). These tokens contain no personal information and are automatically deleted if you disable notifications.
+
+### B. User Generated Content (Encrypted)
+The following data is encrypted *before* it leaves your device:
+* **Journals:** The text body of your diary entries.
+* **Workbooks:** Your answers to deep-dive recovery questions.
+* **Service Data:** Names and notes regarding people you sponsor.
+
+## 3. How We Use Artificial Intelligence (AI)
+MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysis.
+* **Consent:** AI analysis only happens when you explicitly click a button (e.g., "Analyze Journal", "Consult Compass").
+* **Process:** Your device temporarily decrypts the specific text, sends it to the AI provider via a secure connection, and displays the result.
+* **Privacy:** We utilize "Stateless" API calls. Your journal entries are **NOT** used to train Google's public AI models. The data is processed in memory and then discarded by the AI provider.
+
+## 4. Data Storage & Third Parties
+We use trusted third-party infrastructure to host the app:
+* **Google Firebase:** Hosts the database, authentication, push notifications, and static files.
+* **Google Generative AI:** Provides the intelligence for analysis features.
+
+## 5. Data Sovereignty
+You own your data.
+* **Export:** You may download a decrypted JSON or PDF copy of your data at any time via the Profile page.
+* **Deletion:** You may delete your account at any time. This permanently wipes all data (Encrypted and Unencrypted) from our servers.
+
+## 6. Children's Privacy
+MRT is not intended for individuals under the age of 13. We do not knowingly collect data from children.
+
+## 7. Contact Us
+For technical support or privacy questions, please contact:
+**Email:** rpdouglas@gmail.com
+
+</file>
+
+<file path="docs/legal/TERMS_OF_SERVICE.md">
+# 📜 Terms of Service
+
+**Last Updated:** February 13, 2026
+
+By accessing or using **My Recovery Toolkit (MRT)**, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not use the application.
+
+## 1. Medical Disclaimer (Critical)
+**MRT IS NOT A MEDICAL DEVICE AND DOES NOT PROVIDE MEDICAL ADVICE.**
+* The content, AI analysis, and tools provided are for **informational and self-help purposes only**.
+* MRT is not a substitute for professional medical advice, diagnosis, or treatment.
+* **In Case of Emergency:** If you are experiencing a medical emergency, suicidal thoughts, or a relapse crisis, call 911 or your local emergency number immediately. Do not rely on this app for crisis intervention.
+
+## 2. Zero-Knowledge & Data Loss
+* **Your Security PIN:** You are solely responsible for remembering your PIN.
+* **No Recovery:** Because MRT uses Zero-Knowledge encryption, **we cannot reset your PIN or recover your encrypted data** if you forget it.
+* **Liability:** MRT and its developers are not liable for any loss of data resulting from a lost PIN, device failure, or failure to backup your data.
+
+## 3. User Responsibilities
+You agree not to:
+* Use the app for any illegal purpose.
+* Attempt to reverse-engineer the encryption protocols.
+* Enter Personal Identifiable Information (PII) of others (e.g., Sponsees) into unencrypted fields (like Task Titles).
+
+## 4. AI Features
+* **Accuracy:** Artificial Intelligence can make mistakes ("hallucinations"). You acknowledge that advice or insights generated by the "Recovery Coach" or "Compass" may be inaccurate or inappropriate. Always use your own judgment.
+* **Usage:** You agree not to use the AI features to generate harmful, illegal, or abusive content.
+
+## 5. Termination
+We reserve the right to terminate or suspend your account immediately, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the Service.
+
+## 6. Limitation of Liability
+To the maximum extent permitted by law, MRT and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.
+
+## 7. Governing Law
+These Terms shall be governed by the laws of Ontario, Canada, without regard to its conflict of law provisions.
+
+## 8. Changes to Terms
+We reserve the right to modify these terms at any time. Your continued use of the app after changes constitutes acceptance of the new terms.
+</file>
+
+<file path="docs/projects/00_TEMPLATE.md">
+# 📁 Project [ID]: [Project Name]
+
+**Status:** [⚪ Planned | 🟡 Active | 🟢 Done]
+**Primary Persona:** [David | Ned | Lisa | Walt]
+**Objective:** [One precise sentence defining the outcome]
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** [Persona], I want to [Action] so that I can [Benefit/Relief].
+**Competitive Gap:** How does this feature specifically beat "I Am Sober", "Reframe", or "Sober Grid"?
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+*This section MUST be completed before any code is written.*
+* [ ] **Data Sensitivity:** Does this feature handle PII or emotional data?
+* [ ] **Encryption Strategy:** Will this use `src/lib/crypto.ts`? If yes, outline the encryption payload.
+* [ ] **Key Rotation:** Does this data need to be included in `executePinRotation`?
+
+---
+
+## 3. Schema & Architecture 🗄️
+*Define the exact Firestore paths and TypeScript interfaces.*
+
+**Firestore Collections Impacted:**
+* `collection_name`: List fields added or modified.
+
+**Types (`src/lib/db.ts`):**
+```typescript
+// Define interfaces here before building
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Logic & State
+* Define React Query hooks needed.
+* Define Firebase security rules required.
+
+### Phase 2: UI/UX & Gamification
+* List components to create/modify.
+* **Somatic Check:** Does this UI induce stress? (e.g., Avoid red "Overdue" text for missed habits).
+* **Reward:** How does this tie into the XP/Leveling system?
+
+### Phase 3: Edge Cases
+* [ ] What happens if `navigator.onLine` is false?
+* [ ] What happens if `isVaultUnlocked` is false?
+* [ ] What happens on a 320px wide screen (iPhone SE)?
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **Unit Tests:** Target files and edge cases to test.
+* [ ] **The Subway Test:** (Offline resilience check).
+* [ ] **The "Lost PIN" Test:** (Crypto-shredding check).
+
+</file>
+
+<file path="docs/projects/05_SERVICE_MODULE.md">
+# 🤝 Project 05: The "Lisa" Service Module
+
+**Objective:** Build the "Digital Rolodex" for sponsors to manage sponsees securely.
+**Status:** ⚪ Planned
+**Personas Involved:** Lisa (The Service Superstar)
+
+## 🏗️ Phase 1: Schema & Crypto
+* [ ] **Schema:** Create `service` collection structure.
+* [ ] **Crypto:** Verify `src/lib/crypto.ts` can handle small, discrete fields individually without breaking decryption.
+
+## 🧠 Phase 2: Logic Layer
+* [ ] **Hook:** Build `useServiceData()` context hook.
+* [ ] **CRUD:** Implement `addSponsee()`, `updateSponseeNote()`.
+* [ ] **Boundary Check:** Ensure deleting a sponsee deletes their encrypted notes (crypto-shredding).
+
+## 🎨 Phase 3: UI Implementation
+* [ ] **Dashboard:** Create `ServiceWidget` for the main dashboard.
+* [ ] **List View:** Create `pages/Service.tsx` with "Active" and "Alumni" tabs.
+* [ ] **Detail View:** A secure card showing encrypted notes + unencrypted Next Meeting time.
+
+## 🚀 Phase 4: Release
+* [ ] **Docs:** Update User Guide with a section for Sponsors.
+
+</file>
+
+<file path="docs/projects/20_CRYPTO_SCALING.md">
+
+
+## PROJ-31 Post-Sprint Audit
+**Status:** [x] COMPLETED
+
+**Implementation Notes:**
+* Migrated monolithic array loading to a cursor-based Firestore pipeline (```limit``` + ```startAfter```).
+* Batch writes strictly capped beneath Firestore's 500-operation transaction limit.
+* UI decoupled from database engine modifications.
+
+</file>
+
+<file path="docs/projects/23_QA_SENTINEL.md">
+# 📁 Project 23: The QA Sentinel
+
+**Status:** ⚪ Planned
+**Primary Persona:** The Architect (Admin)
+**Objective:** Establish an automated End-to-End (E2E) testing pipeline to guarantee core app functionality during high-velocity scaling.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** the CEO/Architect, I want to automatically verify the "Golden Paths" of the app so that I can deploy updates to 5,000+ users without fear of critical regressions.
+**Competitive Gap:** Most indie health apps break during scaling. MRT will maintain enterprise-grade reliability using automated headless browser testing.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** This project uses Mock Data via Firebase Emulators. No real PII or user vaults will be touched.
+* [x] **Encryption Strategy:** E2E tests will actively verify that `src/lib/crypto.ts` correctly locks and unlocks the vault in a live browser environment.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Tools Introduced:**
+* `Playwright`: For headless browser automation and UI interaction testing.
+* `Firebase Local Emulator Suite`: To intercept Auth and Firestore calls during CI/CD to prevent polluting the production database.
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: The Missing Logic Tests
+* Write `src/lib/__tests__/milestones.test.ts` to mathematically verify the milestone threshold engine (handling leap years and edge cases).
+
+### Phase 2: Emulator Integration
+* Initialize `firebase init emulators`.
+* Configure `vite.config.ts` and Firebase initialization logic to route traffic to `localhost:8080` (Firestore) and `localhost:9099` (Auth) when `VITE_USE_EMULATORS=true`.
+
+### Phase 3: The Playwright "Golden Paths"
+Write exactly 3 resilient E2E tests:
+1. **The Gate Test:** Sign up, onboard (set name/date), and reach the Dashboard.
+2. **The Vault Test:** Set a PIN, write a journal entry, lock the vault, verify data is unreadable, unlock vault, verify data is restored.
+3. **The Ledger Test:** Create a high-priority task, check it off, and verify the Dashboard Streak/Fire increments.
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **CI/CD Pipeline:** Update `.github/workflows/deploy.yaml` to run Playwright tests against the emulators *before* pushing to Firebase Hosting.
+
+</file>
+
+<file path="docs/projects/24_ASSET_ENGINE.md">
+# 📁 Project 24: The Asset Engine
+
+**Status:** 🟢 Done
+**Primary Persona:** The Architect (Admin)
+**Objective:** Consolidate, type-check, and compress all static media assets into a single TypeScript dictionary to eliminate 404 errors, reduce bundle size, and accelerate UI scaling.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** the Architect, I want a strongly typed centralized asset dictionary so that missing or moved images trigger compile-time errors instead of silent production 404s.
+**Competitive Gap:** Many apps suffer from "asset rot" as they scale, leading to bloated download sizes and broken images on poor 3G connections. By forcing WebP compression and strict typing, MRT guarantees a lightweight, bulletproof initial load for users in crisis.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+*This section MUST be completed before any code is written.*
+* [x] **Data Sensitivity:** Does this feature handle PII or emotional data? **No.** (Static marketing/UI assets only).
+* [x] **Encryption Strategy:** Will this use `src/lib/crypto.ts`? **No.**
+* [x] **Key Rotation:** Does this data need to be included in `executePinRotation`? **No.**
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Directory Restructuring:**
+All assets will be moved from the root `/public/` into semantic subdirectories:
+* `/public/assets/ui/` (Chips, UI illustrations)
+* `/public/assets/marketing/` (Screenshots, Personas)
+
+**Types (`src/data/assets.ts`):**
+```typescript
+// The single source of truth for all static imagery
+export const ASSETS = {
+    personas: {
+        david: {
+            headshot: '/assets/marketing/david_headshot.webp',
+            bio: '/assets/marketing/david_bio.webp'
+        },
+        // ...
+    },
+    ui: {
+        chips: {
+            month1: '/assets/ui/medallion_01.webp',
+            // ...
+        }
+    }
+} as const;
+
+// Type helper to ensure components only request valid asset paths
+export type AssetPath = typeof ASSETS;
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Media Compression & Cleanup
+* Run a batch script (Python/Node) to convert all legacy `.png` and `.jpg` marketing assets to `.webp`.
+* Delete unused duplicate assets identified in the Asset Mapping audit.
+
+### Phase 2: The Dictionary
+* Create `src/data/assets.ts`.
+* Map every optimized WebP file into the deeply nested `ASSETS` constant.
+
+### Phase 3: Component Integration
+* Update `Welcome.tsx`, `Links.tsx`, and `SobrietyHero.tsx` to replace hardcoded strings (e.g., `src="/personas/david.jpg"`) with the typed dictionary (e.g., `src={ASSETS.personas.david.headshot}`).
+
+### Phase 4: Edge Cases
+* [x] What happens on a 320px wide screen (iPhone SE)? **WebP compression ensures the images load instantly even on throttled 3G networks.**
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **Unit Tests:** Write a basic test in `assets.test.ts` to verify the `ASSETS` object is successfully exported and not undefined.
+* [ ] **The Build Test:** Run `npm run build` to ensure TypeScript successfully compiles and verifies all referenced asset paths exist in the components.
+
+</file>
+
+<file path="docs/projects/27_SMART_TOOLS.md">
+# 📁 Project 27: The CBT Engine (SMART Tools)
+
+**Status:** 🟡 Active
+**Primary Persona:** Ned (The Pink Cloud) / Walt (The Zen Master)
+**Objective:** Refactor legacy SMART Recovery CBT tools into strictly-typed React components secured by Zero-Knowledge encryption and integrated into the AI Analysis pipeline.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** Ned, I want to complete a Cost Benefit Analysis (CBA) on my phone so that I can logically process a craving before I act on it.
+* **As** Walt, I want my cognitive behavioral exercises saved securely so the AI Compass can identify my irrational beliefs over time.
+**Competitive Gap:** Most apps link out to static PDF worksheets. We offer native, interactive, beautifully designed tools that save securely offline and feed directly into the overarching AI analysis engine.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+*This section MUST be completed before any code is written.*
+* [x] **Data Sensitivity:** High. These tools capture deep emotional triggers, irrational beliefs, and relapse justifications.
+* [x] **Encryption Strategy:** Will use `src/lib/crypto.ts`. The payload (a complex object) will be processed via `JSON.stringify()` and passed to the encryptor. The resulting ciphertext will be stored.
+* [x] **Key Rotation:** Because these are stored as `journals`, they are automatically included in the existing `executePinRotation` batch pipeline. No extra rotation logic needed!
+
+---
+
+## 3. Schema & Architecture 🗄️
+**Architectural Decision:** We will NOT create new collections. We will use a **"Virtual Module"** approach (identical to Vitality). Tools will save to the `journals` collection.
+
+**Firestore Collections Impacted:**
+* `journals`: 
+  * `content`: Encrypted stringified JSON.
+  * `tags`: e.g., `["SMART Tool", "CBA"]` or `["SMART Tool", "ABC"]`.
+  * `moodScore`: Defaults to 5 (or user selected).
+
+**Types (`src/lib/types/smart.ts`):**
+```typescript
+export interface CBAPayload {
+    advantagesDoing: string[];
+    disadvantagesDoing: string[];
+    advantagesNotDoing: string[];
+    disadvantagesNotDoing: string[];
+}
+
+export interface ABCPayload {
+    activatingEvent: string;
+    irrationalBeliefs: string;
+    consequences: string;
+    disputes: string;
+    effectiveNewBeliefs: string;
+}
+// Further interfaces defined during Phase 1
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Logic & State (The Foundation)
+* Define all TypeScript interfaces in `src/lib/types/smart.ts`.
+* Create `SmartToolContainer.tsx`: A wrapper component that handles local debounced state, encryption, and auto-saving via TanStack Query (`useJournalOperations`).
+
+### Phase 2: UI/UX & Gamification (The Refactor)
+* Port legacy `.jsx` tools to modern `.tsx` utilizing Tailwind v4 (glassmorphism, vibrant gradients).
+* **Somatic Check:** Ensure the forms do not feel like "homework". Use auto-expanding textareas and clear, empathetic labeling.
+* **Reward:** Saving a tool grants standard Journal XP (+25 XP).
+
+### Phase 3: Edge Cases
+* [ ] What happens if `navigator.onLine` is false? -> `useJournalOperations` leverages Firestore offline persistence.
+* [ ] What happens if `isVaultUnlocked` is false? -> The `SmartToolContainer` must block entry and display the PIN unlock screen.
+* [ ] What happens on a 320px wide screen (iPhone SE)? -> CSS Grid must collapse to single columns (`grid-cols-1`).
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **Unit Tests:** Verify `smart.ts` interfaces compile securely.
+* [ ] **The Subway Test:** Fill out a CBA offline, reconnect, verify it hits Firestore.
+* [ ] **The "AI Visibility" Test:** Run an AI Journal Analysis. Verify the AI successfully parses the stringified JSON content block.
+
+</file>
+
+<file path="docs/projects/38_URGE_INTERVENTION.md">
+📁 Project 38: The Urge Intervention System (“The Lifeline Protocol”)
+Status: ⚪ Planned
+Primary Persona: David (Crisis) → Secondary: Ned (Early Recovery)
+Objective: Provide a zero-friction, real-time intervention flow that interrupts urges and guides the user through a structured, somatic-first recovery protocol within 3–5 minutes.
+
+1. The Executive Summary
+User Story:
+As David, I want to tap one button when I feel an urge so that I can calm down, think clearly, and not relapse.
+Competitive Gap:
+Most recovery apps (e.g., I Am Sober, Reframe) focus on tracking or reflection after the fact.
+MRT will provide a real-time intervention protocol that:
+•	regulates the nervous system
+•	guides cognition
+•	redirects behavior
+
+2. Security & Zero-Knowledge Audit 🛡️
+•	Data Sensitivity: Medium–High
+o	Captures emotional state, triggers, and behavioral responses.
+•	Encryption Strategy:
+o	Use src/lib/crypto.ts for:
+	Optional user reflections (post-intervention notes)
+o	Core event metadata remains unencrypted for analytics:
+	trigger_type
+	context_tags
+	completed
+•	Key Rotation:
+o	If reflections are stored in journals, they are automatically included in executePinRotation.
+o	If stored separately (urge_events), must be included in rotation pipeline if encrypted fields exist.
+
+3. Schema & Architecture 🗄️
+🔥 Architectural Decision
+Create a new lightweight collection for structured events:
+👉 urge_events
+This avoids polluting journals and enables fast analytics.
+
+Firestore Collections Impacted
+urge_events/{eventId}
+export interface UrgeEvent {
+  uid: string;
+
+  // Core tracking
+  createdAt: number;
+  triggerType: 'manual' | 'notification' | 'ai_detected';
+
+  // Context
+  contextTags: string[]; // ["stress", "alone", "evening"]
+  locationState?: 'home' | 'outside' | 'social' | 'unknown';
+
+  // Flow tracking
+  stagesCompleted: {
+    regulate: boolean;
+    orient: boolean;
+    reframe: boolean;
+    action: boolean;
+  };
+
+  completed: boolean;
+
+  // Optional metrics
+  moodBefore?: number;
+  moodAfter?: number;
+
+  // Actions taken
+  actions: string[]; // ["called_friend", "breathwork", "journal"]
+
+  // Reflection (ENCRYPTED if present)
+  reflection?: string; // encrypted blob
+}
+
+Type Location
+src/lib/types/urge.ts
+
+🔹 Phase 1: Logic & State (Foundation)
+A. Context / Hook
+Create:
+useUrgeIntervention.ts
+Responsibilities:
+•	manage flow state (stage machine)
+•	create/update urge_events
+•	handle transitions
+
+B. State Machine
+type UrgeStage =
+  | 'idle'
+  | 'interrupt'
+  | 'regulate'
+  | 'orient'
+  | 'reframe'
+  | 'action'
+  | 'complete';
+________________________________________
+C. Core Functions
+•	startUrgeFlow(triggerType)
+•	completeStage(stage)
+•	logContext(tags)
+•	logAction(action)
+•	completeFlow()
+________________________________________
+D. Firebase Integration
+•	createUrgeEvent()
+•	updateUrgeEvent()
+Include:
+•	optimistic updates
+•	offline support via TanStack Query
+________________________________________
+E. Guard Clauses
+•	if (!user) return
+•	if (!isVaultUnlocked && reflection) block input
+________________________________________
+________________________________________
+🔹 Phase 2: UI/UX & Gamification (The Experience)
+________________________________________
+🎨 Screen 1: INTERRUPT
+Component: UrgeInterruptScreen.tsx
+•	full-screen modal
+•	minimal UI
+•	animated gradient pulse
+Copy:
+“You’re safe. This will pass.”
+Buttons:
+•	Primary: “Start”
+•	Secondary: “Close”
+________________________________________
+🌬️ Screen 2: REGULATE
+Component: reuse/enhance existing:
+•	BreathworkPacer.tsx
+Enhancements:
+•	auto-start
+•	3–5 cycles max
+•	haptic feedback
+On complete:
+•	call completeStage('regulate')
+________________________________________
+🧭 Screen 3: ORIENT
+Component: UrgeOrientScreen.tsx
+Tap-based selections:
+Prompt 1: “What’s happening?”
+•	craving
+•	stress
+•	anger
+•	boredom
+•	memory
+Prompt 2: “Where are you?”
+•	alone
+•	with people
+•	home
+•	outside
+Store:
+•	contextTags
+________________________________________
+🧠 Screen 4: REFRAME
+Component: UrgeReframeScreen.tsx
+Options:
+A. AI Micro Response
+•	call Gemini (short prompt)
+•	max 2–3 sentences
+B. CBT Quick Prompts
+•	“Play the tape forward”
+•	“What happens next?”
+C. Personal Anchor
+•	sobriety date
+•	last milestone
+•	prior journal snippet
+________________________________________
+🚀 Screen 5: ACTION
+Component: UrgeActionScreen.tsx
+Buttons:
+•	Call someone
+•	Open meeting link
+•	Go outside (log movement)
+•	Write in journal
+Each:
+•	logs actions[]
+•	deep-links to feature
+________________________________________
+🟢 Screen 6: COMPLETE
+Component: UrgeCompleteScreen.tsx
+Copy:
+“You made a different choice. That matters.”
+Gamification:
+•	+XP (25–50)
+•	streak protection flag
+Optional:
+•	“Add a note” → encrypted journal entry
+________________________________________
+________________________________________
+🔹 Phase 3: Edge Cases
+•	Offline Mode
+o	Queue event locally
+o	Sync later
+•	Vault Locked
+o	Allow full flow
+o	Disable reflection input
+•	User Exits Early
+o	mark completed = false
+o	still store partial data
+•	320px Screens
+o	large buttons
+o	vertical stacking
+o	no dense text
+________________________________________
+________________________________________
+5. QA & Verification 🧪
+Unit Tests
+•	useUrgeIntervention.test.ts
+o	state transitions
+o	stage completion
+o	event creation
+________________________________________
+Integration Tests
+•	simulate full flow
+•	verify Firestore writes
+________________________________________
+The Subway Test 🚇
+•	trigger urge offline
+•	complete flow
+•	reconnect → verify sync
+________________________________________
+The "Crisis Speed" Test ⚡
+•	time from tap → breathwork start < 1 second
+________________________________________
+The "Emotional Load" Test 🧠
+•	ensure:
+o	no typing required
+o	max 3 taps per screen
+________________________________________
+________________________________________
+🔮 6. Future Extensions (Already Roadmap-Aligned)
+•	Integrate with:
+o	PROJ-33 Predictive Relapse Engine
+o	PROJ-35 Autopsy Engine
+•	Add:
+o	voice input
+o	sponsor ping
+o	adaptive AI flow
+________________________________________
+🧭 7. Success Metrics (Critical)
+Track:
+•	% of users using SOS
+•	completion rate of flow
+•	drop-off per stage
+•	relapse rate correlation
+•	Day 1 → Day 7 retention lift
+________________________________________
+🧠 8. Architectural Fit
+This feature directly strengthens:
+•	David (Crisis) → Immediate intervention
+•	Ned (Early) → Habit reinforcement
+•	Lisa (Service) → Future sponsor alerts
+•	Walt (Long-term) → Data for insights
+________________________________________
+💡 Final Positioning
+This is not just a feature.
+👉 It becomes the emotional core of the app
+👉 The reason users open MRT instead of anything else
+
+</file>
+
+<file path="docs/projects/39_DEFERRED_VAULT_LOCK.md">
+# 📁 Project 39: Deferred Vault Lock
+
+**Status:** 🟡 Active (Wave 1)
+**Primary Persona:** David (The User in Crisis)
+**Objective:** Allow users to skip the initial 4-digit PIN setup during onboarding to experience the app before committing to Zero-Knowledge security.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** David, I want to see the dashboard and try the tools immediately so that I can de-escalate my anxiety before being forced to memorize a security PIN.
+**Competitive Gap:** Reduces Day-1 abandonment (the "Security Tax") by letting the value of the app sell itself before enforcing strict encryption protocols.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** High. We are temporarily relaxing the encryption gate for specific sessions.
+* [x] **Encryption Strategy:** Unencrypted journals/workbooks must be stored as plain text and explicitly flagged with `isEncrypted: false`. When the user eventually sets a PIN, a migration script must encrypt these orphaned plain-text entries.
+* [x] **Key Rotation:** Yes. The migration step hooks directly into the existing `executePinRotation` pipeline to secure the data once the user opts-in.
+
+---
+
+## 3. Schema & Architecture 🗄️
+**Firestore Collections Impacted:**
+* `users`: Add `hasDeferredVault: boolean` (default false).
+
+**Types (`src/lib/db.ts`):**
+```typescript
+export interface UserProfile {
+    // ... existing fields
+    hasDeferredVault?: boolean;
+}
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Logic & State
+* Update `EncryptionContext` to allow a "deferred" state where `globalKey` is null, but the app does not forcefully route the user to the Lock Screen.
+
+### Phase 2: UI/UX & Gamification
+* **Onboarding Flow:** Add a secondary "Skip for Now (Try the App)" button under the mandatory PIN setup.
+* **Dashboard:** Add a persistent, dismissible "Secure Your Vault" warning banner if `hasDeferredVault` is true.
+
+### Phase 3: Edge Cases
+* [ ] What happens if a user exports their data while in deferred mode? (It exports as plain text).
+* [ ] What happens if they attempt to use AI Analysis? (It should still work, reading the plain text instead of decrypting).
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **The "Lost PIN" Test (Inverted):** Skip PIN, write a journal entry, then set a PIN. Verify the journal is successfully converted from plain text to ciphertext in Firestore.
+
+</file>
+
+<file path="docs/projects/40_TEST_SUITE_AUDIT.md">
+# 📁 Project 40: Core Logic Test Suite Audit
+
+**Status:** 🟢 Completed
+**Primary Persona:** The Architect (Admin)
+**Objective:** Establish a robust Vitest unit testing pipeline for MRT's uncovered core logic (`milestones`, `grouping`, `rotation`, and `PremiumGate`) to guarantee zero regressions during scaling.
+
+---
+
+## 1. The Executive Summary
+**User Story:** 
+* **As** the Lead Architect, I want comprehensive automated tests for all missing utility functions and boundary components so that I can confidently deploy rapid updates (like the React 19 refactor) without breaking the UI or corrupting the Zero-Knowledge vault during PIN rotations.
+**Competitive Gap:** Indie wellness apps frequently corrupt user data during major framework updates. MRT relies on an enterprise-grade automated safety net to ensure mathematical privacy and gamification accuracy are never compromised.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+*This section MUST be completed before any code is written.*
+* [x] **Data Sensitivity:** Safe. This project uses mock data and isolated local environments. No real PII or Firestore databases will be touched.
+* [x] **Encryption Strategy:** Tests for `rotation.ts` must successfully mock both `window.crypto.subtle` and Firestore `writeBatch` to simulate a successful decryption/re-encryption cycle, as well as a rollback failure state.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Tools & Frameworks Used:**
+* `vitest` (Test Runner)
+* `@testing-library/react` (Component rendering)
+
+**Target Files for Coverage (New Files to Create):**
+* `src/lib/__tests__/milestones.test.ts`
+* `src/lib/__tests__/grouping.test.ts`
+* `src/lib/__tests__/rotation.test.ts`
+* `src/components/__tests__/PremiumGate.test.tsx`
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: Pure Functions (Milestones & Grouping)
+* **Goal:** Verify the data parsing that drives the UI.
+* **Target 1 (`milestones.test.ts`):** 
+  * Test: `getMilestone(totalDays)` returns the correct milestone number (e.g., 30, 60, 365) and handles non-milestone days (e.g., 42 returns null).
+  * Test: `getMilestoneLabel` correctly formats days vs. years.
+* **Target 2 (`grouping.test.ts`):**
+  * Test: `groupItemsByYearAndMonth` correctly sorts an array of Timestamp/Date objects into the `NestedGroup<T>` structure (Year -> MonthIndex -> Items).
+
+### Phase 2: Boundary Components (PremiumGate)
+* **Goal:** Verify the monetization UI boundary.
+* **Target (`PremiumGate.test.tsx`):**
+  * Setup: Mock the `useAuth` context and `useNavigate`.
+  * Test: If `userTier === 'premium'`, it renders children natively.
+  * Test: If `userTier !== 'premium'` and `fallbackMode === 'button_swap'`, it renders the lock button.
+  * Test: If `fallbackMode === 'lock_overlay'`, it renders the blurred overlay container.
+
+### Phase 3: The Crypto Rotation Engine (High Complexity)
+* **Goal:** Ensure the PIN rotation chunking logic behaves safely.
+* **Target (`rotation.test.ts`):**
+  * Setup: Mock `src/lib/firebase.ts`, Firestore `query`, `getDocs`, and `writeBatch`. Mock `src/lib/crypto.ts` functions (`generateKey`, `encrypt`, `decrypt`).
+  * Test: `executePinRotation` successfully iterates through mocked journal docs, calls `decrypt` with the old PIN, and `encrypt` with the new PIN.
+  * Test: If decryption fails mid-batch, verify that the catch block throws an error to prevent partial vault corruption.
+
+---
+
+## 5. QA & Verification 🧪
+* [ ] **Run Suite:** Execute `npm run test:once`. All suites must pass.
+* [ ] **Console Hygiene:** Ensure tests suppress expected console warnings/errors (e.g., intentionally failing a decryption) using `vi.spyOn(console, 'error').mockImplementation(() => {})`.
+</file>
+
+<file path="docs/projects/41_DYNAMIC_ANCHOR.md">
+📁 Project 41: The Dynamic Anchor (Circadian Companion)
+Status: ⚪ Planned
+Primary Persona: David (Crisis), Ned (Early Recovery)
+Objective: Replace the rigid "Daily Pledge" with a slim, frictionless, 3-column Quick Action Bar that adapts its journaling prompts based on the local time of day, complete with visual nudges and customizable alerts.
+
+1. The Executive Summary
+User Story:
+
+As a user, I want a 60-second, zero-friction daily routine that adapts to my current state of mind (Morning, Afternoon, Evening, Night).
+
+As a user, I want gentle visual nudges if I forget my routine, and the flexibility to read from different fellowships on the fly without changing my global settings.
+Competitive Gap: Other apps use punitive "pledges." We use a responsive, somatic "Anchor" that meets the user where they are in their day, packaged in an ultra-compact UI with smart completion tracking.
+
+2. Security & Zero-Knowledge Audit 🛡️
+[x] Data Sensitivity: Medium. Captures current state of mind.
+
+[x] Encryption Strategy: Box 1 (The Anchor) feeds directly into src/lib/crypto.ts. The payload will be encrypted and saved to the journals collection.
+
+[x] Key Rotation: Covered automatically, as Box 1 data saves as standard journal entries.
+
+3. Schema & Architecture 🗄️
+Firestore Collections Impacted (users):
+We must update the UserProfile interface in src/lib/db.ts to track settings and the daily reading state. Add the following object to the interface:
+
+anchorSettings?: { notifyCheckIn: boolean; notifyReading: boolean; notifyIntent: boolean; lastReadingDate?: string; defaultFellowship?: string; }
+
+New Utilities Required:
+
+src/hooks/useTimeOfDay.ts: A hook that returns 'morning' | 'afternoon' | 'evening' | 'night' based on the local device clock.
+
+src/data/fellowships.ts: A static dictionary mapping recovery paths to their respective Daily Reading URLs.
+
+4. Implementation Phases 🏗️
+Phase 1: The Circadian Logic & State Tracking
+Implement useTimeOfDay().
+
+Morning: 5:00 AM - 11:59 AM
+
+Afternoon: 12:00 PM - 4:59 PM
+
+Evening: 5:00 PM - 9:59 PM
+
+Night: 10:00 PM - 4:59 AM
+
+Create the prompt template dictionary mapping each time block to specific pre-filled text.
+
+Create a helper hook useAnchorStatus() to evaluate if the 3 badges should show an exclamation point:
+
+Check-In: Query today's journals. Does an entry exist with tags: ['Anchor', currentTimeOfDay]?
+
+Reading: Does userProfile.anchorSettings.lastReadingDate equal today?
+
+Intent: Does a task exist created today with source: 'anchor_intent'?
+
+Phase 2: The Slim UI (The Quick Action Bar)
+Component: src/components/dashboard/DynamicAnchorWidget.tsx.
+
+Design Constraints: Exactly 50% the height of standard Bento boxes (h-10 or h-12). Pill-shaped buttons.
+
+Layout: A grid of 3 identical, minimalistic cards (grid-cols-3).
+
+Card 1 (State): Text wraps over two lines (e.g., "Morning \n Check-In"). Top-right relative absolute positioning for the notification badge (!).
+
+Card 2 (Wisdom): Text wraps. Includes a subtle, indiscreet dropdown chevron (▼) next to the main icon. Top-right badge (!).
+
+Card 3 (Intent): Text wraps. Top-right badge (!).
+
+Phase 3: Action Handlers & Modals
+Action 1 (Check-In): Opens a minimalist modal wrapping JournalEditor. Injects the time-specific template. Silently appends the tags ['Anchor', timeOfDay] upon save.
+
+Action 2 (Reading):
+
+Main Click: Opens an external browser tab to the default fellowship link. Updates lastReadingDate to today.
+
+Dropdown Click: Opens a small headless UI menu listing all available fellowships from src/data/fellowships.ts. Clicking one opens that specific link and updates lastReadingDate.
+
+Action 3 (Intent): Opens a tiny inline input. Submits directly to useTaskOperations.addTask with source: 'anchor_intent' and priority High due today.
+
+Phase 4: User Profile Settings
+Update src/components/profile/Profile.tsx (General Tab) to include an "Anchor Notifications" section.
+
+Allow users to toggle notifyCheckIn, notifyReading, and notifyIntent. If toggled off, the red exclamation badge on the dashboard will be hidden regardless of completion status.
+
+Phase 5: Edge Cases
+[ ] Vault Locked: If the vault is locked, clicking Card 1 must prompt for the PIN before revealing the Journal editor. Cards 2 and 3 should remain fully clickable.
+
+[ ] Mobile Sizing: Ensure the two-line text utilizes leading-tight and smaller fonts (text-[10px]) so it doesn't break the flex container on 320px screens.
+
+5. QA & Verification 🧪
+[ ] Time Travel Test: Manually change the OS system clock across boundaries (e.g., 11:59 AM to 12:01 PM). Verify the UI icon, pre-filled journal template, and the Check-In notification badge reset appropriately.
+
+[ ] Dropdown Integrity: Verify that clicking the dropdown chevron on Button 2 does not accidentally trigger the main button's external link routing.
+
+[ ] Opt-Out Test: Toggle off the notifications in the Profile settings. Verify the ! badges disappear instantly from the Dashboard.
+</file>
+
+<file path="docs/prompts/APPROVAL.md">
+# ✅ Execution Prompt (The Builder v5.0 - The Mandatory Cat Gate)
+
+**Instructions:** Execute ONLY after the Plan is approved.
+
+---
+
+**Decision:** I approve the plan. Proceed with **Phase Execution**.
+
+### 🛑 THE MANDATORY CAT GATE (CRITICAL)
+Before you generate any Python scripts to modify existing files, you MUST verify you have the exact, current code for those specific files.
+* **If you are modifying an existing file:** You MUST STOP and ask me to `cat` the file and paste it into the chat. 
+* **Do NOT** rely on bulk workspace dumps or previous memory. 
+* **Reply exactly with:** "I need the exact current contents of `[filename]` before I can safely patch it. Please paste it below."
+
+### THE "CLEAN CODE" PROTOCOL (Execute only after Cat Gate is passed)
+
+1.  **The "Safe Delivery" Rule:**
+    * You **MUST** generate a **Python script** (`scripts/update_feature.py`) to write the files. 
+    * **Full File Overwrite:** You must provide the **ENTIRE, COMPLETE file content** within your Python script, perfectly merged with the code I just pasted.
+    * **Markdown Protection:** Define `FENCE = chr(96) * 3` at the top of your Python script. Use ``` inside your raw strings where markdown code blocks go. In your write function, use `.replace('```', FENCE)` before saving.
+
+2.  **Anti-Regression Checks:**
+    * **Unused Imports:** If you remove a UI element, you MUST remove its import.
+    * **Strict Types:** Ensure all new props/functions have defined types. **ABSOLUTELY NO `any` TYPES.** Use `unknown` or generics if necessary. 
+    * **Icon Library Check:** Verify you are importing from the correct library (`@heroicons/react/24/outline` vs `solid`).
+
+3.  **Deliverable:**
+    * The Python Script (`scripts/update_feature.py`).
+    * **Manual Verification:** List `npm run build` and `npm run check` as required steps.
+
+**Go.**
+
+</file>
+
+<file path="docs/prompts/FIX.md">
+# 🚑 Error Resolution Prompt (The Surgical Engineer v3.2)
+
+**Role:** Senior Site Reliability Engineer (SRE).
+**Objective:** Restore system stability with **ZERO** collateral damage.
+
+---
+
+### 📜 THE SURGICAL PROTOCOL
+1. **Analyze:** Identify the exact line and character causing the error.
+2. **Constraint Check:** * **NO SWEEPING REFACTORING:** Do not rename variables or "clean up" logic outside the direct error scope.
+    * **NO DELETION:** Do not delete helper functions unless they are the direct source of the error.
+    * **STRICT TYPES:** If fixing an `any` type, use `unknown` or a proper interface.
+3. **Interface Alignment:** Compare the file against the provided `src/lib/db.ts` interface to ensure type parity.
+4. **The Diff Plan:** Before writing the fix, print a strict "Diff Plan" showing exactly what lines will be removed and added.
+
+### 📥 INPUT DATA
+* **Error Log:**
+```text
+[PASTE ERROR HERE]
+```
+* **File to Fix:** [PASTE COMPLETE FILE CONTENT OR RELEVANT SNIPPET]
+
+### 📤 REQUIRED OUTPUT FORMAT
+1. **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
+2. **Diff Plan:** Show exact removals and additions.
+3. **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to apply the patch. 
+    * **CRITICAL:** Use `.replace(old_block, new_block)` for targeted patching rather than overwriting the entire file. Use `FENCE` protection for markdown.
+4. **Verification:** Specific command to run (e.g., `npm run check`).
+
+</file>
+
+<file path="docs/prompts/INGESTION.md">
+# 🧠 Deep Context Ingestion Protocol (v1.0)
+
+**Trigger:** Use this prompt IMMEDIATELY after uploading a `project_codebase_*.txt` dump to start a new AI session.
+**Role:** Principal Architect & Senior Staff Engineer.
+
+---
+
+### 📥 INSTRUCTION: SYSTEM INITIALIZATION
+You have just received a massive text file containing the complete source code and documentation of **My Recovery Toolkit (MRT)**. The files are separated by `<file path="...">` tags. 
+
+You must deeply ingest this entire document. Do not skim. Build a strict, relational mental map of the following pillars:
+
+#### 1. Architecture & Data Flow
+* **The Stack:** React 19, Vite, Tailwind v4, Firebase (Firestore/Auth), Gemini 2.5 API.
+* **State Management:** Map how `AuthContext`, `EncryptionContext`, and `LayoutContext` wrap the application. Understand how `TanStack Query` hooks (e.g., `useJournalOperations`, `useTaskOperations`) manage server state and offline caching.
+* **The Database:** Memorize the exact TypeScript interfaces in `src/lib/db.ts` (`UserProfile`, `JournalEntry`, `Task`, `InsightResult`).
+
+#### 2. The Zero-Knowledge Security Boundary (CRITICAL)
+* **The Core Rule:** Plain text sensitive data (Journals, Workbooks) NEVER leaves the device.
+* **The Mechanism:** Trace how `src/lib/crypto.ts` derives keys from the user's PIN + Salt, and how `AES-GCM` encrypts data before it hits Firestore.
+* **The Gatekeeper:** Understand how `VaultGate.tsx` blocks access to encrypted routes until the PIN is entered in `sessionStorage`.
+
+#### 3. Testing & QA
+* **Vitest Framework:** Understand that UI components rely heavily on contexts. Any component test MUST mock `useAuth` and `useEncryption` to prevent cascading failures.
+
+---
+
+### 🛑 THE ANTI-HALLUCINATION OATH
+By accepting this prompt, you agree to the following absolute constraints:
+1.  **Never Guess:** You will never hallucinate or summarize the contents of a file when writing code. 
+2.  **The Mandatory Cat Gate:** If you need to modify a file that is large, complex, or potentially truncated in your memory, you will STOP and say: *"I need the exact current contents of `[filename]` to proceed safely. Please paste it below."*
+3.  **No Sweeping Rewrites:** You will not delete existing helper functions, types, or imports just because they aren't relevant to the immediate feature.
+
+---
+
+### 📤 REQUIRED OUTPUT
+To prove you have successfully ingested the codebase and are ready to build, output a **System Readiness Report** formatted exactly as follows:
+
+1.  **System Status:** "MRT Codebase v[Detect Version from package.json/build-info] Ingested and Mapped."
+2.  **Architectural Check:** Briefly describe (1 sentence each) the current state of:
+    * The Vault Gatekeeper
+    * The CBT/Smart Tools Virtual Module Routing
+    * The Task/Ledger Recurrence Engine
+     * Journal
+      * workbooks
+3.  **Constraint Acknowledgment:** "I understand the Zero-Knowledge boundary and swear by the Anti-Hallucination Oath. I am ready to execute `PLANNING.md` for new features."
+
+</file>
+
+<file path="docs/prompts/INITIALIZATION.md">
+# 🤖 AI Session Initialization Prompt (v3.2)
+
+**Role:** Principal Software Architect & Product Manager.
+
+**1. Load Technical Context:**
+* **Stack:** React 19, Vite, Tailwind v4, Firebase, Gemini 2.5, VitePress (Docs).
+* **Security:** Zero-Knowledge (AES-GCM). *Never output user data in plain text.*
+* **Reference:** Read `docs/CONTEXT_DUMP.md`.
+
+**2. Core Technical Values (The MRT Standard):**
+* **Type Strictness (CRITICAL):** NO `any` types. Use `unknown` and cast via interfaces.
+* **Linting strictness:** Prefix intentionally unused arguments with an underscore (e.g., `_index`). Delete all unused imports immediately.
+* **Date Safety:** Use JS `Date` for logic/UI and Firestore `Timestamp` for storage. Always normalize using `toDate()` helpers.
+* **Safe Delivery Protocol:** Always use Python scripts with raw strings to generate files. Never use Bash.
+
+**3. Load Project Context:**
+* **Reference:** Read `docs/ACTIVE_CYCLE.md` to see immediate priorities and hotfixes for the current week.
+* **Reference:** Read `docs/ROADMAP.md` for high-level Now/Next/Later goals.
+
+**Your Goal:**
+You are executing a specific task within an **Active Cycle**. Do not deviate from the weekly goals or compromise the Technical Core Values.
+
+**Reply:** 'MRT Platform Loaded. Technical guardrails active. Ready for Task.'
+
+</file>
+
+<file path="docs/prompts/PLANNING.md">
+# 📐 Technical Design & Planning Prompt (v4.1)
+
+**Role:** Senior Staff Engineer & Systems Architect.
+**Objective:** Provide 3 distinct implementation strategies with a formal recommendation, strictly aligned with the formal Project Spec.
+
+---
+
+### PHASE 1: THE GATEKEEPER & CONTEXT MAPPING
+1. **Project Spec Verification (CRITICAL):** Locate the specific `docs/projects/XX_FEATURE.md` file for this task. **If this file does NOT exist in your current context, you MUST STOP immediately.** Instruct the user to generate it using `00_TEMPLATE.md` before proceeding.
+2. **Ingestion:** Review the provided `src/`, `docs/`, `docs-site/`, and `functions/` directories, alongside root configuration files (e.g., `firestore.rules`, `firestore.indexes.json`, `vite.config.ts`, `firebase.json`).
+3. **Dependency Mapping:** Identify existing components, hooks, Cloud Functions, and security rules impacted. 
+4. **Context Verification (CRITICAL):** Explicitly state if you have the complete, up-to-date contents of the target files in your current memory. If you lack the full code for any file you intend to modify, you MUST ask the user to paste it before generating the Strategy Proposal.
+
+### PHASE 2: STRATEGY PROPOSAL (The Rule of 3)
+*Approach A (Minimalist), Approach B (Balanced - Recommended), Approach C (Robust).*
+* **The Persona Lens:** Explicitly state how your recommended Approach B aligns with the target Persona defined in the Project Spec (e.g., Does this UI induce stress for David? Does it offer enough data density for Walt?).
+
+### PHASE 3: TECHNICAL IMPACT ANALYSIS (Mandatory for Recommended)
+1. **Schema & Interface Audit:** Explicitly list Firestore field changes and quote the specific interface from `src/lib/db.ts` this feature will interact with.
+2. **Backend & Config Impact:** List any necessary updates to `firestore.rules`, database indexes, or Cloud Functions.
+3. **Metadata Persistence:** List every metadata field (e.g., `uid`, `source`) that must be preserved.
+4. **Date Normalization:** Firestore returns `Timestamp`. UI expects JS `Date`. Explicitly state where conversions will occur.
+5. **Zero-Knowledge Sync:** Verify that your plan strictly adheres to the *Security & Zero-Knowledge Audit* constraints defined in the Project Spec.
+
+---
+
+### 🛡️ PHASE 4: ANTI-REGRESSION PROTOCOL (CRITICAL)
+**You must explicitly address these common failures before generating code:**
+
+1. **The "Unused Variable" Trap:** Plan to delete unused variables. Prefix intentionally unused callback args with `_`.
+2. **The "Implicit Any" Trap:** Use specific interfaces, never `any`.
+3. **The "Icon Taxonomy" Trap:** Verify your imports (`@heroicons/react/24/outline` vs `solid`).
+4. **The "Safe Delivery" Protocol:** **DO NOT USE BASH.** You MUST plan to use a Python script. To protect Markdown backticks, you must use the `FENCE = chr(96) * 3` replacement strategy.
+
+---
+
+**Output Format:**
+1. The Analysis (Phases 1-3).
+2. The Anti-Regression Checklist (Phase 4).
+3. **STOP:** Wait for approval. Do NOT write the execution script yet.
+
+</file>
+
+<file path="docs/prompts/POST_SPRINT_AUDIT.md">
+# 🛡️ Master Close & Audit Sync Prompt (v4.4)
+
+**Trigger:** Run this after completing a Ticket OR at the end of a Sprint before a Pull Request.
+**Goal:** Ensure the Code, Architecture Specs, User Guides, and Project Boards are in perfect synchronization.
+
+---
+
+**Role:** Lead DevOps Engineer & Principal Technical Writer.
+
+**Input:**
+1. **Context:** A brief summary of the ticket(s) or hotfixes just completed.
+2. *(Optional)* Codebase dump if required for deep drift detection.
+
+**Your Task:** Execute the following 4 phases in order.
+
+### PHASE 1: Security & Quality Gate (The Code)
+Verify the recent work against pre-merge red flags:
+* **Zero-Knowledge Check:** Are there any unencrypted writes to secure collections?
+* **Type Safety & Linting:** Did we verify `npm run check` passes with zero unused variables or implicit `any`s?
+* **Tech Debt Sweep:** Identify any leftover `console.log` statements, disabled ESLint rules, or commented-out legacy code from the recent work.
+
+### PHASE 2: Drift Detection (The Documentation)
+1. **Schema Drift (`docs/SCHEMA_ARCHITECTURE.md`):** Does the schema perfectly match `src/lib/db.ts` payload changes?
+2. **Technical Spec Drift (`docs/specs/`):** Do the feature specs accurately reflect the newly injected logic or UX flows?
+3. **User Guide Drift (`docs-site/guide/`):** Do the VitePress guides require updates for new user-facing behavior?
+
+### PHASE 3: Project Management Sync
+Review the active work boards:
+1. **Active Cycle (`docs/ACTIVE_CYCLE.md`):** Mark completed tasks as `[x]`. Move them to "Resolved This Cycle".
+2. **Roadmap (`docs/ROADMAP.md`):** If a major feature or Epic is done, promote it to the "Recently Shipped" section.
+3. **Changelog (`docs-site/support/changelog.md`):** Draft technical release notes and bump the version number.
+
+### PHASE 4: The Universal Sync Script
+*Output Format:* Produce a single table summarizing the drift, followed by a **Python script** (`scripts/sync_cycle_state.py`) that applies any tech debt cleanup and overwrites all drifted markdown files. Use `FENCE = chr(96) * 3` protection.
+
+**Strict Changelog Safety Protocol (CRITICAL):**
+When writing the Python script to update the changelog, you MUST NEVER overwrite the entire file. You must preserve all historical data. Use the following `readlines()` and `.insert()` methodology:
+1. Open the file in `'r'` mode and call `lines = f.readlines()`.
+2. Find the index of the main `# 🚀 Changelog` (or similar `h1`) header.
+3. Use `lines.insert(index + 1, new_version_string)` to prepend the new entry safely.
+4. Open the file in `'w'` mode and `f.writelines(lines)`.
+
+Finally, output a ready-to-paste `git commit` message summarizing the release.
+</file>
+
+<file path="docs/prompts/READ_STATE.md">
+# 🧠 Read State & Context Alignment Prompt (v1.0)
+
+**Trigger:** Run this BEFORE starting `PLANNING.md` for a new feature or complex bug.
+**Goal:** Verify the AI has a perfectly aligned, hallucination-free mental model of the target files.
+
+---
+
+**Role:** Principal Architect.
+
+**Input:**
+1. **Target Area:** [e.g., "The Firebase Auth Pipeline", or "The FeedbackViewer Component"]
+
+**Your Task:**
+Do NOT generate any code or plans yet. Instead, provide a "Mental Model Dump" to prove you understand the current state of the codebase.
+
+1. **Schema Check:** Explicitly type out the current TypeScript interfaces associated with this feature (e.g., `UserProfile`, `FeedbackReport`).
+2. **Data Flow Check:** Explain step-by-step how data moves from the user input, through local state/React Query, and into Firestore for this specific area.
+3. **Dependency Check:** List the exact names of the hooks and context providers (e.g., `useAuth`, `useEncryption`) this feature relies on.
+4. **Missing Information:** If you are unsure about ANY file's current implementation, explicitly request that I paste the complete file contents before we proceed to planning.
+
+**Output:**
+Provide the Mental Model Dump, ending with either a confirmation of readiness or a request for specific file contents.
+
+</file>
+
+<file path="docs/prompts/TESTING.md">
+# 🧪 QA & Verification Prompt (v3.2)
+
+**Role:** Senior SDET & Technical Writer.
+**Task:** Verify the code delivered and enforce the Documentation-Driven QA loop.
+
+**Context:**
+* Project: [INSERT PROJECT ID]
+* Phase: [INSERT PHASE ID]
+
+## Part 1: Automated Verification (The Engine)
+1. **Unit Tests:** Generate Vitest specs for core logic.
+    * **React Query Async Rule (CRITICAL):** Wrap optimistic UI assertions in `await waitFor(() => { ... })`.
+    * **Strict Types:** Use `as unknown as MyType`.
+2. **Regression:** Does this break any existing data boundaries (`crypto.ts`)?
+3. **E2E Golden Paths (Playwright):** If this feature alters a core user flow (Authentication, Vault Unlocking, Journaling), generate a headless Playwright test script to verify the DOM elements and Firebase Emulator interactions.
+
+## Part 2: Manual Verification (The UX)
+Provide a strict "Smoke Test" checklist using the Persona Lens:
+* **The Subway Test:** How does this feature behave if Wi-Fi drops mid-action?
+* **The Gremlin Test:** What happens if the user inputs extreme edge-case data?
+* **The Crisis Test:** Is the UI frictionless enough for "David" (high-anxiety user)?
+
+## Part 3: Documentation Sync
+Generate the VitePress Markdown file for the User Guide. Use the Python `FENCE` variable trick to output the markdown safely.
+
+</file>
+
+<file path="docs/prompts/TICKET_CLOSE.md">
+# 🛡️ Ticket Closure & Sync Prompt (v3.2)
+
+**Trigger:** Run this after completing a standard ticket or bug fix (combines Docs Audit and PM updates).
+**Goal:** Ensure the Map (Docs) perfectly matches the Territory (Code) before moving on.
+
+---
+
+**Role:** Senior Technical Writer & Systems Architect.
+
+**Input:**
+1. **Context:** We just finished [INSERT TICKET GOAL].
+
+**Your Task:**
+Perform a strict "Drift Detection" analysis and update project boards.
+
+### Phase 1: The 4-Point Drift Checklist
+1. **Technical Spec Drift (`docs/specs/`):** Do the specs reflect the new components/logic?
+2. **User Guide Drift (`docs-site/`):** Do VitePress guides reflect current UI flows?
+3. **Schema Drift (`docs/SCHEMA_ARCHITECTURE.md`):** Does the schema perfectly match `src/lib/db.ts`?
+4. **Tech Debt Sweep:** Did we leave any `console.log` statements, `eslint-disable`, or commented-out legacy code?
+
+### Phase 2: Project Management Update
+1. Update `docs/ACTIVE_CYCLE.md` (Mark task as `[x]`).
+2. Update `docs-site/support/changelog.md` with technical details.
+3. If an Epic is done, move it to the Shipped section in `docs/ROADMAP.md`.
+
+### Phase 3: The Synchronization Script
+Generate a **Python script** (`scripts/close_ticket.py`) to automatically update the markdown files and apply any tech debt removals.
+
+**Strict Scripting Constraints:**
+* Use `.replace()` for targeted text replacement in large files.
+* Use `FENCE = chr(96) * 3` protection for markdown code blocks.
+
+</file>
+
+<file path="docs/specs/01_JOURNAL.md">
+# 📖 Feature Specification: The Journal (The Vault)
+
+**Status:** Live (v2.3)
+**Security Level:** Zero-Knowledge (Client-Side AES-GCM)
+**Primary Persona:** David (The Crisis User), Walt (The Zen Master), Ned (Pink Cloud)
+
+---
+
+## 1. Overview
+The Journal is the central "Input" mechanism of My Recovery Toolkit. It allows users to document their daily inventory, process emotions, and receive AI-driven recovery coaching. Crucially, it is a **secure, encrypted vault**; plain text data is never stored on the server.
+
+## 2. The Three Modes (Tabs)
+The Journal functionality is split into three distinct views via `JournalTabs.tsx`:
+
+### A. Write (The Editor - "Sticky Studio")
+* **Layout:** A flexible column layout with a persistent **Command Toolbar** at the bottom.
+* **Input Methods:** Text and Voice-to-Vault (audio transcribed and analyzed via Gemini 2.5 Flash).
+* **Templates:** Sourced from `src/data/journalTemplates.ts` or user-defined custom templates (Premium feature).
+
+### B. History (The Timeline)
+* **Structure:** A virtualized list (`Virtuoso`) optimized for long-term recovery tracking, grouped by Year and Month.
+* **The Memory Engine (Search):** Client-side search bar filters entries *after* they are decrypted in memory.
+
+### C. Insights (The Dashboard)
+* **Visualizations:** Emotional Velocity (Area Chart), Weekly Rhythm, and an Interactive Word Cloud with a local storage blocklist.
+
+---
+
+## 3. Advanced AI Features
+
+### 🧠 The Analysis Wizard (Cost Shield Enabled)
+* **Component:** `JournalAnalysisWizard.tsx`
+* **Concept:** An "on-demand" recovery coach that reads decrypted history to find patterns.
+* **Usage Limits (Rate Limiting):** Controlled via `useRateLimits.ts` reading `UserProfile.usage_limits`.
+    * **Free Tier:** Limited to 1 Weekly/Monthly Analysis per 7/30 days, and 1 Deep Dive per 30 days. Requires a minimum entry count (7 for weekly, 30 for monthly/deep dive).
+    * **Premium Tier:** Unlimited access (bypasses the timestamp checks).
+* **Output:** Generates a `ComparativeAnalysisResult` or `DeepPatternResult` which is saved to the `insights` collection.
+
+### 🎙️ Voice-to-Vault
+* **Component:** `AudioRecorder.tsx`
+* **Flow:** Records audio -> Converts to Base64 -> Sent to Gemini 2.5 Flash -> Returns Transcription + Mood Score + Smart Tags.
+
+</file>
+
+<file path="docs/specs/02_SERVICE.md">
+# 📐 Feature Spec: Service Module (The Rolodex)
+
+**Project:** PROJ-02
+**Persona:** Lisa (The Service Superstar)
+**Goal:** A secure way to manage sponsees and service commitments without data leaks.
+
+## 1. The "Why"
+* **As:** A sponsor (Lisa).
+* **I want to:** Keep notes on my sponsees (Step work progress, contact info, important dates).
+* **So that:** I can be an effective guide without carrying a physical notebook that could be lost/read.
+
+## 2. User Experience
+* **Entry Point:** Sidebar -> "Service" (New Tab).
+* **Views:**
+    * **Active Sponsees:** List of people currently being sponsored.
+    * **Alumni:** Past sponsees.
+    * **Commitments:** Service positions (e.g., "Coffee Maker", "Greeter") with times.
+* **Detail View:** Clicking a sponsee opens a secure card with:
+    * Contact buttons (Call/Text - Unencrypted).
+    * "Step Status" (Dropdown - Unencrypted).
+    * **Private Notes:** A secure text area (Encrypted).
+
+## 3. Technical Architecture
+
+### Schema: `service` collection
+| Field | Type | Encryption | Purpose |
+| :--- | :--- | :--- | :--- |
+| `uid` | String | No | Owner (Lisa) |
+| `type` | String | No | 'sponsee' \| 'commitment' |
+| `name` | String | **YES** | Sponsee Name (Protect Anonymity) |
+| `contact` | String | **YES** | Phone/Email |
+| `notes` | String | **YES** | Private thoughts/progress |
+| `status` | String | No | 'active' \| 'alumni' |
+| `meetingTime` | Timestamp | No | For reminders |
+
+### Security Model (The "Rolodex" Rule)
+* **Key Usage:** Data is encrypted using **Lisa's PIN**.
+* **Implication:** If Lisa forgets her PIN, she loses her sponsee notes.
+* **Privacy:** Sponsees do **not** have access to this data. It is a one-way record owned by the sponsor.
+
+## 4. Edge Cases
+* **Import/Export:** Sponsee data must be included in the JSON backup (encrypted).
+* **Deletion:** Deleting a sponsee must perform a "soft delete" (move to trash) or confirm heavily, as notes are valuable.
+
+## 5. Verification
+* [ ] Verify Sponsee Name is stored as ciphertext in Firestore console.
+* [ ] Verify Notes are unreadable if Vault is locked.
+
+</file>
+
+<file path="docs/specs/03_ADMIN.md">
+# 📐 Feature Spec: Admin Dashboard
+
+**Status:** Live (v1.2)
+**Access:** Restricted (Custom Claims `admin: true`)
+
+## 1. Overview
+The internal tool for monitoring system health, managing users, and debugging AI usage.
+
+## 2. Sub-Features
+
+### A. Analytics (Gemini Metrics)
+* **Source:** `ai_logs` collection.
+* **Visuals:**
+    * Pie Chart: Model distribution (Flash vs Pro).
+    * Bar Chart: Token usage stream.
+* **Purpose:** Cost monitoring.
+
+### B. User Directory
+* **Source:** `users` collection.
+* **Capabilities:**
+    * View all users (Paginated).
+    * **Promote/Demote:** Toggle admin status via Custom Claims.
+
+### C. System Health
+* **Source:** `client_errors` collection.
+* **AI Analysis:** Uses Gemini to aggregate raw error logs into a "System Health Report" with suggested fixes.
+
+### D. Maintenance Tools
+* **Deduplicator:** Scans for duplicate journal entries (common import bug) and cleans them.
+* **Schema Migration:** Updates legacy documents to match current type definitions.
+
+</file>
+
+<file path="docs/specs/04_WORKBOOKS.md">
+# 📐 Feature Spec: Wisdom (Workbooks & Library)
+
+**Status:** Live (v2.1)
+**Storage:** `users/{uid}/workbook_answers/{workbookId_questionId}`
+
+## 1. Data Structure
+To prevent state conflicts, each answer is stored as an individual document.
+* **ID Format:** `[workbookId]_[questionId]`
+* **Fields:** `answer` (Encrypted), `isEncrypted` (Bool), `updatedAt` (Timestamp).
+
+## 2. The Library Hub (`Workbooks.tsx`)
+The main entry point is structured via a dual-tab navigation system:
+* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks.
+    * **Core Asset:** Includes the fully populated "Women for Recovery" workbook. (This asset is active in the codebase and should be heavily utilized in Go-To-Market campaigns targeting the "Lisa" persona).
+* **Fellowships Tab:** A dedicated directory featuring outbound links to official websites and core literature for major recovery modalities (AA, NA, SMART, Recovery Dharma, WFS).
+
+## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)
+* **Zen Mode:** A full-screen, distraction-free reading layer using `@tailwindcss/typography`.
+* **Mobile Keyboard Protection:** The layout uses strict flexbox constraints (`flex-1 min-h-0` on the parent, `shrink-0` on the question text, and `flex-1 resize-none` on the textarea). This ensures that when virtual keyboards appear on iOS/Android, the input area shrinks dynamically rather than pushing the question context off the screen.
+* **Data Safety:** Answers are auto-saved to Firestore via `useAutoSave` every 2 seconds. Data is encrypted client-side *before* transmission.
+
+## 4. AI Integration
+* **Coach:** On-demand, individual question feedback via `getGeminiCoaching` (powered by ultra-fast `flash-lite`).
+* **Compass:** Aggregate section analysis via `analyzeFullWorkbook`. Suggested actions added to Habits are tagged with `source: 'ai'` to route them to the Action Plan tab.
+
+</file>
+
+<file path="docs/specs/05_TASKS.md">
+# 📐 Feature Spec: Tasks & Habits (The Ledger)
+
+**Status:** Live (v2.2)
+**Context:** High-density professional task management with AI action routing.
+
+## 1. Overview
+A streamlined interface for managing one-time tasks and recurring habits. Rebranded from "Quests" to "Tasks" to align with a professional recovery ledger aesthetic.
+
+## 2. Smart Tabs (Routing Logic)
+The system segregates tasks into four distinct lanes:
+1. **This Week:** Active tasks where `dueDate` is less than 7 days from today AND `source` == 'manual'.
+2. **Later:** Tasks where `dueDate` is exactly 7 days or more in the future AND `source` == 'manual'.
+3. **Action Plan:** Tasks where `source` == 'ai'. This lane is reserved for growth items generated by the Compass (Workbooks) or Analysis Wizard (Journals).
+    * **UX Indicator:** Tasks generated by the AI are tagged with a purple Sparkles icon and automatically receive a `+7 Days` due date badge in the UI to clarify their automated scheduling.
+4. **Log (History):** All tasks where `status` == 'completed' or where a recurring task was completed *today*. 
+
+## 3. Data Structure
+**Collection:** `tasks`
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `source` | string | 'manual' \| 'ai' (Determines tab routing) |
+| `category` | string | 'Recovery', 'Health', 'Work', 'Life' |
+| `priority` | string | 'High', 'Medium', 'Low' |
+| `currentStreak`| number | Cumulative consecutive completions |
+| `dueDate` | Timestamp | Next scheduled deadline |
+| `recurrence` | Map | The full `RecurrenceConfig` object governing repetition. |
+
+## 4. Technical Logic
+* **Optimistic UI:** Toggle actions use React Query `onMutate` for zero-latency feedback.
+* **Smart Reset:** Recurring tasks missed yesterday are automatically moved to "Today" with a streak penalty, preventing "schedule debt."
+* **Future Task Safety:** If a user attempts to complete a task whose `dueDate` is strictly in the future, the optimistic UI update is intercepted by a Headless UI modal requiring explicit confirmation.
+
+</file>
+
+<file path="docs/specs/06_VITALITY.md">
+# 📐 Feature Spec: Vitality (Somatic Health)
+
+**Status:** Live (v2.0)
+**Architecture:** Virtual Module (Abstracted Journal Interface)
+**Primary Code:** `src/pages/Vitality.tsx`
+
+## 1. Overview
+The Vitality module is the somatic regulation engine of MRT. It allows users to track physical health (Movement, Fuel) and nervous system regulation (Breathwork). Unlike other modules, it does not store data in a separate collection; instead, it injects structured, tagged entries into the user's `journals` stream.
+
+## 2. Technical Architecture
+
+### A. The "Virtual" Data Model
+Vitality entries are standard Firestore documents in the `journals` collection with specific **Tag Signatures**.
+
+| Category | Primary Tags | Metadata (Stored in Content Body) |
+| :--- | :--- | :--- |
+| **Movement** | `#Vitality`, `#Movement` | Activity Name, Duration (mins), Intensity (Low/Mod/High) |
+| **Nutrition** | `#Vitality`, `#Nutrition` | Meal Type, Hunger Type (Physical/Emotional/Boredom), Hydration Count |
+| **Breathwork** | `#Vitality`, `#Mindfulness`, `#Somatic`, `#Regulation` | Duration, Technique (e.g., "Box Breathing (4-4-4-4)") |
+
+* **Smart Mood Integration:** To prevent vitality logs from skewing the user's "Average Mood" charts, the module uses React Query to silently fetch the user's 7-day average mood (`getSmartMood`) and injects it into the journal payload, rather than defaulting to `5`.
+
+### B. The Bio-Rhythm Score
+A daily 0-100% score that resets at midnight (Local Device Time). It calculates balance across three pillars:
+* `+33.3%` if a log exists with tag `#Movement` created *today*.
+* `+33.3%` if a log exists with tag `#Nutrition` created *today*.
+* `+33.3%` if a log exists with tag `#Mindfulness` created *today*.
+
+## 3. Sub-Features
+
+### 🏃 Movement & 🍎 Fuel Loggers
+Standard form inputs that compile into markdown strings and save as Journal entries. Includes a rapid-tap Hydration counter.
+
+### 🌬️ Breathwork Engine (Vitality 2.0)
+A clinical-grade somatic anchor combining visual, haptic, and hardware APIs.
+* **State Management:** Bypasses React's standard `setState` rendering batching for the core timer. Uses mutable `useRef` hooks (`timeLeftRef`, `currentPhaseIndex`) to ensure the interval perfectly matches real-world seconds without drifting.
+* **Visuals (Organic Halo):** Uses a multi-layered CSS `border-radius` morphing animation linked to dynamic `transitionDuration` properties to emulate the expansion of human lungs.
+* **Haptic Engine:** Triggers `navigator.vibrate()` on phase boundaries. 
+    * `Inhale/Exhale`: Single distinct pulse (`[40]`).
+    * `Hold`: Gentle double-tap (`[20, 50, 20]`).
+* **Hardware Safeguard:** Utilizes the `useWakeLock` hook (`navigator.wakeLock.request('screen')`) to strictly prevent the device screen from sleeping or dimming while the engine is running.
+* **Customization:** Users can select between `4-7-8`, `4-4-4-4` (Box Breathing), or define a custom array. Custom arrays are persisted in `localStorage`.
+
+</file>
+
+<file path="docs/specs/07_GAMIFICATION.md">
+# 📐 Feature Spec: Gamification Engine (Updated)
+
+**Status:** Live (v1.8)
+**Asset Engine:** 12-Medallion Circular Pipeline active.
+
+## 1. XP Economy
+| Action | XP Value |
+| :--- | :--- |
+| Journal Entry | 25 XP (+10 for length) |
+| Task Completion | 10 (Low) / 25 (Med) / 50 (High) |
+| Clean Milestone | 500 XP (per 30 days) + Medallion Badge |
+
+## 2. Milestone Assets
+The following medallions are dynamically rendered in `SobrietyHero.tsx`:
+- 30, 60, 90 Days
+- 4 through 11 Months
+- 1 Year
+
+</file>
+
+<file path="docs/specs/08_ADMIN.md">
+# 📐 Feature Spec: Admin Dashboard
+
+**Status:** Live (v1.7)
+**Access:** Strict RBAC (Role-Based Access Control)
+**Security Level:** High
+
+## 1. Security Model (Split Authority)
+The system uses a "Defense in Depth" approach:
+1.  **UI Access:** Controlled by the `role` field on the `users/{uid}` document.
+2.  **Database Access:** Controlled by `request.auth.token.admin` (Firebase Custom Claims).
+* **Constraint:** Updating a user's role in the UI (`UserDirectory`) grants them *UI Access* immediately, but *Database Access* requires running the server-side script `scripts/set_admin_role.cjs`.
+
+## 2. Sub-Modules
+
+### A. Telemetry (Health)
+* **Source:** `client_errors` collection.
+* **Feature:** `ErrorLogViewer` visualizes crash reports and uses Gemini to suggest fixes.
+
+### B. Friends Directory (formerly User Directory)
+* **Source:** `users` collection.
+* **Feature:** Searchable list of all friends on the platform. Allows toggling the `role` field. (Note: The UI displays 'Friends' to align with fellowship traditions, while the database retains the 'users' collection structure).
+
+### C. Feedback Inbox (New)
+* **Source:** `feedback` collection.
+* **Feature:** `FeedbackViewer` allows admins to read, filter, and resolve user reports.
+* **Context:** Displays `buildHash` and `route` to help reproduce bugs.
+
+### D. Maintenance Tools
+* **Deduplicator:** Scans `journals` for duplicate content/timestamps and batch-deletes.
+* **Schema Migration:** Updates legacy documents to match current type definitions.
+
+## 3. Verification
+* [ ] **RBAC:** Can a non-admin user access `/admin`? (Should redirect).
+* [ ] **Telemetry:** Trigger a crash. Does it appear in the Health tab?
+* [ ] **Inbox:** Submit feedback as a user. Does it appear in the Admin Inbox?
+
+</file>
+
+<file path="docs/specs/09_PROFILE.md">
+# 📐 Feature Spec: Profile & Data Sovereignty
+
+**Status:** Live (v2.1)
+**Context:** User identity, settings, security, and data portability.
+
+## 1. UI Architecture (The Tabbed View)
+The Profile is split into three distinct horizontal tabs to manage complexity and isolate sensitive flows:
+* **General:** Display Name, Sobriety Date, Sponsor Info. Also includes the prominent link to the external User Guide. *(Note: During initial onboarding, the app forces the user into this tab and hides the navigation until saved).*
+* **Security:** PIN Management and Vault Rotation flows.
+* **Data:** Google Drive Auto-Sync status, JSON Export, PDF Export, Legacy Data Import, and Account Deletion.
+
+## 2. Support Network
+* **Fields:** `sponsorName`, `sponsorPhone`.
+* **Storage:** Stored unencrypted in `users/{uid}`.
+* **Usage:** Populates the "SOS Modal" for one-tap calling or WhatsApp messaging.
+
+## 3. Cloud Auto-Sync (Google Drive)
+**Philosophy:** Automated resilience without vendor lock-in.
+* **Authentication:** Uses Firebase GoogleAuthProvider with the restricted `https://www.googleapis.com/auth/drive.file` scope. This ensures MRT can only see and modify the specific backup file it creates.
+* **The Background Engine:** * Hosted in `AppShell.tsx`.
+    * Checks if `isVaultUnlocked`, `isOnline`, and `driveAccessToken` are active.
+    * Compares `userProfile.lastExportAt` to the current date. If > 7 days, it silently triggers a background export 10 seconds after the vault is unlocked.
+    * It searches Google Drive for `mrt_backup.json` and issues a `PATCH` request to overwrite it, or a `POST` request to create it.
+* **Security Note:** The synced JSON file contains **decrypted (plain text)** data. This ensures the user retains access to their history even if they permanently forget their MRT PIN.
+
+## 4. The Manual Export Engine
+**Philosophy:** The user owns their data.
+* **JSON Export:**
+    * Fetches ALL collections (`journals`, `tasks`, `workbooks`).
+    * **Decryption:** Decrypts all content client-side before generation.
+    * **Output:** Plain text JSON file. *User is warned in the UI to store this securely.*
+* **PDF Export:**
+    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist, utilizing `jsPDF` and `jspdf-autotable`.
+
+## 5. The Import Engine
+* **Logic:** Parses JSON backups (both legacy formats and new full-schema formats).
+* **Legacy Support:** Maps older data structures to the current schema automatically.
+* **Safety:** Flags imported entries as `isEncrypted: false`. The next time the user edits and saves them, they are encrypted with the active vault key.
+
+## 6. The Annihilation Engine (Account Deletion)
+**Philosophy:** The "Right to be Forgotten."
+* **Location:** `src/lib/deletion.ts` -> `executeTotalAccountAnnihilation`
+* **Firebase Constraint:** Firebase Auth throws `auth/requires-recent-login` for destructive actions if the session is stale.
+* **The Flow:**
+    1. User clicks "Request Account Deletion" in the Danger Zone.
+    2. A modal intercepts the request and forces **Re-Authentication** (Email/Password or Google OAuth) to refresh the token.
+    3. The client-side script recursively queries and chunks `batch.delete()` operations across `journals`, `tasks`, `insights`, `ai_logs`, `feedback`, and all user subcollections.
+    4. Once Firestore is completely scrubbed, `deleteUser()` is called to destroy the Auth record.
+
+## 7. Verification
+* [x] **Onboarding Lock:** Does a new user get forced to the General tab with the other tabs hidden?
+* [x] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
+* [x] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
+* [x] **Deletion:** Ensure deleting an account does not leave orphaned records in the `feedback` or `ai_logs` collections.
+
+</file>
+
+<file path="docs/specs/10_INSIGHTS.md">
+# 📐 Feature Spec: Insights Log
+
+**Status:** Live (v2.2)
+**Context:** A timeline of AI-generated coaching and pattern analysis.
+
+## 1. Data Structure (Expanded Schema)
+**Collection:** `insights`
+The log handles polymorphic data types with rich, AI-extracted arrays depending on the source:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `type` | String | 'journal' \| 'workbook' |
+| `summary` | String | AI narrative |
+| `relapse_risk_level` | String | 'Low' \| 'Moderate' \| 'High' \| 'Critical' (Journal Deep Dives) |
+| `trajectory` | String | 'Improving' \| 'Declining' etc. (Journal Reviews) |
+| `pillars` | Map | Contains `understanding`, `emotional_resonance`, and `blind_spots` (Workbook reviews). |
+| `hidden_correlations` | Array | Hidden links identified by Deep Pattern AI |
+| `key_themes` | Array | Recurring topics from Comparative analysis |
+| `suggested_actions` | Array | List of 3 recommended habits |
+
+## 2. UI Architecture & Navigation
+* **Collapsible Timeline:** To prevent cognitive overload, insights are passed through `groupItemsByYearAndMonth` and rendered as a grouped timeline. 
+* **Accordion Rows:** Each insight is wrapped in a `@headlessui/react` `<Disclosure>`. The collapsed header displays the Date, Scope Context, and Risk/Trajectory badges. 
+* **Bento Grid Panels:** Expanding the accordion reveals the high-density "Bento Grid" (Strengths, Risks, Key Themes, Hidden Links) using vibrant background colors (`bg-purple-50`, `bg-rose-50`) aligned with the "Vibrant Momentum" design system.
+
+## 3. Action Integration
+* "Add to Quest" buttons allow users to convert AI advice into tracked `Tasks` with a 7-day due date and the `ai` source tag. The UI explicitly disables these buttons upon click to prevent accidental duplicate task creation.
+
+</file>
+
+<file path="docs/specs/11_DASHBOARD.md">
+# 📐 Feature Spec: Dashboard (The Hub)
+
+**Status:** Live (v2.6)
+**Architecture:** Client-Side Aggregator with Bounded Queries
+
+## 1. Overview
+The Dashboard aggregates data from all modules to generate a real-time "Health Snapshot" using 30-day bounded queries to prevent UI thread locking. Gamification relies on unencrypted metadata to completely bypass AES-GCM decryption on initial render.
+
+</file>
+
+<file path="docs/specs/12_USER_GUIDE.md">
+# 📐 Feature Spec: User Guide & Onboarding
+
+**Status:** Live (v4.0)
+**Context:** In-app education and PWA installation support.
+**Primary Code:** `src/pages/UserGuide.tsx`, `src/components/PWAInstallBanner.tsx`
+
+## 1. The Interactive Handbook
+A native, scrollable guide available via the Profile page.
+* **Visuals:** Uses architectural placeholders (CSS-styled containers) to represent Pixel 9 Pro XL screenshots, ensuring the guide evolves with the design system without needing constant image updates.
+* **Content:** Covers the "4 Pillars" of the app:
+    1.  **The Horizon:** Dashboard & Clean Time.
+    2.  **The Vault:** Security & Encryption.
+    3.  **The Deep Dive:** Journaling & AI.
+    4.  **The Pulse:** Vitality & Breathwork.
+
+## 2. PWA Installation Engine
+* **Component:** `PWAInstallBanner.tsx`.
+* **Logic:**
+    * **Android/Desktop:** Listens for the `beforeinstallprompt` event and triggers the native install modal.
+    * **iOS:** Detects User Agent (`iPhone|iPad`) + `!navigator.standalone`. Renders custom instructions ("Tap Share -> Add to Home Screen").
+* **Persistence:** Uses `localStorage` to dismiss the banner permanently if the user opts out.
+
+## 3. Verification
+* [ ] **iOS Detection:** Open in Safari Dev Tools (User Agent iPhone). Does the custom iOS instruction appear?
+* [ ] **Navigation:** Does the "Back" button in the Guide return to Profile?
+
+</file>
+
+<file path="docs/specs/13_INFRASTRUCTURE.md">
+# 🏗️ Feature Spec: Infrastructure & DevOps
+
+**Status:** Live (v4.0)
+**Stack:** React 19, Vite, Firebase, GitHub Actions, Codespaces.
+**Context:** The invisible machinery that powers development, security, and deployment.
+
+## 1. Development Environment (Codespaces)
+We utilize a containerized development environment to ensure zero "works on my machine" issues.
+
+* **Base Image:** `mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye`
+* **Configuration:** `.devcontainer/devcontainer.json`
+* **Lifecycle:**
+    1. **Post-Create:** Runs `setup.sh` to install global `firebase-tools` and local `npm` dependencies.
+    2. **Secret Injection:** Codespaces secrets are read and written to a local `.env` file automatically on boot.
+* **Port Forwarding:**
+    * `5175`: Vite Dev Server (App) - *Strictly bound to support Dev Tunnels.*
+    * `9099`: Firebase Auth Emulator (If active).
+    * `8080`: Firestore Emulator (If active).
+
+## 2. Build Pipeline (Vite)
+**Config:** `vite.config.ts`
+We use advanced build optimizations to ensure performance on low-end mobile devices.
+
+### A. Chunk Splitting (ManualChunks)
+To prevent a massive `vendor.js` file, we explicitly split dependencies. This drastically reduces the initial load time:
+* **`firebase`**: Isolated to its own chunk (heavy SDK).
+* **`gemini`**: AI libraries isolated (`@google/generative-ai`).
+* **`recharts`**: Data visualization libraries isolated.
+* **`vendor`**: All other `node_modules`.
+
+### B. PWA Service Worker (Workbox)
+* **Strategy:** `autoUpdate` (Updates apply immediately upon download).
+* **Caching Rules:**
+    * **Google Fonts:** `CacheFirst` (1-year expiration).
+    * **Firebase Storage:** `StaleWhileRevalidate` (Images/Personas).
+    * **Exclusions:** Firebase Auth endpoints (`/__/auth`) are explicitly denied caching to prevent infinite login loop bugs.
+
+## 3. CI/CD & Secrets (The "Nuclear" Protocol)
+**Pipeline:** GitHub Actions (`.github/workflows/deploy.yaml`)
+
+We use a "Nuclear" strategy for environment variables to support Vite's build process securely.
+1. **Injection:** GitHub Actions does *not* pass secrets as shell variables.
+2. **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
+3. **Destruction:** The runner is ephemeral; the file is destroyed post-build.
+
+## 4. Database Infrastructure
+**Platform:** Cloud Firestore (NoSQL)
+
+### A. Security Rules (`firestore.rules`)
+* **RBAC:** Admin access is verified via Custom Claims (`request.auth.token.admin == true`).
+* **Tenancy:** Standard users can only read/write documents where `resource.data.uid == request.auth.uid`.
+
+### B. Indexing (`firestore.indexes.json`)
+Composite indexes are required for complex queries:
+* **Journals:** `uid` (Asc) + `createdAt` (Desc) [For Timeline].
+* **Insights:** `uid` (Asc) + `createdAt` (Desc) [For Log].
+
+## 5. Automation Systems
+
+### A. Automated Versioning
+* **Script:** `scripts/generate-build-info.js`
+* **Trigger:** Pre-build.
+* **Logic:** Calculates an MD5 hash of the `src/` directory and injects it into `src/build-info.json`.
+* **UI:** Displayed in `VersionBadge.tsx`.
+
+### B. Persona Seeding
+* **Script:** `scripts/seed-personas.js`
+* **Purpose:** Resets the demo environment with 4 distinct user archetypes.
+* **Crypto:** Generates valid PBKDF2 salts and keys so encrypted features work in demo mode.
+
+## 6. Verification Checklist
+* [ ] **Container:** Does `npm run dev` start without manual config on port 5175?
+* [ ] **PWA:** Does the Service Worker cache Google Fonts? (Check Network Tab).
+* [ ] **Build:** Run `npm run build`. Does `dist/assets` contain split chunks (e.g., `firebase-xxxx.js`)?
+* [ ] **Secrets:** Deploy to DEV. Does `import.meta.env.VITE_GEMINI_API_KEY` exist in the console?
+
+</file>
+
+<file path="docs/specs/14_FEEDBACK.md">
+# 📐 Feature Spec: Feedback & Bug Reporting
+
+**Status:** Live (v1.7)
+**Context:** QA & User Testing support.
+
+## 1. Overview
+A native module allowing testers to report issues or suggest features without leaving the app. It prioritizes capturing technical context over user narrative to speed up debugging.
+
+## 2. Technical Architecture
+* **Component:** `FeedbackModal.tsx`
+* **Trigger:** Accessible via the Sidebar (AppShell).
+* **Storage:** Writes to the `feedback` root collection in Firestore.
+
+### Metadata Capture
+The system automatically appends the following to every report:
+* `buildHash`: Cross-referenced against `build-info.json` to identify stale versions.
+* `environment`: Distinguishes between DEV, UAT, and PROD.
+* `vaultUnlocked`: Helps identify if encryption logic was active during a crash.
+* `route`: Identifies the specific page causing the issue.
+* `userAgent`: Identifies device/browser specific bugs.
+
+## 3. Security
+* **Access:** Any authenticated user can create. Read access restricted to Admins.
+* **Privacy:** **Unencrypted collection.** * *Warning:* The UI explicitly warns users NOT to include sensitive recovery data (PII) in the feedback box.
+    * *Rationale:* Admins need to read bug reports without needing the user's private PIN key.
+
+## 4. Verification
+* [ ] **Network Logic:** Submit while offline. Verify it appears in Firestore once reconnected.
+* [ ] **Metadata:** Verify the `buildHash` in Firestore matches the one displayed in `VersionBadge`.
+
+</file>
+
+<file path="docs/specs/15_AI_INTEGRATION.md">
+# 🧠 Feature Spec: AI Integration & Intelligence Layer
+
+**Status:** Live (v4.5)
+**Stack:** Google Gemini 3.1 & 2.5
+**Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
+
+## 1. The Privacy Boundary
+**Rule:** AI analysis is strictly "Opt-In" and "Stateless".
+* Data is decrypted **in-browser**.
+* The plain text is sent to the Gemini API via a secure HTTPS request.
+* Gemini processes the data, returns the payload, and discards the prompt. User data is **never** stored by Google to train public models.
+
+## 2. The Cascade & Model Optimization Engine
+**Location:** `src/lib/gemini.ts`
+To balance speed, cost, and advanced reasoning, MRT maps specific tasks to optimal models:
+
+* **The Heavy Lifter (gemini-3.1-pro-preview):** Used exclusively for high-context, deep-reasoning tasks. 
+    * Functions: `generateDeepPatternAnalysis` (90-day scans), `generateComparativeAnalysis`, `analyzeFullWorkbook`, and `analyzeSystemHealth`.
+* **The Speed Demon (gemini-2.5-flash-lite):** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
+    * Functions: `getGeminiCoaching` (2-sentence feedback) and `generateJournalAnalysis` (Sentiment/Tag extraction).
+* **The Multimodal Anchor (gemini-2.5-flash):** Hardcoded for `generateAudioAnalysis` (Voice-to-Vault) to ensure stable transcription.
+
+* **The Fallback Cascade:** If a specific model is not provided or fails due to rate limits, the system falls back through: `['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']`.
+
+## 3. Strict JSON Enforcement
+* **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
+* **Sanitization:** All responses pass through a `cleanJSON()` helper function to strip rogue markdown code blocks.
+
+## 4. Chunked Processing (Deep Pattern Analysis)
+* **Problem:** Decrypting 90 days of journal entries simultaneously freezes the React UI thread on mobile devices.
+* **Solution:** The app uses `processInChunks` to decrypt entries in batches of 5, yielding to the main thread in between, driving a smooth UI progress bar.
+
+</file>
+
+<file path="docs/specs/16_CLOUD_SYNC.md">
+# ☁️ Feature Spec: Network Resilience & Cloud Sync
+
+**Status:** Live (v1.5)
+**Context:** How MRT handles offline usage, state detection, and automated data backups.
+
+## 1. Offline-First Architecture (Firestore)
+* MRT relies on Firebase Firestore's built-in local persistence mechanism.
+* If a user is offline (e.g., in a basement meeting room), they can still create Tasks, save Journal entries, and check off Workbook questions.
+* The data is written to the local IndexedDB cache and seamlessly syncs to the cloud once the network connection is restored.
+
+## 2. Network State Detection
+**Location:** `src/contexts/LayoutContext.tsx`
+* The context uses `window.addEventListener` for `online` and `offline` events to maintain an `isOnline` boolean.
+* **UI Feedback:** If `!isOnline`, a red persistent banner appears at the top of the screen (`AppShell.tsx`), assuring the user that their data is still saving locally.
+
+## 3. Google Drive Auto-Sync (The Sentinel)
+**Location:** `src/components/AppShell.tsx` & `src/lib/googleDrive.ts`
+
+### The Authorization
+* Users opt-in by clicking "Sign in with Google" and granting the `https://www.googleapis.com/auth/drive.file` scope.
+* This restricted scope ensures the app can *only* read and write the specific `mrt_backup.json` file it creates, providing strong security isolation.
+
+### The Trigger
+* Handled by a `useEffect` inside `AppShell`.
+* It requires three conditions: `isVaultUnlocked == true`, `isOnline == true`, and a valid `driveAccessToken`.
+* It checks the user's `lastExportAt` timestamp. If it is older than 7 days, a silent background backup is triggered 10 seconds after the app loads.
+
+### The Payload (Data Sovereignty)
+* The app fetches all data (Journals, Tasks, Workbooks).
+* It **decrypts** the ciphertexts back into plain text in-memory.
+* The JSON is uploaded to Drive. *This is a deliberate architectural choice to ensure the user always has a readable copy of their data in case they permanently forget their MRT Vault PIN.*
+
+</file>
+
+<file path="docs/specs/17_ONBOARDING.md">
+# 📐 Feature Spec: Onboarding & The Gates
+
+**Status:** Live (Sprint 5)
+**Access Level:** Free / Public
+
+## 1. The "Why" (User Story)
+* **As a:** New user ("David" or "Ned")
+* **I want to:** Understand the app's value quickly and set up my profile without friction.
+* **So that:** I can start tracking my sobriety and journaling securely.
+
+## 2. User Experience (The Flow)
+### A. The Landing Page (The Interactive Showcase)
+* **Visuals:** 60/40 Asymmetrical Layout on Desktop. Stacks vertically on Mobile.
+* **Left Column:** MRT Branding, Empathetic Blurb, and a primary "Begin Journey" CTA. Features a large, glassmorphism-wrapped Notebook LM YouTube Demo embed.
+* **Right Column:** Interactive Persona Grid.
+    * *Desktop:* Hovering transitions headshots to bios.
+    * *Mobile:* Tapping opens a clean modal with the Bio image stacked above the Persona's YouTube Video.
+
+### B. The Auth Consolidation
+* A single, clean tabbed glassmorphism card in `Login.tsx`. 
+* Users can cleanly toggle between "Sign In" and "Create Account".
+* The "Create Account" tab dynamically reveals "Confirm Password" and "Privacy Guarantee" trust badges.
+
+### C. The Native Link Tree (`/links`)
+* **Purpose:** A standalone, database-free public route designed to capture social media traffic (Instagram/TikTok bio links) and direct them to the app, the VitePress guide, or support.
+* **Architecture:** Bypasses the `PrivateRoute` wrapper. Uses hardcoded `LinkItem` data to ensure instantaneous load times even on poor 3G connections.
+
+### D. The Forced Redirect (The Trap)
+* **Logic:** Upon successful login/signup, the app checks `userProfile.hasCompletedOnboarding`.
+* **Action:** If `false` (or missing), the user is routed to `/profile`.
+* **Requirement:** They must enter a Display Name and Sobriety Date. Once saved, `hasCompletedOnboarding` is set to `true`, releasing them to the Dashboard.
+
+## 3. Technical Architecture
+* **Data Model:** Checks and updates `users/{uid}` collection.
+* **Routing:** Uses React Router DOM inside a `useEffect` authentication listener for private routes.
+
+</file>
+
+<file path="docs/specs/18_CBT_ENGINE.md">
+# 📐 Feature Spec: The CBT Engine (SMART Tools)
+
+**Status:** Live (v1.12.0)
+**Architecture:** Virtual Module (Abstracted Journal Interface) + Render Props
+**Primary Code:** `src/components/smart_tools/`
+
+## 1. Overview
+The CBT Engine digitizes evidence-based SMART Recovery worksheets into interactive, responsive React components. 
+
+## 2. Technical Architecture
+
+### A. The Virtual Module Storage Strategy
+To avoid schema bloat, CBT tools do not have their own Firestore collections. 
+* They are saved directly to the `journals` collection.
+* **The Payload:** The tool's state is wrapped in a metadata object, passed through `JSON.stringify()`, encrypted via AES-GCM, and stored in the `content` field.
+* **Tags:** They are flagged with `['SMART Tool', toolType]` so the `JournalHistory` timeline can render them and the `JournalAnalysisWizard` can read them.
+
+### B. The `SmartToolContainer` (HOC / Render Prop)
+A generic wrapper component (`SmartToolContainer<T>`) handles all complex logic, allowing the individual tools to remain pure UI layers.
+* **Encryption Gate:** Enforces `isVaultUnlocked`.
+* **Session Rehydration:** Accepts a `resumeSession` boolean. If true, it queries the DB on mount for the most recent entry tagged with that tool, decrypts the payload, and hydrates the UI.
+* **Idempotent Saves:** Exposes a "Save to Journal" button. If the session was resumed, it triggers `updateJournal` to prevent DB bloat. Otherwise, it triggers `addJournal`.
+
+## 3. Tool Implementations
+* **Cost Benefit Analysis (CBA):** A responsive 2x2 Bento Grid using Emerald and Rose tints.
+* **ABC Coping Tool:** A sequential, vertical flow (A -> B -> C -> D -> E) designed to map to the cognitive behavioral chain.
+* **D.E.N.T.S. Strategy:** An Acronym Vertical Stack with distinct, vibrant background tints for pre-planning escape routes.
+* **Personify & Disarm:** A "Rogue's Gallery" card grid leveraging Narrative Therapy to externalize the addictive voice.
+* **Lifestyle Balance:** An interactive "Wheel of Life" radar chart (powered by `recharts`) that maps 6 core life categories to geometric shapes, immediately highlighting holistic imbalances.
+* **The Resentment Burner:** An ephemeral journaling tool featuring a layer-based SVG combustion engine. **Crucial Difference:** This tool explicitly bypasses `SmartToolContainer` and Firestore entirely to guarantee absolute zero-knowledge data destruction upon execution.
+
+## 4. Routing
+* **Tools Hub (`/tools`):** A centralized directory routing to all cognitive behavioral tools and ephemeral grounding exercises.
+
+</file>
+
+<file path="docs/specs/19_DATA_EXPORT.md">
+# 📁 Project 30: The Data Sovereignty Engine (Export)
+
+**Status:** ⚪ Planned
+**Primary Persona:** Walt (The Zen Master)
+**Objective:** Establish a formal, zero-knowledge pathway for users to export decades of encrypted data into highly readable local files (PDF/JSON) without unencrypted data ever touching an external server.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** Walt, I want to export my entire journal history to a PDF so that I can print it, review it with my therapist, or store it offline securely.
+**Competitive Gap:** Many apps hold data hostage to ensure retention. We use "Data Sovereignty" as a core marketing pillar. Proving users can easily extract their lives builds ultimate trust.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** Critical. This touches every single decrypted thought a user has logged.
+* [x] **Encryption Strategy:** Data is fetched as `ciphertext` from Firestore. It MUST be decrypted strictly in browser memory. 
+* [x] **File Generation:** Files (JSON/PDF) must be compiled using Blob/ArrayBuffer entirely client-side. The file must trigger a direct `<a>` download. No third-party PDF-generation APIs can be used.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+**Libraries Introduced:**
+* `jspdf` & `jspdf-autotable` (For client-side PDF generation)
+
+**Types (`src/lib/export.ts`):**
+```typescript
+export interface ExportPayload {
+    user: UserProfile;
+    journals: DecryptedJournalEntry[];
+    tasks: Task[];
+    workbooks: DecryptedWorkbookAnswer[];
+    timestamp: string;
+}
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+### Phase 1: The Extraction Engine
+* Build a query to fetch all documents where `uid == currentUser`.
+* Pipe the payloads through the `crypto.ts` decryptor.
+
+### Phase 2: The Formatter
+* **JSON:** Serialize the `ExportPayload` and trigger a `Blob` download.
+* **PDF:** Use `jspdf` to create a beautiful, "Zen-styled" document. Include a title page, table of contents, and chronological journal entries.
+
+### Phase 3: Edge Cases
+* [ ] What happens if the user has 5,000 journals? The PDF generator will crash the browser. We must implement a date-range selector (e.g., "Export 2025") for heavy users.
+
+
+</file>
+
+<file path="docs/specs/20_CRYPTO_SCALING.md">
+# 📁 Project 31: The Crypto Chunking Pipeline
+
+**Status:** ⚪ Planned
+**Primary Persona:** The Architect (Admin)
+**Objective:** Scale the AES-GCM Key Rotation engine so it can seamlessly decrypt and re-encrypt 10,000+ records without crashing mobile browsers or freezing the UI.
+
+---
+
+## 1. The Executive Summary
+**User Story:** * **As** the System Architect, I want to ensure that a power-user with 5 years of daily entries can securely change their PIN without their phone running out of memory and corrupting their database.
+**Competitive Gap:** Scaling true Zero-Knowledge encryption is notoriously difficult. By solving this, we create a massive technical moat against competitors who rely on simple server-side DB encryption.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+* [x] **Data Sensitivity:** Critical. This touches the master PIN rotation cycle.
+* [x] **Encryption Strategy:** Uses `src/lib/crypto.ts`. Requires handling the `Old Key` and `New Key` simultaneously in memory.
+
+---
+
+## 3. Implementation Phases 🏗️
+
+### Phase 1: The Chunking Algorithm
+* Rewrite `executePinRotation` in `src/lib/rotation.ts` to utilize a Generator function or recursive `setTimeout`/`requestAnimationFrame` loop.
+* **Batch Size:** Set hard limit to processing 50 documents per tick.
+
+### Phase 2: UI Feedback (The Progress Bar)
+* Update the Security Profile tab to listen to a new `rotationProgress` state.
+* If a user has a massive database, the UI must show "Encrypting batch 4 of 200... Please keep app open."
+
+### Phase 3: Transaction Safety (Rollbacks)
+* If the app closes midway through a rotation, the database is in a split state (some docs use Key A, some use Key B). 
+* **Migration Flag:** Add a `keyVersion` field to documents during rotation. If a failure occurs, the app must detect the split state on next login and resume the chunking process automatically.
+
+
+</file>
+
+<file path="docs/templates/USER_GUIDE.md">
+# 📘 User Guide: [Feature Name]
+
+## Overview
+[1-2 sentences explaining what this is in plain English.]
+
+## How to Use It
+1.  **Step 1:** Go to the Dashboard.
+2.  **Step 2:** Click the "Pen" icon.
+3.  **Step 3:** ...
+
+> **💡 Pro Tip:** [Helpful advice, e.g., "Use tags to track your mood over time."]
+
+## Edge Cases & Limitations
+* **Offline Mode:** [Explain how it behaves without internet. e.g., "Saves locally and syncs later."]
+* **Vault Locked:** [Explain what happens if the PIN is not entered. e.g., "Metadata is visible, content is blurred."]
+
+## Frequently Asked Questions
+* **Q:** Is this private?
+* **A:** Yes. Your data is encrypted on your phone before it saves. Even the developers cannot read it.
+
+## Troubleshooting
+* **Issue:** [Common problem]
+* **Fix:** [How to resolve it]
+
+</file>
