@@ -75,7 +75,7 @@ export default function DynamicAnchorWidget() {
         {/* Card 1 — Check-In */}
         <button
           onClick={() => setIsJournalModalOpen(true)}
-          className={`relative flex flex-row items-center justify-center gap-1 sm:gap-2 rounded-full shadow-md py-2 px-1 min-w-0 hover:brightness-110 transition active:scale-95 ${btnGradient}`}
+          className={`relative flex flex-row items-center justify-start gap-2 rounded-full shadow-md py-2 px-4 min-w-0 hover:brightness-110 transition active:scale-95 ${btnGradient}`}
         >
           {needsCheckIn && (
             <div className="absolute top-0 right-0 -mt-1 -mr-1 pointer-events-none">
@@ -87,15 +87,10 @@ export default function DynamicAnchorWidget() {
               <LockClosedIcon className="h-3 w-3 text-white/70 bg-white/20 rounded-full" />
             </div>
           )}
-          <TimeIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-white" />
-          <div className="flex flex-col items-start leading-tight text-left overflow-hidden">
-            <span className="text-[10px] sm:text-xs font-bold text-white truncate w-full">
-              {timeText}
-            </span>
-            <span className="text-[10px] sm:text-xs font-bold text-white truncate w-full">
-              Check-In
-            </span>
-          </div>
+          <TimeIcon className="h-5 w-5 shrink-0 text-white" />
+          <span className="text-xs font-bold text-white truncate">
+            {timeText} Check-In
+          </span>
         </button>
 
         {/* Card 2 — Daily Reading */}
@@ -109,17 +104,12 @@ export default function DynamicAnchorWidget() {
               )}
               <button
                 onClick={() => handleReadingClick(fellowship.dailyReadingUrl)}
-                className="flex flex-row items-center justify-center gap-1 sm:gap-2 py-2 px-1 sm:px-2 flex-1 rounded-l-full active:scale-95 origin-left min-w-0"
+                className="flex flex-row items-center justify-start gap-2 py-2 px-4 flex-1 rounded-l-full active:scale-95 origin-left min-w-0"
               >
-                <BookOpenIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-white" />
-                <div className="flex flex-col items-start leading-tight text-left overflow-hidden">
-                  <span className="text-[10px] sm:text-xs font-bold text-white truncate w-full">
-                    Daily
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold text-white truncate w-full">
-                    Reading
-                  </span>
-                </div>
+                <BookOpenIcon className="h-5 w-5 shrink-0 text-white" />
+                <span className="text-xs font-bold text-white truncate">
+                  Daily Reading
+                </span>
               </button>
               <MenuButton className="flex items-center justify-center px-2 border-l border-white/30 rounded-r-full active:bg-white/20 transition-colors">
                 <ChevronDownIcon className="h-3 w-3 text-white" />

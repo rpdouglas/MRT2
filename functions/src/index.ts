@@ -194,6 +194,59 @@ export const dailyBeacon = onSchedule({
 });
 
 
+// --- PROJ-42: Daily Readings Buffer Health Check ---
+
+const READING_MODALITIES = [
+    'twelve-step-aa',
+    'twelve-step-na',
+    'twelve-step-ca',
+    'recovery-dharma',
+    'smart-recovery',
+    'secular-stoic',
+    'mindfulness-buddhist',
+] as const;
+
+const BUFFER_WARN_DAYS = 30;
+const BUFFER_CRITICAL_DAYS = 14;
+
+export const checkBufferHealth = onSchedule({
+    schedule: "1 0 * * *", // 00:01 UTC daily
+    timeoutSeconds: 60,
+    memory: "256MiB",
+    region: "northamerica-northeast1",
+}, async () => {
+    logger.info("PROJ-42: Checking daily readings buffer health...");
+
+    const warnings: string[] = [];
+    const critical: string[] = [];
+
+    for (const modality of READING_MODALITIES) {
+        const statusSnap = await db.collection("buffer_status").doc(modality).get();
+
+        if (!statusSnap.exists) {
+            critical.push(`${modality}: no buffer_status document found`);
+            continue;
+        }
+
+        const status = statusSnap.data() as { totalBuffered: number; lastGeneratedDate: string };
+        const { totalBuffered } = status;
+
+        if (totalBuffered < BUFFER_CRITICAL_DAYS) {
+            critical.push(`${modality}: only ${totalBuffered} days buffered (critical threshold: ${BUFFER_CRITICAL_DAYS})`);
+        } else if (totalBuffered < BUFFER_WARN_DAYS) {
+            warnings.push(`${modality}: ${totalBuffered} days buffered (warn threshold: ${BUFFER_WARN_DAYS})`);
+        }
+    }
+
+    if (critical.length > 0) {
+        logger.error("PROJ-42: CRITICAL buffer shortage — manual seed required", { critical, warnings });
+    } else if (warnings.length > 0) {
+        logger.warn("PROJ-42: Buffer running low", { warnings });
+    } else {
+        logger.info("PROJ-42: All modality buffers healthy.");
+    }
+});
+
 // --- PROJ-BILLING: Stripe Subscription Synchronization ---
 // SRE Note: First-time deployment to a new project requires ~2 mins for Eventarc IAM propagation.
 export const syncStripeSubscription = onDocumentWritten(

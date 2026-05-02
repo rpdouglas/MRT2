@@ -6,8 +6,9 @@ import { Timestamp } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth'; 
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
-import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
+import ModalitySelector from '../components/readings/ModalitySelector';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
 
@@ -352,6 +353,15 @@ export default function Profile() {
                             </label>
                         </div>
                         <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor.</p>
+                    </div>
+
+                    {/* Daily Reading Modalities — PROJ-42 */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
+                            <BookOpenIconOutline className="h-4 w-4 text-sky-500" /> Daily Reading
+                        </h4>
+                        <p className="text-[10px] text-gray-400 mb-3">Select which reading traditions to rotate through each day.</p>
+                        <ModalitySelector />
                     </div>
 
                     {message && (
