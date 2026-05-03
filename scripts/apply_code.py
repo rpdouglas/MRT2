@@ -1,42 +1,23 @@
 import os
+import subprocess
 
 FENCE = chr(96) * 3
 
-def fix_failing_test():
-    file_path = 'src/__tests__/readings/ReadingShareButton.test.tsx'
+def sync_functions_lockfile():
+    functions_dir = 'functions'
     
-    with open(file_path, 'r') as f:
-        content = f.read()
+    if not os.path.exists(functions_dir):
+        print(f"❌ Directory '{functions_dir}' not found.")
+        return
 
-    old_block = r"""  it('includes title, theme, body, reflection and affirmation', async () => {
-    render(<ReadingShareButton reading={base} />);
-    const text = await clickShare();
-
-    expect(text).toContain(base.title);
-    expect(text).toContain(base.theme);
-    expect(text).toContain(base.body);
-    expect(text).toContain(base.reflection);
-    expect(text).toContain(base.affirmation);
-  });"""
-
-    new_block = r"""  it('includes theme, body, reflection, affirmation, and url', async () => {
-    render(<ReadingShareButton reading={base} />);
-    const text = await clickShare();
-
-    expect(text).toContain(base.theme);
-    expect(text).toContain(base.body);
-    expect(text).toContain(base.reflection);
-    expect(text).toContain(base.affirmation);
-    expect(text).toContain('www.myrecoverytoolkit.ca');
-  });"""
-
-    # Apply the targeted patch
-    updated_content = content.replace(old_block, new_block)
-
-    with open(file_path, 'w') as f:
-        f.write(updated_content)
-
-    print("✅ src/__tests__/readings/ReadingShareButton.test.tsx patched successfully.")
+    print("🔄 Running 'npm install' in functions/ to synchronize package-lock.json...")
+    
+    try:
+        # Executes npm install strictly within the functions directory
+        subprocess.run(['npm', 'install'], cwd=functions_dir, check=True)
+        print("✅ functions/package-lock.json synced successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to run npm install: {e}")
 
 if __name__ == "__main__":
-    fix_failing_test()
+    sync_functions_lockfile()
