@@ -2,61 +2,41 @@ import os
 
 FENCE = chr(96) * 3
 
-def patch_share_button():
-    file_path = 'src/components/readings/ReadingShareButton.tsx'
+def fix_failing_test():
+    file_path = 'src/__tests__/readings/ReadingShareButton.test.tsx'
     
     with open(file_path, 'r') as f:
         content = f.read()
 
-    old_build_func = """function buildShareText(reading: DailyReading): string {
-  const lines: string[] = [
-    reading.title,
-    `Theme: ${reading.theme}`,
-    '',
-    reading.body,
-    '',
-    `Reflection: ${reading.reflection}`,
-    '',
-    reading.affirmation,
-  ];
-  if (reading.attribution) {
-    lines.push('', reading.attribution);
-  }
-  if (reading.goDeeper) {
-    lines.push('', `${reading.goDeeper.label}: ${reading.goDeeper.url}`);
-  }
-  return lines.join('\\n');
-}"""
+    old_block = r"""  it('includes title, theme, body, reflection and affirmation', async () => {
+    render(<ReadingShareButton reading={base} />);
+    const text = await clickShare();
 
-    new_build_func = """function buildShareText(reading: DailyReading): string {
-  const lines: string[] = [
-    reading.theme,
-    reading.date,
-    '',
-    reading.body,
-    '',
-    `Reflection: ${reading.reflection}`,
-    '',
-    reading.affirmation,
-  ];
-  if (reading.attribution) {
-    lines.push('', reading.attribution);
-  }
-  if (reading.goDeeper) {
-    lines.push('', `${reading.goDeeper.label}: ${reading.goDeeper.url}`);
-  }
-  
-  lines.push('', 'www.myrecoverytoolkit.ca');
-  
-  return lines.join('\\n');
-}"""
+    expect(text).toContain(base.title);
+    expect(text).toContain(base.theme);
+    expect(text).toContain(base.body);
+    expect(text).toContain(base.reflection);
+    expect(text).toContain(base.affirmation);
+  });"""
 
-    updated_content = content.replace(old_build_func, new_build_func)
+    new_block = r"""  it('includes theme, body, reflection, affirmation, and url', async () => {
+    render(<ReadingShareButton reading={base} />);
+    const text = await clickShare();
+
+    expect(text).toContain(base.theme);
+    expect(text).toContain(base.body);
+    expect(text).toContain(base.reflection);
+    expect(text).toContain(base.affirmation);
+    expect(text).toContain('www.myrecoverytoolkit.ca');
+  });"""
+
+    # Apply the targeted patch
+    updated_content = content.replace(old_block, new_block)
 
     with open(file_path, 'w') as f:
         f.write(updated_content)
 
-    print("✅ src/components/readings/ReadingShareButton.tsx patched successfully.")
+    print("✅ src/__tests__/readings/ReadingShareButton.test.tsx patched successfully.")
 
 if __name__ == "__main__":
-    patch_share_button()
+    fix_failing_test()

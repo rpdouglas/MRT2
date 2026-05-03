@@ -40,15 +40,15 @@ async function clickShare() {
 }
 
 describe('ReadingShareButton — share text content', () => {
-  it('includes title, theme, body, reflection and affirmation', async () => {
+  it('includes theme, body, reflection, affirmation, and url', async () => {
     render(<ReadingShareButton reading={base} />);
     const text = await clickShare();
 
-    expect(text).toContain(base.title);
     expect(text).toContain(base.theme);
     expect(text).toContain(base.body);
     expect(text).toContain(base.reflection);
     expect(text).toContain(base.affirmation);
+    expect(text).toContain('www.myrecoverytoolkit.ca');
   });
 
   it('includes attribution when present', async () => {
