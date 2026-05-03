@@ -2,49 +2,42 @@ import os
 
 FENCE = chr(96) * 3
 
-def sync_docs():
-    # 1. Update Roadmap (Promotion to Shipped)
-    with open('docs/ROADMAP.md', 'r') as f:
-        roadmap = f.read()
+def patch_reading_modal():
+    file_path = 'src/components/readings/ReadingModal.tsx'
     
-    new_shipped = "* `PROJ-42` Daily Readings Engine (Multi-Modality Content)\n* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)"
-    roadmap = roadmap.replace('## ✅ RECENTLY SHIPPED', f'## ✅ RECENTLY SHIPPED\n{new_shipped}')
-    
-    with open('docs/ROADMAP.md', 'w') as f:
-        f.write(roadmap)
+    with open(file_path, 'r') as f:
+        content = f.read()
 
-    # 2. Update Dashboard Spec (Anchor & Reading Integration)
-    with open('docs/specs/11_DASHBOARD.md', 'r') as f:
-        spec = f.read()
-    
-    spec_update = """## 2. Integrated Components
-* **Dynamic Anchor:** A time-aware Quick Action bar (Morning/Afternoon/Evening/Night).
-* **Daily Reading Card:** Rotates content based on modality preferences (AA, NA, Dharma, etc.)."""
-    
-    with open('docs/specs/11_DASHBOARD.md', 'w') as f:
-        f.write(spec + "\n" + spec_update)
+    # 1. Update Wrapper, Panel, and Header
+    old_wrapper = """  return (
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fadeIn">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg overflow-hidden animate-slideUp">
 
-    # 3. Update Changelog (Safe Prepend)
-    changelog_path = 'docs-site/support/changelog.md'
-    with open(changelog_path, 'r') as f:
-        lines = f.readlines()
-    
-    new_entry = [
-        "\n",
-        "## [v1.5.0] - 2026-05-03\n",
-        "### ✨ Daily Reading Engine Launch\n",
-        "- **Feature [PROJ-42]:** Full integration of multi-modality Daily Readings (AA, NA, Dharma, SMART).\n",
-        "- **UX [PROJ-41]:** Finalized the Dynamic Anchor widget with circadian-aware prompts.\n",
-        "- **Privacy:** Confirmed Readings bypass the ZK boundary as shared content to ensure instant access.\n"
-    ]
-    
-    # Insert after the # 🚀 Changelog header
-    lines.insert(1, "".join(new_entry))
-    
-    with open(changelog_path, 'w') as f:
-        f.writelines(lines)
+        {/* Header */}
+        <div className="bg-gradient-to-br from-sky-400 to-blue-600 px-5 pt-4 pb-4 relative">"""
 
-    print("✅ Documentation and Roadmap synchronized.")
+    new_wrapper = """  return (
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-6 animate-fadeIn">
+      <div className="bg-white w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:rounded-3xl shadow-2xl sm:max-w-lg overflow-hidden flex flex-col animate-slideUp">
+
+        {/* Header */}
+        <div className="shrink-0 bg-gradient-to-br from-sky-400 to-blue-600 px-5 pt-8 sm:pt-4 pb-4 relative">"""
+
+    # 2. Update Body container for flex-1 scrolling
+    old_body = """        {/* Body */}
+        <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">"""
+
+    new_body = """        {/* Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 space-y-5">"""
+
+    # Apply patches
+    updated_content = content.replace(old_wrapper, new_wrapper)
+    updated_content = updated_content.replace(old_body, new_body)
+
+    with open(file_path, 'w') as f:
+        f.write(updated_content)
+
+    print("✅ ReadingModal.tsx patched for 100dvh full-screen mobile optimization.")
 
 if __name__ == "__main__":
-    sync_docs()
+    patch_reading_modal()
