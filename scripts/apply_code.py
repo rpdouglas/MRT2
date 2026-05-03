@@ -2,38 +2,61 @@ import os
 
 FENCE = chr(96) * 3
 
-def patch_fellowships():
-    file_path = 'src/data/fellowships.ts'
+def patch_share_button():
+    file_path = 'src/components/readings/ReadingShareButton.tsx'
     
-    new_content = """import type { ReadingModality } from '../lib/db';
+    with open(file_path, 'r') as f:
+        content = f.read()
 
-export interface FellowshipInfo {
-  id: string;
-  name: string;
-  dailyReadingUrl: string;
-  modalityKey?: ReadingModality;
-}
-
-export const FELLOWSHIPS: Record<string, FellowshipInfo> = {
-  AA: {
-    id: 'AA',
-    name: 'AA Daily Reflection',
-    dailyReadingUrl: 'https://www.aa.org/pages/en_US/daily-reflection',
-    modalityKey: 'twelve-step-aa',
-  },
-  NA: {
-    id: 'NA',
-    name: 'NA Just for Today',
-    dailyReadingUrl: 'https://jftna.org/jft/',
-    modalityKey: 'twelve-step-na',
+    old_build_func = """function buildShareText(reading: DailyReading): string {
+  const lines: string[] = [
+    reading.title,
+    `Theme: ${reading.theme}`,
+    '',
+    reading.body,
+    '',
+    `Reflection: ${reading.reflection}`,
+    '',
+    reading.affirmation,
+  ];
+  if (reading.attribution) {
+    lines.push('', reading.attribution);
   }
-};
-"""
+  if (reading.goDeeper) {
+    lines.push('', `${reading.goDeeper.label}: ${reading.goDeeper.url}`);
+  }
+  return lines.join('\\n');
+}"""
+
+    new_build_func = """function buildShareText(reading: DailyReading): string {
+  const lines: string[] = [
+    reading.theme,
+    reading.date,
+    '',
+    reading.body,
+    '',
+    `Reflection: ${reading.reflection}`,
+    '',
+    reading.affirmation,
+  ];
+  if (reading.attribution) {
+    lines.push('', reading.attribution);
+  }
+  if (reading.goDeeper) {
+    lines.push('', `${reading.goDeeper.label}: ${reading.goDeeper.url}`);
+  }
+  
+  lines.push('', 'www.myrecoverytoolkit.ca');
+  
+  return lines.join('\\n');
+}"""
+
+    updated_content = content.replace(old_build_func, new_build_func)
 
     with open(file_path, 'w') as f:
-        f.write(new_content)
+        f.write(updated_content)
 
-    print("✅ src/data/fellowships.ts patched successfully.")
+    print("✅ src/components/readings/ReadingShareButton.tsx patched successfully.")
 
 if __name__ == "__main__":
-    patch_fellowships()
+    patch_share_button()

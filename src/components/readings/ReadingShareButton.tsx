@@ -8,8 +8,7 @@ interface Props {
 
 function buildShareText(reading: DailyReading): string {
   const lines: string[] = [
-    reading.title,
-    `Theme: ${reading.theme}`,
+    reading.theme,
     '',
     reading.body,
     '',
@@ -23,6 +22,9 @@ function buildShareText(reading: DailyReading): string {
   if (reading.goDeeper) {
     lines.push('', `${reading.goDeeper.label}: ${reading.goDeeper.url}`);
   }
+  
+  lines.push('', 'www.myrecoverytoolkit.ca');
+  
   return lines.join('\n');
 }
 
