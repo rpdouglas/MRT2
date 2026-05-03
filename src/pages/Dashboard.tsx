@@ -11,7 +11,6 @@ import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
-import DailyReadingCard from '../components/readings/DailyReadingCard';
 import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, UserGroupIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
@@ -248,9 +247,6 @@ export default function Dashboard() {
         )}
 
         <DynamicAnchorWidget />
-
-        {/* PROJ-42: Daily Reading Card */}
-        <DailyReadingCard />
 
         {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">

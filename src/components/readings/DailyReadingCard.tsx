@@ -6,7 +6,7 @@ import ReadingModal from './ReadingModal';
 
 export default function DailyReadingCard() {
   const { activeModality, hasReadToday, markAsRead } = useReadingPreferences();
-  const { data: reading, isLoading, isStale } = useDailyReading(activeModality);
+  const { data: reading, isLoading } = useDailyReading(activeModality);
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleOpen = () => {
@@ -38,9 +38,7 @@ export default function DailyReadingCard() {
             <BookOpenIcon className="h-5 w-5 text-white" />
           </div>
           <p className="text-sm font-medium text-white/90">
-            {isStale
-              ? "Showing your last available reading — connect to refresh."
-              : "Today's reading is being prepared. Check back soon."}
+            Today's reading is being prepared. Check back soon.
           </p>
         </div>
       </div>
@@ -84,7 +82,7 @@ export default function DailyReadingCard() {
       </button>
 
       {modalOpen && (
-        <ReadingModal reading={reading} onClose={() => setModalOpen(false)} />
+        <ReadingModal readings={[reading]} onClose={() => setModalOpen(false)} />
       )}
     </>
   );

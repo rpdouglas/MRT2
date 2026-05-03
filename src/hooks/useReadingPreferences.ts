@@ -89,6 +89,23 @@ export function useReadingPreferences() {
         selectedModalities: modalities,
       }, { merge: true });
     },
+    onMutate: async (newModalities) => {
+      await queryClient.cancelQueries({ queryKey: ['reading-preferences', user?.uid] });
+      const previous = queryClient.getQueryData<UserReadingPreferences>(['reading-preferences', user?.uid]);
+      queryClient.setQueryData<UserReadingPreferences>(['reading-preferences', user?.uid], (old) => ({
+        uid: user?.uid ?? '',
+        lastReadDate: '',
+        readingHistory: [],
+        ...old,
+        selectedModalities: newModalities,
+      }));
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['reading-preferences', user?.uid], context.previous);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reading-preferences', user?.uid] });
     },

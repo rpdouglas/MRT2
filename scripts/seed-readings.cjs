@@ -5,15 +5,28 @@
  * Run from project root: node scripts/seed-readings.js
  *
  * Prerequisites:
- *   - GOOGLE_APPLICATION_CREDENTIALS env var pointing to a service account key
- *   - GEMINI_API_KEY env var
+ *   - GEMINI_API_KEY env var (or VITE_GEMINI_API_KEY in .env)
+ *   - service-account-dev.json or service-account-prod.json in project root
  *   - npm install @google/generative-ai firebase-admin (in project root or globally)
  *
  * Usage:
- *   GOOGLE_APPLICATION_CREDENTIALS=./service-account.json \
- *   GEMINI_API_KEY=... \
- *   node scripts/seed-readings.js [--modality twelve-step-aa] [--days 90] [--dry-run]
+ *   GEMINI_API_KEY=... node scripts/seed-readings.cjs [--env dev|prod] [--modality twelve-step-aa] [--days 90] [--dry-run]
+ *
+ * Defaults to --env dev. Use --env prod to target mrt2-app-prod.
  */
+
+const fs = require('fs');
+const path = require('path');
+
+// Load .env from project root (Node doesn't auto-load it)
+const envPath = path.resolve(__dirname, '../.env');
+if (fs.existsSync(envPath)) {
+  const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+  for (const line of lines) {
+    const match = line.match(/^([^#=\s][^=]*)=["']?(.+?)["']?\s*$/);
+    if (match) process.env[match[1]] = match[2];
+  }
+}
 
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
@@ -139,20 +152,31 @@ function checkCopyright(text) {
 }
 
 function parseReading(raw, modality, date, theme, bufferBatch) {
-  // Extract sections from Gemini output
-  // Expected format: Body paragraph(s), then "Reflection: ...", then "Affirmation: ..."
-  const reflectionMatch = raw.match(/Reflection[:\s]+(.+?)(?=Affirmation[:\s]|$)/is);
-  const affirmationMatch = raw.match(/Affirmation[:\s]+(.+?)$/is);
+  // Gemini 2.5 Flash uses markdown bold labels e.g. "**Reflection Question:**"
+  const reflectionMatch = raw.match(/\*{0,2}Reflection[^:\n*]*\*{0,2}[:\s]+(.+?)(?=\*{0,2}Affirmation|$)/is);
+  const affirmationMatch = raw.match(/\*{0,2}Affirmation[^:\n*]*\*{0,2}[:\s]+(.+?)$/is);
   const attributionMatch = modality === 'recovery-dharma'
     ? raw.match(/(Adapted from the Recovery Dharma book.*)/i)
     : null;
 
-  const reflection = reflectionMatch?.[1]?.trim() ?? '';
-  const affirmation = affirmationMatch?.[1]?.trim() ?? '';
+  let reflection = reflectionMatch?.[1]?.trim().replace(/\*+/g, '') ?? '';
+  let affirmation = affirmationMatch?.[1]?.trim().replace(/\*+/g, '') ?? '';
 
-  // Body = everything before "Reflection:"
-  const bodyEnd = raw.search(/Reflection[:\s]/i);
-  const body = bodyEnd > 0 ? raw.slice(0, bodyEnd).trim() : raw.trim();
+  // Body = everything before the Reflection label
+  let bodyEnd = raw.search(/\*{0,2}Reflection/i);
+  let body = bodyEnd > 0 ? raw.slice(0, bodyEnd).trim() : raw.trim();
+
+  // Fallback: if labels absent, treat last "?"-ending line as reflection,
+  // last non-empty line as affirmation, everything before as body
+  if (!reflection || !affirmation) {
+    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    const lastQuestionIdx = lines.map((l, i) => l.endsWith('?') ? i : -1).filter(i => i >= 0).pop();
+    if (lastQuestionIdx !== undefined) {
+      reflection = reflection || lines[lastQuestionIdx];
+      affirmation = affirmation || lines[lines.length - 1];
+      body = body.length > 50 ? body : lines.slice(0, lastQuestionIdx).join('\n\n');
+    }
+  }
 
   // Derive title from first sentence of body
   const firstSentence = body.split(/[.!?]/)[0]?.trim() ?? theme;
@@ -173,7 +197,7 @@ function parseReading(raw, modality, date, theme, bufferBatch) {
     affirmation,
     attribution: attributionMatch?.[1]?.trim() ?? (modality === 'recovery-dharma'
       ? 'Adapted from the Recovery Dharma book, licensed CC BY-SA 4.0 — recoverydharma.org'
-      : undefined),
+      : null),
     generatedAt: Timestamp.now(),
     bufferBatch,
   };
@@ -184,6 +208,8 @@ function parseReading(raw, modality, date, theme, bufferBatch) {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
+  const debug = args.includes('--debug');
+  const env = args.includes('--env') ? args[args.indexOf('--env') + 1] : 'dev';
   const modalityFilter = args.includes('--modality')
     ? args[args.indexOf('--modality') + 1]
     : null;
@@ -194,19 +220,29 @@ async function main() {
     ? parseInt(args[args.indexOf('--start-offset') + 1], 10)
     : 0;
 
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    console.error('GOOGLE_APPLICATION_CREDENTIALS not set.');
-    process.exit(1);
-  }
-  if (!process.env.GEMINI_API_KEY) {
-    console.error('GEMINI_API_KEY not set.');
+  if (env !== 'dev' && env !== 'prod') {
+    console.error('--env must be "dev" or "prod".');
     process.exit(1);
   }
 
-  initializeApp({ credential: cert(process.env.GOOGLE_APPLICATION_CREDENTIALS) });
+  const serviceAccountPath = `./service-account-${env}.json`;
+  const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+  if (!geminiApiKey) {
+    console.error('GEMINI_API_KEY (or VITE_GEMINI_API_KEY) not set.');
+    process.exit(1);
+  }
+
+  const resolvedPath = path.resolve(serviceAccountPath);
+  if (!fs.existsSync(resolvedPath)) {
+    console.error(`Service account file not found: ${resolvedPath}`);
+    process.exit(1);
+  }
+
+  initializeApp({ credential: cert(resolvedPath) });
   const db = getFirestore();
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const genAI = new GoogleGenerativeAI(geminiApiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const modalitiesToProcess = modalityFilter
     ? [modalityFilter]
@@ -216,6 +252,7 @@ async function main() {
   const startDate = addDays(new Date(), startOffset);
 
   console.log(`\nPROJ-42 Seed Script`);
+  console.log(`Environment: ${env.toUpperCase()} (${serviceAccountPath})`);
   console.log(`Modalities: ${modalitiesToProcess.join(', ')}`);
   console.log(`Days: ${days} starting ${dateString(startDate)}`);
   console.log(`Dry run: ${dryRun}\n`);
@@ -243,7 +280,7 @@ async function main() {
         }
       }
 
-      const userPrompt = `Today's theme: ${theme}\nToday's date: ${date}\n\nWrite the daily recovery reading now.`;
+      const userPrompt = `Today's theme: ${theme}\nToday's date: ${date}\n\nWrite the daily recovery reading now.\n\nYou MUST end your response with these two lines exactly (plain text, no markdown bold):\nReflection: [your reflection question]\nAffirmation: [your one-sentence affirmation]`;
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
       let attempts = 0;
@@ -266,6 +303,7 @@ async function main() {
 
           if (!reading.reflection || !reading.affirmation || reading.body.length < 100) {
             console.warn(`  [${date}] Incomplete reading (attempt ${attempts})`);
+            if (debug) console.log(`\n--- RAW (${date} attempt ${attempts}) ---\n${raw}\n---\n`);
             continue;
           }
 

@@ -39,6 +39,8 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-42` Daily Readings Engine (Multi-Modality Content)
+* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
 * `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)

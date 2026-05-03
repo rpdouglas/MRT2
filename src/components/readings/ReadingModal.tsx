@@ -1,19 +1,31 @@
-import { XMarkIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import { XMarkIcon, ArrowTopRightOnSquareIcon, ChevronLeftIcon, ChevronRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import ReadingShareButton from './ReadingShareButton';
+import { MODALITY_LABELS } from '../../hooks/useReadingPreferences';
 import type { DailyReading } from '../../lib/db';
 
 interface Props {
-  reading: DailyReading;
+  readings: DailyReading[];
+  initialIndex?: number;
   onClose: () => void;
+  onJournal?: (reading: DailyReading) => void;
 }
 
-export default function ReadingModal({ reading, onClose }: Props) {
+export default function ReadingModal({ readings, initialIndex = 0, onClose, onJournal }: Props) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const reading = readings[currentIndex];
+
+  if (!reading) return null;
+
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < readings.length - 1;
+
   return (
     <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fadeIn">
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg overflow-hidden animate-slideUp">
 
         {/* Header */}
-        <div className="bg-gradient-to-br from-sky-400 to-blue-600 px-5 pt-5 pb-4 relative">
+        <div className="bg-gradient-to-br from-sky-400 to-blue-600 px-5 pt-4 pb-4 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
@@ -21,10 +33,38 @@ export default function ReadingModal({ reading, onClose }: Props) {
           >
             <XMarkIcon className="h-4 w-4 text-white" />
           </button>
-          <span className="inline-block text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white px-2.5 py-1 rounded-full mb-2">
-            {reading.theme}
-          </span>
-          <h2 className="text-lg font-black text-white leading-tight pr-8">{reading.title}</h2>
+
+          {/* Modality row with optional cycling nav */}
+          <div className="flex items-center justify-between mb-3 pr-8">
+            <span className="text-xs font-semibold text-white/80">
+              {MODALITY_LABELS[reading.modality]}
+            </span>
+            {readings.length > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentIndex(i => i - 1)}
+                  disabled={!hasPrev}
+                  className="p-1 rounded-full bg-white/20 hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous reading"
+                >
+                  <ChevronLeftIcon className="h-3.5 w-3.5 text-white" />
+                </button>
+                <span className="text-[10px] font-bold text-white/70 tabular-nums">
+                  {currentIndex + 1}/{readings.length}
+                </span>
+                <button
+                  onClick={() => setCurrentIndex(i => i + 1)}
+                  disabled={!hasNext}
+                  className="p-1 rounded-full bg-white/20 hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next reading"
+                >
+                  <ChevronRightIcon className="h-3.5 w-3.5 text-white" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <h2 className="text-lg font-black text-white leading-tight text-center">{reading.theme}</h2>
         </div>
 
         {/* Body */}
@@ -51,17 +91,28 @@ export default function ReadingModal({ reading, onClose }: Props) {
           {/* Footer actions */}
           <div className="flex items-center justify-between pt-1 pb-2">
             <ReadingShareButton reading={reading} />
-            {reading.goDeeper && (
-              <a
-                href={reading.goDeeper.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                {reading.goDeeper.label}
-                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-              </a>
-            )}
+            <div className="flex items-center gap-3">
+              {reading.goDeeper && (
+                <a
+                  href={reading.goDeeper.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {reading.goDeeper.label}
+                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                </a>
+              )}
+              {onJournal && (
+                <button
+                  onClick={() => onJournal(reading)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors"
+                >
+                  <PencilSquareIcon className="h-3.5 w-3.5" />
+                  Journal
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

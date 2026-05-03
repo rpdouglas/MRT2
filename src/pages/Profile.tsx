@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { getProfile, updateProfileData } from '../lib/db';
-import { Timestamp } from 'firebase/firestore'; 
-import { updateProfile } from 'firebase/auth'; 
+import { Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+import { db } from '../lib/firebase';
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
 import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
@@ -114,8 +115,6 @@ export default function Profile() {
       });
 
       try {
-        const { doc, updateDoc } = await import('firebase/firestore');
-        const { db } = await import('../lib/firebase');
         if (db) {
             await updateDoc(doc(db, "users", user.uid), {
                 "anchorSettings.notifyCheckIn": notifyCheckIn,

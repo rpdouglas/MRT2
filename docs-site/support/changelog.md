@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.5.0] - 2026-05-03
+### ✨ Daily Reading Engine Launch
+- **Feature [PROJ-42]:** Full integration of multi-modality Daily Readings (AA, NA, Dharma, SMART).
+- **UX [PROJ-41]:** Finalized the Dynamic Anchor widget with circadian-aware prompts.
+- **Privacy:** Confirmed Readings bypass the ZK boundary as shared content to ensure instant access.
+
 ## [v1.4.0] - 2026-04-30
 ### ✨ Major UX & Architecture Overhaul
 - **Feature [PROJ-41]:** Launched the Dynamic Anchor (Circadian Companion Widget). Replaced the static daily pledge with a highly responsive, 3-column quick action bar on the dashboard.

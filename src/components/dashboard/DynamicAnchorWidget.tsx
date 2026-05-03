@@ -13,14 +13,17 @@ import {
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import JournalEditor from "../journal/JournalEditor";
 import VaultGate from "../VaultGate";
+import ReadingModal from "../readings/ReadingModal";
 import { useEncryption } from "../../contexts/EncryptionContext";
 import { FELLOWSHIPS } from "../../data/fellowships";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAllDailyReadings } from "../../hooks/useDailyReading";
+import { useReadingPreferences, ALL_MODALITIES } from "../../hooks/useReadingPreferences";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { format } from "date-fns";
-import type { UserProfile } from "../../lib/db";
+import type { DailyReading, UserProfile } from "../../lib/db";
 
 export default function DynamicAnchorWidget() {
   const timeOfDay = useTimeOfDay();
@@ -30,6 +33,23 @@ export default function DynamicAnchorWidget() {
   const { isVaultUnlocked } = useEncryption();
 
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
+  const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
+  const [journalOverrideContent, setJournalOverrideContent] = useState<string | null>(null);
+
+  const { preferences, activeModality, hasReadToday, markAsRead } = useReadingPreferences();
+  const selectedModalities = preferences?.selectedModalities ?? ALL_MODALITIES;
+  const readingResults = useAllDailyReadings(selectedModalities);
+
+  // Only readings that exist in Firestore
+  const availableReadings = readingResults
+    .map(r => r.data)
+    .filter((r): r is DailyReading => r != null);
+
+  // Start on today's active modality if it has a reading, otherwise index 0
+  const initialReadingIndex = Math.max(
+    0,
+    availableReadings.findIndex(r => r.modality === activeModality)
+  );
 
   const { data: userProfile } = useQuery<UserProfile | null>({
     queryKey: ["profile", user?.uid],
@@ -60,6 +80,29 @@ export default function DynamicAnchorWidget() {
   const handleReadingClick = async (url: string) => {
     window.open(url, "_blank");
     await updateReadingDate();
+  };
+
+  const handleInAppReadingClick = () => {
+    if (availableReadings.length > 0) {
+      setIsReadingModalOpen(true);
+      const initial = availableReadings[initialReadingIndex];
+      if (initial && !hasReadToday) markAsRead.mutate(initial.id);
+    } else {
+      handleReadingClick(fellowship.dailyReadingUrl);
+    }
+  };
+
+  const handleJournalFromReading = (reading: DailyReading) => {
+    setIsReadingModalOpen(false);
+    setJournalOverrideContent(
+      `Reading: "${reading.title}"\n\nReflection: ${reading.reflection}\n\nMy thoughts:\n`
+    );
+    setIsJournalModalOpen(true);
+  };
+
+  const handleCloseJournal = () => {
+    setIsJournalModalOpen(false);
+    setJournalOverrideContent(null);
   };
 
   const isDay = timeOfDay === "morning" || timeOfDay === "afternoon";
@@ -103,7 +146,7 @@ export default function DynamicAnchorWidget() {
                 </div>
               )}
               <button
-                onClick={() => handleReadingClick(fellowship.dailyReadingUrl)}
+                onClick={handleInAppReadingClick}
                 className="flex flex-row items-center justify-start gap-2 py-2 px-4 flex-1 rounded-l-full active:scale-95 origin-left min-w-0"
               >
                 <BookOpenIcon className="h-5 w-5 shrink-0 text-white" />
@@ -138,26 +181,39 @@ export default function DynamicAnchorWidget() {
         </div>
       </div>
 
-      {/* Journal Modal */}
+      {/* Reading Modal */}
+      {isReadingModalOpen && availableReadings.length > 0 && (
+        <ReadingModal
+          readings={availableReadings}
+          initialIndex={initialReadingIndex}
+          onClose={() => setIsReadingModalOpen(false)}
+          onJournal={handleJournalFromReading}
+        />
+      )}
+
+      {/* Journal — fullscreen overlay matching the journal page layout */}
       {isJournalModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden relative animate-slideUp">
+        <div className="fixed inset-0 z-[60] bg-indigo-200 flex flex-col animate-slideUp">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0">
+            <span className="text-sm font-bold text-indigo-900">
+              {journalOverrideContent ? "Journal on Reading" : `${timeText} Check-In`}
+            </span>
             <button
-              onClick={() => setIsJournalModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              onClick={handleCloseJournal}
+              className="p-2 bg-white/40 hover:bg-white/60 text-indigo-900 rounded-full transition-colors"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
-            <div className="pt-12 px-2 pb-2 h-[80vh] overflow-y-auto">
-              <VaultGate>
-                <JournalEditor
-                  initialEntry={null}
-                  initialContent={TIME_BASED_PROMPTS[timeOfDay]}
-                  initialTags={["Anchor", timeOfDay]}
-                  onSaveComplete={() => setIsJournalModalOpen(false)}
-                />
-              </VaultGate>
-            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 pb-20">
+            <VaultGate>
+              <JournalEditor
+                initialEntry={null}
+                initialContent={journalOverrideContent ?? TIME_BASED_PROMPTS[timeOfDay]}
+                initialTags={journalOverrideContent ? ["Reading", "Daily Reading"] : ["Anchor", timeOfDay]}
+                onSaveComplete={handleCloseJournal}
+              />
+            </VaultGate>
           </div>
         </div>
       )}

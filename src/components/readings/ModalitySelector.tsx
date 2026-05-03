@@ -1,17 +1,22 @@
+import { useState } from 'react';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { useReadingPreferences, ALL_MODALITIES, MODALITY_LABELS } from '../../hooks/useReadingPreferences';
 import type { ReadingModality } from '../../lib/db';
 
 export default function ModalitySelector() {
   const { preferences, updateModalities } = useReadingPreferences();
-  const selected = preferences?.selectedModalities ?? ALL_MODALITIES;
+
+  // Local override: null until the user makes a change, at which point it becomes
+  // the source of truth so toggles work without waiting for Firestore roundtrips.
+  const [localSelected, setLocalSelected] = useState<ReadingModality[] | null>(null);
+  const selected = localSelected ?? preferences?.selectedModalities ?? ALL_MODALITIES;
 
   const toggle = (modality: ReadingModality) => {
     const next = selected.includes(modality)
       ? selected.filter(m => m !== modality)
       : [...selected, modality];
-    // Always keep at least one modality selected
     if (next.length === 0) return;
+    setLocalSelected(next);
     updateModalities.mutate(next);
   };
 
