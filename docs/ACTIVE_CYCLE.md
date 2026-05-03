@@ -16,6 +16,7 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-41:** Dynamic Anchor -> Replaced static 'Daily Pledge' with a circadian-aware, 3-column quick action bar on the dashboard.
 - [x] **PROJ-40:** Test Suite Audit -> Comprehensive review of Vitest pipeline.
 - [x] **PROJ-31:** Crypto Chunking Pipeline -> Refactor PIN rotation to handle 10k+ docs without UI thread locking.
 - [x] **PROJ-39:** Deferred Vault Lock -> Added 'Skip for Now' onboarding bypass.

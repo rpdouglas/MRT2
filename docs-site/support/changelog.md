@@ -1,5 +1,18 @@
 # 🚀 Changelog
 
+## [v1.5.0] - 2026-05-03
+### ✨ Daily Reading Engine Launch
+- **Feature [PROJ-42]:** Full integration of multi-modality Daily Readings (AA, NA, Dharma, SMART).
+- **UX [PROJ-41]:** Finalized the Dynamic Anchor widget with circadian-aware prompts.
+- **Privacy:** Confirmed Readings bypass the ZK boundary as shared content to ensure instant access.
+
+## [v1.4.0] - 2026-04-30
+### ✨ Major UX & Architecture Overhaul
+- **Feature [PROJ-41]:** Launched the Dynamic Anchor (Circadian Companion Widget). Replaced the static daily pledge with a highly responsive, 3-column quick action bar on the dashboard.
+- **Adaptive Check-Ins:** The widget now intelligently tracks the time of day (Morning, Afternoon, Evening, Night) and injects specialized CBT journaling prompts directly into a secure, Vault-protected modal.
+- **Fellowship Integrations:** Added a built-in headless dropdown to easily access daily readings across major recovery programs (AA, NA, SMART Recovery, etc.), alongside quick-action intent setting.
+- **Granular Control:** Added an "Anchor Notifications" section in Profile settings, allowing users to toggle visual reminder badges on/off dynamically.
+
 ## [v1.3.1] - 2026-04-30
 ### Fixed & Optimized (Testing Infrastructure)
 - **Feature [PROJ-40]:** Completed a comprehensive Test Suite Audit to secure core logic ahead of the React 19 scaling initiatives.
