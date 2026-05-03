@@ -29,7 +29,7 @@ graph TD
 
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, & Settings.
-* **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens`, `timezone`, etc.
+* **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens`, `timezone`, `anchorSettings` (Object), etc.
 
 ### `journals/{entryId}`
 * **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.

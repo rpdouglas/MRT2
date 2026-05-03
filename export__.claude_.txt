@@ -1,0 +1,340 @@
+CONTEXT EXPORT - 2026-05-03T02:19:57.615Z
+Mode: Targeted (/.claude/)
+
+### TABLE OF CONTENTS ###
+- .claude/settings.json
+- .claude/settings.local.json
+- .claude/skills/design/SKILL.md
+- .claude/skills/fix/SKILL.md
+- .claude/skills/planning/SKILL.md
+- .claude/skills/review/SKILL.md
+- .claude/skills/ticket-close/SKILL.md
+- .claude/skills/zk-audit/SKILL.md
+
+### FILE CONTENTS ###
+
+<file path=".claude/settings.json">
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(npm run dev:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx eslint --fix '$CLAUDE_TOOL_INPUT_FILE_PATH' --ext .ts,.tsx 2>&1 | tail -5 || true",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit 2>&1 | tail -10 || true",
+            "timeout": 30,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
+</file>
+
+<file path=".claude/settings.local.json">
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')"
+    ]
+  }
+}
+
+</file>
+
+<file path=".claude/skills/design/SKILL.md">
+---
+name: design
+description: MRT design system guidelines. Invoke before implementing any UI component, styling change, or new screen. Ensures output matches the Vibrant Momentum design language.
+---
+
+# MRT Design System — Vibrant Momentum
+
+## Core Philosophy
+Recovery is a return to life — not a punishment. Reject gloomy health app aesthetics.
+- **Alive & Forward-Moving:** colour, space, and motion signal hope
+- **Frictionless:** minimalistic layouts for cognitively overloaded users (especially David in crisis)
+- **Persona-Adaptive:** UI shifts vibe depending on recovery stage
+
+## Global UI Architecture
+- Layout: `100dvh` (dynamic viewport height) — perfect mobile fit always
+- Materiality: Glassmorphism — translucent cards with `backdrop-blur`, layered depth
+- Navigation: sidebar desktop / bottom-weighted mobile for one-handed use
+- Touch targets: minimum `44px` on all interactive elements (accessibility non-negotiable)
+- Images: WebP only, mapped through `src/data/assets.ts` typed dictionary — no direct image paths
+
+## Module Colour System
+
+| Module | Vibe | Gradient | Psychological Goal |
+|---|---|---|---|
+| Dashboard | Hope & Clarity | Sky Blue → Blue | Open horizons, fresh start |
+| Tasks | Energy & Action | Cyan → Teal | Momentum and dopamine feedback |
+| Service | Warmth & Connection | Rose → Amber | Human-to-human empathy |
+| Insights | Mystical & AI | Fuchsia → Rose | Deep pattern finding, introspection |
+| Vitality | Somatic Health | Amber → Orange | Calm, grounding, vital energy |
+
+High-saturation gradients. No flat, muted, or grey-dominant palettes.
+
+## Persona Design Constraints
+
+**David (Day 1 — Crisis User)**
+- Zero friction. Large SOS buttons. "Skip for Now" always available.
+- Immediate access to grounding tools — never more than 2 taps away.
+- PIN lock screen reinforces Vault security visually.
+- NEVER show red "overdue" or failure states.
+
+**Ned (30–90 Days — Pink Cloud)**
+- Visual reward first. Prominent clean-time counter, XP bars, streak visualisations.
+- High-energy dashboard with momentum indicators.
+- Gamification elements must be immediately visible, not buried.
+
+**Lisa (7+ Years — Service Superstar)**
+- Boundary management. Clean sponsee list organisation.
+- Amber tones for calm — prevent burnout aesthetic.
+- Self-care check-ins surfaced proactively.
+
+**Walt (35+ Years — Zen Master)**
+- Data sovereignty. High-legibility text — never sacrifice readability for style.
+- Deep-dive pattern charts, structured export views.
+- Density is acceptable; clutter is not.
+
+## The "No-Guilt" Engine
+- NEVER use red "Overdue" text or failure language.
+- Missed tasks → silently moved to "Today" via Smart Reset logic.
+- No shame spirals in the UI — every state has a compassionate framing.
+
+## Security UI Rules
+- Encrypted / locked content: always use Blurred Overlay fallback when Vault is locked.
+- Encrypted content must be visually distinct from plaintext content.
+- PIN entry screens must visually reinforce the security and privacy of the Vault.
+
+## AI Integration UI
+- AI-generated suggestions: marked with Purple Sparkle icon (✦) and `+7 Days` badge.
+- Clearly distinguishes automated suggestions from user-created tasks.
+- Never present AI output as authoritative — always as a "suggestion."
+
+## Asset Protocol
+- All images: WebP format only
+- All image references: typed `ASSETS` dictionary in `src/data/assets.ts`
+- No hardcoded image paths anywhere in components
+- Avatars and personas only — never real names or faces (anonymity compliance)
+
+## Marketing & Public-Facing Rules
+- NEVER use black-and-white or shadowy imagery of people looking depressed.
+- Show, don't tell: use stylised app UI mockups on modern devices.
+- Positioning: "Sidekick" or "Companion Tool" — never a clinical medical device.
+- Anonymity: avatars/personas only, never real names or photos.
+- Neutrality: avoid trademarked names (AA/NA/CA) or official logos in public-facing material.
+
+## Before Implementing Any UI Component — Checklist
+1. Which module is this? Apply the correct colour/gradient from the module system.
+2. Which persona will use this most? Apply their design constraint.
+3. Touch targets ≥ 44px on all interactive elements?
+4. Does it pass the David test — can a user in acute crisis complete the action in ≤ 3 taps?
+5. Is glassmorphism applied consistently with the rest of the module?
+6. Are there any guilt/shame/failure states that need compassionate reframing?
+7. If AI-generated content is shown — is the purple sparkle + badge present?
+</file>
+
+<file path=".claude/skills/fix/SKILL.md">
+---
+name: fix
+description: Surgical bug fix. Paste the error log and file content. Produces a diff plan before any code. Zero collateral damage.
+argument-hint: [paste error or describe bug]
+---
+
+# MRT Surgical Fix Protocol
+
+## Pre-Check
+Confirm the error log and relevant file are in context. If not, ask for them before proceeding.
+
+## Process
+1. Root cause: identify the exact line and character causing the error (one sentence)
+2. ZK check: if this file touches crypto.ts, useEncryption, or any Firestore write — confirm the fix does not move the encryption boundary
+3. Diff plan before any code:
+   REMOVE (line N): [exact text]
+   ADD    (line N): [exact text]
+4. Regression test: write one Vitest test that would have caught this error
+5. Verification: state the exact command to run
+
+## Constraints
+- NO variable renaming or cleanup outside the error scope
+- NO deleting helper functions unless they are the error source
+- NO any types — use unknown or a proper interface
+- If the fix requires structural changes: output SURGICAL_LIMIT_REACHED, describe the minimal unsafe fix and a separate refactor ticket
+</file>
+
+<file path=".claude/skills/planning/SKILL.md">
+---
+name: planning
+description: MRT feature planning. Use when starting any new feature. Produces 3-strategy proposal with ZK analysis, test contract, and rollback assessment. Requires docs/projects/XX_FEATURE.md to exist first.
+---
+
+# MRT Planning Protocol
+
+You are in ARCHITECT mode. Think and design — do not write production code.
+
+## Gatekeeper Check
+First: confirm docs/projects/XX_FEATURE.md exists for this task.
+If absent: stop and tell me to create it from docs/projects/00_TEMPLATE.md.
+
+## Phase 1: Dependency Impact Table
+| File/Module | Type | Impact | Confidence |
+Impact: MODIFY / READ / NO-CHANGE / UNCERTAIN
+Confidence: HIGH (in context) / LOW (inferred)
+
+## Phase 2: Three Strategies
+For each approach:
+- Estimated effort (days)
+- Key trade-off (one sentence)
+- Persona fit in crisis state (David) and reflective state (Walt)
+- Scores 1-5: speed / persona / ZK complexity / maintenance / test surface
+
+Recommendation = highest scorer. State it explicitly.
+
+## Phase 3: Technical Impact
+1. Schema changes + interface from src/lib/db.ts
+2. Firestore rules / indexes / Cloud Functions changes
+3. Metadata fields that must be preserved (uid, source, etc.)
+4. Date normalization: where Timestamp → Date conversions occur
+5. ZK boundary: list every encrypted field explicitly
+6. Test contract: unit / integration / security (raw Firestore doc check) / regression
+7. Bundle check: new deps (minzipped size), new lazy routes, new Gemini calls
+8. Rollback: git revert possible? If NO, manual procedure?
+
+## Stop Gate
+After analysis: STOP. Wait for me to type APPROVED before any code is generated.
+</file>
+
+<file path=".claude/skills/review/SKILL.md">
+---
+name: review
+description: Post-implementation review. Run after a feature is complete or after fixing a series of bugs. Checks for drift between what was built and the spec, CLAUDE.md accuracy, skill relevance, and any rules that were repeatedly violated during the session.
+---
+
+# MRT Post-Implementation Review
+
+You are doing a review pass — no new code unless explicitly asked.
+
+## 1. CLAUDE.md Drift Check
+Read the current CLAUDE.md and compare against what you observed during this session.
+- Are any rules in CLAUDE.md outdated or inaccurate based on what you saw in the codebase?
+- Are any rules missing that would have prevented the bugs or issues we just fixed?
+- Is the file still under 150 lines?
+
+Flag each drift as: ADD / REMOVE / UPDATE / ACCURATE
+
+## 2. Skill Relevance Check
+For each skill invoked this session:
+- Did the skill produce useful output or did you have to work around it?
+- Are any instructions in the skill outdated or contradicted by what you saw in the codebase?
+- Are any steps missing that would have caught the issues we just fixed?
+
+## 3. Rules That Were Violated
+List any CLAUDE.md or skill rules that were violated during this session — even if caught and fixed.
+For each: state the rule, what happened, and whether the rule needs to be clearer or enforced differently.
+
+## 4. Missing Rules
+Based on the bugs and issues fixed this session — what rule, if it had existed, would have prevented them?
+Write the rule in the exact format it should appear in CLAUDE.md or the relevant skill.
+
+## 5. Firestore & Schema Drift
+- Do firestore.rules reflect all collections touched this session?
+- Does docs/SCHEMA_ARCHITECTURE.md match any new fields added?
+- Are all new queries covered by an index in firestore.indexes.json?
+
+## Output
+A structured report with specific suggested edits — not prose.
+For CLAUDE.md changes: show the exact line to add, remove, or update.
+For skill changes: show the exact section and replacement text.
+End with: READY TO APPLY — list the changes you want me to make, or LOOKS GOOD if no changes needed.
+</file>
+
+<file path=".claude/skills/ticket-close/SKILL.md">
+---
+name: ticket-close
+description: Drift detection and project board sync after completing a ticket or sprint. Checks schema, specs, user guides, and tech debt. Produces sync report.
+
+---
+
+# MRT Ticket Close Protocol
+
+## Drift Checklist
+1. Schema drift: does docs/SCHEMA_ARCHITECTURE.md match src/lib/db.ts changes?
+2. Spec drift: do docs/specs/ files reflect the new logic as implemented?
+3. User guide drift: do docs-site/guide/ files reflect new user-facing behaviour?
+4. Feature spec drift: did the implementation deviate from docs/projects/XX_FEATURE.md?
+5. Tech debt: any console.log, eslint-disable, or commented-out code left behind?
+6. ZK check: any unencrypted writes to secure collections?
+
+## Project Board Updates (state what needs changing, don't generate a script)
+- docs/ACTIVE_CYCLE.md: which task to mark [x]?
+- docs-site/support/changelog.md: what to add?
+- docs/ROADMAP.md: if an Epic is complete, what moves to Shipped?
+
+## Output
+A structured drift table. Flag anything that needs fixing before this ticket is considered closed.
+</file>
+
+<file path=".claude/skills/zk-audit/SKILL.md">
+---
+name: zk-audit
+description: Zero-Knowledge security audit. Use after any feature that touches Firestore writes, encryption, or user data. Checks for ZK boundary violations.
+---
+
+# ZK Security Audit
+
+Review the code I'm about to describe (or that is currently in context) for Zero-Knowledge violations.
+
+## Check 1: Encryption Boundary
+- Does any user-generated content reach Firestore without passing through encryptData()?
+- Are all encrypted field names in the interface marked clearly?
+- Is the encryption key ever exposed in component props, React state, or console output?
+
+## Check 2: Firestore Write Audit
+For every Firestore write in the change:
+- List the collection path
+- List every field written
+- Mark each field: ENCRYPTED / PLAINTEXT-OK / VIOLATION-RISK
+
+## Check 3: Security Test
+Write the Vitest test that reads the raw Firestore document from the emulator
+and asserts encrypted fields are NOT human-readable strings:
+```typescript
+const rawDoc = await adminDb.collection('[collection]').doc(testDocId).get();
+const data = rawDoc.data();
+expect(data?.encryptedField).not.toMatch(/[a-zA-Z]{10,}/); // not plaintext
+```
+
+## Output
+- PASS: ZK boundary intact
+- RISK: [specific concern]
+- VIOLATION: [exact location, exact fix needed]
+</file>

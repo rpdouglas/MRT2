@@ -30,9 +30,15 @@ interface ExtendedJournalTemplate extends JournalTemplate {
     content?: string;
 }
 
-interface JournalEditorProps { initialEntry: JournalEntry | null; initialTemplateId?: string | null; onSaveComplete: () => void; }
+interface JournalEditorProps { 
+  initialEntry: JournalEntry | null; 
+  initialTemplateId?: string | null; 
+  initialContent?: string;
+  initialTags?: string[];
+  onSaveComplete: () => void; 
+}
 
-export default function JournalEditor({ initialEntry, initialTemplateId, onSaveComplete }: JournalEditorProps) {
+export default function JournalEditor({ initialEntry, initialTemplateId, initialContent, initialTags, onSaveComplete }: JournalEditorProps) {
   const { user, userTier } = useAuth();
   const { encrypt } = useEncryption();
   const { addJournal, updateJournal } = useJournalOperations();
@@ -144,15 +150,15 @@ export default function JournalEditor({ initialEntry, initialTemplateId, onSaveC
       if (initialEntry.weather) setWeather(initialEntry.weather);
       setActiveTemplate(null);
     } else {
-      setNewEntry('');
-      setTags([]);
+      setNewEntry(initialContent || '');
+      setTags(initialTags || []);
       setActiveTemplate(null);
       setFormAnswers([]);
       setWeather(null);
       fetchLocalWeather(); 
       if (initialTemplateId) handleTemplateSelect(initialTemplateId);
     }
-  }, [initialEntry, initialTemplateId, handleTemplateSelect, fetchLocalWeather]);
+  }, [initialEntry, initialTemplateId, initialContent, initialTags, handleTemplateSelect, fetchLocalWeather]);
 
   const handleAddTag = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
         setTags(prev => prev.slice(0, -1));

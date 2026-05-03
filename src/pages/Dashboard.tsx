@@ -10,6 +10,7 @@ import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
+import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
 import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, UserGroupIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
@@ -244,6 +245,8 @@ export default function Dashboard() {
             <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
           </div>
         )}
+
+        <DynamicAnchorWidget />
 
         {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">

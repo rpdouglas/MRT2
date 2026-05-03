@@ -97,5 +97,16 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow read, update, delete: if isAdmin();
     }
+
+    // 9. Daily Reading Preferences (PROJ-42)
+    match /user_reading_preferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // 10. Daily Readings — admin-seeded content, readable by all authenticated users
+    match /daily_readings/{readingId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
   }
 }

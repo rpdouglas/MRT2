@@ -49,6 +49,13 @@ export interface UserProfile {
   // --- NEW: PROJ-26 (The Beacon) ---
   fcmTokens?: string[];
   timezone?: string;
+  anchorSettings?: {
+    notifyCheckIn: boolean;
+    notifyReading: boolean;
+    notifyIntent: boolean;
+    lastReadingDate?: string;
+    defaultFellowship?: string;
+  };
 }
 
 export interface JournalTemplate { id: string; name: string; prompts: string[]; defaultTags: string[]; }
@@ -86,7 +93,7 @@ export interface Task {
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
   lastCompletedAt?: Timestamp | Date | null; 
-  source?: 'manual' | 'ai'; 
+  source?: 'manual' | 'ai' | 'anchor_intent'; 
 }
 
 export interface WorkbookAnswer {
@@ -220,6 +227,39 @@ export const getJournalHistory = async (uid: string) => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as JournalEntry));
 };
+
+// --- PROJ-42: Daily Readings Engine ---
+
+export type ReadingModality =
+  | 'twelve-step-aa'
+  | 'twelve-step-na'
+  | 'twelve-step-ca'
+  | 'recovery-dharma'
+  | 'smart-recovery'
+  | 'secular-stoic'
+  | 'mindfulness-buddhist';
+
+export interface DailyReading {
+  id: string;
+  modality: ReadingModality;
+  date: string;              // "YYYY-MM-DD"
+  theme: string;
+  title: string;
+  body: string;
+  reflection: string;
+  affirmation: string;
+  attribution?: string;      // Required for recovery-dharma
+  goDeeper?: { label: string; url: string };
+  generatedAt: Timestamp;
+  bufferBatch: number;
+}
+
+export interface UserReadingPreferences {
+  uid: string;
+  selectedModalities: ReadingModality[];
+  lastReadDate: string;      // "YYYY-MM-DD"
+  readingHistory: string[];
+}
 
 export interface FullUserData {
   profile: UserProfile | null;

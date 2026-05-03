@@ -14,7 +14,7 @@ dist-ssr
 
 # Security
 *.env
-service-account.json
+service-account*.json
 
 # Editor directories and files
 .vscode/*
@@ -40,3 +40,4 @@ mrt-release.keystore
 scripts/list_assets.py
 scripts/apply_code.py
 export_src_lib-src_hooks-src_data.txt
+CLAUDE.local.md
