@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+# FENCE protection for writing markdown backticks within a Python script
 FENCE = chr(96) * 3
 
 def sync_functions_lockfile():
