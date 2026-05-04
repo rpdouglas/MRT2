@@ -1,7 +1,7 @@
 ---
 name: fix
 description: Surgical bug fix. Paste the error log and file content. Produces a diff plan before any code. Zero collateral damage.
-argument-hint: [paste error or describe bug]
+
 ---
 
 # MRT Surgical Fix Protocol
