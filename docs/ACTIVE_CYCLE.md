@@ -16,6 +16,7 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-46:** The Ledger — Frictionless Task Module Upgrade. Sprint 1: swipe-to-complete (green reveal + haptic), Forgiveness Tap (amber swipe-left, "Let today go" sheet), Pull-to-Add Quick Capture. Sprint 2: Rhythm Score (14-day ring), AI Context Cards (sourceContext + sourceRef deep-links), Gemini prompt updates for action_contexts.
 - [x] **PROJ-41:** Dynamic Anchor -> Replaced static 'Daily Pledge' with a circadian-aware, 3-column quick action bar on the dashboard.
 - [x] **PROJ-40:** Test Suite Audit -> Comprehensive review of Vitest pipeline.
 - [x] **PROJ-31:** Crypto Chunking Pipeline -> Refactor PIN rotation to handle 10k+ docs without UI thread locking.

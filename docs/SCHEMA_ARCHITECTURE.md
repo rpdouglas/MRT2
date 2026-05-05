@@ -43,6 +43,22 @@ graph TD
 
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans. (Unencrypted for streak evaluation).
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `title` (String): Task text. **UNENCRYPTED** (required for streak evaluation and AI action routing).
+    * `source` (String): `'manual'` | `'ai'` | `'anchor_intent'` — governs tab routing.
+    * `status` (String): `'pending'` | `'completed'`.
+    * `isRecurring` (Boolean): True for habit-type tasks.
+    * `frequency` (String): Legacy field — `'once'` | `'daily'` | `'weekly'` | `'monthly'`.
+    * `recurrence` (Map): Full `RecurrenceConfig` object (supersedes `frequency`).
+    * `priority` (String): `'High'` | `'Medium'` | `'Low'`.
+    * `category` (String, optional): `'Recovery'` | `'Health'` | `'Life'` | `'Work'`.
+    * `currentStreak` (Int): Consecutive completion count. Decrements on Smart Reset; resets to 0 (not negative floor) on first miss.
+    * `dueDate` (Timestamp): Next scheduled deadline.
+    * `lastCompletedAt` (Timestamp | null): Used by Rhythm Score 14-day window and Smart Reset detection.
+    * `createdAt` (Timestamp): Document creation time.
+    * `sourceContext` (String, optional): **PROJ-46.** AI-generated one-sentence explanation of why this task was recommended (max 120 chars). Only present when `source === 'ai'`. Plaintext — not sensitive content.
+    * `sourceRef` (String, optional): **PROJ-46.** Reference for deep-linking back to the insight source. Format: `workbook:{workbookId}` for workbook-derived tasks, or a Firestore insight document ID for insight-derived tasks. Only present when `source === 'ai'`.
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
