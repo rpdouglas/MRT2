@@ -1,4 +1,4 @@
-CONTEXT EXPORT - 2026-05-03T02:37:27.424Z
+CONTEXT EXPORT - 2026-05-05T15:35:44.855Z
 Mode: Targeted (docs, docs-site)
 
 ### TABLE OF CONTENTS ###
@@ -24,7 +24,10 @@ Mode: Targeted (docs, docs-site)
 - docs/projects/40_TEST_SUITE_AUDIT.md
 - docs/projects/41_DYNAMIC_ANCHOR.md
 - docs/projects/42_DAILY_READINGS.md
+- docs/projects/45_ADAPTIVE_PERSONA_UI
+- docs/projects/46_TASK_MODULE_UPGRADE.md
 - docs/prompts/APPROVAL.md
+- docs/prompts/CODEBASE_DOCS_AUDIT.md
 - docs/prompts/FIX.md
 - docs/prompts/INGESTION.md
 - docs/prompts/INITIALIZATION.md
@@ -92,6 +95,7 @@ Mode: Targeted (docs, docs-site)
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-46:** The Ledger — Frictionless Task Module Upgrade. Sprint 1: swipe-to-complete (green reveal + haptic), Forgiveness Tap (amber swipe-left, "Let today go" sheet), Pull-to-Add Quick Capture. Sprint 2: Rhythm Score (14-day ring), AI Context Cards (sourceContext + sourceRef deep-links), Gemini prompt updates for action_contexts.
 - [x] **PROJ-41:** Dynamic Anchor -> Replaced static 'Daily Pledge' with a circadian-aware, 3-column quick action bar on the dashboard.
 - [x] **PROJ-40:** Test Suite Audit -> Comprehensive review of Vitest pipeline.
 - [x] **PROJ-31:** Crypto Chunking Pipeline -> Refactor PIN rotation to handle 10k+ docs without UI thread locking.
@@ -241,69 +245,482 @@ firebase deploy --only hosting
 <file path="docs/PERSONAS.md">
 # 👥 Persona-Based Development Model
 
-Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, fellowship culture, and technical environment.
+**Version:** 2.1 · **Last Updated:** May 2026 · **Next Review:** November 2026
 
-## 🌍 The Users (The Recovery Journey)
+**Change Log:**
+- v1.0 — Original four personas (David, Ned, Lisa, Walt)
+- v2.0 — Added Maya (The Systematiser)
+- v2.1 — Full audit pass: added §0 Usage Guide, §1 Persona Hierarchy, Journey Arc per persona, emotional state spectrums, fellowship-specific notes, anti-personas, Walt bio correction, Maya archetype differentiation, version control
 
-### 1. "David" (The User in Crisis)
-* **Fellowship:** CA (Cocaine Anonymous)
-* **Stage:** Day 1 to 30. Relapsed after 2 years. Acute distress, high anxiety.
-* **Demographics:** 32, Tech-literate but currently cognitively overloaded.
-* **Environment:** Alone in his bedroom at 2 AM. Screen brightness is low.
-* **Goal:** De-escalate immediate urges. Access help instantly.
-* **UX Constraint:** **Zero Friction.**
-    * *Rule:* No complex navigation. SOS button must be visible in < 1s.
-    * *Rule:* "Urge Log" and Voice-to-Vault must be accessible with 1 tap.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/david_headshot.png`
-    * `bio_feature`: `/assets/personas/david_bio.jpg`
-    * `full_body`: `/assets/personas/david_full.png`
-    * `looking_left`: `/assets/personas/david_left.png`
+---
+
+## §0 How to Use This Document in Development
+
+Features must pass the "Persona Check" based on the user's emotional state, stage of recovery, fellowship culture, and technical environment. Every module in My Recovery Toolkit (MRT) is designed to serve at least one of these primary user archetypes.
+
+**For every new feature or spec:**
+
+1. **Identify the primary persona** this feature serves — who is it primarily designed for?
+2. **Apply their UX Constraints** as acceptance criteria, not guidelines.
+3. **Run the David Safety Test** — could this UI harm or overwhelm someone in acute crisis? If yes, redesign before shipping.
+4. **Run the Walt Sovereignty Test** — does this feature respect data ownership and exportability?
+5. **Check the Ned Transition** — does this feature account for the Pink Cloud crash at Day 90? Does gamification serve or harm Ned at that inflection point?
+6. **Check the surveillance test** (for any social or connection feature) — would a reasonable person in early recovery feel watched or controlled by this? If yes, redesign.
+
+**The primary persona rule:** Design decisions are optimised for the primary persona. Secondary personas are tested against the result — their needs are accommodated without compromising the primary. Never design for an average of all personas; this produces a mediocre experience for everyone.
+
+---
+
+## §1 Persona Hierarchy
+
+| Role | Persona | Why |
+| :--- | :--- | :--- |
+| **Primary Safety Anchor** | David | Any feature that could harm a person in acute crisis must be redesigned before shipping. David's worst-case state sets the minimum acceptable UX floor for the entire product. |
+| **Primary Engagement Driver** | Ned | Daily retention, task completion, and gamification features are optimised for Ned. His metrics determine whether the product builds habit. |
+| **Primary Depth Driver** | Walt + Maya | AI analysis, journaling depth, workbook completion, and data export features are optimised for these two. Their engagement justifies the Premium tier. |
+| **Primary Viral Driver** | Lisa | The sponsor invite flow is the primary mechanism for organic user acquisition. Lisa bringing her sponsees into MRT is MRT's most important growth loop. |
+
+---
+
+## §2 Recovery Journey Arc
+
+Users are not static. The same person may move through multiple persona stages over time — or regress. MRT must adapt as users evolve.
+
+```
+Day 1-30      → David (Survival, crisis-first design)
+Day 30-90     → Ned (Momentum, gamification, habit building)
+Day 90+       → Pink Cloud Crash transition point — highest design risk
+Month 3-18    → Maya (Systematic learning, CBT, workbook completion)
+Year 1+       → Walt (Deep reflection, long-term patterns, data sovereignty)
+Year 7+       → Lisa (Service, sponsorship, giving back — Step 12)
+```
+
+**Stage transition design rules:**
+- **Day 30 (David → Ned):** Shift visual emphasis from crisis tools to progress indicators. Introduce gamification. Do not remove SOS access — early Ned still needs it.
+- **Day 90 (Pink Cloud Crash):** The highest-risk design moment. Reduce streak-count prominence. Shift from quantity metrics (tasks completed) to quality metrics (journal depth, step progress). Surface CBT tools and deeper AI analysis. Do not let the app feel "empty" when streaks break.
+- **Month 6 (Ned → Maya/Walt):** Introduce structured workbook pathways. Offer deeper AI comparative analysis. Reduce onboarding prompts.
+- **Year 1+ (Any → Lisa):** Surface service features and sponsor tooling when sobriety milestones suggest readiness.
+
+---
+
+## §3 The Personas
+
+---
+
+### 1. "David" (The Survivor)
+> *"I just need the noise to stop right now."*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | Day 1 to 30 (Relapsed after 2 years) |
+| **Recovery Path** | CA (Cocaine Anonymous) |
+| **System Archetype** | **The Survivor** (High Urgency) |
+| **Core Motivation** | De-escalate immediate urges and survive the night. |
+| **Tech Literacy** | High, but currently cognitively overloaded. |
+| **Environment** | Alone in his bedroom at 2 AM. Screen brightness is low. One hand. Portrait mode. |
+| **Fellowship Notes** | CA (Cocaine Anonymous) — stimulant-specific recovery culture. Step language and literature differs from AA/NA. Sponsor relationship follows the same 12-Step model but the community is smaller and meetings are less geographically dense. CA-specific content must be used when referencing David's fellowship context. |
+
+#### 📖 Bio & Narrative
+David is 32 years old and tech-literate, but currently in a state of acute distress and high anxiety after losing two years of clean time. His cognitive load is maxed out. He cannot handle complex navigation, reading long blocks of text, or making multi-step decisions. He needs immediate, frictionless intervention to prevent a downward spiral. He found his sponsor through a CA meeting three weeks ago and has their number saved — but calling feels like admitting defeat at 2AM. He attends meetings sporadically; his attendance is least reliable in the first two weeks of a new attempt.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Mild urge, daytime, some cognitive capacity. Wants to log quickly and move on. | One-tap logging, brief prompts, visual confirmation. |
+| **Typical case** | Evening anxiety, moderate distress, phone in one hand. | Large touch targets, no multi-step flows, immediate SOS access. |
+| **Worst case** | 4AM after a relapse. Cognitively overwhelmed, shame spiral, phone nearly dead. | Single-screen intervention. Zero navigation. Sponsor call button visible without vault unlock. No text input required. |
+
+> **Design rule:** All David-facing features must be designed for the worst case, not the typical case.
+
+#### 🎯 Goals & Needs
+* **De-escalation:** Immediate access to grounding techniques.
+* **Rapid Logging:** Ability to record what he is feeling without typing paragraphs.
+* **Instant Support:** One-tap access to his sponsor's phone number or crisis lines — available even when vault is locked.
+
+#### 🚧 Frustrations & Pain Points
+* **Friction:** Anything that takes more than a single tap to access.
+* **Overwhelm:** Dashboards with too many charts, text, or options.
+* **Shame:** Dealing with the heavy emotional toll of a recent relapse. Any UI language that implies failure makes this worse.
+* **Isolation:** At 2AM there is no one to call who won't worry. He needs MRT to be that bridge.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Zero Friction.**
+* *Rule:* No complex navigation. The SOS/Urge button must be visible in < 1 second from app launch.
+* *Rule:* "Urge Log" and Voice-to-Vault must be accessible with exactly 1 tap.
+* *Rule:* Sponsor call button must be functional without vault PIN entry — pulled from connection metadata, not the encrypted vault.
+* *Rule:* No red "failure" states, no "overdue" labels, no shame-inducing language anywhere in David-facing flows.
+* *Rule:* Maximum 3 taps to complete any crisis-mode action. Count taps. If it's 4, cut one.
+
+#### 🛠️ Key Feature Alignment
+* **Urge Surfer:** For immediate crisis de-escalation.
+* **Voice-to-Vault:** To quickly vent feelings without typing.
+* **SOS Modal — Sponsor Call Button:** One-tap access to sponsor (active sponsor connection required; works without vault unlock).
+* **CA Daily Reading:** Fellowship-appropriate daily content.
+
+#### 🔄 Journey Arc — Stage Transition
+At Day 30, David's crisis intensity typically reduces. MRT should respond by:
+- Gradually introducing Ned-style progress indicators (sobriety counter becomes more prominent)
+- Keeping SOS access but reducing its visual dominance
+- Introducing the first gamification elements (streaks, daily pledge) without overwhelming the still-fragile recovery foundation
+
+#### 🏆 Success Metrics
+* **Intervention Speed:** Time from app launch to SOS/Urge button tap.
+* **Crisis Conversion:** Successful completion of an Urge Surfing session.
+* **Day 7 Retention:** % of David-cohort users (Day 1-7) still active at Day 30 — the most critical retention window.
+
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.david.headshot`
+* `ASSETS.personas.david.bio_feature`
+* `ASSETS.personas.david.full_body`
+* `ASSETS.personas.david.looking_left`
+
+---
 
 ### 2. "Ned" (The Pink Cloud)
-* **Fellowship:** NA (Narcotics Anonymous)
-* **Stage:** 30 to 90 Days. Optimistic, manic energy, eager to track progress.
-* **Demographics:** 24, Digital Native. Expects high-fidelity UI and gamification.
-* **Environment:** At the gym, on the bus, constantly moving.
-* **Goal:** Gamification, clean-time tracking, and building daily habits.
-* **UX Constraint:** **Visual Reward.**
-    * *Rule:* Dashboard must prominently display clean time/streaks.
-    * *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/ned_headshot.png`
-    * `bio_feature`: `/assets/personas/ned_bio.jpg`
-    * `full_body`: `/assets/personas/ned_full.png`
-    * `looking_left`: `/assets/personas/ned_left.png`
+> *"I'm going to crush it today! Let's get that streak!"*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | 30 to 90 Days |
+| **Recovery Path** | NA (Narcotics Anonymous) |
+| **System Archetype** | **The Achiever** (High Energy) |
+| **Core Motivation** | Building momentum, tracking clean time, external validation. |
+| **Tech Literacy** | Digital Native (Expects high-fidelity UI and gamification). |
+| **Environment** | On his phone in portrait mode, one thumb, often with background noise (gym, commute). Short attention windows of 30–90 seconds. Tap-based interactions only — no text input in the flow. |
+| **Fellowship Notes** | NA (Narcotics Anonymous) — the NA Basic Text, NA-specific step language, and NA's "We Do Recover" culture differ meaningfully from AA. The NA community tends to skew younger and more urban. NA-specific daily readings and step language should be used in Ned's context. His sponsor relationship follows NA norms. |
+
+#### 📖 Bio & Narrative
+Ned is 24, a digital native, and currently riding the optimistic, manic energy often called the "Pink Cloud" of early recovery. He treats recovery like a fitness app — he wants to see his stats, hit his daily goals, and feel a constant sense of forward momentum. He attends NA meetings three times a week and has a sponsor he calls every morning. He's enthusiastic about step work right now, though that enthusiasm will be tested.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Morning, energy high, just completed his daily pledge. | Full gamification, confetti, prominent streak counter, social sharing. |
+| **Typical case** | Evening check-in, moderate energy. | Quick log, task completion, streak update. |
+| **Worst case — The Pink Cloud Crash (Day 90)** | The initial euphoria fades. Daily tasks feel like obligations. Streaks breaking feels catastrophic. Highest relapse risk since Day 1. | Shift from quantity to quality metrics. Surface deeper tools (CBT, journaling). Reduce streak-count prominence. Do not let the app feel empty when streaks break. |
+
+> **Design rule:** All Ned-facing gamification features must be stress-tested against the Pink Cloud Crash. If a feature would make Day 90 Ned feel like a failure, redesign it before shipping.
+
+#### 🎯 Goals & Needs
+* **Gamification:** Wants to see streaks, badges, and progress rings.
+* **Habit Building:** Needs structured daily task lists.
+* **Visual Affirmation:** Thrives on seeing his clean time front-and-center.
+* **Recognition:** Wants his sponsor to know when he completes a step (opt-in step completion notification).
+
+#### 🚧 Frustrations & Pain Points
+* **Boredom:** Static, dry, or overly clinical interfaces.
+* **Lack of Feedback:** Completing a task and getting no visual reward.
+* **Stagnation:** Feeling like he isn't making measurable "progress."
+* **Day 90 Void:** When the Pink Cloud lifts and the gamification that sustained him suddenly feels hollow — MRT must have something deeper waiting for him.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Visual Reward.**
+* *Rule:* Dashboard must prominently display clean time and daily streaks.
+* *Rule:* Positive reinforcement (confetti/haptics) on task completion is essential.
+* *Rule:* At Day 90, automatically surface a "Going Deeper" prompt — introduce CBT tools, longer journal prompts, step work depth — without removing the gamification layer entirely.
+* *Rule:* Streak-break UI must never be punishing. "Smart Reset" logic silently moves missed tasks to today. No red states, no failure language.
+
+#### 🛠️ Key Feature Alignment
+* **Daily Beacon/Tasks:** Keeping him engaged with recurring actions.
+* **Gamification Engine:** Milestone badges and streak tracking.
+* **NA Daily Reading:** Fellowship-appropriate content for his tradition.
+* **Step Completion Notification (opt-in):** Signals his sponsor when he completes a step — feeds his need for recognition.
+
+#### 🔄 Journey Arc — Stage Transition
+At Day 90, Ned is at his highest post-early-recovery relapse risk. MRT should respond by:
+- Shifting visual emphasis from streak counts to milestone badges (more durable, less fragile)
+- Automatically surfacing the first workbook sections as the next challenge
+- Introducing the AI Pattern Analysis feature for the first time ("You've logged 90 days — here's what your data shows")
+- Reducing daily task count pressure — quality over quantity
+
+#### 🏆 Success Metrics
+* **Daily Active Usage (DAU):** Consistent daily logins, particularly in the first 90 days.
+* **Task Completion Rate:** Percentage of daily habits checked off.
+* **Day 90 Retention:** % of Ned-cohort users still active at Day 90 and Day 120 — the Pink Cloud Crash window.
+
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.ned.headshot`
+* `ASSETS.personas.ned.bio_feature`
+* `ASSETS.personas.ned.full_body`
+* `ASSETS.personas.ned.looking_left`
+
+---
 
 ### 3. "Lisa" (The Service Superstar)
-* **Fellowship:** AA (Alcoholics Anonymous)
-* **Stage:** 7 Years (Maintenance). High-functioning, high-stress, sponsors 5 women.
-* **Demographics:** 45, Working professional, uses her phone primarily for communication/email.
-* **Environment:** In her car immediately after chairing a meeting.
-* **Goal:** Manage sponsee commitments (Step 12) without burning out.
-* **UX Constraint:** **Boundary Management.**
-    * *Rule:* "Sponsee Dashboard" must organize commitments efficiently to reduce mental load.
-    * *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" (Vitality Module).
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/lisa_headshot.png`
-    * `bio_feature`: `/assets/personas/lisa_bio.jpg`
-    * `full_body`: `/assets/personas/lisa_full.png`
-    * `looking_left`: `/assets/personas/lisa_left.png`
+> *"I have five sponsees and a full-time job. I need to stay organized so I don't burn out."*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | Maintenance (7 Years) |
+| **Recovery Path** | AA (Alcoholics Anonymous) |
+| **System Archetype** | **The Guide** (High Output) |
+| **Core Motivation** | Giving back (Step 12) without burning out. |
+| **Tech Literacy** | Moderate-High (Uses phone primarily for communication). |
+| **Environment** | In her car immediately after chairing a meeting. Phone only, one hand, parking lot. Time-pressured — she has 5 minutes before the next thing. |
+| **Fellowship Notes** | AA (Alcoholics Anonymous) — Lisa follows the AA Big Book and 12 Traditions closely. She takes anonymity seriously; she will not use features that risk exposing her sponsees' identities or her own full name in any public context. She uses AA's gender-specific sponsor model (women sponsor women). Her five sponsees are all women she met at her home group. |
+
+#### 📖 Bio & Narrative
+Lisa is a 45-year-old working professional with a high-stress life. She is heavily involved in service work and currently sponsors 3–6 women (currently at 5, which is near her capacity limit). She uses MRT not just for her own recovery, but as a management tool to keep her service commitments organised. She is highly susceptible to neglecting her own self-care — a pattern her own sponsor regularly calls out. In her car after a meeting, she has five minutes to check in on who needs attention before she drives home.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Sunday morning, organised, ahead of her commitments. | Full Rolodex management, step progress updates, planning mode. |
+| **Typical case** | In her car after a meeting. 5 minutes. One hand. | Quick dashboard scan — who needs contact? One-tap log contact. |
+| **Worst case — Burnout** | Overcommitted, neglecting her own program. Resentful. | Vitality module self-care prompts surface. Amber tones. Gentle, non-intrusive boundary reminder. |
+
+#### 🎯 Goals & Needs
+* **Organisation:** Keep track of where her sponsees are in their step work, encrypted and private.
+* **Resource Sharing:** Easily send readings or workbook content to sponsees — text only, anonymous.
+* **Boundary Maintenance:** Ensure she is taking time for her own mental health, not just serving others.
+* **At-a-Glance Urgency:** Know immediately who among her sponsees needs attention without reading through notes.
+
+#### 🚧 Frustrations & Pain Points
+* **Mental Load:** Trying to remember who texted her what, and when. This is her primary problem.
+* **Boundary Blurring:** Losing track of her own programme while helping others.
+* **Clutter:** Apps that make it hard to find specific tools quickly.
+* **Privacy Risk:** Any feature that could expose a sponsee's identity or recovery status to others.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Boundary Management.**
+* *Rule:* Service dashboard must sort friends by urgency (days since last contact) — Lisa must know who needs attention in under 10 seconds without reading individual profiles.
+* *Rule:* Needs gentle, non-intrusive "Self-Care Check-ins" (Vitality Module) — surfaced proactively, never as a guilt-inducing alert.
+* *Rule:* All sponsee data must be encrypted. Lisa must never worry that her private observations about a vulnerable person could be read by anyone else.
+* *Rule:* Anonymity compliance — no feature should surface a sponsee's full name, real photo, or identifying details in any shareable format.
+* *Rule:* The sponsee count (currently 5) is a design anchor for card layouts, sort algorithms, and notification thresholds — not a static fact. Range is 3–6.
+
+#### 🛠️ Key Feature Alignment
+* **Service Module — Encrypted Rolodex (PROJ-05):** Her primary daily tool. Sorted by urgency. Encrypted notes and step tracking per sponsee.
+* **📋 Reading Share Button (planned — Daily Readings Engine, PROJ-40):** Text-only, anonymous exports for sponsees. No MRT branding that would violate AA anonymity tradition.
+* **Vitality Module:** Tracking her own self-care metrics — the counterbalance to her service work.
+* **QR Handshake:** Secure in-person step work sharing with sponsees.
+
+#### 🔄 Journey Arc — Stage Transition
+Lisa is at the maintenance stage. Her journey arc is not forward progression but sustainable depth. MRT should:
+- Never add features that increase Lisa's mental load without providing a corresponding reduction in manual effort
+- Surface the Service Module as a primary navigation item as soon as user sobriety milestone data suggests readiness for sponsorship (Year 2+)
+- Provide periodic "sponsor health" prompts: "You have 5 active sponsees. Your capacity note says 5 is your limit."
+
+#### 🏆 Success Metrics
+* **Feature Utility:** Frequency of using the Service Dashboard and Rolodex.
+* **Self-Care Logging:** Consistent use of her personal daily anchor in the Vitality module.
+* **Viral Coefficient:** Number of successful sponsee invite activations per Lisa-cohort user — this is MRT's primary organic growth metric.
+
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.lisa.headshot`
+* `ASSETS.personas.lisa.bio_feature`
+* `ASSETS.personas.lisa.full_body`
+* `ASSETS.personas.lisa.looking_left`
+
+---
 
 ### 4. "Walt" (The Zen Master)
-* **Fellowship:** Recovery Dharma
-* **Stage:** 35+ Years. Stable, reflective, focused on mindfulness and sangha.
-* **Demographics:** 68, Vietnam Vet. Prefers desktop/tablet. Lower tolerance for tiny touch targets.
-* **Environment:** Home office, morning coffee, using a tablet or desktop browser.
-* **Goal:** Deep journaling, analyzing long-term patterns, data sovereignty.
-* **UX Constraint:** **Data Sovereignty & Accessibility.**
-    * *Rule:* Touch targets must be 44px+. Text must be highly legible.
-    * *Rule:* Export tools (PDF/JSON) must work perfectly for his archives.
-* **Asset Metadata (VitePress/Marketing):**
-    * `headshot`: `/assets/personas/walt_headshot.png`
-    * `bio_feature`: `/assets/personas/walt_bio.jpg`
-    * `full_body`: `/assets/personas/walt_full.png`
-    * `looking_left`: `/assets/personas/walt_left.png`
+> *"Recovery is a lifelong practice of mindfulness and reflection."*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | Long-Term (35+ Years) |
+| **Recovery Path** | AA (original) · Recovery Dharma (current practice) |
+| **System Archetype** | **The Observer** (High Reflection) |
+| **Core Motivation** | Deep journaling, analysing long-term patterns, data sovereignty. |
+| **Tech Literacy** | Moderate (Prefers desktop/tablet, comfortable with both touch and keyboard). |
+| **Environment** | Home office, morning coffee, Chrome on iPad primarily, occasionally macOS desktop browser. Expects the app to behave like a native tablet application — not a stretched mobile layout. |
+
+#### 📖 Bio & Narrative
+Walt is a 68-year-old Vietnam Veteran with 35+ years of stable recovery. He began his recovery through AA in the late 1980s, worked all 12 Steps under multiple sponsors over the years, and in the last decade has found Recovery Dharma's Buddhist framework more aligned with his mature mindfulness practice. He maintains ties to both traditions — he still attends an AA Big Book meeting monthly and a Recovery Dharma group weekly. He sponsors two men in his AA home group.
+
+He uses MRT primarily for deep introspection: writing long journal entries, tracking macro-patterns over years rather than days, and managing his service work with the quiet precision of someone who has seen what happens when boundaries fail. He is extremely protective of his privacy — a posture forged over decades of watching anonymity be violated in smaller fellowships.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Morning ritual, coffee, no interruptions. Deep writing mode. | Full-screen journal editor. No notifications. Word count visible. Export tools readily accessible. |
+| **Typical case** | Evening reflection after a meeting or call with a sponsee. | Shorter journal entry. Pattern analysis. Checking on step progress of sponsees. |
+| **Worst case** | A rare difficult day — difficult memories surface or a sponsee relapses. | Does not need crisis intervention tools. Needs the journal to be available and fast. SOS modal is not designed for Walt. |
+
+#### 🎯 Goals & Needs
+* **Deep Introspection:** A clean, distraction-free environment for long-form writing. No character limits anywhere.
+* **Data Ownership:** Absolute control over his personal data. JSON and PDF exports must work perfectly. He backs up monthly.
+* **Accessibility:** High-legibility text, 44px+ touch targets, no cluttered mobile UI. He uses a tablet.
+* **Service Management:** An organised, encrypted view of his two sponsees' step progress and his private notes about their work together.
+* **Long-term Pattern Analysis:** AI insights that compare this year's data against previous years — not just last week.
+
+#### 🚧 Frustrations & Pain Points
+* **Accessibility:** Tiny touch targets, low-contrast text, or features that assume a phone rather than a tablet.
+* **Walled Gardens:** Apps that lock his data in and do not allow easy exports. He will leave any app that does this.
+* **Superficiality:** Gamification or "gimmicks" that distract from deep work. Walt does not want streaks or badges.
+* **Unreferenced AI:** AI insights that do not show their source data. Walt wants to know which journal entries generated a pattern claim.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Data Sovereignty & Accessibility.**
+* *Rule:* Touch targets must be 44px+ minimum. Text must be highly legible — minimum 16px body, high contrast.
+* *Rule:* Export tools (PDF/JSON) must work perfectly and include all data, including `service_friends` encrypted records.
+* *Rule:* No character limits on any notes or journal fields. Walt writes 800-word entries.
+* *Rule:* AI insights must reference their source data (which journal entries, which date range). Walt will not trust an insight he cannot trace.
+* *Rule:* Gamification elements (streaks, badges, XP) must not appear in Walt's primary navigation paths. They may exist in the system but must not interrupt his workflow.
+
+#### 🛠️ Key Feature Alignment
+* **The Vault:** Zero-knowledge encrypted long-form journaling. His primary daily tool.
+* **Data Exports:** Local backups and PDF generation — must include service data.
+* **AI Pattern Analysis (Deep Mode):** Comparative analysis across months and years, not just weeks.
+* **Service Module:** Manages his two sponsees' step progress and encrypted notes.
+* **Recovery Dharma Workbook:** His current programme's structured inquiry path.
+
+#### 🔄 Journey Arc
+Walt has no further stage to transition to — he is at the apex of the recovery journey arc. MRT must serve him as a long-term user for years, not months. The product health metric for Walt is 12-month retention, not 30-day retention. Features must not become cluttered with additions that serve newer users at the cost of Walt's clean, depth-focused experience.
+
+#### 🏆 Success Metrics
+* **Content Depth:** Average word count per journal entry.
+* **Export Frequency:** Regular use of the data backup tools (monthly is the expected pattern).
+* **Long-term Retention:** % of Walt-cohort users (35+ days active, high journal word count) still active at 6 months and 12 months. This is the most important product health indicator for this persona.
+
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.walt.headshot`
+* `ASSETS.personas.walt.bio_feature`
+* `ASSETS.personas.walt.full_body`
+* `ASSETS.personas.walt.looking_left`
+
+---
+
+### 5. "Maya" (The Systematiser)
+> *"I want to understand the mechanics of my brain so I can upgrade my operating system."*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | Early-to-Mid (6–18 months) |
+| **Recovery Path** | Secular / CBT / SMART Recovery |
+| **System Archetype** | **The Systematiser** (High Completion Drive) |
+| **Core Motivation** | Completing the curriculum. Mastering the psychological mechanics of her addiction. |
+| **Tech Literacy** | High (Heavy user of data exports, AI insights, structured content). |
+| **Environment** | Evening sessions at a desktop with a second monitor, or weekend mornings on a laptop with coffee. Full cognitive capacity — she is never in a crisis state when she opens MRT. Comfortable with information density. No accessibility constraints. |
+
+#### 📖 Bio & Narrative
+Maya is 28 years old and works in a data-driven field. She initially tried traditional 12-Step programs but found the spiritual framework a poor fit for how she thinks. She moved to SMART Recovery and Recovery Dharma, and has been in structured recovery for eight months.
+
+She doesn't just want to "stay sober" — she wants to master the psychological mechanics of her behaviour. She treats her recovery like a curriculum, moving systematically through workbooks in linear order, tracking her completion percentage, and using AI comparative analysis to spot patterns she can't see herself. She attends a Recovery Dharma group online weekly and has a wise-friend relationship with one other member — she values this structured 1:1 peer accountability over open community feeds.
+
+**Differentiation from Walt:** Maya is in *completion mode* — she approaches recovery as a course to finish and master, moving chapter by chapter toward understanding. Walt is in *reflection mode* — he approaches recovery as an open-ended lifelong practice with no destination. These are meaningfully different UX postures that generate different design decisions on the same features. Maya wants progress bars and linear navigation; Walt wants an open journal and long-term pattern charts.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Weekend morning, dedicated study session, full focus. | Full workbook depth, AI analysis, export tools. |
+| **Typical case** | Weekday evening, 30-60 minutes. | One workbook section, journal entry, quick pattern check. |
+| **Lowest engagement** | Busy week, too tired for deep work. | Quick daily reading, brief log. Must not feel like failure — progress bar should show what she's completed, not what's pending. |
+
+> **Note:** Maya does not have a crisis state in MRT. She is never in acute distress when she opens the app. The David safety test applies to features she encounters (e.g., community features) but her primary flows do not need crisis-first design.
+
+#### 🎯 Goals & Needs
+* **Systematic Learning:** Complete every workbook section in linear order with visible completion tracking.
+* **Data Correlation:** Deep Pattern Analysis across 90-day windows — moods correlated with specific triggers.
+* **Traceable Insights:** AI analysis that references source data. She will not trust an output she cannot audit.
+* **Peer Accountability:** A structured 1:1 wise-friend relationship — not an open social feed.
+* **Modality Breadth:** Access to multiple recovery philosophies (SMART, Recovery Dharma, CBT, Secular/Stoic) to build a comprehensive personal framework.
+
+#### 🚧 Frustrations & Pain Points
+* **Vague Advice:** Frustrated by "one-size-fits-all" recovery slogans. Prefers rigorous CBT toolsets like CBA and DENTS.
+* **Lack of Structure:** Dislikes a dashboard that feels empty. Needs clear progress indicators for workbook completion — not a blank "add a journal entry" prompt.
+* **Data Silos:** Wants workbook progress visible alongside journal entries in PDF exports.
+* **Untraceable AI:** If an AI insight doesn't show its source data, Maya assumes it's wrong and stops using the feature.
+* **Open Social Feeds:** Not interested in a general community feed. Finds it distracting from the curriculum.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Structured Progression.**
+* *Rule:* Workbook completion percentage must be visible at all times in the workbook module — Maya tracks her progress like a course syllabus.
+* *Rule:* Linear navigation through workbook sections is the default — do not randomise or suggest sections out of sequence.
+* *Rule:* AI insights must explicitly reference source data (which journal entries, which date range, which mood samples). No black-box outputs.
+* *Rule:* Data visualisations must be mathematically exact and exportable. No rounded or estimated figures.
+* *Rule:* Progress indicators should show what she has completed, not what remains — framing completion, not deficit.
+
+#### 🛠️ Key Feature Alignment
+* **The Workbook Compass:** Core user for SMART Recovery, CBT, Recovery Dharma, and Secular/Stoic workbooks. Linear completion is her primary engagement pattern.
+* **AI Comparative Analysis:** Compares current weekly patterns against previous months with full data references.
+* **Multi-Modality Daily Readings:** Frequently switches between SMART, Recovery Dharma, Secular/Stoic to gather broad philosophical perspective.
+* **PDF Export with Workbook Progress:** Must include workbook completion data alongside journal entries.
+* **Accountability Partner (planned):** A structured 1:1 connection with her wise friend — not an open community feed.
+
+#### 🔄 Journey Arc — Stage Transition
+At Month 18, Maya faces a transition: she has completed the available curricula and her systematic drive may turn to frustration if there is nothing left to complete. MRT must anticipate this by:
+- Surfacing the advanced AI Pattern Analysis features (multi-year comparison) when workbook completion reaches 80%+
+- Introducing the community features — she may now be ready to give back and mentor others with a similar secular/CBT approach
+- Offering the service tools (wise-friend mentorship in RD model) as the next structured relationship to manage
+
+#### 🏆 Success Metrics
+* **Wisdom Score:** Total workbook questions answered and completed. This is Maya's primary engagement signal.
+* **Curriculum Completion Rate:** Percentage of available recovery literature consumed within her selected modalities.
+* **Insight Frequency:** How often she triggers the Deep Pattern Recognition engine and marks insights as "useful."
+* **Export Engagement:** Regular generation of workbook-inclusive PDF exports.
+
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.maya.headshot`
+* `ASSETS.personas.maya.bio_feature`
+* `ASSETS.personas.maya.full_body`
+* `ASSETS.personas.maya.looking_left`
+
+---
+
+## §4 Anti-Personas
+
+Anti-personas document users who should NOT be served by MRT features, or who could be harmed by them. These are not edge cases — they are documented risks that must be designed against, particularly for social and connection features.
+
+---
+
+### Anti-Persona A — "The 13th-Stepper"
+> A person using the sponsor role to exploit newcomers rather than support them.
+
+**Risk:** The Service Module's sponsor invite and connection features could be misused by someone with predatory intent toward vulnerable users in early recovery. The "13th-stepper" is a documented real-world problem in AA/NA communities.
+
+**Design responses already implemented:**
+- Friend consent screen requires explicit opt-in — the sponsee must accept the connection
+- Lisa can only see sobriety date — no access to encrypted vault content
+- Friend can revoke connection at any time
+
+**Additional safeguards needed:**
+- Friends should be able to report a connection as concerning from within the Profile settings — this should route to an admin review, not just disconnect
+- Connection invite links expire in 7 days and are single-use — cannot be mass-distributed
+
+---
+
+### Anti-Persona B — "The Active User"
+> A person currently in active addiction who opens MRT out of curiosity, guilt, or to manage appearances rather than with genuine recovery intent.
+
+**Risk:** Not harmful in itself — but features designed for David (crisis, genuine intent to recover) may not serve this user well, and may inadvertently provide a false sense of progress without real engagement.
+
+**Design response:** MRT makes no judgment about intent. The app is available. The design for David assumes genuine crisis intent. Features should not be built specifically to convert or detect this anti-persona — that would require surveillance that violates the product's values.
+
+---
+
+### Anti-Persona C — "The Dual-Diagnosis Crisis"
+> A person whose mental health crisis exceeds what a peer-support recovery app is designed to address — acute suicidality, psychosis, severe dissociation.
+
+**Risk:** MRT's SOS modal and grounding tools are designed for addiction-related urges and anxiety, not for acute psychiatric emergencies. A user in a true psychiatric crisis using MRT's Urge Surfer instead of calling 911 or a crisis line represents a real clinical risk.
+
+**Design responses:**
+- SOS modal always surfaces professional crisis lines (988 in the US, local equivalents) alongside peer tools — these are never buried below MRT's own features
+- MRT must never position itself as a clinical tool or substitute for professional mental health care
+- The app's positioning language ("Sidekick," "Companion Tool") is specifically chosen to avoid implying clinical capability
+
+---
+
+## §5 Persona Overlap Register
+
+Maintained to prevent design paralysis when two personas have conflicting needs on the same feature.
+
+| Pair | Overlap | Resolution |
+| :--- | :--- | :--- |
+| Walt ↔ Maya | Both analytical, data-focused, secular recovery, AI insights | **UX posture is different:** Walt = open-ended reflection (no destination). Maya = linear curriculum completion (wants to finish). Design for Maya uses progress bars, linear navigation, completion %. Design for Walt uses open journal, long-horizon pattern charts, no completion pressure. |
+| David ↔ Ned | Both early recovery, both phone-primary | **Emotional state is opposite:** David is in crisis and needs zero friction. Ned is energised and wants reward. The same feature (daily pledge) should be a survival tool for David and a gamification element for Ned — these are handled by stage-based UI adaptation, not separate UIs. |
+| Lisa ↔ Walt | Both long-term, both sponsor others | **Job-to-be-done is different:** Lisa = manage others (service-outward). Walt = reflect inward (introspection-first). Service features are Lisa's primary destination; a secondary one for Walt. |
+| Maya ↔ Ned | Both early-to-mid recovery | **Motivation is opposite:** Ned = momentum and gamification (external validation). Maya = systematic mastery (internal curriculum). The same workbook feature is a completion-tracking tool for Maya and a progress badge for Ned. |
+
+---
+
+*My Recovery Toolkit · docs/PERSONAS.md · v2.1 · May 2026*
 
 </file>
 
@@ -349,6 +766,9 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-46` The Ledger — Frictionless Task Module Upgrade (Swipe Gestures, Quick Capture, Rhythm Score, AI Context Cards)
+* `PROJ-42` Daily Readings Engine (Multi-Modality Content)
+* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
 * `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
@@ -407,6 +827,22 @@ graph TD
 
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans. (Unencrypted for streak evaluation).
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `title` (String): Task text. **UNENCRYPTED** (required for streak evaluation and AI action routing).
+    * `source` (String): `'manual'` | `'ai'` | `'anchor_intent'` — governs tab routing.
+    * `status` (String): `'pending'` | `'completed'`.
+    * `isRecurring` (Boolean): True for habit-type tasks.
+    * `frequency` (String): Legacy field — `'once'` | `'daily'` | `'weekly'` | `'monthly'`.
+    * `recurrence` (Map): Full `RecurrenceConfig` object (supersedes `frequency`).
+    * `priority` (String): `'High'` | `'Medium'` | `'Low'`.
+    * `category` (String, optional): `'Recovery'` | `'Health'` | `'Life'` | `'Work'`.
+    * `currentStreak` (Int): Consecutive completion count. Decrements on Smart Reset; resets to 0 (not negative floor) on first miss.
+    * `dueDate` (Timestamp): Next scheduled deadline.
+    * `lastCompletedAt` (Timestamp | null): Used by Rhythm Score 14-day window and Smart Reset detection.
+    * `createdAt` (Timestamp): Document creation time.
+    * `sourceContext` (String, optional): **PROJ-46.** AI-generated one-sentence explanation of why this task was recommended (max 120 chars). Only present when `source === 'ai'`. Plaintext — not sensitive content.
+    * `sourceRef` (String, optional): **PROJ-46.** Reference for deep-linking back to the insight source. Format: `workbook:{workbookId}` for workbook-derived tasks, or a Firestore insight document ID for insight-derived tasks. Only present when `source === 'ai'`.
 
 ### `insights/{insightId}`
 * **Purpose:** AI-generated analysis of journals/workbooks.
@@ -1724,6 +2160,836 @@ const COPYRIGHT_TRIGGERS = [
 - [ ] No trademarked fellowship names in any UI label or generated content
 </file>
 
+<file path="docs/projects/45_ADAPTIVE_PERSONA_UI">
+# 🧠 Project PROJ-45: Adaptive Persona UI Engine
+
+**Status:** ⚪ Planned — PARKED (not in active sprint)
+**Primary Persona:** All five — David (safety anchor), Ned, Lisa, Walt, Maya
+**Objective:** Transform MRT's five user personas from a branding framework into a runtime application architecture, where the UI reshapes itself — layout, cognitive load, typography, interaction patterns, information density — based on which persona the user identifies with in a given session.
+
+---
+
+## 1. The Executive Summary
+
+**User Story:**
+- **As** David (acute crisis), I want the app to present a single large action with no distractions so that I can ground myself without navigating a dense interface.
+- **As** Ned (Pink Cloud), I want streak counts, XP, and mission labels front and centre so that I feel immediate momentum and reward.
+- **As** Lisa (service-oriented), I want a case-management grid of my sponsees so that I can act on the most urgent need in under 10 seconds.
+- **As** Walt (reflective), I want a blank page and nothing else so that I can write without noise or gamification pressure.
+- **As** Maya (analytical), I want every data control and workbook progress visible at once so that I do not have to navigate to find depth.
+
+**The Core Insight:**
+Right now, personas are branding architecture. They should become runtime architecture. Recovery is non-linear — the same person uses all five modes. The UI must reflect who the user is *right now*, not who they were at signup.
+
+**Competitive Gap:**
+No recovery app — not Reframe, I Am Sober, nor Loosid — has implemented persona-driven runtime layout adaptation. All use a single UI for all users. An adaptive engine is a genuine product differentiator and a natural extension of MRT's privacy-first, user-sovereign philosophy. This is an untapped market position.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+
+*This section MUST be completed before any code is written.*
+
+- [ ] **Data Sensitivity:** Mode-switch history is clinically significant data. The fact that a user has been in David mode for 4 consecutive sessions is a meaningful recovery signal. This data must be treated as sensitive.
+- [ ] **Encryption Strategy:** The mode-switch session log (`personaModeHistory`) should be stored encrypted via `src/lib/crypto.ts`. The current persona preference (default mode) can be stored plaintext in `users/{uid}` as metadata.
+- [ ] **Key Rotation:** The encrypted `personaModeHistory` field must be included in `executePinRotation` — it is sensitive enough to be crypto-shredded on PIN change.
+- [ ] **Analytics Consent:** Mode-switch data is used for the Adaptive Welfare Check (Phase 4). This requires explicit opt-in consent during onboarding — separate from general analytics consent.
+- [ ] **ZK Boundary Check:** The shared infrastructure (Vault backend, auth, push notifications) must remain identical across all persona modes. No persona mode may weaken or bypass the ZK boundary.
+
+**ZK Assessment per persona mode:**
+
+| Persona Mode | New Data Written | Encrypted? | Notes |
+|---|---|---|---|
+| David | `currentPersonaMode`, `personaModeHistory` | History: Yes. Current: No | Current mode is metadata, history is sensitive |
+| Ned | Same as above | Same | |
+| Lisa | Same as above | Same | Sponsee data remains in existing encrypted `service_friends` collection |
+| Walt | Same as above | Same | Journal data remains in existing encrypted vault |
+| Maya | Same as above | Same | Workbook data remains in existing encrypted collection |
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+*Define the exact Firestore paths and TypeScript interfaces.*
+
+### Per-Persona UI Contract
+
+| Persona | Emotional State | UI Mode | Density | Primary Action |
+|---|---|---|---|---|
+| 🌊 David | Acute Crisis | Grounding / single large action | Minimal | SOS Urge Surfer |
+| ⚡ Ned | Pink Cloud / High Energy | Gamified dashboard | Medium | Daily streak & XP |
+| 🌿 Lisa | Stable / Service-Oriented | Case management grid | Medium | Sponsee overview |
+| 🌙 Walt | Zen / Reflective | Vault & journal | Minimal | Encrypted journal entry |
+| 🧠 Maya | Analytical / Curriculum-Driven | Data-dense dashboard | High | Workbook progression |
+
+### Three-Layer Architecture
+
+**Layer 1 — Design Token Layer**
+Each persona has a complete CSS design token set: colour palette, typography scale (font family, size, weight), spacing scale, and motion profile. Switching persona swaps the entire token set. No inline style overrides — token-only switching.
+
+**Layer 2 — Layout Grammar Layer**
+Each persona maps to a distinct React component tree with different layout logic. This is not a visual reskin — it is a different information architecture.
+
+| Persona | Component Tree Depth | Notes |
+|---|---|---|
+| David | ~3 nodes | Breathing orb → SOS button → 988 footer |
+| Ned | ~6 nodes | Streak hero → Mission list → Stats → Badges |
+| Lisa | ~8 nodes | Sponsee grid → Individual card → Action row |
+| Walt | ~4 nodes | Date header → Textarea → Sparkline → Export |
+| Maya | ~12 nodes | Workbook matrix → Heatmap → AI terminal → Stats header |
+
+**Layer 3 — Interaction Pattern Layer**
+Cognitive load, touch target sizes, animation speed, and default information density are all controlled per persona.
+- David mode: disables non-essential navigation entirely. No badges, no task lists, no notifications visible.
+- Maya mode: exposes all controls. Dense layout. No hand-holding.
+
+### Firestore Collections Impacted
+
+**`users/{uid}`** — add the following fields (plaintext metadata):
+```typescript
+currentPersonaMode: PersonaMode;        // active mode this session
+defaultPersonaMode: PersonaMode;        // persisted preference
+personaModeUpdatedAt: Timestamp;
+```
+
+**`user_persona_history/{uid}`** — new encrypted collection:
+```typescript
+// Encrypted via src/lib/crypto.ts
+interface PersonaModeHistoryDocument {
+  uid: string;
+  encryptedHistory: string;            // encrypted JSON array of PersonaSession[]
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+interface PersonaSession {
+  mode: PersonaMode;
+  sessionStartedAt: string;            // ISO date — encrypted
+  sessionEndedAt: string | null;       // ISO date — encrypted
+}
+```
+
+### Types (`src/lib/db.ts`)
+
+```typescript
+type PersonaMode = 'david' | 'ned' | 'lisa' | 'walt' | 'maya';
+
+interface PersonaModeState {
+  currentMode: PersonaMode;
+  defaultMode: PersonaMode;
+  sessionHistory: PersonaSession[];    // decrypted at runtime, never in global state
+}
+
+interface PersonaSession {
+  mode: PersonaMode;
+  sessionStartedAt: string;
+  sessionEndedAt: string | null;
+}
+
+// Design token contract per persona
+interface PersonaTokenSet {
+  mode: PersonaMode;
+  colorPrimary: string;
+  colorBackground: string;
+  fontFamily: string;
+  fontSizeBase: number;
+  motionSpeed: 'slow' | 'normal' | 'fast' | 'none';
+  density: 'minimal' | 'medium' | 'high';
+  touchTargetMin: number;             // px — David: 56px minimum, Maya: 44px
+}
+```
+
+### Shared Infrastructure (unchanged across all modes)
+
+- Zero-Knowledge Vault backend — data layer is identical
+- Authentication and session management
+- Push notification system (content is persona-aware; infrastructure is shared)
+- Analytics event schema — mode switches logged as first-class events
+
+---
+
+## 4. Implementation Phases 🏗️
+
+> **This project is PARKED. These phases are proposed for when it enters active development. No code should be written until the Open Questions in Section 7 are resolved and Phase 0 design work is complete.**
+
+---
+
+### Phase 0: Foundation & Design System
+
+**Objective:** Establish the token system and design language before any React work begins.
+
+**Logic & State:**
+- Define the `PersonaMode` type and `PersonaModeState` interface in `src/lib/db.ts`
+- Create `usePersonaMode()` hook — reads/writes current mode, persists default preference to Firestore
+- Define Firestore security rules for `user_persona_history`
+
+**UI/UX:**
+- Define complete design token schema per persona (colour, typography, spacing, motion)
+- Create Figma component library with all 5 token sets
+- Establish layout grammar rules — document the component tree depth and node structure for each persona
+- Design the persona selector overlay — the daily mood check-in ritual
+
+**Success Criteria:** A designer can create a new screen in any persona mode using tokens only. The persona selector feels like a check-in, not a settings screen.
+
+**Somatic Check:** The selector must not trigger anxiety — offering "Who are you today?" is very different from asking someone in crisis to categorise themselves clinically.
+
+**Edge Cases:**
+- [ ] What if `isVaultUnlocked` is false when the user tries to switch modes? Mode switch is permitted; encrypted history is not written until vault is unlocked.
+- [ ] What if the user has never selected a persona before? Default to David for safety (see Open Questions).
+
+---
+
+### Phase 1: David + Walt (v1)
+
+**Objective:** Ship the two minimal-density modes first — lowest risk, highest clinical priority.
+
+**Logic & State:**
+- React Query hook: `usePersonaMode()` — session state + Firestore persistence
+- React Query hook: `usePersonaHistory()` — encrypted read/write of session history
+- Firebase security rules: `user_persona_history/{uid}` — owner-only read/write
+
+**UI/UX — David Mode:**
+- Full-screen breathing orb as default view (animated, calming — Tailwind CSS animation)
+- Sober day counter at maximum legible size
+- SOS Urge Surfer: single large button, always above the fold
+- Voice-to-Vault: one tap to record, zero text input required
+- 988 crisis line: permanently visible footer, never scrolls away
+- Navigation: hidden by default. Single discreet icon to access other features.
+- Typography: large serif, slow rhythm, generous line height
+- No notifications, no badges, no task lists visible in this mode
+
+**UI/UX — Walt Mode:**
+- Default view: date header and open textarea only. Nothing else.
+- Word count below textarea, unobtrusive
+- Longitudinal sparkline: 14-day journal entry frequency, minimal
+- Export controls: JSON and PDF — available but quiet
+- Pattern analysis: surfaced as a text link, not a button
+- No streak, no XP, no gamification of any kind
+- Typography: classical serif (Garamond-adjacent), generous margins, light palette
+- Zero-knowledge reminder: one quiet line confirming vault is encrypted
+
+**Somatic Check:** David mode must not contain any element that increases cognitive load. Walt mode must not contain any element that implies urgency or competition.
+
+**Reward:** Not applicable for David mode (crisis intervention). Walt mode: word count is the only "progress" signal.
+
+**Success Criteria:** Internal user testing — David mode usable in under 3 taps from cold launch.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Both modes function offline. David mode's breathing orb is fully local. Walt mode writes journal to TanStack Query cache and syncs on reconnection.
+- [ ] `isVaultUnlocked` is false → David mode still shows SOS and 988 footer (no vault access needed). Walt mode shows the journal textarea only after vault unlock — show a PIN prompt in place of the textarea.
+- [ ] 320px screen (iPhone SE) → David mode: breathing orb scales to 80vw. SOS button occupies full width. Walt mode: full-width textarea, no sidebar elements.
+
+---
+
+### Phase 2: Ned + Lisa (v1)
+
+**Objective:** Ship the medium-density service and achievement modes.
+
+**Logic & State:**
+- React Query hooks: `useStreakData()`, `useXPSystem()`, `useMissions()` — Ned
+- React Query hooks: `useServiceFriends()` (existing from PROJ-05), `useVitalityData()` — Lisa
+- Mode-switch transition animations (CSS transitions, 300ms, reduced-motion respects `prefers-reduced-motion`)
+
+**UI/UX — Ned Mode:**
+- Streak counter as hero element with flame animation
+- XP system: each completed task awards points, displayed in real time
+- Daily mission list: checkbox-based, gamified labels ("Mission" not "Task")
+- Progress bar for daily goal completion
+- Stats dashboard: this week / this month / personal best
+- Celebration animations on milestone hits (Day 7, 30, 90, 1 year)
+- Typography: condensed sans-serif, high contrast, high energy
+
+**UI/UX — Lisa Mode:**
+- Sponsee dashboard: card per sponsee with days sober, last contact, status (stable / at-risk / new)
+- Task per sponsee: one actionable next step visible per card
+- Vitality Module: Lisa's own wellbeing score surfaced prominently
+- Quick contact: one-tap to send check-in message to sponsee (with consent)
+- Reading Share Button: share daily reading directly to a sponsee
+- Invite flow: streamlined sponsee onboarding
+- Typography: warm serif (Palatino-adjacent), structured layout, planner aesthetic
+
+**Somatic Check:** Ned mode — streak-break UI must never be punishing. Smart Reset logic silently moves missed tasks. No red states, no "failed" language. Lisa mode — amber tones throughout; no urgency that induces burnout.
+
+**Reward:** Ned mode: XP on every task completion. Celebration animation on milestones. Lisa mode: reward is relational — "Sarah reached Day 30" is the celebration.
+
+**Success Criteria:** Lisa's sponsee dashboard replaces current sponsee UX with no feature regression. Mode-switch transition feels responsive (<300ms perceived).
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Ned mode: streak data cached for 48h. Tasks write to cache, sync on reconnect. Lisa mode: sponsee list cached; contact actions queue and send on reconnect.
+- [ ] `isVaultUnlocked` is false → Ned mode: streak and missions visible (not encrypted). XP system visible. Lisa mode: encrypted sponsee notes hidden; card metadata (days sober, last contact) visible as plaintext metadata.
+- [ ] 320px screen → Ned mode: streak hero full-width. Mission list single column. Lisa mode: sponsee cards full-width, single column. No horizontal scroll.
+
+---
+
+### Phase 3: Maya (v1)
+
+**Objective:** Ship the high-density analytical mode.
+
+**Logic & State:**
+- React Query hooks: `useWorkbookProgress()`, `useTriggerHeatmap()`, `useAIInsightEngine()`
+- Analytics events for mode switches logged to Firestore (with consent)
+- Maya mode is the first mode to actively query Gemini for pattern analysis
+
+**UI/UX — Maya Mode:**
+- Workbook matrix: all active workbooks with progress bars, module counts, completion status
+- Trigger frequency heatmap: 14-day rolling view, severity vs. frequency axes
+- AI Insight Engine: terminal-style interface for querying pattern data
+- DENTS framework tracker
+- Cost-Benefit Analysis tool (CBA): integrated in-mode, not buried in settings
+- Session statistics in header bar: modules complete, AI insights generated, data points logged
+- Typography: monospace throughout, dense information layout, dark terminal aesthetic
+
+**Somatic Check:** Maya mode is the one mode where information density is intentional and desired. The somatic check is inverted: does the UI *under-serve* her analytical needs? Missing data or hidden controls would be the failure mode for Maya.
+
+**Reward:** Workbook completion percentage and AI insight count are Maya's progress signals. No gamification — this is mastery-based reward.
+
+**Success Criteria:** Maya mode workbook progression matches parity with non-adaptive workbook UX. All existing workbook features accessible within Maya mode without navigating to another section.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Workbook matrix shows cached data. AI Insight Engine shows "Analysis requires connection" text link. Heatmap shows cached 14-day window.
+- [ ] `isVaultUnlocked` is false → Workbook content (encrypted answers) hidden. Workbook structure and progress percentage visible (plaintext metadata). Prompt PIN entry in-line.
+- [ ] Gemini API rate limit hit → AI terminal shows queued state; retry automatically after 30s. Never crash the mode.
+- [ ] 320px screen → Heatmap collapses to 7-day view. Matrix goes single column. Terminal becomes full-screen on tap.
+
+---
+
+### Phase 4: Adaptive Intelligence
+
+**Objective:** Enable the app to respond to mode-switch patterns with clinical welfare checks.
+
+**Logic & State:**
+- Session mode history logging (encrypted, opt-in)
+- Welfare check trigger logic: 4+ consecutive sessions in David mode → surface gentle check-in
+- Persona usage analytics dashboard (admin-only, aggregate anonymised data)
+
+**Welfare Check Design:**
+> *"You've been using grounding mode for a few days. How are you doing?"*
+
+This is a meaningful clinical touchpoint. It must be:
+- Opt-in (consent captured at onboarding)
+- Gentle — not alarming, not a diagnostic assessment
+- Actionable — offer to connect with sponsor, or surface a crisis resource
+- Reviewed by clinical advisors before rollout (see Phase 5)
+
+**UI/UX:**
+- Welfare check surfaces as a soft modal at session start (not mid-session)
+- Two options: "I'm okay, continue" and "I could use support" (routes to sponsor call or 988)
+- No forced response — dismiss is always available
+
+**Success Criteria:** Welfare check prototype tested with clinical advisors and approved for rollout. Analytics pipeline confirmed with correct consent gating.
+
+**Edge Cases:**
+- [ ] User opts out of mode history → Welfare check never triggers. Mode preference still persists.
+- [ ] User switches from David to Ned and back: does this reset the 4-session counter? Decision: yes — any non-David session resets the counter.
+
+---
+
+### Phase 5: v1.0 Release
+
+**Objective:** Full QA, accessibility audit, and release readiness.
+
+- Full QA across all 5 modes on iOS, Android, and desktop PWA
+- Accessibility audit: WCAG AA compliance across all 5 token sets. David mode requires AAA contrast (crisis state, low screen brightness).
+- App Store metadata updated to reflect the adaptive UI as a feature
+- Investor demo materials prepared
+
+**Success Criteria:** App Store rating maintains 4.5+. Day-7 retention improves versus single-UI baseline. Clinical advisor sign-off on welfare check feature.
+
+---
+
+## 5. QA & Verification 🧪
+
+- [ ] **Unit Tests:**
+  - `usePersonaMode()` — read, write, persist to Firestore
+  - `usePersonaHistory()` — encrypt before write, decrypt on read; raw Firestore document must contain only ciphertext
+  - Token switching — assert correct CSS variables are applied per mode
+  - David mode: SOS button visible within 3 taps from cold launch (automation)
+  - Walt mode: no gamification elements render in the component tree (snapshot test)
+  - Ned mode: streak counter updates in real time on task completion
+  - Maya mode: workbook matrix shows correct completion % from encrypted workbook data
+
+- [ ] **The Subway Test (Offline Resilience):**
+  - All five modes must display usable UI when `navigator.onLine` is false
+  - David mode: breathing orb and SOS must function with zero network
+  - Walt mode: journal entry must write to TanStack cache and confirm with "saved locally" indicator
+  - No mode may show a blank screen or unhandled error state offline
+
+- [ ] **The "Lost PIN" Test (Crypto-Shredding):**
+  - On PIN reset (crypto-shred), `personaModeHistory` encrypted collection must be confirmed deleted
+  - Post-reset: mode preference (plaintext, in `users/{uid}`) persists — only the history is shredded
+  - Verify via Firebase Emulator: document is absent after crypto-shred
+
+- [ ] **The David Safety Test (Persona-Specific):**
+  - In David mode, count the taps from cold launch to SOS button activation. Must be ≤ 3.
+  - In David mode, confirm: no notification badges visible, no task list visible, no navigation bar visible, 988 footer always in DOM.
+  - In David mode with vault locked: 988 footer still renders. SOS still renders. No PIN prompt blocks the crisis flow.
+
+- [ ] **Accessibility Check:**
+  - Colour contrast: David mode target AAA (7:1), all others AA (4.5:1)
+  - Touch targets: David mode minimum 56px. All other modes minimum 44px.
+  - `prefers-reduced-motion`: all animations (breathing orb, flame, celebrations) must pause or simplify
+
+---
+
+## 6. Open Questions
+
+*These must be resolved before Phase 1 begins. Do not re-litigate them without updating this document.*
+
+| # | Question | Options | Status |
+|---|---|---|---|
+| 1 | **Default mode for new users** | (a) Onboarding quiz routes them · (b) David is default for safety · (c) User chooses at first launch | ❓ Unresolved |
+| 2 | **Mode-switch friction** | (a) Always one tap, no friction · (b) Minimal confirmation ("Switch to Ned mode?") | ❓ Unresolved |
+| 3 | **Navigation consistency** | (a) Each mode determines its own navigation (current prototype) · (b) Shared nav bar across all modes | ❓ Unresolved |
+| 4 | **Analytics consent model** | (a) Opt-in per feature at onboarding · (b) Part of general onboarding consent flow | ❓ Unresolved |
+| 5 | **Crisis escalation from non-David modes** | (a) App suggests switching to David mode on high-severity trigger · (b) No paternalistic mode-switching — user controls | ❓ Unresolved |
+| 6 | **Community feed (PROJ-04) behaviour per mode** | (a) Mode-specific views (list/card/hidden) · (b) Community feed is mode-agnostic | ❓ Unresolved |
+
+---
+
+## 7. Companion Artefacts
+
+The following artefacts were created alongside this spec and must be stored in the same project folder:
+
+| File | Description |
+|---|---|
+| `mrt_adaptive_ui.jsx` | React prototype demonstrating all 5 persona modes with distinct layouts, colour systems, and interaction patterns. Working proof of concept — not a production component. Start here when the project re-enters the sprint. |
+| `mrt_brand_review.jsx` | Brand audit dashboard that surfaced the insight about personas as runtime architecture, built from MRT Brand Guidelines v3.0 review. |
+| `MRT_Master_Marketing_Brand_Strategy_Guidelines_v3.0.pdf` | Defines the five personas, their emotional states, and their messaging contracts — the source of truth for the per-persona UI contracts in Section 3. |
+
+> **Note for future sessions:** The adaptive UI prototype demonstrates the concept convincingly. When this project re-enters the sprint, review the prototype with the full team before redesigning from scratch. The five layout grammars (David: 3-node depth, Maya: 12-node depth) are the core architectural insight. Do not flatten them into a single component tree with conditional rendering — that defeats the purpose of the engine.
+
+---
+
+## 8. Feature Flag
+
+This feature ships behind `FEATURE_ADAPTIVE_PERSONA_UI` in `src/lib/featureFlags.ts`.
+
+The flag is `false` in production until Phase 5 QA is complete. It can be enabled per-user for internal testing by setting `featureFlags.adaptivePersonaUI: true` in the user's Firestore profile document.
+
+---
+
+*MRT · PROJ-45 Adaptive Persona UI Engine · v0.1 DRAFT · May 2026 · Status: PARKED*
+</file>
+
+<file path="docs/projects/46_TASK_MODULE_UPGRADE.md">
+# 📋 Project PROJ-46: The Ledger — Frictionless Task Module Upgrade
+
+**Status:** ✅ Shipped (2026-05-05 · commits 69d45f4, 5972211 on `feature/task_update`)
+**Primary Persona:** Ned (engagement driver) · David (safety anchor) · All five personas benefit
+**Objective:** Reduce task completion to a single swipe gesture, surface AI Action Plan tasks in context rather than a ghost tab, and replace the silent Smart Reset with a psychologically safe Forgiveness Tap — all without any breaking schema changes.
+
+---
+
+## 1. The Executive Summary
+
+**User Stories:**
+
+- **As Ned** (30-90 days, Pink Cloud), I want to complete today's habits with a satisfying swipe so that each completion feels like a win, not a checkbox click — and I want to see a Rhythm Score that doesn't punish me for one missed day the way a streak counter does.
+- **As David** (Day 1-30, acute crisis), I want to swipe past a task I can't face today and see it move without shame language so that I don't spiral into failure thinking when recovery is already hard enough.
+- **As Maya** (analytical, 6-18 months), I want to see the Workbook insight that generated an AI task inline on the task card so that I understand *why* I'm being asked to do this action before I commit to it.
+- **As Lisa** (sponsor, 7+ years), I want to add a task in one line of text rather than navigating a modal so that I can capture a sponsee action item in the 30 seconds I have between meetings.
+- **As Walt** (long-term, analytical), I want to see a Rhythm Score that reflects my actual consistency over 14 days so that one busy week doesn't erase months of disciplined practice from my view of myself.
+
+**Competitive Gap:**
+Every task app with a rating above 4.5 stars uses swipe-to-complete as a primary interaction (Things 3, Todoist, Gmail). MRT currently requires tap-find-tap-wait for the same action. The Rhythm Score directly addresses the brittle streak counter problem that causes Ned-cohort churn at Day 90 — no competitor in the recovery space has implemented consistency-based scoring. The AI Action Plan context card makes the Workbook-to-action pipeline visible and traceable, which no recovery app currently does.
+
+---
+
+## 2. Security & Zero-Knowledge Audit 🛡️
+
+- [x] **Data Sensitivity:** This upgrade adds two new fields to `tasks` documents: `sourceContext` (string — a brief AI-generated summary) and `sourceRef` (string — a reference ID to a workbook answer or journal entry). Neither field contains user-generated PII or emotional content. `sourceContext` is a one-sentence AI summary of the *type* of insight (e.g., "From your Step 4 workbook — isolation identified as a recurring trigger"). `sourceRef` is a document ID, not content.
+- [x] **Rhythm Score:** Computed entirely client-side from existing `tasks` query data using a 14-day rolling window. No new Firestore writes. No new fields on any document. The score is derived, not stored.
+- [x] **Encryption Strategy:** No new encryption required. `tasks` collection is already unencrypted plaintext (required for streak evaluation per the ZK architecture). `sourceContext` and `sourceRef` are metadata — not emotional content — and correctly remain unencrypted.
+- [x] **Key Rotation:** No new fields require inclusion in `executePinRotation`. The two new task fields are metadata, not vault content.
+- [x] **Forgiveness Tap:** Pure UI change to the existing Smart Reset flow. No schema change. The same `updateDoc` call that previously fired silently now fires after user interaction. The Firestore write is identical.
+- [x] **Pull-to-Add Quick Capture:** Creates a standard task document with the same schema as the existing `addTask()` function. No new fields, no new permissions.
+
+**ZK Boundary Assessment:** ✅ Unchanged. All five changes in this spec are either pure UI modifications or additive metadata fields on the already-plaintext `tasks` collection. No encrypted collection is touched. No vault content is read or written.
+
+---
+
+## 3. Schema & Architecture 🗄️
+
+### Firestore Collections Impacted
+
+**`tasks/{taskId}`** — two new optional fields added:
+
+| Field | Type | Nullable | Description |
+|---|---|---|---|
+| `sourceContext` | `string` | Yes | One-sentence AI summary of the insight that generated this task. Only present when `source == 'ai'`. Written by the Workbook Compass or Journal Analysis Wizard at task creation time. Example: `"From your Step 4 workbook — you identified isolation as a trigger 3 times this week."` |
+| `sourceRef` | `string` | Yes | Document ID of the workbook answer or journal entry that generated this task. Used to deep-link back to the source. Only present when `source == 'ai'`. |
+
+**No other collections are modified.** No new collections are created.
+
+### Types (`src/lib/db.ts`)
+
+Add to the existing `Task` interface:
+
+```typescript
+// Add to existing Task interface in src/lib/db.ts
+interface Task {
+  // ... all existing fields unchanged ...
+
+  // New optional fields — only present on AI-generated tasks (source === 'ai')
+  sourceContext?: string;    // One-sentence insight summary — plaintext, not sensitive
+  sourceRef?: string;        // Reference doc ID for deep-link back to source workbook/journal
+}
+```
+
+### Rhythm Score — Client-Side Computed Type
+
+The Rhythm Score is **not stored in Firestore**. It is computed on the client from the existing task query data. Define the computation contract:
+
+```typescript
+// src/lib/rhythmScore.ts — new utility file
+
+/**
+ * Computes a 0–100 Rhythm Score from the last 14 days of task completion history.
+ *
+ * Rhythm is MORE forgiving than a streak:
+ * - A 14-day perfect record = 100
+ * - One missed day out of 14 = ~93 (not zero)
+ * - A missed week = ~50 (still reflects real effort)
+ *
+ * Formula: (completedDays / 14) * 100, where completedDays = number of days in
+ * the last 14 where at least one recurring task was completed.
+ */
+export function computeRhythmScore(tasks: Task[]): number {
+  const today = startOfDay(new Date());
+  const windowStart = subDays(today, 13); // 14-day window inclusive of today
+
+  const completedDays = new Set<string>();
+
+  for (const task of tasks) {
+    if (!task.isRecurring) continue;
+    if (!task.lastCompletedAt) continue;
+
+    const completedDate = toDate(task.lastCompletedAt);
+    if (!completedDate) continue;
+    if (isBefore(completedDate, windowStart)) continue;
+
+    // Record this day as a day with at least one completion
+    completedDays.add(format(startOfDay(completedDate), 'yyyy-MM-dd'));
+  }
+
+  return Math.round((completedDays.size / 14) * 100);
+}
+```
+
+### Workbook Compass / Journal Wizard — Write Contract Update
+
+When the AI generates a task (i.e., when calling `addTask()` with `source: 'ai'`), the calling code in the Workbook Compass and Journal Analysis Wizard must now also pass `sourceContext` and `sourceRef`:
+
+```typescript
+// Updated call signature — addTask() is unchanged; callers pass additional fields
+await TaskLib.addTask(
+  user.uid,
+  title,
+  recurrence,
+  priority,
+  dueDate,
+  'ai',               // source
+  {                   // new optional metadata param — addTask() passes through to Firestore
+    sourceContext: "From your Step 4 workbook — you identified isolation as a trigger.",
+    sourceRef: workbookAnswerId,  // or journalEntryId
+  }
+);
+```
+
+Update `addTask()` in `src/lib/tasks.ts` to accept and pass through this optional metadata:
+
+```typescript
+export async function addTask(
+  uid: string,
+  title: string,
+  recurrence: RecurrenceConfig,
+  priority: Priority,
+  startDate: Date,
+  source: 'manual' | 'ai' = 'manual',
+  aiMeta?: { sourceContext?: string; sourceRef?: string }  // NEW — optional
+) {
+  // ... existing logic unchanged ...
+  await addDoc(collection(db, COLLECTION), {
+    // ... all existing fields ...
+    ...(aiMeta?.sourceContext && { sourceContext: aiMeta.sourceContext }),
+    ...(aiMeta?.sourceRef && { sourceRef: aiMeta.sourceRef }),
+  });
+}
+```
+
+---
+
+## 4. Implementation Phases 🏗️
+
+> **Sprint 1 (4–6 engineering days, zero schema changes):**
+> Phase 1 (Swipe Gestures) + Phase 2 (Pull-to-Add) + Phase 3 (Forgiveness Tap)
+>
+> **Sprint 2 (3–4 engineering days, 2 new fields):**
+> Phase 4 (AI Context Cards + Rhythm Score)
+>
+> Ship Sprint 1 independently. Sprint 2 depends on Sprint 1 but not vice versa.
+
+---
+
+### Phase 1: Swipe Gesture Interactions
+
+**Logic & State:**
+- Add touch event handlers to `TaskRow.tsx` for horizontal swipe detection.
+- Swipe threshold: minimum 80px horizontal delta + velocity > 0.3px/ms before triggering. This prevents accidental swipes during vertical scroll.
+- Swipe right (≥80px delta): calls `toggleTask({ task, isCompleting: true })` — existing mutation, no change.
+- Swipe left (≥80px delta): calls the updated Smart Reset / Forgiveness Tap (Phase 3).
+- During swipe: translate the card horizontally using CSS `transform: translateX()`. Show a green reveal layer (right swipe) or amber reveal layer (left swipe) beneath the card as it slides.
+- On release below threshold: spring the card back to position (CSS transition: `transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)`).
+- No new React Query hooks. No Firestore rule changes.
+
+**UI/UX:**
+- **Swipe Right — Complete:**
+  - Green reveal layer shows a checkmark icon as the card slides right.
+  - On threshold met: card slides fully off screen to the right, then the task disappears from the list with a height-collapse animation (200ms).
+  - Haptic: `navigator.vibrate([40])` — single short pulse on completion.
+  - Streak counter increments with a pop animation (`transform: scale(1.3) → 1.0`, 150ms).
+  - XP award toast appears for 1.5 seconds (same as existing completion flow, now triggered by gesture).
+
+- **Swipe Left — Skip Today (leads to Phase 3 Forgiveness Tap):**
+  - Amber reveal layer shows a forward-arrow icon as the card slides left.
+  - On threshold met: card snaps back to position (does not slide off screen — user must confirm via the Forgiveness Tap overlay).
+
+- **Somatic Check:** The green/amber colour coding is deliberate — green = positive action, amber = compassionate deferral. Never red. The swipe-left amber matches the Service Module's warmth-and-connection palette and carries the same psychological intent: no shame, just tomorrow.
+
+- **Reward:** Swipe-right completion triggers the same XP award as the existing toggle — no change to the XP economy. The satisfaction comes from the gesture itself, not additional points.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Swipe-complete fires the optimistic UI update immediately (existing behaviour via React Query `onMutate`). The Firestore write queues. Task card disappears optimistically. Behaviour is unchanged from tap-to-complete.
+- [ ] `isVaultUnlocked` is false → `tasks` collection is unencrypted; swipe gestures work regardless of vault state.
+- [ ] 320px screen (iPhone SE) → Swipe threshold reduced to 60px delta on narrow screens. Reveal layer still shows icon. Card still animates correctly.
+- [ ] Simultaneous vertical scroll and horizontal swipe → Detect primary gesture direction in the first 10px of movement. If vertical-primary: pass event to scroll handler. If horizontal-primary: lock to swipe handler. Standard iOS/Android touch handling pattern.
+
+---
+
+### Phase 2: Pull-to-Add Quick Capture
+
+**Logic & State:**
+- Pull-down gesture on the task list container (≥60px vertical pull from top of list when already scrolled to top) reveals the Quick Capture input.
+- Quick Capture renders as a bottom sheet that slides up from the bottom of the screen — more accessible than a top-anchored pull (avoids status bar interference on iOS).
+- The gesture triggers the bottom sheet; the pull itself is the affordance, not the entry point.
+- On submit (Enter key / "Add" button): calls existing `addTask()` with `source: 'manual'`, `dueDate: today`, `priority: 'Medium'` as defaults. User can edit all fields from the full TaskFormModal if needed.
+- No new React Query hooks. No schema changes.
+
+**UI/UX:**
+- Quick Capture input: single text field, full width, auto-focused on sheet open.
+- Placeholder: `"Add a recovery task for today…"` — recovery-framed language, not productivity-framed.
+- Below the input: three tap targets for quick priority setting (🔴 High · 🟡 Medium · 🟢 Low). Default: Medium pre-selected.
+- Below priority: due date shortcut chips: `Today` (pre-selected) · `Tomorrow` · `This week` — tap to change. No date picker on quick capture; full date picker accessible via `More options →` link that opens TaskFormModal.
+- Submit button: `"Add to Today"` — specific and recovery-anchored, not generic "Save".
+- On submit: sheet dismisses, task appears at top of the This Week list with a brief highlight pulse (200ms, cyan).
+- FAB (`+` button) remains — it opens TaskFormModal directly for users who prefer it. Pull-to-add is an additive interaction, not a replacement.
+
+- **Somatic Check:** The Quick Capture sheet must close cleanly if the user pulls it down again or taps outside — no sticky modals. Escape routes are always present.
+- **Reward:** The task appears immediately in the list (optimistic UI). The user sees their addition without waiting for Firestore confirmation.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Quick Capture still works; `addTask()` optimistic UI adds to cache immediately, queues Firestore write.
+- [ ] `isVaultUnlocked` is false → Tasks are unencrypted; Quick Capture works regardless of vault state.
+- [ ] 320px screen → Bottom sheet occupies 85vh, input and priority chips stack vertically. Full keyboard-visible layout tested.
+- [ ] Pull gesture conflicts with browser pull-to-refresh → Use `touch-action: pan-y` and detect the list's `scrollTop === 0` before activating the sheet trigger. Disable browser pull-to-refresh on the tasks page (already done in PWA manifest).
+
+---
+
+### Phase 3: Forgiveness Tap (Smart Reset Replacement)
+
+**Logic & State:**
+- The existing `getUserTasks()` function in `src/lib/tasks.ts` currently performs a silent Smart Reset: when a recurring task's `dueDate` is in the past and it was not completed today, it silently updates `dueDate` to today and adjusts `currentStreak`.
+- **This silent behaviour is preserved for the background load** — it still runs on `getUserTasks()` so that David never sees a pile of overdue tasks from last week.
+- **The Forgiveness Tap adds a UI layer for the swipe-left interaction only.** When a user actively swipes left on a task (choosing to skip today), instead of the silent update firing immediately:
+  1. The amber swipe reveal layer is shown.
+  2. A bottom sheet slides up with the Forgiveness Tap UI.
+  3. User confirms → silent Smart Reset fires.
+  4. User dismisses → task snaps back to position, no changes made.
+
+**The Forgiveness Tap bottom sheet content:**
+
+```
+┌─────────────────────────────────────┐
+│  🍂  Let today go                   │
+│                                     │
+│  "Morning Meditation" will be       │
+│  waiting for you tomorrow.          │
+│  Your streak is safe — this is      │
+│  just one day.                      │
+│                                     │
+│  [  Move to Tomorrow  ]  ← primary  │
+│  [  Keep for Today    ]  ← ghost    │
+└─────────────────────────────────────┘
+```
+
+- **Language notes:** "Let today go" is tested recovery language — present in multiple NA and Recovery Dharma texts. "Your streak is safe" is a deliberate inversion of the shame spiral. If streak IS broken (consecutive missed days), use "Recovery continues tomorrow" instead. Never use the word "missed" or "failed".
+- **If streak was already at 0 or negative** (chronic avoidance pattern): the sheet still shows compassionate language but quietly notes: "You've skipped this a few times. Want to make it easier?" with a link to edit the recurrence frequency. This is the only gentle nudge toward reducing cognitive load — never pressure.
+
+**UI/UX — Amber palette throughout:** consistent with the Service Module's warmth-and-connection colour system. No red. No failure iconography.
+
+**Somatic Check:** This is the most clinically sensitive interaction in the spec. The language requires review against SAMHSA safe messaging guidelines before Sprint 1 ships. The specific phrase "Let today go" should be validated with at least one clinical advisor. The "your streak is safe" copy requires verification that the streak IS in fact safe in that moment (streak penalty on Smart Reset is -1 from 0, not a full reset — confirm this against `useTaskOperations.ts` line ~210 before writing the copy).
+
+**Reward:** There is no XP reward for skipping. The reward is the absence of punishment — the compassionate framing is the feature.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Forgiveness Tap confirms → Smart Reset fires optimistically via cache update. Firestore write queues. Task date updates in cache immediately.
+- [ ] `isVaultUnlocked` is false → Forgiveness Tap is available; tasks are unencrypted.
+- [ ] 320px screen → Bottom sheet is full-width. Button targets are 56px height minimum. Task title truncates with ellipsis at 2 lines.
+- [ ] User swipes left on a task that is NOT recurring → Forgiveness Tap still shows, but copy changes to: "Move this to tomorrow?" (no streak language — one-time tasks have no streak). "Move to Tomorrow" updates `dueDate` only.
+
+---
+
+### Phase 4: AI Context Cards + Rhythm Score
+
+> **Prerequisite:** Sprint 1 (Phases 1-3) must be shipped and stable before Sprint 2 begins.
+
+**Logic & State:**
+
+**Rhythm Score:**
+- Add `computeRhythmScore(tasks: Task[]): number` to `src/lib/rhythmScore.ts` (see schema section for full implementation).
+- Call in the Tasks page component after the existing `useQuery` for tasks resolves: `const rhythmScore = useMemo(() => computeRhythmScore(tasks ?? []), [tasks]);`
+- No new hook. No new Firestore read. Derived from the existing task query.
+- Display: shown alongside (not replacing) the existing streak counter for the first 30 days after shipping. After 30 days, Rhythm Score becomes the primary display; streak counter moves to a secondary position (tap to expand).
+
+**AI Context Cards:**
+- `sourceContext` and `sourceRef` are now written at task creation time by the Workbook Compass and Journal Analysis Wizard (see schema section).
+- On the existing `TaskRow.tsx`: detect `task.source === 'ai' && task.sourceContext`. If present, render the context card expansion below the task title.
+- Context card is collapsed by default (just the task title + purple sparkle shows). Tap the sparkle or task to expand.
+- Expanded state shows: `sourceContext` text (one sentence) + a `"See insight →"` link that deep-links to the source via `sourceRef`.
+
+**UI/UX — Rhythm Score:**
+- Position: replaces the streak number display in the task module header.
+- Visual: a circular progress ring (0-100) with the number inside. Colour: green (≥70) → amber (40-69) → muted (0-39). Never red.
+- Label: "14-Day Rhythm" — specific and data-honest, not a vague wellness term.
+- Tooltip / tap: shows the calculation breakdown — "X of the last 14 days included a completed habit."
+
+**UI/UX — AI Context Cards:**
+- Purple sparkle icon (existing) remains on AI task cards.
+- Below the task title, collapsed: a subtle one-line preview of `sourceContext` in 11px muted text. Not hidden — just de-emphasised.
+- Tap the card: expands to full `sourceContext` sentence + `"See insight →"` deep link.
+- The `"See insight →"` link navigates to the specific workbook section or journal entry identified by `sourceRef`. If the source document no longer exists (deleted journal entry), the link shows "Source no longer available" gracefully — no broken navigation.
+
+**Workbook Compass & Journal Analysis Wizard updates:**
+- Both already call `addTask()` when generating AI actions. Update those call sites to pass `aiMeta: { sourceContext, sourceRef }`.
+- `sourceContext` must be generated by Gemini as part of the task generation prompt — add to the existing prompt: "Also provide a one-sentence explanation of why this action is recommended, referencing the user's specific pattern. Maximum 120 characters. No jargon."
+- `sourceRef` is the document ID of the workbook answer document or journal entry that triggered the analysis. Already available at the call site.
+
+**Somatic Check:** The Rhythm Score must never make a user feel surveilled or judged. The tooltip "X of the last 14 days" is factual — it does not editorialize. The colour transitions are gradual and non-alarming. No "you're slipping" language anywhere.
+
+**Reward:** The Rhythm Score at 70+ triggers a subtle ambient glow on the tasks header (not an animation or celebration — just a warm visual state). This rewards consistency without gamifying it in the Ned-specific sense.
+
+**Edge Cases:**
+- [ ] `navigator.onLine` is false → Rhythm Score computes from cached task data. Displays based on whatever is in TanStack Query cache. Shows "Based on cached data" if cache is more than 24h old.
+- [ ] `isVaultUnlocked` is false → Rhythm Score computes from unencrypted `tasks` data; displays normally. AI Context Cards display `sourceContext` (plaintext) normally. `sourceRef` deep-link is blocked until vault is unlocked (the destination is encrypted content).
+- [ ] 320px screen → Rhythm Score ring shrinks to 40px diameter. Context card collapses to title-only on narrow screens; tap to expand.
+- [ ] `sourceRef` doc deleted → "See insight →" replaced with "Source no longer available" (muted text, no link).
+- [ ] Task with `source === 'ai'` but no `sourceContext` (legacy AI tasks created before this spec) → No context card rendered. Purple sparkle still shows. Graceful degradation — no empty card state.
+
+---
+
+## 5. QA & Verification 🧪
+
+### Unit Tests (`src/__tests__/tasks/`)
+
+- [ ] **Swipe gesture threshold:** Mock touch events — assert swipe-right fires `toggleTask` only when horizontal delta ≥ 80px AND velocity ≥ 0.3px/ms. Assert it does NOT fire at 79px delta.
+- [ ] **Swipe-left → Forgiveness Tap:** Assert bottom sheet renders on left-swipe threshold met. Assert "Move to Tomorrow" calls `updateTask` with tomorrow's date. Assert "Keep for Today" dismisses sheet without any Firestore call.
+- [ ] **Forgiveness Tap copy selection:** Assert "Your streak is safe" appears when `currentStreak > 0`. Assert "Recovery continues tomorrow" appears when `currentStreak <= 0`.
+- [ ] **Forgiveness Tap — one-time task:** Assert "Move this to tomorrow?" copy (no streak language) when `isRecurring === false`.
+- [ ] **Quick Capture submit:** Assert `addTask()` called with `source: 'manual'`, `dueDate: today`, `priority: 'Medium'` on default submit.
+- [ ] **Quick Capture priority chips:** Assert priority changes when chip tapped. Assert selected chip has active state. Assert `addTask()` receives the selected priority.
+- [ ] **`computeRhythmScore()`:** Test with 14 days of daily completions → score 100. Test with 7 completions in 14 days → score 50. Test with 0 completions → score 0. Test with completions outside the 14-day window → not counted.
+- [ ] **Rhythm Score colour thresholds:** Assert green at score 70, amber at 69, muted (no special colour) at 39.
+- [ ] **AI Context Card rendering:** Assert context card renders when `source === 'ai'` and `sourceContext` is present. Assert no context card when `sourceContext` is absent (legacy AI tasks). Assert "Source no longer available" when `sourceRef` points to a deleted document.
+- [ ] **`addTask()` with `aiMeta`:** Assert `sourceContext` and `sourceRef` written to Firestore document when provided. Assert neither field is written when `aiMeta` is undefined (manual tasks).
+
+### The Subway Test (Offline Resilience)
+- [ ] With `navigator.onLine` mocked to `false`:
+  - Swipe-right on a task → optimistic UI removes task from list. Assert task removed from TanStack cache. Assert `updateDoc` queued (not errored).
+  - Quick Capture submit → task appears in list. Assert added to TanStack cache. Assert `addDoc` queued.
+  - Forgiveness Tap confirm → task's `dueDate` updates in UI. Assert cache updated. Assert `updateDoc` queued.
+  - Rhythm Score → displays (computed from cache). Assert displays "Based on cached data" label when cache age > 24h.
+
+### The "Lost PIN" Test (Crypto-Shredding)
+- [ ] Confirm `sourceContext` and `sourceRef` fields are **not** included in `executePinRotation` — they are plaintext metadata on an unencrypted collection and must not be shredded.
+- [ ] Confirm Rhythm Score computation produces a score of 0 after crypto-shred (all completed task history is gone; the score correctly reflects the fresh start).
+
+### Persona-Specific QA
+
+- [ ] **David Safety Test:** Open the app in a simulated low-battery, low-brightness scenario. Swipe-left on a task. Verify Forgiveness Tap bottom sheet renders correctly. Verify no red states, no "failed" or "missed" language anywhere in the flow. Verify the sheet can be dismissed in ≤ 2 taps.
+- [ ] **Ned Pink Cloud Crash Test:** Set all task `currentStreak` values to 0 (simulating Day 90 crash). Verify Rhythm Score still shows a meaningful value (reflecting the 90 days of prior completions in the 14-day window). Verify copy reads "Recovery continues tomorrow" not "Your streak is safe."
+- [ ] **Maya Traceability Test:** Create an AI task with `sourceContext` and `sourceRef` populated. Verify the context card expands. Verify the "See insight →" link navigates to the correct workbook section. Verify that tapping a task with a valid `sourceRef` but a deleted source document shows "Source no longer available."
+- [ ] **Walt Accessibility Test:** On iPad (tablet emulation), verify Rhythm Score ring is ≥48px. Verify all swipe gesture targets meet 44px minimum. Verify no gamification language (no "streak" in primary view after 30-day transition period).
+- [ ] **Lisa Speed Test:** Time the Quick Capture flow from pull gesture to task appearing in the list. Target: ≤8 seconds end-to-end on a mid-range device with a cold TanStack cache.
+
+### Regression Tests (Existing Behaviour Must Not Break)
+
+- [ ] Existing tap-to-complete still works (swipe is additive, not replacement).
+- [ ] FAB `+` button still opens `TaskFormModal` directly.
+- [ ] AI Action Plan tab still exists and shows AI tasks — context cards are additive, the tab is not removed.
+- [ ] Smart Reset on `getUserTasks()` still fires silently on background load — Forgiveness Tap is only for active swipe-left, not background evaluation.
+- [ ] XP awards still fire on task completion via both tap and swipe.
+- [ ] `currentStreak` field still updates correctly on both completion and smart reset — Rhythm Score is a display layer, not a replacement for the underlying data.
+- [ ] Future Task Safety modal still intercepts swipe-right on tasks with `dueDate` strictly in the future.
+
+---
+
+## 6. Out of Scope
+
+- Natural language parsing (NLP) on the Quick Capture input — text is stored as-is. NLP via Gemini is a future enhancement on top of this foundation.
+- Morning Pledge ritual (3-task daily selection) — this is Approach 3 and a separate spec.
+- Rhythm Score replacing streak counter as the *only* metric — the 30-day parallel display period is required before primary promotion.
+- Removing the Action Plan tab — the tab stays. Context cards are additive.
+- Weekly Recovery Insight generated from evening inventory — separate spec.
+- Any change to the XP economy — task completion XP values are unchanged.
+
+---
+
+## 7. Definition of Done
+
+**Sprint 1:**
+- [ ] Swipe-right completes a task with animation and haptic feedback
+- [ ] Swipe-left surfaces the Forgiveness Tap bottom sheet
+- [ ] Forgiveness Tap copy has been reviewed against SAMHSA safe messaging guidelines
+- [ ] "Let today go" / "Recovery continues tomorrow" copy validated with a clinical advisor
+- [ ] Pull-to-add Quick Capture opens, accepts input, and creates a task in ≤3 taps
+- [ ] All three new interactions work identically with tap-to-complete (no regressions)
+- [ ] Swipe gesture does not conflict with vertical scroll on any tested device
+- [ ] All Sprint 1 unit tests passing
+- [ ] Subway Test passing for all three new interactions
+- [ ] `npm run check` — zero TypeScript errors
+- [ ] `npm run build` — clean build
+- [ ] David Safety Test passing — no shame language in any flow
+
+**Sprint 2:**
+- [ ] `sourceContext` and `sourceRef` written by Workbook Compass and Journal Analysis Wizard on all new AI tasks
+- [ ] AI Context Cards expand correctly on tap; "See insight →" navigates to source
+- [ ] Legacy AI tasks (no `sourceContext`) degrade gracefully — no empty card state
+- [ ] Rhythm Score computes correctly from 14-day window (unit tests passing)
+- [ ] Rhythm Score displays alongside streak for first 30 days
+- [ ] Rhythm Score colour thresholds correct (green ≥70, amber 40-69, muted below)
+- [ ] Maya Traceability Test passing
+- [ ] Walt Accessibility Test passing
+- [ ] All Sprint 2 unit tests passing
+- [ ] `npm run check` — zero TypeScript errors
+- [ ] `npm run build` — clean build
+
+---
+
+---
+
+## 8. Shipped Notes
+
+**`sourceRef` format:** The spec described `sourceRef` as a raw Firestore document ID. In practice, no individual workbook answer document IDs are available at the `addTask()` call site in `WorkbookDetail.tsx`. The implemented convention is:
+- Workbook-derived tasks: `sourceRef = 'workbook:{workbookId}'` (e.g., `'workbook:step-4'`)
+- Insight-derived tasks: `sourceRef = insight.id` (Firestore document ID, no prefix)
+
+`TaskRow` routes deep-links by prefix: `workbook:` → `/workbooks/{id}`, all others → `/insights`.
+
+---
+
+*MRT · PROJ-46 The Ledger — Frictionless Task Module Upgrade · v1.0 · May 2026 · Status: ✅ Shipped*
+</file>
+
 <file path="docs/prompts/APPROVAL.md">
 # ✅ Execution Prompt (The Builder v5.0 - The Mandatory Cat Gate)
 
@@ -1756,6 +3022,39 @@ Before you generate any Python scripts to modify existing files, you MUST verify
     * **Manual Verification:** List `npm run build` and `npm run check` as required steps.
 
 **Go.**
+
+</file>
+
+<file path="docs/prompts/CODEBASE_DOCS_AUDIT.md">
+# Comprehensive Codebase & Documentation Audit
+
+**Objective:** Achieve a deep, structural understanding of the MRT (My Recovery Toolkit) codebase and perform a gap analysis against the user-facing documentation to ensure feature parity, accuracy, and completeness.
+
+**Phase 1: Deep Codebase Ingestion & Architectural Mapping**
+1. **Analyze Core Architecture:** 
+   - Trace the lifecycle of the application starting from `src/main.tsx` and `src/App.tsx`.
+   - Understand the `AppShell` layout, protected routing (`PrivateRoute`), and the offline-first TanStack Query configuration.
+   - Deeply inspect the `VaultGate` and the encryption boundary (`src/lib/crypto.ts`) to understand how zero-knowledge AES-GCM encryption is enforced before data hits Firestore.
+2. **Feature & Module Breakdown:**
+   - Map out all major features (e.g., Journaling, Workbooks, Tasks/Habits, Vitality/Mood, Insights, and Gamification).
+   - Identify how each feature is connected: Trace UI components (`src/components/`) to their respective hooks (`src/hooks/`), contexts (`src/contexts/`), and backend data models.
+   - Catalog all interactive elements, modals, forms, and specific user flows (especially crisis/urge interventions designed for the "David" persona).
+3. **Database & Services:**
+   - Review Firestore schemas, indexes, and Cloud Functions (`functions/`) to understand data persistence and background jobs (like the daily cron).
+
+**Phase 2: Documentation Comparison**
+1. **Review User-Facing Docs:** 
+   - Read through all markdown files in the `/docs-site/` directory (e.g., Getting Started, Dashboard, Journaling, CBT Tools, etc.).
+2. **Cross-Reference:** 
+   - Compare the documented features, UI descriptions, and workflows against the actual implementation discovered in Phase 1.
+   - Verify that encryption promises, offline capabilities, and specific tools (like the Dynamic Anchor or Urge Intervention) are accurately represented to the user.
+
+**Phase 3: Gap Analysis & Reporting (Action Required)**
+1. **Synthesize Findings:** 
+   - Generate a structured report highlighting areas where the codebase has outpaced the documentation (undocumented features, outdated screenshots/descriptions) or where the documentation promises functionality that does not exist or works differently.
+2. **Actionable Recommendations:** 
+   - Provide a prioritized list of suggested updates for the `/docs-site/` files.
+   - *CRITICAL:* Do NOT make any changes to the documentation or codebase yet. Present the gap analysis and wait for explicit approval on which updates to apply.
 
 </file>
 
@@ -1792,52 +3091,54 @@ Before you generate any Python scripts to modify existing files, you MUST verify
 </file>
 
 <file path="docs/prompts/INGESTION.md">
-# 🧠 Deep Context Ingestion Protocol (v1.0)
+# 🧠 Deep Context Ingestion Protocol (v1.1)
 
-**Trigger:** Use this prompt IMMEDIATELY after uploading a `project_codebase_*.txt` dump to start a new AI session.
-**Role:** Principal Architect & Senior Staff Engineer.
+**Trigger:** Use this prompt IMMEDIATELY after uploading a `project_codebase_*.txt` dump to start a new AI session[cite: 2].
+**Role:** Principal Architect & Senior Staff Engineer[cite: 2].
 
 ---
 
-### 📥 INSTRUCTION: SYSTEM INITIALIZATION
-You have just received a massive text file containing the complete source code and documentation of **My Recovery Toolkit (MRT)**. The files are separated by `<file path="...">` tags. 
+### 📥 INSTRUCTION: SYSTEM INITIALIZATION (v1.1)
+You have just received a massive text file containing the complete source code and documentation of **My Recovery Toolkit (MRT)**[cite: 1, 2]. The files are separated by `<file path="...">` tags[cite: 1, 2]. 
 
-You must deeply ingest this entire document. Do not skim. Build a strict, relational mental map of the following pillars:
+You must deeply ingest this entire document[cite: 2]. Build a strict, relational mental map of these four pillars[cite: 2]:
 
-#### 1. Architecture & Data Flow
-* **The Stack:** React 19, Vite, Tailwind v4, Firebase (Firestore/Auth), Gemini 2.5 API.
-* **State Management:** Map how `AuthContext`, `EncryptionContext`, and `LayoutContext` wrap the application. Understand how `TanStack Query` hooks (e.g., `useJournalOperations`, `useTaskOperations`) manage server state and offline caching.
-* **The Database:** Memorize the exact TypeScript interfaces in `src/lib/db.ts` (`UserProfile`, `JournalEntry`, `Task`, `InsightResult`).
+#### 1. Architecture & AI Data Flow
+* **The Stack:** React 19, Vite, Tailwind v4, Firebase (Firestore/Auth)[cite: 1, 2].
+* **The Gemini Cascade:** Understand the `MODEL_CASCADE` in `src/lib/gemini.ts`[cite: 1, 2]. Deep reasoning tasks use `gemini-3.1-pro-preview`, while low-latency tasks use `gemini-2.5-flash-lite`[cite: 1, 2].
+* **State Management:** Map how `AuthContext`, `EncryptionContext`, and `LayoutContext` wrap the app[cite: 1, 2]. Trace `TanStack Query` hooks for journal and task operations[cite: 1, 2].
 
 #### 2. The Zero-Knowledge Security Boundary (CRITICAL)
-* **The Core Rule:** Plain text sensitive data (Journals, Workbooks) NEVER leaves the device.
-* **The Mechanism:** Trace how `src/lib/crypto.ts` derives keys from the user's PIN + Salt, and how `AES-GCM` encrypts data before it hits Firestore.
-* **The Gatekeeper:** Understand how `VaultGate.tsx` blocks access to encrypted routes until the PIN is entered in `sessionStorage`.
+* **The Core Rule:** Plain text sensitive data (Journals, Workbooks) NEVER leaves the device[cite: 1, 2].
+* **The Mechanism:** Trace how `src/lib/crypto.ts` derives keys from PIN + Salt using PBKDF2/AES-GCM[cite: 1, 2].
+* **Rotation:** Understand memory-safe PIN rotation and "Crypto-Shredding" logic in `src/lib/rotation.ts`[cite: 1, 2].
 
-#### 3. Testing & QA
-* **Vitest Framework:** Understand that UI components rely heavily on contexts. Any component test MUST mock `useAuth` and `useEncryption` to prevent cascading failures.
+#### 3. Feature Engines (PROJ-26 & PROJ-42)
+* **The Reading Engine:** Memorize the multi-modality logic in `useReadingPreferences.ts` and how it rotates content based on `getDayOfYear`[cite: 1, 2].
+* **The Beacon (Push):** Understand FCM token registration and timezone handling in `src/lib/messaging.ts`[cite: 1, 2].
+* **Recurrence:** Map the "Lazy Evaluation" in `src/lib/tasks.ts` that handles missed recurring habits during the fetch cycle[cite: 1, 2].
+
+#### 4. Testing & QA
+* **Vitest:** Understand the mocking requirements for `useAuth` and `useEncryption` to prevent context-related test failures[cite: 1, 2].
 
 ---
 
 ### 🛑 THE ANTI-HALLUCINATION OATH
-By accepting this prompt, you agree to the following absolute constraints:
-1.  **Never Guess:** You will never hallucinate or summarize the contents of a file when writing code. 
-2.  **The Mandatory Cat Gate:** If you need to modify a file that is large, complex, or potentially truncated in your memory, you will STOP and say: *"I need the exact current contents of `[filename]` to proceed safely. Please paste it below."*
-3.  **No Sweeping Rewrites:** You will not delete existing helper functions, types, or imports just because they aren't relevant to the immediate feature.
+1. **Never Guess:** Do not summarize or hallucinate file contents[cite: 1, 2].
+2. **The Mandatory Cat Gate:** If a file is truncated or complex, STOP and ask for the full content[cite: 1, 2].
+3. **No Sweeping Rewrites:** Preserve existing helper functions and types[cite: 1, 2].
 
 ---
 
 ### 📤 REQUIRED OUTPUT
-To prove you have successfully ingested the codebase and are ready to build, output a **System Readiness Report** formatted exactly as follows:
-
-1.  **System Status:** "MRT Codebase v[Detect Version from package.json/build-info] Ingested and Mapped."
-2.  **Architectural Check:** Briefly describe (1 sentence each) the current state of:
-    * The Vault Gatekeeper
-    * The CBT/Smart Tools Virtual Module Routing
-    * The Task/Ledger Recurrence Engine
-     * Journal
-      * workbooks
-3.  **Constraint Acknowledgment:** "I understand the Zero-Knowledge boundary and swear by the Anti-Hallucination Oath. I am ready to execute `PLANNING.md` for new features."
+To prove ingestion, output a **System Readiness Report**:
+1. **System Status:** "MRT Codebase v1.4.0 Ingested and Mapped."[cite: 1, 2]
+2. **Architectural Check:** 1-sentence summary of:
+   * The Vault Gatekeeper[cite: 2]
+   * The Gemini Cascade Priority[cite: 2]
+   * The Task Recurrence Logic[cite: 2]
+   * The Daily Reading Rotation[cite: 2]
+3. **Constraint Acknowledgment:** "I understand the Zero-Knowledge boundary and swear by the Anti-Hallucination Oath."[cite: 1, 2]
 
 </file>
 
@@ -2209,7 +3510,7 @@ The main entry point is structured via a dual-tab navigation system:
 <file path="docs/specs/05_TASKS.md">
 # 📐 Feature Spec: Tasks & Habits (The Ledger)
 
-**Status:** Live (v2.2)
+**Status:** Live (v2.3 — updated PROJ-46)
 **Context:** High-density professional task management with AI action routing.
 
 ## 1. Overview
@@ -2227,17 +3528,58 @@ The system segregates tasks into four distinct lanes:
 **Collection:** `tasks`
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `source` | string | 'manual' \| 'ai' (Determines tab routing) |
-| `category` | string | 'Recovery', 'Health', 'Work', 'Life' |
-| `priority` | string | 'High', 'Medium', 'Low' |
-| `currentStreak`| number | Cumulative consecutive completions |
+| `source` | string | `'manual'` \| `'ai'` \| `'anchor_intent'` — determines tab routing |
+| `category` | string | `'Recovery'`, `'Health'`, `'Work'`, `'Life'` |
+| `priority` | string | `'High'`, `'Medium'`, `'Low'` |
+| `currentStreak` | number | Cumulative consecutive completions |
 | `dueDate` | Timestamp | Next scheduled deadline |
-| `recurrence` | Map | The full `RecurrenceConfig` object governing repetition. |
+| `recurrence` | Map | The full `RecurrenceConfig` object governing repetition |
+| `lastCompletedAt` | Timestamp \| null | Last completion time; used by Rhythm Score and Smart Reset |
+| `sourceContext` | string? | **(PROJ-46)** AI one-sentence explanation of why the task was recommended. Only on `source === 'ai'`. Plaintext. |
+| `sourceRef` | string? | **(PROJ-46)** Deep-link reference. Format: `workbook:{id}` or Firestore insight doc ID. Only on `source === 'ai'`. |
 
 ## 4. Technical Logic
 * **Optimistic UI:** Toggle actions use React Query `onMutate` for zero-latency feedback.
-* **Smart Reset:** Recurring tasks missed yesterday are automatically moved to "Today" with a streak penalty, preventing "schedule debt."
-* **Future Task Safety:** If a user attempts to complete a task whose `dueDate` is strictly in the future, the optimistic UI update is intercepted by a Headless UI modal requiring explicit confirmation.
+* **Smart Reset:** On background load (`getUserTasks()`), recurring tasks whose `dueDate` is in the past and were not completed today are silently moved to today with a streak penalty, preventing "schedule debt." This continues to fire on every load regardless of how the task was skipped.
+* **Forgiveness Tap (PROJ-46):** When a user actively swipes left on a task, the silent Smart Reset is replaced by a bottom sheet — "Let today go" — offering "Move to Tomorrow" or "Keep for Today". The underlying `updateDoc` write is identical to the Smart Reset; only the UX differs. Copy is streak-aware: "Your streak is safe" (streak > 0) vs "Recovery continues tomorrow" (streak ≤ 0).
+* **Future Task Safety:** If a user attempts to complete a task whose `dueDate` is strictly in the future (via tap or swipe), the action is intercepted by a confirmation modal before firing.
+
+## 5. Gesture Interactions (PROJ-46)
+Implemented via `SwipeableTaskRow` wrapping `TaskRow`, using `@use-gesture/react` v10.
+
+* **Swipe right (≥80px + ≥0.3px/ms velocity):** Completes the task. Green reveal layer + checkmark visible beneath the card during drag. On threshold: card slides off screen, `navigator.vibrate([40])` fires, `toggleTask` called. Threshold reduced to 60px on screens ≤360px wide.
+* **Swipe left (≥80px + ≥0.3px/ms velocity):** Opens the Forgiveness Tap bottom sheet. Amber reveal layer + forward-arrow visible during drag. Card snaps back on release (does not slide off screen).
+* **Direction lock:** `axis: 'x'` with a 10px threshold — vertical scroll is not intercepted until horizontal movement is confirmed as primary direction.
+* **Log view:** Gestures disabled in the history tab (`isLogView === true` cancels the drag handler).
+
+## 6. Quick Capture (PROJ-46)
+Pull-to-add gesture on the task list container (detected via `touchstart`/`touchend` on the scrollable div):
+* Activates only when `scrollTop === 0` and pull distance ≥ 60px.
+* Opens `QuickCaptureSheet`: single text input (auto-focused), three priority chips (High/Medium/Low, Medium default), three date chips (Today/Tomorrow/This week, Today default).
+* On submit: calls `addTask({ source: 'manual', recurrence: { type: 'once' }, priority, dueDate })`.
+* "More options →" link closes the sheet and opens `TaskFormModal` for full editing.
+* FAB `+` button continues to open `TaskFormModal` directly — Quick Capture is additive.
+
+## 7. Rhythm Score (PROJ-46)
+Client-side computed metric. **Not stored in Firestore.**
+
+* **Formula:** `Math.round((completedDays / 14) * 100)` where `completedDays` = count of distinct days in the last 14 where at least one recurring task was completed (`lastCompletedAt` in window).
+* **Implementation:** `src/lib/rhythmScore.ts` → `computeRhythmScore(tasks: Task[]): number`
+* **Display:** `RhythmScoreRing` SVG component above the task list (non-history tabs). Colour: green (≥70) / amber (40–69) / muted (below 40). Only shown when score > 0.
+* **Key property:** One missed day out of 14 scores ~93, not 0. Designed to be more forgiving than a streak counter.
+
+## 8. AI Context Cards (PROJ-46)
+Rendered in `TaskRow` when `task.source === 'ai' && task.sourceContext`:
+* **Collapsed:** One-line preview of `sourceContext` in 11px muted text below the task metadata row.
+* **Expanded (tap):** Full `sourceContext` sentence + `"See insight →"` deep-link.
+* **Deep-link routing:** `sourceRef` starting with `workbook:` → `/workbooks/{id}`; other values → `/insights`. Missing `sourceRef` → "Source no longer available" (no broken navigation).
+* **Legacy AI tasks** (no `sourceContext`): No context card rendered; purple sparkle icon still shows.
+
+### Write Contract
+When `addTask()` is called with `source: 'ai'`, callers must pass `aiMeta: { sourceContext, sourceRef }`:
+* `JournalAnalysisWizard`: passes `sourceContext` from `result.action_contexts[i]`; no `sourceRef` (multi-entry source, no single doc ID).
+* `InsightsLog`: passes `sourceRef: insight.id`; no `sourceContext` (actions from saved insights, context not stored).
+* `WorkbookDetail`: passes `sourceContext` from `insight.action_contexts[i]` and `sourceRef: 'workbook:{workbookId}'`.
 
 </file>
 
@@ -2445,6 +3787,9 @@ The log handles polymorphic data types with rich, AI-extracted arrays depending 
 ## 1. Overview
 The Dashboard aggregates data from all modules to generate a real-time "Health Snapshot" using 30-day bounded queries to prevent UI thread locking. Gamification relies on unencrypted metadata to completely bypass AES-GCM decryption on initial render.
 
+## 2. Integrated Components
+* **Dynamic Anchor:** A time-aware Quick Action bar (Morning/Afternoon/Evening/Night).
+* **Daily Reading Card:** Rotates content based on modality preferences (AA, NA, Dharma, etc.).
 </file>
 
 <file path="docs/specs/12_USER_GUIDE.md">
@@ -3038,26 +4383,70 @@ Your tasks are automatically routed into four distinct lanes to reduce overwhelm
 1. **This Week:** Tasks due today or within the next 6 days.
 2. **Later:** Tasks scheduled exactly 7 days from now or further in the future.
 3. **Action Plan:** Tasks generated automatically by the AI Compass (indicated by a purple Sparkles icon).
-4. **Log:** Your history of completed tasks. 
+4. **Log:** Your history of completed tasks.
    * *Note:* To keep the app running smoothly, your completed tasks are grouped by Year and Month. Tap a month to expand and view your historical wins!
 
+## Completing a Task — Swipe or Tap
+You have two ways to complete a task:
+
+* **Tap the circle** on the left of any task row — the original method, always available.
+* **Swipe right** on a task card — the new gesture shortcut. A green layer reveals beneath the card as you drag. Release past the threshold and the card slides off with a brief vibration. Done.
+
+Both methods go through the same completion logic, including the Future Task safety check.
+
+## Skipping a Task — The Forgiveness Tap
+Recovery is not a straight line. If you can't face a task today, **swipe left** on the card.
+
+An amber "Let today go" sheet slides up. You have two choices:
+* **Move to Tomorrow** — the task quietly shifts to tomorrow's list. No streak penalty.
+* **Keep for Today** — dismiss the sheet; nothing changes.
+
+The copy is streak-aware: if your streak is intact you'll see *"Your streak is safe — this is just one day."* If you've already missed a few days you'll see *"Recovery continues tomorrow."* There is no red state, no "failed" language, anywhere in this flow.
+
+## Adding a Task — Quick Capture
+For fast capture (e.g., a sponsee action item between meetings):
+
+1. **Pull down** from the top of the task list (when already scrolled to the top).
+2. A bottom sheet slides up with a single text field, auto-focused.
+3. Set priority (🔴 High · 🟡 Medium · 🟢 Low) and a date chip (Today · Tomorrow · This week).
+4. Tap **"Add to Today"** or press Enter.
+
+The task appears immediately. Pull capture defaults to a one-time task with Medium priority due today. Tap **"More options →"** to open the full task form for recurring schedules and categories.
+
+The floating **+** button still opens the full task form directly — Quick Capture is an additional shortcut, not a replacement.
+
+## The Rhythm Score
+Above the task list you'll see a small circular ring labelled **14-Day Rhythm**. This is your consistency score — a number from 0 to 100 based on how many of the last 14 days included at least one completed habit.
+
+* **Green (70–100):** Strong, consistent rhythm.
+* **Amber (40–69):** Building momentum.
+* **Muted (0–39):** Early days — the score reflects where you are, not where you're going.
+
+Unlike a streak counter, **one missed day barely moves the Rhythm Score**. Missing a single day out of 14 scores ~93, not zero. The score is a reflection of your actual pattern over two weeks, not a punishment for imperfection.
+
+## AI Context Cards
+Tasks generated by the AI Compass (purple sparkle icon) now show you *why* they were suggested. Below the task title you'll see a short one-line summary in muted text.
+
+**Tap the card** to expand it:
+* The full one-sentence context appears (e.g., *"From your Step 4 workbook — you identified isolation as a trigger three times this week."*)
+* A **"See insight →"** link takes you back to the workbook section or journal analysis that generated the task.
+
+If the source was later deleted, the link is replaced with "Source no longer available" — no broken navigation.
+
 ## The "Smart Reset" System
-We don't believe in "Schedule Debt" or guilt. 
-* If you miss a daily recurring habit (like "Morning Meditation"), MRT doesn't leave it in the past. 
-* It automatically drops your current streak to 0 (a gentle penalty) and **moves the due date to Today** so you can try again immediately.
+We don't believe in "Schedule Debt" or guilt.
+* If you miss a recurring habit (like "Morning Meditation"), MRT doesn't leave it stranded in the past.
+* On the next app load it automatically moves the due date to Today so you can try again immediately.
+* This silent reset still happens in the background on every load. The **Forgiveness Tap** (swipe left) is the active, user-initiated version of the same mechanic — with a compassionate UI layer on top.
 
-## Creating a Task
-Click the floating `+` button to add a task. You can set Priorities (High, Medium, Low) and advanced Recurring schedules (e.g., "The Last Friday of every month").
-
-### Task Categories
-To help maintain balance in your recovery, tasks can be tagged with specific categories:
-* **Recovery:** Step-work, meetings, calling your sponsor.
-* **Health:** Gym, water intake, meal prep.
-* **Life:** Chores, finances, errands.
-* **Work:** Professional or educational goals.
+## Creating a Task — Full Form
+Tap the floating **+** button to open the full task form. You can set:
+* **Priority:** High, Medium, or Low.
+* **Recurring schedules:** Daily, weekly, monthly, or advanced patterns like "The last Friday of every month."
+* **Category:** Recovery, Health, Life, or Work.
 
 ## Completing Future Tasks
-If you attempt to check off a task that is scheduled for a future date (e.g., Tomorrow), the app will display a warning modal asking you to confirm. This prevents you from accidentally clearing out tasks you actually need to do later in the week.
+If you attempt to check off a task scheduled for a future date (via tap or swipe), a confirmation modal will appear. This prevents accidentally clearing tasks you need to do later in the week.
 
 </file>
 
@@ -3328,6 +4717,19 @@ For technical support or privacy questions, please contact:
 
 <file path="docs-site/support/changelog.md">
 # 🚀 Changelog
+
+## [v1.6.0] - 2026-05-05
+### ✨ The Ledger — Frictionless Task Module Upgrade
+- **Gesture Interactions [PROJ-46]:** Swipe right on any task to complete it — a green layer reveals beneath the card and a brief vibration confirms the action. Swipe left to open the "Let today go" Forgiveness Tap sheet, offering a compassionate move-to-tomorrow option with no streak penalty.
+- **Quick Capture [PROJ-46]:** Pull down from the top of the task list to instantly capture a task. Set priority and date in a focused bottom sheet, or tap "More options →" for the full form.
+- **Rhythm Score [PROJ-46]:** A 14-day consistency ring (0–100) now sits above your task list. One missed day out of 14 scores ~93, not 0 — designed to reflect your pattern, not punish imperfection.
+- **AI Context Cards [PROJ-46]:** Tasks generated by the AI Compass now show a one-line explanation of why they were suggested. Tap to expand and follow the "See insight →" deep-link back to the source workbook or journal analysis.
+
+## [v1.5.0] - 2026-05-03
+### ✨ Daily Reading Engine Launch
+- **Feature [PROJ-42]:** Full integration of multi-modality Daily Readings (AA, NA, Dharma, SMART).
+- **UX [PROJ-41]:** Finalized the Dynamic Anchor widget with circadian-aware prompts.
+- **Privacy:** Confirmed Readings bypass the ZK boundary as shared content to ensure instant access.
 
 ## [v1.4.0] - 2026-04-30
 ### ✨ Major UX & Architecture Overhaul
