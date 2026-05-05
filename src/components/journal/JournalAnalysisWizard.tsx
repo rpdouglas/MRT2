@@ -128,16 +128,19 @@ isOpen, onClose, entries }: WizardProps) {
         }
     };
 
-    const handleAddToTasks = async (action: string) => {
+    const handleAddToTasks = async (action: string, actionIndex: number) => {
         if (!user) return;
         try {
             const dueDate = addDays(new Date(), 7);
+            const result = scope === 'all-time' ? deepResult : standardResult;
+            const sourceContext = result?.action_contexts?.[actionIndex];
             await addTask({
                 title: action,
                 recurrence: { type: 'once' },
                 priority: 'Medium',
                 dueDate: dueDate,
-                source: 'ai' 
+                source: 'ai',
+                ...(sourceContext && { aiMeta: { sourceContext } }),
             });
             setAddedActions(prev => new Set(prev).add(action));
       toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
@@ -320,7 +323,7 @@ isOpen, onClose, entries }: WizardProps) {
                                                     {deepResult.long_term_advice.slice(0, 3).map((action, i) => (
                                                         <div key={i} className="flex items-center justify-between gap-2 text-sm bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-purple-900">
                                                             <span>{action}</span>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action, i)} disabled={addedActions.has(action)} className={`p-1.5 rounded-full transition-all ${addedActions.has(action) ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}>
                                                                 {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
                                                             </button>
                                                         </div>
@@ -356,7 +359,7 @@ isOpen, onClose, entries }: WizardProps) {
                                                     {standardResult.actionable_advice.slice(0, 3).map((action, i) => (
                                                         <div key={i} className="flex items-center justify-between gap-2 text-sm text-fuchsia-900 bg-white p-2.5 rounded-lg border border-fuchsia-50 shadow-sm">
                                                             <span>{action}</span>
-                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}>
+                                                            <button onClick={() => !addedActions.has(action) && handleAddToTasks(action, i)} disabled={addedActions.has(action)} className={`p-1 rounded-full transition-all ${addedActions.has(action) ? 'text-green-600 bg-green-100' : 'text-fuchsia-400 hover:text-fuchsia-600 hover:bg-fuchsia-100'}`}>
                                                                 {addedActions.has(action) ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
                                                             </button>
                                                         </div>

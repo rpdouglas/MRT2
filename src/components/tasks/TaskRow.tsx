@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon as CheckCircleOutline, TrashIcon, PencilSquareIcon, ArrowPathIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import type { Task } from '../../lib/tasks';
@@ -16,6 +18,8 @@ interface TaskRowProps {
 const toDate = (val: Date | Timestamp | undefined | null): Date | null => { if (!val) return null; if (val instanceof Timestamp) return val.toDate(); if (val instanceof Date) return val; return null; }
 
 export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = false }: TaskRowProps) {
+    const navigate = useNavigate();
+    const [isContextExpanded, setIsContextExpanded] = useState(false);
     const today = startOfDay(new Date());
     const taskDate = task.dueDate ? startOfDay(toDate(task.dueDate) || new Date()) : null;
     
@@ -87,6 +91,46 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = 
                         </div>
                     )}
                 </div>
+
+                {/* AI Context Card — only for AI tasks with sourceContext */}
+                {task.source === 'ai' && task.sourceContext && (
+                    <button
+                        onClick={e => { e.stopPropagation(); setIsContextExpanded(v => !v); }}
+                        className="mt-1.5 w-full text-left"
+                        aria-expanded={isContextExpanded}
+                    >
+                        {!isContextExpanded ? (
+                            <p className="text-[11px] text-slate-400 line-clamp-1 leading-snug">
+                                {task.sourceContext}
+                            </p>
+                        ) : (
+                            <div className="bg-purple-50 border border-purple-100 rounded-lg px-2.5 py-2 mt-1">
+                                <p className="text-[11px] text-purple-800 leading-relaxed">
+                                    {task.sourceContext}
+                                </p>
+                                {task.sourceRef ? (
+                                    <button
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            if (task.sourceRef!.startsWith('workbook:')) {
+                                                navigate(`/workbooks/${task.sourceRef!.replace('workbook:', '')}`);
+                                            } else {
+                                                navigate('/insights');
+                                            }
+                                        }}
+                                        className="mt-1 text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+                                    >
+                                        See insight →
+                                    </button>
+                                ) : (
+                                    <span className="mt-1 block text-[11px] text-slate-400">
+                                        Source no longer available
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </button>
+                )}
             </div>
 
             <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity mt-0.5">

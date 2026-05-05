@@ -9,12 +9,14 @@ import VibrantHeader from '../components/VibrantHeader';
 import TaskRow from '../components/tasks/TaskRow';
 import SwipeableTaskRow from '../components/tasks/SwipeableTaskRow';
 import QuickCaptureSheet from '../components/tasks/QuickCaptureSheet';
+import RhythmScoreRing from '../components/tasks/RhythmScoreRing';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { THEME } from '../lib/theme';
 import type { Task } from '../lib/tasks';
 import type { TaskPriority } from '../lib/db';
+import { computeRhythmScore } from '../lib/rhythmScore';
 import { isBefore, isAfter, startOfDay, addDays, isSameDay, format } from 'date-fns';
 
 type TabOption = 'this_week' | 'later' | 'action_plan' | 'history';
@@ -82,6 +84,8 @@ export default function Tasks() {
 
         return () => unsubscribe();
     }, [user]);
+
+    const rhythmScore = useMemo(() => computeRhythmScore(tasks), [tasks]);
 
     const filteredTasks = useMemo(() => {
         const today = startOfDay(new Date());
@@ -329,6 +333,18 @@ export default function Tasks() {
                     ))}
                 </div>
             </div>
+
+            {activeTab !== 'history' && rhythmScore > 0 && (
+                <div className="px-4 mt-4 max-w-3xl mx-auto w-full flex items-center gap-3 bg-white/70 rounded-xl border border-slate-100 shadow-sm py-2.5 px-4">
+                    <RhythmScoreRing score={rhythmScore} size={52} />
+                    <div>
+                        <p className="text-xs font-bold text-slate-700">14-Day Rhythm</p>
+                        <p className="text-[11px] text-slate-400 leading-snug">
+                            Reflects your consistency — one missed day won't reset this.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div className="flex-1 px-4 mt-6 max-w-3xl mx-auto w-full">
                 <div

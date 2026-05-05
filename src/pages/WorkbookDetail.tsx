@@ -155,12 +155,24 @@ export default function WorkbookDetail() {
     } catch (error) { console.error("Failed to save log", error); setSavingInsight(false); alert("Failed to save. Please try again."); }
   };
 
-  const handleAddToHabits = async (action: string) => {
+  const handleAddToHabits = async (action: string, actionIndex: number) => {
     if (!user) return;
     try {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 3);
-        await addTask(user.uid, action, { type: 'once' }, 'High', dueDate, 'ai');
+        const sourceContext = insight?.action_contexts?.[actionIndex];
+        await addTask(
+          user.uid,
+          action,
+          { type: 'once' },
+          'High',
+          dueDate,
+          'ai',
+          {
+            sourceContext,
+            sourceRef: workbookId ? `workbook:${workbookId}` : undefined,
+          }
+        );
         setAddedActions(prev => new Set(prev).add(action));
       toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
     } catch (e) {
@@ -364,8 +376,8 @@ export default function WorkbookDetail() {
                                        return (
                                           <li key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-purple-100">
                                               <span className="text-sm text-gray-700 font-medium">{action}</span>
-                                              <button 
-                                                  onClick={() => !isAdded && handleAddToHabits(action)}
+                                              <button
+                                                  onClick={() => !isAdded && handleAddToHabits(action, idx)}
                                                   disabled={isAdded}
                                                   className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-50'}`}
                                               >

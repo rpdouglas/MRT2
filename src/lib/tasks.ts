@@ -24,15 +24,16 @@ const toDate = (val: unknown): Date | undefined => {
 
 // 1. CREATE
 export async function addTask(
-  uid: string, 
-  title: string, 
-  recurrence: RecurrenceConfig, 
-  priority: Priority, 
+  uid: string,
+  title: string,
+  recurrence: RecurrenceConfig,
+  priority: Priority,
   startDate: Date,
-  source: Task['source'] = 'manual'
+  source: Task['source'] = 'manual',
+  aiMeta?: { sourceContext?: string; sourceRef?: string }
 ) {
   if (!db) throw new Error("Database not initialized");
-  
+
   const isRecurring = recurrence.type !== 'once';
   const due = startOfDay(startDate);
 
@@ -47,7 +48,9 @@ export async function addTask(
     lastCompletedAt: null,
     dueDate: Timestamp.fromDate(due),
     createdAt: Timestamp.now(),
-    source
+    source,
+    ...(aiMeta?.sourceContext && { sourceContext: aiMeta.sourceContext }),
+    ...(aiMeta?.sourceRef && { sourceRef: aiMeta.sourceRef }),
   });
 }
 
