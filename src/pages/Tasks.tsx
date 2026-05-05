@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, Fragment } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, type Firestore, Timestamp } from 'firebase/firestore';
@@ -7,11 +7,14 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Virtuoso } from 'react-virtuoso';
 import VibrantHeader from '../components/VibrantHeader';
 import TaskRow from '../components/tasks/TaskRow';
+import SwipeableTaskRow from '../components/tasks/SwipeableTaskRow';
+import QuickCaptureSheet from '../components/tasks/QuickCaptureSheet';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { THEME } from '../lib/theme';
 import type { Task } from '../lib/tasks';
+import type { TaskPriority } from '../lib/db';
 import { isBefore, isAfter, startOfDay, addDays, isSameDay, format } from 'date-fns';
 
 type TabOption = 'this_week' | 'later' | 'action_plan' | 'history';
@@ -38,6 +41,13 @@ export default function Tasks() {
     // Future Task Intercept State
     const [pendingFutureTask, setPendingFutureTask] = useState<{task: Task; isCompleting: boolean} | null>(null);
     const [isFutureModalOpen, setIsFutureModalOpen] = useState(false);
+
+    // Quick Capture Sheet
+    const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
+
+    // Pull-to-add gesture detection
+    const listContainerRef = useRef<HTMLDivElement>(null);
+    const touchStartY = useRef(0);
 
     // Virtuoso Collapsible State
     const [expandedYears, setExpandedYears] = useState<Set<string>>(() => {
@@ -220,24 +230,27 @@ export default function Tasks() {
         });
     };
 
-    const handleTaskToggleIntercept = (params: {task: Task; isCompleting: boolean}) => {
-        const { task, isCompleting } = params;
-        
+    // Shared future-date intercept logic — returns true if toggle proceeded, false if intercepted
+    const checkAndToggle = (task: Task, isCompleting: boolean): boolean => {
         if (isCompleting && task.dueDate) {
             const dueDate = toDate(task.dueDate);
-            if (dueDate) {
-                const todayDate = startOfDay(new Date());
-                const taskStartOfDay = startOfDay(dueDate);
-                
-                if (isAfter(taskStartOfDay, todayDate)) {
-                    setPendingFutureTask(params);
-                    setIsFutureModalOpen(true);
-                    return; 
-                }
+            if (dueDate && isAfter(startOfDay(dueDate), startOfDay(new Date()))) {
+                setPendingFutureTask({ task, isCompleting });
+                setIsFutureModalOpen(true);
+                return false;
             }
         }
-        toggleTask(params);
+        toggleTask({ task, isCompleting });
+        return true;
     };
+
+    // For tap-to-complete via TaskRow button
+    const handleTaskToggleIntercept = (params: {task: Task; isCompleting: boolean}) => {
+        checkAndToggle(params.task, params.isCompleting);
+    };
+
+    // For swipe-right — returns bool so SwipeableTaskRow can decide whether to animate
+    const handleSwipeComplete = (task: Task): boolean => checkAndToggle(task, true);
 
     const confirmFutureToggle = () => { if (pendingFutureTask) { toggleTask(pendingFutureTask); }
         setIsFutureModalOpen(false);
@@ -245,6 +258,36 @@ export default function Tasks() {
     };
 
     const cancelFutureToggle = () => { setIsFutureModalOpen(false); setPendingFutureTask(null); };
+
+    const handleQuickAdd = (title: string, priority: TaskPriority, dueDate: Date) => {
+        addTask({ title, recurrence: { type: 'once' }, priority, dueDate, source: 'manual' });
+    };
+
+    // Pull-to-add: detect downward pull from top of list to open Quick Capture
+    useEffect(() => {
+        const el = listContainerRef.current;
+        if (!el) return;
+
+        const onTouchStart = (e: TouchEvent) => {
+            touchStartY.current = e.touches[0].clientY;
+        };
+
+        const onTouchEnd = (e: TouchEvent) => {
+            if (el.scrollTop !== 0) return;
+            if (activeTab === 'history') return;
+            const dy = e.changedTouches[0].clientY - touchStartY.current;
+            if (dy >= 60 && !isQuickCaptureOpen) {
+                setIsQuickCaptureOpen(true);
+            }
+        };
+
+        el.addEventListener('touchstart', onTouchStart, { passive: true });
+        el.addEventListener('touchend', onTouchEnd, { passive: true });
+        return () => {
+            el.removeEventListener('touchstart', onTouchStart);
+            el.removeEventListener('touchend', onTouchEnd);
+        };
+    }, [activeTab, isQuickCaptureOpen]);
 
     if (loading) return <div className="p-10 text-center text-gray-400">Loading ledger...</div>;
 
@@ -288,7 +331,10 @@ export default function Tasks() {
             </div>
 
             <div className="flex-1 px-4 mt-6 max-w-3xl mx-auto w-full">
-                <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col ${activeTab === 'history' ? 'h-[65vh] min-h-[400px]' : 'min-h-[300px]'}`}>
+                <div
+                ref={listContainerRef}
+                className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col ${activeTab === 'history' ? 'h-[65vh] min-h-[400px]' : 'min-h-[300px]'}`}
+            >
                     {filteredTasks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 text-center p-6">
                             <div className="bg-slate-50 p-4 rounded-full mb-3">
@@ -376,11 +422,13 @@ export default function Tasks() {
                     ) : (
                         <div className="divide-y divide-gray-50">
                             {filteredTasks.map(task => (
-                                <TaskRow 
-                                    key={task.id} 
-                                    task={task} 
+                                <SwipeableTaskRow
+                                    key={task.id}
+                                    task={task}
                                     isLogView={false}
                                     onToggle={handleTaskToggleIntercept}
+                                    onSwipeComplete={handleSwipeComplete}
+                                    onUpdateTask={updateTask}
                                     onDelete={handleDelete}
                                     onEdit={handleEdit}
                                 />
@@ -397,11 +445,18 @@ export default function Tasks() {
                 <PlusIcon className="h-6 w-6" />
             </button>
 
-            <TaskFormModal 
+            <TaskFormModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 initialTask={editingTask}
                 onSave={handleSave}
+            />
+
+            <QuickCaptureSheet
+                isOpen={isQuickCaptureOpen}
+                onClose={() => setIsQuickCaptureOpen(false)}
+                onAdd={handleQuickAdd}
+                onMoreOptions={() => { setEditingTask(null); setIsModalOpen(true); }}
             />
 
             {/* FUTURE TASK WARNING MODAL */}
