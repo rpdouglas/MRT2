@@ -1,6 +1,6 @@
 # 📋 Project PROJ-46: The Ledger — Frictionless Task Module Upgrade
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped (2026-05-05 · commits 69d45f4, 5972211 on `feature/task_update`)
 **Primary Persona:** Ned (engagement driver) · David (safety anchor) · All five personas benefit
 **Objective:** Reduce task completion to a single swipe gesture, surface AI Action Plan tasks in context rather than a ghost tab, and replace the silent Smart Reset with a psychologically safe Forgiveness Tap — all without any breaking schema changes.
 
@@ -401,4 +401,16 @@ export async function addTask(
 
 ---
 
-*MRT · PROJ-46 The Ledger — Frictionless Task Module Upgrade · v1.0 · May 2026 · Status: ⚪ Planned*
+---
+
+## 8. Shipped Notes
+
+**`sourceRef` format:** The spec described `sourceRef` as a raw Firestore document ID. In practice, no individual workbook answer document IDs are available at the `addTask()` call site in `WorkbookDetail.tsx`. The implemented convention is:
+- Workbook-derived tasks: `sourceRef = 'workbook:{workbookId}'` (e.g., `'workbook:step-4'`)
+- Insight-derived tasks: `sourceRef = insight.id` (Firestore document ID, no prefix)
+
+`TaskRow` routes deep-links by prefix: `workbook:` → `/workbooks/{id}`, all others → `/insights`.
+
+---
+
+*MRT · PROJ-46 The Ledger — Frictionless Task Module Upgrade · v1.0 · May 2026 · Status: ✅ Shipped*
