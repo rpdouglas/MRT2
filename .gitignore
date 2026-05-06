@@ -42,3 +42,4 @@ scripts/apply_code.py
 export_src_lib-src_hooks-src_data.txt
 CLAUDE.local.md
 export_docs-docs-site.txt
+export_src_components-src_pages-src_contexts.txt
