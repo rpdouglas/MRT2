@@ -9,7 +9,8 @@ const XP_VALUES = {
     TASK_HIGH: 50,
     WORKBOOK_QUESTION: 15,
     VITALITY_LOG: 15,
-    CLEAN_DAY_MILESTONE: 500 // XP per 30 days
+    CLEAN_DAY_MILESTONE: 500, // XP per 30 days
+    ROSC_ASSESSMENT: 25,
 };
 
 // --- INTERFACES ---
@@ -148,10 +149,11 @@ const calculateConsecutiveStreak = (entries: ScorableJournal[]): number => {
 // --- CORE CALCULATORS ---
 
 export const calculateUserLevel = (
-    journals: ScorableJournal[], 
-    tasks: ScorableTask[], 
+    journals: ScorableJournal[],
+    tasks: ScorableTask[],
     workbookAnswersCount: number,
-    cleanDays: number
+    cleanDays: number,
+    roscAssessmentsCount = 0
 ): UserStats => {
     let xp = 0;
     const xpBreakdown = { wisdom: 0, action: 0, vitality: 0, reflection: 0 };
@@ -198,6 +200,9 @@ export const calculateUserLevel = (
     // 4. Clean Time Bonuses (Every 30 days)
     const milestones = Math.floor(cleanDays / 30);
     xp += (milestones * XP_VALUES.CLEAN_DAY_MILESTONE);
+
+    // 5. ROSC Assessment XP (monthly check-ins)
+    xp += roscAssessmentsCount * XP_VALUES.ROSC_ASSESSMENT;
 
     // 5. Determine Archetype
     const maxVal = Math.max(xpBreakdown.wisdom, xpBreakdown.action, xpBreakdown.vitality, xpBreakdown.reflection);

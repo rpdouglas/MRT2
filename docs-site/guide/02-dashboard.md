@@ -65,5 +65,5 @@ Quickly view your active streaks and completion rates across your core pillars:
 
 ## 7. The Gamification Engine
 Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
-* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), and logging vitality metrics.
+* **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), logging vitality metrics, and completing your monthly Recovery Capital check-in (+25 XP).
 * **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).

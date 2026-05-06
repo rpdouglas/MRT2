@@ -69,7 +69,27 @@ export async function executeCryptoShredding(uid: string) {
         }
     }
 
-    // 3. Clear Profile Fields
+    // 3. Delete ROSC Assessments
+    let lastRoscDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+    let hasMoreRosc = true;
+    while (hasMoreRosc) {
+        let rQ = query(collection(database, 'users', uid, 'rosc_assessments'), limit(500));
+        if (lastRoscDoc) rQ = query(collection(database, 'users', uid, 'rosc_assessments'), startAfter(lastRoscDoc), limit(500));
+
+        const rSnap = await getDocs(rQ);
+        if (rSnap.empty) {
+            hasMoreRosc = false;
+        } else {
+            rSnap.docs.forEach(d => {
+                currentBatch.delete(d.ref);
+                opCount++;
+                if (opCount >= 450) commitBatch();
+            });
+            lastRoscDoc = rSnap.docs[rSnap.docs.length - 1];
+        }
+    }
+
+    // 4. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
     currentBatch.update(pRef, { encryptionSalt: deleteField(), pinVerifier: deleteField() });
     opCount++;
@@ -191,6 +211,39 @@ export async function executePinRotation(
             
             // Artificial progress scaling for UI (scales from 45% to 90%)
             onProgress(Math.min(90, 45 + Math.floor((workbookProcessed / 100) * 5)));
+        }
+
+        // --- PROCESS ROSC ASSESSMENTS ---
+        let lastRoscDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+        let hasMoreRosc = true;
+
+        while (hasMoreRosc) {
+            let rQ = query(collection(database, 'users', uid, 'rosc_assessments'), limit(BATCH_SIZE));
+            if (lastRoscDoc) rQ = query(collection(database, 'users', uid, 'rosc_assessments'), startAfter(lastRoscDoc), limit(BATCH_SIZE));
+
+            const rSnap = await getDocs(rQ);
+            if (rSnap.empty) {
+                hasMoreRosc = false;
+                continue;
+            }
+
+            const currentBatch = writeBatch(database);
+
+            for (const document of rSnap.docs) {
+                const data = document.data();
+                if (data.encryptedAIContext) {
+                    await generateKey(oldPin, currentSalt);
+                    const plain = await decrypt(data.encryptedAIContext);
+                    if (plain.includes("Locked Content")) throw new Error("DECRYPTION_FAILED");
+
+                    await generateKey(newPin, newSalt);
+                    const cipher = await encrypt(plain);
+                    currentBatch.update(document.ref, { encryptedAIContext: cipher });
+                }
+            }
+
+            await currentBatch.commit();
+            lastRoscDoc = rSnap.docs[rSnap.docs.length - 1];
         }
 
         // 4. Finalize Profile Updates
