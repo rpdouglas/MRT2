@@ -1,4 +1,4 @@
-CONTEXT EXPORT - 2026-05-06T03:04:41.192Z
+CONTEXT EXPORT - 2026-05-06T21:43:08.097Z
 Mode: Targeted (src/components, src/pages, src/contexts, src/App.tsx)
 
 ### TABLE OF CONTENTS ###
@@ -26,6 +26,10 @@ Mode: Targeted (src/components, src/pages, src/contexts, src/App.tsx)
 - src/components/admin/FriendsDirectory.tsx
 - src/components/admin/SchemaMigration.tsx
 - src/components/dashboard/DynamicAnchorWidget.tsx
+- src/components/insights/ROSCAssessmentCard.tsx
+- src/components/insights/ROSCCheckIn.tsx
+- src/components/insights/ROSCHistoryPanel.tsx
+- src/components/insights/ROSCRadarChart.tsx
 - src/components/journal/AudioRecorder.tsx
 - src/components/journal/JournalAnalysisWizard.tsx
 - src/components/journal/JournalEditor.tsx
@@ -3919,6 +3923,600 @@ export default function DynamicAnchorWidget() {
       )}
     </>
   );
+}
+
+</file>
+
+<file path="src/components/insights/ROSCAssessmentCard.tsx">
+import { useState, useCallback } from 'react';
+import { format } from 'date-fns';
+import { LockClosedIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { useEncryption } from '../../contexts/EncryptionContext';
+import ROSCRadarChart from './ROSCRadarChart';
+import type { ROSCAssessment } from '../../lib/types/rosc';
+
+interface DecryptedContext {
+    narrative: string;
+    strengths: string[];
+    growth_areas: string[];
+    evidence: Record<string, string[]>;
+}
+
+interface Props {
+    assessment: ROSCAssessment;
+    previous?: ROSCAssessment;
+    compact?: boolean;
+}
+
+function trajectoryPill(t: ROSCAssessment['trajectory']) {
+    const map: Record<string, string> = {
+        'Improving': 'bg-emerald-100 text-emerald-700',
+        'Stable': 'bg-blue-100 text-blue-700',
+        'Declining': 'bg-amber-100 text-amber-700',
+        'Insufficient Data': 'bg-gray-100 text-gray-500',
+    };
+    return map[t] ?? 'bg-gray-100 text-gray-500';
+}
+
+export default function ROSCAssessmentCard({ assessment, previous, compact = false }: Props) {
+    const [expanded, setExpanded] = useState(false);
+    const [context, setContext] = useState<DecryptedContext | null>(null);
+    const [decrypting, setDecrypting] = useState(false);
+    const { decrypt, isVaultUnlocked } = useEncryption();
+
+    const createdDate = assessment.createdAt?.toDate
+        ? assessment.createdAt.toDate()
+        : new Date(assessment.createdAt as unknown as string);
+
+    const handleExpand = useCallback(async () => {
+        const next = !expanded;
+        setExpanded(next);
+        if (next && !context && assessment.encryptedAIContext && isVaultUnlocked) {
+            setDecrypting(true);
+            try {
+                const plain = await decrypt(assessment.encryptedAIContext);
+                setContext(JSON.parse(plain) as DecryptedContext);
+            } catch {
+                // Context unavailable — show locked state
+            } finally {
+                setDecrypting(false);
+            }
+        }
+    }, [expanded, context, assessment.encryptedAIContext, isVaultUnlocked, decrypt]);
+
+    return (
+        <div className="bg-white rounded-2xl border border-fuchsia-100 shadow-sm overflow-hidden">
+            <button
+                onClick={handleExpand}
+                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-fuchsia-50/40 transition-colors text-left"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white rounded-xl w-10 h-10 flex flex-col items-center justify-center leading-none">
+                        <span className="text-[11px] font-bold">{format(createdDate, 'MMM').toUpperCase()}</span>
+                        <span className="text-[10px] opacity-80">{format(createdDate, 'yyyy')}</span>
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-gray-900">
+                            Recovery Capital · {format(createdDate, 'MMMM yyyy')}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs font-black text-fuchsia-700">{assessment.totalScore}/40</span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${trajectoryPill(assessment.trajectory)}`}>
+                                {assessment.trajectory}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {expanded
+                    ? <ChevronUpIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    : <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                }
+            </button>
+
+            {expanded && (
+                <div className="px-4 pb-5 border-t border-fuchsia-50 pt-4 space-y-4">
+                    {!compact && (
+                        <ROSCRadarChart current={assessment} previous={previous} />
+                    )}
+
+                    {assessment.journalEntriesAnalysed > 0 && (
+                        <p className="text-[10px] text-gray-400 text-center">
+                            Based on {assessment.journalEntriesAnalysed} journal entries
+                        </p>
+                    )}
+
+                    {assessment.encryptedAIContext ? (
+                        isVaultUnlocked ? (
+                            decrypting ? (
+                                <div className="text-center text-xs text-gray-400 py-4">Unlocking your recovery story…</div>
+                            ) : context ? (
+                                <div className="space-y-3">
+                                    <div className="bg-fuchsia-50 border border-fuchsia-100 rounded-xl p-3">
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                            <SparklesIcon className="h-3.5 w-3.5 text-fuchsia-500" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-600">This Month</span>
+                                        </div>
+                                        <p className="text-xs text-gray-700 leading-relaxed">{context.narrative}</p>
+                                    </div>
+
+                                    {context.strengths?.length > 0 && (
+                                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                                            <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-1.5">Strengths</div>
+                                            <ul className="space-y-1">
+                                                {context.strengths.map((s, i) => (
+                                                    <li key={i} className="text-xs text-emerald-800">· {s}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {context.growth_areas?.length > 0 && (
+                                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                                            <div className="text-[10px] font-bold uppercase tracking-wide text-amber-600 mb-1.5">Areas to Nurture</div>
+                                            <ul className="space-y-1">
+                                                {context.growth_areas.map((g, i) => (
+                                                    <li key={i} className="text-xs text-amber-800">· {g}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null
+                        ) : (
+                            <div className="flex flex-col items-center gap-2 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                                <p className="text-xs text-gray-500 text-center">
+                                    Unlock vault to read your recovery story.
+                                </p>
+                            </div>
+                        )
+                    ) : (
+                        <div className="text-center text-xs text-gray-400 py-2">
+                            Upgrade to Premium for AI-powered insights on your recovery.
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+</file>
+
+<file path="src/components/insights/ROSCCheckIn.tsx">
+import { useState, useCallback } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import type { ROSCCheckInAnswers } from '../../lib/types/rosc';
+
+const QUESTIONS: {
+    domain: keyof Omit<ROSCCheckInAnswers, 'resilience'> | 'resilience';
+    label: string;
+    question: string;
+    low: string;
+    high: string;
+}[] = [
+    {
+        domain: 'health',
+        label: 'Health',
+        question: 'This month, how well did you take care of your physical and emotional health?',
+        low: 'Struggling',
+        high: 'Thriving',
+    },
+    {
+        domain: 'home',
+        label: 'Home',
+        question: 'How stable and safe does your living situation feel right now?',
+        low: 'Uncertain',
+        high: 'Very stable',
+    },
+    {
+        domain: 'purpose',
+        label: 'Purpose',
+        question: 'How meaningful and engaging are your daily activities — work, creative pursuits, service, family?',
+        low: 'Adrift',
+        high: 'Fully engaged',
+    },
+    {
+        domain: 'community',
+        label: 'Community',
+        question: 'How connected do you feel to people who support and encourage your recovery?',
+        low: 'Isolated',
+        high: 'Deeply connected',
+    },
+    {
+        domain: 'resilience',
+        label: 'Resilience',
+        question: 'When this month got hard, how well did you bounce back?',
+        low: 'It knocked me down',
+        high: 'I found my footing',
+    },
+];
+
+interface Props {
+    onComplete: (answers: ROSCCheckInAnswers) => void;
+    onDismiss: () => void;
+    onStart?: () => void;
+    initialAnswers?: ROSCCheckInAnswers | null;
+}
+
+export default function ROSCCheckIn({ onComplete, onDismiss, onStart, initialAnswers }: Props) {
+    const [step, setStep] = useState(0);
+    const [answers, setAnswers] = useState<Partial<ROSCCheckInAnswers>>(initialAnswers ?? {});
+    const [started, setStarted] = useState(false);
+
+    const current = QUESTIONS[step];
+    const currentValue = answers[current.domain];
+
+    const handleSelect = useCallback((value: number) => {
+        if (!started) {
+            setStarted(true);
+            onStart?.();
+        }
+        const next = { ...answers, [current.domain]: value };
+        setAnswers(next);
+
+        if (step < QUESTIONS.length - 1) {
+            setTimeout(() => setStep(s => s + 1), 250);
+        } else {
+            onComplete(next as ROSCCheckInAnswers);
+        }
+    }, [started, answers, current.domain, step, onComplete, onStart]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm bg-gradient-to-br from-amber-50 to-rose-50 rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                    <div className="flex gap-1.5">
+                        {QUESTIONS.map((_, i) => (
+                            <div
+                                key={i}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${
+                                    i <= step ? 'bg-rose-500 w-6' : 'bg-rose-200 w-3'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                    <button
+                        onClick={onDismiss}
+                        className="text-rose-400 hover:text-rose-600 p-1 rounded-full hover:bg-rose-100 transition-colors"
+                        aria-label="Dismiss check-in"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="px-6 pb-8">
+                    <div className="mb-2">
+                        <span className="text-xs font-bold uppercase tracking-widest text-rose-400">
+                            {current.label} · Question {step + 1} of {QUESTIONS.length}
+                        </span>
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900 leading-snug mb-8">
+                        {current.question}
+                    </h2>
+
+                    <div className="flex justify-center gap-3 mb-4">
+                        {[1, 2, 3, 4, 5].map((val) => (
+                            <button
+                                key={val}
+                                onClick={() => handleSelect(val)}
+                                className={`w-12 h-12 rounded-full text-sm font-bold border-2 transition-all duration-150 ${
+                                    currentValue === val
+                                        ? 'bg-rose-500 border-rose-500 text-white scale-110 shadow-lg shadow-rose-200'
+                                        : 'bg-white border-rose-200 text-rose-600 hover:border-rose-400 hover:bg-rose-50'
+                                }`}
+                                aria-pressed={currentValue === val}
+                            >
+                                {val}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-between text-xs text-rose-400 font-medium px-1">
+                        <span>{current.low}</span>
+                        <span>{current.high}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+</file>
+
+<file path="src/components/insights/ROSCHistoryPanel.tsx">
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { SparklesIcon, WifiIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext';
+import { useROSCAssessments } from '../../hooks/useROSCAssessments';
+import ROSCCheckIn from './ROSCCheckIn';
+import ROSCAssessmentCard from './ROSCAssessmentCard';
+import ROSCRadarChart from './ROSCRadarChart';
+import type { ROSCCheckInAnswers } from '../../lib/types/rosc';
+
+export default function ROSCHistoryPanel() {
+    const { userTier } = useAuth();
+    const { isVaultUnlocked } = useEncryption();
+    const {
+        assessments,
+        isLoading,
+        canCreateThisMonth,
+        hasStartedCheckIn,
+        savedCheckIn,
+        saveCheckInProgress,
+        createAssessment,
+        isCreating,
+        createProgress,
+        createError,
+    } = useROSCAssessments();
+
+    const [showCheckIn, setShowCheckIn] = useState(false);
+    const isOnline = navigator.onLine;
+
+    const handleCheckInStart = () => {
+        localStorage.setItem(`roscCheckInStarted_${format(new Date(), 'yyyy-MM')}`, 'true');
+    };
+
+    const handleCheckInComplete = async (answers: ROSCCheckInAnswers) => {
+        setShowCheckIn(false);
+        // Persist answers before the AI call so they survive a failure
+        saveCheckInProgress(answers);
+        await createAssessment(answers).catch(() => {
+            // Error surfaced via createError — answers remain in sessionStorage for retry
+        });
+    };
+
+    const latest = assessments[0];
+    const previous = assessments[1];
+
+    const ctaLabel = (() => {
+        if (!canCreateThisMonth) return null;
+        if (hasStartedCheckIn) return 'Continue your check-in';
+        if (assessments.length === 0) return 'Start your first check-in';
+        return 'Start this month\'s check-in';
+    })();
+
+    const ctaDisabled = !isOnline || !isVaultUnlocked || isCreating;
+
+    const ctaDisabledReason = (() => {
+        if (!isOnline) return 'Connect to complete your check-in';
+        if (!isVaultUnlocked) return 'Unlock vault to begin';
+        return null;
+    })();
+
+    return (
+        <div className="space-y-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-lg font-black text-gray-900 tracking-tight">Recovery Capital</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">Monthly snapshot across all four ROSC dimensions</p>
+                </div>
+                {ctaLabel && (
+                    <div className="flex flex-col items-end gap-0.5">
+                        <button
+                            onClick={() => !ctaDisabled && setShowCheckIn(true)}
+                            disabled={ctaDisabled}
+                            className={`text-xs font-bold px-3 py-2 rounded-xl transition-all ${
+                                ctaDisabled
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-fuchsia-600 to-rose-500 text-white hover:opacity-90 shadow-sm'
+                            }`}
+                        >
+                            {ctaLabel}
+                        </button>
+                        {ctaDisabledReason && (
+                            <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <WifiIcon className="h-3 w-3" />
+                                {ctaDisabledReason}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {isCreating && (
+                <div className="bg-fuchsia-50 border border-fuchsia-100 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <SparklesIcon className="h-4 w-4 text-fuchsia-500 animate-pulse" />
+                        <span className="text-xs font-bold text-fuchsia-700">Analysing your recovery capital…</span>
+                    </div>
+                    <div className="w-full bg-fuchsia-100 rounded-full h-1.5">
+                        <div
+                            className="bg-fuchsia-500 h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${createProgress}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {createError && (
+                <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs text-rose-700">
+                    {createError}
+                </div>
+            )}
+
+            {isLoading ? (
+                <div className="text-center py-8 text-xs text-gray-400">Loading your history…</div>
+            ) : assessments.length === 0 ? (
+                <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-fuchsia-200">
+                    <div className="w-12 h-12 bg-fuchsia-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <SparklesIcon className="h-6 w-6 text-fuchsia-400" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-700">Your first snapshot awaits</p>
+                    <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                        Complete your first monthly check-in to see your Recovery Capital across Health, Home, Purpose, and Community.
+                    </p>
+                    {userTier !== 'premium' && (
+                        <p className="text-[10px] text-gray-400 mt-2">
+                            Free tier shows scores · Upgrade for AI insights
+                        </p>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {latest && !isCreating && (
+                        <div className="bg-gradient-to-br from-fuchsia-600 to-rose-500 rounded-2xl p-4 shadow-lg">
+                            <div className="mb-3">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-200">
+                                    {format(latest.createdAt.toDate ? latest.createdAt.toDate() : new Date(), 'MMMM yyyy')}
+                                </div>
+                                {assessments.length === 1 && (
+                                    <div className="text-[10px] text-fuchsia-300 mt-0.5">Your first Recovery Capital snapshot</div>
+                                )}
+                            </div>
+                            <ROSCRadarChart current={latest} previous={assessments.length >= 2 ? previous : undefined} />
+                        </div>
+                    )}
+
+                    {assessments.length === 0 && !canCreateThisMonth && (
+                        <p className="text-center text-xs text-gray-400">Check back next month for your next snapshot.</p>
+                    )}
+
+                    {assessments.length >= 2 && (
+                        <div className="space-y-2">
+                            <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 px-1">History</h3>
+                            {assessments.slice(1).map((a, i) => (
+                                <ROSCAssessmentCard
+                                    key={a.id}
+                                    assessment={a}
+                                    previous={assessments[i + 2]}
+                                    compact
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {showCheckIn && (
+                <ROSCCheckIn
+                    onComplete={handleCheckInComplete}
+                    onDismiss={() => setShowCheckIn(false)}
+                    onStart={handleCheckInStart}
+                    initialAnswers={savedCheckIn}
+                />
+            )}
+        </div>
+    );
+}
+
+</file>
+
+<file path="src/components/insights/ROSCRadarChart.tsx">
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
+import type { ROSCAssessment } from '../../lib/types/rosc';
+
+interface Props {
+    current: ROSCAssessment;
+    previous?: ROSCAssessment;
+}
+
+const DOMAINS = ['Health', 'Home', 'Purpose', 'Community'] as const;
+
+function scoreColor(score: number) {
+    if (score >= 7) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+    if (score >= 4) return 'text-amber-600 bg-amber-50 border-amber-200';
+    return 'text-gray-500 bg-gray-50 border-gray-200';
+}
+
+function trajectoryLabel(t: ROSCAssessment['trajectory'], prevTotal?: number, currTotal?: number): string {
+    if (t === 'Declining') return 'Room to grow this month';
+    if (t === 'Improving' && prevTotal !== undefined && currTotal !== undefined) {
+        return `Up from ${prevTotal} last month`;
+    }
+    if (t === 'Stable') return 'Similar to last month';
+    if (t === 'Insufficient Data') return 'Based on your check-in';
+    return '';
+}
+
+export default function ROSCRadarChart({ current, previous }: Props) {
+    const chartData = DOMAINS.map((d) => {
+        const key = d.toLowerCase() as keyof typeof current.scores;
+        return {
+            domain: d,
+            score: current.scores[key].score,
+            prevScore: previous ? previous.scores[key].score : undefined,
+            fullMark: 10,
+        };
+    });
+
+    const subtitle = trajectoryLabel(current.trajectory, previous?.totalScore, current.totalScore);
+
+    return (
+        <div className="space-y-4">
+            <div className="text-center">
+                <div className="text-3xl font-black text-gray-900">
+                    {current.totalScore}
+                    <span className="text-lg font-normal text-gray-400">/40</span>
+                </div>
+                <div className="text-sm font-medium text-gray-500 mt-0.5">Total Recovery Capital</div>
+                {subtitle && (
+                    <div className="text-xs font-semibold text-fuchsia-600 mt-1">{subtitle}</div>
+                )}
+            </div>
+
+            <ResponsiveContainer width="100%" height={220}>
+                <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.15)" />
+                    <PolarAngleAxis
+                        dataKey="domain"
+                        tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }}
+                    />
+                    {previous && (
+                        <Radar
+                            name="Last month"
+                            dataKey="prevScore"
+                            stroke="rgba(255,255,255,0.6)"
+                            fill="rgba(255,255,255,0.1)"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 2"
+                        />
+                    )}
+                    <Radar
+                        name="This month"
+                        dataKey="score"
+                        stroke="#8B5CF6"
+                        fill="rgba(139,92,246,0.25)"
+                        strokeWidth={2}
+                        isAnimationActive
+                        animationDuration={600}
+                        animationEasing="ease-out"
+                    />
+                </RadarChart>
+            </ResponsiveContainer>
+
+            {previous && (
+                <div className="flex justify-center gap-4 text-xs font-medium text-gray-500">
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-0.5 bg-violet-500 rounded-full inline-block" />
+                        This month
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-0.5 bg-gray-300 rounded-full inline-block" style={{ borderTop: '1px dashed #9ca3af' }} />
+                        Last month
+                    </span>
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {DOMAINS.map((d) => {
+                    const key = d.toLowerCase() as keyof typeof current.scores;
+                    const score = current.scores[key].score;
+                    return (
+                        <div
+                            key={d}
+                            className={`flex flex-col items-center py-2 px-3 rounded-xl border text-xs font-bold ${scoreColor(score)}`}
+                        >
+                            <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70 mb-0.5">{d}</span>
+                            <span className="text-base font-black">{score}</span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
 }
 
 </file>
@@ -9581,7 +10179,19 @@ export default function Dashboard() {
         return snap.size;
     },
     enabled: !!user,
-    refetchOnMount: 'always', 
+    refetchOnMount: 'always',
+  });
+
+  const { data: roscCount = 0 } = useQuery({
+    queryKey: ['rosc_count', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return 0;
+        const database: Firestore = db;
+        const snap = await getDocs(collection(database, 'users', user.uid, 'rosc_assessments'));
+        return snap.size;
+    },
+    enabled: !!user,
+    staleTime: 24 * 60 * 60 * 1000,
   });
 
   const stats = useMemo(() => {
@@ -9599,7 +10209,7 @@ export default function Dashboard() {
     const tStats = calculateTaskStats(tasks as any);
     const wStats = calculateWorkbookStats(workbookCount, TOTAL_WORKBOOK_QUESTIONS);
     const vStats = calculateVitalityStats(journals as any);
-    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean);
+    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean, roscCount);
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
@@ -9614,7 +10224,7 @@ export default function Dashboard() {
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
+  }, [journals, tasks, workbookCount, roscCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {
@@ -9969,10 +10579,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { useTaskOperations } from '../hooks/useTaskOperations'; 
+import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { addDays, format } from 'date-fns';
 import { Disclosure, Transition } from '@headlessui/react';
+import ROSCHistoryPanel from '../components/insights/ROSCHistoryPanel';
 import { LightBulbIcon, SparklesIcon, CheckCircleIcon, PlusCircleIcon, ShieldExclamationIcon, TrophyIcon, CalendarDaysIcon, BookOpenIcon, AcademicCapIcon, LinkIcon, HashtagIcon, BoltIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
@@ -10137,7 +10748,11 @@ export default function InsightsLog() {
                 toColor={THEME.insights.header.to} 
             />
 
-            <div className="px-4 -mt-10 relative z-30">
+            <div className="max-w-4xl mx-auto px-4 mt-6 mb-6">
+                <ROSCHistoryPanel />
+            </div>
+
+            <div className="px-4 relative z-30">
                 <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
                     {(['all', 'journal', 'workbook'] as const).map((tab) => (
                     <button
@@ -14743,6 +15358,7 @@ import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, creat
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
+import { refreshFcmTokenIfStale } from '../lib/messaging';
 
 interface AuthContextType {
   user: User | null;
@@ -14785,6 +15401,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await getOrCreateUserProfile(currentUser);
           setUser(currentUser);
           setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
+          refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
           
           // Phase 2: Listen directly to the Stripe extension's 'subscriptions' subcollection
           if (db) {
