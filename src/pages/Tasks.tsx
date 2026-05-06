@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, type Firestore, Timestamp } from 'firebase/firestore';
-import { PlusIcon, ClipboardDocumentListIcon, CalendarIcon, ClockIcon, SparklesIcon, ArchiveBoxIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ClipboardDocumentListIcon, CalendarIcon, ClockIcon, ArchiveBoxIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Virtuoso } from 'react-virtuoso';
 import VibrantHeader from '../components/VibrantHeader';
@@ -17,9 +17,9 @@ import { THEME } from '../lib/theme';
 import type { Task } from '../lib/tasks';
 import type { TaskPriority } from '../lib/db';
 import { computeRhythmScore } from '../lib/rhythmScore';
-import { isBefore, isAfter, startOfDay, addDays, isSameDay, format } from 'date-fns';
+import { isBefore, isAfter, startOfDay, isSameDay, format } from 'date-fns';
 
-type TabOption = 'this_week' | 'later' | 'action_plan' | 'history';
+type TabOption = 'today' | 'later' | 'log';
 
 type HistoryItem = 
     | { type: 'header-year'; title: string; count: number } 
@@ -34,7 +34,7 @@ export default function Tasks() {
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<TabOption>('this_week');
+    const [activeTab, setActiveTab] = useState<TabOption>('today');
     
     // Modals & Editing
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,55 +89,58 @@ export default function Tasks() {
 
     const filteredTasks = useMemo(() => {
         const today = startOfDay(new Date());
-        const nextWeekBoundary = addDays(today, 7);
-        
+
         return tasks.filter(task => {
             const isStatusCompleted = task.status === 'completed';
             const taskLastCompleted = toDate(task.lastCompletedAt);
             const isCompletedToday = taskLastCompleted ? isSameDay(taskLastCompleted, today) : false;
-            
-            if (activeTab === 'history') {
+
+            if (activeTab === 'log') {
                 return isStatusCompleted || isCompletedToday;
             }
 
             if (isStatusCompleted) return false;
 
-            const date = startOfDay(toDate(task.dueDate) || today);
-            const isManual = !task.source || task.source === 'manual';
-            const isAI = task.source === 'ai';
+            const due = startOfDay(toDate(task.dueDate) || today);
 
-            if (activeTab === 'action_plan') {
-                return isAI;
-            }
-
-            if (isManual) { if (activeTab === 'this_week') { return isBefore(date, nextWeekBoundary); }
-                if (activeTab === 'later') {
-                    return !isBefore(date, nextWeekBoundary);
-                }
-            }
+            if (activeTab === 'today') return !isAfter(due, today);  // due today or overdue
+            if (activeTab === 'later') return isAfter(due, today);   // due tomorrow or beyond
             return false;
         }).sort((a, b) => {
-            if (activeTab === 'history') {
-                const dateA = toDate(a.lastCompletedAt)?.getTime() || 0;
-                const dateB = toDate(b.lastCompletedAt)?.getTime() || 0;
-                return dateB - dateA;
+            if (activeTab === 'log') {
+                return (toDate(b.lastCompletedAt)?.getTime() ?? 0) - (toDate(a.lastCompletedAt)?.getTime() ?? 0);
             }
 
+            if (activeTab === 'later') {
+                return (toDate(a.dueDate)?.getTime() ?? 0) - (toDate(b.dueDate)?.getTime() ?? 0);
+            }
+
+            // Today: overdue tasks first (oldest first), then today's tasks (by priority)
+            const today = startOfDay(new Date());
+            const aDate = startOfDay(toDate(a.dueDate) || today);
+            const bDate = startOfDay(toDate(b.dueDate) || today);
+            const aOverdue = isBefore(aDate, today);
+            const bOverdue = isBefore(bDate, today);
+            if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+            if (aOverdue) return aDate.getTime() - bDate.getTime();
             const pMap = { High: 3, Medium: 2, Low: 1 };
-            const pA = a.priority || 'Medium';
-            const pB = b.priority || 'Medium';
-            const priorityDiff = pMap[pB] - pMap[pA];
-            if (priorityDiff !== 0) return priorityDiff;
-            
-            const dateA = toDate(a.dueDate)?.getTime() || 0;
-            const dateB = toDate(b.dueDate)?.getTime() || 0;
-            return dateA - dateB;
+            return (pMap[b.priority || 'Medium'] ?? 2) - (pMap[a.priority || 'Medium'] ?? 2);
         });
     }, [tasks, activeTab]);
 
-    // Data Transformation for Virtuoso History
+    // Badge count for Today tab — shown regardless of active tab
+    const todayCount = useMemo(() => {
+        const today = startOfDay(new Date());
+        return tasks.filter(t => {
+            if (t.status === 'completed') return false;
+            const due = startOfDay(toDate(t.dueDate) || today);
+            return !isAfter(due, today);
+        }).length;
+    }, [tasks]);
+
+    // Data Transformation for Virtuoso Log
     const historyFlatData = useMemo(() => {
-        if (activeTab !== 'history') return [];
+        if (activeTab !== 'log') return [];
 
         const itemsToGroup = filteredTasks.map(task => {
             const dateToUse = toDate(task.lastCompletedAt) || toDate(task.createdAt) || new Date();
@@ -278,7 +281,7 @@ export default function Tasks() {
 
         const onTouchEnd = (e: TouchEvent) => {
             if (el.scrollTop !== 0) return;
-            if (activeTab === 'history') return;
+            if (activeTab === 'log') return;
             const dy = e.changedTouches[0].clientY - touchStartY.current;
             if (dy >= 60 && !isQuickCaptureOpen) {
                 setIsQuickCaptureOpen(true);
@@ -312,29 +315,35 @@ export default function Tasks() {
 
             <div className="px-4 -mt-8 relative z-20">
                 <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex overflow-x-auto no-scrollbar">
-                    {[
-                        { id: 'this_week', label: 'This Week', icon: CalendarIcon },
+                    {([
+                        { id: 'today', label: 'Today', icon: CalendarIcon },
                         { id: 'later', label: 'Later', icon: ClockIcon },
-                        { id: 'action_plan', label: 'Action Plan', icon: SparklesIcon },
-                        { id: 'history', label: 'Log', icon: ArchiveBoxIcon },
-                    ].map(tab => (
+                        { id: 'log',   label: 'Log',   icon: ArchiveBoxIcon },
+                    ] as const).map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as TabOption)}
+                            onClick={() => setActiveTab(tab.id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
-                                activeTab === tab.id 
-                                ? 'bg-slate-800 text-white shadow-md' 
+                                activeTab === tab.id
+                                ? 'bg-slate-800 text-white shadow-md'
                                 : 'text-gray-500 hover:bg-gray-50'
                             }`}
                         >
                             <tab.icon className="h-4 w-4" />
                             {tab.label}
+                            {tab.id === 'today' && todayCount > 0 && (
+                                <span className={`ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-black px-1 ${
+                                    activeTab === 'today' ? 'bg-white text-slate-800' : 'bg-slate-800 text-white'
+                                }`}>
+                                    {todayCount}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {activeTab !== 'history' && rhythmScore > 0 && (
+            {activeTab !== 'log' && rhythmScore > 0 && (
                 <div className="px-4 mt-4 max-w-3xl mx-auto w-full flex items-center gap-3 bg-white/70 rounded-xl border border-slate-100 shadow-sm py-2.5 px-4">
                     <RhythmScoreRing score={rhythmScore} size={52} />
                     <div>
@@ -349,27 +358,25 @@ export default function Tasks() {
             <div className="flex-1 px-4 mt-6 max-w-3xl mx-auto w-full">
                 <div
                 ref={listContainerRef}
-                className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col ${activeTab === 'history' ? 'h-[65vh] min-h-[400px]' : 'min-h-[300px]'}`}
+                className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col ${activeTab === 'log' ? 'h-[65vh] min-h-[400px]' : 'min-h-[300px]'}`}
             >
                     {filteredTasks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 text-center p-6">
                             <div className="bg-slate-50 p-4 rounded-full mb-3">
-                                {activeTab === 'action_plan' ? (
-                                    <SparklesIcon className="h-8 w-8 text-purple-300" />
-                                ) : (
-                                    <ClipboardDocumentListIcon className="h-8 w-8 text-slate-300" />
-                                )}
+                                <ClipboardDocumentListIcon className="h-8 w-8 text-slate-300" />
                             </div>
                             <h3 className="text-slate-900 font-bold">
-                                {activeTab === 'action_plan' ? 'No Active Insights' : 'All Clear'}
+                                {activeTab === 'today' ? "You're all caught up" : 'All Clear'}
                             </h3>
                             <p className="text-slate-500 text-xs mt-1 max-w-xs">
-                                {activeTab === 'action_plan' 
-                                    ? 'Visit the Insights page to generate an AI Action Plan.' 
-                                    : 'You have no pending tasks for this view. Enjoy the moment.'}
+                                {activeTab === 'today'
+                                    ? 'Check back tomorrow.'
+                                    : activeTab === 'later'
+                                    ? 'Nothing scheduled yet. Tasks you complete today will appear here with their next due date.'
+                                    : 'Completed tasks will appear here.'}
                             </p>
                         </div>
-                    ) : activeTab === 'history' ? (
+                    ) : activeTab === 'log' ? (
                         <div className="flex-1 h-full w-full">
                             <Virtuoso 
                                 style={{ height: '100%' }}

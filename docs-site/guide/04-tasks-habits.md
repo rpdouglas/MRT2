@@ -3,12 +3,13 @@
 The Tasks module helps you build consistent routines and track actionable recovery steps.
 
 ## Smart Tabs
-Your tasks are automatically routed into four distinct lanes to reduce overwhelm:
-1. **This Week:** Tasks due today or within the next 6 days.
-2. **Later:** Tasks scheduled exactly 7 days from now or further in the future.
-3. **Action Plan:** Tasks generated automatically by the AI Compass (indicated by a purple Sparkles icon).
-4. **Log:** Your history of completed tasks.
-   * *Note:* To keep the app running smoothly, your completed tasks are grouped by Year and Month. Tap a month to expand and view your historical wins!
+Your tasks are automatically sorted into three lanes so you always know exactly what needs attention:
+
+1. **Today (default):** Everything on your plate right now — tasks due today *and* anything overdue from previous days. Overdue items appear at the top so nothing gets buried. A badge shows how many tasks are waiting.
+2. **Later:** Tasks scheduled for tomorrow or further ahead. When you complete a recurring habit, it moves here immediately with its next due date — so Today only ever shows what still needs your attention.
+3. **Log:** Your completed history. One-time tasks you've finished appear here, grouped by month.
+
+AI-suggested tasks (purple sparkle icon) appear in Today or Later based on their due date — they follow the same routing as your own tasks.
 
 ## Completing a Task — Swipe or Tap
 You have two ways to complete a task:

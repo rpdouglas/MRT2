@@ -1,5 +1,13 @@
 # 🚀 Changelog
 
+## [v1.7.0] - 2026-05-06
+### ✨ The Ledger — Precision, Resilience & Tab Redesign
+- **Tab Redesign [PROJ-47]:** Replaced the four-tab layout (This Week / Later / Action Plan / Log) with a three-tab actionability model: **Today** (all overdue + due today), **Later** (due tomorrow or beyond), **Log** (completed history). AI-suggested tasks now route by due date alongside manual tasks — no separate Action Plan tab.
+- **Overdue Labels [PROJ-47]:** Tasks overdue by exactly 1 day display "From yesterday" (amber). Tasks overdue by 2+ days display "Overdue" (amber). No red states, no "missed" or "failed" language.
+- **Monthly Precision Fix [PROJ-47]:** Fixed a calendar drift bug where tasks scheduled on the 31st would permanently shift to the 28th after a February occurrence. Monthly tasks now restore to their original day-of-month after short months (e.g. Jan 31 → Feb 28 → Mar 31).
+- **Late-Night Grace Window [PROJ-47]:** Added a 2-hour trailing grace window around midnight. Completing a recurring habit at 11:45 PM and opening the app after midnight no longer silently breaks your streak.
+- **Miss History [PROJ-47]:** The app now records how many days each habit was missed per evaluation cycle in a `missedCountHistory` field — foundation for future compliance pattern analysis in Insights.
+
 ## [v1.6.1] - 2026-05-06
 ### 📚 User Guide Sync
 - **Docs [PROJ-48]:** Added a new Daily Readings guide covering all 7 modalities, day-of-year rotation, the share feature, and how to journal from a reading.
