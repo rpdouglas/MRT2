@@ -115,7 +115,19 @@ export default function Dashboard() {
         return snap.size;
     },
     enabled: !!user,
-    refetchOnMount: 'always', 
+    refetchOnMount: 'always',
+  });
+
+  const { data: roscCount = 0 } = useQuery({
+    queryKey: ['rosc_count', user?.uid],
+    queryFn: async () => {
+        if (!user || !db) return 0;
+        const database: Firestore = db;
+        const snap = await getDocs(collection(database, 'users', user.uid, 'rosc_assessments'));
+        return snap.size;
+    },
+    enabled: !!user,
+    staleTime: 24 * 60 * 60 * 1000,
   });
 
   const stats = useMemo(() => {
@@ -133,7 +145,7 @@ export default function Dashboard() {
     const tStats = calculateTaskStats(tasks as any);
     const wStats = calculateWorkbookStats(workbookCount, TOTAL_WORKBOOK_QUESTIONS);
     const vStats = calculateVitalityStats(journals as any);
-    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean);
+    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean, roscCount);
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
@@ -148,7 +160,7 @@ export default function Dashboard() {
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
+  }, [journals, tasks, workbookCount, roscCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {

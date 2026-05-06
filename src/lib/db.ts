@@ -37,6 +37,7 @@ export interface UserProfile {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
     lastDeepDive?: Timestamp;
+    lastROSCAssessment?: Timestamp;
   };
   tier?: 'free' | 'premium';
   tierSource?: 'stripe' | 'manual';

@@ -3,10 +3,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { useTaskOperations } from '../hooks/useTaskOperations'; 
+import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { addDays, format } from 'date-fns';
 import { Disclosure, Transition } from '@headlessui/react';
+import ROSCHistoryPanel from '../components/insights/ROSCHistoryPanel';
 import { LightBulbIcon, SparklesIcon, CheckCircleIcon, PlusCircleIcon, ShieldExclamationIcon, TrophyIcon, CalendarDaysIcon, BookOpenIcon, AcademicCapIcon, LinkIcon, HashtagIcon, BoltIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
@@ -171,7 +172,11 @@ export default function InsightsLog() {
                 toColor={THEME.insights.header.to} 
             />
 
-            <div className="px-4 -mt-10 relative z-30">
+            <div className="max-w-4xl mx-auto px-4 mt-6 mb-6">
+                <ROSCHistoryPanel />
+            </div>
+
+            <div className="px-4 relative z-30">
                 <div className="bg-white p-1.5 rounded-xl shadow-lg border border-fuchsia-200 flex max-w-md mx-auto">
                     {(['all', 'journal', 'workbook'] as const).map((tab) => (
                     <button

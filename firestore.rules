@@ -38,6 +38,9 @@ service cloud.firestore {
       match /templates/{templateId} {
         allow read, write: if isOwner(userId);
       }
+      match /rosc_assessments/{assessmentId} {
+        allow read, write: if isOwner(userId);
+      }
 
       // Stripe Extension Subcollections (Backend Managed)
       // Users create the session request, backend fills in the URL.

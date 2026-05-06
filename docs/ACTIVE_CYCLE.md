@@ -18,6 +18,7 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-49:** The Recovery Capital (ROSC) Matrix — Monthly self-reported check-in + Gemini AI analysis across SAMHSA's four dimensions (Health, Home, Purpose, Community). Animated radar chart with longitudinal overlay. ZK boundary: domain scores unencrypted, AI narrative encrypted. Premium AI insights; free tier self-report scores.
 - [x] **PROJ-47:** The Ledger — Precision, Resilience & Tab Redesign. Monthly day-drift fix (`originalDayOfMonth`), 2-hour midnight grace window, `missedCountHistory` append, Today/Later/Log tab redesign (Action Plan tab removed), "From yesterday" overdue label.
 - [x] **PROJ-48:** User Guide Synchronization Sprint — new Daily Readings page (09), Dynamic Anchor rewrite (2-button bar, time-of-day table, notify toggles), Voice-to-Vault full section, recurrence schedule table, Smart Reset / Lazy Evaluation expansion.
 - [x] **PROJ-46:** The Ledger — Frictionless Task Module Upgrade. Sprint 1: swipe-to-complete (green reveal + haptic), Forgiveness Tap (amber swipe-left, "Let today go" sheet), Pull-to-Add Quick Capture. Sprint 2: Rhythm Score (14-day ring), AI Context Cards (sourceContext + sourceRef deep-links), Gemini prompt updates for action_contexts.
