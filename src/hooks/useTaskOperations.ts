@@ -24,13 +24,14 @@ export function useTaskOperations() {
 
   // --- 1. ADD TASK ---
   const addTaskMutation = useMutation({
-        mutationFn: async (params: { 
-            title: string; 
-            recurrence: TaskLib.RecurrenceConfig; 
-            priority: TaskLib.Priority; 
-            dueDate: Date;
-            source?: 'manual' | 'ai' | 'anchor_intent';
-        }) => {
+    mutationFn: async (params: {
+      title: string;
+      recurrence: TaskLib.RecurrenceConfig;
+      priority: TaskLib.Priority;
+      dueDate: Date;
+      source?: 'manual' | 'ai' | 'anchor_intent';
+      aiMeta?: { sourceContext?: string; sourceRef?: string };
+    }) => {
       if (!user) throw new Error("No user");
       await TaskLib.addTask(
         user.uid,
@@ -39,6 +40,7 @@ export function useTaskOperations() {
         params.priority,
         params.dueDate,
         params.source,
+        params.aiMeta,
       );
     },
     onMutate: async (newVar) => {
@@ -62,6 +64,8 @@ export function useTaskOperations() {
           lastCompletedAt: null,
           source: newVar.source || "manual",
           category: "Recovery",
+          ...(newVar.aiMeta?.sourceContext && { sourceContext: newVar.aiMeta.sourceContext }),
+          ...(newVar.aiMeta?.sourceRef && { sourceRef: newVar.aiMeta.sourceRef }),
         };
         queryClient.setQueryData(queryKey, [optimisticTask, ...previousTasks]);
       }

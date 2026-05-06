@@ -115,7 +115,7 @@ export default function InsightsLog() {
         loadData();
     }, [loadData]);
 
-    const handleAddToTasks = async (action: string) => {
+    const handleAddToTasks = async (action: string, sourceRef?: string) => {
         if (!user) return;
         try {
             const dueDate = addDays(new Date(), 7);
@@ -124,7 +124,8 @@ export default function InsightsLog() {
                 recurrence: { type: 'once' },
                 priority: 'Medium',
                 dueDate: dueDate,
-                source: 'ai' 
+                source: 'ai',
+                ...(sourceRef && { aiMeta: { sourceRef } }),
             });
             setAddedActions(prev => new Set(prev).add(action));
         } catch (e) {
@@ -331,8 +332,8 @@ export default function InsightsLog() {
                                                                                                             return (
                                                                                                                 <li key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-purple-50 shadow-sm text-sm text-purple-900">
                                                                                                                     <span>{step}</span>
-                                                                                                                    <button 
-                                                                                                                        onClick={() => !isAdded && handleAddToTasks(step)}
+                                                                                                                    <button
+                                                                                                                        onClick={() => !isAdded && handleAddToTasks(step, insight.id)}
                                                                                                                         disabled={isAdded}
                                                                                                                         className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-100'}`}
                                                                                                                     >

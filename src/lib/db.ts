@@ -93,7 +93,9 @@ export interface Task {
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
   lastCompletedAt?: Timestamp | Date | null; 
-  source?: 'manual' | 'ai' | 'anchor_intent'; 
+  source?: 'manual' | 'ai' | 'anchor_intent';
+  sourceContext?: string;   // AI-generated one-sentence insight summary. Plaintext. Only on source === 'ai'.
+  sourceRef?: string;       // Reference for deep-linking back to source (workbook or insight).
 }
 
 export interface WorkbookAnswer {
