@@ -18,7 +18,8 @@ const AGGRESSIVE_IGNORE_PATHS = [
   'build',
   'public/Marketing',
   'coverage',
-  '.firebase'
+  '.firebase',
+  'docs/projects/archive'
 ];
 
 const ALWAYS_IGNORE_FILES = [

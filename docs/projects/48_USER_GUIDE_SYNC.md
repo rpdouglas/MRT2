@@ -1,6 +1,6 @@
 # 📁 Project 48: User Guide Synchronization Sprint
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped (2026-05-06 · `feature/update_user_guide`)
 **Primary Persona:** All Personas (Focus on Onboarding)
 **Objective:** Synchronize the VitePress user documentation with the v1.6.0 codebase, addressing the drift in the Daily Readings, Dynamic Anchor, Task Recurrence, Voice-to-Vault, and Push Notification systems.
 
@@ -65,4 +65,16 @@
 
 ---
 
-**STOP:** Wait for approval. Do NOT write the execution script yet.
+---
+
+## 6. Shipped Notes
+
+**"3-column" spec error:** Phase 2 described the Dynamic Anchor as a "3-column Quick Action Bar." The actual implementation (`DynamicAnchorWidget.tsx` — `grid-cols-2`) is 2 columns: a Check-In button and a Daily Reading button with a dropdown chevron. The guide was written to match the code.
+
+**Smart Reset / Lazy Evaluation:** Added to `04-tasks-habits.md` — explains on-demand evaluation at app load, the streak penalty table (first miss → 0, subsequent misses → decrement below 0), and the equivalence between the silent reset and the Forgiveness Tap write.
+
+**Share button:** Spec described the share feature as "stripping PII." In practice, readings contain no user data by design — the share output is the reading text plus the MRT URL. Documented accurately.
+
+---
+
+*MRT · PROJ-48 User Guide Synchronization Sprint · v1.0 · May 2026 · Status: ✅ Shipped*

@@ -3,12 +3,13 @@
 The Tasks module helps you build consistent routines and track actionable recovery steps.
 
 ## Smart Tabs
-Your tasks are automatically routed into four distinct lanes to reduce overwhelm:
-1. **This Week:** Tasks due today or within the next 6 days.
-2. **Later:** Tasks scheduled exactly 7 days from now or further in the future.
-3. **Action Plan:** Tasks generated automatically by the AI Compass (indicated by a purple Sparkles icon).
-4. **Log:** Your history of completed tasks.
-   * *Note:* To keep the app running smoothly, your completed tasks are grouped by Year and Month. Tap a month to expand and view your historical wins!
+Your tasks are automatically sorted into three lanes so you always know exactly what needs attention:
+
+1. **Today (default):** Everything on your plate right now — tasks due today *and* anything overdue from previous days. Overdue items appear at the top so nothing gets buried. A badge shows how many tasks are waiting.
+2. **Later:** Tasks scheduled for tomorrow or further ahead. When you complete a recurring habit, it moves here immediately with its next due date — so Today only ever shows what still needs your attention.
+3. **Log:** Your completed history. One-time tasks you've finished appear here, grouped by month.
+
+AI-suggested tasks (purple sparkle icon) appear in Today or Later based on their due date — they follow the same routing as your own tasks.
 
 ## Completing a Task — Swipe or Tap
 You have two ways to complete a task:
@@ -59,15 +60,43 @@ If the source was later deleted, the link is replaced with "Source no longer ava
 
 ## The "Smart Reset" System
 We don't believe in "Schedule Debt" or guilt.
-* If you miss a recurring habit (like "Morning Meditation"), MRT doesn't leave it stranded in the past.
-* On the next app load it automatically moves the due date to Today so you can try again immediately.
-* This silent reset still happens in the background on every load. The **Forgiveness Tap** (swipe left) is the active, user-initiated version of the same mechanic — with a compassionate UI layer on top.
+
+**Why tasks move to Today (Lazy Evaluation)**
+
+MRT does not run a background clock. Instead, the reset fires on-demand the moment you open the app and your tasks are loaded. If you missed "Morning Meditation" yesterday, that task is not moved to today at midnight — it's moved at the moment you open the app next. This is called *lazy evaluation*: the check only runs when the data is actually needed, not on a fixed schedule.
+
+This means you will never open the app to find a pile of overdue copies of the same habit. There is always exactly one instance due today, no matter how many days have passed.
+
+**How the streak penalty works**
+
+| Situation | What happens to your streak |
+| :--- | :--- |
+| You complete the habit | Streak increments by 1 |
+| You miss one day (streak was > 0) | Streak resets to 0 |
+| You miss again (streak is already 0 or below) | Streak decrements by 1 each consecutive miss |
+
+The negative range tracks consecutive missed days, which feeds the streak-aware copy in the Forgiveness Tap. Once you complete the habit again the streak climbs back from wherever it sits.
+
+**Active vs. silent reset**
+
+The silent Smart Reset and the **Forgiveness Tap** (swipe left) produce an identical Firestore write — the due date moves to today. The only difference is the Forgiveness Tap wraps the same action in a compassionate UI that lets you choose between tomorrow or today, and tells you whether your streak is still intact.
 
 ## Creating a Task — Full Form
 Tap the floating **+** button to open the full task form. You can set:
 * **Priority:** High, Medium, or Low.
-* **Recurring schedules:** Daily, weekly, monthly, or advanced patterns like "The last Friday of every month."
 * **Category:** Recovery, Health, Life, or Work.
+
+### Recurrence Options
+| Schedule | What it means | Example |
+| :--- | :--- | :--- |
+| **Once** | One-time task, never repeats | "Call insurance company" |
+| **Daily** | Every day (or every N days with an interval) | "Morning meditation" every day |
+| **Weekly** | Repeats on specific days of the week you choose | "Step group" every Tuesday and Thursday |
+| **Bi-weekly** | Every two weeks on the same day | "Sponsor call" every other Sunday |
+| **Monthly** | Same calendar date each month | "Service commitment" on the 15th |
+| **Monthly (relative)** | A specific weekday within the month | "1st Monday of the month", "Last Friday of the month" |
+
+For **Monthly (relative)**, choose the week position (1st, 2nd, 3rd, 4th, or Last) and the day of the week. The app calculates the exact date each month automatically — no manual adjustment needed.
 
 ## Completing Future Tasks
 If you attempt to check off a task scheduled for a future date (via tap or swipe), a confirmation modal will appear. This prevents accidentally clearing tasks you need to do later in the week.

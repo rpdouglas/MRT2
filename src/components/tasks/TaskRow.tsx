@@ -4,7 +4,7 @@ import { CheckCircleIcon as CheckCircleOutline, TrashIcon, PencilSquareIcon, Arr
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
 import type { Task } from '../../lib/tasks';
 import { getRecurrenceLabel } from '../../lib/dateUtils';
-import { format, isBefore, startOfDay, isSameDay } from 'date-fns';
+import { format, isBefore, startOfDay, isSameDay, differenceInDays } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
 interface TaskRowProps {
@@ -34,6 +34,8 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = 
 
     // Strict Overdue: Only if not checked and date is strictly before today
     const isOverdue = !isChecked && taskDate && isBefore(taskDate, today);
+    const daysMissed = isOverdue && taskDate ? differenceInDays(today, taskDate) : 0;
+    const overdueLabel = daysMissed === 1 ? 'From yesterday' : 'Overdue';
     
     const priorityColor = {
         High: 'text-red-600 bg-red-50 border-red-100',
@@ -74,8 +76,8 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = 
                     )}
 
                     {taskDate && (
-                        <span className={`flex items-center gap-1 text-[10px] font-medium ${isOverdue ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
-                            {isOverdue ? 'Overdue' : `Due: ${format(taskDate, 'MMM d')}`}
+                        <span className={`flex items-center gap-1 text-[10px] font-medium ${isOverdue ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
+                            {isOverdue ? overdueLabel : `Due: ${format(taskDate, 'MMM d')}`}
                             {task.source === 'ai' && !isOverdue && (
                                 <span className="bg-purple-50 text-purple-600 border border-purple-100 px-1 py-0.5 rounded-[4px] font-bold" title="Auto-scheduled by AI">
                                     +7 Days

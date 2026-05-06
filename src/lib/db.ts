@@ -96,6 +96,7 @@ export interface Task {
   source?: 'manual' | 'ai' | 'anchor_intent';
   sourceContext?: string;   // AI-generated one-sentence insight summary. Plaintext. Only on source === 'ai'.
   sourceRef?: string;       // Reference for deep-linking back to source (workbook or insight).
+  missedCountHistory?: number[]; // Appended per lazy-eval cycle (arrayUnion). Each element = days missed in that cycle.
 }
 
 export interface WorkbookAnswer {
