@@ -123,3 +123,7 @@
 - **Dashboard Performance (PROJ-19):** Implemented a 30-day bounded query engine (`useDashboardData.ts`) and composite indexing.
 - **Zero-Knowledge Vault Stability:** Patched an edge-case crash during PIN rotation and decryption fallback.
 - **Infrastructure:** Hardened the Cloud Functions deployment environment (`skipLibCheck`).
+
+## [v1.0.0] - 2026-04-01
+### ✨ The CBT Engine (SMART Tools)
+- **Feature [PROJ-27]:** Launched the SMART Tools (CBT Engine) including Cost Benefit Analysis (CBA) and ABC models, completely refactored into strictly-typed React components and secured by Zero-Knowledge encryption.
