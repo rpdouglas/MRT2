@@ -1,6 +1,6 @@
 # 📋 Project PROJ-47: The Ledger — Precision, Resilience & Tab Redesign
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped (2026-05-06)
 **Primary Persona:** David (safety anchor) · Ned (engagement driver) · Maya (precision driver)
 **Objective:** Redesign the task tab structure from a time-horizon model (This Week / Later) to an actionability model (Today / Later), fix the monthly day-drift bug that causes Feb 28 trapping, add a timezone-aware grace window for David's late-night sessions, and accurately log historical miss data for Maya's pattern analysis — all without breaking the existing Smart Reset or PROJ-46 gesture interactions.
 
@@ -525,4 +525,4 @@ it('getLogTasks: excludes completed recurring tasks', () => { ... });
 
 ---
 
-*MRT · PROJ-47 The Ledger — Precision, Resilience & Tab Redesign · v1.0 · May 2026 · Status: ⚪ Planned*
+*MRT · PROJ-47 The Ledger — Precision, Resilience & Tab Redesign · v1.0 · May 2026 · Status: ✅ Shipped*

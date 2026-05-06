@@ -1,5 +1,20 @@
 # 🚀 Changelog
 
+## [v1.7.0] - 2026-05-06
+### ✨ The Ledger — Precision, Resilience & Tab Redesign
+- **Tab Redesign [PROJ-47]:** Replaced the four-tab layout (This Week / Later / Action Plan / Log) with a three-tab actionability model: **Today** (all overdue + due today), **Later** (due tomorrow or beyond), **Log** (completed history). AI-suggested tasks now route by due date alongside manual tasks — no separate Action Plan tab.
+- **Overdue Labels [PROJ-47]:** Tasks overdue by exactly 1 day display "From yesterday" (amber). Tasks overdue by 2+ days display "Overdue" (amber). No red states, no "missed" or "failed" language.
+- **Monthly Precision Fix [PROJ-47]:** Fixed a calendar drift bug where tasks scheduled on the 31st would permanently shift to the 28th after a February occurrence. Monthly tasks now restore to their original day-of-month after short months (e.g. Jan 31 → Feb 28 → Mar 31).
+- **Late-Night Grace Window [PROJ-47]:** Added a 2-hour trailing grace window around midnight. Completing a recurring habit at 11:45 PM and opening the app after midnight no longer silently breaks your streak.
+- **Miss History [PROJ-47]:** The app now records how many days each habit was missed per evaluation cycle in a `missedCountHistory` field — foundation for future compliance pattern analysis in Insights.
+
+## [v1.6.1] - 2026-05-06
+### 📚 User Guide Sync
+- **Docs [PROJ-48]:** Added a new Daily Readings guide covering all 7 modalities, day-of-year rotation, the share feature, and how to journal from a reading.
+- **Docs [PROJ-48]:** Rewrote the Dashboard guide with the Dynamic Anchor widget (time-aware check-in prompts and their exact windows), and documented all three push notification toggles (Check-In, Reading, Intent).
+- **Docs [PROJ-48]:** Expanded Voice-to-Vault in the Journal guide to a full section explaining transcription, auto mood detection, and the ZK encryption step.
+- **Docs [PROJ-48]:** Added a full recurrence schedule table to the Tasks guide (Once, Daily, Weekly, Bi-weekly, Monthly, Monthly-relative) and expanded the Smart Reset section with a Lazy Evaluation explanation and streak penalty table.
+
 ## [v1.6.0] - 2026-05-05
 ### ✨ The Ledger — Frictionless Task Module Upgrade
 - **Gesture Interactions [PROJ-46]:** Swipe right on any task to complete it — a green layer reveals beneath the card and a brief vibration confirms the action. Swipe left to open the "Let today go" Forgiveness Tap sheet, offering a compassionate move-to-tomorrow option with no streak penalty.
@@ -108,3 +123,7 @@
 - **Dashboard Performance (PROJ-19):** Implemented a 30-day bounded query engine (`useDashboardData.ts`) and composite indexing.
 - **Zero-Knowledge Vault Stability:** Patched an edge-case crash during PIN rotation and decryption fallback.
 - **Infrastructure:** Hardened the Cloud Functions deployment environment (`skipLibCheck`).
+
+## [v1.0.0] - 2026-04-01
+### ✨ The CBT Engine (SMART Tools)
+- **Feature [PROJ-27]:** Launched the SMART Tools (CBT Engine) including Cost Benefit Analysis (CBA) and ABC models, completely refactored into strictly-typed React components and secured by Zero-Knowledge encryption.

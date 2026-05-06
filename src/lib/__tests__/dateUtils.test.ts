@@ -81,13 +81,55 @@ describe('📅 DateUtils Engine', () => {
       expect(nextDate?.getDate()).toBe(15);
     });
 
-    it('should handle "monthly" overflow correctly (Jan 31 -> Feb 28)', () => {
+    it('should handle "monthly" overflow correctly (Jan 31 -> Feb 28) — no originalDayOfMonth', () => {
       const endOfJan = new Date('2026-01-31T12:00:00Z');
       const config: RecurrenceConfig = { type: 'monthly' };
       const nextDate = calculateNextDueDate(endOfJan, config);
       // 2026 is not a leap year, so Feb has 28 days
       expect(nextDate?.getMonth()).toBe(1); // Feb (0-indexed)
       expect(nextDate?.getDate()).toBe(28);
+    });
+
+    it('monthly with originalDayOfMonth=31: Jan 31 → Feb 28 (clamp) → Mar 31 (restore)', () => {
+      const jan31 = new Date('2026-01-31T12:00:00Z');
+      const config: RecurrenceConfig = { type: 'monthly', originalDayOfMonth: 31 };
+
+      const feb = calculateNextDueDate(jan31, config)!;
+      expect(feb.getMonth()).toBe(1); // February
+      expect(feb.getDate()).toBe(28); // Clamped — Feb 2026 has 28 days
+
+      const mar = calculateNextDueDate(feb, config)!;
+      expect(mar.getMonth()).toBe(2); // March
+      expect(mar.getDate()).toBe(31); // Restored to originalDayOfMonth
+    });
+
+    it('monthly with originalDayOfMonth=31: Feb 28 → Mar 31 (does not permanently drift to 28)', () => {
+      const feb28 = new Date('2026-02-28T12:00:00Z');
+      const config: RecurrenceConfig = { type: 'monthly', originalDayOfMonth: 31 };
+      const mar = calculateNextDueDate(feb28, config)!;
+      expect(mar.getMonth()).toBe(2);
+      expect(mar.getDate()).toBe(31);
+    });
+
+    it('monthly with originalDayOfMonth=29: leap year Feb 29 → Mar 29 → Apr 29', () => {
+      const feb29 = new Date('2028-02-29T12:00:00Z'); // 2028 is a leap year
+      const config: RecurrenceConfig = { type: 'monthly', originalDayOfMonth: 29 };
+
+      const mar = calculateNextDueDate(feb29, config)!;
+      expect(mar.getMonth()).toBe(2);
+      expect(mar.getDate()).toBe(29);
+
+      const apr = calculateNextDueDate(mar, config)!;
+      expect(apr.getMonth()).toBe(3);
+      expect(apr.getDate()).toBe(29);
+    });
+
+    it('monthly with originalDayOfMonth=31: Apr 30 → May 31 (restores after 30-day month)', () => {
+      const apr30 = new Date('2026-04-30T12:00:00Z');
+      const config: RecurrenceConfig = { type: 'monthly', originalDayOfMonth: 31 };
+      const may = calculateNextDueDate(apr30, config)!;
+      expect(may.getMonth()).toBe(4);
+      expect(may.getDate()).toBe(31);
     });
   });
 

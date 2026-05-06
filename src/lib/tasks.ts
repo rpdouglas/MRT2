@@ -2,9 +2,9 @@
  * src/lib/tasks.ts
  * UPDATED: Re-architected toggleTask and addTask to properly handle RecurrenceConfig.
  */
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, Timestamp, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase";
-import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay } from "date-fns";
+import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay, subHours, isAfter, differenceInDays } from "date-fns";
 import type { Task as TaskInterface } from "./db";
 import { type RecurrenceConfig, calculateNextDueDate } from "./dateUtils";
 
@@ -37,12 +37,17 @@ export async function addTask(
   const isRecurring = recurrence.type !== 'once';
   const due = startOfDay(startDate);
 
+  const recurrenceToStore: RecurrenceConfig = { ...recurrence };
+  if (recurrence.type === 'monthly') {
+    recurrenceToStore.originalDayOfMonth = startDate.getDate();
+  }
+
   await addDoc(collection(db, COLLECTION), {
     uid,
     title,
     isRecurring,
-    frequency: recurrence.type, // Backwards compatibility
-    recurrence, // Store the full config object
+    frequency: recurrenceToStore.type, // Backwards compatibility
+    recurrence: recurrenceToStore,
     priority,
     currentStreak: 0,
     lastCompletedAt: null,
@@ -66,6 +71,8 @@ export async function getUserTasks(uid: string) {
   const snapshot = await getDocs(q);
   const tasks: Task[] = [];
   const today = startOfDay(new Date());
+  const GRACE_WINDOW_HOURS = 2;
+  const graceWindowStart = subHours(today, GRACE_WINDOW_HOURS);
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
@@ -84,26 +91,36 @@ export async function getUserTasks(uid: string) {
       dueDate: toDate(data.dueDate),
       lastCompletedAt: toDate(data.lastCompletedAt) || null,
       createdAt: toDate(data.createdAt) || new Date(),
-      source: data.source || 'manual'
+      source: data.source || 'manual',
+      missedCountHistory: data.missedCountHistory ?? undefined,
     };
 
     if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
-        const completedToday = task.lastCompletedAt && isSameDay(task.lastCompletedAt as Date, today);
-        
-        if (!completedToday) {
+        // Grace window: completions within 2 hours before midnight count for "today"
+        // Protects David's late-night sessions from silent streak resets
+        const completedInWindow = task.lastCompletedAt &&
+          isAfter(task.lastCompletedAt as Date, graceWindowStart);
+
+        if (!completedInWindow) {
             let newStreak = task.currentStreak;
-            
+
             if (newStreak > 0) {
-                newStreak = 0; 
+                newStreak = 0;
             } else {
-                newStreak -= 1; 
+                newStreak -= 1;
             }
 
+            const daysMissed = differenceInDays(today, startOfDay(task.dueDate as Date));
             const taskRef = doc(db, COLLECTION, task.id!);
-            await updateDoc(taskRef, { currentStreak: newStreak, dueDate: Timestamp.fromDate(today) });
+            await updateDoc(taskRef, {
+              currentStreak: newStreak,
+              dueDate: Timestamp.fromDate(today),
+              missedCountHistory: arrayUnion(daysMissed),
+            });
 
             task.currentStreak = newStreak;
-            task.dueDate = today; 
+            task.dueDate = today;
+            task.missedCountHistory = [...(task.missedCountHistory ?? []), daysMissed];
         }
     }
 

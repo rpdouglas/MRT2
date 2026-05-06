@@ -10,6 +10,7 @@ export interface RecurrenceConfig {
   dayOfMonth?: number; // 1-31 (for monthly)
   weekOfMonth?: number; // 1 (1st), 2 (2nd), ... 5 (Last) (for monthly-relative)
   dayOfWeek?: number; // 0-6 (for monthly-relative)
+  originalDayOfMonth?: number; // Stores intended day for monthly tasks (e.g. 31) so short months don't cause permanent drift
 }
 
 export interface SobrietyDuration { years: number; months: number; days: number; totalDays: number; }
@@ -64,16 +65,13 @@ export function calculateNextDueDate(baseDate: Date, config: RecurrenceConfig): 
       break;
 
     case 'monthly': {
-      // Add 1 month, try to keep same day
-      const currentDay = nextDate.getDate();
+      // Use originalDayOfMonth to remember the intended day across short months.
+      // e.g. Jan 31 → Feb 28 (clamped) → Mar 31 (restored). Without it, drift was permanent.
+      const targetDay = config.originalDayOfMonth ?? nextDate.getDate();
+      nextDate.setDate(1); // Move to 1st before incrementing to prevent JS month overflow
       nextDate.setMonth(nextDate.getMonth() + 1);
-      
-      // Handle edge case (e.g. Jan 31 -> Feb 28/29)
-      if (nextDate.getDate() !== currentDay) {
-          // If date changed, it means we overflowed (e.g. Feb 28 became Mar 2)
-          // Set to 0 (last day of previous month)
-          nextDate.setDate(0); 
-      }
+      const daysInNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+      nextDate.setDate(Math.min(targetDay, daysInNewMonth));
       break;
     }
 
