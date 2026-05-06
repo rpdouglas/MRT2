@@ -348,6 +348,73 @@ export async function analyzeFullWorkbook(
 // Alias for backward compatibility
 export const analyzeWorkbookContent = analyzeFullWorkbook;
 
+export interface ROSCAnalysisResult {
+  scores: {
+    health: { score: number; evidence: string[] };
+    home: { score: number; evidence: string[] };
+    purpose: { score: number; evidence: string[] };
+    community: { score: number; evidence: string[] };
+  };
+  trajectory: 'Improving' | 'Stable' | 'Declining' | 'Insufficient Data';
+  narrative: string;
+  strengths: string[];
+  growth_areas: string[];
+}
+
+export async function generateROSCAnalysis(
+  selfReport: { health: number; home: number; purpose: number; community: number; resilience: number },
+  journalSummary: string,
+  entryCount: number
+): Promise<ROSCAnalysisResult> {
+  const prompt = `You are an expert in Recovery Capital assessment, grounded in SAMHSA's four recovery dimensions.
+Your role is to act as a wise and empathetic Recovery Coach — not a clinician — helping a user understand their holistic life in recovery this month.
+
+IMPORTANT CONSTRAINTS:
+- Do NOT reproduce any journal entry verbatim in your response
+- Do NOT make clinical diagnoses or treatment recommendations
+- Frame ALL findings with compassion — avoid language that implies failure
+- Scores reflect evidence quality, not moral judgment
+- If you see very few entries (fewer than 5), return trajectory: "Insufficient Data"
+
+SELF-REPORTED CHECK-IN (user's own assessment, scale 1-5):
+- Health: ${selfReport.health}/5
+- Home: ${selfReport.home}/5
+- Purpose: ${selfReport.purpose}/5
+- Community: ${selfReport.community}/5
+- Resilience this month: ${selfReport.resilience}/5
+
+JOURNAL HISTORY (last 30 days, ${entryCount} entries):
+${journalSummary}
+
+SCORING INSTRUCTIONS:
+Score each domain 1-10 by blending:
+- The user's own self-report (weight: 40%)
+- Evidence from journal entries (weight: 60%)
+
+Domain criteria:
+- HEALTH (1-10): Physical activity mentions, sleep quality, mood trend, substance-free references, self-care practices, emotional regulation.
+- HOME (1-10): Stability signals (routine, safe environment references), stress around housing or finances as negative signals. Weight self-report heavily here.
+- PURPOSE (1-10): Work/career mentions, creative pursuits, service work references, goal completion, meaningful activity descriptions.
+- COMMUNITY (1-10): Meeting attendance references, sponsor contact, social connections, helping others, feelings of belonging vs. isolation.
+
+Return ONLY this JSON structure, no markdown:
+{
+  "scores": {
+    "health": { "score": 0, "evidence": ["brief reference"] },
+    "home": { "score": 0, "evidence": ["brief reference"] },
+    "purpose": { "score": 0, "evidence": ["brief reference"] },
+    "community": { "score": 0, "evidence": ["brief reference"] }
+  },
+  "trajectory": "Improving",
+  "narrative": "2-3 sentence compassionate overview of this month's recovery capital",
+  "strengths": ["Domain name: brief strength observation"],
+  "growth_areas": ["Domain name: compassionate growth suggestion"]
+}`;
+
+  const text = await generateWithCascade(prompt, 'rosc_assessment', 'gemini-3.1-pro-preview');
+  return JSON.parse(cleanJSON(text)) as ROSCAnalysisResult;
+}
+
 export async function getGeminiCoaching(
     context: string, 
     userAnswer: string

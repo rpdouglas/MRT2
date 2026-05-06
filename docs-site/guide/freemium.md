@@ -9,10 +9,12 @@ Designed for immediate relief, habit building, and finding stability.
 * **The Horizon:** Full dashboard tracking for clean time and gamification streaks.
 * **The Pulse:** Unlimited somatic tracking (Fuel, Movement) and 4-7-8 Breathwork.
 * **AI Access (Metered):** Limited to 1 Weekly Check-in per week, 1 Monthly Review per month, and 1 Deep Pattern Scan per month.
+* **Recovery Capital Check-in (ROSC):** One self-report check-in per calendar month. Domain scores are based on your own answers — no AI journal analysis on the free tier.
 
 ## 🌟 MRT Premium (Supporter)
 Designed for users in the maintenance phase looking for deep insights, and sponsors managing commitments.
 * **Unlimited AI Compass:** Unlimited, on-demand Gemini pattern recognition and deep-dive journal analysis.
+* **Recovery Capital Matrix (ROSC):** Full AI-powered monthly assessment — Gemini reads your last 30 journal entries alongside your check-in answers and produces blended domain scores (1–10), a personalised narrative, identified strengths, and compassionate growth suggestions. All AI output is encrypted before storage.
 * **Custom Templates:** Build and save your own Markdown-powered journal structures.
 * **The Digital Rolodex (Service Module):** A securely encrypted system to track sponsee step work, contact info, and meeting times *(Coming Soon)*.
 * **Cloud Auto-Sync:** Automated, invisible JSON backups to your personal Google Drive.

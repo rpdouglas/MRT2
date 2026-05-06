@@ -1,5 +1,13 @@
 # 🚀 Changelog
 
+## [v1.8.0] - 2026-05-06
+### ✨ The Recovery Capital (ROSC) Matrix
+- **Feature [PROJ-49]:** Monthly self-check-in across SAMHSA's four recovery dimensions — Health, Home, Purpose, and Community — using five strength-based questions and an AI analysis of your last 30 journal entries.
+- **Radar Chart [PROJ-49]:** Scores are visualised as an animated radar chart. When two or more monthly snapshots exist, the chart overlays the current and previous month so you can see the shape of your recovery changing over time.
+- **ZK Privacy [PROJ-49]:** Domain scores (numbers) are readable without vault unlock. The AI narrative, strengths, growth areas, and evidence references are encrypted client-side — the server never sees your AI insights in plaintext.
+- **Premium vs Free [PROJ-49]:** Free tier completes the self-check-in and receives domain scores. Premium adds a full Gemini analysis of your journal history, producing a narrative, identified strengths, and compassionate growth suggestions.
+- **Rate Limit [PROJ-49]:** One assessment per calendar month — consistent with clinical ROSC methodology and designed to prevent compulsive reassessment.
+
 ## [v1.7.1] - 2026-05-06
 ### 🐛 Bug Fixes
 - **Recurring Tasks:** Fixed an issue where completing an overdue recurring task would calculate its next due date based on the missed date rather than today, preventing it from properly rolling forward.

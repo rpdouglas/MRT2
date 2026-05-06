@@ -1,6 +1,6 @@
 # 🧭 Project PROJ-49: The Recovery Capital (ROSC) Matrix
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Personas:** Walt (The Zen Master) · Lisa (The Service Superstar)
 **Secondary Personas:** Maya (The Systematiser) · Ned (transition from Day 90 onward)
 **Objective:** Build a clinically grounded, privacy-preserving monthly Recovery Capital assessment that scores the four SAMHSA-defined domains of recovery (Health, Home, Purpose, Community) using a hybrid approach — a short self-reported check-in augmented by AI analysis of the user's encrypted journal history — rendered as an animated radar chart that accumulates longitudinal snapshots over time.
