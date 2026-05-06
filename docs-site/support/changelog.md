@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.7.1] - 2026-05-06
+### 🐛 Bug Fixes
+- **Recurring Tasks:** Fixed an issue where completing an overdue recurring task would calculate its next due date based on the missed date rather than today, preventing it from properly rolling forward.
+
 ## [v1.7.0] - 2026-05-06
 ### ✨ The Ledger — Precision, Resilience & Tab Redesign
 - **Tab Redesign [PROJ-47]:** Replaced the four-tab layout (This Week / Later / Action Plan / Log) with a three-tab actionability model: **Today** (all overdue + due today), **Later** (due tomorrow or beyond), **Log** (completed history). AI-suggested tasks now route by due date alongside manual tasks — no separate Action Plan tab.

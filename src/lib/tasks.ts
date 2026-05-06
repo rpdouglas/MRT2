@@ -143,7 +143,8 @@ export async function toggleTask(task: Task, isCompleting: boolean) {
 
     // Use full recurrence logic if available, else fallback to legacy frequency
     if (task.isRecurring && task.recurrence) {
-        const calculatedNext = calculateNextDueDate(currentDue, task.recurrence);
+        const baseDate = isBefore(currentDue, today) ? today : currentDue;
+        const calculatedNext = calculateNextDueDate(baseDate, task.recurrence);
         if (calculatedNext) nextDue = calculatedNext;
     } else if (task.frequency && task.frequency !== 'once') {
         if (task.frequency === 'daily') nextDue = addDays(today, 1);
