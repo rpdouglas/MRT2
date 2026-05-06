@@ -29,6 +29,9 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 // ─── PROJ-26 constants ────────────────────────────────────────────────────────
 
+// Override via Firebase Functions env var if using a custom domain.
+const APP_URL = process.env.APP_URL ?? "https://mrt2-app-prod.web.app";
+
 const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
 
 function getMilestone(totalDays: number): number | null {
@@ -313,8 +316,8 @@ export const dailyBeacon = onSchedule({
                     messagesToSend.push({
                         token,
                         notification: { title, body },
-                        data: { click_action: "/dashboard" },
-                        webpush: { fcmOptions: { link: "/dashboard" } },
+                        data: { click_action: `${APP_URL}/dashboard` },
+                        webpush: { fcmOptions: { link: `${APP_URL}/dashboard` } },
                     });
                 });
             }

@@ -48,6 +48,7 @@ export interface UserProfile {
   currencySymbol?: string;
   // --- NEW: PROJ-26 (The Beacon) ---
   fcmTokens?: string[];
+  fcmSwVersion?: number;
   timezone?: string;
   anchorSettings?: {
     notifyCheckIn: boolean;
