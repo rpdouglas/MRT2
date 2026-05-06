@@ -10,7 +10,7 @@ vi.mock('../firebase', () => ({
 // Mock Firestore functions
 vi.mock('firebase/firestore', async (importOriginal) => {
     const actual = await importOriginal<typeof import('firebase/firestore')>();
-    
+
     // We must mock Timestamp as a Class so `instanceof Timestamp` works in tasks.ts
     class MockTimestamp {
         date: Date;
@@ -30,6 +30,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         doc: vi.fn(),
         updateDoc: vi.fn(),
         deleteDoc: vi.fn(),
+        arrayUnion: vi.fn((v: unknown) => ({ __arrayUnion: v })),
         Timestamp: MockTimestamp
     };
 });
@@ -90,7 +91,7 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => { beforeEach(() => {
                         title: 'Drink Water',
                         isRecurring: true,
                         currentStreak: 5,
-                        dueDate: firestore.Timestamp.fromDate(yesterday), 
+                        dueDate: firestore.Timestamp.fromDate(yesterday),
                         lastCompletedAt: firestore.Timestamp.fromDate(today), // Already done today!
                     })
                 }]
@@ -99,10 +100,136 @@ describe('📋 Tasks Engine (Smart Reset & Streaks)', () => { beforeEach(() => {
             vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
 
             const tasks = await getUserTasks('user_1');
-            
+
             // Should NOT trigger punishment
             expect(firestore.updateDoc).not.toHaveBeenCalled();
             expect(tasks[0].currentStreak).toBe(5);
+        });
+
+        it('grace window: task completed at 11:30 PM last night is NOT penalised (within 2-hour window)', async () => {
+            const today = new Date();
+            today.setHours(0, 10, 0, 0); // Simulated evaluation at 00:10 AM
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            // 11:30 PM yesterday — within the 2-hour trailing grace window (10 PM–midnight)
+            const lastNight1130pm = new Date(yesterday);
+            lastNight1130pm.setHours(23, 30, 0, 0);
+
+            const mockSnapshot = {
+                docs: [{
+                    id: 'task_grace_pass',
+                    data: () => ({
+                        uid: 'user_1',
+                        title: 'Late Check-In',
+                        isRecurring: true,
+                        currentStreak: 7,
+                        dueDate: firestore.Timestamp.fromDate(yesterday),
+                        lastCompletedAt: firestore.Timestamp.fromDate(lastNight1130pm),
+                    })
+                }]
+            };
+
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+
+            const tasks = await getUserTasks('user_1');
+
+            expect(firestore.updateDoc).not.toHaveBeenCalled();
+            expect(tasks[0].currentStreak).toBe(7);
+        });
+
+        it('grace window: task completed at 9:45 PM last night IS penalised (outside 2-hour window)', async () => {
+            const today = new Date();
+            today.setHours(0, 10, 0, 0);
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            // 9:45 PM yesterday — BEFORE the grace window start (10 PM)
+            const lastNight945pm = new Date(yesterday);
+            lastNight945pm.setHours(21, 45, 0, 0);
+
+            const mockSnapshot = {
+                docs: [{
+                    id: 'task_grace_fail',
+                    data: () => ({
+                        uid: 'user_1',
+                        title: 'Evening Meditation',
+                        isRecurring: true,
+                        currentStreak: 4,
+                        dueDate: firestore.Timestamp.fromDate(yesterday),
+                        lastCompletedAt: firestore.Timestamp.fromDate(lastNight945pm),
+                    })
+                }]
+            };
+
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+
+            const tasks = await getUserTasks('user_1');
+
+            expect(firestore.updateDoc).toHaveBeenCalled();
+            expect(tasks[0].currentStreak).toBe(0); // Streak from 4 → 0 (first miss)
+        });
+
+        it('missedCountHistory: overdue task appends daysMissed via arrayUnion', async () => {
+            const today = new Date();
+            const threeDaysAgo = new Date(today);
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+            const mockSnapshot = {
+                docs: [{
+                    id: 'task_miss',
+                    data: () => ({
+                        uid: 'user_1',
+                        title: 'Weekly Run',
+                        isRecurring: true,
+                        currentStreak: 2,
+                        dueDate: firestore.Timestamp.fromDate(threeDaysAgo),
+                        lastCompletedAt: null,
+                        missedCountHistory: [1],
+                    })
+                }]
+            };
+
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+
+            await getUserTasks('user_1');
+
+            expect(firestore.arrayUnion).toHaveBeenCalledWith(3);
+            expect(firestore.updateDoc).toHaveBeenCalledWith(
+                undefined,
+                expect.objectContaining({
+                    missedCountHistory: expect.objectContaining({ __arrayUnion: 3 }),
+                })
+            );
+        });
+
+        it('missedCountHistory: task due today (not yet overdue) does not append', async () => {
+            const today = new Date();
+
+            const mockSnapshot = {
+                docs: [{
+                    id: 'task_due_today',
+                    data: () => ({
+                        uid: 'user_1',
+                        title: 'Daily Reflection',
+                        isRecurring: true,
+                        currentStreak: 3,
+                        dueDate: firestore.Timestamp.fromDate(today),
+                        lastCompletedAt: null,
+                        missedCountHistory: [],
+                    })
+                }]
+            };
+
+            vi.mocked(firestore.getDocs).mockResolvedValue(mockSnapshot as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+
+            await getUserTasks('user_1');
+
+            // dueDate is today, not strictly before today — lazy eval branch does not fire
+            expect(firestore.arrayUnion).not.toHaveBeenCalled();
+            expect(firestore.updateDoc).not.toHaveBeenCalled();
         });
     });
 
