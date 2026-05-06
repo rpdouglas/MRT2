@@ -15,7 +15,10 @@ Unlike traditional wellness apps, MRT is built on the principle that **we cannot
 * **The Vault (Secure Journaling):** Encrypted reflections with integrated **Gemini AI** for sentiment analysis and pattern recognition.
 * **The Library (Interactive Workbooks):** Structured 12-Step, CBT, and Recovery Dharma modules to facilitate deep inner work.
 * **The Pulse (Vitality):** Somatic regulation tools including a guided **4-7-8 Breathwork** pacer and activity logging.
+* **The Anchor (Urge Surfer):** Acute crisis intervention and somatic regulation tool for immediate relief.
+* **Tasks & Habits:** Structured daily task and recurring habit tracking for building healthy routines.
 * **The Compass (AI Insights):** Analyzes decrypted history to identify subtle relapse triggers and emotional trends.
+* **Premium Supporter Access:** Optional Stripe-integrated subscription model to unlock advanced platform features.
 
 ## 🎨 Design System: Vibrant Momentum
 MRT utilizes a high-saturation, motion-heavy design system designed to signal life and energy. 
@@ -24,10 +27,12 @@ MRT utilizes a high-saturation, motion-heavy design system designed to signal li
 * **Tactile Feedback:** Haptic triggers for breathwork and task completion.
 
 ## 🛠️ Tech Stack
-* **Frontend:** React 19 + Vite + Tailwind CSS v4
-* **Backend:** Firebase (Auth, Firestore, Hosting)
+* **Frontend:** React 19 + Vite + Tailwind CSS v3.4
+* **Backend:** Firebase (Auth, Firestore, Hosting, Functions)
 * **Intelligence:** Google Gemini 2.5 (Flash/Pro Cascade)
 * **Security:** AES-GCM (Client-side) + PBKDF2 Key Derivation
+* **Offline & PWA:** Vite PWA with Workbox caching for robust offline capabilities
+* **Testing:** Vitest + React Testing Library
 * **Infrastructure:** GitHub Actions (CI/CD) + DevContainers (Codespaces)
 
 ## 🏁 Getting Started
@@ -38,26 +43,50 @@ MRT utilizes a high-saturation, motion-heavy design system designed to signal li
 
 ### Installation
 1.  **Clone the Repo:**
-    \`\`\`bash
+    ```bash
     git clone https://github.com/rpdouglas/MRT2.git
     cd MRT2
-    \`\`\`
+    ```
 2.  **Install Dependencies:**
-    \`\`\`bash
+    ```bash
     npm install
-    \`\`\`
+    ```
 3.  **Environment Setup:**
-    Create a \`.env\` file in the root and add your Firebase and Gemini credentials.
+    Create a `.env` file in the root directory and add your required credentials:
+    ```env
+    VITE_FIREBASE_API_KEY=
+    VITE_FIREBASE_AUTH_DOMAIN=
+    VITE_FIREBASE_PROJECT_ID=
+    VITE_FIREBASE_STORAGE_BUCKET=
+    VITE_FIREBASE_MESSAGING_SENDER_ID=
+    VITE_FIREBASE_APP_ID=
+    VITE_FIREBASE_MEASUREMENT_ID=
+    VITE_FIREBASE_VAPID_KEY=
+    VITE_GEMINI_API_KEY=
+    VITE_STRIPE_PREMIUM_PRICE_ID=
+    VITE_APP_VERSION=Dev-Local
+    ```
 4.  **Run Development Server:**
-    \`\`\`bash
+    ```bash
     npm run dev
-    \`\`\`
+    ```
+
+## 🧪 Testing and Quality Control
+Ensure everything is working correctly by running the integrated pipeline (lint, vitest, and build):
+```bash
+npm run check
+```
 
 ## 📜 Documentation
-For detailed technical specifications, refer to the \`docs/\` directory:
+For detailed technical specifications, refer to the `docs/` directory:
 * [Infrastructure & DevOps](./docs/specs/13_INFRASTRUCTURE.md)
 * [Security Model](./docs/specs/SECURITY_ZERO_KNOWLEDGE.md)
 * [Gamification Engine](./docs/specs/07_GAMIFICATION.md)
+
+To view the full documentation site locally:
+```bash
+npm run docs:dev
+```
 
 ---
 **Developed with purpose by Clean and Sober Ryan.**
