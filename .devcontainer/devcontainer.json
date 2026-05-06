@@ -16,7 +16,8 @@
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "tamasfe.even-better-toml",
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "github.vscode-github-actions"
       ],
       "settings": {
         "editor.formatOnSave": true,

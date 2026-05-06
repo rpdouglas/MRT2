@@ -3,6 +3,7 @@ import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, creat
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
+import { refreshFcmTokenIfStale } from '../lib/messaging';
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await getOrCreateUserProfile(currentUser);
           setUser(currentUser);
           setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
+          refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
           
           // Phase 2: Listen directly to the Stripe extension's 'subscriptions' subcollection
           if (db) {
