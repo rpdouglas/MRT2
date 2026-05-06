@@ -44,10 +44,11 @@ export interface ComparativeAnalysisResult {
     wins: string[];
     blind_spots: string[];
     actionable_advice: string[];
+    action_contexts?: string[]; // Parallel one-sentence explanations for each actionable_advice item
 }
 
 export interface WorkbookAnalysisResult {
-    scope_context: string; 
+    scope_context: string;
     summary: string;
     pillars: {
         understanding: string;
@@ -55,15 +56,17 @@ export interface WorkbookAnalysisResult {
         blind_spots: string;
     };
     suggested_actions: string[];
+    action_contexts?: string[]; // Parallel one-sentence explanations for each suggested_actions item
 }
 
 // Deep Pattern Recognition Interface
 export interface DeepPatternResult {
     core_triggers: string[];
-    emotional_velocity: string; 
+    emotional_velocity: string;
     hidden_correlations: string[];
     relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
     long_term_advice: string[];
+    action_contexts?: string[]; // Parallel one-sentence explanations for each long_term_advice item
     pattern_summary: string;
 }
 
@@ -222,9 +225,10 @@ export async function generateDeepPatternAnalysis(
         "emotional_velocity": "A brief description (MAX 15 words) of how quickly their mood shifts (e.g. 'Volatile swings between AM and PM', 'Stable but low baseline').",
         "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
         "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
-        "long_term_advice": ["Action 1", "Action 2", "Action 3"]
+        "long_term_advice": ["Action 1", "Action 2", "Action 3"],
+        "action_contexts": ["One sentence explaining why Action 1 is recommended, referencing a specific pattern (max 120 chars, no jargon).", "...", "..."]
     }
-    IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items. No more, no less.
+    IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items and a matching "action_contexts" array of the same length.
     Return ONLY raw JSON.
     `;
 
@@ -270,9 +274,10 @@ export async function generateComparativeAnalysis(
         "comparison_summary": "A 2-3 sentence narrative comparing the periods (or summarizing the journey).",
         "wins": ["Specific win 1", "Specific win 2"],
         "blind_spots": ["Potential risk or overlooked area 1", "Area 2"],
-        "actionable_advice": ["Step 1", "Step 2", "Step 3"]
+        "actionable_advice": ["Step 1", "Step 2", "Step 3"],
+        "action_contexts": ["One sentence explaining why Step 1 is recommended, referencing the user's specific pattern (max 120 chars, no jargon).", "...", "..."]
     }
-    IMPORTANT: Provide EXACTLY 3 distinct "actionable_advice" items. No more, no less.
+    IMPORTANT: Provide EXACTLY 3 distinct "actionable_advice" items and a matching "action_contexts" array of the same length.
     DO NOT use Markdown formatting. Return ONLY the raw JSON string.
     `;
 
@@ -329,9 +334,10 @@ export async function analyzeFullWorkbook(
             "emotional_resonance": "Current emotional state (e.g. Resentful, Accepting).",
             "blind_spots": "Potential risks or overlooked areas."
         },
-        "suggested_actions": ["Action 1", "Action 2", "Action 3"]
+        "suggested_actions": ["Action 1", "Action 2", "Action 3"],
+        "action_contexts": ["One sentence explaining why Action 1 is recommended, referencing the user's specific pattern (max 120 chars, no jargon).", "...", "..."]
     }
-    IMPORTANT: "suggested_actions" must contain EXACTLY 3 items.
+    IMPORTANT: "suggested_actions" must contain EXACTLY 3 items and "action_contexts" must match the same length.
     Return ONLY raw JSON.
     `;
 
