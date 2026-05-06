@@ -5,6 +5,7 @@
 
 ## 🚨 Triage & Hotfixes (Priority 1)
 *Issues bypassing the backlog to protect user retention.*
+- [x] **Overdue Task Completion Fix:** Fixed a bug where overdue recurring tasks calculated their next due date relative to their past due date instead of today.
 *(Queue Empty)*
 
 ## 🛠️ Active Projects (Priority 2)
