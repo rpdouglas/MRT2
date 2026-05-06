@@ -1,6 +1,6 @@
 # 🐛 Sprint Planning Triage Report
 **Generated:** 5/6/2026
-**Total Actionable Issues:** 14 (Investigating: 6, New: 0, Backlog: 8)
+**Total Actionable Issues:** 16 (Investigating: 6, New: 2, Backlog: 8)
 
 ## 🔍 Active Investigations (Prioritized for Sprint)
 ### Phase 1: /dashboard Polish
@@ -28,7 +28,10 @@
   - *ID:* `4BZDV3lkoceHeTIZhZvD`
 
 ## 📥 New Inbox (Needs Triage)
-*Inbox zero!*
+- **[BUG]** When a recurring task is overdue and you complete it, it should complete it for today. Not for the days it was not completed and then roll over to the next recurrence
+  - *Route:* `/tasks` | Reported: 5/6/2026 | ID: `zsLfl3iWzrLhIJoUKRF4`
+- **[BUG]** The milestone counting is not working properly. It should go 30 days, 60 days, 90 days and then go monthly by the month not by the day count
+  - *Route:* `/dashboard` | Reported: 5/6/2026 | ID: `sr12tTsRZwjyZ3OB6PJk`
 
 ## 📚 Backlog (Deferred)
 - **[SUGGESTION]** I like the idea of a gauge for self-care. Like how full is your cup? You know what I mean based on a few key items that would come into play if we can work on the healthconnect API

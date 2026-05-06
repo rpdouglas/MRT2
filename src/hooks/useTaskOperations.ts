@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import * as TaskLib from "../lib/tasks";
 import { Timestamp } from "firebase/firestore";
-import { startOfDay, addDays, addWeeks, addMonths } from "date-fns";
+import { startOfDay, addDays, addWeeks, addMonths, isBefore } from "date-fns";
 import { calculateNextDueDate } from "../lib/dateUtils";
 
 const toDate = (val: unknown): Date | null => {
@@ -106,8 +106,9 @@ export function useTaskOperations() {
 
                 let nextDue = t.dueDate ? toDate(t.dueDate) : today;
                 if (t.isRecurring && t.recurrence) {
+                  const baseDate = (nextDue && isBefore(nextDue, today)) ? today : (nextDue || today);
                   const calcDue = calculateNextDueDate(
-                    nextDue || today,
+                    baseDate,
                     t.recurrence,
                   );
                   if (calcDue) nextDue = calcDue;
