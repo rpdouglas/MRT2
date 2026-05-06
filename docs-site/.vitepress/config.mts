@@ -27,7 +27,8 @@ export default defineConfig({
           { text: 'The Ledger (Tasks)', link: '/guide/04-tasks-habits' },
           { text: 'The Pulse (Vitality)', link: '/guide/05-vitality' },
           { text: 'The Compass (Workbooks)', link: '/guide/06-workbooks' },
-          { text: 'The Toolbox (CBT)', link: '/guide/08-cbt-tools' }
+          { text: 'The Toolbox (CBT)', link: '/guide/08-cbt-tools' },
+          { text: 'Daily Readings', link: '/guide/09-daily-readings' }
         ]
       },
       {

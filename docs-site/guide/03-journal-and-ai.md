@@ -3,9 +3,20 @@
 The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**
 
 ## 1. Writing an Entry
-* **Text Mode:** Select a template (like "Morning Check-in" or "Urge Log") or free-write. 
-* **Voice-to-Vault:** Tap the Microphone icon to dictate your journal. The app uses Google Gemini to transcribe your audio, detect your mood, and auto-generate tags.
+* **Text Mode:** Select a template (like "Morning Check-in" or "Urge Log") or free-write.
 * **Metadata:** Always slide the 1-10 Mood scale and add custom tags (e.g., `#Anxiety`, `#Meeting`) to help the AI track your patterns later.
+
+### Voice-to-Vault
+Tap the **Microphone** icon to dictate your entry instead of typing.
+
+1. Speak naturally — describe how you're feeling, what happened, or what's on your mind.
+2. When you stop, MRT sends the audio to Google Gemini for transcription.
+3. Gemini returns the transcribed text, an estimated mood score (1–10), and a set of suggested tags.
+4. Review the pre-filled entry, adjust anything you want, then save.
+
+The final entry is **Zero-Knowledge encrypted** before it is written to Firestore — Gemini sees your audio for transcription only and the processed text is never stored in plain form.
+
+> **Best for David:** If you're in an acute state and can't face a blank text field, Voice-to-Vault removes the friction of typing. Just speak.
 
 ## 2. History & Navigation
 Navigate to the **History** tab to view past entries.

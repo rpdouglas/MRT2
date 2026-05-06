@@ -1,5 +1,12 @@
 # 🚀 Changelog
 
+## [v1.6.1] - 2026-05-06
+### 📚 User Guide Sync
+- **Docs [PROJ-48]:** Added a new Daily Readings guide covering all 7 modalities, day-of-year rotation, the share feature, and how to journal from a reading.
+- **Docs [PROJ-48]:** Rewrote the Dashboard guide with the Dynamic Anchor widget (time-aware check-in prompts and their exact windows), and documented all three push notification toggles (Check-In, Reading, Intent).
+- **Docs [PROJ-48]:** Expanded Voice-to-Vault in the Journal guide to a full section explaining transcription, auto mood detection, and the ZK encryption step.
+- **Docs [PROJ-48]:** Added a full recurrence schedule table to the Tasks guide (Once, Daily, Weekly, Bi-weekly, Monthly, Monthly-relative) and expanded the Smart Reset section with a Lazy Evaluation explanation and streak penalty table.
+
 ## [v1.6.0] - 2026-05-05
 ### ✨ The Ledger — Frictionless Task Module Upgrade
 - **Gesture Interactions [PROJ-46]:** Swipe right on any task to complete it — a green layer reveals beneath the card and a brief vibration confirms the action. Swipe left to open the "Let today go" Forgiveness Tap sheet, offering a compassionate move-to-tomorrow option with no streak penalty.
