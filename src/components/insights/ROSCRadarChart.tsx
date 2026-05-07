@@ -42,7 +42,7 @@ export default function ROSCRadarChart({ current, previous }: Props) {
             <div className="text-center">
                 <div className="text-3xl font-black text-gray-900">
                     {current.totalScore}
-                    <span className="text-lg font-normal text-gray-400">/40</span>
+                    <span className="text-3xl font- text-gray-900">/40</span>
                 </div>
                 <div className="text-sm font-medium text-gray-500 mt-0.5">Total Recovery Capital</div>
                 {subtitle && (
@@ -55,7 +55,7 @@ export default function ROSCRadarChart({ current, previous }: Props) {
                     <PolarGrid stroke="rgba(255,255,255,0.15)" />
                     <PolarAngleAxis
                         dataKey="domain"
-                        tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }}
+                        tick={{ fontSize: 16, fill: '#40372b', fontWeight: 800 }}
                     />
                     {previous && (
                         <Radar
@@ -70,8 +70,8 @@ export default function ROSCRadarChart({ current, previous }: Props) {
                     <Radar
                         name="This month"
                         dataKey="score"
-                        stroke="#8B5CF6"
-                        fill="rgba(139,92,246,0.25)"
+                        stroke="#C084FC"
+                        fill="rgba(192,132,252,0.15)"
                         strokeWidth={2}
                         isAnimationActive
                         animationDuration={600}
@@ -100,7 +100,7 @@ export default function ROSCRadarChart({ current, previous }: Props) {
                     return (
                         <div
                             key={d}
-                            className={`flex flex-col items-center py-2 px-3 rounded-xl border text-xs font-bold ${scoreColor(score)}`}
+                            className={`flex flex-col items-center py-2 px-3 rounded-xl border text-xl font-bold ${scoreColor(score)}`}
                         >
                             <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70 mb-0.5">{d}</span>
                             <span className="text-base font-black">{score}</span>
