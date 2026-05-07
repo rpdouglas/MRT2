@@ -13,4 +13,4 @@ Yes! MRT is built with "Offline-First" technology. If you are in a basement meet
 
 ### ⚙️ Account
 **How do I delete my account?**
-Go to your **Profile** -> **Data Management** and click the red "Delete Account" button. This instantly and permanently destroys your authentication profile and all associated data records on our servers.
+Go to your **Profile → Data** tab and click **Request Account Deletion** in the Danger Zone. This instantly and permanently destroys your authentication profile and all associated data records on our servers.

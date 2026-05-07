@@ -28,7 +28,8 @@ export default defineConfig({
           { text: 'The Pulse (Vitality)', link: '/guide/05-vitality' },
           { text: 'The Compass (Workbooks)', link: '/guide/06-workbooks' },
           { text: 'The Toolbox (CBT)', link: '/guide/08-cbt-tools' },
-          { text: 'Daily Readings', link: '/guide/09-daily-readings' }
+          { text: 'Daily Readings', link: '/guide/09-daily-readings' },
+          { text: 'Insights & Recovery Capital', link: '/guide/10-insights' }
         ]
       },
       {
