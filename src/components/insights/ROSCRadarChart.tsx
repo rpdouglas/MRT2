@@ -44,7 +44,7 @@ export default function ROSCRadarChart({ current, previous }: Props) {
                     {current.totalScore}
                     <span className="text-3xl font- text-gray-900">/40</span>
                 </div>
-                <div className="text-sm font-medium text-gray-500 mt-0.5">Total Recovery Capital</div>
+                <div className="text-sm font-medium text-gray-900 mt-0.5">Total Recovery Capital</div>
                 {subtitle && (
                     <div className="text-xs font-semibold text-fuchsia-600 mt-1">{subtitle}</div>
                 )}
@@ -100,9 +100,9 @@ export default function ROSCRadarChart({ current, previous }: Props) {
                     return (
                         <div
                             key={d}
-                            className={`flex flex-col items-center py-2 px-3 rounded-xl border text-xl font-bold ${scoreColor(score)}`}
+                            className={`flex flex-col items-center py-2 px-3 rounded-xl border text-xxl font-bold ${scoreColor(score)}`}
                         >
-                            <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70 mb-0.5">{d}</span>
+                            <span className="text-[12px] font-bold uppercase tracking-wide opacity-70 mb-0.5">{d}</span>
                             <span className="text-base font-black">{score}</span>
                         </div>
                     );

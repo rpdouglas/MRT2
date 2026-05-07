@@ -64,7 +64,7 @@ export default function ROSCHistoryPanel() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-black text-gray-900 tracking-tight">Recovery Capital</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">Monthly snapshot across all four ROSC dimensions</p>
+                    <p className="text-sm text-black mt-0.5">Monthly snapshot across all four ROSC dimensions</p>
                 </div>
                 {ctaLabel && (
                     <div className="flex flex-col items-end gap-0.5">
@@ -132,11 +132,11 @@ export default function ROSCHistoryPanel() {
                     {latest && !isCreating && (
                         <div className="bg-gradient-to-br from-fuchsia-600 to-rose-500 rounded-2xl p-4 shadow-lg">
                             <div className="mb-3">
-                                <div className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-200">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-black-200">
                                     {format(latest.createdAt.toDate ? latest.createdAt.toDate() : new Date(), 'MMMM yyyy')}
                                 </div>
                                 {assessments.length === 1 && (
-                                    <div className="text-[10px] text-fuchsia-300 mt-0.5">Your first Recovery Capital snapshot</div>
+                                    <div className="text-[10px] text-black-300 mt-0.5">Your first Recovery Capital snapshot</div>
                                 )}
                             </div>
                             <ROSCRadarChart current={latest} previous={assessments.length >= 2 ? previous : undefined} />
