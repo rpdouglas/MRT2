@@ -56,42 +56,6 @@ See what you talk about most often.
 
 ## 5. Recovery Capital Matrix (ROSC)
 
-Navigate to the **Insights** page (sidebar icon) to access the Recovery Capital Matrix — a monthly snapshot of your holistic wellbeing across the four dimensions defined by SAMHSA's recovery framework.
+The Recovery Capital Matrix lives on the **Insights** page (its own sidebar icon). It provides a monthly snapshot of your holistic wellbeing across the four SAMHSA recovery domains — Health, Home, Purpose, and Community — using a 5-question guided check-in and an optional AI analysis of your recent journal entries.
 
-### What is Recovery Capital?
-Recovery Capital is the breadth of internal and external resources you can draw upon to sustain recovery. MRT measures it across four domains:
-
-| Domain | What it reflects |
-| :--- | :--- |
-| **Health** | Physical and emotional wellbeing, self-care, mood trend |
-| **Home** | Stability and safety of your living situation |
-| **Purpose** | Meaningful activity — work, service, creativity, family |
-| **Community** | Connections with people who support your recovery |
-
-### The Monthly Check-In
-Once per calendar month, a **"Start this month's check-in"** button appears at the top of the Insights page. Tapping it opens a 5-question guided flow (approximately 60–90 seconds):
-
-1. Answer each question on a 1–5 scale using strength-based language — *"Thriving"* at the top, neutral language at the bottom. There is no failure state.
-2. All five questions complete automatically — no back button, no form to submit. The last answer triggers the analysis.
-3. If the AI analysis fails mid-way (e.g., lost connectivity), your answers are temporarily saved so you don't have to repeat the check-in on retry.
-
-> **David:** The check-in is designed to take under two minutes. Each screen shows only one question. If you dismiss mid-flow, you'll see "Continue your check-in" next time you open Insights.
-
-### Your Radar Chart
-After the check-in, an animated radar chart fills in showing your four domain scores (each 1–10). The polygon draws in from the centre over half a second.
-
-* **Score pills** below the chart colour-code each domain: green (≥ 7), amber (4–6), or muted (1–3). No red states.
-* **Total score** is shown at the top: e.g., *"Total Recovery Capital: 31/40."*
-* **Longitudinal overlay:** Once you have two or more monthly snapshots, the chart overlays both the current and previous month — a solid polygon for this month, a dashed outline for last month. Walt uses this to track how the *shape* of his recovery changes over time.
-
-### History
-Past assessments are listed below the current chart as expandable cards. Tap any card to see that month's full radar chart. If your Vault is unlocked, tapping also decrypts the AI-generated narrative, identified strengths, and compassionate growth suggestions for that month.
-
-### Vault-Locked Behaviour
-* **Domain scores** (numbers) are always visible — they are stored unencrypted.
-* **AI narrative, strengths, and growth suggestions** require the Vault to be unlocked. If locked, those sections show a blurred placeholder: *"Unlock vault to read your recovery story."*
-* The **check-in CTA is hidden** when the Vault is locked — the analysis requires decrypting your journal entries before sending them to Gemini.
-
-### Free vs Premium
-* **Free tier:** Completes the self-check-in and receives domain scores derived from your answers alone.
-* **Premium:** Gemini reads your last 30 journal entries alongside your check-in answers and produces a blended score, a 2–3 sentence narrative, domain-specific strengths, and compassionate growth suggestions — all encrypted before storage.
+For the full walkthrough — including the radar chart, vault-locked behaviour, longitudinal overlays, and free vs. premium differences — see the [Insights guide](/guide/10-insights).

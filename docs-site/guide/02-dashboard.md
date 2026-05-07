@@ -43,13 +43,13 @@ Staying on track is easier with gentle nudges. At the top of your Dashboard, you
 * **Habit Nudges:** Receive a quiet reminder if you have pending habits or tasks left to complete for the day.
 * *Note for iOS (iPhone) users:* Apple requires you to install the app to your Home Screen before it allows push notifications. Follow the installation guide if you don't see the banner.
 
-### Managing Notification Types
-Go to **Profile → Anchor Notifications** to control which nudges you receive:
-* **Check-In Reminders** (`notifyCheckIn`) — daily prompt to complete your time-of-day check-in.
-* **Reading Reminders** (`notifyReading`) — reminder to open your daily reading.
-* **Intent Reminders** (`notifyIntent`) — nudge to set your daily intention if you haven't yet.
+### Managing Dashboard Badges
+Go to **Profile → General**, scroll to the **Anchor Notifications** section to control the red dot badges on your Dynamic Anchor:
+* **Daily Check-In Badge** — shows a red dot on the check-in button when you haven't checked in today.
+* **Daily Reading Badge** — shows a red dot on the reading button when you haven't read today.
+* **Daily Intent Badge** — shows a red dot when you haven't set today's intention.
 
-Each toggle can be switched on or off independently.
+Each badge can be toggled on or off independently. These control the visual indicators on the Dashboard — they are separate from the push notifications sent by The Beacon.
 
 ## 5. Smart Data Alerts & Changelog
 * **Backup Needed:** Because your data is encrypted with Zero-Knowledge architecture, we cannot recover it for you. If it has been more than 7 days since your last export, the Dashboard will politely remind you to download a backup. *(Note: If you have Google Drive Auto-Sync enabled in your Profile, this warning is hidden as the app handles it for you).*
@@ -59,9 +59,10 @@ Each toggle can be switched on or off independently.
 Quickly view your active streaks and completion rates across your core pillars:
 * **Journal:** View your consecutive day streak and weekly consistency.
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
-* **Vitality:** View your biological regulation streak.
-* **Wisdom:** View your workbook mastery percentage.
-* **Tools:** Access the Urge Surfer and grounding exercises.
+* **Vitality:** View your biological regulation streak and total logs.
+* **Wisdom:** View your workbook completion percentage and total questions answered.
+* **Service** *(Coming Soon):* Encrypted sponsee management — the tile is visible but inactive until the module launches.
+* **Tools:** Access CBT exercises and grounding tools.
 
 ## 7. The Gamification Engine
 Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.

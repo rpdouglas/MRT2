@@ -5,7 +5,7 @@ The Workbooks module is your centralized hub for structured, deep-dive recovery 
 ## The Library Hub
 When you open the Workbooks page, you will see two tabs:
 * **Workbooks:** Interactive step-work, cognitive behavioral therapy (CBT) exercises, and specialty paths.
-* **Literature:** (Coming Soon) A repository of classic reading materials and daily meditations.
+* **Literature:** A fellowship resources directory with direct links to official websites and core literature for AA, NA, SMART Recovery, Recovery Dharma, and other programs.
 
 ## Zen Mode & Auto-Save
 * When you open a section, the app enters a distraction-free reading mode.

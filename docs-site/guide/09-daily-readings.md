@@ -33,7 +33,7 @@ Tap the chevron (▾) next to the Daily Reading button to open an external fello
 
 ## Changing Your Modality Preferences
 
-Go to **Profile → Reading Preferences** to enable or disable individual modalities. Your selections are saved to your account and sync across devices.
+Go to **Profile → General**, scroll to the **Daily Reading** section to enable or disable individual modalities. Your selections are saved to your account and sync across devices.
 
 ## Sharing a Reading
 
