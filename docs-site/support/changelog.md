@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.1] - 2026-05-07
+### ✨ ROSC Matrix Visual Upgrade
+- **Pill Capsules [PROJ-53]:** Replaced the Recharts radar chart with a custom, animated "Pill Capsules" visualization featuring a premium glassmorphic dark theme.
+- **Longitudinal Tracking [PROJ-53]:** Previous month's scores are now subtly "ghosted" behind the current month's active pill segments, providing an instant visual diff of your momentum.
+
 ## [v1.8.0] - 2026-05-06
 ### ✨ The Recovery Capital (ROSC) Matrix
 - **Feature [PROJ-49]:** Monthly self-check-in across SAMHSA's four recovery dimensions — Health, Home, Purpose, and Community — using five strength-based questions and an AI analysis of your last 30 journal entries.
