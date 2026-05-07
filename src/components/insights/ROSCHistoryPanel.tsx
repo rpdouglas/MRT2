@@ -6,7 +6,7 @@ import { useEncryption } from '../../contexts/EncryptionContext';
 import { useROSCAssessments } from '../../hooks/useROSCAssessments';
 import ROSCCheckIn from './ROSCCheckIn';
 import ROSCAssessmentCard from './ROSCAssessmentCard';
-import ROSCRadarChart from './ROSCRadarChart';
+import ROSCPillCapsules from './ROSCPillCapsules';
 import type { ROSCCheckInAnswers } from '../../lib/types/rosc';
 
 export default function ROSCHistoryPanel() {
@@ -34,11 +34,8 @@ export default function ROSCHistoryPanel() {
 
     const handleCheckInComplete = async (answers: ROSCCheckInAnswers) => {
         setShowCheckIn(false);
-        // Persist answers before the AI call so they survive a failure
         saveCheckInProgress(answers);
-        await createAssessment(answers).catch(() => {
-            // Error surfaced via createError — answers remain in sessionStorage for retry
-        });
+        await createAssessment(answers).catch(() => {});
     };
 
     const latest = assessments[0];
@@ -130,16 +127,38 @@ export default function ROSCHistoryPanel() {
             ) : (
                 <div className="space-y-4">
                     {latest && !isCreating && (
-                        <div className="bg-gradient-to-br from-fuchsia-600 to-rose-500 rounded-2xl p-4 shadow-lg">
-                            <div className="mb-3">
-                                <div className="text-[10px] font-bold uppercase tracking-widest text-black-200">
-                                    {format(latest.createdAt.toDate ? latest.createdAt.toDate() : new Date(), 'MMMM yyyy')}
+                        <div className="relative rounded-3xl overflow-hidden p-[1.5px] shadow-lg" style={{ background: 'linear-gradient(145deg, #7C3AED 0%, #EC4899 100%)' }}>
+                            <div className="relative rounded-[23px] bg-[#0A0418]/60 backdrop-blur-2xl p-5 overflow-hidden">
+                                {/* Ambient blobs */}
+                                <div className="absolute -top-16 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, #7C3AED40 0%, transparent 65%)' }} />
+                                <div className="absolute -bottom-10 -left-5 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, #EC489930 0%, transparent 65%)' }} />
+                                
+                                <div className="relative z-10">
+                                    <div className="mb-6 flex justify-between items-start">
+                                        <div>
+                                            <div className="text-[10px] tracking-widest text-white/45 uppercase mb-1">
+                                                {format(latest.createdAt.toDate ? latest.createdAt.toDate() : new Date(), 'MMMM yyyy')}
+                                            </div>
+                                            <div className="text-[13px] text-white/65">Recovery Capital</div>
+                                            {assessments.length === 1 && (
+                                                <div className="text-[10px] text-white/40 mt-1">Your first snapshot</div>
+                                            )}
+                                        </div>
+                                        <div className="text-right flex flex-col items-end">
+                                            <div className="flex items-baseline gap-1">
+                                                <div className="text-[42px] font-black text-white leading-none">{latest.totalScore}</div>
+                                                <div className="text-[11px] text-white/35 pb-1">/ 40</div>
+                                            </div>
+                                            {assessments.length >= 2 && previous && (
+                                                <div className="text-[11px] text-[#34D399] font-bold mt-1">
+                                                    {latest.totalScore >= previous.totalScore ? '▲ +' : '▼ '}{latest.totalScore - previous.totalScore} this month
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <ROSCPillCapsules current={latest} previous={assessments.length >= 2 ? previous : undefined} />
                                 </div>
-                                {assessments.length === 1 && (
-                                    <div className="text-[10px] text-black-300 mt-0.5">Your first Recovery Capital snapshot</div>
-                                )}
                             </div>
-                            <ROSCRadarChart current={latest} previous={assessments.length >= 2 ? previous : undefined} />
                         </div>
                     )}
 

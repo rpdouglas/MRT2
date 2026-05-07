@@ -27,17 +27,17 @@ Tapping it opens a 5-question guided flow (approximately 60–90 seconds):
 
 > **David:** The check-in is designed to take under two minutes. Each screen shows only one question. If you dismiss mid-flow, you'll see "Continue your check-in" next time you open Insights.
 
-### Your Radar Chart
+### Your Pill Capsules
 
-After the check-in, an animated radar chart fills in showing your four domain scores (each 1–10). The polygon draws in from the centre over half a second.
+After the check-in, an animated set of segmented pill capsules fills in, showing your four domain scores (each 1–10). The segments light up sequentially with premium glassmorphic gradients.
 
-* **Score pills** below the chart colour-code each domain: green (≥ 7), amber (4–6), or muted (1–3). No red states.
-* **Total score** is shown at the top: e.g., *"Total Recovery Capital: 31/40."*
-* **Longitudinal overlay:** Once you have two or more monthly snapshots, the chart overlays both the current and previous month — a solid polygon for this month, a dashed outline for last month. This lets you track how the *shape* of your recovery changes over time.
+* **Score numbers** alongside each domain pill display your exact score, with dynamic trend indicators (e.g., `▲ +2`) showing month-over-month growth.
+* **Total score** is shown prominently at the top: e.g., *"31 / 40."*
+* **Longitudinal comparison:** Once you have two or more monthly snapshots, the pill segments from your previous month are subtly "ghosted" in the background behind your current score. This lets you instantly visualize your momentum and growth over time.
 
 ### History
 
-Past assessments are listed below the current chart as expandable cards. Tap any card to see that month's full radar chart. If your Vault is unlocked, tapping also decrypts the AI-generated narrative, identified strengths, and compassionate growth suggestions for that month.
+Past assessments are listed below the current chart as expandable cards. Tap any card to see that month's full pill capsules. If your Vault is unlocked, tapping also decrypts the AI-generated narrative, identified strengths, and compassionate growth suggestions for that month.
 
 ### Vault-Locked Behaviour
 
