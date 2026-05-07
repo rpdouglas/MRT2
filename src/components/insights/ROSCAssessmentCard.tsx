@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { LockClosedIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useEncryption } from '../../contexts/EncryptionContext';
-import ROSCRadarChart from './ROSCRadarChart';
+import ROSCPillCapsules from './ROSCPillCapsules';
 import type { ROSCAssessment } from '../../lib/types/rosc';
 
 interface DecryptedContext {
@@ -54,11 +54,115 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
         }
     }, [expanded, context, assessment.encryptedAIContext, isVaultUnlocked, decrypt]);
 
+    if (expanded) {
+        const gain = previous ? assessment.totalScore - previous.totalScore : 0;
+        return (
+            <div className="relative rounded-3xl overflow-hidden p-[1.5px] shadow-lg" style={{ background: 'linear-gradient(145deg, #7C3AED 0%, #EC4899 100%)' }}>
+                <div className="relative rounded-[23px] bg-[#0A0418]/60 backdrop-blur-2xl p-5 overflow-hidden">
+                    {/* Ambient blobs */}
+                    <div className="absolute -top-16 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, #7C3AED40 0%, transparent 65%)' }} />
+                    <div className="absolute -bottom-10 -left-5 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, #EC489930 0%, transparent 65%)' }} />
+                    
+                    <div className="relative z-10">
+                        {/* Header */}
+                        <button onClick={handleExpand} className="w-full flex justify-between items-start mb-6 text-left cursor-pointer">
+                            <div>
+                                <div className="text-[10px] tracking-widest text-white/45 uppercase mb-1">
+                                    {format(createdDate, 'MMM yyyy')}
+                                </div>
+                                <div className="text-[13px] text-white/65">Recovery Capital</div>
+                            </div>
+                            <div className="text-right flex flex-col items-end">
+                                <div className="flex items-baseline gap-1">
+                                    <div className="text-[42px] font-black text-white leading-none">{assessment.totalScore}</div>
+                                    <div className="text-[11px] text-white/35 pb-1">/ 40</div>
+                                </div>
+                                {previous && (
+                                    <div className="text-[11px] text-[#34D399] font-bold mt-1">
+                                        {gain >= 0 ? '▲ +' : '▼ '}{gain} this month
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+
+                        <div className="space-y-5">
+                            {!compact && (
+                                <ROSCPillCapsules current={assessment} previous={previous} />
+                            )}
+
+                            {assessment.journalEntriesAnalysed > 0 && (
+                                <p className="text-[10px] text-white/40 text-center">
+                                    Based on {assessment.journalEntriesAnalysed} journal entries
+                                </p>
+                            )}
+
+                            {assessment.encryptedAIContext ? (
+                                isVaultUnlocked ? (
+                                    decrypting ? (
+                                        <div className="text-center text-xs text-white/40 py-4">Unlocking your recovery story…</div>
+                                    ) : context ? (
+                                        <div className="space-y-3">
+                                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                                <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <SparklesIcon className="h-3.5 w-3.5 text-fuchsia-400" />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-300">This Month</span>
+                                                </div>
+                                                <p className="text-xs text-white/80 leading-relaxed">{context.narrative}</p>
+                                            </div>
+
+                                            {context.strengths?.length > 0 && (
+                                                <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-xl p-3">
+                                                    <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-400 mb-1.5">Strengths</div>
+                                                    <ul className="space-y-1">
+                                                        {context.strengths.map((s, i) => (
+                                                            <li key={i} className="text-xs text-emerald-100/80">· {s}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {context.growth_areas?.length > 0 && (
+                                                <div className="bg-amber-950/30 border border-amber-500/20 rounded-xl p-3">
+                                                    <div className="text-[10px] font-bold uppercase tracking-wide text-amber-400 mb-1.5">Areas to Nurture</div>
+                                                    <ul className="space-y-1">
+                                                        {context.growth_areas.map((g, i) => (
+                                                            <li key={i} className="text-xs text-amber-100/80">· {g}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : null
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 py-4 bg-white/5 rounded-xl border border-dashed border-white/20">
+                                        <LockClosedIcon className="h-5 w-5 text-white/40" />
+                                        <p className="text-xs text-white/50 text-center">
+                                            Unlock vault to read your recovery story.
+                                        </p>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="text-center text-xs text-white/40 py-2">
+                                    Upgrade to Premium for AI-powered insights on your recovery.
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-4 pt-2 flex justify-center border-t border-white/5">
+                            <button onClick={handleExpand} className="p-2">
+                                <ChevronUpIcon className="h-4 w-4 text-white/40 flex-shrink-0" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white rounded-2xl border border-fuchsia-100 shadow-sm overflow-hidden">
             <button
                 onClick={handleExpand}
-                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-fuchsia-50/40 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-fuchsia-50/40 transition-colors text-left cursor-pointer"
             >
                 <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white rounded-xl w-10 h-10 flex flex-col items-center justify-center leading-none">
@@ -77,76 +181,8 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                         </div>
                     </div>
                 </div>
-                {expanded
-                    ? <ChevronUpIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    : <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                }
+                <ChevronDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
             </button>
-
-            {expanded && (
-                <div className="px-4 pb-5 border-t border-fuchsia-50 pt-4 space-y-4">
-                    {!compact && (
-                        <ROSCRadarChart current={assessment} previous={previous} />
-                    )}
-
-                    {assessment.journalEntriesAnalysed > 0 && (
-                        <p className="text-[10px] text-gray-400 text-center">
-                            Based on {assessment.journalEntriesAnalysed} journal entries
-                        </p>
-                    )}
-
-                    {assessment.encryptedAIContext ? (
-                        isVaultUnlocked ? (
-                            decrypting ? (
-                                <div className="text-center text-xs text-gray-400 py-4">Unlocking your recovery story…</div>
-                            ) : context ? (
-                                <div className="space-y-3">
-                                    <div className="bg-fuchsia-50 border border-fuchsia-100 rounded-xl p-3">
-                                        <div className="flex items-center gap-1.5 mb-1.5">
-                                            <SparklesIcon className="h-3.5 w-3.5 text-fuchsia-500" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-600">This Month</span>
-                                        </div>
-                                        <p className="text-xs text-gray-700 leading-relaxed">{context.narrative}</p>
-                                    </div>
-
-                                    {context.strengths?.length > 0 && (
-                                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                                            <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 mb-1.5">Strengths</div>
-                                            <ul className="space-y-1">
-                                                {context.strengths.map((s, i) => (
-                                                    <li key={i} className="text-xs text-emerald-800">· {s}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                    {context.growth_areas?.length > 0 && (
-                                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                                            <div className="text-[10px] font-bold uppercase tracking-wide text-amber-600 mb-1.5">Areas to Nurture</div>
-                                            <ul className="space-y-1">
-                                                {context.growth_areas.map((g, i) => (
-                                                    <li key={i} className="text-xs text-amber-800">· {g}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : null
-                        ) : (
-                            <div className="flex flex-col items-center gap-2 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                                <LockClosedIcon className="h-5 w-5 text-gray-400" />
-                                <p className="text-xs text-gray-500 text-center">
-                                    Unlock vault to read your recovery story.
-                                </p>
-                            </div>
-                        )
-                    ) : (
-                        <div className="text-center text-xs text-gray-400 py-2">
-                            Upgrade to Premium for AI-powered insights on your recovery.
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
