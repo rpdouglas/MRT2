@@ -39,6 +39,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-54` Journal Insights Momentum UI Redesign (GlassCard, dark theme, smooth charts, and typography upgrade)
 * `PROJ-49` The Recovery Capital (ROSC) Matrix (Monthly SAMHSA domain assessment, Recharts radar chart with longitudinal overlay, ZK-encrypted AI narrative, free-tier self-report scores)
 * `PROJ-47` The Ledger — Precision, Resilience & Tab Redesign (Monthly day-drift fix, grace window, missedCountHistory, Today/Later/Log tabs)
 * `PROJ-48` User Guide Synchronization Sprint (Daily Readings page, Dynamic Anchor, Voice-to-Vault, Recurrence Table, Smart Reset expansion)
