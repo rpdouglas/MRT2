@@ -6,7 +6,8 @@
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
-    }
+    },
+    "ghcr.io/devcontainers/features/python:1": {}
   },
 
   "customizations": {
@@ -17,11 +18,12 @@
         "bradlc.vscode-tailwindcss",
         "tamasfe.even-better-toml",
         "editorconfig.editorconfig",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "vitest.explorer"
       ],
       "settings": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "files.eol": "\n"
       }
     }
