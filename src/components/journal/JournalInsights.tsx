@@ -2,10 +2,9 @@
  * src/components/journal/JournalInsights.tsx
  * GITHUB COMMENT:
  * [JournalInsights.tsx]
- * FEAT: "Emotional Velocity" upgraded to Gradient Area Chart.
- * FEAT: "Weekly Rhythm" upgraded to 'Baseline vs Reality' (Thick Bars + Dotted Line).
- * FEAT: Added smart Stop-Word filtering to Word Cloud.
- * FEAT: Added "Manage Filter" modal for user-defined blocked words (LocalStorage).
+ * FEAT: Refactored Insights tab to Momentum Kinetic v3.0 (Walt persona).
+ * FEAT: Implemented GlassCard primitive.
+ * FEAT: Applied Analytical layer design tokens and smoothed typography.
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -36,6 +35,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { format, subDays, getDay, startOfDay } from 'date-fns';
 import ManageWordCloudModal from './ManageWordCloudModal';
+import GlassCard from '../ui/GlassCard';
 
 // --- TYPES ---
 
@@ -261,48 +261,48 @@ export default function JournalInsights() {
       setUserBlockList(prev => prev.filter(w => w !== word));
   };
 
-  if (loading) return <div className="p-10 text-center text-gray-400 animate-pulse">Analyzing patterns...</div>;
+  if (loading) return <div className="p-10 text-center font-sans text-fuchsia-200/50 animate-pulse">Reflecting on your journey...</div>;
 
   return (
     <div className="space-y-6 pb-20">
         
         {/* --- TOP STATS --- */}
         <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-indigo-50 flex flex-col items-center justify-center">
-                <div className="text-2xl font-black text-indigo-600">{stats.total}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Entries</div>
-            </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-purple-50 flex flex-col items-center justify-center">
+            <GlassCard variant="insights" className="flex flex-col items-center justify-center py-4">
+                <div className="font-mono text-3xl font-black text-white drop-shadow-[0_0_15px_rgba(232,121,249,0.5)]">{stats.total}</div>
+                <div className="font-sans text-[10px] text-fuchsia-200/70 font-bold uppercase tracking-wider mt-1">Entries</div>
+            </GlassCard>
+            <GlassCard variant="insights" className="flex flex-col items-center justify-center py-4">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-2xl font-black text-purple-600">{stats.avgMood}</span>
+                    <span className="font-mono text-3xl font-black text-white drop-shadow-[0_0_15px_rgba(232,121,249,0.5)]">{stats.avgMood}</span>
                     {stats.trend !== 0 && (
-                        <span className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stats.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stats.trend > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/60'}`}>
                             {stats.trend > 0 ? <ArrowTrendingUpIcon className="h-3 w-3 mr-0.5" /> : <ArrowTrendingDownIcon className="h-3 w-3 mr-0.5" />}
                             {Math.abs(stats.trend)}
                         </span>
                     )}
                 </div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
-            </div>
-             <div className="bg-white p-4 rounded-2xl shadow-sm border border-orange-50 flex flex-col items-center justify-center">
-                <FireIcon className="h-6 w-6 text-orange-500 mb-1" />
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Active</div>
-            </div>
+                <div className="font-sans text-[10px] text-fuchsia-200/70 font-bold uppercase tracking-wider mt-1">Avg Mood</div>
+            </GlassCard>
+             <GlassCard variant="insights" className="flex flex-col items-center justify-center py-4">
+                <FireIcon className="h-7 w-7 text-[#E879F9] mb-1 drop-shadow-[0_0_10px_rgba(232,121,249,0.5)]" />
+                <div className="font-sans text-[10px] text-fuchsia-200/70 font-bold uppercase tracking-wider mt-1">Active</div>
+            </GlassCard>
         </div>
 
         {/* --- 1. WEEKLY RHYTHM (Baseline vs Reality) --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
+        <GlassCard variant="insights">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
-                    <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
+                <h3 className="flex items-center gap-2 font-sans font-bold text-white text-sm uppercase tracking-wide">
+                    <CalendarDaysIcon className="h-4 w-4 text-[#E879F9]" />
                     Weekly Rhythm
                 </h3>
-                <div className="flex gap-3 text-[10px] font-bold">
-                    <span className="flex items-center gap-1 text-slate-400">
-                        <div className="w-4 h-0.5 bg-slate-400 border border-slate-400 border-dashed"></div> Prev 30 Days
+                <div className="flex gap-3 font-sans text-[10px] font-bold">
+                    <span className="flex items-center gap-1 text-fuchsia-200/50">
+                        <div className="w-4 h-0.5 bg-fuchsia-200/50 border border-fuchsia-200/50 border-dashed"></div> Prev 30 Days
                     </span>
-                    <span className="flex items-center gap-1 text-purple-600">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div> Last 30 Days
+                    <span className="flex items-center gap-1 text-[#E879F9]">
+                        <div className="w-2 h-2 rounded-full bg-[#E879F9]"></div> Last 30 Days
                     </span>
                 </div>
             </div>
@@ -310,44 +310,51 @@ export default function JournalInsights() {
             <div className="h-56 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={weeklyComparisonData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <defs>
+                            <linearGradient id="colorPill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#E879F9" stopOpacity={1}/>
+                                <stop offset="100%" stopColor="#EC4899" stopOpacity={1}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                         <XAxis 
                             dataKey="dayName" 
-                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            tick={{fontSize: 10, fill: 'rgba(245,208,254,0.75)', fontFamily: 'JetBrains Mono, monospace'}} 
                             axisLine={false}
                             tickLine={false}
                         />
                         <YAxis domain={[0, 10]} hide />
                         <Tooltip 
-                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
-                            cursor={{fill: '#f8fafc'}}
+                            contentStyle={{borderRadius: '16px', border: '1px solid rgba(232,121,249,0.2)', background: 'rgba(15,3,32,0.9)', backdropFilter: 'blur(10px)', color: '#FDF4FF'}} 
+                            itemStyle={{fontFamily: 'JetBrains Mono, monospace'}}
+                            cursor={{fill: 'rgba(255,255,255,0.04)'}}
                         />
                         <Line 
                             type="monotone" 
                             dataKey="prevAvg" 
                             name="Prev 30 Days" 
-                            stroke="#94a3b8" 
+                            stroke="rgba(245,208,254,0.35)" 
                             strokeWidth={2} 
                             strokeDasharray="5 5"
-                            dot={{r: 3, fill: '#94a3b8'}}
+                            dot={false}
                         />
                         <Bar 
                             dataKey="currentAvg" 
                             name="Last 30 Days" 
-                            fill="#8b5cf6" 
-                            radius={[6, 6, 0, 0]} 
-                            barSize={32} 
+                            fill="url(#colorPill)" 
+                            radius={[8, 8, 8, 8]} 
+                            barSize={16} 
                         />
                     </ComposedChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-center text-xs text-gray-400 mt-2">Avg Mood Score</p>
-        </div>
+            <p className="text-center font-sans text-xs text-fuchsia-200/50 mt-2">Avg Mood Score</p>
+        </GlassCard>
 
         {/* --- 2. EMOTIONAL VELOCITY (Gradient Area) --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50">
-            <h3 className="flex items-center gap-2 font-bold text-gray-900 mb-6 text-sm uppercase tracking-wide">
-                <ChartBarIcon className="h-4 w-4 text-indigo-500" />
+        <GlassCard variant="insights">
+            <h3 className="flex items-center gap-2 font-sans font-bold text-white mb-6 text-sm uppercase tracking-wide">
+                <ChartBarIcon className="h-4 w-4 text-[#E879F9]" />
                 Emotional Velocity
             </h3>
             
@@ -356,14 +363,14 @@ export default function JournalInsights() {
                     <AreaChart data={dailyTrendData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
                         <defs>
                             <linearGradient id="colorMoodArea" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
-                                <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="#E879F9" stopOpacity={0.15}/>
+                                <stop offset="95%" stopColor="#E879F9" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E7FF" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                         <XAxis 
                             dataKey="displayDate" 
-                            tick={{fontSize: 10, fill: '#94A3B8'}} 
+                            tick={{fontSize: 10, fill: 'rgba(245,208,254,0.75)', fontFamily: 'JetBrains Mono, monospace'}} 
                             axisLine={false}
                             tickLine={false}
                             minTickGap={30}
@@ -372,17 +379,18 @@ export default function JournalInsights() {
                         <YAxis yAxisId="right" orientation="right" hide domain={['auto', 'auto']} />
 
                         <Tooltip 
-                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} 
-                            labelStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}}
+                            contentStyle={{borderRadius: '16px', border: '1px solid rgba(232,121,249,0.2)', background: 'rgba(15,3,32,0.9)', backdropFilter: 'blur(10px)', color: '#FDF4FF'}} 
+                            labelStyle={{fontSize: '12px', fontWeight: 'bold', color: 'rgba(245,208,254,0.75)'}}
+                            itemStyle={{fontFamily: 'JetBrains Mono, monospace'}}
                         />
-                        <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px'}} />
+                        <Legend wrapperStyle={{fontSize: '10px', paddingTop: '10px', fontFamily: 'DM Sans, sans-serif', color: 'rgba(245,208,254,0.75)'}} />
 
                         <Area 
                             yAxisId="left"
                             type="monotone" 
                             dataKey="avgMood" 
                             name="Mood Flow" 
-                            stroke="#6366F1" 
+                            stroke="#E879F9" 
                             fillOpacity={1} 
                             fill="url(#colorMoodArea)" 
                             strokeWidth={3} 
@@ -392,7 +400,7 @@ export default function JournalInsights() {
                             type="monotone" 
                             dataKey="avgTemp" 
                             name="Temp (°C)" 
-                            stroke="#FDBA74" 
+                            stroke="rgba(245,208,254,0.35)" 
                             strokeWidth={2} 
                             dot={false} 
                             strokeDasharray="5 5" 
@@ -400,20 +408,20 @@ export default function JournalInsights() {
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-        </div>
+        </GlassCard>
 
         {/* --- 3. WORD CLOUD --- */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-indigo-50 relative">
+        <GlassCard variant="insights" className="relative">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="flex items-center gap-2 font-bold text-gray-900 text-sm uppercase tracking-wide">
-                    <CloudIcon className="h-4 w-4 text-blue-500" />
+                <h3 className="flex items-center gap-2 font-sans font-bold text-white text-sm uppercase tracking-wide">
+                    <CloudIcon className="h-4 w-4 text-[#E879F9]" />
                     Recurring Themes
                 </h3>
                 
                 {/* Filter Trigger */}
                 <button 
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    className="p-1.5 rounded-full text-fuchsia-200/50 hover:text-white hover:bg-white/10 transition-colors"
                     title="Manage Ignored Words"
                 >
                     <EyeSlashIcon className="h-5 w-5" />
@@ -421,22 +429,22 @@ export default function JournalInsights() {
             </div>
             
             {wordCloudData.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-sm">Not enough data yet.</div>
+                <div className="text-center py-8 font-sans text-fuchsia-200/50 text-sm">Every journey starts with a first reflection.</div>
             ) : (
                 <div className="flex flex-wrap gap-2 justify-center items-center py-4">
                     {wordCloudData.map((word, i) => {
                         const maxVal = wordCloudData[0].value;
                         const sizeClass = 
-                            word.value > maxVal * 0.8 ? 'text-2xl font-black text-indigo-600' :
-                            word.value > maxVal * 0.6 ? 'text-xl font-bold text-purple-600' :
-                            word.value > maxVal * 0.4 ? 'text-lg font-semibold text-pink-500' :
-                            'text-sm text-gray-500';
+                            word.value > maxVal * 0.8 ? 'text-2xl font-black text-white drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]' :
+                            word.value > maxVal * 0.6 ? 'text-xl font-bold text-[#E879F9]' :
+                            word.value > maxVal * 0.4 ? 'text-lg font-semibold text-[#EC4899]' :
+                            'text-sm text-fuchsia-200/70';
 
                         return (
                             <button
                                 key={i}
                                 onClick={() => navigate(`/journal?tab=history&search=${encodeURIComponent(word.text)}`)}
-                                className={`${sizeClass} transition-all hover:scale-110 cursor-pointer px-2 py-1 rounded-lg hover:bg-indigo-50 focus:outline-none`}
+                                className={`${sizeClass} font-sans transition-all hover:scale-110 cursor-pointer px-2 py-1 rounded-lg hover:bg-white/5 focus:outline-none`}
                                 title={`Search for "${word.text}"`}
                             >
                                 {word.text}
@@ -445,7 +453,7 @@ export default function JournalInsights() {
                     })}
                 </div>
             )}
-        </div>
+        </GlassCard>
 
         {/* FILTER MODAL */}
         <ManageWordCloudModal 
