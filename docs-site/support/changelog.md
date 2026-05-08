@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.8.2] - 2026-05-08
+### ✨ Journal Insights UI Redesign
+- **Momentum UI [PROJ-54]:** Refactored the Journal Insights tab to an atmospheric "Glass and Glow" interface using the Walt persona rules. Introduced GlassCard components and dark mode semantic styling.
+- **Typography & Charts [PROJ-54]:** Upgraded fonts to JetBrains Mono and DM Sans. Smoothed chart curves, reduced grid lines, and implemented pill-based Weekly Rhythm visualization for lower cognitive load.
+- **Word Cloud Polish [PROJ-54]:** Enhanced the word cloud design and empty states to be more compassionate.
+
 ## [v1.8.1] - 2026-05-07
 ### ✨ ROSC Matrix Visual Upgrade
 - **Pill Capsules [PROJ-53]:** Replaced the Recharts radar chart with a custom, animated "Pill Capsules" visualization featuring a premium glassmorphic dark theme.
