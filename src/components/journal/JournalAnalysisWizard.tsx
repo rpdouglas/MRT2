@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Fragment, useState, useEffect } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { SparklesIcon, XMarkIcon, CalendarDaysIcon, ChartBarIcon, GlobeAmericasIcon, CheckCircleIcon, ArrowPathIcon, BoltIcon, PlusCircleIcon, TrophyIcon, LockClosedIcon, ShieldExclamationIcon, LinkIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { db } from '../../lib/firebase';
@@ -12,6 +12,7 @@ import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 import { useTaskOperations } from '../../hooks/useTaskOperations'; 
 import { useRateLimits } from '../../hooks/useRateLimits';
+import { DRAFT_TAG } from '../../lib/types/smart';
 import type { ElementType } from 'react';
 
 interface WizardProps { isOpen: boolean; onClose: () => void; entries: JournalEntry[]; }
@@ -56,8 +57,12 @@ isOpen, onClose, entries }: WizardProps) {
     useEffect(() => { if (isOpen) { setStep('select'); }
     }, [isOpen]);
 
+    // Exclude in-progress guided-tool drafts — they're incomplete and shouldn't
+    // count toward eligibility or feed into AI analysis.
+    const analyzableEntries = useMemo(() => entries.filter(e => !e.tags?.includes(DRAFT_TAG)), [entries]);
+
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
-        const entryCount = entries.length;
+        const entryCount = analyzableEntries.length;
 
         // 1. Check strict data volume requirements
         if (targetScope === 'weekly' && entryCount < 7) {
@@ -93,13 +98,13 @@ isOpen, onClose, entries }: WizardProps) {
             if (scope === 'weekly') {
                 const oneWeekAgo = subDays(now, 7);
                 const twoWeeksAgo = subDays(now, 14);
-                currentSet = entries.filter(e => isAfter(getDate(e), oneWeekAgo));
-                previousSet = entries.filter(e => isAfter(getDate(e), twoWeeksAgo) && isBefore(getDate(e), oneWeekAgo));
+                currentSet = analyzableEntries.filter(e => isAfter(getDate(e), oneWeekAgo));
+                previousSet = analyzableEntries.filter(e => isAfter(getDate(e), twoWeeksAgo) && isBefore(getDate(e), oneWeekAgo));
             } else if (scope === 'monthly') {
                 const oneMonthAgo = subDays(now, 30);
                 const twoMonthsAgo = subDays(now, 60);
-                currentSet = entries.filter(e => isAfter(getDate(e), oneMonthAgo));
-                previousSet = entries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
+                currentSet = analyzableEntries.filter(e => isAfter(getDate(e), oneMonthAgo));
+                previousSet = analyzableEntries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
             }
 
             const formatSet = (set: JournalEntry[]) => set.map(e => `[${getDate(e).toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`).join('\n---\n');
