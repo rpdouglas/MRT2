@@ -51,10 +51,28 @@ const PERSONA_CONTENT = [
   }
 ];
 
+// Maps common Firebase Auth error codes to David-safe, non-technical copy.
+function describeAuthError(err: unknown): string {
+  const code = (err as { code?: string } | null)?.code ?? '';
+  switch (code) {
+    case 'auth/email-already-in-use':
+      return 'An account already exists for that email. Try signing in instead.';
+    case 'auth/weak-password':
+      return 'Please use a password with at least 6 characters.';
+    case 'auth/invalid-email':
+      return 'That email address doesn’t look right.';
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'Email or password is incorrect.';
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+}
+
 export default function Welcome() {
   const navigate = useNavigate();
-  const auth = useAuth() as { user: unknown; loading: boolean; loginWithGoogle?: () => Promise<void> };
-  const { user, loading, loginWithGoogle } = auth;
+  const { user, loading, loginWithGoogle, signupWithEmail, loginWithEmail } = useAuth();
   const [isSignUp, setIsSignUp] = useState(true);
 
   // Smart Redirect: If user is already logged in, skip the splash page entirely
@@ -65,12 +83,27 @@ export default function Welcome() {
   }, [user, loading, navigate]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Wire to useAuth() hook and executePinRotation / setup
-    // For now, route directly to login flow or dashboard
-    navigate('/dashboard');
+    setAuthError(null);
+    setIsSubmitting(true);
+    try {
+      if (isSignUp) {
+        await signupWithEmail(email, password);
+      } else {
+        await loginWithEmail(email, password);
+      }
+      // Redirection is handled automatically by the useEffect above once
+      // AuthContext's onAuthStateChanged listener picks up the new session.
+    } catch (err) {
+      console.error('Auth error:', err);
+      setAuthError(describeAuthError(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -254,11 +287,16 @@ export default function Welcome() {
               className="w-full bg-slate-800/50 border border-slate-700 text-white px-4 py-3.5 rounded-xl placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
             
-            <button 
-              type="submit" 
-              className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-500 transition-colors mt-2 shadow-lg shadow-blue-900/20"
+            {authError && (
+              <p role="alert" className="text-rose-300 text-sm text-center -mb-1">{authError}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-500 transition-colors mt-2 shadow-lg shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isSignUp ? 'Initialize Toolkit' : 'Unlock Vault'}
+              {isSubmitting ? 'Please wait…' : isSignUp ? 'Initialize Toolkit' : 'Unlock Vault'}
             </button>
           </form>
 
@@ -297,9 +335,9 @@ export default function Welcome() {
 
           {/* Toggle State */}
           <div className="mt-8 text-center">
-            <button 
+            <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => { setIsSignUp(!isSignUp); setAuthError(null); }}
               className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
