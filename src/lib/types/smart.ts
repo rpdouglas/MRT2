@@ -30,7 +30,16 @@ export interface CBAPayload {
     disadvantagesStopping: string[];
 }
 
-export interface ABCPayload { activatingEvent: string; beliefs: string; consequences: string; dispute: string; effectiveBelief: string; }
+export interface ABCPayload {
+    activatingEvent: string;  // Step A
+    beliefs: string;          // Step B
+    consequences: string;     // Step C
+    dispute: string;          // Step D — the Disputation step (most critical)
+    effectiveBelief: string;  // Step E — the new rational belief
+}
+
+/** Tag applied to SMART Tool journal entries that hold a partial (in-progress) guided-flow save. */
+export const DRAFT_TAG = 'DRAFT' as const;
 
 export interface DENTSPayload { deny: string; escape: string; neutralize: string; tasks: string; swap: string; }
 

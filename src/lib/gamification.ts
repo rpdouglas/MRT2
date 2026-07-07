@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import { DRAFT_TAG } from './types/smart';
 
 // --- CONFIGURATION ---
 const XP_VALUES = {
@@ -11,6 +12,7 @@ const XP_VALUES = {
     VITALITY_LOG: 15,
     CLEAN_DAY_MILESTONE: 500, // XP per 30 days
     ROSC_ASSESSMENT: 25,
+    SMART_TOOL_COMPLETION: 25, // Guided CBT tool completion — equivalent to a Medium-priority task (TASK_MEDIUM)
 };
 
 // --- INTERFACES ---
@@ -166,7 +168,17 @@ export const calculateUserLevel = (
         if (j.tags && j.tags.includes('Vitality')) {
             xpBreakdown.vitality += XP_VALUES.VITALITY_LOG;
             xp += XP_VALUES.VITALITY_LOG;
-            return; 
+            return;
+        }
+
+        // SMART Tool completion (guided CBT flows) — flat XP, no depth bonus.
+        // Partial saves tagged DRAFT haven't been completed yet and earn nothing.
+        if (j.tags && j.tags.includes('SMART Tool')) {
+            if (!j.tags.includes(DRAFT_TAG)) {
+                xpBreakdown.action += XP_VALUES.SMART_TOOL_COMPLETION;
+                xp += XP_VALUES.SMART_TOOL_COMPLETION;
+            }
+            return;
         }
 
         // Depth Bonus

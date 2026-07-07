@@ -26,7 +26,7 @@ export function useJournalOperations() {
             isEncrypted: boolean;
         }) => {
             if (!user || !db) throw new Error("Not authenticated");
-            await addDoc(collection(db, 'journals'), {
+            return await addDoc(collection(db, 'journals'), {
                 uid: user.uid,
                 content: params.content,
                 moodScore: params.moodScore,
