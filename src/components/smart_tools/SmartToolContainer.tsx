@@ -20,6 +20,8 @@ interface SmartToolContainerProps<T extends object> {
     initialData: T;
     resumeSession?: boolean;
     hideDefaultSaveButton?: boolean;
+    /** Skip the container's own header bar entirely — for tools that render their own page chrome (e.g. a guided flow with its own VibrantHeader). */
+    hideHeader?: boolean;
     children: (props: {
         data: T;
         updateData: (newData: Partial<T>) => void;
@@ -28,7 +30,7 @@ interface SmartToolContainerProps<T extends object> {
     }) => React.ReactNode;
 }
 
-export function SmartToolContainer<T extends object>({ toolType, toolLabel, initialData, resumeSession = false, hideDefaultSaveButton = false, children }: SmartToolContainerProps<T>) {
+export function SmartToolContainer<T extends object>({ toolType, toolLabel, initialData, resumeSession = false, hideDefaultSaveButton = false, hideHeader = false, children }: SmartToolContainerProps<T>) {
     const { user } = useAuth();
     const { isVaultUnlocked, encrypt, decrypt } = useEncryption();
     const { addJournal, updateJournal } = useJournalOperations();
@@ -169,6 +171,10 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
         );
     }
 
+    if (hideHeader) {
+        return <>{children({ data, updateData, save: handleSave, isSaving: isSavingLocal })}</>;
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center bg-white/40 backdrop-blur-sm p-4 rounded-2xl border border-white/60 shadow-sm">
@@ -183,7 +189,7 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
                             <span>Saved</span>
                         </div>
                     )}
-                    
+
                     {!hideDefaultSaveButton && (
                         <button
                             onClick={() => handleSave()}
