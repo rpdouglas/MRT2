@@ -155,4 +155,59 @@ describe('🧭 GuidedWorkflowEngine', () => {
         await act(async () => { vi.advanceTimersByTime(5100); });
         expect(generateCBTCoachingPrompt).toHaveBeenCalledTimes(1);
     });
+
+    describe('list-type steps', () => {
+        interface ListPayload extends Record<string, string | string[]> { items: string[]; }
+
+        const LIST_STEPS: Step[] = [
+            { id: 'items', label: 'Items', question: 'List some items', coaching: 'Coaching', inputType: 'list', accentColor: 'emerald', placeholder: 'Add item...', minLength: 1, aiPromptEnabled: false },
+        ];
+
+        const renderListEngine = () => render(
+            <GuidedWorkflowEngine<ListPayload>
+                toolType="CBA"
+                toolLabel="Test Tool"
+                steps={LIST_STEPS}
+                onComplete={onComplete}
+                onSaveProgress={onSaveProgress}
+            />
+        );
+
+        it('gates Next by item count, not character count', () => {
+            renderListEngine();
+            const input = screen.getByPlaceholderText('Add item...');
+            const finishButton = screen.getByText('Finish');
+
+            expect(finishButton).toBeDisabled();
+
+            // Typing alone (no commit) must not satisfy minLength — only committed items count.
+            fireEvent.change(input, { target: { value: 'a much longer string than any minLength' } });
+            expect(finishButton).toBeDisabled();
+
+            fireEvent.keyDown(input, { key: 'Enter' });
+            expect(finishButton).not.toBeDisabled();
+        });
+
+        it('never calls the AI coaching prompt for a list step even if misconfigured with aiPromptEnabled', async () => {
+            vi.useFakeTimers();
+            (useAuth as Mock).mockReturnValue({ userTier: 'premium' });
+            const misconfiguredSteps: Step[] = [{ ...LIST_STEPS[0], aiPromptEnabled: true }];
+            render(
+                <GuidedWorkflowEngine<ListPayload>
+                    toolType="CBA"
+                    toolLabel="Test Tool"
+                    steps={misconfiguredSteps}
+                    onComplete={onComplete}
+                    onSaveProgress={onSaveProgress}
+                />
+            );
+
+            fireEvent.keyDown(screen.getByPlaceholderText('Add item...'), { key: 'Enter' }); // no-op, empty
+            fireEvent.change(screen.getByPlaceholderText('Add item...'), { target: { value: 'item one' } });
+            fireEvent.keyDown(screen.getByPlaceholderText('Add item...'), { key: 'Enter' });
+
+            await act(async () => { vi.advanceTimersByTime(6000); });
+            expect(generateCBTCoachingPrompt).not.toHaveBeenCalled();
+        });
+    });
 });
