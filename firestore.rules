@@ -29,7 +29,29 @@ service cloud.firestore {
     // 1. User Profiles & Subcollections
     match /users/{userId} {
       // Profile Document
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Account creation: the client writes its own initial profile on first
+      // login (see getOrCreateUserProfile in src/lib/db.ts). tier/role must
+      // start at their safe defaults so a crafted first write can't self-grant
+      // premium or admin.
+      allow create: if isAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.tier == 'free' &&
+        request.resource.data.role == 'user'
+      );
+
+      // Profile updates: owners may edit their own document, but never the
+      // billing tier or role fields — tier/tierSource are exclusively written
+      // by syncStripeSubscription (Cloud Function, admin SDK), and role is
+      // admin-managed. This prevents client-side self-escalation to Premium
+      // or to the admin UI (AuthContext.tsx trusts profile.role === 'admin').
+      allow update: if isAdmin() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'tierSource', 'role'])
+      );
+
+      allow delete: if isOwner(userId) || isAdmin();
 
       // Safe Subcollections (User Managed)
       match /workbook_answers/{answerId} {
