@@ -51,6 +51,23 @@ describe('🎮 Gamification Engine', () => {
         const result = calculateUserLevel([], [], 0, 60); // 2 months
         expect(result.totalXP).toBe(1000);
     });
+
+    it('should award 25 XP for a completed SMART Tool entry (Medium-priority equivalent, not TASK_HIGH)', () => {
+        const journals = [
+            { tags: ['SMART Tool', 'ABC'], createdAt: mockDate(0) },
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
+        const result = calculateUserLevel(journals, [], 0, 0);
+        expect(result.totalXP).toBe(25);
+        expect(result.totalXP).not.toBe(50); // not TASK_HIGH, despite PROJ-50 spec's parenthetical
+    });
+
+    it('should award 0 XP for a DRAFT-tagged (incomplete) SMART Tool entry', () => {
+        const journals = [
+            { tags: ['SMART Tool', 'ABC', 'DRAFT'], createdAt: mockDate(0) },
+        ] as unknown as Parameters<typeof calculateJournalStats>[0];
+        const result = calculateUserLevel(journals, [], 0, 0);
+        expect(result.totalXP).toBe(0);
+    });
   });
 
   describe('calculateJournalStats & Streaks', () => {

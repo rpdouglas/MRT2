@@ -71,8 +71,8 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 **Before ANY Firestore write:** confirm user-generated content passes through `encryptData()` in `src/lib/crypto.ts`.  
 **Never:** log decrypted data, store plaintext sensitive content server-side, or send decrypted content to Gemini **outside the four approved AI-analysis flows below**.
 
-**Approved Gemini exception — decrypted journal/workbook content, scoped to exactly these four flows:**
-`useDeepPatternAnalysis.ts`, `useROSCAssessments.ts` (→ `generateROSCAnalysis`), `JournalAnalysisWizard.tsx` (→ `generateComparativeAnalysis`), and `WorkbookDetail.tsx` (→ `analyzeWorkbookContent`) — the four functions called are defined in `src/lib/gemini.ts`. These flows decrypt content **client-side only**, send it to Gemini directly over HTTPS for a single stateless inference call, and never persist the raw content server-side or in `ai_logs` (metadata only). This is a deliberate, load-bearing product decision (the AI Insights / Recovery Compass feature set), not an oversight — treat it as the *only* carve-out to the "never send sensitive content to Gemini" rule. Any **new** call site that wants to send decrypted content to Gemini must be added here explicitly before shipping, not assumed to inherit this exception.
+**Approved Gemini exception — decrypted journal/workbook content, scoped to exactly these five flows:**
+`useDeepPatternAnalysis.ts`, `useROSCAssessments.ts` (→ `generateROSCAnalysis`), `JournalAnalysisWizard.tsx` (→ `generateComparativeAnalysis`), `WorkbookDetail.tsx` (→ `analyzeWorkbookContent`), and `GuidedWorkflowEngine.tsx` (→ `generateCBTCoachingPrompt`, PROJ-50) — the five functions called are defined in `src/lib/gemini.ts`. These flows decrypt content **client-side only**, send it to Gemini directly over HTTPS for a single stateless inference call, and never persist the raw content server-side or in `ai_logs` (metadata only). This is a deliberate, load-bearing product decision (the AI Insights / Recovery Compass feature set), not an oversight — treat it as the *only* carve-out to the "never send sensitive content to Gemini" rule. Any **new** call site that wants to send decrypted content to Gemini must be added here explicitly before shipping, not assumed to inherit this exception.
 
 ---
 
@@ -103,7 +103,7 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 - Verify icon name exists before using it — don't guess.
 
 ### AI (Gemini)
-- Only non-sensitive metadata or explicitly approved content goes to Gemini requests — see the "Approved Gemini exception" list under Zero-Knowledge Encryption Boundary for the four flows permitted to send decrypted content.
+- Only non-sensitive metadata or explicitly approved content goes to Gemini requests — see the "Approved Gemini exception" list under Zero-Knowledge Encryption Boundary for the five flows permitted to send decrypted content.
 - Sanitise before every AI call — treat Gemini as an untrusted boundary. Never send raw content to Gemini from a call site not on the approved list; never persist decrypted content server-side (`ai_logs` stays metadata-only).
 
 ---

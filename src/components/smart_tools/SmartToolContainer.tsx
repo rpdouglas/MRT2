@@ -19,13 +19,16 @@ interface SmartToolContainerProps<T extends object> {
     toolLabel: string;
     initialData: T;
     resumeSession?: boolean;
-    children: (props: { 
-        data: T; 
+    hideDefaultSaveButton?: boolean;
+    children: (props: {
+        data: T;
         updateData: (newData: Partial<T>) => void;
+        save: (overrideData: T, extraTags?: string[]) => Promise<void>;
+        isSaving: boolean;
     }) => React.ReactNode;
 }
 
-export function SmartToolContainer<T extends object>({ toolType, toolLabel, initialData, resumeSession = false, children }: SmartToolContainerProps<T>) {
+export function SmartToolContainer<T extends object>({ toolType, toolLabel, initialData, resumeSession = false, hideDefaultSaveButton = false, children }: SmartToolContainerProps<T>) {
     const { user } = useAuth();
     const { isVaultUnlocked, encrypt, decrypt } = useEncryption();
     const { addJournal, updateJournal } = useJournalOperations();
@@ -90,8 +93,9 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
 
     const updateData = useCallback((newData: Partial<T>) => { setData(prev => ({ ...prev, ...newData })); setHasUnsavedChanges(true); }, []);
 
-    const handleSave = async () => {
+    const handleSave = async (overrideData?: T, extraTags: string[] = []) => {
         if (!isVaultUnlocked) return;
+        const saveData = overrideData ?? data;
         setIsSavingLocal(true);
         try {
             const payload = {
@@ -100,14 +104,15 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
                     version: '2.0',
                     lastSaved: new Date().toISOString()
                 },
-                data: data
+                data: saveData
             };
 
             // 1. Stringify the JSON payload
             const plainTextPayload = JSON.stringify(payload);
-            
+
             // 2. Encrypt the payload before sending to Firestore
             const cipherText = await encrypt(plainTextPayload);
+            const tags = ['SMART Tool', toolType, ...extraTags];
 
             // 3. Update existing or save as a new secure journal entry
             if (currentDocId) {
@@ -115,22 +120,24 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
                     id: currentDocId,
                     content: cipherText,
                     moodScore: 5,
-                    tags: ['SMART Tool', toolType],
+                    tags,
                     isEncrypted: true
                 });
             } else {
-                await addJournal({
+                const ref = await addJournal({
                     content: cipherText,
                     moodScore: 5, // Default neutral mood
-                    tags: ['SMART Tool', toolType],
+                    tags,
                     sentiment: 'Neutral',
                     weather: null,
                     isEncrypted: true
                 });
-                // Note: The next save in this immediate session might create a duplicate 
-                // if they save twice without remounting, but future mounts will catch the latest.
+                // Capture the new doc's id immediately so a second save in the same
+                // mount updates this entry instead of creating a duplicate.
+                setCurrentDocId(ref.id);
             }
 
+            if (overrideData) setData(overrideData);
             setLastSaved(new Date());
             setHasUnsavedChanges(false);
         } catch (error: unknown) { console.error(`[SmartToolContainer] Save failed for ${toolType}:`, error); alert("Failed to save tool to journal."); } finally {
@@ -177,22 +184,24 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
                         </div>
                     )}
                     
-                    <button
-                        onClick={handleSave}
-                        disabled={isSavingLocal || (!hasUnsavedChanges && lastSaved !== null)}
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 active:scale-95 shadow-sm font-bold"
-                    >
-                        {isSavingLocal ? (
-                            <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Saving...</>
-                        ) : (
-                            'Save to Journal'
-                        )}
-                    </button>
+                    {!hideDefaultSaveButton && (
+                        <button
+                            onClick={() => handleSave()}
+                            disabled={isSavingLocal || (!hasUnsavedChanges && lastSaved !== null)}
+                            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 active:scale-95 shadow-sm font-bold"
+                        >
+                            {isSavingLocal ? (
+                                <><ArrowPathIcon className="w-4 h-4 animate-spin" /> Saving...</>
+                            ) : (
+                                'Save to Journal'
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {children({ data, updateData })}
+                {children({ data, updateData, save: handleSave, isSaving: isSavingLocal })}
             </div>
         </div>
     );
