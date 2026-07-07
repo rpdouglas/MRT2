@@ -96,7 +96,8 @@ describe('📓 useJournalOperations Hook', () => {
         // FIX: Cast via unknown to avoid 'any'
         vi.mocked(firestore.addDoc).mockResolvedValue({ id: 'new-doc-id' } as unknown as firestore.DocumentReference);
 
-        await result.current.addJournal(payload);
+        const ref = await result.current.addJournal(payload);
+        expect(ref).toEqual({ id: 'new-doc-id' });
 
         // Verify Firebase Call
         expect(firestore.collection).toHaveBeenCalledWith(expect.anything(), 'journals');

@@ -10,6 +10,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { auth } from './firebase'; // To capture current user for logging
 import { logAIUsage } from './analytics';
+import type { SmartToolType } from './types/smart';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
@@ -428,4 +429,29 @@ export async function getGeminiCoaching(
     
     // Low latency model for instant chat-like feedback
     return await generateWithCascade(prompt, 'workbook_coach', 'gemini-2.5-flash-lite');
+}
+
+// PROJ-50: Approved Gemini exception — see CLAUDE.md Zero-Knowledge Encryption
+// Boundary section. Called only from GuidedWorkflowEngine.tsx with the live,
+// in-memory step input the user is currently typing.
+export async function generateCBTCoachingPrompt(
+    toolType: SmartToolType,
+    stepId: string,
+    userInput: string
+): Promise<string> {
+    const prompt = `
+    You are a peer-support recovery coach, not a clinician. The user is working through a "${toolType}" guided CBT exercise, currently on step "${stepId}".
+    Their current input: "${userInput}"
+
+    Write ONE follow-up question (max 15 words) that helps them go one layer deeper into this step.
+    Rules:
+    - It must be a question, never a statement or advice.
+    - Do not restate their input back to them.
+    - Keep it warm, non-clinical, recovery-appropriate language.
+    Return ONLY the question text, no quotes, no markdown, no preamble.
+    `;
+
+    // Low latency model — fired after a short pause while the user is mid-step
+    const text = await generateWithCascade(prompt, 'cbt_coaching_prompt', 'gemini-2.5-flash-lite');
+    return text.trim();
 }

@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { processInChunks } from '../lib/utils';
 import { generateDeepPatternAnalysis, type DeepPatternResult } from '../lib/gemini';
+import { DRAFT_TAG } from '../lib/types/smart';
 
 interface UseDeepPatternAnalysisReturn {
     analyze: () => Promise<void>;
@@ -59,8 +60,17 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
             setProgress(20); // Fetched
 
             // 2. Process & Decrypt in Chunks (Prevent UI Freezing)
-            const rawDocs = snapshot.docs.map(d => d.data());
-            
+            // Exclude in-progress guided-tool drafts — they're incomplete and shouldn't feed AI analysis.
+            const rawDocs = snapshot.docs
+                .map(d => d.data())
+                .filter(d => !(d.tags as string[] | undefined)?.includes(DRAFT_TAG));
+
+            if (rawDocs.length === 0) {
+                setError("Not enough journal entries to analyze.");
+                setLoading(false);
+                return;
+            }
+
             const decryptedEntries = await processInChunks(
                 rawDocs,
                 5, // Small chunk size for decryption safety
