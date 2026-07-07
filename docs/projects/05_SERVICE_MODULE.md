@@ -1,7 +1,7 @@
 # 🤝 Project 05: The "Lisa" Service Module
 
 **Objective:** Build the "Digital Rolodex" for sponsors to manage sponsees securely.
-**Status:** ⚪ Planned
+**Status:** ⏸️ Paused (paused per ROADMAP.md Wave 3 to focus on Wave 1 Onboarding — see docs/ACTIVE_CYCLE.md)
 **Personas Involved:** Lisa (The Service Superstar)
 
 ## 🏗️ Phase 1: Schema & Crypto
@@ -20,3 +20,9 @@
 
 ## 🚀 Phase 4: Release
 * [ ] **Docs:** Update User Guide with a section for Sponsors.
+
+## 🧪 Phase 5: QA & Verification
+* [ ] **Unit Tests:** `useServiceData()` CRUD operations (`addSponsee`, `updateSponseeNote`), crypto-shredding on sponsee delete.
+* [ ] **The Subway Test:** Rolodex list and sponsee detail view render from cached data when offline.
+* [ ] **The "Lost PIN" Test:** Confirm all sponsee notes are unreadable after PIN rotation without the new key, and confirm inclusion in `executePinRotation`.
+* [ ] **Anonymity Check:** Confirm no sponsee full name, photo, or identifying detail is ever included in a shareable/exportable format (per Lisa's anti-13th-stepper safeguards in `docs/PERSONAS.md`).

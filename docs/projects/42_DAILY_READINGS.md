@@ -1,5 +1,5 @@
 # 📖 Feature Spec — Daily Readings Engine
-**ID:** PROJ-40  
+**ID:** PROJ-42  
 **Epic:** Education & Daily Program  
 **Priority:** P1 — High  
 **Target Personas:** David (primary), Ned, Walt, Lisa  

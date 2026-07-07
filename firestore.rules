@@ -89,7 +89,7 @@ service cloud.firestore {
       allow read, delete: if isAdmin();
     }
     
-    // 7. Service (The Lisa Module - Placeholder for PROJ-02)
+    // 7. Service (The Lisa Module - Placeholder for PROJ-05)
     match /service/{serviceId} {
         allow create: if isCreatingOwnedResource();
         allow read, update, delete: if isResourceOwner();
