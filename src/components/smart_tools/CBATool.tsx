@@ -133,13 +133,18 @@ function CBAToolInner({ data, updateData, save, isSaving }: CBAToolInnerProps) {
                             <InformationCircleIcon className="w-6 h-6 text-blue-500 shrink-0 mt-0.5" />
                             <p className="text-sm leading-relaxed font-medium">{EXPLANATION}</p>
                         </div>
-                        <input
-                            type="text"
-                            value={behavior}
-                            onChange={(e) => setBehavior(e.target.value)}
-                            placeholder="What behavior are we analyzing? (e.g. Drinking, Isolating)"
-                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-lg font-semibold focus:border-blue-400 focus:ring-0 transition-all placeholder-slate-300"
-                        />
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+                                What behavior are we analyzing?
+                            </label>
+                            <input
+                                type="text"
+                                value={behavior}
+                                onChange={(e) => setBehavior(e.target.value)}
+                                placeholder="e.g. Drinking, Isolating"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-lg font-semibold focus:border-blue-400 focus:ring-0 transition-all placeholder-slate-300"
+                            />
+                        </div>
                         <button
                             type="button"
                             disabled={!behavior.trim()}

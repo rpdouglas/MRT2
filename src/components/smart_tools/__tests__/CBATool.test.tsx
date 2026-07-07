@@ -86,20 +86,20 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
 
     it('disables Continue with an empty behavior and enables it once typed', async () => {
         render(<CBATool />);
-        await waitFor(() => screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'));
+        await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
 
         const continueButton = screen.getByText('Continue →');
         expect(continueButton).toBeDisabled();
 
-        fireEvent.change(screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'), { target: { value: 'Drinking' } });
+        fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Drinking' } });
         expect(continueButton).not.toBeDisabled();
     });
 
     it('transitions to the guided phase and interpolates the entered behavior into the quadrant question', async () => {
         render(<CBATool />);
-        await waitFor(() => screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'));
+        await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
 
-        fireEvent.change(screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'), { target: { value: 'Drinking' } });
+        fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Drinking' } });
         fireEvent.click(screen.getByText('Continue →'));
 
         await waitFor(() => expect(screen.getByText('Step 1 of 4 — Advantages of Drinking')).toBeInTheDocument());
@@ -108,8 +108,8 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
 
     it('walks through all 4 quadrants and reaches the summary phase', async () => {
         render(<CBATool />);
-        await waitFor(() => screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'));
-        fireEvent.change(screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'), { target: { value: 'Drinking' } });
+        await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
+        fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Drinking' } });
         fireEvent.click(screen.getByText('Continue →'));
 
         await waitFor(() => screen.getByPlaceholderText('e.g., Relief from anxiety, at least for a while'));
@@ -136,8 +136,8 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
 
     it('preserves behavior through a mid-guided "Save Progress" call', async () => {
         render(<CBATool />);
-        await waitFor(() => screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'));
-        fireEvent.change(screen.getByPlaceholderText('What behavior are we analyzing? (e.g. Drinking, Isolating)'), { target: { value: 'Isolating' } });
+        await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
+        fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Isolating' } });
         fireEvent.click(screen.getByText('Continue →'));
 
         await waitFor(() => screen.getByPlaceholderText('e.g., Relief from anxiety, at least for a while'));
