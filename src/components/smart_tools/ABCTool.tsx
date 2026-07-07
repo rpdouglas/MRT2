@@ -98,6 +98,7 @@ export const ABCTool: React.FC = () => {
             initialData={initialData}
             resumeSession
             hideDefaultSaveButton
+            hideHeader
         >
             {({ data, save, isSaving }) => (
                 <GuidedWorkflowEngine<ABCPayload>
