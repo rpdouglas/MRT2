@@ -7,7 +7,6 @@
 
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Queued** | `NEW` | **Deferred Vault Lock** | David | Allow "Skip PIN initially" during onboarding. Let users experience the app before forcing Zero-Knowledge setup. |
 | ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 3-column Quick Action Bar replacing the static daily pledge. |
 | 🟡 **Queued** | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
 | ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
@@ -40,16 +39,16 @@
 
 ## ✅ RECENTLY SHIPPED
 * `PROJ-54` Journal Insights Momentum UI Redesign (GlassCard, dark theme, smooth charts, and typography upgrade)
+* `PROJ-53` ROSC Matrix Visual Upgrade (Pill Capsules) (Animated segmented pill visualization, glassmorphic dark theme, replacing the Recharts radar chart)
 * `PROJ-49` The Recovery Capital (ROSC) Matrix (Monthly SAMHSA domain assessment, Recharts radar chart with longitudinal overlay, ZK-encrypted AI narrative, free-tier self-report scores)
 * `PROJ-47` The Ledger — Precision, Resilience & Tab Redesign (Monthly day-drift fix, grace window, missedCountHistory, Today/Later/Log tabs)
 * `PROJ-48` User Guide Synchronization Sprint (Daily Readings page, Dynamic Anchor, Voice-to-Vault, Recurrence Table, Smart Reset expansion)
 * `PROJ-46` The Ledger — Frictionless Task Module Upgrade (Swipe Gestures, Quick Capture, Rhythm Score, AI Context Cards)
 * `PROJ-42` Daily Readings Engine (Multi-Modality Content)
 * `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
-* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
-* `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
 * `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
+* `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
 * `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
 * `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
