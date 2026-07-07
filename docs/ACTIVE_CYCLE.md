@@ -11,8 +11,10 @@
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
-- [ ] **PROJ-05:** The Service Network -> Build encrypted Sponsee Rolodex to unblock organic viral growth.
 - [⛔ BLOCKED] **PROJ-07:** Play Store TWA (Waiting on DUNS Number for Google Play Developer Account verification).
+
+## ⏸️ Paused (Not in this cycle)
+- **PROJ-05:** The Service Network -> Build encrypted Sponsee Rolodex to unblock organic viral growth. Paused per ROADMAP.md (Wave 3) to focus on Wave 1 Onboarding — no code exists yet beyond a Firestore rules stub; `Dashboard.tsx` still shows a "Coming Soon" placeholder. Was previously listed here as an active Priority-2 item, which didn't match its Wave-3/Paused status elsewhere — moved here to keep this file honest about what's actually being worked on.
 
 ## 🧹 Chores & Tech Debt
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.

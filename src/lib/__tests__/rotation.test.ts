@@ -1,0 +1,197 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as firestore from 'firebase/firestore';
+import { executePinRotation } from '../rotation';
+import { generateKey, encrypt, computePinHash, generateSalt, isVaultUnlocked, clearKey } from '../crypto';
+
+// Mock Firebase config — rotation.ts only needs `db` to be truthy.
+vi.mock('../firebase', () => ({
+    db: {}
+}));
+
+// Mock Firestore reads/writes; crypto.ts is left un-mocked so real
+// PBKDF2/AES-GCM round-trips happen, matching crypto.test.ts's approach.
+vi.mock('firebase/firestore', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('firebase/firestore')>();
+    return {
+        ...actual as Record<string, unknown>,
+        collection: vi.fn(),
+        query: vi.fn(),
+        where: vi.fn(),
+        limit: vi.fn(),
+        startAfter: vi.fn(),
+        doc: vi.fn(() => ({ __ref: 'profile' })),
+        getDoc: vi.fn(),
+        setDoc: vi.fn().mockResolvedValue(undefined),
+        getDocs: vi.fn(),
+        writeBatch: vi.fn(),
+    };
+});
+
+type FakeDoc = { id: string; ref: { __id: string }; data: () => Record<string, unknown> };
+type FakeSnapshot = { empty: boolean; docs: FakeDoc[] };
+
+function emptySnapshot(): FakeSnapshot {
+    return { empty: true, docs: [] };
+}
+
+function pageSnapshot(docs: FakeDoc[]): FakeSnapshot {
+    return { empty: false, docs };
+}
+
+function mockProfileSnapshot(data: Record<string, unknown>) {
+    return { exists: () => true, data: () => data } as unknown as Awaited<ReturnType<typeof firestore.getDoc>>;
+}
+
+describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
+    const OLD_PIN = '1111';
+    const NEW_PIN = '2222';
+    let updateCalls: Array<[unknown, Record<string, unknown>]>;
+    let commitMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        clearKey();
+        updateCalls = [];
+        commitMock = vi.fn().mockResolvedValue(undefined);
+
+        // Shared chainable batch: every writeBatch() call returns an object
+        // that records .update() calls and resolves .commit().
+        const batch = {
+            update: vi.fn((ref: unknown, data: Record<string, unknown>) => { updateCalls.push([ref, data]); return batch; }),
+            set: vi.fn(() => batch),
+            delete: vi.fn(() => batch),
+            commit: commitMock,
+        };
+        vi.mocked(firestore.writeBatch).mockReturnValue(batch as unknown as ReturnType<typeof firestore.writeBatch>);
+    });
+
+    // Journals is always processed first, then workbook_answers, then
+    // rosc_assessments — each collection's paginated while-loop issues a
+    // getDocs call per page and needs a final EMPTY page to terminate. This
+    // test suite only exercises the journals collection, so: N journal pages
+    // with docs, then one empty journal page to end that loop, then one
+    // empty page each for workbook_answers and rosc_assessments.
+    function queueGetDocs(journalPages: FakeSnapshot[]) {
+        const calls = [...journalPages, emptySnapshot(), emptySnapshot(), emptySnapshot()];
+        for (const page of calls) {
+            vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+        }
+    }
+
+    it('completes a fresh rotation: re-encrypts all documents and clears the pending marker', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+        const staleCipher = await encrypt('Morning gratitude entry');
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocs([
+            pageSnapshot([{ id: 'j1', ref: { __id: 'j1' }, data: () => ({ isEncrypted: true, content: staleCipher }) }]),
+        ]);
+
+        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {});
+
+        // Content was re-encrypted (not left as the stale ciphertext).
+        const journalUpdate = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'j1');
+        expect(journalUpdate).toBeDefined();
+        expect(journalUpdate![1].content).not.toBe(staleCipher);
+
+        // pendingRotation marker was written before processing (setDoc)...
+        expect(firestore.setDoc).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ pendingRotation: { salt: result.newSalt, verifier: result.newVerifier } }),
+            expect.anything()
+        );
+        // ...and cleared again on the final profile update.
+        const finalUpdate = updateCalls.find(([, data]) => 'encryptionSalt' in data);
+        expect(finalUpdate).toBeDefined();
+        expect(finalUpdate![1].encryptionSalt).toBe(result.newSalt);
+        expect(finalUpdate![1]).toHaveProperty('pendingRotation');
+    });
+
+    it('resumes an interrupted rotation: skips documents already migrated under a pending key instead of failing', async () => {
+        const oldSalt = generateSalt();
+
+        // Simulate a PRIOR attempt that got partway through: it generated
+        // pendingSalt/pendingVerifier and successfully re-encrypted doc "j1"
+        // under it before the process died. "j2" is still on the old key.
+        const pendingSalt = generateSalt();
+        await generateKey(NEW_PIN, pendingSalt);
+        const pendingVerifier = await computePinHash(NEW_PIN, pendingSalt);
+        const migratedCipher = await encrypt('Already migrated by the prior attempt');
+
+        await generateKey(OLD_PIN, oldSalt);
+        const staleCipher = await encrypt('Still on the old key');
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(
+            mockProfileSnapshot({ pendingRotation: { salt: pendingSalt, verifier: pendingVerifier } })
+        );
+        queueGetDocs([
+            pageSnapshot([
+                { id: 'j1', ref: { __id: 'j1' }, data: () => ({ isEncrypted: true, content: migratedCipher }) },
+                { id: 'j2', ref: { __id: 'j2' }, data: () => ({ isEncrypted: true, content: staleCipher }) },
+            ]),
+        ]);
+
+        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {});
+
+        // The resumed attempt reuses the SAME pending salt/verifier — it does
+        // not mint a third, unrelated salt that would orphan "j1".
+        expect(result.newSalt).toBe(pendingSalt);
+        expect(result.newVerifier).toBe(pendingVerifier);
+
+        // "j1" (already migrated) must NOT be rewritten — it was correctly
+        // detected as already-on-the-new-key and skipped.
+        expect(updateCalls.some(([ref]) => (ref as { __id: string }).__id === 'j1')).toBe(false);
+
+        // "j2" (still stale) must be migrated.
+        const j2Update = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'j2');
+        expect(j2Update).toBeDefined();
+        expect(j2Update![1].content).not.toBe(staleCipher);
+    });
+
+    it('on a mid-batch failure, does NOT silently reset the in-memory key to the old PIN', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+        // Garbage ciphertext: fails to decrypt under BOTH the old and the
+        // (about-to-be-generated) new key — a genuine corruption case.
+        const corruptCipher = 'aabbccdd:ffffffffffffffffffffffffffffffff';
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocs([
+            pageSnapshot([{ id: 'j1', ref: { __id: 'j1' }, data: () => ({ isEncrypted: true, content: corruptCipher }) }]),
+        ]);
+
+        await expect(
+            executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {})
+        ).rejects.toThrow('PARTIAL_ROTATION_FAILURE');
+
+        // The vault must still be unlocked — the old catch-block behavior of
+        // re-deriving the OLD key on failure (which would strand any batches
+        // already committed under the new key) has been removed.
+        expect(isVaultUnlocked()).toBe(true);
+
+        // The pending marker must have been persisted before any document
+        // processing began, so a retry has something to resume from.
+        expect(firestore.setDoc).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ pendingRotation: expect.objectContaining({ salt: expect.any(String) }) }),
+            expect.anything()
+        );
+
+        // The final profile update (encryptionSalt/pinVerifier/clearing the
+        // pending marker) must never have been reached.
+        expect(updateCalls.some(([, data]) => 'encryptionSalt' in data)).toBe(false);
+    });
+
+    it('rejects with INCORRECT_PIN before touching any documents when the old PIN verifier does not match', async () => {
+        const oldSalt = generateSalt();
+        const realVerifier = await computePinHash(OLD_PIN, oldSalt);
+
+        await expect(
+            executePinRotation('user_1', 'wrong-pin', NEW_PIN, oldSalt, realVerifier, () => {})
+        ).rejects.toThrow('INCORRECT_PIN');
+
+        expect(firestore.getDocs).not.toHaveBeenCalled();
+        expect(firestore.setDoc).not.toHaveBeenCalled();
+    });
+});

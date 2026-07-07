@@ -58,6 +58,14 @@ export interface UserProfile {
     lastReadingDate?: string;
     defaultFellowship?: string;
   };
+  // Marks an in-flight PIN rotation (src/lib/rotation.ts). Present only
+  // between the start of executePinRotation and its successful completion —
+  // lets an interrupted rotation resume with the same salt/verifier instead
+  // of generating a new one and losing track of already-migrated documents.
+  pendingRotation?: {
+    salt: string;
+    verifier: string;
+  };
 }
 
 export interface JournalTemplate { id: string; name: string; prompts: string[]; defaultTags: string[]; }

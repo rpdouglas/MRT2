@@ -157,3 +157,14 @@ jobs:
           firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
           projectId: "${{ env.FIREBASE_PROJECT_ID }}"
           channelId: live
+
+      # Hosting is the only thing action-hosting-deploy@v0 ships above — rules,
+      # indexes, and Cloud Functions were never deployed by this pipeline and
+      # could silently drift from what's in main. Deploy them explicitly here.
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Deploy Firestore Rules, Indexes & Cloud Functions
+        run: npx firebase-tools deploy --only firestore:rules,firestore:indexes,functions --project "${{ env.FIREBASE_PROJECT_ID }}" --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/service-account.json

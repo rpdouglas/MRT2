@@ -160,7 +160,16 @@ export default function Profile() {
           setOldPin('');
           setNewPin('');
           setConfirmPin('');
-      } catch (err: unknown) { const error = err as Error; if (error.message === 'INCORRECT_PIN') { setRotError("Current PIN is incorrect."); } else { setRotError("An error occurred during rotation. State rolled back securely."); console.error(error); }
+      } catch (err: unknown) {
+          const error = err as Error;
+          if (error.message === 'INCORRECT_PIN') {
+              setRotError("Current PIN is incorrect.");
+          } else if (error.message === 'PARTIAL_ROTATION_FAILURE') {
+              setRotError("Your PIN change was interrupted partway through. Don't close the app — tap \"Update PIN\" again with the same PINs below to finish safely.");
+          } else {
+              setRotError("An error occurred during rotation. Please try again.");
+              console.error(error);
+          }
       } finally {
           setIsRotating(false);
       }

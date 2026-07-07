@@ -5,7 +5,7 @@
  * FIX: Strong typing for Firestore database instance to resolve TS2345 in closures.
  */
 import { db } from './firebase';
-import { collection, query, where, getDocs, writeBatch, doc, deleteField, limit, startAfter, type Firestore, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, setDoc, writeBatch, doc, deleteField, limit, startAfter, type Firestore, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
 import { generateSalt, generateKey, computePinHash, encrypt, decrypt } from './crypto';
 
 const BATCH_SIZE = 50;
@@ -123,15 +123,35 @@ export async function executePinRotation(
     onProgress(2);
 
     // 2. Count Total Documents (for accurate progress bar)
-    // In Firestore, we use size of aggregate query, but for simplicity and to save reads, 
+    // In Firestore, we use size of aggregate query, but for simplicity and to save reads,
     // we'll estimate progress based on batches processed. We will track total processed.
     let processedDocs = 0;
-    // Assuming a rough estimate of total documents to drive the UI. 
+    // Assuming a rough estimate of total documents to drive the UI.
     // For exact progress, you would run a COUNT() query here. We will set a generic progress flow.
 
-    // 3. Generate New Key Material
-    const newSalt = generateSalt();
-    const newVerifier = await computePinHash(newPin, newSalt);
+    // 3. Generate (or resume) New Key Material
+    // If a previous rotation attempt to this same new PIN was interrupted
+    // mid-batch, some documents below are already re-encrypted under that
+    // attempt's new key. Reusing its exact salt/verifier (persisted in
+    // `pendingRotation`) lets the per-document logic below detect and skip
+    // those already-migrated documents instead of misreporting them as
+    // corrupted. A fresh salt is only generated when there's no compatible
+    // pending attempt to resume.
+    const pRef = doc(database, 'users', uid);
+    const profileSnap = await getDoc(pRef);
+    const pending = profileSnap.data()?.pendingRotation as { salt: string; verifier: string } | undefined;
+    const pendingVerifierForThisPin = pending ? await computePinHash(newPin, pending.salt) : null;
+
+    let newSalt: string;
+    let newVerifier: string;
+    if (pending && pendingVerifierForThisPin === pending.verifier) {
+        newSalt = pending.salt;
+        newVerifier = pending.verifier;
+    } else {
+        newSalt = generateSalt();
+        newVerifier = await computePinHash(newPin, newSalt);
+        await setDoc(pRef, { pendingRotation: { salt: newSalt, verifier: newVerifier } }, { merge: true });
+    }
 
     try {
         // --- PROCESS JOURNALS ---
@@ -156,8 +176,17 @@ export async function executePinRotation(
                     // Decrypt with OLD key
                     await generateKey(oldPin, currentSalt);
                     const plain = await decrypt(data.content);
-                    if (plain.includes("Locked Content")) throw new Error("DECRYPTION_FAILED");
-                    
+                    if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                        // May already be re-encrypted under the new key from an
+                        // interrupted prior attempt — check before failing.
+                        await generateKey(newPin, newSalt);
+                        const alreadyMigrated = await decrypt(data.content);
+                        if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                            throw new Error("DECRYPTION_FAILED");
+                        }
+                        continue; // already migrated in a previous attempt
+                    }
+
                     // Encrypt with NEW key
                     await generateKey(newPin, newSalt);
                     const cipher = await encrypt(plain);
@@ -196,8 +225,17 @@ export async function executePinRotation(
                     // Decrypt with OLD key
                     await generateKey(oldPin, currentSalt);
                     const plain = await decrypt(data.answer);
-                    if (plain.includes("Locked Content")) throw new Error("DECRYPTION_FAILED");
-                    
+                    if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                        // May already be re-encrypted under the new key from an
+                        // interrupted prior attempt — check before failing.
+                        await generateKey(newPin, newSalt);
+                        const alreadyMigrated = await decrypt(data.answer);
+                        if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                            throw new Error("DECRYPTION_FAILED");
+                        }
+                        continue; // already migrated in a previous attempt
+                    }
+
                     // Encrypt with NEW key
                     await generateKey(newPin, newSalt);
                     const cipher = await encrypt(plain);
@@ -234,7 +272,16 @@ export async function executePinRotation(
                 if (data.encryptedAIContext) {
                     await generateKey(oldPin, currentSalt);
                     const plain = await decrypt(data.encryptedAIContext);
-                    if (plain.includes("Locked Content")) throw new Error("DECRYPTION_FAILED");
+                    if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                        // May already be re-encrypted under the new key from an
+                        // interrupted prior attempt — check before failing.
+                        await generateKey(newPin, newSalt);
+                        const alreadyMigrated = await decrypt(data.encryptedAIContext);
+                        if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                            throw new Error("DECRYPTION_FAILED");
+                        }
+                        continue; // already migrated in a previous attempt
+                    }
 
                     await generateKey(newPin, newSalt);
                     const cipher = await encrypt(plain);
@@ -246,17 +293,29 @@ export async function executePinRotation(
             lastRoscDoc = rSnap.docs[rSnap.docs.length - 1];
         }
 
-        // 4. Finalize Profile Updates
+        // 4. Finalize Profile Updates — clears the pendingRotation marker now
+        // that every document has been confirmed migrated to the new key.
         await generateKey(newPin, newSalt); // Ensure app state rests on the new key
-        const pRef = doc(database, 'users', uid);
-        await writeBatch(database).update(pRef, { encryptionSalt: newSalt, pinVerifier: newVerifier }).commit();
+        await writeBatch(database).update(pRef, {
+            encryptionSalt: newSalt,
+            pinVerifier: newVerifier,
+            pendingRotation: deleteField(),
+        }).commit();
 
         onProgress(100);
         return { newSalt, newVerifier };
 
     } catch (error) {
-        // Safety Fallback: Rollback memory state to the old key
-        await generateKey(oldPin, currentSalt);
-        throw error;
+        // Do NOT silently reset the in-memory key to the old PIN here: any
+        // batches already committed above were re-encrypted under the NEW
+        // key, so pretending the old PIN is still authoritative would leave
+        // those documents silently undecryptable next time the user unlocks
+        // with it. `pendingRotation` on the profile (written above, before
+        // any document writes) preserves the exact salt/verifier this
+        // attempt used, so retrying executePinRotation with the same
+        // (oldPin, newPin) will resume correctly — already-migrated
+        // documents are detected and skipped rather than re-processed.
+        console.error("PIN rotation failed mid-batch — retry with the same PIN to resume safely.", error);
+        throw new Error("PARTIAL_ROTATION_FAILURE");
     }
 }
