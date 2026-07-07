@@ -455,3 +455,37 @@ export async function generateCBTCoachingPrompt(
     const text = await generateWithCascade(prompt, 'cbt_coaching_prompt', 'gemini-2.5-flash-lite');
     return text.trim();
 }
+
+// PROJ-50 Phase 3: Approved Gemini exception — see CLAUDE.md Zero-Knowledge
+// Encryption Boundary section. Called only from CBATool.tsx, Premium-gated,
+// on the completed four-quadrant CBA data once the user reaches the Summary phase.
+export async function generateCBAReflection(
+    behavior: string,
+    quadrants: {
+        advantagesDoing: string[];
+        disadvantagesDoing: string[];
+        advantagesStopping: string[];
+        disadvantagesStopping: string[];
+    }
+): Promise<string> {
+    const prompt = `
+    You are a peer-support recovery coach, not a clinician. The user just completed a Cost-Benefit
+    Analysis of the behavior "${behavior}".
+
+    Advantages of ${behavior}: ${quadrants.advantagesDoing.join('; ')}
+    Disadvantages of ${behavior}: ${quadrants.disadvantagesDoing.join('; ')}
+    Advantages of stopping: ${quadrants.advantagesStopping.join('; ')}
+    Disadvantages of stopping: ${quadrants.disadvantagesStopping.join('; ')}
+
+    Write ONE sentence (max 30 words) reflecting back a pattern or tension you notice across
+    these four lists. This is a mirror, not advice.
+    Rules:
+    - Never give a recommendation, instruction, or opinion about what the user should do.
+    - Do not use clinical language.
+    - Do not simply restate their own words back verbatim.
+    Return ONLY the sentence, no quotes, no markdown, no preamble.
+    `;
+
+    const text = await generateWithCascade(prompt, 'cba_reflection', 'gemini-2.5-flash-lite');
+    return text.trim();
+}

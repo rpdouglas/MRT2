@@ -16,6 +16,7 @@ import { useGuidedDraft } from '../../hooks/useGuidedDraft';
 import { generateCBTCoachingPrompt } from '../../lib/gemini';
 import type { SmartToolType } from '../../lib/types/smart';
 import { StepCoachingCard } from './StepCoachingCard';
+import { ListInput, type ListAccentColor } from './ListInput';
 import VibrantHeader from '../VibrantHeader';
 
 const AI_PROMPT_DEBOUNCE_MS = 5000;
@@ -26,14 +27,17 @@ export interface Step {
     label: string;
     question: string;
     coaching: string;
-    inputType: 'textarea';
+    inputType: 'textarea' | 'list';
     placeholder: string;
+    /** For 'textarea' steps, minimum characters. For 'list' steps, minimum items. */
     minLength: number;
     aiPromptEnabled: boolean;
+    /** Only meaningful when inputType === 'list'. */
+    accentColor?: ListAccentColor;
     renderExtra?: (ctx: {
-        value: string;
-        onChange: (v: string) => void;
-        allStepValues: Record<string, string>;
+        value: string | string[];
+        onChange: (v: string | string[]) => void;
+        allStepValues: Record<string, string | string[]>;
     }) => React.ReactNode;
 }
 
@@ -62,12 +66,12 @@ export function GuidedWorkflowEngine<T>({
     const navigate = useNavigate();
     const { userTier } = useAuth();
     const { isOnline } = useLayout();
-    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, string>>(toolType);
+    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, string | string[]>>(toolType);
 
     const [currentStep, setCurrentStep] = useState(0);
-    const [stepData, setStepData] = useState<Record<string, string>>(() => ({ ...(initialData as Record<string, string> | undefined) }));
+    const [stepData, setStepData] = useState<Record<string, string | string[]>>(() => ({ ...(initialData as Record<string, string | string[]> | undefined) }));
     const [showResumePrompt, setShowResumePrompt] = useState(false);
-    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, string>> } | null>(null);
+    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, string | string[]>> } | null>(null);
     const [savedFlash, setSavedFlash] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
 
@@ -93,19 +97,21 @@ export function GuidedWorkflowEngine<T>({
     }, [currentStep, stepData, saveDraft]);
 
     const step = steps[currentStep];
-    const currentValue = stepData[step.id] ?? '';
+    const currentValue: string | string[] = stepData[step.id] ?? (step.inputType === 'list' ? [] : '');
     const canAdvance = currentValue.length >= step.minLength;
     const isLastStep = currentStep === steps.length - 1;
     const aiEnabled = step.aiPromptEnabled && userTier === 'premium';
 
-    const updateStepValue = (value: string) => {
+    const updateStepValue = (value: string | string[]) => {
         setStepData(prev => ({ ...prev, [step.id]: value }));
     };
 
     // AI coaching prompt: fires once per step, after a pause in typing, Premium only.
     useEffect(() => {
         if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-        if (!aiEnabled || aiPrompts[step.id] || currentValue.length < step.minLength) return;
+        if (!aiEnabled) return;
+        if (typeof currentValue !== 'string') return; // defensive: list steps must never reach the AI prompt
+        if (aiPrompts[step.id] || currentValue.length < step.minLength) return;
 
         aiTimerRef.current = setTimeout(() => {
             const context = getAiContext ? getAiContext(step, currentValue) : currentValue;
@@ -120,7 +126,7 @@ export function GuidedWorkflowEngine<T>({
 
     const handleResume = () => {
         if (pendingDraft) {
-            setStepData(pendingDraft.stepData as Record<string, string>);
+            setStepData(pendingDraft.stepData as Record<string, string | string[]>);
             setCurrentStep(pendingDraft.currentStep);
         }
         setShowResumePrompt(false);
@@ -212,13 +218,22 @@ export function GuidedWorkflowEngine<T>({
 
                     <StepCoachingCard coaching={step.coaching} />
 
-                    <textarea
-                        rows={5}
-                        value={currentValue}
-                        onChange={(e) => updateStepValue(e.target.value)}
-                        placeholder={step.placeholder}
-                        className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-base focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:outline-none transition-all resize-y min-h-[140px]"
-                    />
+                    {step.inputType === 'list' ? (
+                        <ListInput
+                            items={Array.isArray(currentValue) ? currentValue : []}
+                            onChange={updateStepValue}
+                            accentColor={step.accentColor ?? 'sky'}
+                            placeholder={step.placeholder}
+                        />
+                    ) : (
+                        <textarea
+                            rows={5}
+                            value={typeof currentValue === 'string' ? currentValue : ''}
+                            onChange={(e) => updateStepValue(e.target.value)}
+                            placeholder={step.placeholder}
+                            className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-base focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:outline-none transition-all resize-y min-h-[140px]"
+                        />
+                    )}
 
                     {step.renderExtra && (
                         <div className="w-full">
