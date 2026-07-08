@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import { PuzzlePieceIcon, ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon, ChartPieIcon, FireIcon } from '@heroicons/react/24/outline';
+import { PuzzlePieceIcon, ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon, ChartPieIcon, FireIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 const TOOLS = [
     {
@@ -86,6 +86,17 @@ const TOOLS = [
         color: 'text-cyan-600',
         bg: 'bg-cyan-50',
         border: 'border-l-cyan-500',
+        status: 'active'
+    },
+    {
+        id: 'thought-record',
+        title: 'Thought Record',
+        description: 'Work through a difficult moment step by step and reframe the thought behind it.',
+        path: '/tools/thought-record',
+        icon: ClipboardDocumentListIcon,
+        color: 'text-violet-600',
+        bg: 'bg-violet-50',
+        border: 'border-l-violet-500',
         status: 'active'
     }
 ];
