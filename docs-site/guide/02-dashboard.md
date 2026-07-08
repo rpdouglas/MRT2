@@ -60,7 +60,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Journal:** View your consecutive day streak and weekly consistency.
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
 * **Vitality:** View your biological regulation streak and total logs.
-* **Wisdom:** View your workbook completion percentage and total questions answered.
+* **Wisdom:** See how many questions you've answered out of the total available across all workbooks, with your overall completion percentage shown just below.
 * **Service** *(Coming Soon):* Encrypted sponsee management — the tile is visible but inactive until the module launches.
 * **Tools:** Access CBT exercises and grounding tools.
 
