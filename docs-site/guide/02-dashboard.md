@@ -8,6 +8,8 @@ At the very top of your dashboard is your unified Identity Card.
 * **Gamification Rank:** Right below your time, you will see your current Level, Archetype (e.g., Scholar, Doer, Monk), and your XP Progress Bar.
 * **Financial Freedom:** If configured, the bottom right will show exactly how much money you have saved since your sobriety date.
   > **💡 Pro Tip:** You can configure your daily, weekly, or monthly substance cost in **Profile → General** to activate the Financial Freedom tracker.
+* **Hero Color:** Tap the swatch icon in the top-left corner of the card to pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly and also applies to any milestone image you share.
+  > **💡 Pro Tip:** You can also change this permanently from **Profile → General → Hero Appearance**.
 
 ## 2. Crisis Tools (Urge Surfer & SOS)
 If you are experiencing a craving or a panic attack, tap the red **Warning Triangle (SOS)** in the top right corner of the dashboard header.

@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.5] - 2026-07-08
+### 🎨 Sobriety Hero Color Themes
+- **Feature [PROJ-56]:** Added a swatch button to the top-left of the dashboard sobriety hero, letting you pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly and reflected in any milestone image you share.
+- **Settings [PROJ-56]:** The same picker is also available permanently under **Profile → General → Hero Appearance**.
+
 ## [v1.8.4] - 2026-07-08
 ### ✨ Journal Polish
 - **Lined Paper Journaling:** The Dashboard Check-In modal, main Journal page, and Journal History free-write editor now share the Resentment Burner's lined-notebook-paper look — cream background, ruled lines, and a serif font — for a more tactile writing feel.

@@ -30,7 +30,7 @@ graph TD
 
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, & Settings.
-* **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens` (Array), `fcmSwVersion` (Number — SW version stamp for one-time token migration on login), `timezone`, `anchorSettings` (Object), etc.
+* **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens` (Array), `fcmSwVersion` (Number — SW version stamp for one-time token migration on login), `timezone`, `anchorSettings` (Object), `heroColor` (String, optional — one of `amber`/`sky`/`emerald`/`violet`/`rose`; PROJ-56, **UNENCRYPTED** cosmetic preference, defaults to `amber` when absent), etc.
 * **`usage_limits` (Map, optional):** Rate-limit timestamps for AI features. Fields: `lastWeeklyInsight`, `lastMonthlyInsight`, `lastDeepDive`, `lastROSCAssessment` (all Timestamps, all optional). Premium users bypass all limits.
 
 ### `journals/{entryId}`
