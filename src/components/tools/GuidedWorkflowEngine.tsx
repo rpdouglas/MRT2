@@ -17,7 +17,10 @@ import { generateCBTCoachingPrompt } from '../../lib/gemini';
 import type { SmartToolType } from '../../lib/types/smart';
 import { StepCoachingCard } from './StepCoachingCard';
 import { ListInput, type ListAccentColor } from './ListInput';
+import { EmotionIntensitySelector, type EmotionEntry } from './EmotionIntensitySelector';
 import VibrantHeader from '../VibrantHeader';
+
+type StepValue = string | string[] | EmotionEntry[];
 
 const AI_PROMPT_DEBOUNCE_MS = 5000;
 const DRAFT_AUTOSAVE_INTERVAL_MS = 30000;
@@ -27,17 +30,21 @@ export interface Step {
     label: string;
     question: string;
     coaching: string;
-    inputType: 'textarea' | 'list';
+    inputType: 'textarea' | 'list' | 'emotion';
     placeholder: string;
-    /** For 'textarea' steps, minimum characters. For 'list' steps, minimum items. */
+    /** For 'textarea' steps, minimum characters. For 'list'/'emotion' steps, minimum items/emotions selected. */
     minLength: number;
     aiPromptEnabled: boolean;
     /** Only meaningful when inputType === 'list'. */
     accentColor?: ListAccentColor;
+    /** Only meaningful when inputType === 'emotion'. When set, this step re-rates the emotion names already recorded by the named step (e.g. Step 7 re-rating Step 3's emotions), instead of offering a free chip picker. */
+    emotionSourceStepId?: string;
     renderExtra?: (ctx: {
-        value: string | string[];
-        onChange: (v: string | string[]) => void;
-        allStepValues: Record<string, string | string[]>;
+        value: StepValue;
+        onChange: (v: StepValue) => void;
+        allStepValues: Record<string, StepValue>;
+        /** Write to an arbitrary stepData key, not just the current step's own id — e.g. persisting an optional side-selection like a cognitive distortion. */
+        setStepValue: (stepId: string, value: StepValue) => void;
     }) => React.ReactNode;
 }
 
@@ -51,6 +58,8 @@ export interface GuidedWorkflowEngineProps<T> {
     isSaving?: boolean;
     /** Lets a specific tool enrich the AI prompt's context for a given step (e.g. a selected cognitive distortion). */
     getAiContext?: (step: Step, value: string) => string;
+    /** Skip the engine's own generic completion screen — for tools that show their own custom summary/review UI on completion. */
+    suppressCompletionScreen?: boolean;
 }
 
 export function GuidedWorkflowEngine<T>({
@@ -62,16 +71,17 @@ export function GuidedWorkflowEngine<T>({
     onSaveProgress,
     isSaving = false,
     getAiContext,
+    suppressCompletionScreen = false,
 }: GuidedWorkflowEngineProps<T>) {
     const navigate = useNavigate();
     const { userTier } = useAuth();
     const { isOnline } = useLayout();
-    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, string | string[]>>(toolType);
+    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, StepValue>>(toolType);
 
     const [currentStep, setCurrentStep] = useState(0);
-    const [stepData, setStepData] = useState<Record<string, string | string[]>>(() => ({ ...(initialData as Record<string, string | string[]> | undefined) }));
+    const [stepData, setStepData] = useState<Record<string, StepValue>>(() => ({ ...(initialData as Record<string, StepValue> | undefined) }));
     const [showResumePrompt, setShowResumePrompt] = useState(false);
-    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, string | string[]>> } | null>(null);
+    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, StepValue>> } | null>(null);
     const [savedFlash, setSavedFlash] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
 
@@ -97,14 +107,32 @@ export function GuidedWorkflowEngine<T>({
     }, [currentStep, stepData, saveDraft]);
 
     const step = steps[currentStep];
-    const currentValue: string | string[] = stepData[step.id] ?? (step.inputType === 'list' ? [] : '');
+    const currentValue: StepValue = stepData[step.id] ?? (step.inputType === 'textarea' ? '' : []);
     const canAdvance = currentValue.length >= step.minLength;
     const isLastStep = currentStep === steps.length - 1;
     const aiEnabled = step.aiPromptEnabled && userTier === 'premium';
+    const fixedEmotions: string[] | undefined = step.emotionSourceStepId
+        ? ((stepData[step.emotionSourceStepId] as EmotionEntry[] | undefined) ?? []).map(e => e.emotion)
+        : undefined;
 
-    const updateStepValue = (value: string | string[]) => {
-        setStepData(prev => ({ ...prev, [step.id]: value }));
+    const setStepValue = (stepId: string, value: StepValue) => {
+        setStepData(prev => ({ ...prev, [stepId]: value }));
     };
+    const updateStepValue = (value: StepValue) => setStepValue(step.id, value);
+
+    // Re-rate steps (emotionSourceStepId set) start from the source step's own
+    // recorded intensities the first time the user reaches this step — never
+    // clobbers an already-answered/resumed value.
+    useEffect(() => {
+        if (step.inputType !== 'emotion' || !step.emotionSourceStepId) return;
+        const existing = stepData[step.id];
+        if (Array.isArray(existing) && existing.length > 0) return; // already answered/resumed — never clobber
+        const source = stepData[step.emotionSourceStepId];
+        if (Array.isArray(source) && source.length > 0 && typeof source[0] !== 'string') {
+            setStepData(prev => ({ ...prev, [step.id]: (source as EmotionEntry[]).map(e => ({ ...e })) }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step.id]);
 
     // AI coaching prompt: fires once per step, after a pause in typing, Premium only.
     useEffect(() => {
@@ -126,7 +154,7 @@ export function GuidedWorkflowEngine<T>({
 
     const handleResume = () => {
         if (pendingDraft) {
-            setStepData(pendingDraft.stepData as Record<string, string | string[]>);
+            setStepData(pendingDraft.stepData as Record<string, StepValue>);
             setCurrentStep(pendingDraft.currentStep);
         }
         setShowResumePrompt(false);
@@ -153,7 +181,7 @@ export function GuidedWorkflowEngine<T>({
         if (isLastStep) {
             await onComplete(stepData as unknown as T);
             clearDraft();
-            setIsComplete(true);
+            if (!suppressCompletionScreen) setIsComplete(true);
         } else {
             setCurrentStep(prev => prev + 1);
         }
@@ -220,10 +248,16 @@ export function GuidedWorkflowEngine<T>({
 
                     {step.inputType === 'list' ? (
                         <ListInput
-                            items={Array.isArray(currentValue) ? currentValue : []}
+                            items={Array.isArray(currentValue) ? currentValue as string[] : []}
                             onChange={updateStepValue}
                             accentColor={step.accentColor ?? 'sky'}
                             placeholder={step.placeholder}
+                        />
+                    ) : step.inputType === 'emotion' ? (
+                        <EmotionIntensitySelector
+                            value={Array.isArray(currentValue) ? currentValue as EmotionEntry[] : []}
+                            onChange={updateStepValue}
+                            fixedEmotions={fixedEmotions}
                         />
                     ) : (
                         <textarea
@@ -237,7 +271,7 @@ export function GuidedWorkflowEngine<T>({
 
                     {step.renderExtra && (
                         <div className="w-full">
-                            {step.renderExtra({ value: currentValue, onChange: updateStepValue, allStepValues: stepData })}
+                            {step.renderExtra({ value: currentValue, onChange: updateStepValue, allStepValues: stepData, setStepValue })}
                         </div>
                     )}
 

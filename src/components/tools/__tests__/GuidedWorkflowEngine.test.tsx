@@ -210,4 +210,102 @@ describe('🧭 GuidedWorkflowEngine', () => {
             expect(generateCBTCoachingPrompt).not.toHaveBeenCalled();
         });
     });
+
+    describe('emotion-type steps', () => {
+        interface EmotionPayload extends Record<string, string> { emotions: string; outcomeEmotions: string; }
+
+        const EMOTION_STEPS: Step[] = [
+            { id: 'emotions', label: 'Emotions (Before)', question: 'How do you feel?', coaching: 'Coaching', inputType: 'emotion', placeholder: '', minLength: 1, aiPromptEnabled: false },
+            { id: 'outcomeEmotions', label: 'Emotions (After)', question: 'Re-rate', coaching: 'Coaching', inputType: 'emotion', placeholder: '', minLength: 1, aiPromptEnabled: false, emotionSourceStepId: 'emotions' },
+        ];
+
+        const renderEmotionEngine = () => render(
+            <GuidedWorkflowEngine<EmotionPayload>
+                toolType="THOUGHT_RECORD"
+                toolLabel="Test Tool"
+                steps={EMOTION_STEPS}
+                onComplete={onComplete}
+                onSaveProgress={onSaveProgress}
+            />
+        );
+
+        it('gates Next by emotion-selection count', () => {
+            renderEmotionEngine();
+            const nextButton = screen.getByText('Next →');
+            expect(nextButton).toBeDisabled();
+
+            fireEvent.click(screen.getByRole('button', { name: 'Calm' }));
+            expect(nextButton).not.toBeDisabled();
+        });
+
+        it('resolves emotionSourceStepId into fixedEmotions on the re-rate step', () => {
+            renderEmotionEngine();
+            fireEvent.click(screen.getByRole('button', { name: 'Calm' }));
+            fireEvent.click(screen.getByText('Next →'));
+
+            expect(screen.getByText('Step 2 of 2 — Emotions (After)')).toBeInTheDocument();
+            // Re-rate mode: 'Calm' shows as a slider label, and the free-pick chip grid (e.g. 'Anxious') is gone.
+            expect(screen.getByText('Calm')).toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'Anxious' })).not.toBeInTheDocument();
+        });
+    });
+
+    describe('renderExtra setStepValue', () => {
+        interface SidePayload extends Record<string, string> { a: string; sideKey: string; }
+
+        const SIDE_STEPS: Step[] = [
+            {
+                id: 'a', label: 'Step A', question: 'Question A?', coaching: 'Coaching', inputType: 'textarea', placeholder: 'a...', minLength: 5, aiPromptEnabled: false,
+                renderExtra: ({ allStepValues, setStepValue }) => (
+                    <button type="button" onClick={() => setStepValue('sideKey', 'sideValue')}>
+                        Set side value (currently: {(allStepValues.sideKey as string) ?? 'none'})
+                    </button>
+                ),
+            },
+        ];
+
+        it('writes to an arbitrary key without touching the current step\'s own value, and it survives to onComplete', async () => {
+            render(
+                <GuidedWorkflowEngine<SidePayload>
+                    toolType="ABC"
+                    toolLabel="Test Tool"
+                    steps={SIDE_STEPS}
+                    onComplete={onComplete}
+                    onSaveProgress={onSaveProgress}
+                />
+            );
+
+            fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
+            fireEvent.click(screen.getByText('Set side value (currently: none)'));
+
+            expect(screen.getByPlaceholderText('a...')).toHaveValue('hello world');
+            expect(screen.getByText('Set side value (currently: sideValue)')).toBeInTheDocument();
+
+            fireEvent.click(screen.getByText('Finish'));
+            await waitFor(() => expect(onComplete).toHaveBeenCalledWith({ a: 'hello world', sideKey: 'sideValue' }));
+        });
+    });
+
+    describe('suppressCompletionScreen', () => {
+        it('shows the generic completion screen by default', async () => {
+            renderEngine();
+            fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
+            fireEvent.click(screen.getByText('Next →'));
+            fireEvent.change(screen.getByPlaceholderText('b...'), { target: { value: 'goodbye world' } });
+            fireEvent.click(screen.getByText('Finish'));
+
+            await waitFor(() => expect(screen.getByText('You just did some serious cognitive work.')).toBeInTheDocument());
+        });
+
+        it('skips the generic completion screen when suppressCompletionScreen is true, but still calls onComplete', async () => {
+            renderEngine({ suppressCompletionScreen: true });
+            fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
+            fireEvent.click(screen.getByText('Next →'));
+            fireEvent.change(screen.getByPlaceholderText('b...'), { target: { value: 'goodbye world' } });
+            fireEvent.click(screen.getByText('Finish'));
+
+            await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1));
+            expect(screen.queryByText('You just did some serious cognitive work.')).not.toBeInTheDocument();
+        });
+    });
 });
