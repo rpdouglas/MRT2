@@ -65,24 +65,6 @@ export default function ResentmentBurner() {
     return (
         <div className="min-h-screen bg-slate-900 flex flex-col font-sans selection:bg-rose-500/30 overflow-hidden">
             
-            <style>{`
-                /* Realistic Notebook Paper CSS */
-                .notebook-paper {
-                    background-color: #fdfbf7;
-                    background-image: 
-                        /* Vertical Red Margin Line */
-                        linear-gradient(90deg, transparent 50px, #f43f5e 50px, #f43f5e 52px, transparent 52px),
-                        /* Horizontal Grey Ruled Lines */
-                        repeating-linear-gradient(to bottom, transparent, transparent 31px, #cbd5e1 31px, #cbd5e1 32px);
-                    background-size: 100% 32px;
-                    background-attachment: local; /* Keeps lines synced while scrolling */
-                    line-height: 32px;
-                    padding-top: 32px;
-                    padding-left: 64px; /* Push text past the red line */
-                    padding-right: 16px;
-                }
-            `}</style>
-
             <svg width="0" height="0" className="absolute pointer-events-none">
                 <filter id="combustion-filter" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
                     <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" seed="5" result="noise" />
