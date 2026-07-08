@@ -18,6 +18,8 @@ export const createConverter = <T extends object>() => ({ toFirestore(data: With
   },
 });
 
+export type HeroColorKey = 'amber' | 'sky' | 'emerald' | 'violet' | 'rose';
+
 export interface UserProfile {
   hasDeferredVault?: boolean;
   uid: string;
@@ -47,6 +49,8 @@ export interface UserProfile {
   substanceCost?: number;
   costFrequency?: 'daily' | 'weekly' | 'monthly';
   currencySymbol?: string;
+  // --- NEW: PROJ-56 (Sobriety Hero Color Themes) ---
+  heroColor?: HeroColorKey;
   // --- NEW: PROJ-26 (The Beacon) ---
   fcmTokens?: string[];
   fcmSwVersion?: number;

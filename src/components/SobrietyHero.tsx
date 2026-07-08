@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { CalendarDaysIcon, ShareIcon, BanknotesIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ShareIcon, BanknotesIcon, SparklesIcon, SwatchIcon } from '@heroicons/react/24/outline';
 import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -8,7 +8,9 @@ import { calculateSobrietyDuration } from '../lib/dateUtils';
 import { calculateSavings } from '../lib/financial';
 import { getMilestone, getMilestoneLabel, getMilestoneImage } from '../lib/milestones';
 import { toPng } from 'html-to-image';
-import type { UserProfile } from '../lib/db';
+import type { UserProfile, HeroColorKey } from '../lib/db';
+import { HERO_COLORS, getHeroColorTheme } from '../lib/heroColors';
+import { useHeroColor } from '../hooks/useHeroColor';
 import { Link } from 'react-router-dom';
 
 interface SobrietyHeroProps {
@@ -26,6 +28,14 @@ interface SobrietyHeroProps {
 export default function SobrietyHero({ date, levelData, archetype, userProfile }: SobrietyHeroProps) {
     const heroRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    const { updateHeroColor } = useHeroColor();
+    const heroTheme = getHeroColorTheme(userProfile?.heroColor);
+
+    const handleSelectColor = (key: HeroColorKey) => {
+        setIsColorPickerOpen(false);
+        updateHeroColor.mutate(key);
+    };
 
     // Fetch latest AI insight for export card safely in the background
     const { data: latestInsight } = useQuery({
@@ -109,7 +119,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
     if (!stats) {
         return (
-            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-center text-white shadow-xl shadow-orange-500/20 border border-white/20">
+            <div className={`${heroTheme.gradient} rounded-3xl p-4 text-center text-white ${heroTheme.shadow} border border-white/20`}>
                 <div className="opacity-90 mb-1.5 font-bold uppercase tracking-widest text-xs drop-shadow-sm">Begin the Journey</div>
                 <p className="text-sm font-medium drop-shadow-sm">Set your sobriety date in Profile to track your freedom.</p>
             </div>
@@ -117,17 +127,50 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
     }
 
     return (
-        <div 
-            ref={heroRef} 
-            className={`bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500 rounded-3xl p-4 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group border border-white/20 w-full ${isExporting ? 'aspect-square p-6 sm:p-8 transition-none' : ''}`}
+        <div
+            ref={heroRef}
+            className={`${heroTheme.gradient} rounded-3xl p-4 text-white ${heroTheme.shadow} relative overflow-hidden group border border-white/20 w-full ${isExporting ? 'aspect-square p-6 sm:p-8 transition-none' : ''}`}
         >
+            {/* Color Picker Button (Hidden during export to keep it clean) */}
+            {!isExporting && (
+                <div className="absolute top-3 left-3 z-20">
+                    <button
+                        onClick={() => setIsColorPickerOpen(open => !open)}
+                        className="p-2 rounded-full backdrop-blur-sm transition-all bg-white/20 hover:bg-white/30 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                        title="Change Hero Color"
+                    >
+                        <SwatchIcon className="h-4 w-4" />
+                    </button>
+
+                    {isColorPickerOpen && (
+                        <>
+                            {/* Backdrop to catch outside taps and close the popover */}
+                            <div className="fixed inset-0 z-10" onClick={() => setIsColorPickerOpen(false)} />
+                            <div className="absolute top-11 left-0 z-20 flex gap-2 p-2.5 rounded-2xl bg-white shadow-xl border border-gray-200">
+                                {(Object.keys(HERO_COLORS) as HeroColorKey[]).map((key) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleSelectColor(key)}
+                                        title={HERO_COLORS[key].label}
+                                        aria-label={`Use ${HERO_COLORS[key].label} theme`}
+                                        className={`h-7 w-7 rounded-full ${HERO_COLORS[key].swatchClass} shadow-sm transition-transform hover:scale-110 ${
+                                            (userProfile?.heroColor ?? 'amber') === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
             {/* Share Button (Hidden during export to keep it clean) */}
             {!isExporting && (
                 <button
                     onClick={handleShare}
                     className={`absolute top-3 right-3 z-20 p-2 rounded-full backdrop-blur-sm transition-all ${
-                        activeMilestone 
-                            ? 'bg-white text-orange-500 animate-pulse shadow-[0_0_20px_rgba(255,255,255,0.6)] opacity-100' 
+                        activeMilestone
+                            ? `bg-white ${heroTheme.accentText} animate-pulse shadow-[0_0_20px_rgba(255,255,255,0.6)] opacity-100`
                             : 'bg-white/20 hover:bg-white/30 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
                     }`}
                     title="Share Milestone"
@@ -139,7 +182,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
             {/* Dynamic Background Texture */}
             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             {/* Decorative Glow */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-300 opacity-20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
+            <div className={`absolute -top-24 -right-24 w-64 h-64 ${heroTheme.glow} opacity-20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000`}></div>
 
             <div className="relative z-10 flex flex-col h-full justify-between">
                 
@@ -198,7 +241,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                                     <span className="text-white/90 text-[10px] font-bold uppercase tracking-wider drop-shadow-sm">Inspire someone today</span>
                                 </div>
                                 {!isExporting && (
-                                    <div className="flex items-center gap-1 text-[10px] font-bold bg-white text-orange-500 px-3 py-1.5 rounded-full shadow-sm animate-pulse">
+                                    <div className={`flex items-center gap-1 text-[10px] font-bold bg-white ${heroTheme.accentText} px-3 py-1.5 rounded-full shadow-sm animate-pulse`}>
                                         Tap Share <ShareIcon className="h-3 w-3" />
                                     </div>
                                 )}

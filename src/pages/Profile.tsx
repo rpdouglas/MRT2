@@ -7,11 +7,14 @@ import { updateProfile } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import VibrantHeader from '../components/VibrantHeader'; 
 import DataManagement from '../components/profile/DataManagement';
-import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import ModalitySelector from '../components/readings/ModalitySelector';
 import { useNavigate } from 'react-router-dom';
 import { THEME } from '../lib/theme';
+import { HERO_COLORS } from '../lib/heroColors';
+import { useHeroColor } from '../hooks/useHeroColor';
+import type { HeroColorKey } from '../lib/db';
 
 type TabType = 'general' | 'security' | 'data';
 
@@ -40,6 +43,10 @@ export default function Profile() {
   const [notifyCheckIn, setNotifyCheckIn] = useState(true);
   const [notifyReading, setNotifyReading] = useState(true);
   const [notifyIntent, setNotifyIntent] = useState(true);
+
+  // Form State (Hero Appearance)
+  const [heroColor, setHeroColor] = useState<HeroColorKey>('amber');
+  const { updateHeroColor } = useHeroColor();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -74,6 +81,8 @@ export default function Profile() {
           setNotifyCheckIn(data.anchorSettings?.notifyCheckIn ?? true);
           setNotifyReading(data.anchorSettings?.notifyReading ?? true);
           setNotifyIntent(data.anchorSettings?.notifyIntent ?? true);
+
+          setHeroColor(data.heroColor ?? 'amber');
           
           if (!data.hasCompletedOnboarding) { setIsOnboarding(true); setActiveTab('general'); }
         } else { setIsOnboarding(true); setActiveTab('general'); }
@@ -82,6 +91,11 @@ export default function Profile() {
     }
     loadProfile();
   }, [user]);
+
+  const handleSelectHeroColor = (key: HeroColorKey) => {
+    setHeroColor(key);
+    updateHeroColor.mutate(key);
+  };
 
   const handleLogout = async () => { try { await logout(); navigate('/login'); } catch (error) {
       console.error('Failed to log out', error);
@@ -361,6 +375,28 @@ export default function Profile() {
                             </label>
                         </div>
                         <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor.</p>
+                    </div>
+
+                    {/* Hero Appearance — PROJ-56 */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
+                            <SwatchIcon className="h-4 w-4 text-rose-500" /> Hero Appearance
+                        </h4>
+                        <p className="text-[10px] text-gray-400 mb-3">Choose the color scheme for your dashboard sobriety hero.</p>
+                        <div className="flex gap-3">
+                            {(Object.keys(HERO_COLORS) as HeroColorKey[]).map((key) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => handleSelectHeroColor(key)}
+                                    title={HERO_COLORS[key].label}
+                                    aria-label={`Use ${HERO_COLORS[key].label} theme`}
+                                    className={`h-9 w-9 rounded-full ${HERO_COLORS[key].swatchClass} shadow-sm transition-transform hover:scale-110 ${
+                                        heroColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                                    }`}
+                                />
+                            ))}
+                        </div>
                     </div>
 
                     {/* Daily Reading Modalities — PROJ-42 */}
