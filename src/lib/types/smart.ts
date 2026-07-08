@@ -13,8 +13,9 @@ export type SmartToolType =
     | 'LIFESTYLE_BALANCE' 
     | 'PERSONIFY' 
     | 'SELF_COMPASSION' 
-    | 'SMART_GOAL' 
-    | 'BOUNDARIES';
+    | 'SMART_GOAL'
+    | 'BOUNDARIES'
+    | 'THOUGHT_RECORD';
 
 export interface SmartToolMetadata {
     type: SmartToolType;
@@ -66,4 +67,21 @@ export interface SmartGoalPayload {
 }
 
 export interface BoundariesPayload { boundaries: Array<{ id: number; who: string; what: string; how: string; type: 'Small' | 'Large'; }>;
+}
+
+export interface ThoughtRecordPayload {
+    situation: string;              // Column 1 — what happened
+    automaticThoughts: string;      // Column 2 — the immediate thought
+    emotions: Array<{                // Column 3 — emotions + intensity, before the reframe
+        emotion: string;
+        intensity: number;          // 0-100
+    }>;
+    evidenceFor: string;             // Column 4 — evidence supporting the thought
+    evidenceAgainst: string;         // Column 5 — evidence challenging the thought
+    balancedThought: string;         // Column 6 — the reframed thought
+    outcomeEmotions: Array<{         // Column 7 — same emotions as Column 3, re-rated after the reframe
+        emotion: string;
+        intensity: number;
+    }>;
+    distortionType?: string;        // Optional: identified cognitive distortion (Step 5)
 }
