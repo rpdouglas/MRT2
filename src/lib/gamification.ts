@@ -1,5 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 import { DRAFT_TAG } from './types/smart';
+import { WORKBOOKS } from '../data/workbooks';
 
 // --- CONFIGURATION ---
 const XP_VALUES = {
@@ -34,7 +35,16 @@ export interface TaskStats {
 export interface WorkbookStats {
     wisdomScore: number; // Total questions answered
     masterCompletion: number; // % of total questions
+    totalQuestions: number; // Denominator used for masterCompletion
 }
+
+// Sum of every non-read_only question across all workbooks — recalculates automatically
+// as workbooks/questions are added, instead of relying on a hardcoded guess.
+const TOTAL_WORKBOOK_QUESTIONS = WORKBOOKS.reduce(
+    (sum, wb) => sum + wb.sections.reduce(
+        (s, sec) => s + sec.questions.filter(q => q.type !== 'read_only').length, 0
+    ), 0
+);
 
 export interface VitalityStats { bioStreak: number; totalLogs: number; }
 
@@ -275,8 +285,12 @@ export const calculateTaskStats = (tasks: ScorableTask[]): TaskStats => {
     return { completionRate, habitFire: totalMomentum };
 };
 
-export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = 50): WorkbookStats => { 
-    return { wisdomScore: answersSnapshotSize, masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100) };
+export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestionsAvailable: number = TOTAL_WORKBOOK_QUESTIONS): WorkbookStats => {
+    return {
+        wisdomScore: answersSnapshotSize,
+        masterCompletion: Math.round((answersSnapshotSize / totalQuestionsAvailable) * 100),
+        totalQuestions: totalQuestionsAvailable,
+    };
 };
 
 export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {
