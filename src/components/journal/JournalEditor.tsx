@@ -317,7 +317,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                     value={newEntry}
                     onChange={(e) => setNewEntry(e.target.value)}
                     placeholder="How are you feeling today?"
-                    className="w-full h-full p-2 rounded-xl border-none focus:ring-0 shadow-none resize-none text-gray-700 leading-relaxed font-mono text-base placeholder:text-gray-300"
+                    className="w-full h-full rounded-2xl notebook-paper font-serif text-base resize-none text-slate-800 placeholder:text-slate-400 focus:outline-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] border border-slate-200"
                 />
             )}
         </div>
