@@ -11,6 +11,7 @@ import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
+import GlassCard from '../components/ui/GlassCard';
 import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, UserGroupIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
@@ -262,98 +263,98 @@ export default function Dashboard() {
 
         {/* 6-TILE BENTO GRID */}
         <div className="grid grid-cols-2 gap-4">
-            <Link to="/journal" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <ChartBarIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
+            <Link to="/journal" className="block transition-transform active:scale-95">
+                <GlassCard variant="journal" className="shadow-lg">
+                    <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 text-white">
+                        <ChartBarIcon className="h-16 w-16 rotate-12" />
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><ChartBarIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
+                        <div className="p-1.5 bg-white/10 rounded-lg"><ChartBarIcon className="h-4 w-4 text-white/80" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider text-white/65">Journal</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.journal.streak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
+                        <div className="text-3xl font-black text-white">{stats.journal.streak}</div>
+                        <div className="text-base font-bold text-white/40 uppercase tracking-wide">Days</div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Consistency</span>
-                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
+                    <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-base font-bold text-white/40">Consistency</span>
+                        <span className="text-base font-bold text-white/80">{stats.journal.consistency}/wk</span>
                     </div>
-                </div>
+                </GlassCard>
             </Link>
 
-            <Link to="/tasks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <FireIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
+            <Link to="/tasks" className="block transition-transform active:scale-95">
+                <GlassCard variant="tasks" className="shadow-lg">
+                    <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 text-white">
+                        <FireIcon className="h-16 w-16 rotate-12" />
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><FireIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
+                        <div className="p-1.5 bg-white/10 rounded-lg"><FireIcon className="h-4 w-4 text-white/80" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider text-white/65">Habits</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.task.fire}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
+                        <div className="text-3xl font-black text-white">{stats.task.fire}</div>
+                        <div className="text-base font-bold text-white/40 uppercase tracking-wide">Fire</div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Rate</span>
-                        <span className="text-base font-bold">{stats.task.rate}%</span>
+                    <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-base font-bold text-white/40">Rate</span>
+                        <span className="text-base font-bold text-white/80">{stats.task.rate}%</span>
                     </div>
-                </div>
+                </GlassCard>
             </Link>
 
-            <Link to="/vitality" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <HeartIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
+            <Link to="/vitality" className="block transition-transform active:scale-95">
+                <GlassCard variant="vitality" className="shadow-lg">
+                    <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 text-white">
+                        <HeartIcon className="h-16 w-16 rotate-12" />
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><HeartIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
+                        <div className="p-1.5 bg-white/10 rounded-lg"><HeartIcon className="h-4 w-4 text-white/80" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider text-white/65">Vitality</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
+                        <div className="text-3xl font-black text-white">{stats.vitality.bioStreak}</div>
+                        <div className="text-base font-bold text-white/40 uppercase tracking-wide">Rhythm</div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Logs</span>
-                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
+                    <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-base font-bold text-white/40">Logs</span>
+                        <span className="text-base font-bold text-white/80">{stats.vitality.totalLogs}</span>
                     </div>
-                </div>
+                </GlassCard>
             </Link>
 
-            <Link to="/workbooks" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-500 to-lime-600 text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95 hover:shadow-xl">
-                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
-                    <SparklesIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
+            <Link to="/workbooks" className="block transition-transform active:scale-95">
+                <GlassCard variant="workbooks" className="shadow-lg">
+                    <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 text-white">
+                        <SparklesIcon className="h-16 w-16 rotate-12" />
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><SparklesIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
+                        <div className="p-1.5 bg-white/10 rounded-lg"><SparklesIcon className="h-4 w-4 text-white/80" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider text-white/65">Wisdom</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
+                        <div className="text-3xl font-black text-white">{stats.workbook.completion}%</div>
+                        <div className="text-base font-bold text-white/40 uppercase tracking-wide">Done</div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Score</span>
-                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
+                    <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-base font-bold text-white/40">Score</span>
+                        <span className="text-base font-bold text-white/80">{stats.workbook.wisdom}</span>
                     </div>
-                </div>
+                </GlassCard>
             </Link>
 
-            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
-                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
-                    <UserGroupIcon className="h-16 w-16 rotate-12" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-300/50 rounded-lg"><UserGroupIcon className="h-4 w-4 text-slate-500" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider">Service</span>
+            <div className="opacity-70 cursor-not-allowed">
+                <GlassCard variant="service" className="shadow-lg">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2 text-white">
+                        <UserGroupIcon className="h-16 w-16 rotate-12" />
                     </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">Coming Soon</div>
-                    <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
-                </div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1.5 bg-white/10 rounded-lg"><UserGroupIcon className="h-4 w-4 text-white/80" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider text-white/65">Service</span>
+                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-white/40">Coming Soon</div>
+                    <p className="text-[10px] leading-tight pr-2 text-white/50">Encrypted sponsee management.</p>
+                </GlassCard>
             </div>
 
             <Link to="/tools" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">

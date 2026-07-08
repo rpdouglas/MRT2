@@ -122,7 +122,7 @@ export default function DynamicAnchorWidget() {
         >
           {needsCheckIn && (
             <div className="absolute top-0 right-0 -mt-1 -mr-1 pointer-events-none">
-              <ExclamationCircleIcon className="h-4 w-4 text-red-500 fill-white bg-white rounded-full" />
+              <ExclamationCircleIcon className="h-4 w-4 text-amber-400 fill-white bg-white rounded-full" />
             </div>
           )}
           {!isVaultUnlocked && (
@@ -142,7 +142,7 @@ export default function DynamicAnchorWidget() {
             <div className={`relative flex flex-row items-stretch justify-between w-full ${btnGradient} rounded-full shadow-md transition hover:brightness-110`}>
               {needsReading && (
                 <div className="absolute top-0 right-0 -mt-1 -mr-1 z-10 pointer-events-none">
-                  <ExclamationCircleIcon className="h-4 w-4 text-red-500 fill-white bg-white rounded-full" />
+                  <ExclamationCircleIcon className="h-4 w-4 text-amber-400 fill-white bg-white rounded-full" />
                 </div>
               )}
               <button

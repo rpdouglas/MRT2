@@ -44,11 +44,19 @@ export const THEME = {
   vitality: {
     page: 'bg-orange-200', // Warm apricot
     header: {
+      from: 'from-amber-500',
+      via: 'via-orange-500',
+      to: 'to-orange-600'
+    },
+    ring: '#fbbf24' // Amber-400
+  },
+  service: {
+    page: 'bg-rose-200', // Warm blush
+    header: {
       from: 'from-rose-500',
       via: 'via-orange-500',
       to: 'to-amber-500'
-    },
-    ring: '#fbbf24' // Amber-400
+    }
   },
   profile: {
     page: 'bg-zinc-300', // Deep metallic grey
