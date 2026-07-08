@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.4] - 2026-07-08
+### ✨ Journal Polish
+- **Lined Paper Journaling:** The Dashboard Check-In modal, main Journal page, and Journal History free-write editor now share the Resentment Burner's lined-notebook-paper look — cream background, ruled lines, and a serif font — for a more tactile writing feel.
+
 ## [v1.8.3] - 2026-07-08
 ### ✨ Workbook Remediation
 - **Real Step Content [PROJ-55]:** Rewrote Steps 2-11 of the 12-Step workbook with genuine, step-specific reflection questions — each with its own unique, literature-grounded context — replacing a templated placeholder that repeated the same three questions across ten steps.
