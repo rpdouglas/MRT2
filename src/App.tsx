@@ -32,6 +32,7 @@ const ABCTool = lazy(() => import('./components/smart_tools/ABCTool').then(m => 
 const DentsTool = lazy(() => import('./components/smart_tools/DentsTool').then(m => ({ default: m.DentsTool })));
 const PersonifyTool = lazy(() => import('./components/smart_tools/PersonifyTool').then(m => ({ default: m.PersonifyTool })));
 const LifestyleBalanceTool = lazy(() => import('./components/smart_tools/LifestyleBalanceTool').then(m => ({ default: m.LifestyleBalanceTool })));
+const ThoughtRecordTool = lazy(() => import('./components/smart_tools/ThoughtRecordTool').then(m => ({ default: m.ThoughtRecordTool })));
 const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
 
@@ -141,6 +142,11 @@ export default function App() {
                         <Route path="/tools/lifestyle-balance" element={<PrivateRoute>
                             <VaultGate>
                                 <LifestyleBalanceTool />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/tools/thought-record" element={<PrivateRoute>
+                            <VaultGate>
+                                <ThoughtRecordTool />
                             </VaultGate>
                             </PrivateRoute>} />
 

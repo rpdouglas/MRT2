@@ -2,9 +2,9 @@
  * src/components/tools/CognitiveDistortionPicker.tsx
  * PROJ-50: Guided CBT/REBT Interactive Workflows
  * Optional, single-select grid of common cognitive distortions. Purely educational —
- * never blocks advancement. The current guided flows treat the selection as
- * ephemeral (used only to enrich the AI coaching prompt context), not part of
- * any saved tool payload.
+ * never blocks advancement. In ABCDE the selection is ephemeral (used only to
+ * enrich the AI coaching prompt context); in Thought Record (PROJ-50 Phase 4) it
+ * is persisted into ThoughtRecordPayload.distortionType via renderExtra's setStepValue.
  */
 import { useState } from 'react';
 
