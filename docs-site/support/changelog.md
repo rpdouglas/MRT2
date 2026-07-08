@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.3] - 2026-07-08
+### 🎨 Sobriety Hero Color Themes
+- **Feature [PROJ-56]:** Added a swatch button to the top-left of the dashboard sobriety hero, letting you pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly and reflected in any milestone image you share.
+- **Settings [PROJ-56]:** The same picker is also available permanently under **Profile → General → Hero Appearance**.
+
 ## [v1.8.2] - 2026-05-08
 ### ✨ Journal Insights UI Redesign
 - **Momentum UI [PROJ-54]:** Refactored the Journal Insights tab to an atmospheric "Glass and Glow" interface using the Walt persona rules. Introduced GlassCard components and dark mode semantic styling.

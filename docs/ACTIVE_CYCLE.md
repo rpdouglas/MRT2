@@ -20,6 +20,7 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-56:** Sobriety Hero Color Themes — swatch button on the dashboard hero (top-left) plus a matching "Hero Appearance" picker in Profile → General. 5 curated presets, stored as a plaintext `heroColor` field on `users/{uid}`, defaulting to today's amber look when unset.
 - [x] **PROJ-54:** Journal Insights Momentum UI Redesign — Refactored the Insights tab into an atmospheric, reflection-first "Glass and Glow" interface utilizing Momentum Kinetic v3.0, replacing dry charts with semantic colors and ambient motion.
 - [x] **PROJ-53:** ROSC Matrix Visual Upgrade (Pill Capsules) — Replaced Recharts radar chart with custom animated "Pill Capsules" design featuring premium glassmorphic dark theme and longitudinal ghosting.
 - [x] **PROJ-49:** The Recovery Capital (ROSC) Matrix — Monthly self-reported check-in + Gemini AI analysis across SAMHSA's four dimensions (Health, Home, Purpose, Community). Animated radar chart with longitudinal overlay. ZK boundary: domain scores unencrypted, AI narrative encrypted. Premium AI insights; free tier self-report scores.
