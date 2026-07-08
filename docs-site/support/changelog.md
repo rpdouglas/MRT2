@@ -1,9 +1,19 @@
 # 🚀 Changelog
 
-## [v1.8.3] - 2026-07-08
+## [v1.8.5] - 2026-07-08
 ### 🎨 Sobriety Hero Color Themes
 - **Feature [PROJ-56]:** Added a swatch button to the top-left of the dashboard sobriety hero, letting you pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly and reflected in any milestone image you share.
 - **Settings [PROJ-56]:** The same picker is also available permanently under **Profile → General → Hero Appearance**.
+
+## [v1.8.4] - 2026-07-08
+### ✨ Journal Polish
+- **Lined Paper Journaling:** The Dashboard Check-In modal, main Journal page, and Journal History free-write editor now share the Resentment Burner's lined-notebook-paper look — cream background, ruled lines, and a serif font — for a more tactile writing feel.
+
+## [v1.8.3] - 2026-07-08
+### ✨ Workbook Remediation
+- **Real Step Content [PROJ-55]:** Rewrote Steps 2-11 of the 12-Step workbook with genuine, step-specific reflection questions — each with its own unique, literature-grounded context — replacing a templated placeholder that repeated the same three questions across ten steps.
+- **Architecture Cleanup [PROJ-55]:** Migrated the Workbook Detail and Session pages, plus auto-save, onto a dedicated TanStack Query hook instead of calling Firestore directly, and fixed a fragile string-based check that decided whether an answer needed decrypting.
+- **Wisdom Tile [PROJ-55]:** The Dashboard's workbook stat now leads with "Questions Answered: X / Y" instead of a bare percentage, and the completion percentage is computed dynamically instead of a hardcoded guess.
 
 ## [v1.8.2] - 2026-05-08
 ### ✨ Journal Insights UI Redesign

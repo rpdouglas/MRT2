@@ -42,6 +42,7 @@ graph TD
     * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
     * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
     * `tags` (Array): **UNENCRYPTED** (e.g., `["Vitality", "Movement"]` or `["SMART Tool", "CBA"]`).
+        * *`DRAFT` tag (PROJ-50):* A partial, in-progress guided-tool save carries an extra `'DRAFT'` tag (e.g. `["SMART Tool", "CBA", "DRAFT"]`). Only the final, complete save drops it. `DRAFT`-tagged entries are excluded from XP (`gamification.ts`), from AI pattern analysis (`useDeepPatternAnalysis.ts`), and from the Tools Hub completion-count badge (`useSmartToolCompletions.ts`) — but they do surface a "Resume" entry point on the tool's card.
 
 ### `tasks/{taskId}`
 * **Purpose:** Gamification, Habits, and AI Action Plans. (Unencrypted for streak evaluation).
