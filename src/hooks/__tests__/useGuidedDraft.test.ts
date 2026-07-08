@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useGuidedDraft } from '../useGuidedDraft';
+import { useGuidedDraft, hasGuidedDraft } from '../useGuidedDraft';
 
 describe('📝 useGuidedDraft Hook', () => {
     beforeEach(() => {
@@ -60,5 +60,28 @@ describe('📝 useGuidedDraft Hook', () => {
         sessionStorage.setItem('guidedDraft_ABC', '{not-json');
         const { result } = renderHook(() => useGuidedDraft('ABC'));
         expect(result.current.getDraft()).toBeNull();
+    });
+
+    describe('hasGuidedDraft (plain, non-hook check)', () => {
+        it('returns false when no draft exists', () => {
+            expect(hasGuidedDraft('CBA')).toBe(false);
+        });
+
+        it('returns true once a draft has been saved for that toolType', () => {
+            const { result } = renderHook(() => useGuidedDraft('CBA'));
+            act(() => { result.current.saveDraft(1, { behavior: 'Drinking' }); });
+
+            expect(hasGuidedDraft('CBA')).toBe(true);
+            expect(hasGuidedDraft('ABC')).toBe(false);
+        });
+
+        it('returns false after the draft is cleared', () => {
+            const { result } = renderHook(() => useGuidedDraft('DENTS'));
+            act(() => { result.current.saveDraft(0, { scenario: 'A party' }); });
+            expect(hasGuidedDraft('DENTS')).toBe(true);
+
+            act(() => { result.current.clearDraft(); });
+            expect(hasGuidedDraft('DENTS')).toBe(false);
+        });
     });
 });

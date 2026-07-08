@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import { SocraticPromptCard } from '../tools/SocraticPromptCard';
@@ -21,6 +22,9 @@ const SOCRATIC_QUESTIONS = [
 ];
 
 export const ABCTool: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const forceFresh = searchParams.get('fresh') === '1';
+
     // Ephemeral — enriches the Step D AI coaching prompt only, never persisted to ABCPayload.
     const [distortion, setDistortion] = useState<string | null>(null);
 
@@ -107,6 +111,7 @@ export const ABCTool: React.FC = () => {
                     steps={steps}
                     initialData={data}
                     isSaving={isSaving}
+                    forceFresh={forceFresh}
                     onSaveProgress={(partial) => save(partial as ABCPayload, [DRAFT_TAG])}
                     onComplete={(payload) => save(payload, [])}
                     getAiContext={(step, value) =>

@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import VibrantHeader from '../VibrantHeader';
@@ -142,15 +143,17 @@ interface DentsToolInnerProps {
     updateData: (newData: Partial<DENTSPayload>) => void;
     save: (overrideData: DENTSPayload, extraTags?: string[]) => Promise<void>;
     isSaving: boolean;
+    forceFresh: boolean;
 }
 
-function DentsToolInner({ data, updateData, save, isSaving }: DentsToolInnerProps) {
+function DentsToolInner({ data, updateData, save, isSaving, forceFresh }: DentsToolInnerProps) {
     const [phase, setPhase] = useState<Phase>(() => {
+        if (forceFresh) return 'intro';
         if (isDentsComplete(data)) return 'summary';
         if (data.scenario) return 'guided';
         return 'intro';
     });
-    const [scenario, setScenario] = useState(data.scenario ?? '');
+    const [scenario, setScenario] = useState(forceFresh ? '' : (data.scenario ?? ''));
 
     const handleStartGuided = async () => {
         const trimmed = scenario.trim();
@@ -209,6 +212,7 @@ function DentsToolInner({ data, updateData, save, isSaving }: DentsToolInnerProp
                 steps={buildDentsSteps(data.scenario ?? '')}
                 initialData={data}
                 isSaving={isSaving}
+                forceFresh={forceFresh}
                 suppressCompletionScreen
                 onSaveProgress={(partial) => save(partial as DENTSPayload, [DRAFT_TAG])}
                 onComplete={async (payload) => {
@@ -257,6 +261,9 @@ function DentsToolInner({ data, updateData, save, isSaving }: DentsToolInnerProp
 }
 
 export const DentsTool: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const forceFresh = searchParams.get('fresh') === '1';
+
     const initialData: DENTSPayload = { scenario: '', deny: '', escape: '', neutralize: '', tasks: '', swap: '' };
 
     return (
@@ -269,7 +276,7 @@ export const DentsTool: React.FC = () => {
             hideHeader
         >
             {({ data, updateData, save, isSaving }) => (
-                <DentsToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} />
+                <DentsToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} forceFresh={forceFresh} />
             )}
         </SmartToolContainer>
     );

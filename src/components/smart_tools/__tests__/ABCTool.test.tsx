@@ -3,8 +3,11 @@
  * PROJ-50: Guided CBT/REBT Interactive Workflows
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ABCTool } from '../ABCTool';
+import { useSearchParams } from 'react-router-dom';
+import * as firestore from 'firebase/firestore';
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: () => ({ user: { uid: 'test-uid' }, userTier: 'free' }),
@@ -44,7 +47,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     };
 });
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useSearchParams: vi.fn(() => [new URLSearchParams()]) }));
 
 const fillStep = (placeholder: string, value: string) => {
     fireEvent.change(screen.getByPlaceholderText(placeholder), { target: { value } });
@@ -94,5 +97,26 @@ describe('🧠 ABCTool (Guided ABCDE flow)', () => {
             ['activatingEvent', 'beliefs', 'consequences', 'dispute', 'effectiveBelief'].sort()
         );
         expect(decoded.data.dispute).not.toContain('Catastrophising');
+    });
+
+    it('?fresh=1 starts at Step 1 with empty fields, ignoring a rehydrated in-progress session', async () => {
+        (useSearchParams as Mock).mockReturnValue([new URLSearchParams('fresh=1'), vi.fn()]);
+        vi.mocked(firestore.getDocs).mockResolvedValue({
+            empty: false,
+            docs: [{
+                id: 'existing-doc',
+                data: () => ({
+                    isEncrypted: true,
+                    content: `ENC:${JSON.stringify({ data: { activatingEvent: 'Stale rehydrated event', beliefs: '', consequences: '', dispute: '', effectiveBelief: '' } })}`,
+                    tags: ['SMART Tool', 'ABC', 'DRAFT'],
+                    createdAt: { toDate: () => new Date() },
+                }),
+            }],
+        } as unknown as firestore.QuerySnapshot);
+
+        render(<ABCTool />);
+
+        await waitFor(() => expect(screen.getByText('Step 1 of 5 — A — Activating Event')).toBeInTheDocument());
+        expect(screen.getByPlaceholderText("e.g., My boss sent a vague email asking to 'talk later'.")).toHaveValue('');
     });
 });
