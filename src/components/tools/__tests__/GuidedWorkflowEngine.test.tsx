@@ -124,6 +124,23 @@ describe('🧭 GuidedWorkflowEngine', () => {
         expect(screen.getByText('Resume your Test Tool session?')).toBeInTheDocument();
     });
 
+    describe('forceFresh', () => {
+        it('skips the resume-prompt and clears any existing draft, even when one exists', () => {
+            mockGetDraft.mockReturnValue({ currentStep: 1, stepData: { a: 'partial' } });
+            renderEngine({ forceFresh: true });
+
+            expect(screen.queryByText('Resume your Test Tool session?')).not.toBeInTheDocument();
+            expect(mockClearDraft).toHaveBeenCalled();
+        });
+
+        it('starts at step 0 with empty stepData, ignoring initialData', () => {
+            renderEngine({ forceFresh: true, initialData: { a: 'stale value', b: 'also stale' } });
+
+            expect(screen.getByText('Step 1 of 2 — Step A')).toBeInTheDocument();
+            expect(screen.getByPlaceholderText('a...')).toHaveValue('');
+        });
+    });
+
     it('never calls the AI coaching prompt for free-tier users, even after the inactivity delay', async () => {
         vi.useFakeTimers();
         (useAuth as Mock).mockReturnValue({ userTier: 'free' });
