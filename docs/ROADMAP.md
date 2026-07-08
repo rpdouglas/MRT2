@@ -38,6 +38,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-50` Guided CBT/REBT Interactive Workflows (Step-locked guided flows for ABCDE, CBA, and DENTS Scenario Mode; new Thought Record and Five Questions tools; AI coaching prompts; Tools Hub redesign with Start Fresh/Resume/History entry points and completion tracking)
 * `PROJ-54` Journal Insights Momentum UI Redesign (GlassCard, dark theme, smooth charts, and typography upgrade)
 * `PROJ-53` ROSC Matrix Visual Upgrade (Pill Capsules) (Animated segmented pill visualization, glassmorphic dark theme, replacing the Recharts radar chart)
 * `PROJ-49` The Recovery Capital (ROSC) Matrix (Monthly SAMHSA domain assessment, Recharts radar chart with longitudinal overlay, ZK-encrypted AI narrative, free-tier self-report scores)
