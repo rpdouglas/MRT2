@@ -286,6 +286,48 @@ describe('🧭 GuidedWorkflowEngine', () => {
         });
     });
 
+    describe('canAdvanceExtra', () => {
+        interface RatingPayload extends Record<string, string | number> { a: string; rating: number; }
+
+        const RATING_STEPS: Step[] = [
+            {
+                id: 'a', label: 'Step A', question: 'Question A?', coaching: 'Coaching', inputType: 'textarea', placeholder: 'a...', minLength: 5, aiPromptEnabled: false,
+                canAdvanceExtra: (allStepValues) => typeof allStepValues.rating === 'number' && allStepValues.rating > 0,
+                renderExtra: ({ setStepValue }) => (
+                    <button type="button" onClick={() => setStepValue('rating', 3)}>Rate 3</button>
+                ),
+            },
+        ];
+
+        const renderRatingEngine = () => render(
+            <GuidedWorkflowEngine<RatingPayload>
+                toolType="ABC"
+                toolLabel="Test Tool"
+                steps={RATING_STEPS}
+                onComplete={onComplete}
+                onSaveProgress={onSaveProgress}
+            />
+        );
+
+        it('blocks Finish until the extra gate is satisfied, even when minLength is already met', () => {
+            renderRatingEngine();
+            fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
+            expect(screen.getByText('Finish')).toBeDisabled();
+
+            fireEvent.click(screen.getByText('Rate 3'));
+            expect(screen.getByText('Finish')).not.toBeDisabled();
+        });
+
+        it('carries the numeric sibling value through to onComplete', async () => {
+            renderRatingEngine();
+            fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
+            fireEvent.click(screen.getByText('Rate 3'));
+            fireEvent.click(screen.getByText('Finish'));
+
+            await waitFor(() => expect(onComplete).toHaveBeenCalledWith({ a: 'hello world', rating: 3 }));
+        });
+    });
+
     describe('suppressCompletionScreen', () => {
         it('shows the generic completion screen by default', async () => {
             renderEngine();
