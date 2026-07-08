@@ -64,6 +64,8 @@ export interface GuidedWorkflowEngineProps<T> {
     getAiContext?: (step: Step, value: string) => string;
     /** Skip the engine's own generic completion screen — for tools that show their own custom summary/review UI on completion. */
     suppressCompletionScreen?: boolean;
+    /** Always start at step 0 with empty stepData and skip the resume-prompt dialog, ignoring any existing sessionStorage draft (and initialData) — for ToolsHub's "Start Fresh" entry point. */
+    forceFresh?: boolean;
 }
 
 export function GuidedWorkflowEngine<T>({
@@ -76,6 +78,7 @@ export function GuidedWorkflowEngine<T>({
     isSaving = false,
     getAiContext,
     suppressCompletionScreen = false,
+    forceFresh = false,
 }: GuidedWorkflowEngineProps<T>) {
     const navigate = useNavigate();
     const { userTier } = useAuth();
@@ -83,7 +86,9 @@ export function GuidedWorkflowEngine<T>({
     const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, StepDataValue>>(toolType);
 
     const [currentStep, setCurrentStep] = useState(0);
-    const [stepData, setStepData] = useState<Record<string, StepDataValue>>(() => ({ ...(initialData as Record<string, StepDataValue> | undefined) }));
+    const [stepData, setStepData] = useState<Record<string, StepDataValue>>(() => (
+        forceFresh ? {} : { ...(initialData as Record<string, StepDataValue> | undefined) }
+    ));
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, StepDataValue>> } | null>(null);
     const [savedFlash, setSavedFlash] = useState(false);
@@ -92,8 +97,12 @@ export function GuidedWorkflowEngine<T>({
     const [aiPrompts, setAiPrompts] = useState<Record<string, string>>({});
     const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Check for an existing same-session draft on mount.
+    // Check for an existing same-session draft on mount — skipped entirely when forceFresh.
     useEffect(() => {
+        if (forceFresh) {
+            clearDraft();
+            return;
+        }
         const draft = getDraft();
         if (draft && Object.keys(draft.stepData).length > 0) {
             setPendingDraft(draft);

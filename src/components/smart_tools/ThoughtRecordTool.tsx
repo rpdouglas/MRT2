@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import { CognitiveDistortionPicker } from '../tools/CognitiveDistortionPicker';
@@ -90,10 +91,11 @@ interface ThoughtRecordToolInnerProps {
     data: ThoughtRecordPayload;
     save: (overrideData: ThoughtRecordPayload, extraTags?: string[]) => Promise<void>;
     isSaving: boolean;
+    forceFresh: boolean;
 }
 
-function ThoughtRecordToolInner({ data, save, isSaving }: ThoughtRecordToolInnerProps) {
-    const [phase, setPhase] = useState<Phase>(() => isThoughtRecordComplete(data) ? 'summary' : 'guided');
+function ThoughtRecordToolInner({ data, save, isSaving, forceFresh }: ThoughtRecordToolInnerProps) {
+    const [phase, setPhase] = useState<Phase>(() => (!forceFresh && isThoughtRecordComplete(data)) ? 'summary' : 'guided');
 
     if (phase === 'guided') {
         return (
@@ -103,6 +105,7 @@ function ThoughtRecordToolInner({ data, save, isSaving }: ThoughtRecordToolInner
                 steps={STEPS}
                 initialData={data}
                 isSaving={isSaving}
+                forceFresh={forceFresh}
                 suppressCompletionScreen
                 onSaveProgress={(partial) => save(partial as ThoughtRecordPayload, [DRAFT_TAG])}
                 onComplete={async (payload) => {
@@ -163,6 +166,9 @@ function ThoughtRecordToolInner({ data, save, isSaving }: ThoughtRecordToolInner
 }
 
 export const ThoughtRecordTool: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const forceFresh = searchParams.get('fresh') === '1';
+
     const initialData: ThoughtRecordPayload = {
         situation: '', automaticThoughts: '', emotions: [], evidenceFor: '', evidenceAgainst: '', balancedThought: '', outcomeEmotions: [],
     };
@@ -177,7 +183,7 @@ export const ThoughtRecordTool: React.FC = () => {
             hideHeader
         >
             {({ data, save, isSaving }) => (
-                <ThoughtRecordToolInner data={data} save={save} isSaving={isSaving} />
+                <ThoughtRecordToolInner data={data} save={save} isSaving={isSaving} forceFresh={forceFresh} />
             )}
         </SmartToolContainer>
     );

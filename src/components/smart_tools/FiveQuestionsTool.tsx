@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import { YesNoToggle } from '../tools/YesNoToggle';
@@ -108,15 +109,17 @@ interface FiveQuestionsToolInnerProps {
     updateData: (newData: Partial<FiveQuestionsPayload>) => void;
     save: (overrideData: FiveQuestionsPayload, extraTags?: string[]) => Promise<void>;
     isSaving: boolean;
+    forceFresh: boolean;
 }
 
-function FiveQuestionsToolInner({ data, updateData, save, isSaving }: FiveQuestionsToolInnerProps) {
+function FiveQuestionsToolInner({ data, updateData, save, isSaving, forceFresh }: FiveQuestionsToolInnerProps) {
     const [phase, setPhase] = useState<Phase>(() => {
+        if (forceFresh) return 'intro';
         if (isFiveQuestionsComplete(data)) return 'summary';
         if (data.thought) return 'guided';
         return 'intro';
     });
-    const [thought, setThought] = useState(data.thought);
+    const [thought, setThought] = useState(forceFresh ? '' : data.thought);
 
     const handleStartGuided = async () => {
         const trimmed = thought.trim();
@@ -175,6 +178,7 @@ function FiveQuestionsToolInner({ data, updateData, save, isSaving }: FiveQuesti
                 steps={buildFiveQuestionsSteps(data.thought)}
                 initialData={data}
                 isSaving={isSaving}
+                forceFresh={forceFresh}
                 suppressCompletionScreen
                 onSaveProgress={(partial) => save(partial as FiveQuestionsPayload, [DRAFT_TAG])}
                 onComplete={async (payload) => {
@@ -237,6 +241,9 @@ function FiveQuestionsToolInner({ data, updateData, save, isSaving }: FiveQuesti
 }
 
 export const FiveQuestionsTool: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const forceFresh = searchParams.get('fresh') === '1';
+
     const initialData: FiveQuestionsPayload = {
         thought: '',
         q1Explanation: '', q1IsTrue: '',
@@ -256,7 +263,7 @@ export const FiveQuestionsTool: React.FC = () => {
             hideHeader
         >
             {({ data, updateData, save, isSaving }) => (
-                <FiveQuestionsToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} />
+                <FiveQuestionsToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} forceFresh={forceFresh} />
             )}
         </SmartToolContainer>
     );

@@ -8,6 +8,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CBATool } from '../CBATool';
 import { useAuth } from '../../../contexts/AuthContext';
 import { generateCBAReflection } from '../../../lib/gemini';
+import { useSearchParams } from 'react-router-dom';
 import * as firestore from 'firebase/firestore';
 
 vi.mock('../../../contexts/AuthContext', () => ({
@@ -50,7 +51,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     };
 });
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useSearchParams: vi.fn(() => [new URLSearchParams()]) }));
 
 interface CBAPayloadLike {
     behavior: string;
@@ -222,5 +223,18 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             advantagesDoing: ['a'], disadvantagesDoing: ['b'], advantagesStopping: ['c'], disadvantagesStopping: ['d'],
         }));
         expect(await screen.findByText('You seem to value connection more than you value escape.')).toBeInTheDocument();
+    });
+
+    it('?fresh=1 starts at the intro screen with a blank field, even when a complete session would normally resume straight to summary', async () => {
+        (useSearchParams as Mock).mockReturnValue([new URLSearchParams('fresh=1'), vi.fn()]);
+        mockResumeDoc(
+            { behavior: 'Drinking', advantagesDoing: ['a'], disadvantagesDoing: ['b'], advantagesStopping: ['c'], disadvantagesStopping: ['d'] },
+            ['SMART Tool', 'CBA']
+        );
+        render(<CBATool />);
+
+        await waitFor(() => expect(screen.getByText("What behavior are we analyzing?")).toBeInTheDocument());
+        expect(screen.getByPlaceholderText('e.g. Drinking, Isolating')).toHaveValue('');
+        expect(screen.queryByText('Reviewing: Drinking')).not.toBeInTheDocument();
     });
 });
