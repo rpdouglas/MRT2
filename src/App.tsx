@@ -27,6 +27,7 @@ const InsightsLog = lazy(() => import('./pages/InsightsLog'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); 
 const ToolsHub = lazy(() => import('./pages/ToolsHub'));
+const ToolHistory = lazy(() => import('./pages/ToolHistory'));
 const CBATool = lazy(() => import('./components/smart_tools/CBATool').then(m => ({ default: m.CBATool })));
 const ABCTool = lazy(() => import('./components/smart_tools/ABCTool').then(m => ({ default: m.ABCTool })));
 const DentsTool = lazy(() => import('./components/smart_tools/DentsTool').then(m => ({ default: m.DentsTool })));
@@ -153,6 +154,11 @@ export default function App() {
                         <Route path="/tools/five-questions" element={<PrivateRoute>
                             <VaultGate>
                                 <FiveQuestionsTool />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/tools/:toolType/history" element={<PrivateRoute>
+                            <VaultGate>
+                                <ToolHistory />
                             </VaultGate>
                             </PrivateRoute>} />
 

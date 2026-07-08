@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import { ListInput, type ListAccentColor } from '../tools/ListInput';
@@ -79,16 +80,18 @@ interface CBAToolInnerProps {
     updateData: (newData: Partial<CBAPayload>) => void;
     save: (overrideData: CBAPayload, extraTags?: string[]) => Promise<void>;
     isSaving: boolean;
+    forceFresh: boolean;
 }
 
-function CBAToolInner({ data, updateData, save, isSaving }: CBAToolInnerProps) {
+function CBAToolInner({ data, updateData, save, isSaving, forceFresh }: CBAToolInnerProps) {
     const { userTier } = useAuth();
     const [phase, setPhase] = useState<Phase>(() => {
+        if (forceFresh) return 'intro';
         if (isCBAComplete(data)) return 'summary';
         if (data.behavior) return 'guided';
         return 'intro';
     });
-    const [behavior, setBehavior] = useState(data.behavior);
+    const [behavior, setBehavior] = useState(forceFresh ? '' : data.behavior);
     const [reflection, setReflection] = useState<string | null>(null);
     const [reflectionLoading, setReflectionLoading] = useState(false);
 
@@ -167,6 +170,7 @@ function CBAToolInner({ data, updateData, save, isSaving }: CBAToolInnerProps) {
                 steps={buildQuadrantSteps(data.behavior)}
                 initialData={data}
                 isSaving={isSaving}
+                forceFresh={forceFresh}
                 onSaveProgress={(partial) => save(partial as CBAPayload, [DRAFT_TAG])}
                 onComplete={async (payload) => {
                     await save(payload, [DRAFT_TAG]); // still DRAFT — summary is the true completion gate
@@ -231,6 +235,9 @@ function CBAToolInner({ data, updateData, save, isSaving }: CBAToolInnerProps) {
 }
 
 export const CBATool: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const forceFresh = searchParams.get('fresh') === '1';
+
     const initialData: CBAPayload = {
         behavior: '',
         advantagesDoing: [],
@@ -249,7 +256,7 @@ export const CBATool: React.FC = () => {
             hideHeader
         >
             {({ data, updateData, save, isSaving }) => (
-                <CBAToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} />
+                <CBAToolInner data={data} updateData={updateData} save={save} isSaving={isSaving} forceFresh={forceFresh} />
             )}
         </SmartToolContainer>
     );

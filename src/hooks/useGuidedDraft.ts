@@ -13,8 +13,21 @@ export interface GuidedDraft<T> {
     stepData: Partial<T>;
 }
 
+function draftKey(toolType: SmartToolType): string {
+    return `guidedDraft_${toolType}`;
+}
+
+/** Plain (non-hook) check for whether a session draft exists — for callers like ToolsHub that need to check several tools without mounting each one's GuidedWorkflowEngine. */
+export function hasGuidedDraft(toolType: SmartToolType): boolean {
+    try {
+        return sessionStorage.getItem(draftKey(toolType)) !== null;
+    } catch {
+        return false;
+    }
+}
+
 export function useGuidedDraft<T>(toolType: SmartToolType) {
-    const key = `guidedDraft_${toolType}`;
+    const key = draftKey(toolType);
 
     const getDraft = useCallback((): GuidedDraft<T> | null => {
         try {

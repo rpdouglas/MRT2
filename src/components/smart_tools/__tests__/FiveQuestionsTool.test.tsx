@@ -49,7 +49,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
     };
 });
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useSearchParams: vi.fn(() => [new URLSearchParams()]) }));
 
 interface FiveQuestionsPayloadLike {
     thought: string;
