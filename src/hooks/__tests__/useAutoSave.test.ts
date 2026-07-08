@@ -1,86 +1,63 @@
 /**
  * src/hooks/__tests__/useAutoSave.test.ts
- * GITHUB COMMENT:
- * [useAutoSave.test.ts]
- * QA: Implemented strict timing and state boundary tests for the useAutoSave hook.
- * Verifies debounce logic, encryption payload mapping, and duplicate-save prevention.
- * FIX: Replaced synchronous timer advances and waitFor with vi.advanceTimersByTimeAsync to resolve React state update hanging/timeouts.
- * FIX: Resolved ESLint 'any' type error and removed unused disable directive.
+ * QA: Strict timing and state boundary tests for the useAutoSave hook.
+ * Verifies debounce logic, delegation to the injected saveAnswer mutation, and
+ * duplicate-save prevention. Firestore/encryption concerns live in
+ * useWorkbookAnswers now, so this hook is tested against a mocked saveAnswer.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAutoSave } from '../useAutoSave';
-import * as EncryptionContext from '../../contexts/EncryptionContext';
-import * as firestore from 'firebase/firestore';
 
-// Mock Firebase config
-vi.mock('../../lib/firebase', () => ({
-    db: {}
-}));
-
-// Mock Firestore
-vi.mock('firebase/firestore', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('firebase/firestore')>();
-    return {
-        ...actual as Record<string, unknown>,
-        doc: vi.fn((_db, ...paths) => paths.join('/')), // Simple string path for easy assertion
-        setDoc: vi.fn().mockResolvedValue(undefined),
-        Timestamp: {
-            now: vi.fn(() => 'mocked-timestamp')
-        }
-    };
-});
-
-// Mock Encryption Context
-vi.mock('../../contexts/EncryptionContext', () => ({
-    useEncryption: vi.fn()
-}));
-
-describe('💾 useAutoSave Engine', () => { const defaultProps = { uid: 'user123', workbookId: 'wb1', sectionId: 'sec1', questionId: 'q1', value: '' };
+describe('💾 useAutoSave Engine', () => {
+    const makeProps = (overrides: Partial<Parameters<typeof useAutoSave>[0]> = {}) => ({
+        sectionId: 'sec1',
+        questionId: 'q1',
+        value: '',
+        saveAnswer: vi.fn().mockResolvedValue(undefined),
+        ...overrides,
+    });
 
     beforeEach(() => {
-        vi.clearAllMocks();
         vi.useFakeTimers();
-        
-        // Mock encrypt to return a predictable ciphertext
-        vi.mocked(EncryptionContext.useEncryption).mockReturnValue({
-            encrypt: vi.fn().mockResolvedValue('encrypted-secret-text'),
-        } as unknown as ReturnType<typeof EncryptionContext.useEncryption>);
     });
 
     afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
     it('1. should initialize in an idle state', () => {
-        const { result } = renderHook(() => useAutoSave(defaultProps));
+        const { result } = renderHook(() => useAutoSave(makeProps()));
         expect(result.current.status).toBe('idle');
         expect(result.current.lastSavedAt).toBeNull();
     });
 
-    it('2. should not trigger save if value is empty', () => { renderHook(() => useAutoSave({ ...defaultProps, value: ' ' })); act(() => { vi.advanceTimersByTime(3000); });
-        
-        expect(firestore.setDoc).not.toHaveBeenCalled();
+    it('2. should not trigger save if value is empty', () => {
+        const props = makeProps({ value: ' ' });
+        renderHook(() => useAutoSave(props));
+        act(() => { vi.advanceTimersByTime(3000); });
+
+        expect(props.saveAnswer).not.toHaveBeenCalled();
     });
 
     it('3. should debounce typing and trigger save after 2 seconds of inactivity', async () => {
-        // Start with a value
+        const props = makeProps({ value: 'Initial text' });
         const { result, rerender } = renderHook(
-            (props) => useAutoSave(props), 
-            { initialProps: { ...defaultProps, value: 'Initial text' } }
+            (p) => useAutoSave(p),
+            { initialProps: props }
         );
 
         // User keeps typing within the 2 second window
-        rerender({ ...defaultProps, value: 'Initial text updated' });
+        rerender({ ...props, value: 'Initial text updated' });
         act(() => {
             vi.advanceTimersByTime(1000);
         });
-        
-        rerender({ ...defaultProps, value: 'Initial text updated again' });
+
+        rerender({ ...props, value: 'Initial text updated again' });
         act(() => {
             vi.advanceTimersByTime(1000);
         });
 
         // Ensure nothing has saved yet because we keep interrupting the timer
-        expect(firestore.setDoc).not.toHaveBeenCalled();
+        expect(props.saveAnswer).not.toHaveBeenCalled();
 
         // Now wait the full 2 seconds (using async timer advance to flush promises)
         await act(async () => {
@@ -88,26 +65,21 @@ describe('💾 useAutoSave Engine', () => { const defaultProps = { uid: 'user123
         });
 
         expect(result.current.status).toBe('saved');
-        expect(firestore.setDoc).toHaveBeenCalledTimes(1);
-        
-        // Verify the payload shape
-        expect(firestore.setDoc).toHaveBeenCalledWith(
-            'users/user123/workbook_answers/wb1_q1', // Mocked doc() output
-            expect.objectContaining({
-                uid: 'user123',
-                workbookId: 'wb1',
-                questionId: 'q1',
-                answer: 'encrypted-secret-text', // Verifies encryption happened
-                isEncrypted: true
-            }),
-            { merge: true }
-        );
+        expect(props.saveAnswer).toHaveBeenCalledTimes(1);
+
+        // Verify the payload shape — the hook delegates encryption/Firestore to saveAnswer
+        expect(props.saveAnswer).toHaveBeenCalledWith({
+            sectionId: 'sec1',
+            questionId: 'q1',
+            plaintext: 'Initial text updated again',
+        });
     });
 
     it('4. should not save if the value is identical to the previously saved value', async () => {
+        const props = makeProps({ value: 'Final Answer' });
         const { result, rerender } = renderHook(
-            (props) => useAutoSave(props), 
-            { initialProps: { ...defaultProps, value: 'Final Answer' } }
+            (p) => useAutoSave(p),
+            { initialProps: props }
         );
 
         // Trigger first save
@@ -115,16 +87,27 @@ describe('💾 useAutoSave Engine', () => { const defaultProps = { uid: 'user123
             await vi.advanceTimersByTimeAsync(2000);
         });
         expect(result.current.status).toBe('saved');
-        expect(firestore.setDoc).toHaveBeenCalledTimes(1);
+        expect(props.saveAnswer).toHaveBeenCalledTimes(1);
 
         // User edits, but puts it back to the exact same text before the debounce finishes
-        rerender({ ...defaultProps, value: 'Final Answer' });
-        
+        rerender({ ...props, value: 'Final Answer' });
+
         await act(async () => {
             await vi.advanceTimersByTimeAsync(2000);
         });
 
-        // Should NOT have called setDoc a second time
-        expect(firestore.setDoc).toHaveBeenCalledTimes(1);
+        // Should NOT have called saveAnswer a second time
+        expect(props.saveAnswer).toHaveBeenCalledTimes(1);
+    });
+
+    it('5. should set error status if saveAnswer rejects', async () => {
+        const props = makeProps({ value: 'Will fail', saveAnswer: vi.fn().mockRejectedValue(new Error('offline')) });
+        const { result } = renderHook(() => useAutoSave(props));
+
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(2000);
+        });
+
+        expect(result.current.status).toBe('error');
     });
 });

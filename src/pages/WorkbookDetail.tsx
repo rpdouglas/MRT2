@@ -1,33 +1,36 @@
 import { toast } from 'sonner';
-import { useState, useEffect, Fragment, useCallback } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEncryption } from '../contexts/EncryptionContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
 import { analyzeWorkbookContent, type WorkbookAnalysisResult } from '../lib/gemini';
 import { addTask } from '../lib/tasks';
 import { saveInsight } from '../lib/insights';
+import { useWorkbookAnswers } from '../hooks/useWorkbookAnswers';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { PlayCircleIcon, CheckCircleIcon, SparklesIcon, ArrowPathIcon, PlusCircleIcon, LightBulbIcon, ShieldExclamationIcon, AcademicCapIcon, BookmarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
-
-// Define a proper interface for workbook answer data to avoid 'any'
-interface WorkbookAnswer { workbookId: string; sectionId: string; questionId: string; answer: string; uid: string; }
 
 export default function WorkbookDetail() {
   const navigate = useNavigate();
 
   const { workbookId } = useParams();
   const { user } = useAuth();
-  const { decrypt } = useEncryption(); 
   const workbook = getWorkbook(workbookId || '');
 
-  // Data State
-  const [completedCounts, setCompletedCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  // Data: scoped to this workbook (progress + section/workbook-scope analysis)
+  const { answers: workbookAnswers, isLoading } = useWorkbookAnswers(workbook?.id);
+  // Data: across all workbooks, only needed for the "Global Review" analysis scope
+  const { answers: globalAnswers, isLoading: isGlobalLoading } = useWorkbookAnswers();
+
+  const completedCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const entry of workbookAnswers) {
+        counts[entry.sectionId] = (counts[entry.sectionId] || 0) + 1;
+    }
+    return counts;
+  }, [workbookAnswers]);
 
   // Analysis State
   const [showWizard, setShowWizard] = useState(false);
@@ -39,42 +42,10 @@ export default function WorkbookDetail() {
   const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
   const [savingInsight, setSavingInsight] = useState(false);
 
-  // loadProgress wrapped in useCallback to stabilize the dependency for useEffect
-  const loadProgress = useCallback(async () => {
-    if (!user || !workbook || !db) return;
-    
-    try {
-        const q = query(
-            collection(db, 'users', user.uid, 'workbook_answers'),
-            where('workbookId', '==', workbook.id)
-        );
-        
-        const snapshot = await getDocs(q);
-        const counts: Record<string, number> = {};
-
-        snapshot.docs.forEach(docSnap => {
-            const data = docSnap.data();
-            if (data.sectionId) {
-                counts[data.sectionId] = (counts[data.sectionId] || 0) + 1;
-            }
-        });
-
-        setCompletedCounts(counts);
-    } catch (error) {
-        console.error("Error loading progress:", error);
-    } finally {
-        setLoading(false);
-    }
-  }, [user, workbook]);
-
-  useEffect(() => {
-    loadProgress();
-  }, [loadProgress]);
-
   // --- AI ANALYSIS LOGIC ---
 
   const handleAnalyze = async () => {
-    if (!user || !workbook || !db) return;
+    if (!workbook) return;
 
     setAnalyzing(true);
     setInsight(null);
@@ -82,58 +53,29 @@ export default function WorkbookDetail() {
     setSavingInsight(false);
 
     try {
-        let docsToAnalyze: WorkbookAnswer[] = [];
+        let docsToAnalyze: typeof workbookAnswers = [];
         let contextTitle = "";
 
         if (analysisScope === 'section') {
-            const q = query(
-                collection(db, 'users', user.uid, 'workbook_answers'),
-                where('workbookId', '==', workbook.id),
-                where('sectionId', '==', selectedSectionId)
-            );
-            const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            docsToAnalyze = workbookAnswers.filter(a => a.sectionId === selectedSectionId);
             const sec = workbook.sections.find(s => s.id === selectedSectionId);
             contextTitle = sec ? sec.title : "Section Review";
-
         } else if (analysisScope === 'workbook') {
-            const q = query(
-                collection(db, 'users', user.uid, 'workbook_answers'),
-                where('workbookId', '==', workbook.id)
-            );
-            const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            docsToAnalyze = workbookAnswers;
             contextTitle = workbook.title;
         } else {
-            // Global (Careful with large datasets in production)
-            const q = collection(db, 'users', user.uid, 'workbook_answers');
-            const snap = await getDocs(q);
-            docsToAnalyze = snap.docs.map(d => d.data() as WorkbookAnswer);
+            // Global (already decrypted by useWorkbookAnswers; careful with large datasets in production)
+            docsToAnalyze = globalAnswers;
             contextTitle = "Global Recovery Review";
         }
-
-        // --- DECRYPTION STEP ---
-        // We must decrypt the answers before sending them to the AI
-        docsToAnalyze = await Promise.all(docsToAnalyze.map(async (entry) => {
-            const rawAnswer = entry.answer;
-            // Simple check: if it contains a colon, it's likely iv:ciphertext
-            if (rawAnswer && rawAnswer.includes(':')) {
-                try {
-                    const plain = await decrypt(rawAnswer);
-                    return { ...entry, answer: plain };
-                } catch (e) { console.error("Decryption failed during analysis", e); return { ...entry, answer: "[Redacted/Error]" }; }
-            }
-            return entry;
-        }));
-        // -----------------------
 
         if (docsToAnalyze.length === 0) { alert("No entries found for this selection. Try completing some questions first."); setAnalyzing(false); return; }
 
         const textContent = docsToAnalyze.map(d => `Question: ${d.questionId}\nAnswer: ${d.answer}`).join('\n\n');
-        
+
         // Pass contextTitle to the AI function so it's used
         const result = await analyzeWorkbookContent(contextTitle, [{ question: "Combined Context", answer: textContent }]);
-        
+
         if (result) { setInsight(result); setShowWizard(false); setShowResult(true); } else {
             alert("Analysis failed. Please try again.");
         }
@@ -180,7 +122,7 @@ export default function WorkbookDetail() {
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading workbook...</div>;
+  if (isLoading) return <div className="p-8 text-center text-gray-500">Loading workbook...</div>;
   if (!workbook) return <div className="p-8 text-center text-gray-500">Workbook not found.</div>;
 
   // Calculate mastery for header
@@ -312,7 +254,7 @@ export default function WorkbookDetail() {
 
                   <div className="mt-6 flex justify-end gap-3">
                       <button onClick={() => setShowWizard(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
-                      <button onClick={handleAnalyze} disabled={analyzing} className="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2">
+                      <button onClick={handleAnalyze} disabled={analyzing || (analysisScope === 'global' && isGlobalLoading)} className="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2">
                           {analyzing ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <SparklesIcon className="h-4 w-4" />}
                           Analyze Now
                       </button>

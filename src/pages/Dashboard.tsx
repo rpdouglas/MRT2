@@ -17,8 +17,6 @@ import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
 
-const TOTAL_WORKBOOK_QUESTIONS = 45;
-
 export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
   const queryClient = useQueryClient();
@@ -143,7 +141,7 @@ export default function Dashboard() {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const jStats = calculateJournalStats(journals as any);
     const tStats = calculateTaskStats(tasks as any);
-    const wStats = calculateWorkbookStats(workbookCount, TOTAL_WORKBOOK_QUESTIONS);
+    const wStats = calculateWorkbookStats(workbookCount);
     const vStats = calculateVitalityStats(journals as any);
     const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean, roscCount);
     /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -154,7 +152,7 @@ export default function Dashboard() {
     return {
         journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
         task: { rate: tStats.completionRate, fire: tStats.habitFire },
-        workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion },
+        workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion, total: wStats.totalQuestions },
         vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
         level,
         showBackup,
@@ -332,12 +330,12 @@ export default function Dashboard() {
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
                     </div>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.workbook.completion}%</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Done</div>
+                        <div className="text-3xl font-black">{stats.workbook.wisdom}</div>
+                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">/ {stats.workbook.total} Answered</div>
                     </div>
                     <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Score</span>
-                        <span className="text-base font-bold">{stats.workbook.wisdom}</span>
+                        <span className="text-base font-bold opacity-75">Progress</span>
+                        <span className="text-base font-bold">{stats.workbook.completion}%</span>
                     </div>
                 </div>
             </Link>

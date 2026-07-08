@@ -1,83 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useEncryption } from '../contexts/EncryptionContext'; 
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { CheckCircleIcon, ArrowRightIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
 import { getGeminiCoaching } from '../lib/gemini';
 import { useAutoSave } from '../hooks/useAutoSave';
+import { useWorkbookAnswers } from '../hooks/useWorkbookAnswers';
 
 export default function WorkbookSession() {
     const { workbookId, sectionId } = useParams();
-    const { user } = useAuth();
-    const { decrypt } = useEncryption(); 
     const navigate = useNavigate();
 
     // Content State
     const [section, setSection] = useState<WorkbookSection | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    // User Progress State
+    // User Progress State (loaded via useWorkbookAnswers, overlaid with in-session edits
+    // so switching between questions within the autosave debounce window shows the latest keystrokes)
     const [currentAnswer, setCurrentAnswer] = useState('');
-    const [answers, setAnswers] = useState<Record<string, string>>({}); // Cache for loaded answers
-    
+    const [localEdits, setLocalEdits] = useState<Record<string, string>>({});
+
     // UI State
     const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
     const [aiCoachLoading, setAiCoachLoading] = useState(false);
     const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
-    // 1. Load Workbook Content & User Progress
+    const { answers: savedAnswers, isLoading, saveAnswer } = useWorkbookAnswers(workbookId);
+
+    const answers = useMemo(() => {
+        const record: Record<string, string> = {};
+        for (const entry of savedAnswers) record[entry.questionId] = entry.answer;
+        return { ...record, ...localEdits };
+    }, [savedAnswers, localEdits]);
+
+    // 1. Load Static Workbook Content
     useEffect(() => {
-        async function loadData() {
-            if (!user || !workbookId || !sectionId || !db) return;
+        if (!workbookId || !sectionId) return;
 
-            try {
-                // A. Load Static Workbook JSON
-                const wb = getWorkbook(workbookId || '');
-                if (!wb) {
-                    navigate('/workbooks');
-                    return;
-                }
+        const wb = getWorkbook(workbookId);
+        if (!wb) { navigate('/workbooks'); return; }
 
-                const sec = wb.sections.find(s => s.id === sectionId);
-                if (!sec) { navigate(`/workbooks/${workbookId}`); return; }
-                setSection(sec);
-
-                // B. Load User Progress
-                const answersRef = collection(db, 'users', user.uid, 'workbook_answers');
-                const q = query(answersRef, where('workbookId', '==', workbookId));
-                const snapshot = await getDocs(q);
-                const loadedAnswers: Record<string, string> = {};
-
-                for (const docSnap of snapshot.docs) {
-                    const data = docSnap.data();
-                    if (data.answer) {
-                        if (data.isEncrypted) {
-                            try {
-                                loadedAnswers[data.questionId] = await decrypt(data.answer);
-                            } catch {
-                                loadedAnswers[data.questionId] = "🔒 [Error Decrypting]";
-                            }
-                        } else {
-                            loadedAnswers[data.questionId] = data.answer;
-                        }
-                    }
-                }
-                setAnswers(loadedAnswers);
-                
-                // Initialize current answer based on first question
-                if (sec.questions.length > 0) { const firstQ = sec.questions[0]; setCurrentAnswer(loadedAnswers[firstQ.id] || ''); }
-
-            } catch (error) {
-                console.error("Error loading session:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadData();
-    }, [user, workbookId, sectionId, navigate, decrypt]);
+        const sec = wb.sections.find(s => s.id === sectionId);
+        if (!sec) { navigate(`/workbooks/${workbookId}`); return; }
+        setSection(sec);
+    }, [workbookId, sectionId, navigate]);
 
     // Current Question Helpers
     const currentQuestion = section?.questions[activeQuestionIndex];
@@ -89,11 +53,10 @@ export default function WorkbookSession() {
 
     // --- AUTO SAVE HOOK ---
     const { status: saveStatus } = useAutoSave({
-        uid: user?.uid || '',
-        workbookId: workbookId || '',
         sectionId: sectionId || '',
         questionId: currentQuestion?.id || '',
-        value: currentAnswer
+        value: currentAnswer,
+        saveAnswer,
     });
 
     // 2. Handle Answer Input
@@ -101,7 +64,7 @@ export default function WorkbookSession() {
         setCurrentAnswer(text);
         // Update local cache immediately for UI responsiveness
         if (currentQuestion) {
-            setAnswers(prev => ({ ...prev, [currentQuestion.id]: text }));
+            setLocalEdits(prev => ({ ...prev, [currentQuestion.id]: text }));
         }
     };
 
@@ -128,7 +91,7 @@ export default function WorkbookSession() {
         }
     };
 
-    if (loading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
+    if (isLoading || !section || !currentQuestion) return <div className="p-8 text-center text-gray-500">Loading Session...</div>;
 
     const progressPercent = ((activeQuestionIndex) / section.questions.length) * 100;
 

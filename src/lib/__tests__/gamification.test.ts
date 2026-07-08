@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateUserLevel, calculateJournalStats, calculateTaskStats } from '../gamification';
+import { calculateUserLevel, calculateJournalStats, calculateTaskStats, calculateWorkbookStats } from '../gamification';
+import { WORKBOOKS } from '../../data/workbooks';
 import { Timestamp } from 'firebase/firestore';
 
 // Helper to mock dates easily
@@ -124,12 +125,43 @@ describe('🎮 Gamification Engine', () => {
               { status: 'pending', currentStreak: 0 } // Broken streak
           ] as unknown as Parameters<typeof calculateTaskStats>[0];
           const result = calculateTaskStats(tasks);
-          
+
           // 1 out of 3 completed = ~33%
           expect(result.completionRate).toBe(33);
-          
+
           // 5 + 2 = 7 (Total Habit Fire)
           expect(result.habitFire).toBe(7);
+      });
+  });
+
+  describe('calculateWorkbookStats', () => {
+      const expectedTotal = WORKBOOKS.reduce(
+          (sum, wb) => sum + wb.sections.reduce(
+              (s, sec) => s + sec.questions.filter(q => q.type !== 'read_only').length, 0
+          ), 0
+      );
+
+      it('should guard against an empty WORKBOOKS registry regressing the denominator to zero', () => {
+          expect(expectedTotal).toBeGreaterThan(0);
+      });
+
+      it('should default the denominator to the live total question count across all workbooks', () => {
+          const result = calculateWorkbookStats(expectedTotal);
+          expect(result.totalQuestions).toBe(expectedTotal);
+          expect(result.masterCompletion).toBe(100);
+      });
+
+      it('should compute wisdomScore and masterCompletion from the answered count', () => {
+          const result = calculateWorkbookStats(0);
+          expect(result.wisdomScore).toBe(0);
+          expect(result.masterCompletion).toBe(0);
+      });
+
+      it('should still accept an explicit denominator override', () => {
+          const result = calculateWorkbookStats(5, 10);
+          expect(result.wisdomScore).toBe(5);
+          expect(result.masterCompletion).toBe(50);
+          expect(result.totalQuestions).toBe(10);
       });
   });
 });
