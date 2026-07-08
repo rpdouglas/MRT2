@@ -3,7 +3,12 @@
 Recovery is about interrupting automatic reactions with intentional logic. The **Tools Hub** contains interactive Cognitive Behavioral Therapy (CBT) exercises, adapted from evidence-based models like SMART Recovery and REBT.
 
 ## Accessing the Tools
-From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the Tools Hub, where you can select an exercise based on your current emotional state.
+From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the Tools Hub, where each tool's card shows a time estimate, a "Best for" tag, and — once you've completed it at least once — how many times you've used it.
+
+Every guided tool (CBA, ABC, D.E.N.T.S., Thought Record, Five Questions) offers up to three ways in:
+* **Start Fresh** — always available. Opens the tool at Step 1 with a blank slate, even if you have an unfinished session sitting in the background.
+* **Resume** — appears only when you have an in-progress session (from this browser tab, or a partial save from an earlier one) waiting to be picked back up.
+* **History** — appears once you've completed the tool at least once. Opens a readable list of your past completions (not the raw entry) — tap any one to see the full answers.
 
 ---
 
@@ -30,9 +35,23 @@ The ABC model teaches us that events don't cause our feelings; our *beliefs* abo
 ---
 
 ## 🛡️ D.E.N.T.S. Strategy Tool
-**When to use it:** When you are preparing to enter a high-risk situation.
+**When to use it:** When you know a challenging situation is coming.
 
-This is a pre-planning safety tool. Fill it out *before* the urge strikes so you have a concrete action plan ready (Deny, Escape, Neutralize, Tasks, Swap).
+This is a pre-planning safety tool. Start by naming the specific high-risk situation you're planning for (a wedding, a stressful family gathering) — the five D.E.N.T.S. prompts (Deny, Escape, Neutralize, Tasks, Swap) are then worded to reference that exact situation, so your plan is concrete instead of generic.
+
+---
+
+## 🧠 Thought Record
+**When to use it:** When you want to understand and reframe a difficult moment.
+
+The classic 7-column CBT thought record, guided one step at a time: what happened, the automatic thought it triggered, how strongly you felt it (rate 1-3 emotions 0-100%), the evidence for and against the thought, a more balanced thought, and — finally — a re-rating of those same emotions now that you've worked through it. The summary screen, "The Shift," shows exactly how much each emotion moved.
+
+---
+
+## ❓ Five Questions
+**When to use it:** When a recurring thought is keeping you stuck.
+
+Byron Katie's method of self-enquiry, adapted for recovery. Name the specific thought you want to examine, then work through five guided questions: is it true, can you know that for certain, how you react when you believe it, who you'd be without it, and — last — a "turnaround" (the opposite thought), rated 1-5 stars for how true it feels.
 
 ---
 
@@ -59,5 +78,6 @@ A 5-minute interactive grounding timer that uses the 5-4-3-2-1 somatic method to
 ---
 
 ## 🔒 Privacy & Saving
-Every time you complete a CBT tool (except the Resentment Burner), click **Save to Journal**. 
-The app wraps your answers in **Zero-Knowledge Encryption** and saves them to your Journal History. Tools like *Personify* and *Lifestyle Balance* will securely load your previous session so you can update them over time.
+Guided tools quietly keep your in-progress answers on your own device as you work, so a refresh won't lose your place. Tap **Save Progress** (or **Exit & save draft**) at any point to securely encrypt and store that progress in your Journal — that's also what makes the **Resume** entry point appear later. The final screen's **Save to Journal** button is what marks a session complete.
+
+Every save — draft or complete — is wrapped in **Zero-Knowledge Encryption** before it ever leaves your device. *Personify* and *Lifestyle Balance* will securely load your previous session automatically so you can update them over time.

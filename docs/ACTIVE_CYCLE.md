@@ -20,6 +20,7 @@
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-50:** Guided CBT/REBT Interactive Workflows — Transformed the CBT tool suite from open-form static inputs into guided, step-by-step interactive flows (`GuidedWorkflowEngine`) with contextual coaching, optional AI-assisted prompts, and psychoeducation. Shipped in 6 phases: foundation + guided ABCDE, guided CBA, a brand-new 7-column Thought Record, DENTS Scenario Mode + a brand-new Five Questions self-enquiry tool, and a Tools Hub redesign (Start Fresh / Resume / History entry points, completion tracking, time estimates).
 - [x] **PROJ-54:** Journal Insights Momentum UI Redesign — Refactored the Insights tab into an atmospheric, reflection-first "Glass and Glow" interface utilizing Momentum Kinetic v3.0, replacing dry charts with semantic colors and ambient motion.
 - [x] **PROJ-53:** ROSC Matrix Visual Upgrade (Pill Capsules) — Replaced Recharts radar chart with custom animated "Pill Capsules" design featuring premium glassmorphic dark theme and longitudinal ghosting.
 - [x] **PROJ-49:** The Recovery Capital (ROSC) Matrix — Monthly self-reported check-in + Gemini AI analysis across SAMHSA's four dimensions (Health, Home, Purpose, Community). Animated radar chart with longitudinal overlay. ZK boundary: domain scores unencrypted, AI narrative encrypted. Premium AI insights; free tier self-report scores.
