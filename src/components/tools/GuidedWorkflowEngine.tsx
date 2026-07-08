@@ -21,6 +21,8 @@ import { EmotionIntensitySelector, type EmotionEntry } from './EmotionIntensityS
 import VibrantHeader from '../VibrantHeader';
 
 type StepValue = string | string[] | EmotionEntry[];
+/** Wider type for stepData/renderExtra's sibling-key channel — adds plain numbers (e.g. a star rating) on top of a step's own StepValue shape. A step's own `id` key is only ever written by its own inputType-driven onChange, never a number, so `currentValue` below stays safely narrowed to StepValue. */
+type StepDataValue = StepValue | number;
 
 const AI_PROMPT_DEBOUNCE_MS = 5000;
 const DRAFT_AUTOSAVE_INTERVAL_MS = 30000;
@@ -39,12 +41,14 @@ export interface Step {
     accentColor?: ListAccentColor;
     /** Only meaningful when inputType === 'emotion'. When set, this step re-rates the emotion names already recorded by the named step (e.g. Step 7 re-rating Step 3's emotions), instead of offering a free chip picker. */
     emotionSourceStepId?: string;
+    /** Extra gate evaluated alongside the minLength check — e.g. requiring a renderExtra-authored sibling field (a Yes/No answer, a star rating) to be answered before the user can advance. */
+    canAdvanceExtra?: (allStepValues: Record<string, StepDataValue>) => boolean;
     renderExtra?: (ctx: {
         value: StepValue;
         onChange: (v: StepValue) => void;
-        allStepValues: Record<string, StepValue>;
-        /** Write to an arbitrary stepData key, not just the current step's own id — e.g. persisting an optional side-selection like a cognitive distortion. */
-        setStepValue: (stepId: string, value: StepValue) => void;
+        allStepValues: Record<string, StepDataValue>;
+        /** Write to an arbitrary stepData key, not just the current step's own id — e.g. persisting an optional side-selection like a cognitive distortion or a star rating. */
+        setStepValue: (stepId: string, value: StepDataValue) => void;
     }) => React.ReactNode;
 }
 
@@ -76,12 +80,12 @@ export function GuidedWorkflowEngine<T>({
     const navigate = useNavigate();
     const { userTier } = useAuth();
     const { isOnline } = useLayout();
-    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, StepValue>>(toolType);
+    const { getDraft, saveDraft, clearDraft } = useGuidedDraft<Record<string, StepDataValue>>(toolType);
 
     const [currentStep, setCurrentStep] = useState(0);
-    const [stepData, setStepData] = useState<Record<string, StepValue>>(() => ({ ...(initialData as Record<string, StepValue> | undefined) }));
+    const [stepData, setStepData] = useState<Record<string, StepDataValue>>(() => ({ ...(initialData as Record<string, StepDataValue> | undefined) }));
     const [showResumePrompt, setShowResumePrompt] = useState(false);
-    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, StepValue>> } | null>(null);
+    const [pendingDraft, setPendingDraft] = useState<{ currentStep: number; stepData: Partial<Record<string, StepDataValue>> } | null>(null);
     const [savedFlash, setSavedFlash] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
 
@@ -107,15 +111,16 @@ export function GuidedWorkflowEngine<T>({
     }, [currentStep, stepData, saveDraft]);
 
     const step = steps[currentStep];
-    const currentValue: StepValue = stepData[step.id] ?? (step.inputType === 'textarea' ? '' : []);
-    const canAdvance = currentValue.length >= step.minLength;
+    // A step's own id is only ever written by its own inputType-driven onChange (never a number), so this narrows safely.
+    const currentValue: StepValue = (stepData[step.id] as StepValue | undefined) ?? (step.inputType === 'textarea' ? '' : []);
+    const canAdvance = currentValue.length >= step.minLength && (!step.canAdvanceExtra || step.canAdvanceExtra(stepData));
     const isLastStep = currentStep === steps.length - 1;
     const aiEnabled = step.aiPromptEnabled && userTier === 'premium';
     const fixedEmotions: string[] | undefined = step.emotionSourceStepId
         ? ((stepData[step.emotionSourceStepId] as EmotionEntry[] | undefined) ?? []).map(e => e.emotion)
         : undefined;
 
-    const setStepValue = (stepId: string, value: StepValue) => {
+    const setStepValue = (stepId: string, value: StepDataValue) => {
         setStepData(prev => ({ ...prev, [stepId]: value }));
     };
     const updateStepValue = (value: StepValue) => setStepValue(step.id, value);
@@ -154,7 +159,7 @@ export function GuidedWorkflowEngine<T>({
 
     const handleResume = () => {
         if (pendingDraft) {
-            setStepData(pendingDraft.stepData as Record<string, StepValue>);
+            setStepData(pendingDraft.stepData as Record<string, StepDataValue>);
             setCurrentStep(pendingDraft.currentStep);
         }
         setShowResumePrompt(false);

@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import { PuzzlePieceIcon, ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon, ChartPieIcon, FireIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import { PuzzlePieceIcon, ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon, ChartPieIcon, FireIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 
 const TOOLS = [
     {
@@ -58,7 +58,7 @@ const TOOLS = [
     {
         id: 'dents',
         title: 'D.E.N.T.S. Strategy',
-        description: 'Pre-plan your escape and distraction routes for high-risk situations.',
+        description: 'Pre-plan your escape and distraction routes for a specific high-risk situation.',
         path: '/tools/dents',
         icon: BoltIcon,
         color: 'text-amber-600',
@@ -97,6 +97,17 @@ const TOOLS = [
         color: 'text-violet-600',
         bg: 'bg-violet-50',
         border: 'border-l-violet-500',
+        status: 'active'
+    },
+    {
+        id: 'five-questions',
+        title: 'Five Questions',
+        description: 'Question a recurring thought using Byron Katie-style self-enquiry.',
+        path: '/tools/five-questions',
+        icon: ChatBubbleLeftRightIcon,
+        color: 'text-teal-600',
+        bg: 'bg-teal-50',
+        border: 'border-l-teal-500',
         status: 'active'
     }
 ];

@@ -42,9 +42,26 @@ export interface ABCPayload {
 /** Tag applied to SMART Tool journal entries that hold a partial (in-progress) guided-flow save. */
 export const DRAFT_TAG = 'DRAFT' as const;
 
-export interface DENTSPayload { deny: string; escape: string; neutralize: string; tasks: string; swap: string; }
+export interface DENTSPayload {
+    scenario?: string; // Optional: the specific high-risk situation this plan targets (PROJ-50 Phase 5 Scenario Mode). Optional for backward compatibility with entries saved before this field existed.
+    deny: string;
+    escape: string;
+    neutralize: string;
+    tasks: string;
+    swap: string;
+}
 
-export interface FiveQuestionsPayload { q1: string; q2: string; q3: string; q4: string; q5: string; }
+export interface FiveQuestionsPayload {
+    thought: string;            // The specific belief/thought being examined (captured before the 5 questions)
+    q1Explanation: string;      // Q1 — Is this thought true?
+    q1IsTrue: 'yes' | 'no' | '';
+    q2Explanation: string;      // Q2 — Can I absolutely know it is true?
+    q2CanKnow: 'yes' | 'no' | '';
+    q3Reaction: string;         // Q3 — How do I react when I believe this thought?
+    q4WithoutThought: string;   // Q4 — Who would I be without this thought?
+    turnaround: string;         // Q5 — The opposite thought
+    turnaroundRating: number;   // Q5 — 1-5 rating of how true the turnaround feels, 0 = unrated
+}
 
 export interface LifestyleBalancePayload { physical: number; mental: number; relationships: number; work: number; spiritual: number; leisure: number; }
 
