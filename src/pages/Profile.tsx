@@ -5,7 +5,8 @@ import { getProfile, updateProfileData } from '../lib/db';
 import { Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { db } from '../lib/firebase';
-import VibrantHeader from '../components/VibrantHeader'; 
+import { requestNotificationPermission } from '../lib/messaging';
+import VibrantHeader from '../components/VibrantHeader';
 import DataManagement from '../components/profile/DataManagement';
 import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
@@ -39,10 +40,14 @@ export default function Profile() {
   const [costFrequency, setCostFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [currencySymbol, setCurrencySymbol] = useState('$');
 
-  // Form State (Anchor Notifications)
+  // Form State (Dashboard Badges — formerly "Anchor Notifications")
   const [notifyCheckIn, setNotifyCheckIn] = useState(true);
   const [notifyReading, setNotifyReading] = useState(true);
-  const [notifyIntent, setNotifyIntent] = useState(true);
+
+  // Form State (Push Notifications) — separate from the badge toggles above; this is
+  // the only control that actually gates server-sent push (see dailyBeacon).
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
+  const [pushToggleBusy, setPushToggleBusy] = useState(false);
 
   // Form State (Hero Appearance)
   const [heroColor, setHeroColor] = useState<HeroColorKey>('amber');
@@ -80,7 +85,7 @@ export default function Profile() {
           
           setNotifyCheckIn(data.anchorSettings?.notifyCheckIn ?? true);
           setNotifyReading(data.anchorSettings?.notifyReading ?? true);
-          setNotifyIntent(data.anchorSettings?.notifyIntent ?? true);
+          setPushNotificationsEnabled(data.pushNotificationsEnabled ?? true);
 
           setHeroColor(data.heroColor ?? 'amber');
           
@@ -95,6 +100,33 @@ export default function Profile() {
   const handleSelectHeroColor = (key: HeroColorKey) => {
     setHeroColor(key);
     updateHeroColor.mutate(key);
+  };
+
+  // Applies immediately (like handleSelectHeroColor above) rather than waiting for the
+  // General-tab form submit, since it also has to touch browser Notification permission
+  // and Firestore token state, not just a profile field.
+  const handleTogglePushNotifications = async (enabled: boolean) => {
+    if (!user || !db) return;
+    const previous = pushNotificationsEnabled;
+    setPushNotificationsEnabled(enabled);
+    setPushToggleBusy(true);
+    try {
+      if (enabled) {
+        await updateDoc(doc(db, "users", user.uid), { pushNotificationsEnabled: true });
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          await requestNotificationPermission(user.uid);
+        }
+      } else {
+        // Clearing fcmTokens is what actually excludes this user from dailyBeacon's
+        // `fcmTokens != []` query — pushNotificationsEnabled is UI state for the toggle itself.
+        await updateDoc(doc(db, "users", user.uid), { pushNotificationsEnabled: false, fcmTokens: [] });
+      }
+    } catch (err) {
+      console.warn("Failed to update push notification preference", err);
+      setPushNotificationsEnabled(previous);
+    } finally {
+      setPushToggleBusy(false);
+    }
   };
 
   const handleLogout = async () => { try { await logout(); navigate('/login'); } catch (error) {
@@ -132,8 +164,7 @@ export default function Profile() {
         if (db) {
             await updateDoc(doc(db, "users", user.uid), {
                 "anchorSettings.notifyCheckIn": notifyCheckIn,
-                "anchorSettings.notifyReading": notifyReading,
-                "anchorSettings.notifyIntent": notifyIntent
+                "anchorSettings.notifyReading": notifyReading
             });
         }
       } catch (err) {
@@ -355,10 +386,10 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    {/* Anchor Notifications */}
+                    {/* Dashboard Badges (formerly "Anchor Notifications") — in-app only, does not affect push */}
                     <div className="pt-4 border-t border-gray-100">
                         <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <IdentificationIcon className="h-4 w-4 text-amber-600" /> Anchor Notifications
+                            <IdentificationIcon className="h-4 w-4 text-amber-600" /> Dashboard Badges
                         </h4>
                         <div className="space-y-3">
                             <label className="flex items-center gap-3">
@@ -369,12 +400,26 @@ export default function Profile() {
                                 <input type="checkbox" checked={notifyReading} onChange={e => setNotifyReading(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
                                 <span className="text-sm font-medium text-gray-700">Daily Reading Badge</span>
                             </label>
-                            <label className="flex items-center gap-3">
-                                <input type="checkbox" checked={notifyIntent} onChange={e => setNotifyIntent(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <span className="text-sm font-medium text-gray-700">Daily Intent Badge</span>
-                            </label>
                         </div>
-                        <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor.</p>
+                        <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor. This does not affect push notifications below.</p>
+                    </div>
+
+                    {/* Push Notifications — the only control that actually gates server-sent push (dailyBeacon) */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <IdentificationIcon className="h-4 w-4 text-amber-600" /> Push Notifications
+                        </h4>
+                        <label className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked={pushNotificationsEnabled}
+                                disabled={pushToggleBusy}
+                                onChange={e => handleTogglePushNotifications(e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Milestone &amp; habit reminders on this device</span>
+                        </label>
+                        <p className="mt-2 text-[10px] text-gray-400">Turning this off stops all push notifications to this device. You can re-enable it any time.</p>
                     </div>
 
                     {/* Hero Appearance — PROJ-56 */}

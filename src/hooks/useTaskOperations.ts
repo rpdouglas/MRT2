@@ -29,7 +29,7 @@ export function useTaskOperations() {
       recurrence: TaskLib.RecurrenceConfig;
       priority: TaskLib.Priority;
       dueDate: Date;
-      source?: 'manual' | 'ai' | 'anchor_intent';
+      source?: 'manual' | 'ai';
       aiMeta?: { sourceContext?: string; sourceRef?: string };
     }) => {
       if (!user) throw new Error("No user");

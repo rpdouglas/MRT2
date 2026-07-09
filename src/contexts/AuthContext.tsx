@@ -3,7 +3,7 @@ import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, creat
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
-import { refreshFcmTokenIfStale } from '../lib/messaging';
+import { refreshFcmTokenIfStale, listenForForegroundMessages } from '../lib/messaging';
 
 interface AuthContextType {
   user: User | null;
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let unsubscribeSubscriptions: Unsubscribe | undefined;
+    let unsubscribeForegroundMessages: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       try {
@@ -47,7 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentUser);
           setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
           refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
-          
+          if (!unsubscribeForegroundMessages) {
+            listenForForegroundMessages().then((unsub) => { unsubscribeForegroundMessages = unsub; }).catch(console.error);
+          }
+
           // Phase 2: Listen directly to the Stripe extension's 'subscriptions' subcollection
           if (db) {
              const subsRef = collection(db, 'users', currentUser.uid, 'subscriptions');
@@ -73,13 +77,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (unsubscribeSubscriptions) {
               unsubscribeSubscriptions();
           }
+          if (unsubscribeForegroundMessages) {
+              unsubscribeForegroundMessages();
+              unsubscribeForegroundMessages = undefined;
+          }
         }
       } catch (error) { console.error("Error fetching user profile:", error); setUser(currentUser); setUserTier('free'); } finally {
         setLoading(false);
       }
     });
 
-    return () => { unsubscribeAuth(); if (unsubscribeSubscriptions) { unsubscribeSubscriptions(); }
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSubscriptions) { unsubscribeSubscriptions(); }
+      if (unsubscribeForegroundMessages) { unsubscribeForegroundMessages(); }
     };
   }, []);
 

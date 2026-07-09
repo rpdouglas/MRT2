@@ -92,3 +92,10 @@ Phase 5: Edge Cases
 [ ] Dropdown Integrity: Verify that clicking the dropdown chevron on Button 2 does not accidentally trigger the main button's external link routing.
 
 [ ] Opt-Out Test: Toggle off the notifications in the Profile settings. Verify the ! badges disappear instantly from the Dashboard.
+
+6. Addendum (2026-07-09): Intent Card Descoped 🔻
+The spec above (Phase 2 Card 3, Phase 3 Action 3, and the `notifyIntent` toggle in Phase 4) called for a third Quick Action Bar card — an inline "Intent" input that created a task with `source: 'anchor_intent'`. This card was never built: `DynamicAnchorWidget.tsx` shipped with only 2 cards (`grid-cols-2`, Check-In + Reading), while `notifyIntent`, `needsIntent` (in `useAnchorStatus.ts`), and the `anchor_intent` task source remained in the codebase as dead code behind a live-looking Profile toggle for over two months without ever having an effect.
+
+Status correction: despite the header above, this project was **not fully completed** as specced — the QA checkboxes in Section 5 were never checked off, which is consistent with Card 3 never shipping.
+
+Decision (2026-07-09): descope and remove Card 3 entirely rather than build it. `notifyIntent`, `needsIntent`, and `Task.source: 'anchor_intent'` were deleted as part of the notification-system remediation (see `docs/projects/26_THE_BEACON.md`). The Quick Action Bar remains a 2-card layout (Check-In, Reading) going forward. Any future revival of an "Intent" concept should be scoped as a new ticket, not a resurrection of this dead code.
