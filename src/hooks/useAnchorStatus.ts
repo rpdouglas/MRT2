@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimeOfDay } from './useTimeOfDay';
-import { type JournalEntry, type Task, type UserProfile, getProfile } from '../lib/db';
+import { type JournalEntry, type UserProfile, getProfile } from '../lib/db';
 import { isToday } from 'date-fns';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, type Firestore } from 'firebase/firestore';
@@ -25,7 +25,7 @@ export function useAnchorStatus() {
         if (!user || !db) return [];
         const database: Firestore = db;
         const q = query(
-            collection(database, 'journals'), 
+            collection(database, 'journals'),
             where('uid', '==', user.uid),
             orderBy('createdAt', 'desc')
         );
@@ -38,23 +38,10 @@ export function useAnchorStatus() {
     enabled: !!user,
   });
 
-  const { data: tasks } = useQuery<Task[]>({
-    queryKey: ['tasks', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return [];
-        const database: Firestore = db;
-        const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
-        const snap = await getDocs(q);
-        return snap.docs.map(d => d.data()) as Task[];
-    },
-    enabled: !!user,
-  });
-
-  if (!user || !profile || !journals || !tasks) {
+  if (!user || !profile || !journals) {
     return {
       needsCheckIn: false,
       needsReading: false,
-      needsIntent: false,
     };
   }
 
@@ -63,7 +50,7 @@ export function useAnchorStatus() {
     if (!entry.createdAt) return false;
     const date = entry.createdAt.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt as unknown as string);
     if (!isToday(date)) return false;
-    
+
     const tags = entry.tags || [];
     return tags.includes('Anchor') && tags.includes(timeOfDay);
   });
@@ -72,27 +59,13 @@ export function useAnchorStatus() {
   const lastReading = profile.anchorSettings?.lastReadingDate;
   const hasReading = lastReading ? isToday(new Date(lastReading)) : false;
 
-  // Intent: Does a task exist created today with source: 'anchor_intent'?
-  const hasIntent = tasks.some(task => {
-    if (!task.createdAt) return false;
-    const date = task.createdAt instanceof Date 
-      ? task.createdAt 
-      : (task.createdAt as unknown as { toDate?: () => Date }).toDate 
-        ? (task.createdAt as unknown as { toDate: () => Date }).toDate() 
-        : new Date(task.createdAt as unknown as string);
-    if (!isToday(date)) return false;
-    return task.source === 'anchor_intent';
-  });
-
   const settings = profile.anchorSettings || {
     notifyCheckIn: true,
     notifyReading: true,
-    notifyIntent: true,
   };
 
   return {
     needsCheckIn: settings.notifyCheckIn !== false && !hasCheckIn,
     needsReading: settings.notifyReading !== false && !hasReading,
-    needsIntent: settings.notifyIntent !== false && !hasIntent,
   };
 }
