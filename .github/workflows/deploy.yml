@@ -28,7 +28,14 @@ jobs:
       # GATE 2: Unit Tests (Logic)
       - name: Unit Tests
         run: npm run test:watch -- --run # Runs once and exits
-  
+
+      # GATE 3: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Functions Unit Tests
+        run: npm test --prefix functions
+
   # --- JOB 2: BUILD & DEPLOY (Only if Verify passes) ---
   deploy:
     needs: verify
