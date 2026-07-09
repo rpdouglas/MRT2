@@ -3,8 +3,9 @@
  * PROJ-26: The Beacon (Push Notification Engine)
  * Handles Firebase Cloud Messaging client-side token generation and permission requests.
  */
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, isSupported, onMessage, type Unsubscribe } from "firebase/messaging";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { toast } from "sonner";
 import app, { db } from "./firebase";
 
 const FCM_SW_VERSION = 2;
@@ -56,4 +57,18 @@ export async function refreshFcmTokenIfStale(uid: string, fcmSwVersion: number |
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         await requestNotificationPermission(uid);
     }
+}
+
+// Displays an in-app toast for pushes that arrive while the tab is focused — background
+// messages are already handled by public/firebase-messaging-sw.js's onBackgroundMessage.
+export async function listenForForegroundMessages(): Promise<Unsubscribe | undefined> {
+    const supported = await isSupported();
+    if (!supported) return undefined;
+
+    const messaging = getMessaging(app);
+    return onMessage(messaging, (payload) => {
+        const title = payload.notification?.title || 'Notification';
+        const body = payload.notification?.body;
+        toast(title, body ? { description: body } : undefined);
+    });
 }

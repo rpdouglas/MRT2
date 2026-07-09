@@ -55,10 +55,12 @@ export interface UserProfile {
   fcmTokens?: string[];
   fcmSwVersion?: number;
   timezone?: string;
+  // Push opt-out — distinct from anchorSettings.notify* below, which only controls
+  // in-app dashboard badge visibility, not server-sent push. Defaults to true when unset.
+  pushNotificationsEnabled?: boolean;
   anchorSettings?: {
     notifyCheckIn: boolean;
     notifyReading: boolean;
-    notifyIntent: boolean;
     lastReadingDate?: string;
     defaultFellowship?: string;
   };
@@ -107,7 +109,7 @@ export interface Task {
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
   lastCompletedAt?: Timestamp | Date | null; 
-  source?: 'manual' | 'ai' | 'anchor_intent';
+  source?: 'manual' | 'ai';
   sourceContext?: string;   // AI-generated one-sentence insight summary. Plaintext. Only on source === 'ai'.
   sourceRef?: string;       // Reference for deep-linking back to source (workbook or insight).
   missedCountHistory?: number[]; // Appended per lazy-eval cycle (arrayUnion). Each element = days missed in that cycle.

@@ -10,7 +10,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp, type QueryDocumentSnapshot, type DocumentData } from "firebase-admin/firestore";
 import { getMessaging, TokenMessage } from "firebase-admin/messaging";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getAuth } from "firebase-admin/auth";
@@ -34,14 +34,14 @@ const APP_URL = process.env.APP_URL ?? "https://mrt2-app-prod.web.app";
 
 const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
 
-function getMilestone(totalDays: number): number | null {
+export function getMilestone(totalDays: number): number | null {
     if (totalDays <= 0) return null;
     if (STANDARD_MILESTONES.includes(totalDays)) return totalDays;
     if (totalDays % 365 === 0) return totalDays;
     return null;
 }
 
-function getMilestoneLabel(totalDays: number): string {
+export function getMilestoneLabel(totalDays: number): string {
     if (totalDays === 1) return "24 Hours";
     if (totalDays === 7) return "1 Week";
     if (totalDays === 30) return "1 Month";
@@ -50,6 +50,115 @@ function getMilestoneLabel(totalDays: number): string {
         return `${years} Year${years > 1 ? "s" : ""}`;
     }
     return `${totalDays} Days`;
+}
+
+export interface BeaconAlert { title: string; body: string; }
+
+export function computeMilestoneAlert(sobrietyDate: Timestamp | undefined, startOfTodayUTC: Date): BeaconAlert | null {
+    if (!sobrietyDate) return null;
+    const sobDate = sobrietyDate.toDate();
+    const sobStartUTC = new Date(Date.UTC(sobDate.getUTCFullYear(), sobDate.getUTCMonth(), sobDate.getUTCDate()));
+    const diffTime = Math.abs(startOfTodayUTC.getTime() - sobStartUTC.getTime());
+    const daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const milestone = getMilestone(daysClean);
+    if (!milestone) return null;
+    return {
+        title: "🎉 Milestone Reached!",
+        body: `Happy ${getMilestoneLabel(milestone)}! Tap to view your new medallion.`,
+    };
+}
+
+export function computeHabitAlert(pendingTaskCount: number): BeaconAlert | null {
+    if (pendingTaskCount <= 0) return null;
+    return {
+        title: "Keep the Fire Alive 🔥",
+        body: `You have ${pendingTaskCount} habit${pendingTaskCount > 1 ? "s" : ""} to complete today.`,
+    };
+}
+
+export interface BeaconUserDoc { id: string; data: () => DocumentData; }
+
+export interface BeaconBatchResult {
+    messages: TokenMessage[];
+    tokenToUid: Map<string, string>;
+    usersProcessed: number;
+    usersFailed: number;
+}
+
+// Isolated per-user so one malformed record (e.g. a bad sobrietyDate) can't abort
+// processing for every user that comes after it in the batch.
+export async function processUserBatch(
+    userDocs: BeaconUserDoc[],
+    startOfTodayUTC: Date,
+    getPendingTaskCount: (uid: string) => Promise<number>
+): Promise<BeaconBatchResult> {
+    const messages: TokenMessage[] = [];
+    const tokenToUid = new Map<string, string>();
+    let usersProcessed = 0;
+    let usersFailed = 0;
+
+    for (const userDoc of userDocs) {
+        usersProcessed++;
+        const uid = userDoc.id;
+        try {
+            const userData = userDoc.data();
+            const tokens: string[] = (userData.fcmTokens as string[]) || [];
+            if (tokens.length === 0) continue;
+
+            tokens.forEach((token) => tokenToUid.set(token, uid));
+
+            let alert = computeMilestoneAlert(userData.sobrietyDate as Timestamp | undefined, startOfTodayUTC);
+            if (!alert) {
+                const pendingCount = await getPendingTaskCount(uid);
+                alert = computeHabitAlert(pendingCount);
+            }
+
+            if (alert) {
+                const { title, body } = alert;
+                tokens.forEach((token) => {
+                    messages.push({
+                        token,
+                        notification: { title, body },
+                        data: { click_action: `${APP_URL}/dashboard` },
+                        webpush: { fcmOptions: { link: `${APP_URL}/dashboard` } },
+                    });
+                });
+            }
+        } catch (userError) {
+            usersFailed++;
+            logger.error(`dailyBeacon: failed to process user ${uid}`, userError);
+        }
+    }
+
+    return { messages, tokenToUid, usersProcessed, usersFailed };
+}
+
+interface BeaconSendResponse { success: boolean; error?: { code?: string }; }
+
+// Maps each failed, permanently-invalid token back to its owning uid so dead tokens
+// can be pruned from Firestore without re-scanning every fetched user doc.
+export function identifyStaleTokensByUser(
+    responses: BeaconSendResponse[],
+    tokens: string[],
+    tokenToUid: Map<string, string>
+): Map<string, string[]> {
+    const staleTokensMap = new Map<string, string[]>();
+    responses.forEach((resp, idx) => {
+        if (resp.success) return;
+        const failedToken = tokens[idx];
+        const errorCode = resp.error?.code;
+        if (
+            errorCode === "messaging/invalid-registration-token" ||
+            errorCode === "messaging/registration-token-not-registered"
+        ) {
+            const uid = tokenToUid.get(failedToken);
+            if (uid) {
+                if (!staleTokensMap.has(uid)) staleTokensMap.set(uid, []);
+                staleTokensMap.get(uid)?.push(failedToken);
+            }
+        }
+    });
+    return staleTokensMap;
 }
 
 // ─── PROJ-42 constants & helpers ──────────────────────────────────────────────
@@ -248,6 +357,9 @@ async function generateForModality(
 
 // ─── PROJ-26: Daily Beacon ─────────────────────────────────────────────────────
 
+const BEACON_USER_BATCH_SIZE = 300;
+const BEACON_BATCH_WARN_THRESHOLD = 20;
+
 export const dailyBeacon = onSchedule({
     schedule: "0 12 * * *",
     timeoutSeconds: 300,
@@ -257,70 +369,60 @@ export const dailyBeacon = onSchedule({
     logger.info("Starting Daily Beacon execution...", { time: new Date().toISOString() });
 
     try {
-        const usersSnap = await db.collection("users")
-            .where("fcmTokens", "!=", [])
-            .get();
-
-        if (usersSnap.empty) {
-            logger.info("No users with active tokens found. Exiting.");
-            return;
-        }
-
         const now = new Date();
         const startOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
         const endOfTodayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
         const messagesToSend: TokenMessage[] = [];
-        const staleTokensMap = new Map<string, string[]>();
+        // Maps each dispatched token back to its owning uid, so a failed send can be pruned
+        // without re-scanning every fetched user doc (also survives pagination below).
+        const tokenToUid = new Map<string, string>();
+        let usersProcessed = 0;
+        let usersFailed = 0;
+        let batchesProcessed = 0;
+        let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined;
 
-        for (const userDoc of usersSnap.docs) {
-            const userData = userDoc.data();
-            const uid = userDoc.id;
-            const tokens: string[] = userData.fcmTokens || [];
+        // Paginated so a growing user base can't blow past the function's timeout/memory
+        // budget with a single unbounded query.
+        for (;;) {
+            let usersQuery = db.collection("users")
+                .where("fcmTokens", "!=", [])
+                .limit(BEACON_USER_BATCH_SIZE);
+            if (lastDoc) {
+                usersQuery = usersQuery.startAfter(lastDoc);
+            }
 
-            if (tokens.length === 0) continue;
+            const usersSnap = await usersQuery.get();
+            if (usersSnap.empty) break;
 
-            let title = "Daily Check-in";
-            let body = "Take a moment for your recovery today.";
-            let hasAlert = false;
+            batchesProcessed++;
+            if (batchesProcessed === BEACON_BATCH_WARN_THRESHOLD) {
+                logger.warn(`dailyBeacon: processed ${batchesProcessed} batches (${usersProcessed} users so far) — consider a fan-out/pub-sub architecture if this keeps growing.`);
+            }
 
-            if (userData.sobrietyDate) {
-                const sobDate = (userData.sobrietyDate as Timestamp).toDate();
-                const sobStartUTC = new Date(Date.UTC(sobDate.getUTCFullYear(), sobDate.getUTCMonth(), sobDate.getUTCDate()));
-                const diffTime = Math.abs(startOfTodayUTC.getTime() - sobStartUTC.getTime());
-                const daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const milestone = getMilestone(daysClean);
-                if (milestone) {
-                    title = "🎉 Milestone Reached!";
-                    body = `Happy ${getMilestoneLabel(milestone)}! Tap to view your new medallion.`;
-                    hasAlert = true;
+            const batchResult = await processUserBatch(
+                usersSnap.docs,
+                startOfTodayUTC,
+                async (uid) => {
+                    const tasksSnap = await db.collection("tasks")
+                        .where("uid", "==", uid)
+                        .where("status", "==", "pending")
+                        .where("dueDate", "<=", Timestamp.fromDate(endOfTodayUTC))
+                        .get();
+                    return tasksSnap.size;
                 }
-            }
+            );
+            messagesToSend.push(...batchResult.messages);
+            batchResult.tokenToUid.forEach((uid, token) => tokenToUid.set(token, uid));
+            usersProcessed += batchResult.usersProcessed;
+            usersFailed += batchResult.usersFailed;
 
-            if (!hasAlert) {
-                const tasksSnap = await db.collection("tasks")
-                    .where("uid", "==", uid)
-                    .where("status", "==", "pending")
-                    .where("dueDate", "<=", Timestamp.fromDate(endOfTodayUTC))
-                    .get();
+            lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
+            if (usersSnap.size < BEACON_USER_BATCH_SIZE) break;
+        }
 
-                if (!tasksSnap.empty) {
-                    title = "Keep the Fire Alive 🔥";
-                    body = `You have ${tasksSnap.size} habit${tasksSnap.size > 1 ? "s" : ""} to complete today.`;
-                    hasAlert = true;
-                }
-            }
-
-            if (hasAlert) {
-                tokens.forEach((token) => {
-                    messagesToSend.push({
-                        token,
-                        notification: { title, body },
-                        data: { click_action: `${APP_URL}/dashboard` },
-                        webpush: { fcmOptions: { link: `${APP_URL}/dashboard` } },
-                    });
-                });
-            }
+        if (usersFailed > 0) {
+            logger.warn(`dailyBeacon: ${usersFailed} of ${usersProcessed} users failed processing and were skipped.`);
         }
 
         if (messagesToSend.length === 0) {
@@ -333,25 +435,11 @@ export const dailyBeacon = onSchedule({
         logger.info(`Sent ${batchResponse.successCount}. Failed: ${batchResponse.failureCount}`);
 
         if (batchResponse.failureCount > 0) {
-            batchResponse.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    const failedToken = messagesToSend[idx].token;
-                    const errorCode = resp.error?.code;
-                    if (
-                        errorCode === "messaging/invalid-registration-token" ||
-                        errorCode === "messaging/registration-token-not-registered"
-                    ) {
-                        const targetUserDoc = usersSnap.docs.find((d) =>
-                            (d.data().fcmTokens || []).includes(failedToken)
-                        );
-                        if (targetUserDoc) {
-                            const uid = targetUserDoc.id;
-                            if (!staleTokensMap.has(uid)) staleTokensMap.set(uid, []);
-                            staleTokensMap.get(uid)?.push(failedToken);
-                        }
-                    }
-                }
-            });
+            const staleTokensMap = identifyStaleTokensByUser(
+                batchResponse.responses,
+                messagesToSend.map((m) => m.token),
+                tokenToUid
+            );
 
             const batch = db.batch();
             let pruneCount = 0;

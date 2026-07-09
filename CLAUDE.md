@@ -60,7 +60,7 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 
 | Collection | Encrypted? | Notes |
 |---|---|---|
-| `users/{uid}` | ❌ No | Profile metadata only |
+| `users/{uid}` | ❌ No | Profile metadata only. Includes `fcmTokens`, `fcmSwVersion`, `timezone`, `pushNotificationsEnabled` (push device/preference metadata, PROJ-26) and `anchorSettings` (dashboard badge preferences, PROJ-41) — none of it recovery content, so it's correctly unencrypted |
 | `journals/{id}` | ✅ Yes (content) | mood/tags/timestamps are plaintext |
 | `workbook_answers/{id}` | ✅ Yes | |
 | `service/{id}` | ✅ Yes | Sponsee notes |
