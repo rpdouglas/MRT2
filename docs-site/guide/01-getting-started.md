@@ -6,7 +6,7 @@ Welcome to My Recovery Toolkit (MRT). We believe that the hardest work you do sh
 When you first create an account, MRT requires you to set up your basic identity profile.
 1. **Create Account:** Use Email/Password or Google Sign-In.
 2. **Profile Setup:** You will be automatically redirected to your Profile. You must enter your **Display Name** and your **Sobriety Date** to continue. *(The app uses your Sobriety Date to calculate milestones and gamification XP).*
-3. **Save:** Click "Save Changes" to unlock the Dashboard.
+3. **Save:** Click "Complete Setup" to unlock the Dashboard.
 
 ## 🔒 Securing Your Vault
 MRT uses **Zero-Knowledge Encryption**. This means your journals and workbook answers are mathematically scrambled on your device *before* they are sent to the cloud.

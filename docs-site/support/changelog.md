@@ -1,5 +1,12 @@
 # 🚀 Changelog
 
+## [v1.8.7] - 2026-07-10
+### 🛠️ Profile Settings Reliability
+- **Autosave [PROJ-58]:** Profile → General now saves every field automatically as you type or toggle it — no more "Save Changes" button to remember to click, matching how Hero Appearance and Reading preferences already worked.
+- **Reset Vault Dialog [PROJ-58]:** The "Destroy & Reset Vault" confirmation is now a proper in-app dialog (matching the account deletion flow) instead of a plain browser pop-up.
+- **Direct Links [PROJ-58]:** Profile's Security and Data tabs are now real, shareable links (`/profile/security`, `/profile/data`) instead of hidden behind in-page tab state.
+- **Clearer Errors [PROJ-58]:** Failed data imports now explain what went wrong (bad file, permission issue, connection problem) instead of a generic "check console" message.
+
 ## [v1.8.6] - 2026-07-10
 ### ✨ Journal Template Modality Expansion
 - **11 New Templates [PROJ-57]:** The journal template picker now covers 11 recovery modalities beyond Twelve-Step — CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, and General — for 15 templates total, grouped by modality in the picker.

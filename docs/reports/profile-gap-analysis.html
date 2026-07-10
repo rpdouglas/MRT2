@@ -1,0 +1,409 @@
+<title>Profile Section — UX Gap Analysis</title>
+<style>
+  :root{
+    --bg:#f5f7f6;
+    --surface:#ffffff;
+    --surface-2:#eef1ef;
+    --text:#1b2422;
+    --text-muted:#57635d;
+    --border:#dde3df;
+    --accent:#22647f;
+    --accent-soft:#dceaee;
+    --accent-ink:#0f3a4a;
+    --crit:#a8432a;
+    --crit-soft:#f6e3dc;
+    --mod:#a3781f;
+    --mod-soft:#f4ecd8;
+    --min:#3f7d5c;
+    --min-soft:#e2efe7;
+    --shadow: 0 1px 2px rgba(20,30,28,0.06), 0 8px 24px -12px rgba(20,30,28,0.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12181a;
+      --surface:#1a2224;
+      --surface-2:#212b2d;
+      --text:#e8edea;
+      --text-muted:#9dabA4;
+      --border:#2b3638;
+      --accent:#7cbcd4;
+      --accent-soft:#1f3a44;
+      --accent-ink:#cfeaf4;
+      --crit:#e3906f;
+      --crit-soft:#3a271f;
+      --mod:#e0bb6b;
+      --mod-soft:#3a3220;
+      --min:#8fc9a8;
+      --min-soft:#22332a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12181a; --surface:#1a2224; --surface-2:#212b2d; --text:#e8edea; --text-muted:#9dabA4;
+    --border:#2b3638; --accent:#7cbcd4; --accent-soft:#1f3a44; --accent-ink:#cfeaf4;
+    --crit:#e3906f; --crit-soft:#3a271f; --mod:#e0bb6b; --mod-soft:#3a3220; --min:#8fc9a8; --min-soft:#22332a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"]{
+    --bg:#f5f7f6; --surface:#ffffff; --surface-2:#eef1ef; --text:#1b2422; --text-muted:#57635d;
+    --border:#dde3df; --accent:#22647f; --accent-soft:#dceaee; --accent-ink:#0f3a4a;
+    --crit:#a8432a; --crit-soft:#f6e3dc; --mod:#a3781f; --mod-soft:#f4ecd8; --min:#3f7d5c; --min-soft:#e2efe7;
+    --shadow: 0 1px 2px rgba(20,30,28,0.06), 0 8px 24px -12px rgba(20,30,28,0.12);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    line-height:1.55;
+    max-width:100%;
+    margin:0;
+    padding:0 20px 96px;
+  }
+  ::selection{ background:var(--accent-soft); }
+  a{ color:var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px; border-radius:2px;
+  }
+
+  .wrap{ max-width:820px; margin:0 auto; }
+
+  .masthead{
+    padding:56px 0 28px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 14px;
+  }
+  h1{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:clamp(28px,4.2vw,40px);
+    font-weight:700;
+    letter-spacing:-0.01em;
+    line-height:1.12;
+    margin:0 0 14px;
+    text-wrap:balance;
+    color:var(--text);
+  }
+  .dek{
+    font-size:17px;
+    color:var(--text-muted);
+    max-width:62ch;
+    margin:0 0 20px;
+  }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:8px 22px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:13px; color:var(--text-muted);
+  }
+  .meta-row b{ color:var(--text); font-weight:600; }
+
+  section{ padding:40px 0; border-bottom:1px solid var(--border); }
+  section:last-of-type{ border-bottom:none; }
+
+  h2{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:22px; font-weight:700; letter-spacing:-0.005em;
+    margin:0 0 6px; color:var(--text);
+  }
+  .section-note{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:13.5px; color:var(--text-muted); margin:0 0 24px; max-width:64ch;
+  }
+
+  /* stat strip */
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+  }
+  .stat{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:16px 16px 14px; box-shadow:var(--shadow);
+  }
+  .stat .num{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric:tabular-nums; font-weight:700; font-size:26px; color:var(--accent-ink);
+    background:none;
+  }
+  .stat .label{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:12.5px; color:var(--text-muted); margin-top:4px; line-height:1.35;
+  }
+
+  /* persona grid */
+  .personas{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .persona{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px;
+  }
+  .persona .name{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-weight:700; font-size:14.5px; margin-bottom:6px; color:var(--text);
+  }
+  .persona .name span{ font-weight:400; color:var(--text-muted); }
+  .persona p{ margin:0; font-size:14.5px; color:var(--text-muted); }
+  .persona .verdict{
+    display:inline-block; margin-top:10px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:11.5px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+    padding:2px 8px; border-radius:999px;
+  }
+  .verdict.ok{ background:var(--min-soft); color:var(--min); }
+  .verdict.gap{ background:var(--crit-soft); color:var(--crit); }
+  .verdict.partial{ background:var(--mod-soft); color:var(--mod); }
+
+  /* findings */
+  .finding{
+    display:grid; grid-template-columns:auto 1fr; gap:14px 16px;
+    padding:18px 0; border-top:1px solid var(--border);
+  }
+  .finding:first-of-type{ border-top:none; padding-top:6px; }
+  .chip{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    padding:4px 9px; border-radius:5px; white-space:nowrap; height:fit-content;
+  }
+  .chip.crit{ background:var(--crit-soft); color:var(--crit); }
+  .chip.mod{ background:var(--mod-soft); color:var(--mod); }
+  .chip.min{ background:var(--min-soft); color:var(--min); }
+  .finding h3{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:15.5px; font-weight:700; margin:0 0 6px; color:var(--text);
+  }
+  .finding p{ margin:0 0 8px; font-size:15.5px; }
+  .finding p:last-child{ margin-bottom:0; }
+  .finding .where{
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size:12.5px; color:var(--text-muted); background:var(--surface-2);
+    padding:1px 6px; border-radius:4px;
+  }
+  .finding .why{
+    font-size:13.5px; color:var(--text-muted); font-style:italic;
+  }
+
+  /* priority table */
+  .priority{ width:100%; border-collapse:collapse; font-size:15px; }
+  .priority th{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;
+    color:var(--text-muted); text-align:left; padding:8px 12px; border-bottom:2px solid var(--border);
+  }
+  .priority td{ padding:12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .priority tr:last-child td{ border-bottom:none; }
+  .priority .rank{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric:tabular-nums; font-weight:700; color:var(--accent-ink); width:1%;
+  }
+
+  /* file inventory */
+  .scroll-x{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+  table.files{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:600px; }
+  table.files th{
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700;
+    color:var(--text-muted); text-align:left; padding:9px 12px; background:var(--surface-2);
+    position:sticky; top:0;
+  }
+  table.files td{ padding:9px 12px; border-top:1px solid var(--border); }
+  table.files td:first-child{ font-family: ui-monospace, 'SF Mono', Menlo, monospace; white-space:nowrap; color:var(--accent-ink); }
+
+  details{ margin-top:18px; }
+  summary{
+    cursor:pointer;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-weight:700; font-size:14px; color:var(--accent);
+    padding:8px 0;
+  }
+
+  footer{
+    padding:36px 0 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size:12.5px; color:var(--text-muted);
+  }
+
+  @media (max-width:520px){
+    .finding{ grid-template-columns:1fr; }
+    .chip{ width:fit-content; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">MRT · Gap Analysis · Lightweight Review</p>
+    <h1>Profile Section: Frictionless-Operation Audit</h1>
+    <p class="dek">A read-only pass through <code>Profile.tsx</code> and every sub-component, hook, and route it touches — scored for friction, consistency, and layout sense against the app's own personas.</p>
+    <div class="meta-row">
+      <span><b>Scope</b> General / Security / Data tabs, entry routing, 8 hooks &amp; contexts</span>
+      <span><b>Method</b> Full-file read, no code changed</span>
+      <span><b>Findings</b> 7 flagged, ranked below</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>At a glance</h2>
+    <p class="section-note">The numbers that matter most before reading the detail.</p>
+    <div class="stats">
+      <div class="stat"><div class="num">3</div><div class="label">different save models on one General tab, with no visual distinction</div></div>
+      <div class="stat"><div class="num">1</div><div class="label">flat route — no deep link to Security or Data sub-tabs</div></div>
+      <div class="stat"><div class="num">36px</div><div class="label">hero-colour swatch target, below the app's own 44px rule</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">confirmation UI patterns for the app's two most destructive actions</div></div>
+      <div class="stat"><div class="num">0</div><div class="label">sponsor/sponsee connection surface for the Lisa persona</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Persona fit</h2>
+    <p class="section-note">CLAUDE.md's own test: does this screen serve the person it names?</p>
+    <div class="personas">
+      <div class="persona">
+        <div class="name">David <span>— crisis, max 3 taps</span></div>
+        <p>Profile correctly stays out of his critical path; SOS lives outside it. His one real dependency — the sponsor phone number — is a plain, unvalidated text field with no reachability check.</p>
+        <span class="verdict partial">Partial</span>
+      </div>
+      <div class="persona">
+        <div class="name">Ned <span>— gamification, streaks</span></div>
+        <p>Hero-colour and badge toggles are low-friction and instant-save, appropriately playful without leaking gamification clutter from the Dashboard.</p>
+        <span class="verdict ok">Good fit</span>
+      </div>
+      <div class="persona">
+        <div class="name">Walt <span>— data, legibility, exports</span></div>
+        <p>JSON/PDF export and Drive sync satisfy the sovereignty test, but import failures dump the user to devtools, and swatch targets sit under his 44px floor.</p>
+        <span class="verdict partial">Partial</span>
+      </div>
+      <div class="persona">
+        <div class="name">Lisa <span>— sponsor, service, boundaries</span></div>
+        <p>No sponsor-mode, no sponsee list, no capacity indicator anywhere near account settings. This persona has zero footprint in Profile.</p>
+        <span class="verdict gap">Gap</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Ranked findings</h2>
+    <p class="section-note">Highest-impact first. Severity reflects risk of silent data loss or a broken product rule, not visual polish alone.</p>
+
+    <div class="finding">
+      <span class="chip crit">Critical</span>
+      <div>
+        <h3>Three incompatible save models share one page</h3>
+        <p>Identity, sobriety date, financial fields, and Dashboard Badge toggles all wait for the bottom <span class="where">Save Changes</span> button. Push Notifications and Hero Appearance save instantly on click. Reading modality also saves instantly. Nothing on screen signals which bucket a control belongs to.</p>
+        <p class="why">Why it matters: a user can toggle a badge, watch a swatch "take" instantly nearby, reasonably assume everything saved, and navigate away — losing the badge and any identity edits with no warning.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip crit">Critical</span>
+      <div>
+        <h3>Profile bypasses the app's own data-flow rule</h3>
+        <p><span class="where">Profile.tsx</span> reads/writes via local <span class="where">useState</span> + direct <span class="where">getProfile()</span>/<span class="where">updateDoc</span> calls, never through TanStack Query. Meanwhile <span class="where">useAnchorStatus.ts</span> — which drives the Dashboard's badge widget — reads the same <span class="where">['profile', uid]</span> cache key <em>through</em> <span class="where">useQuery</span>.</p>
+        <p class="why">Why it matters: toggling a Dashboard Badge off in Profile may not hide it on the Dashboard until the query's staleTime expires — a real, testable inconsistency, and a direct violation of CLAUDE.md's "all Firestore ops through TanStack Query" rule.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip mod">Moderate</span>
+      <div>
+        <h3>Two destructive actions, two confirmation patterns</h3>
+        <p>Vault reset ("Danger Zone") confirms via a native <span class="where">window.prompt()</span> asking the user to type RESET. Account deletion uses a fully styled Headless-UI dialog with staged re-auth. Both are appropriately serious — but they don't look like they belong to the same app, and native prompts render inconsistently in standalone iOS PWA mode.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip mod">Moderate</span>
+      <div>
+        <h3>No deep link into Security or Data</h3>
+        <p>Sub-sections are client-side tab state on a single flat <span class="where">/profile</span> route, not distinct URLs. A support email or push notification can't land a user directly on Security; the back button doesn't step between tabs either.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip mod">Moderate</span>
+      <div>
+        <h3>Errors get swallowed behind a success message</h3>
+        <p>The nested <span class="where">anchorSettings</span> write and the auth <span class="where">displayName</span> sync inside <span class="where">handleSave</span> both catch failures into <span class="where">console.warn</span> only. The user sees "Profile updated successfully" even when part of the save silently failed. Separately, import errors surface as "Check console for details" — a dead end for non-technical users.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip mod">Moderate</span>
+      <div>
+        <h3>Lisa has no surface here</h3>
+        <p>The only "sponsor" concept in Profile is a plain name/phone pair the user enters for their <em>own</em> SOS contact — not a sponsee roster, connection request, or capacity indicator. There is no entry point into a Service Module from account settings at all.</p>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="chip min">Minor</span>
+      <div>
+        <h3>Small polish gaps</h3>
+        <p>Hero-colour swatches render at 36px, under the design system's own 44px touch-target floor. <span class="where">AppShell.tsx</span> renders two near-duplicate "vault unlocked" banners with slightly different copy. The sobriety-date field accepts any date, past or future, with no client-side bound.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <h2>What's already working</h2>
+    <p class="section-note">Worth preserving, not just fixing what's broken.</p>
+    <div class="finding" style="border-top:none; padding-top:6px;">
+      <span class="chip min">Holding up</span>
+      <div>
+        <p>PIN rotation has clear, distinct error states for wrong PIN vs. mid-rotation interruption vs. generic failure, plus a real documented recovery path for partial failures. Account deletion's staged re-auth dialog correctly disables its own close button mid-shred so the operation can't be aborted halfway. Onboarding hides Security/Data until identity fields are complete, which is the right call for a first-run flow. Export/import correctly gates PDF behind tier without hiding that it exists.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Priority order</h2>
+    <div class="scroll-x">
+      <table class="priority">
+        <thead><tr><th>#</th><th>Finding</th><th>Fix effort</th></tr></thead>
+        <tbody>
+          <tr><td class="rank">1</td><td>Unify save behaviour on General tab — one pattern, or a visible "auto-saved" state per field</td><td>Small–Medium</td></tr>
+          <tr><td class="rank">2</td><td>Route Profile's own read/write through TanStack Query, matching sibling hooks</td><td>Medium</td></tr>
+          <tr><td class="rank">3</td><td>Replace native prompt/alert in vault reset with the existing Headless-UI dialog pattern</td><td>Small</td></tr>
+          <tr><td class="rank">4</td><td>Surface real errors instead of a blanket success message</td><td>Small</td></tr>
+          <tr><td class="rank">5</td><td>Nested routes for Security/Data if deep-linking is ever needed</td><td>Medium</td></tr>
+          <tr><td class="rank">6</td><td>Scope Lisa's sponsor/sponsee flow — likely belongs to Service Module, not Profile</td><td>Separate spec</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <details>
+      <summary>File inventory (17 files reviewed)</summary>
+      <div class="scroll-x" style="margin-top:12px;">
+        <table class="files">
+          <thead><tr><th>Path</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>src/pages/Profile.tsx</td><td>Main page — 3 tabs, identity, financial, sponsor, badges, push, colour, reading</td></tr>
+            <tr><td>src/components/profile/DataManagement.tsx</td><td>Data tab — sync status, export, import, account deletion</td></tr>
+            <tr><td>src/components/readings/ModalitySelector.tsx</td><td>Reading-tradition checklist, embedded in General tab</td></tr>
+            <tr><td>src/hooks/useHeroColor.ts</td><td>Optimistic mutation for appearance swatch</td></tr>
+            <tr><td>src/hooks/useReadingPreferences.ts</td><td>Query + mutation for reading modality selection</td></tr>
+            <tr><td>src/hooks/useAnchorStatus.ts</td><td>Reads same profile cache key to drive Dashboard badges</td></tr>
+            <tr><td>src/contexts/AuthContext.tsx</td><td>Session, tier, reauth, deleteAccount, logout</td></tr>
+            <tr><td>src/contexts/EncryptionContext.tsx</td><td>Vault lock state, changePin, resetVault</td></tr>
+            <tr><td>src/lib/db.ts</td><td>UserProfile type and raw Firestore access</td></tr>
+            <tr><td>src/lib/rotation.ts</td><td>PIN rotation / crypto-shredding execution</td></tr>
+            <tr><td>src/lib/deletion.ts</td><td>Account annihilation execution</td></tr>
+            <tr><td>src/lib/exporter.ts / importer.ts</td><td>Export/import engines</td></tr>
+            <tr><td>src/lib/messaging.ts</td><td>FCM permission + token logic</td></tr>
+            <tr><td>src/components/AppShell.tsx</td><td>Sidebar nav + vault banners linking into Profile</td></tr>
+            <tr><td>src/components/VaultGate.tsx</td><td>Vault lock/unlock, PIN recovery wizard</td></tr>
+            <tr><td>src/components/PremiumGate.tsx</td><td>Tier gate wrapping PDF export</td></tr>
+            <tr><td>src/App.tsx</td><td>Router — single flat /profile route</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <footer>
+    Lightweight review per your call — no spec file gate applied. Findings 1, 2, and 6 above are good candidates for a proper <code>docs/projects/XX_PROFILE_REVISION.md</code> spec if you want to act on them through the full planning protocol.
+  </footer>
+
+</div>

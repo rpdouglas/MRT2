@@ -92,23 +92,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <PWAInstallBanner />
       <PWAUpdateBeacon />
 
-      {hasDeferredVault && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center justify-between z-[40] relative animate-slideDown">
-          <div className="flex items-center gap-3">
-            <WarningIcon className="h-5 w-5 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800 font-medium leading-tight">
-              Your vault is unlocked. Data is unencrypted.
-            </p>
-          </div>
-          <Link 
-            to="/profile" 
-            className="text-xs font-bold bg-amber-200 text-amber-900 px-3 py-2 rounded-lg hover:bg-amber-300 transition-colors shrink-0 shadow-sm"
-          >
-            Secure Vault
-          </Link>
-        </div>
-      )}
-
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={setSidebarOpen}>
           <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" />
