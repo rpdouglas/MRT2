@@ -44,3 +44,4 @@ CLAUDE.local.md
 export_docs-docs-site.txt
 export_src_components-src_pages-src_contexts.txt
 export__docs_.txt
+.env
