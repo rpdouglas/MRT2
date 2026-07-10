@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, Fragment } from 'react';
+import posthog from 'posthog-js';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { Timestamp } from 'firebase/firestore';
@@ -296,6 +297,7 @@ export default function Profile() {
           console.warn("Failed to sync auth profile", authErr);
       }
 
+      posthog.capture('profile_saved', { is_onboarding: isOnboarding, has_sobriety_date: !!sobrietyDate });
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
