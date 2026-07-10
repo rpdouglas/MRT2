@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import posthog from 'posthog-js';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, ArrowRightIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
@@ -31,6 +32,8 @@ export default function WorkbookSession() {
         return { ...record, ...localEdits };
     }, [savedAnswers, localEdits]);
 
+    const sectionStartedRef = useRef(false);
+
     // 1. Load Static Workbook Content
     useEffect(() => {
         if (!workbookId || !sectionId) return;
@@ -41,6 +44,14 @@ export default function WorkbookSession() {
         const sec = wb.sections.find(s => s.id === sectionId);
         if (!sec) { navigate(`/workbooks/${workbookId}`); return; }
         setSection(sec);
+        if (!sectionStartedRef.current) {
+            sectionStartedRef.current = true;
+            posthog.capture('workbook_section_started', {
+                workbook_id: workbookId,
+                section_id: sectionId,
+                question_count: sec.questions.length,
+            });
+        }
     }, [workbookId, sectionId, navigate]);
 
     // Current Question Helpers
@@ -69,7 +80,18 @@ export default function WorkbookSession() {
     };
 
     // 3. Navigation
-    const handleNext = () => { if (!section) return; if (activeQuestionIndex < section.questions.length - 1) { setActiveQuestionIndex(prev => prev + 1); } else {
+    const handleNext = () => {
+        if (!section) return;
+        if (currentAnswer.trim()) {
+            posthog.capture('workbook_answer_saved', {
+                workbook_id: workbookId,
+                section_id: sectionId,
+                question_index: activeQuestionIndex,
+            });
+        }
+        if (activeQuestionIndex < section.questions.length - 1) {
+            setActiveQuestionIndex(prev => prev + 1);
+        } else {
             navigate(`/workbooks/${workbookId}`);
         }
     };

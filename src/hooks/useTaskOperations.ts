@@ -6,6 +6,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import * as TaskLib from "../lib/tasks";
+import posthog from "posthog-js";
 import { Timestamp } from "firebase/firestore";
 import { startOfDay, addDays, addWeeks, addMonths, isBefore } from "date-fns";
 import { calculateNextDueDate } from "../lib/dateUtils";
@@ -75,6 +76,13 @@ export function useTaskOperations() {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
+    },
+    onSuccess: (_data, variables) => {
+      posthog.capture('task_created', {
+        recurrence: variables.recurrence.type,
+        priority: variables.priority,
+        source: variables.source || 'manual',
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -147,6 +155,15 @@ export function useTaskOperations() {
     onError: (_err, _vars, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
+      }
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.isCompleting) {
+        posthog.capture('task_completed', {
+          recurrence: variables.task.recurrence?.type,
+          priority: variables.task.priority,
+          source: variables.task.source || 'manual',
+        });
       }
     },
     onSettled: () => {

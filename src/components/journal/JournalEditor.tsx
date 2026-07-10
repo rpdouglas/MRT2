@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import posthog from 'posthog-js';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
@@ -223,6 +224,13 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
       } else {
         await addJournal({ content: contentToSave, moodScore: mood, sentiment: 'Pending', weather: weather, tags: tags, isEncrypted: isEncrypted });
       }
+      posthog.capture('journal_entry_saved', {
+        is_edit: !!initialEntry,
+        mood_score: mood,
+        tag_count: tags.length,
+        used_template: !!activeTemplate,
+        has_weather: !!weather,
+      });
 
       setNewEntry('');
       setFormAnswers([]);

@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
 import { refreshFcmTokenIfStale, listenForForegroundMessages } from '../lib/messaging';
+import posthog from 'posthog-js';
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profile = await getOrCreateUserProfile(currentUser);
           setUser(currentUser);
           setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
+          posthog.identify(currentUser.uid, { tier: profile.tier || 'free' });
           refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
           if (!unsubscribeForegroundMessages) {
             listenForForegroundMessages().then((unsub) => { unsubscribeForegroundMessages = unsub; }).catch(console.error);
@@ -99,21 +101,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     provider.setCustomParameters({ prompt: 'select_account' });
-    
+
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (credential?.accessToken) {
       setDriveAccessToken(credential.accessToken);
     }
+    posthog.capture('user_logged_in', { method: 'google' });
   };
 
   const signupWithEmail = async (email: string, pass: string) => {
     if (!auth) throw new Error("Auth not initialized");
     const result = await createUserWithEmailAndPassword(auth, email, pass);
     await getOrCreateUserProfile(result.user);
+    posthog.identify(result.user.uid);
+    posthog.capture('user_signed_up', { method: 'email' });
   };
 
-  const loginWithEmail = async (email: string, pass: string) => { if (!auth) throw new Error("Auth not initialized"); await signInWithEmailAndPassword(auth, email, pass); };
+  const loginWithEmail = async (email: string, pass: string) => {
+    if (!auth) throw new Error("Auth not initialized");
+    await signInWithEmailAndPassword(auth, email, pass);
+    posthog.capture('user_logged_in', { method: 'email' });
+  };
 
   const reauthenticateWithEmail = async (password: string) => {
       if (!auth || !user || !user.email) throw new Error("Not authenticated");
@@ -130,7 +139,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); };
 
-  const logout = async () => { if (!auth) return; await signOut(auth); };
+  const logout = async () => {
+    if (!auth) return;
+    posthog.capture('user_logged_out');
+    posthog.reset();
+    await signOut(auth);
+  };
 
   const value = {
     user,
