@@ -176,6 +176,11 @@ export default function App() {
                                 <Profile />
                             </PrivateRoute>} />
 
+                        {/* Deep-linkable tab (Project 58 Phase 4) — /profile/general|security|data */}
+                        <Route path="/profile/:tab" element={<PrivateRoute>
+                                <Profile />
+                            </PrivateRoute>} />
+
                         <Route path="/premium" element={<PrivateRoute>
                                 <PremiumUpgrade />
                             </PrivateRoute>} />

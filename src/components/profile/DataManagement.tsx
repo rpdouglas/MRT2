@@ -13,6 +13,23 @@ import PremiumGate from '../PremiumGate';
 import VaultGate from '../VaultGate';
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, DocumentTextIcon, CodeBracketSquareIcon, ExclamationTriangleIcon, CheckCircleIcon, CloudArrowUpIcon, TrashIcon, ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
+// Replaces the old blanket "Check console for details" message — names the
+// likely cause where importLegacyJournals' rejection lets us tell, so a
+// non-technical user isn't sent to devtools for a routine "wrong file" mistake.
+function describeImportError(error: unknown): string {
+    if (error instanceof SyntaxError) {
+        return "Error: That file isn't valid JSON. Export a fresh backup from MRT and try that file instead.";
+    }
+    const err = error as { code?: string; message?: string };
+    if (err?.code === 'permission-denied') {
+        return "Error: You don't have permission to write this data. Try signing out and back in, then retry.";
+    }
+    if (err?.code === 'unavailable' || err?.message?.toLowerCase().includes('network')) {
+        return "Error: Lost connection during import. Check your network and try again.";
+    }
+    return "Error: Couldn't import this file. Confirm it's an MRT backup, or try exporting a fresh copy.";
+}
+
 export default function DataManagement() {
     const { user, driveAccessToken, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount } = useAuth();
     const { isVaultUnlocked } = useEncryption();
@@ -97,20 +114,20 @@ export default function DataManagement() {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !user) return;
-    
+
         if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
           setImportStatus('Error: Please select a valid JSON file.');
           return;
         }
-    
+
         setImporting(true);
         setImportStatus('Reading file and mapping data...');
-    
+
         try {
           const result = await importLegacyJournals(user.uid, file);
           setImportStatus(`Success! Imported ${result.success} entries. (${result.errors} skipped)`);
           if (fileInputRef.current) fileInputRef.current.value = '';
-        } catch (error) { console.error("Import failed", error); setImportStatus('Error: Import failed. Check console for details.'); } finally {
+        } catch (error) { console.error("Import failed", error); setImportStatus(describeImportError(error)); } finally {
           setImporting(false);
         }
     };
