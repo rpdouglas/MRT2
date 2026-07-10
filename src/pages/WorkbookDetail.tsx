@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { useState, useMemo, Fragment } from 'react';
+import posthog from 'posthog-js';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getWorkbook, type WorkbookSection } from '../data/workbooks';
@@ -46,6 +47,11 @@ export default function WorkbookDetail() {
 
   const handleAnalyze = async () => {
     if (!workbook) return;
+
+    posthog.capture('workbook_analysis_requested', {
+      workbook_id: workbook.id,
+      analysis_scope: analysisScope,
+    });
 
     setAnalyzing(true);
     setInsight(null);

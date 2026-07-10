@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import posthog from 'posthog-js';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { getProfile, updateProfileData } from '../lib/db';
@@ -177,6 +178,7 @@ export default function Profile() {
           console.warn("Failed to sync auth profile", authErr);
       }
 
+      posthog.capture('profile_saved', { is_onboarding: isOnboarding, has_sobriety_date: !!sobrietyDate });
       if (isOnboarding) {
           navigate('/dashboard');
       } else {
