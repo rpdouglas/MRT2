@@ -7,7 +7,7 @@ import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'fi
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
-import { DEFAULT_TEMPLATES } from '../../data/journalTemplates';
+import { DEFAULT_TEMPLATES, GROUP_ORDER } from '../../data/journalTemplates';
 import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
@@ -118,9 +118,16 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
   const handleTemplateSelect = useCallback((tId: string) => {
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
     if (defTemplate) {
-        setNewEntry(defTemplate.content); 
-        setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
-        setActiveTemplate(null);
+        if (defTemplate.content) {
+            setNewEntry(defTemplate.content);
+            setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
+            setActiveTemplate(null);
+        } else if (defTemplate.prompts) {
+            setActiveTemplate({ id: defTemplate.id, name: defTemplate.name, prompts: defTemplate.prompts, defaultTags: defTemplate.tags });
+            setFormAnswers(new Array(defTemplate.prompts.length).fill(''));
+            setNewEntry('');
+            setTags(prev => [...new Set([...prev, ...defTemplate.tags])]);
+        }
         return;
     }
 
@@ -262,9 +269,13 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                     >
                         <option value="" disabled>Choose Template...</option>
                         <option value="none">Free Write</option>
-                        <optgroup label="Standard">
-                            {DEFAULT_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                        </optgroup>
+                        {GROUP_ORDER.filter(group => DEFAULT_TEMPLATES.some(t => t.group === group)).map(group => (
+                            <optgroup key={group} label={group}>
+                                {DEFAULT_TEMPLATES.filter(t => t.group === group).map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </optgroup>
+                        ))}
                         {customTemplates.length > 0 && (
                             <optgroup label="My Templates">
                                 {customTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
