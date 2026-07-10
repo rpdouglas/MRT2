@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.6] - 2026-07-10
+### ✨ Journal Template Modality Expansion
+- **11 New Templates [PROJ-57]:** The journal template picker now covers 11 recovery modalities beyond Twelve-Step — CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, and General — for 15 templates total, grouped by modality in the picker.
+- **Guided Forms [PROJ-57]:** The new templates open as a short guided form (one labeled box per prompt) instead of a single free-text block. The original 4 Twelve-Step templates are unchanged.
+
 ## [v1.8.5] - 2026-07-08
 ### 🎨 Sobriety Hero Color Themes
 - **Feature [PROJ-56]:** Added a swatch button to the top-left of the dashboard sobriety hero, letting you pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly and reflected in any milestone image you share.

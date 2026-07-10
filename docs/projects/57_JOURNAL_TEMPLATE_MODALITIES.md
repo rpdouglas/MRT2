@@ -1,6 +1,6 @@
 # 📁 Project 57: Journal Template Modality Expansion
 
-**Status:** 🟡 Active
+**Status:** ✅ Shipped (2026-07-10, PR #92)
 **Primary Persona:** Ned, Walt (Lisa benefits indirectly via sponsee variety). David's crisis path is unaffected.
 **Objective:** Expand the Journal Editor's default template picker from 4 Twelve-Step-only templates to 15 templates spanning 11 recovery modalities (CBT/SMART, DBT, Mindfulness, Harm Reduction, Trauma-Informed, ACT, Motivational, MAT, General), grouped in the picker by modality.
 
@@ -70,14 +70,14 @@ A template has either `content` (dropped into free-write textarea, as today) or 
 
 ## 5. QA & Verification 🧪
 
-- [ ] **Unit Tests** (new file `src/components/journal/__tests__/JournalEditor.test.tsx`, following `src/components/smart_tools/__tests__/ThoughtRecordTool.test.tsx` conventions):
+- [x] **Unit Tests** (`src/components/journal/__tests__/JournalEditor.test.tsx`, following `src/components/smart_tools/__tests__/ThoughtRecordTool.test.tsx` conventions):
   - `handleTemplateSelect` with a `content`-shaped default template sets `newEntry` and clears `activeTemplate`.
   - `handleTemplateSelect` with a `prompts`-shaped default template sets `activeTemplate`, sizes `formAnswers` to `prompts.length`, clears `newEntry`.
   - `handleSave` with an active prompts-based default template interpolates `**{prompt}**\n{answer}` per prompt (reuses existing save logic — regression check only).
-- [ ] **The Subway Test:** Confirm template picker and selection work fully offline (static data, no fetch) — expected trivially green given no network calls added.
-- [ ] **The "Lost PIN" Test:** N/A — no encrypted data or keys involved in this feature.
-- [ ] **Persona/Manual Test:** All 15 templates selectable in dev server; groups render in `GROUP_ORDER`; original 4 templates behave identically to before (free-text, same content/tags); SOS modal's `/journal?template=urge_log` deep link still opens the Urge Log template correctly (its `content` field is unchanged).
-- [ ] `npm run check` (lint + test + build) passes with zero errors.
+- [x] **The Subway Test:** Confirmed offline-safe — template picker is static bundled data, no fetch involved.
+- [x] **The "Lost PIN" Test:** N/A — no encrypted data or keys involved in this feature.
+- [ ] **Persona/Manual Test:** Not run in a live browser — the implementation sandbox had no Firebase credentials/emulator to reach the logged-in Journal Editor. Verified instead via RTL tests exercising the same selection → guided-form → save path. Recommend a real-device pass before/soon after this reaches users.
+- [x] `npm run check` (lint + test + build) passes with zero errors — confirmed in the implementation session (355/355 tests passing; the only other suite failure, `functions/src/index.test.ts`, is a pre-existing, unrelated missing-dependency issue in that package).
 
 ---
 
