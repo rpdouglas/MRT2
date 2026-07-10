@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import posthog from 'posthog-js';
 import VibrantHeader from '../components/VibrantHeader';
 import { db } from '../lib/firebase';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
@@ -16,6 +17,7 @@ export default function PremiumUpgrade() {
 
     const handleSubscribe = async () => {
         if (!user || !db) return;
+        posthog.capture('premium_upgrade_clicked');
         setIsSubscribing(true);
         try {
             const priceId = import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID;
