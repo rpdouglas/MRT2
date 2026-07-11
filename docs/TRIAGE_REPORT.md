@@ -1,15 +1,17 @@
 # 🐛 Sprint Planning Triage Report
 **Generated:** 5/6/2026
-**Total Actionable Issues:** 16 (Investigating: 6, New: 2, Backlog: 8)
+**Last Reviewed:** 2026-05-06 (audit-corrected 2026-07-11 — see ✅ Resolved annotations below)
+**Total Actionable Issues:** 16 originally (Investigating: 6, New: 2, Backlog: 8) — **13 still open** as of 2026-07-11 after 3 items were confirmed shipped by later projects (PROJ-26, PROJ-57, and the same-day overdue-task fix) without this file being updated at the time.
 
 ## 🔍 Active Investigations (Prioritized for Sprint)
 ### Phase 1: /dashboard Polish
 - [ ] **[BUG]** The login flow does not seem to be working properly. You click on begin journal journey. Then you put an email and password and you click initialize account or toolkit or whatever. And then it brings you to another screen to put an email and create a username and password
   - *Details:* `DEV` | Vault Unlocked: `false` | Reported: 4/28/2026
   - *ID:* `YGGZfsq79yvVrRXG1ZWY`
-- [ ] **[BUG]** The localhost is producing notifications. Production is only showing that the app has been updated in the background and it's showing the dev address
+- [x] ~~**[BUG]** The localhost is producing notifications. Production is only showing that the app has been updated in the background and it's showing the dev address~~
   - *Details:* `DEV` | Vault Unlocked: `true` | Reported: 4/27/2026
   - *ID:* `jK01oCQmEIUhTLtrTIz9`
+  - **✅ Resolved** — matches the PROJ-26 hotfix logged in `ACTIVE_CYCLE.md` ("FCM SW token migration — fixed notification click-through (absolute URL) and stale token re-registration on SW version bump"). 2026-07-11 audit correction.
 - [ ] **[BUG]** The tools button should be the same as the other buttons
   - *Details:* `DEV` | Vault Unlocked: `true` | Reported: 4/22/2026
   - *ID:* `fBpciWpuOqXviCRv7EGZ`
@@ -28,10 +30,12 @@
   - *ID:* `4BZDV3lkoceHeTIZhZvD`
 
 ## 📥 New Inbox (Needs Triage)
-- **[BUG]** When a recurring task is overdue and you complete it, it should complete it for today. Not for the days it was not completed and then roll over to the next recurrence
+- ~~**[BUG]** When a recurring task is overdue and you complete it, it should complete it for today. Not for the days it was not completed and then roll over to the next recurrence~~
   - *Route:* `/tasks` | Reported: 5/6/2026 | ID: `zsLfl3iWzrLhIJoUKRF4`
+  - **✅ Resolved** — fixed same day in commit `10d8364` ("Fix recurrence logic for overdue tasks"), and logged again as done in `ACTIVE_CYCLE.md`'s Triage & Hotfixes ("Overdue Task Completion Fix"). This entry was never removed from this file when the fix shipped — 2026-07-11 audit correction.
 - **[BUG]** The milestone counting is not working properly. It should go 30 days, 60 days, 90 days and then go monthly by the month not by the day count
   - *Route:* `/dashboard` | Reported: 5/6/2026 | ID: `sr12tTsRZwjyZ3OB6PJk`
+  - **Still open** — confirmed via `src/lib/gamification.ts` (2026-07-11 audit): milestone XP is still computed as `Math.floor(cleanDays / 30)`, i.e. pure day-count, not the requested day-based-then-calendar-month cadence after day 90.
 
 ## 📚 Backlog (Deferred)
 - **[SUGGESTION]** I like the idea of a gauge for self-care. Like how full is your cup? You know what I mean based on a few key items that would come into play if we can work on the healthconnect API
@@ -40,8 +44,9 @@
   - *Route:* `/journal` | Reported: 3/30/2026 | ID: `Ru1QaQDgD6SFDpZt9dQl`
 - **[SUGGESTION]** It would be cool to have like a Sims style kpi gauge showing different meters like you know vitality, active journaling, I don't know whatever else
   - *Route:* `/admin` | Reported: 3/29/2026 | ID: `SWTEeNR65c65jsIpJFuN`
-- **[SUGGESTION]** We should have something like a template or something along those lines in the journal that provides daily prompted journaling guides. You should be able to pick a modality of recovery for that or simply random stuff from each modality. Should it be a template you can select and it will automatically cycle through different prompts based on the date? Or should it be a new tab itself? I'm not sure
+- ~~**[SUGGESTION]** We should have something like a template or something along those lines in the journal that provides daily prompted journaling guides. You should be able to pick a modality of recovery for that or simply random stuff from each modality. Should it be a template you can select and it will automatically cycle through different prompts based on the date? Or should it be a new tab itself? I'm not sure~~
   - *Route:* `/dashboard` | Reported: 3/24/2026 | ID: `YXOguurnDGHPUPqD3bK9`
+  - **✅ Resolved** — shipped as PROJ-57 (Journal Template Modality Expansion): 15 templates across 11 recovery modalities, grouped by modality in the picker. 2026-07-11 audit correction.
 - **[BUG]** Need to move the vite press site from git pages to docs.myrecoverytoolkit.ca
   - *Route:* `/journal` | Reported: 3/19/2026 | ID: `8rA1sWF41WOutMwz1EDA`
 - **[BUG]** The Gemini API stats doesn't really tell me anything on the Apple TV and can we look at potentially bringing more and more data into that? That actually gives us some insight onto the usage of Gemini

@@ -1,5 +1,7 @@
 # 📐 Feature Spec: Admin Dashboard
 
+> **Supersedes [`03_ADMIN.md`](./03_ADMIN.md)** — this is the current, authoritative spec for the Admin Dashboard.
+
 **Status:** Live (v1.7)
 **Access:** Strict RBAC (Role-Based Access Control)
 **Security Level:** High

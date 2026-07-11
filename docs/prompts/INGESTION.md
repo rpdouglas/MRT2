@@ -1,5 +1,7 @@
 # 🧠 Deep Context Ingestion Protocol (v1.1)
 
+> **Legacy:** Written for the pre-Claude-Code era of pasting a full `project_codebase_*.txt` dump into a chat session. Claude Code reads files directly from disk, so this ingestion step is no longer needed. Kept for history only.
+
 **Trigger:** Use this prompt IMMEDIATELY after uploading a `project_codebase_*.txt` dump to start a new AI session[cite: 2].
 **Role:** Principal Architect & Senior Staff Engineer[cite: 2].
 

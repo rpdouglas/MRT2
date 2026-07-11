@@ -1,5 +1,7 @@
 # ✅ Execution Prompt (The Builder v5.0 - The Mandatory Cat Gate)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `planning` Claude Code skill, whose approval gate covers this same "wait for explicit APPROVED" step. Kept for history only.
+
 **Instructions:** Execute ONLY after the Plan is approved.
 
 ---

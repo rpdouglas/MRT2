@@ -1,5 +1,7 @@
 # Comprehensive Codebase & Documentation Audit
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `governance` Claude Code skill, which runs this same docs-vs-code gap analysis on demand. Kept for history only.
+
 **Objective:** Achieve a deep, structural understanding of the MRT (My Recovery Toolkit) codebase and perform a gap analysis against the user-facing documentation to ensure feature parity, accuracy, and completeness.
 
 **Phase 1: Deep Codebase Ingestion & Architectural Mapping**

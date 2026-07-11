@@ -1,4 +1,4 @@
-
+**Full spec:** [`../31_CRYPTO_SCALING.md`](../31_CRYPTO_SCALING.md)
 
 ## PROJ-31 Post-Sprint Audit
 **Status:** [x] COMPLETED

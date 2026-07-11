@@ -1,5 +1,7 @@
 # 🧠 Read State & Context Alignment Prompt (v1.0)
 
+> **Legacy:** This manual-prompt era pre-planning alignment check is superseded by the `planning` skill's own exploration phase and the `governance` skill's evidence checks. Kept for history only.
+
 **Trigger:** Run this BEFORE starting `PLANNING.md` for a new feature or complex bug.
 **Goal:** Verify the AI has a perfectly aligned, hallucination-free mental model of the target files.
 
