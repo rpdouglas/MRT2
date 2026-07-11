@@ -49,7 +49,10 @@ const TEXT_EXTENSIONS = new Set([
 
 // Extensionless files we deliberately want included (opposite of the
 // permissive no-extension default used by the older export_codebase.js).
-const EXTENSIONLESS_ALLOWLIST = new Set(['.firebaserc', '.clinerules']);
+const EXTENSIONLESS_ALLOWLIST = new Set(['.firebaserc', '.clinerules', 'pre-commit']);
+
+// Language hint for specific extensionless filenames (falls back to '' otherwise).
+const LANG_BY_BASENAME = { 'pre-commit': 'bash' };
 
 const LANG_BY_EXT = {
   '.ts': 'typescript', '.tsx': 'typescript', '.mts': 'typescript',
@@ -175,6 +178,7 @@ function codeFence(content) {
 function langFor(absPath) {
   const ext = path.extname(absPath).toLowerCase();
   const base = path.basename(absPath);
+  if (LANG_BY_BASENAME[base]) return LANG_BY_BASENAME[base];
   if (EXTENSIONLESS_ALLOWLIST.has(base)) return 'text';
   return LANG_BY_EXT[ext] ?? '';
 }
@@ -249,6 +253,19 @@ const SECTIONS = [
   { id: '12', title: 'docs (prompts, templates, reports)', slug: 'docs-misc', kind: 'dir', targets: ['docs/prompts', 'docs/templates', 'docs/reports'] },
   { id: '13', title: 'docs-site (VitePress)', slug: 'docs-site', kind: 'dir', targets: ['docs-site'] },
   { id: '14', title: 'scripts', slug: 'scripts', kind: 'dir', targets: ['scripts', 'check_models.js', 'generate_icons.py', 'export_codebase.js'] },
+  {
+    id: '15',
+    title: 'CI/CD & Dev Tooling',
+    slug: 'ci-cd-tooling',
+    kind: 'explicit',
+    targets: [
+      '.github/workflows/deploy.yml',
+      '.github/workflows/deploy-docs.yaml',
+      '.husky/pre-commit',
+      '.devcontainer/devcontainer.json',
+      '.devcontainer/setup.sh',
+    ],
+  },
 ];
 
 function resolveSectionFiles(section) {
