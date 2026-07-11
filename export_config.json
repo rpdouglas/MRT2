@@ -1,0 +1,62 @@
+{
+  "maxChunkSizeBytes": 1048576,
+  "ignorePaths": [
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "coverage",
+    ".firebase",
+    "exports"
+  ],
+  "ignoreFiles": [
+    "package-lock.json",
+    "yarn.lock",
+    ".DS_Store",
+    "mrt-release.keystore",
+    "export_codebase.js",
+    "export_config.json",
+    "docs_dump.txt"
+  ],
+  "groups": {
+    "frontend_core": [
+      "src/lib",
+      "src/hooks",
+      "src/data",
+      "src/contexts"
+    ],
+    "frontend_ui": [
+      "src/components",
+      "src/pages",
+      "src/App.tsx",
+      "src/main.tsx",
+      "src/App.css",
+      "src/index.css"
+    ],
+    "backend": [
+      "functions/src",
+      "functions/package.json"
+    ],
+    "docs": [
+      "docs",
+      "docs-site",
+      "README.md",
+      "GEMINI.md",
+      "CLAUDE.md",
+      "AI_Maintenance.md",
+      "AI_WORKFLOW.md"
+    ],
+    "configs": [
+      "package.json",
+      "tailwind.config.js",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "firebase.json",
+      "tsconfig.json",
+      "eslint.config.js",
+      "tsconfig.app.json",
+      "tsconfig.node.json",
+      "vite.config.ts"
+    ]
+  }
+}
