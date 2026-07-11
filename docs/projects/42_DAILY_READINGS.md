@@ -3,7 +3,8 @@
 **Epic:** Education & Daily Program  
 **Priority:** P1 — High  
 **Target Personas:** David (primary), Ned, Walt, Lisa  
-**Status:** ✅ Completed (2026-05-03)
+**Status:** ✅ Completed (2026-05-03)  
+**Objective:** Deliver an in-app daily reading/meditation touchpoint spanning multiple recovery modalities, surfaced on the Dashboard within one tap, to replace the need to leave the app for this cornerstone recovery-program practice.
 
 ---
 

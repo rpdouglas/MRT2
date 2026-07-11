@@ -25,11 +25,15 @@ jobs:
       - name: Lint Check
         run: npm run lint
         
-      # GATE 2: Unit Tests (Logic)
+      # GATE 2: Spec Quality (docs/projects/*.md must match the governance skill's Check F)
+      - name: Spec Quality Check
+        run: npm run docs:check-specs
+
+      # GATE 3: Unit Tests (Logic)
       - name: Unit Tests
         run: npm run test:watch -- --run # Runs once and exits
 
-      # GATE 3: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
+      # GATE 4: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 

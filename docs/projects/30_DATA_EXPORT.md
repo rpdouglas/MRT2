@@ -50,3 +50,10 @@ export interface ExportPayload {
 ### Phase 3: Edge Cases
 * [ ] What happens if the user has 5,000 journals? The PDF generator will crash the browser. We must implement a date-range selector (e.g., "Export 2025") for heavy users.
 
+---
+
+## 5. QA & Verification 🧪
+* [ ] **Unit Tests:** `ExportPayload` serialization, PDF generation for empty/large datasets.
+* [ ] **The Subway Test:** Export flow must work fully offline against cached decrypted data.
+* [ ] **The "Lost PIN" Test:** Confirm export is inaccessible pre-unlock and that no decrypted content persists after the export session ends.
+
