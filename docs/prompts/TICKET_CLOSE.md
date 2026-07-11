@@ -1,5 +1,7 @@
 # 🛡️ Ticket Closure & Sync Prompt (v3.2)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `ticket-close` Claude Code skill. Kept for history only.
+
 **Trigger:** Run this after completing a standard ticket or bug fix (combines Docs Audit and PM updates).
 **Goal:** Ensure the Map (Docs) perfectly matches the Territory (Code) before moving on.
 

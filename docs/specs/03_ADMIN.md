@@ -1,5 +1,7 @@
 # 📐 Feature Spec: Admin Dashboard
 
+> **Superseded by [`08_ADMIN.md`](./08_ADMIN.md)** (v1.7 — adds RBAC split-authority model, Friends Directory rename, Feedback Inbox). Kept for history only; do not treat this file as current.
+
 **Status:** Live (v1.2)
 **Access:** Restricted (Custom Claims `admin: true`)
 

@@ -1,5 +1,7 @@
 # 🤖 AI Session Initialization Prompt (v3.2)
 
+> **Legacy:** This manual session-bootstrap prompt is superseded by CLAUDE.md (auto-loaded every session) plus the `/clear`-before-each-feature workflow it documents. Kept for history only.
+
 **Role:** Principal Software Architect & Product Manager.
 
 **1. Load Technical Context:**

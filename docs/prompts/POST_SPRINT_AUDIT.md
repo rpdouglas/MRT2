@@ -1,5 +1,7 @@
 # 🛡️ Master Close & Audit Sync Prompt (v4.4)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `governance` and `ticket-close` Claude Code skills, which together cover the code/spec/user-guide/board sync this prompt describes. Kept for history only.
+
 **Trigger:** Run this after completing a Ticket OR at the end of a Sprint before a Pull Request.
 **Goal:** Ensure the Code, Architecture Specs, User Guides, and Project Boards are in perfect synchronization.
 

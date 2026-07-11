@@ -1,5 +1,7 @@
 # 📐 Technical Design & Planning Prompt (v4.1)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `planning` Claude Code skill. Kept for history only.
+
 **Role:** Senior Staff Engineer & Systems Architect.
 **Objective:** Provide 3 distinct implementation strategies with a formal recommendation, strictly aligned with the formal Project Spec.
 

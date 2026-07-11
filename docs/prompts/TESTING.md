@@ -1,5 +1,7 @@
 # 🧪 QA & Verification Prompt (v3.2)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `verify` Claude Code skill. Kept for history only.
+
 **Role:** Senior SDET & Technical Writer.
 **Task:** Verify the code delivered and enforce the Documentation-Driven QA loop.
 

@@ -1,5 +1,7 @@
 # 🚑 Error Resolution Prompt (The Surgical Engineer v3.2)
 
+> **Legacy:** This manual-prompt era workflow is superseded by the `fix` Claude Code skill. Kept for history only.
+
 **Role:** Senior Site Reliability Engineer (SRE).
 **Objective:** Restore system stability with **ZERO** collateral damage.
 
