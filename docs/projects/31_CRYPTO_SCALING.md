@@ -33,3 +33,10 @@
 * If the app closes midway through a rotation, the database is in a split state (some docs use Key A, some use Key B). 
 * **Migration Flag:** Add a `keyVersion` field to documents during rotation. If a failure occurs, the app must detect the split state on next login and resume the chunking process automatically.
 
+---
+
+## 5. QA & Verification 🧪
+* [x] **Unit Tests:** Cursor-based pagination and 500-op batch-write cap, per the post-sprint audit (`archive/31_CRYPTO_SCALING_AUDIT.md`).
+* [ ] **The Subway Test:** Not documented in the post-sprint audit — needs a follow-up verification pass if revisited.
+* [ ] **The "Lost PIN" Test:** Not documented in the post-sprint audit — needs a follow-up verification pass if revisited.
+

@@ -48,11 +48,12 @@ For every Firestore write introduced by the ticket:
 
 ---
 
-## Project Board Updates (state what needs changing, don't generate a script)
-- `docs/ACTIVE_CYCLE.md`: which task to mark [x]?
-- `docs-site/support/changelog.md`: what to prepend?
-- `docs/ROADMAP.md`: what moves to Recently Shipped?
-- `docs/projects/XX_FEATURE.md`: update Status to ✅ Shipped?
+## Project Board Updates
+The mechanical part of this (spec Status field, `ACTIVE_CYCLE.md` Resolved line, `ROADMAP.md` Recently Shipped line) is handled by the reusable script — don't hand-generate a one-off script for it:
+```
+python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line description of what shipped." --apply
+```
+Run it without `--apply` first to preview. It deliberately does NOT touch `docs-site/support/changelog.md` (version-bump semantics need judgment) — state what to prepend there manually.
 
 ---
 

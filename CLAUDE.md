@@ -11,7 +11,8 @@ npm run dev          # Vite dev server (port 5175)
 npm run build        # TypeScript check + Vite build → dist/
 npm run lint         # ESLint — zero warnings allowed
 npm run lint:fix     # Auto-fix lint issues
-npm run check        # Full QA pipeline: lint + test + build
+npm run check        # Full QA pipeline: lint + spec-quality + test + build
+npm run docs:check-specs  # Validate docs/projects/*.md against 00_TEMPLATE.md's required sections
 npm run test         # Vitest watch mode
 npm run test:once    # Single run (CI)
 npx vitest run src/__tests__/someFile.test.ts  # Single test file

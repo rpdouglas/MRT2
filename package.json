@@ -13,8 +13,9 @@
     "preview": "vite preview",
     "docs:dev": "vitepress dev docs-site",
     "docs:build": "vitepress build docs-site",
+    "docs:check-specs": "node scripts/check_spec_quality.mjs",
     "test:once": "vitest run",
-    "check": "npm run lint && npm run test:once && npm run build",
+    "check": "npm run lint && npm run docs:check-specs && npm run test:once && npm run build",
     "export:llm": "node scripts/export-llm.mjs"
   },
   "dependencies": {
