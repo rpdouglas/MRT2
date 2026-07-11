@@ -38,7 +38,7 @@ const EXCLUDED_FILENAMES = new Set([
   'docs_dump.txt',
 ]);
 
-const EXCLUDED_FILENAME_PREFIXES = ['.env', 'export_', 'service-account'];
+const EXCLUDED_FILENAME_PREFIXES = ['.env', 'service-account'];
 const EXCLUDED_EXTENSIONS = new Set(['.keystore', '.aab', '.apk']);
 
 const TEXT_EXTENSIONS = new Set([
@@ -77,8 +77,15 @@ function isExcludedPath(rel) {
   return false;
 }
 
+// Stale one-off dump files from the older export_codebase.js tool
+// (e.g. export_src_lib-src_hooks-src_data.txt) — not export_codebase.js itself.
+function isLegacyDumpFile(name) {
+  return name.startsWith('export_') && name.endsWith('.txt');
+}
+
 function isExcludedFile(rel, name) {
   if (EXCLUDED_FILENAMES.has(name)) return true;
+  if (isLegacyDumpFile(name)) return true;
   for (const prefix of EXCLUDED_FILENAME_PREFIXES) {
     if (name.startsWith(prefix)) return true;
   }
@@ -238,23 +245,31 @@ const ROOT_CONFIG_FILES = [
   'functions/vitest.config.ts', 'functions/.eslintrc.js',
 ];
 
+const SRC_APP_ENTRY_FILES = [
+  'src/App.tsx', 'src/App.css', 'src/main.tsx', 'src/index.css', 'src/vite-env.d.ts',
+  // Lives under public/ only because Vite/Firebase Hosting require service workers
+  // to be served from the public root — it's genuine app logic, not a binary asset.
+  'public/firebase-messaging-sw.js',
+];
+
 const SECTIONS = [
   { id: '01', title: 'Root Config & Manifest', slug: 'root-config-manifest', kind: 'explicit', targets: ROOT_CONFIG_FILES },
-  { id: '02', title: 'src/lib', slug: 'src-lib', kind: 'dir', targets: ['src/lib'] },
-  { id: '03', title: 'src/hooks + src/contexts', slug: 'src-hooks-contexts', kind: 'dir', targets: ['src/hooks', 'src/contexts'] },
-  { id: '04', title: 'src/components', slug: 'src-components', kind: 'dir', targets: ['src/components'] },
-  { id: '05', title: 'src/pages', slug: 'src-pages', kind: 'dir', targets: ['src/pages'] },
-  { id: '06', title: 'src/data', slug: 'src-data', kind: 'dir', targets: ['src/data'] },
-  { id: '07', title: 'src tests & setup', slug: 'src-tests-and-setup', kind: 'dir', targets: ['src/__tests__', 'src/test'] },
-  { id: '08', title: 'functions/src (Cloud Functions)', slug: 'functions-src', kind: 'dir', targets: ['functions/src'] },
-  { id: '09', title: 'docs (root, design, legal)', slug: 'docs-root', kind: 'docs-root', targets: ['docs/design', 'docs/legal'] },
-  { id: '10', title: 'docs/specs', slug: 'docs-specs', kind: 'dir', targets: ['docs/specs'] },
-  { id: '11', title: 'docs/projects', slug: 'docs-projects', kind: 'dir', targets: ['docs/projects'] },
-  { id: '12', title: 'docs (prompts, templates, reports)', slug: 'docs-misc', kind: 'dir', targets: ['docs/prompts', 'docs/templates', 'docs/reports'] },
-  { id: '13', title: 'docs-site (VitePress)', slug: 'docs-site', kind: 'dir', targets: ['docs-site'] },
-  { id: '14', title: 'scripts', slug: 'scripts', kind: 'dir', targets: ['scripts', 'check_models.js', 'generate_icons.py', 'export_codebase.js'] },
+  { id: '02', title: 'src/ app entry (App.tsx, main.tsx)', slug: 'src-app-entry', kind: 'explicit', targets: SRC_APP_ENTRY_FILES },
+  { id: '03', title: 'src/lib', slug: 'src-lib', kind: 'dir', targets: ['src/lib'] },
+  { id: '04', title: 'src/hooks + src/contexts', slug: 'src-hooks-contexts', kind: 'dir', targets: ['src/hooks', 'src/contexts'] },
+  { id: '05', title: 'src/components', slug: 'src-components', kind: 'dir', targets: ['src/components'] },
+  { id: '06', title: 'src/pages', slug: 'src-pages', kind: 'dir', targets: ['src/pages'] },
+  { id: '07', title: 'src/data', slug: 'src-data', kind: 'dir', targets: ['src/data'] },
+  { id: '08', title: 'src tests & setup', slug: 'src-tests-and-setup', kind: 'dir', targets: ['src/__tests__', 'src/test'] },
+  { id: '09', title: 'functions/src (Cloud Functions)', slug: 'functions-src', kind: 'dir', targets: ['functions/src'] },
+  { id: '10', title: 'docs (root, design, legal)', slug: 'docs-root', kind: 'docs-root', targets: ['docs/design', 'docs/legal'] },
+  { id: '11', title: 'docs/specs', slug: 'docs-specs', kind: 'dir', targets: ['docs/specs'] },
+  { id: '12', title: 'docs/projects', slug: 'docs-projects', kind: 'dir', targets: ['docs/projects'] },
+  { id: '13', title: 'docs (prompts, templates, reports)', slug: 'docs-misc', kind: 'dir', targets: ['docs/prompts', 'docs/templates', 'docs/reports'] },
+  { id: '14', title: 'docs-site (VitePress)', slug: 'docs-site', kind: 'dir', targets: ['docs-site'] },
+  { id: '15', title: 'scripts', slug: 'scripts', kind: 'dir', targets: ['scripts', 'check_models.js', 'generate_icons.py', 'export_codebase.js'] },
   {
-    id: '15',
+    id: '16',
     title: 'CI/CD & Dev Tooling',
     slug: 'ci-cd-tooling',
     kind: 'explicit',
@@ -265,6 +280,13 @@ const SECTIONS = [
       '.devcontainer/devcontainer.json',
       '.devcontainer/setup.sh',
     ],
+  },
+  {
+    id: '17',
+    title: 'Claude Code Config & Skills',
+    slug: 'claude-code-config',
+    kind: 'dir',
+    targets: ['.claude/settings.json', '.claude/skills'],
   },
 ];
 
@@ -314,7 +336,7 @@ function rootDriftCheck(model) {
     const name = entry.name;
     if (accountedPrefixes.has(name)) continue;
     if (name.startsWith('.')) continue; // dotfiles/dirs are tooling config, not source scope
-    if (name.startsWith('export_') || name.startsWith('service-account')) continue;
+    if (isLegacyDumpFile(name) || name.startsWith('service-account')) continue;
     if (EXCLUDED_FILENAMES.has(name)) continue;
     const ext = path.extname(name).toLowerCase();
     if (EXCLUDED_EXTENSIONS.has(ext)) continue;
