@@ -5,6 +5,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const PROJECTS_DIR = join(process.cwd(), 'docs', 'projects');
+// Only numbered spec files (e.g. "42_DAILY_READINGS.md") are specs — README.md
+// and other non-numbered files in this directory are not project specs.
+const SPEC_FILENAME_PATTERN = /^\d+_.+\.md$/;
 const EXEMPT_FILES = new Set(['00_TEMPLATE.md']);
 
 // Field markers are matched loosely (bold optional, plural/qualifier-tolerant)
@@ -20,7 +23,7 @@ const REQUIRED_CHECKS = [
 
 function getSpecFiles() {
   return readdirSync(PROJECTS_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .filter((entry) => entry.isFile() && SPEC_FILENAME_PATTERN.test(entry.name))
     .map((entry) => entry.name)
     .filter((name) => !EXEMPT_FILES.has(name));
 }
