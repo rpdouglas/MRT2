@@ -48,6 +48,4 @@ export__docs_.txt
 
 # Codebase export output
 /exports/
-
-# Codebase export output
-/exports/
+llm-export/
