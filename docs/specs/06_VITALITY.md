@@ -2,7 +2,7 @@
 
 **Status:** Live (v2.0)
 **Architecture:** Virtual Module (Abstracted Journal Interface)
-**Primary Code:** `src/pages/Vitality.tsx`
+**Primary Code:** `src/pages/Vitality.tsx` (thin tab shell) — split across `src/hooks/useVitalityEntries.ts` (data layer, ZK-encrypted writes), `src/hooks/useBreathEngine.ts` (breathwork state machine), `src/hooks/useTodaysVitalityLogs.ts` (real-time log feed), `src/lib/vitalityScoring.ts` (bio-balance/mood-inference logic), and `src/components/vitality/{MoveTab,FuelTab,BreathTab}.tsx` (per-tab UI). Split in PROJ-60.
 
 ## 1. Overview
 The Vitality module is the somatic regulation engine of MRT. It allows users to track physical health (Movement, Fuel) and nervous system regulation (Breathwork). Unlike other modules, it does not store data in a separate collection; instead, it injects structured, tagged entries into the user's `journals` stream.
@@ -18,7 +18,7 @@ Vitality entries are standard Firestore documents in the `journals` collection w
 | **Nutrition** | `#Vitality`, `#Nutrition` | Meal Type, Hunger Type (Physical/Emotional/Boredom), Hydration Count |
 | **Breathwork** | `#Vitality`, `#Mindfulness`, `#Somatic`, `#Regulation` | Duration, Technique (e.g., "Box Breathing (4-4-4-4)") |
 
-* **Smart Mood Integration:** To prevent vitality logs from skewing the user's "Average Mood" charts, the module uses React Query to silently fetch the user's 7-day average mood (`getSmartMood`) and injects it into the journal payload, rather than defaulting to `5`.
+* **Smart Mood Integration:** To prevent vitality logs from skewing the user's "Average Mood" charts, the module reads the cached `['journals', uid]` React Query data and derives the user's recent average mood (`inferMoodFromRecentEntries` in `src/lib/vitalityScoring.ts`) and injects it into the journal payload, rather than defaulting to `5`.
 
 ### B. The Bio-Rhythm Score
 A daily 0-100% score that resets at midnight (Local Device Time). It calculates balance across three pillars:
