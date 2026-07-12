@@ -5,6 +5,7 @@ import { useJournalOperations } from '../hooks/useJournalOperations';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useQueryClient } from '@tanstack/react-query';
+import { inferMoodFromRecentEntries, type MoodCacheEntry } from '../lib/vitalityScoring';
 import VibrantHeader from '../components/VibrantHeader';
 import { 
     PuzzlePieceIcon, 
@@ -39,15 +40,8 @@ export default function UrgeSurfer() {
     // --- SMART MOOD INFERENCE ---
     const getSmartMood = () => {
         if (!user) return 5;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cache = queryClient.getQueryData<any[]>(['journals', user.uid]);
-        if (!cache || cache.length === 0) return 5;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const recent = cache.filter((e: any) => typeof e.moodScore === 'number' && e.moodScore > 0).slice(0, 7);
-        if (recent.length === 0) return 5;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sum = recent.reduce((acc: number, curr: any) => acc + (curr.moodScore || 0), 0);
-        return Math.round(sum / recent.length);
+        const cache = queryClient.getQueryData<MoodCacheEntry[]>(['journals', user.uid]);
+        return inferMoodFromRecentEntries(cache ?? []);
     };
 
     useEffect(() => {

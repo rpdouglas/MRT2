@@ -141,9 +141,10 @@ jobs:
       
       - name: Load Service Account
         run: |
-          echo "SERVICE_ACCOUNT_JSON<<EOF" >> $GITHUB_ENV
+          EOF_DELIM="EOF_$(openssl rand -hex 8)"
+          echo "SERVICE_ACCOUNT_JSON<<$EOF_DELIM" >> $GITHUB_ENV
           cat ./service-account.json >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "$EOF_DELIM" >> $GITHUB_ENV
 
       - name: Build
         run: npm run build

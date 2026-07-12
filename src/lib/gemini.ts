@@ -109,8 +109,12 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
             
             // --- LOGGING ---
-            const uid = auth?.currentUser?.uid || 'anonymous';
-            logAIUsage(uid, currentModelName, contextTag, response.usageMetadata);
+            // Fire-and-forget telemetry; skip rather than log under a sentinel
+            // uid the Firestore rules would reject (create requires
+            // resource.data.uid === request.auth.uid).
+            if (auth?.currentUser?.uid) {
+                logAIUsage(auth.currentUser.uid, currentModelName, contextTag, response.usageMetadata);
+            }
             // ----------------
             
             return text;
@@ -172,8 +176,9 @@ export async function generateAudioAnalysis(base64Audio: string, mimeType: strin
         const text = response.text();
 
         // Logging
-        const uid = auth?.currentUser?.uid || 'anonymous';
-        logAIUsage(uid, modelName, 'voice_to_vault', response.usageMetadata);
+        if (auth?.currentUser?.uid) {
+            logAIUsage(auth.currentUser.uid, modelName, 'voice_to_vault', response.usageMetadata);
+        }
 
         return JSON.parse(cleanJSON(text)) as AudioAnalysisResult;
 

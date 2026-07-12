@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, type Firestore, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { PlusIcon, ClipboardDocumentListIcon, CalendarIcon, ClockIcon, ArchiveBoxIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Virtuoso } from 'react-virtuoso';
@@ -12,6 +10,7 @@ import QuickCaptureSheet from '../components/tasks/QuickCaptureSheet';
 import RhythmScoreRing from '../components/tasks/RhythmScoreRing';
 import TaskFormModal, { type TaskFormData } from '../components/tasks/TaskFormModal';
 import { useTaskOperations } from '../hooks/useTaskOperations';
+import { useTasksList } from '../hooks/useTasksList';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { THEME } from '../lib/theme';
 import type { Task } from '../lib/tasks';
@@ -29,11 +28,9 @@ type HistoryItem =
 const toDate = (val: Date | Timestamp | undefined | null): Date | null => { if (!val) return null; if (val instanceof Timestamp) return val.toDate(); if (val instanceof Date) return val; return null; }
 
 export default function Tasks() {
-    const { user } = useAuth();
     const { addTask, toggleTask, deleteTask, updateTask } = useTaskOperations();
+    const { tasks, loading } = useTasksList();
 
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabOption>('today');
     
     // Modals & Editing
@@ -56,34 +53,6 @@ export default function Tasks() {
         return new Set([new Date().getFullYear().toString()]);
     });
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => { const now = new Date(); return new Set([`${now.getFullYear()}-${now.getMonth()}`]); });
-
-    useEffect(() => {
-        if (!user || !db) return;
-        const database: Firestore = db;
-        
-        const q = query(
-            collection(database, 'tasks'),
-            where('uid', '==', user.uid),
-            orderBy('createdAt', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const taskData = snapshot.docs.map(doc => {
-                const d = doc.data();
-                return {
-                    id: doc.id,
-                    ...d,
-                    dueDate: d.dueDate?.toDate ? d.dueDate.toDate() : d.dueDate,
-                    createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : d.createdAt,
-                    lastCompletedAt: d.lastCompletedAt?.toDate ? d.lastCompletedAt.toDate() : d.lastCompletedAt
-                } as Task;
-            });
-            setTasks(taskData);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, [user]);
 
     const rhythmScore = useMemo(() => computeRhythmScore(tasks), [tasks]);
 

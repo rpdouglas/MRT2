@@ -125,8 +125,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   // --- 2-LEVEL FLATTENING (The Logic Core) ---
   const flatData = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grouped = groupItemsByYearAndMonth(filteredEntries as any[]);
+    const grouped = groupItemsByYearAndMonth(filteredEntries);
     const result: HistoryItem[] = [];
     
     // 1. Sort Years Descending (2026, 2025...)

@@ -6,7 +6,7 @@ import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore }
 import { useQuery } from '@tanstack/react-query';
 import { useUserProfile } from '../hooks/useUserProfile';
 import Confetti from 'react-confetti';
-import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats, calculateUserLevel } from '../lib/gamification';
+import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats, calculateUserLevel, type ScorableJournal, type ScorableTask } from '../lib/gamification';
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
@@ -61,11 +61,11 @@ export default function Dashboard() {
 
   const { data: journals = [], isLoading: journalLoading } = useQuery({
     queryKey: ['journals', user?.uid],
-    queryFn: async () => {
+    queryFn: async (): Promise<ScorableJournal[]> => {
         if (!user || !db) return [];
         const database: Firestore = db;
         const q = query(
-            collection(database, 'journals'), 
+            collection(database, 'journals'),
             where('uid', '==', user.uid),
             orderBy('createdAt', 'desc')
         );
@@ -76,12 +76,12 @@ export default function Dashboard() {
         }));
     },
     enabled: !!user,
-    refetchOnMount: 'always', 
+    refetchOnMount: 'always',
   });
 
   const { data: tasks = [], isLoading: taskLoading } = useQuery({
     queryKey: ['tasks', user?.uid],
-    queryFn: async () => {
+    queryFn: async (): Promise<ScorableTask[]> => {
         if (!user || !db) return [];
         const database: Firestore = db;
         const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
@@ -89,7 +89,7 @@ export default function Dashboard() {
         return snap.docs.map(d => d.data());
     },
     enabled: !!user,
-    refetchOnMount: 'always', 
+    refetchOnMount: 'always',
   });
 
   const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
@@ -127,13 +127,11 @@ export default function Dashboard() {
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const jStats = calculateJournalStats(journals as any);
-    const tStats = calculateTaskStats(tasks as any);
+    const jStats = calculateJournalStats(journals);
+    const tStats = calculateTaskStats(tasks);
     const wStats = calculateWorkbookStats(workbookCount);
-    const vStats = calculateVitalityStats(journals as any);
-    const level = calculateUserLevel(journals as any, tasks as any, workbookCount, daysClean, roscCount);
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+    const vStats = calculateVitalityStats(journals);
+    const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount);
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
     const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
