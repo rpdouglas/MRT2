@@ -38,6 +38,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-59` Data Access Layer Consolidation (Consolidated Firestore data-access layer onto TanStack Query: fixed two stale-cache bugs, extracted a shared query/mutation factory, migrated all raw CRUD call sites.)
 * `PROJ-58` Profile UX Remediation (Unified three incompatible save models into one autosave pattern; fixed a TanStack Query bypass that could desync Dashboard badges after a Profile save; restyled the vault-reset confirmation into a Headless UI dialog; made Security/Data tabs deep-linkable routes; cause-specific import-failure messages; distinct partial-failure state for the displayName auth sync; 44px touch targets)
 * `PROJ-57` Journal Template Modality Expansion (Default journal template picker expanded from 4 Twelve-Step-only templates to 15 templates across 11 recovery modalities — CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, General — grouped by modality; new templates render as guided multi-prompt forms reusing the existing custom-template rendering path)
 * `PROJ-55` Workbook Remediation (Real, step-specific content for 12-Step Steps 2-11 with unique literature-grounded contexts; migrated Workbook pages off direct Firestore calls onto a TanStack Query hook; fixed a fragile decryption heuristic; removed orphaned data module; dynamic gamification denominator)

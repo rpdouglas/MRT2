@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.8] - 2026-07-12
+### 🛠️ Data Layer Consolidation (Internal)
+- **Architecture [PROJ-59]:** Consolidated Firestore access behind TanStack Query across the app — fixed a bug where saving a journal entry didn't refresh the Dashboard streak until next page load, and a crash that could hit the Daily Reading button for users without a saved fellowship preference.
+
 ## [v1.8.7] - 2026-07-10
 ### 🛠️ Profile Settings Reliability
 - **Autosave [PROJ-58]:** Profile → General now saves every field automatically as you type or toggle it — no more "Save Changes" button to remember to click, matching how Hero Appearance and Reading preferences already worked.

@@ -6,18 +6,19 @@
  */
 import { useState } from 'react';
 import { db } from '../../lib/firebase';
-import { 
-    collection, 
-    getDocs, 
-    deleteDoc, 
-    doc, 
-    orderBy, 
-    query, 
-    limit, 
+import {
+    collection,
+    getDocs,
+    deleteDoc,
+    doc,
+    orderBy,
+    query,
+    limit,
     type Firestore,
-    Timestamp 
+    Timestamp
 } from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useFirestoreMutation } from '../../hooks/useFirestoreCrud';
 import { analyzeSystemHealth, type SystemHealthAnalysis } from '../../lib/gemini';
 import { Virtuoso } from 'react-virtuoso';
 import { 
@@ -45,8 +46,6 @@ interface AggregatedError {
 }
 
 export default function ErrorLogViewer() {
-    const queryClient = useQueryClient();
-    
     // Analysis State
     const [analyzing, setAnalyzing] = useState(false);
     const [analysis, setAnalysis] = useState<SystemHealthAnalysis | null>(null);
@@ -66,12 +65,18 @@ export default function ErrorLogViewer() {
         }
     });
 
+    // Global admin collection, not uid-scoped — the factory's uid param is unused here.
+    const deleteMutation = useFirestoreMutation<string>(['client_errors'], {
+        mutationFn: async (_uid, id) => {
+            if (!db) return;
+            await deleteDoc(doc(db, 'client_errors', id));
+        },
+    });
+
     const handleDelete = async (id: string) => {
-        if (!db) return;
         if (!confirm("Delete this log?")) return;
         try {
-            await deleteDoc(doc(db, 'client_errors', id));
-            queryClient.invalidateQueries({ queryKey: ['client_errors'] });
+            await deleteMutation.mutateAsync(id);
         } catch (e) {
             console.error("Failed to delete", e);
         }

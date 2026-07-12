@@ -2,8 +2,9 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, doc, getDoc, updateDoc, Timestamp, type Firestore } from 'firebase/firestore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore } from 'firebase/firestore';
+import { useQuery } from '@tanstack/react-query';
+import { useUserProfile } from '../hooks/useUserProfile';
 import Confetti from 'react-confetti';
 import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats, calculateUserLevel } from '../lib/gamification';
 import { getMilestone } from '../lib/milestones';
@@ -19,7 +20,6 @@ import { useBuildInfo } from '../lib/versioning';
 
 export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
-  const queryClient = useQueryClient();
   const meta = useBuildInfo();
   
   // Evaluate current time purely once on mount to satisfy react-hooks/purity
@@ -43,32 +43,21 @@ export default function Dashboard() {
       return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return null;
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-        return snap.exists() ? (snap.data() as UserProfile) : null;
-    },
-    enabled: !!user,
-    refetchOnMount: 'always', 
-  });
+  const { profile: userProfile, isLoading: profileLoading, patchFields } = useUserProfile();
+  const { mutate: patchProfileFields } = patchFields;
 
   // Changelog Beacon Logic
   useEffect(() => {
-      if (userProfile && db && user) {
+      if (userProfile) {
           if (!userProfile.lastSeenBuildHash) {
-              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
-              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
+              patchProfileFields({ lastSeenBuildHash: meta.globalHash });
           } else if (userProfile.lastSeenBuildHash !== meta.globalHash) {
               // FIX: Wrap in setTimeout to avoid synchronous setState inside useEffect
               setTimeout(() => setShowChangelogToast(true), 0);
-              updateDoc(doc(db, 'users', user.uid), { lastSeenBuildHash: meta.globalHash });
-              queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
+              patchProfileFields({ lastSeenBuildHash: meta.globalHash });
           }
       }
-  }, [userProfile, meta.globalHash, user, queryClient]);
+  }, [userProfile, meta.globalHash, patchProfileFields]);
 
   const { data: journals = [], isLoading: journalLoading } = useQuery({
     queryKey: ['journals', user?.uid],

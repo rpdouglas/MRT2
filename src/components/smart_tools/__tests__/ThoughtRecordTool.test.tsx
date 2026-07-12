@@ -5,9 +5,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { ThoughtRecordTool } from '../ThoughtRecordTool';
 import { useAuth } from '../../../contexts/AuthContext';
 import * as firestore from 'firebase/firestore';
+
+function renderWithQueryClient(ui: ReactElement) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({ user: { uid: 'test-uid' }, userTier: 'free' })),
@@ -113,7 +120,7 @@ describe('🧠 ThoughtRecordTool (Guided Thought Record flow)', () => {
     });
 
     it('walks through all 7 steps, reaches summary, and shows the correct Shift and distortion', async () => {
-        render(<ThoughtRecordTool />);
+        renderWithQueryClient(<ThoughtRecordTool />);
         await waitFor(() => screen.getByText('Step 1 of 7 — Situation'));
 
         completeAllSteps();
@@ -124,7 +131,7 @@ describe('🧠 ThoughtRecordTool (Guided Thought Record flow)', () => {
     });
 
     it('drops the DRAFT tag only on the summary phase\'s final save, with the correct payload', async () => {
-        render(<ThoughtRecordTool />);
+        renderWithQueryClient(<ThoughtRecordTool />);
         await waitFor(() => screen.getByText('Step 1 of 7 — Situation'));
         completeAllSteps();
 
@@ -148,7 +155,7 @@ describe('🧠 ThoughtRecordTool (Guided Thought Record flow)', () => {
             },
             ['SMART Tool', 'THOUGHT_RECORD', 'DRAFT']
         );
-        render(<ThoughtRecordTool />);
+        renderWithQueryClient(<ThoughtRecordTool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing your reframed thought')).toBeInTheDocument());
         expect(screen.queryByText(/Step 1 of 7/)).not.toBeInTheDocument();
@@ -162,7 +169,7 @@ describe('🧠 ThoughtRecordTool (Guided Thought Record flow)', () => {
             },
             ['SMART Tool', 'THOUGHT_RECORD', 'DRAFT']
         );
-        render(<ThoughtRecordTool />);
+        renderWithQueryClient(<ThoughtRecordTool />);
 
         await waitFor(() => expect(screen.getByText('Step 1 of 7 — Situation')).toBeInTheDocument());
         expect(screen.getByPlaceholderText('e.g., Sitting alone in my apartment on a Friday night, phone buzzing with messages from old friends.')).toHaveValue('Sitting alone at home.');

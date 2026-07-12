@@ -3,6 +3,7 @@ import posthog from 'posthog-js';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
+import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -50,7 +51,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
 
   const getSmartMood = () => {
       if (initialEntry) return initialEntry.moodScore;
-      const cache = queryClient.getQueryData<JournalEntry[]>(['journals']);
+      const cache = queryClient.getQueryData<JournalEntry[]>(['journals', user?.uid]);
       if (!cache || cache.length === 0) return 5;
 
       const recent = cache
@@ -71,7 +72,6 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
   
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   const [customTemplates, setCustomTemplates] = useState<JournalTemplate[]>([]);
@@ -98,23 +98,22 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
     }
   }, [user]);
 
-  const loadUserTags = useCallback(async () => {
-    if (!user || !db) return;
-    try {
-        const q = query(collection(db, 'journals'), where('uid', '==', user.uid), orderBy('createdAt', 'desc'), limit(50));
+  const { data: availableTags = [] } = useFirestoreQuery<string[]>(
+    ['journals', user?.uid, 'recent-tags'],
+    async (uid) => {
+        if (!db) return [];
+        const q = query(collection(db, 'journals'), where('uid', '==', uid), orderBy('createdAt', 'desc'), limit(50));
         const snapshot = await getDocs(q);
         const tagSet = new Set<string>();
         snapshot.docs.forEach(doc => {
-            const data = doc.data() as JournalDocData; 
+            const data = doc.data() as JournalDocData;
             if (data.tags && Array.isArray(data.tags)) {
                 data.tags.forEach((t: string) => tagSet.add(t));
             }
         });
-        setAvailableTags(Array.from(tagSet).sort());
-    } catch (e) {
-        console.warn("Failed to load user tags", e);
-    }
-  }, [user]);
+        return Array.from(tagSet).sort();
+    },
+  );
 
   const handleTemplateSelect = useCallback((tId: string) => {
     const defTemplate = DEFAULT_TEMPLATES.find(t => t.id === tId);
@@ -148,7 +147,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
     } else { setActiveTemplate(null); setNewEntry(''); setTags([]); }
   }, [customTemplates]); 
 
-  useEffect(() => { if (!user) return; loadCustomTemplates(); loadUserTags(); if (!initialEntry) fetchLocalWeather(); }, [user, initialEntry, loadCustomTemplates, loadUserTags, fetchLocalWeather]);
+  useEffect(() => { if (!user) return; loadCustomTemplates(); if (!initialEntry) fetchLocalWeather(); }, [user, initialEntry, loadCustomTemplates, fetchLocalWeather]);
 
   useEffect(() => {
     if (initialEntry) {
@@ -201,7 +200,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
     let plainContent = newEntry;
     if (activeTemplate) {
         plainContent = `**${activeTemplate.name}**\n\n`;
-        activeTemplate.prompts.forEach((prompt, idx) => {
+        (activeTemplate.prompts || []).forEach((prompt, idx) => {
             plainContent += `**${prompt}**\n${formAnswers[idx] || '-(Skipped)-'}\n\n`;
         });
     }
@@ -313,7 +312,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                         <h3 className="font-bold text-blue-900">{activeTemplate.name}</h3>
                         <button type="button" onClick={() => setActiveTemplate(null)} className="text-xs text-blue-500 hover:text-blue-700 underline">Switch to Text Mode</button>
                     </div>
-                    {activeTemplate.prompts.map((prompt, idx) => (
+                    {(activeTemplate.prompts || []).map((prompt, idx) => (
                         <div key={idx}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">{prompt}</label>
                             <textarea

@@ -42,6 +42,7 @@ export function useUserProfile() {
   return {
     profile: query.data ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     updateProfile,
     patchFields,
   };

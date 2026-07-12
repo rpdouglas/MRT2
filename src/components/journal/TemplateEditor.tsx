@@ -1,28 +1,27 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, getDocs, Timestamp } from 'firebase/firestore';
+import { useFirestoreQuery, useFirestoreMutation } from '../../hooks/useFirestoreCrud';
+import { getUserTemplates, saveUserTemplate, deleteUserTemplate, type JournalTemplate } from '../../lib/db';
+import { Timestamp } from 'firebase/firestore';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PencilSquareIcon, XMarkIcon, ListBulletIcon, HashtagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-
-// Local Type Definition
-interface JournalTemplate {
-    id: string;
-    uid: string;
-    name: string;
-    content?: string; 
-    prompts?: string[]; // Legacy support
-    defaultTags: string[];
-    createdAt: Timestamp; // FIX: Replaced 'any' with 'Timestamp'
-}
 
 export default function TemplateEditor() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    
-    const [templates, setTemplates] = useState<JournalTemplate[]>([]);
-    const [loading, setLoading] = useState(true);
-    
+
+    const queryKey = ['templates', user?.uid];
+    const { data: templates = [], isLoading: loading } = useFirestoreQuery<JournalTemplate[]>(
+        queryKey,
+        (uid) => getUserTemplates(uid),
+    );
+    const saveMutation = useFirestoreMutation<JournalTemplate>(queryKey, {
+        mutationFn: (uid, template) => saveUserTemplate(uid, template),
+    });
+    const deleteMutation = useFirestoreMutation<string>(queryKey, {
+        mutationFn: (uid, templateId) => deleteUserTemplate(uid, templateId),
+    });
+
     // Editor State
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -30,27 +29,10 @@ export default function TemplateEditor() {
     const [content, setContent] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
-    const [saving, setSaving] = useState(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // FIX: Hoisted and wrapped in useCallback
-    const loadTemplates = useCallback(async () => {
-        if (!user || !db) return;
-        setLoading(true);
-        try {
-            const q = query(collection(db, 'users', user.uid, 'templates'));
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as JournalTemplate));
-            setTemplates(data);
-        } catch (error) {
-            console.error("Failed to load templates", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
-
-    useEffect(() => { if (!user) return; loadTemplates(); console.log("Template Editor V2 Loaded"); }, [user, loadTemplates]); // FIX: Added loadTemplates to dependencies
+    useEffect(() => { console.log("Template Editor V2 Loaded"); }, []);
 
     // --- Toolbar Helpers ---
     const insertText = (before: string, after: string = '') => {
@@ -105,10 +87,9 @@ export default function TemplateEditor() {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Delete this template?")) return;
-        if (!user || !db) return;
+        if (!user) return;
         try {
-            await deleteDoc(doc(db, 'users', user.uid, 'templates', id));
-            setTemplates(templates.filter(t => t.id !== id));
+            await deleteMutation.mutateAsync(id);
         } catch (e) {
             console.error("Error deleting", e);
         }
@@ -116,7 +97,7 @@ export default function TemplateEditor() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !db) return;
+        if (!user) return;
 
         // Clean data
         const cleanTags = tags.map(t => t.trim()).filter(t => t !== '').map(t => t.startsWith('#') ? t : `#${t}`);
@@ -126,32 +107,20 @@ export default function TemplateEditor() {
             return;
         }
 
-        setSaving(true);
-        const templateData = {
-            uid: user.uid,
-            name,
-            content, // Saving as Free Text
-            defaultTags: cleanTags,
-            updatedAt: Timestamp.now()
-        };
-
         try {
-            if (editId) {
-                await updateDoc(doc(db, 'users', user.uid, 'templates', editId), templateData);
-                setTemplates(prev => prev.map(t => t.id === editId ? { ...t, ...templateData } as JournalTemplate : t));
-            } else {
-                const docRef = await addDoc(collection(db, 'users', user.uid, 'templates'), {
-                    ...templateData,
-                    createdAt: Timestamp.now()
-                });
-                setTemplates([...templates, { id: docRef.id, ...templateData, createdAt: Timestamp.now() } as JournalTemplate]);
-            }
+            await saveMutation.mutateAsync({
+                id: editId || '',
+                uid: user.uid,
+                name,
+                content, // Saving as Free Text
+                defaultTags: cleanTags,
+                updatedAt: Timestamp.now(),
+                ...(editId ? {} : { createdAt: Timestamp.now() }),
+            });
             setIsEditing(false);
             resetForm();
         } catch (error) {
             console.error("Error saving template", error);
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -254,12 +223,12 @@ export default function TemplateEditor() {
                         >
                             Cancel
                         </button>
-                        <button 
+                        <button
                             type="submit"
-                            disabled={saving}
+                            disabled={saveMutation.isPending}
                             className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
                         >
-                            {saving ? 'Saving...' : 'Save Template'}
+                            {saveMutation.isPending ? 'Saving...' : 'Save Template'}
                         </button>
                     </div>
 

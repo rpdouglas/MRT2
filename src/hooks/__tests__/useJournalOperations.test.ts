@@ -108,7 +108,7 @@ describe('📓 useJournalOperations Hook', () => {
 
         // Verify Cache Invalidation (Critical for Ticket 3.1 Fix)
         await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
+            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals', 'test-user-123'] });
         });
     });
 
@@ -138,7 +138,7 @@ describe('📓 useJournalOperations Hook', () => {
 
         // Verify Cache Invalidation
         await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
+            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals', 'test-user-123'] });
         });
     });
 
@@ -154,7 +154,7 @@ describe('📓 useJournalOperations Hook', () => {
         expect(firestore.deleteDoc).toHaveBeenCalledWith('mock-doc-ref');
 
         await waitFor(() => {
-            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals'] });
+            expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['journals', 'test-user-123'] });
         });
     });
 
@@ -178,5 +178,29 @@ describe('📓 useJournalOperations Hook', () => {
         })).rejects.toThrow("Not authenticated");
 
         expect(firestore.addDoc).not.toHaveBeenCalled();
+    });
+
+    it('5. should invalidate the exact cache entry other readers subscribe to (regression: PROJ-59 stale-cache bug)', async () => {
+        // Simulates a reader like Dashboard.tsx/useAnchorStatus.ts, which queries
+        // ['journals', uid] directly rather than going through this hook.
+        queryClient.setQueryData(['journals', 'test-user-123'], [{ id: 'existing' }]);
+
+        const { result } = renderHook(() => useJournalOperations(), { wrapper });
+
+        vi.mocked(firestore.addDoc).mockResolvedValue({ id: 'new-doc-id' } as unknown as firestore.DocumentReference);
+
+        await result.current.addJournal({
+            content: 'Encrypted Content',
+            moodScore: 8,
+            sentiment: 'Positive',
+            weather: null,
+            tags: [],
+            isEncrypted: true
+        });
+
+        await waitFor(() => {
+            const state = queryClient.getQueryState(['journals', 'test-user-123']);
+            expect(state?.isInvalidated).toBe(true);
+        });
     });
 });

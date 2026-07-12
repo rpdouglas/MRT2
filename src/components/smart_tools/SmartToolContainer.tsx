@@ -7,12 +7,20 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
+import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, limit, getDocs, type Firestore } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, type Firestore, type Timestamp } from 'firebase/firestore';
 import { CheckCircleIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import type { SmartToolType } from '../../lib/types/smart';
+
+interface LatestSessionDoc {
+    id: string;
+    content: string;
+    isEncrypted: boolean;
+    createdAt?: Timestamp;
+}
 
 interface SmartToolContainerProps<T extends object> {
     toolType: SmartToolType;
@@ -43,40 +51,47 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
     const [isInitializing, setIsInitializing] = useState(resumeSession);
     const [currentDocId, setCurrentDocId] = useState<string | null>(null);
 
-    // Fetch and rehydrate latest session
+    const { data: latestSessionDoc, isLoading: isSessionQueryLoading } = useFirestoreQuery<LatestSessionDoc | null>(
+        ['journals', user?.uid, 'session', toolType],
+        async (uid) => {
+            if (!db) return null;
+            const database: Firestore = db;
+            const q = query(
+                collection(database, 'journals'),
+                where('uid', '==', uid),
+                where('tags', 'array-contains', toolType),
+                orderBy('createdAt', 'desc'),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) return null;
+            const docSnap = snapshot.docs[0];
+            const raw = docSnap.data();
+            return { id: docSnap.id, content: raw.content, isEncrypted: raw.isEncrypted, createdAt: raw.createdAt };
+        },
+        { enabled: resumeSession && isVaultUnlocked },
+    );
+
+    // Rehydrate local state from the fetched session doc (decryption stays a
+    // side effect here, not inside the query, since it needs the vault key).
     useEffect(() => {
+        if (!resumeSession) { setIsInitializing(false); return; }
+        if (isSessionQueryLoading) return;
+
         let isMounted = true;
 
-        const fetchLatestSession = async () => {
-            if (!resumeSession || !isVaultUnlocked || !user || !db) {
-                if (isMounted && isInitializing) setIsInitializing(false);
-                return;
-            }
-
+        const hydrate = async () => {
             try {
-                const database: Firestore = db;
-                const q = query(
-                    collection(database, 'journals'),
-                    where('uid', '==', user.uid),
-                    where('tags', 'array-contains', toolType),
-                    orderBy('createdAt', 'desc'),
-                    limit(1)
-                );
-                
-                const snapshot = await getDocs(q);
+                if (latestSessionDoc) {
+                    setCurrentDocId(latestSessionDoc.id);
 
-                if (!snapshot.empty && isMounted) {
-                    const docSnap = snapshot.docs[0];
-                    const rawData = docSnap.data();
-                    setCurrentDocId(docSnap.id);
-
-                    if (rawData.isEncrypted && rawData.content) {
-                        const plainText = await decrypt(rawData.content);
+                    if (latestSessionDoc.isEncrypted && latestSessionDoc.content) {
+                        const plainText = await decrypt(latestSessionDoc.content);
                         const parsed = JSON.parse(plainText);
-                        if (parsed && parsed.data) {
+                        if (parsed && parsed.data && isMounted) {
                             setData(parsed.data as T);
                             setHasUnsavedChanges(false);
-                            setLastSaved(rawData.createdAt?.toDate ? rawData.createdAt.toDate() : new Date());
+                            setLastSaved(latestSessionDoc.createdAt?.toDate ? latestSessionDoc.createdAt.toDate() : new Date());
                         }
                     }
                 }
@@ -88,10 +103,10 @@ export function SmartToolContainer<T extends object>({ toolType, toolLabel, init
             }
         };
 
-        fetchLatestSession();
+        hydrate();
 
         return () => { isMounted = false; };
-    }, [resumeSession, isVaultUnlocked, user, toolType, decrypt, isInitializing]);
+    }, [resumeSession, isSessionQueryLoading, latestSessionDoc, toolType, decrypt]);
 
     const updateData = useCallback((newData: Partial<T>) => { setData(prev => ({ ...prev, ...newData })); setHasUnsavedChanges(true); }, []);
 

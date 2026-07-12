@@ -9,8 +9,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../lib/firebase';
-import { doc, getDoc, type Firestore } from 'firebase/firestore';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { ShieldCheckIcon, EnvelopeIcon, LockClosedIcon, KeyIcon, ExclamationTriangleIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 // --- Interfaces & Data ---
@@ -25,8 +24,9 @@ const PERSONAS: Persona[] = [
 
 export default function Login() {
   const { loginWithGoogle, loginWithEmail, signupWithEmail, user, loading } = useAuth();
+  const { profile, isLoading: profileLoading, isError: profileError } = useUserProfile();
   const navigate = useNavigate();
-  
+
   // State
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -37,31 +37,19 @@ export default function Login() {
 
   // --- THE ONBOARDING REDIRECT LOGIC ---
   useEffect(() => {
-    async function checkRouting() {
-        if (user && !loading && db) {
-            try {
-                const database: Firestore = db;
-                const userRef = doc(database, 'users', user.uid);
-                const snap = await getDoc(userRef);
-                
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.hasCompletedOnboarding) {
-                        navigate('/dashboard');
-                    } else {
-                        navigate('/profile'); // Force to setup
-                    }
-                } else {
-                    navigate('/profile'); // Safety fallback
-                }
-            } catch (err) {
-                console.error("Routing check failed", err);
-                navigate('/dashboard'); // Fallback to safe zone
-            }
-        }
+    if (!user || loading || profileLoading) return;
+
+    if (profileError) {
+      navigate('/dashboard'); // Fallback to safe zone
+      return;
     }
-    checkRouting();
-  }, [user, loading, navigate]);
+
+    if (profile?.hasCompletedOnboarding) {
+      navigate('/dashboard');
+    } else {
+      navigate('/profile'); // Force to setup, or safety fallback if no doc exists yet
+    }
+  }, [user, loading, profile, profileLoading, profileError, navigate]);
 
   // Handlers
   const handleGoogleLogin = async () => {

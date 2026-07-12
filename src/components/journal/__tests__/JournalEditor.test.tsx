@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { QuerySnapshot } from 'firebase/firestore';
 import JournalEditor from '../JournalEditor';
 import { getUserTemplates } from '../../../lib/db';
 
@@ -112,5 +113,44 @@ describe('JournalEditor default template selection (PROJ-57)', () => {
         expect(savedContent).toContain('Situation:');
         expect(savedContent).toContain('Sitting alone at home.');
         expect(savedContent).toContain('-(Skipped)-');
+    });
+});
+
+describe('JournalEditor tag suggestions and smart mood (PROJ-59)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockAddJournal.mockResolvedValue({ id: 'new-doc' });
+    });
+
+    it('offers previously-used tags fetched via useFirestoreQuery as suggestions', async () => {
+        const firestore = await import('firebase/firestore');
+        vi.mocked(firestore.getDocs).mockResolvedValue({
+            empty: false,
+            docs: [{ data: () => ({ tags: ['Gratitude', 'Urge'] }) }],
+        } as unknown as QuerySnapshot);
+
+        await renderEditor();
+
+        const tagInput = screen.getByPlaceholderText('Add tags...');
+        fireEvent.change(tagInput, { target: { value: 'Gra' } });
+
+        expect(await screen.findByText('Gratitude')).toBeInTheDocument();
+    });
+
+    it('prefills mood from the ["journals", uid] cache average (regression: was reading the unkeyed ["journals"] cache)', async () => {
+        const queryClient = new QueryClient();
+        queryClient.setQueryData(['journals', 'test-uid'], [
+            { moodScore: 8 }, { moodScore: 6 }, { moodScore: 7 },
+        ]);
+
+        render(
+            <QueryClientProvider client={queryClient}>
+                <JournalEditor initialEntry={null} onSaveComplete={vi.fn()} />
+            </QueryClientProvider>
+        );
+
+        await waitFor(() => expect(vi.mocked(getUserTemplates)).toHaveBeenCalled());
+        // (8 + 6 + 7) / 3 = 7
+        expect(await screen.findByText('7')).toBeInTheDocument();
     });
 });

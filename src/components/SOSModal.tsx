@@ -1,40 +1,18 @@
 import { MapPin, ExternalLink } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { doc, getDoc, type Firestore } from 'firebase/firestore';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 interface SOSModalProps { isOpen: boolean; onClose: () => void; }
 
 export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   const [showMeetings, setShowMeetings] = useState(false);
-  const { user } = useAuth();
+  const { profile } = useUserProfile();
   const navigate = useNavigate();
-  const [sponsorName, setSponsorName] = useState<string | null>(null);
-  const [sponsorPhone, setSponsorPhone] = useState<string | null>(null);
-
-  useEffect(() => {
-      if (isOpen && user && db) {
-          const fetchSponsor = async () => {
-              try {
-                  const database = db as Firestore;
-                  const ref = doc(database, 'users', user.uid);
-                  const snap = await getDoc(ref);
-                  if (snap.exists()) {
-                      const data = snap.data();
-                      setSponsorName(data.sponsorName || null);
-                      setSponsorPhone(data.sponsorPhone || null);
-                  }
-              } catch (e) {
-                  console.error("Failed to load sponsor info", e);
-              }
-          };
-          fetchSponsor();
-      }
-  }, [isOpen, user]);
+  const sponsorName = profile?.sponsorName || null;
+  const sponsorPhone = profile?.sponsorPhone || null;
 
   const handleNavigation = (path: string) => { onClose(); navigate(path); };
 

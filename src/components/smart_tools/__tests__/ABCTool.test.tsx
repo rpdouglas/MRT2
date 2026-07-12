@@ -5,9 +5,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { ABCTool } from '../ABCTool';
 import { useSearchParams } from 'react-router-dom';
 import * as firestore from 'firebase/firestore';
+
+function renderWithQueryClient(ui: ReactElement) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: () => ({ user: { uid: 'test-uid' }, userTier: 'free' }),
@@ -60,13 +67,13 @@ describe('🧠 ABCTool (Guided ABCDE flow)', () => {
     });
 
     it('renders the first step (Activating Event) with the spec-verbatim question', async () => {
-        render(<ABCTool />);
+        renderWithQueryClient(<ABCTool />);
         await waitFor(() => expect(screen.getByText('Step 1 of 5 — A — Activating Event')).toBeInTheDocument());
         expect(screen.getByText('What happened? Describe just the facts — what you saw, heard, or experienced.')).toBeInTheDocument();
     });
 
     it('renders the Socratic prompt card and distortion picker on Step D, and excludes the distortion from the saved payload', async () => {
-        render(<ABCTool />);
+        renderWithQueryClient(<ABCTool />);
         await waitFor(() => screen.getByPlaceholderText("e.g., My boss sent a vague email asking to 'talk later'."));
 
         fillStep("e.g., My boss sent a vague email asking to 'talk later'.", 'My sponsor missed our scheduled call today.');
@@ -114,7 +121,7 @@ describe('🧠 ABCTool (Guided ABCDE flow)', () => {
             }],
         } as unknown as firestore.QuerySnapshot);
 
-        render(<ABCTool />);
+        renderWithQueryClient(<ABCTool />);
 
         await waitFor(() => expect(screen.getByText('Step 1 of 5 — A — Activating Event')).toBeInTheDocument());
         expect(screen.getByPlaceholderText("e.g., My boss sent a vague email asking to 'talk later'.")).toHaveValue('');

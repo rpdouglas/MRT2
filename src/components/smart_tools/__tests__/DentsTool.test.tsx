@@ -5,9 +5,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { DentsTool } from '../DentsTool';
 import { useAuth } from '../../../contexts/AuthContext';
 import * as firestore from 'firebase/firestore';
+
+function renderWithQueryClient(ui: ReactElement) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({ user: { uid: 'test-uid' }, userTier: 'free' })),
@@ -97,7 +104,7 @@ describe('⚡ DentsTool (Guided D.E.N.T.S. Scenario Mode)', () => {
     });
 
     it('walks through the scenario intro and all 5 steps to reach an editable summary', async () => {
-        render(<DentsTool />);
+        renderWithQueryClient(<DentsTool />);
         await waitFor(() => screen.getByText("What's the high-risk situation you're planning for?"));
 
         await completeAllSteps();
@@ -108,7 +115,7 @@ describe('⚡ DentsTool (Guided D.E.N.T.S. Scenario Mode)', () => {
     });
 
     it('drops the DRAFT tag only on the summary phase\'s final save, with the scenario in the payload', async () => {
-        render(<DentsTool />);
+        renderWithQueryClient(<DentsTool />);
         await waitFor(() => screen.getByText("What's the high-risk situation you're planning for?"));
         await completeAllSteps();
 
@@ -128,7 +135,7 @@ describe('⚡ DentsTool (Guided D.E.N.T.S. Scenario Mode)', () => {
             { deny: 'a', escape: 'b', neutralize: 'c', tasks: 'd', swap: 'e' },
             ['SMART Tool', 'DENTS']
         );
-        render(<DentsTool />);
+        renderWithQueryClient(<DentsTool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing your plan')).toBeInTheDocument());
         expect(screen.queryByText("What's the high-risk situation you're planning for?")).not.toBeInTheDocument();
@@ -139,7 +146,7 @@ describe('⚡ DentsTool (Guided D.E.N.T.S. Scenario Mode)', () => {
             { deny: '', escape: '', neutralize: '', tasks: '', swap: '' },
             ['SMART Tool', 'DENTS', 'DRAFT']
         );
-        render(<DentsTool />);
+        renderWithQueryClient(<DentsTool />);
 
         await waitFor(() => expect(screen.getByText("What's the high-risk situation you're planning for?")).toBeInTheDocument());
     });

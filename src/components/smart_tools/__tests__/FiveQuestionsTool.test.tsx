@@ -5,9 +5,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { FiveQuestionsTool } from '../FiveQuestionsTool';
 import { useAuth } from '../../../contexts/AuthContext';
 import * as firestore from 'firebase/firestore';
+
+function renderWithQueryClient(ui: ReactElement) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({ user: { uid: 'test-uid' }, userTier: 'free' })),
@@ -104,7 +111,7 @@ describe('❓ FiveQuestionsTool (Guided Byron Katie self-enquiry flow)', () => {
     });
 
     it('walks through the thought intro and all 5 questions to reach the summary', async () => {
-        render(<FiveQuestionsTool />);
+        renderWithQueryClient(<FiveQuestionsTool />);
         await waitFor(() => screen.getByText("What's the thought or belief you want to examine?"));
 
         await completeAllSteps();
@@ -115,7 +122,7 @@ describe('❓ FiveQuestionsTool (Guided Byron Katie self-enquiry flow)', () => {
     });
 
     it('blocks Finish on Q1 until both the explanation and the Yes/No answer are given', async () => {
-        render(<FiveQuestionsTool />);
+        renderWithQueryClient(<FiveQuestionsTool />);
         await waitFor(() => screen.getByText("What's the thought or belief you want to examine?"));
         fireEvent.change(screen.getByPlaceholderText("e.g. I'll never be able to relax without using"), { target: { value: 'thought' } });
         fireEvent.click(screen.getByText('Continue →'));
@@ -129,7 +136,7 @@ describe('❓ FiveQuestionsTool (Guided Byron Katie self-enquiry flow)', () => {
     });
 
     it('drops the DRAFT tag only on the summary phase\'s final save, with the full payload', async () => {
-        render(<FiveQuestionsTool />);
+        renderWithQueryClient(<FiveQuestionsTool />);
         await waitFor(() => screen.getByText("What's the thought or belief you want to examine?"));
         await completeAllSteps();
 
@@ -152,7 +159,7 @@ describe('❓ FiveQuestionsTool (Guided Byron Katie self-enquiry flow)', () => {
             },
             ['SMART Tool', 'FIVE_QUESTIONS', 'DRAFT']
         );
-        render(<FiveQuestionsTool />);
+        renderWithQueryClient(<FiveQuestionsTool />);
 
         await waitFor(() => expect(screen.getByText('Examining: "a"')).toBeInTheDocument());
         expect(screen.queryByText("What's the thought or belief you want to examine?")).not.toBeInTheDocument();
@@ -166,7 +173,7 @@ describe('❓ FiveQuestionsTool (Guided Byron Katie self-enquiry flow)', () => {
             },
             ['SMART Tool', 'FIVE_QUESTIONS', 'DRAFT']
         );
-        render(<FiveQuestionsTool />);
+        renderWithQueryClient(<FiveQuestionsTool />);
 
         await waitFor(() => expect(screen.getByText('Step 1 of 5 — Q1 — Is It True?')).toBeInTheDocument());
     });

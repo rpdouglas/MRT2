@@ -16,20 +16,15 @@ import VaultGate from "../VaultGate";
 import ReadingModal from "../readings/ReadingModal";
 import { useEncryption } from "../../contexts/EncryptionContext";
 import { FELLOWSHIPS } from "../../data/fellowships";
-import { useAuth } from "../../contexts/AuthContext";
 import { useAllDailyReadings } from "../../hooks/useDailyReading";
 import { useReadingPreferences, ALL_MODALITIES } from "../../hooks/useReadingPreferences";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import { format } from "date-fns";
-import type { DailyReading, UserProfile } from "../../lib/db";
+import type { DailyReading } from "../../lib/db";
 
 export default function DynamicAnchorWidget() {
   const timeOfDay = useTimeOfDay();
   const { needsCheckIn, needsReading } = useAnchorStatus();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { isVaultUnlocked } = useEncryption();
 
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
@@ -51,30 +46,21 @@ export default function DynamicAnchorWidget() {
     availableReadings.findIndex(r => r.modality === activeModality)
   );
 
-  const { data: userProfile } = useQuery<UserProfile | null>({
-    queryKey: ["profile", user?.uid],
-    queryFn: async () => {
-      if (!user || !db) return null;
-      const snap = await getDoc(doc(db, "users", user.uid));
-      return snap.exists() ? (snap.data() as UserProfile) : null;
-    },
-    enabled: !!user,
-  });
+  const { profile: userProfile, patchFields } = useUserProfile();
 
   const recoveryPath =
     userProfile?.anchorSettings?.defaultFellowship ||
     (userProfile as unknown as { recoveryPath?: string })?.recoveryPath ||
     "DEFAULT";
-  const fellowship = FELLOWSHIPS[recoveryPath] || FELLOWSHIPS.DEFAULT;
+  // FELLOWSHIPS has no 'DEFAULT' entry — recoveryPath falls back to the
+  // literal string "DEFAULT" when unset, so that lookup must itself fall
+  // back to a real entry (AA) or this throws for any user without
+  // anchorSettings.defaultFellowship set (found via PROJ-59 test coverage).
+  const fellowship = FELLOWSHIPS[recoveryPath] || FELLOWSHIPS.AA;
 
   const updateReadingDate = async () => {
-    if (user && db) {
-      const todayStr = format(new Date(), "yyyy-MM-dd");
-      await updateDoc(doc(db, "users", user.uid), {
-        "anchorSettings.lastReadingDate": todayStr,
-      });
-      queryClient.invalidateQueries({ queryKey: ["profile", user.uid] });
-    }
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    await patchFields.mutateAsync({ "anchorSettings.lastReadingDate": todayStr });
   };
 
   const handleReadingClick = async (url: string) => {
