@@ -208,7 +208,7 @@ interface GeneratedReading {
     attribution?: string;
 }
 
-function buildBatchPrompt(
+export function buildBatchPrompt(
     datesAndThemes: Array<{ date: string; theme: string }>,
     requiresAttribution: boolean,
 ): string {

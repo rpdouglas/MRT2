@@ -7,8 +7,10 @@ import {
     computeHabitAlert,
     processUserBatch,
     identifyStaleTokensByUser,
+    buildBatchPrompt,
     type BeaconUserDoc,
 } from "./index";
+import { MODALITY_CONFIGS, READING_MODALITIES, type ReadingModality } from "./prompts";
 
 describe("getMilestone", () => {
     it("returns null for zero or negative days", () => {
@@ -197,5 +199,68 @@ describe("identifyStaleTokensByUser", () => {
         const responses = tokens.map(() => ({ success: true }));
         const result = identifyStaleTokensByUser(responses, tokens, tokenToUid);
         expect(result.size).toBe(0);
+    });
+});
+
+describe("MODALITY_CONFIGS (prompts.ts static config)", () => {
+    it.each(READING_MODALITIES)("%s has a non-empty systemPrompt, label, and at least one theme", (modality) => {
+        const config = MODALITY_CONFIGS[modality];
+        expect(config.systemPrompt.trim().length).toBeGreaterThan(0);
+        expect(config.label.trim().length).toBeGreaterThan(0);
+        expect(config.themes.length).toBeGreaterThan(0);
+    });
+
+    it("only recovery-dharma requires attribution", () => {
+        const requiring = READING_MODALITIES.filter((m) => MODALITY_CONFIGS[m].requiresAttribution);
+        expect(requiring).toEqual(["recovery-dharma"]);
+    });
+
+    it("12-Step modality prompts forbid their own trademarked name from appearing in the reading body", () => {
+        const trademarkByModality: Record<string, string> = {
+            "twelve-step-aa": "Alcoholics Anonymous",
+            "twelve-step-na": "Narcotics Anonymous",
+            "twelve-step-ca": "Cocaine Anonymous",
+        };
+        for (const [modality, name] of Object.entries(trademarkByModality)) {
+            const prompt = MODALITY_CONFIGS[modality as ReadingModality].systemPrompt;
+            expect(prompt).toContain("Do NOT use the trademarked name");
+            expect(prompt).toContain(name);
+        }
+    });
+});
+
+describe("buildBatchPrompt", () => {
+    it("interpolates every date/theme pair into a numbered list", () => {
+        const prompt = buildBatchPrompt(
+            [
+                { date: "2026-07-01", theme: "Gratitude" },
+                { date: "2026-07-02", theme: "Service" },
+            ],
+            false,
+        );
+
+        expect(prompt).toContain("1. Date: 2026-07-01 | Theme: Gratitude");
+        expect(prompt).toContain("2. Date: 2026-07-02 | Theme: Service");
+        expect(prompt).toContain("Generate exactly 2 daily recovery readings");
+        expect(prompt).toContain("valid JSON array of exactly 2 objects");
+    });
+
+    it("includes the exact Recovery Dharma attribution instruction only when requiresAttribution is true", () => {
+        const withAttribution = buildBatchPrompt([{ date: "2026-07-01", theme: "Impermanence" }], true);
+        const withoutAttribution = buildBatchPrompt([{ date: "2026-07-01", theme: "Impermanence" }], false);
+
+        expect(withAttribution).toContain(
+            '"attribution": must be exactly "Adapted from the Recovery Dharma book, licensed CC BY-SA 4.0 — recoverydharma.org"'
+        );
+        expect(withoutAttribution).not.toContain("attribution");
+    });
+
+    it("threads each modality's own requiresAttribution flag through correctly", () => {
+        for (const modality of READING_MODALITIES) {
+            const config = MODALITY_CONFIGS[modality];
+            const prompt = buildBatchPrompt([{ date: "2026-07-01", theme: config.themes[0] }], config.requiresAttribution);
+            expect(prompt).toContain(config.themes[0]);
+            expect(prompt.includes("attribution")).toBe(config.requiresAttribution);
+        }
     });
 });

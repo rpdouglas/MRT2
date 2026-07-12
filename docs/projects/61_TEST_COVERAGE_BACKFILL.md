@@ -1,6 +1,6 @@
 # 📁 Project 61: Test Coverage Backfill — ZK-Adjacent & Firestore-Write Paths
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** The Architect (Admin)
 **Objective:** Close the four highest-risk test-coverage gaps identified in the deep review — one decryption-adjacent module and three Firestore-write paths with zero coverage today.
 
@@ -23,13 +23,13 @@
 ---
 
 ## 3. Schema & Architecture 🗄️
-No production code changes — test files only.
+Test files only, with one approved exception: `functions/src/index.ts`'s `buildBatchPrompt` was changed from a private to an exported function (visibility-only, zero behavior change) so its prompt-interpolation logic — which actually lives in `index.ts`, not in the static-config `prompts.ts` — could be unit tested. See §5 for the full rationale.
 
-**Target files for coverage (new test files to create):**
+**Target files for coverage:**
 * `src/lib/__tests__/exporter.test.ts` — **highest priority**, decryption-adjacent, currently zero coverage
 * `src/hooks/__tests__/useROSCAssessments.test.ts` — Firestore-write hook, zero coverage anywhere
 * `src/hooks/__tests__/useRateLimits.test.ts` — Firestore-write hook, zero coverage anywhere
-* `functions/src/__tests__/prompts.test.ts` — zero coverage today
+* `functions/src/index.test.ts` (extended, not a new `__tests__/prompts.test.ts`) — matches this package's existing co-located test convention; covers both `prompts.ts`'s static `MODALITY_CONFIGS` and `buildBatchPrompt`'s actual interpolation logic
 
 **Lower-priority, noted but not scoped in this pass** (per the review, `src/lib/db.ts`, `deletion.ts`, `importer.ts` are also under-tested — defer until the above four are closed):
 * `src/lib/db.ts`, `src/lib/deletion.ts`, `src/lib/importer.ts`
@@ -48,12 +48,13 @@ No production code changes — test files only.
 * Mock Firestore (`writeBatch`/`setDoc`/`getDocs` as applicable) per each hook's actual calls.
 * Test the optimistic update / rollback-on-error behavior for each mutation, consistent with how `useTaskOperations`/`useJournalOperations` are already tested (mirror their existing test structure rather than inventing a new one).
 
-### Phase 3: `functions/src/prompts.ts`
-* Unit test prompt-construction logic in isolation (no live Gemini calls) — confirm the correct fields are interpolated into each prompt template for the flows that use it.
+### Phase 3: `functions/src/prompts.ts` + `buildBatchPrompt` (`functions/src/index.ts`)
+* Static-config assertions over `MODALITY_CONFIGS`/`READING_MODALITIES` (non-empty `systemPrompt`/`label`/`themes`, correct `requiresAttribution` per modality, trademarked names absent from 12-Step prompt bodies).
+* Unit test `buildBatchPrompt`'s actual interpolation in isolation (no live Gemini calls) — confirm dates/themes are correctly substituted and the Recovery Dharma attribution instruction appears only when `requiresAttribution` is true.
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Run Suite:** `npm run test:once` — all new and existing suites must pass.
-* [ ] **Console Hygiene:** No decrypted fixture content ever printed to console during test runs, including on intentional-failure paths.
-* [ ] **Coverage confirmation:** Re-run the ratios from the review's §5 table after this ships and confirm all four target files move from 0 to covered.
+* [x] **Run Suite:** `npm run test:once` — all new and existing suites must pass. (447/447 passed, 64 files; `functions/`: 34/34 passed)
+* [x] **Console Hygiene:** No decrypted fixture content ever printed to console during test runs, including on intentional-failure paths. Failure-path assertions check the entry id in the logged error, never a decrypted value.
+* [x] **Coverage confirmation:** All four target files now covered — `src/lib/__tests__/exporter.test.ts` (6 tests), `src/hooks/__tests__/useROSCAssessments.test.ts` (7 tests), `src/hooks/__tests__/useRateLimits.test.ts` (9 tests), `functions/src/index.test.ts` prompt-construction additions (13 tests). One deviation from the original plan, approved before implementation: `buildBatchPrompt` — the actual prompt-interpolation logic — lives in `functions/src/index.ts`, not `prompts.ts` (which is pure static config); it was exported (visibility-only, no behavior change) and tested alongside the existing `functions/src/index.test.ts` co-located convention rather than in a new `functions/src/__tests__/prompts.test.ts`.
