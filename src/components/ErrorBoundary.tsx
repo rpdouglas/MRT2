@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 interface Props {
@@ -30,6 +30,7 @@ class ErrorBoundary extends Component<Props, State> { public state: State = { ha
     if (db) {
         try {
             addDoc(collection(db, 'client_errors'), {
+                uid: auth?.currentUser?.uid,
                 message: error.message,
                 stack: error.stack || 'No stack trace',
                 componentStack: errorInfo.componentStack,

@@ -101,13 +101,13 @@ service cloud.firestore {
 
     // 5. AI Analytics Logs
     match /ai_logs/{logId} {
-      allow create: if request.auth != null;
+      allow create: if isCreatingOwnedResource();
       allow read: if isAdmin();
     }
 
     // 6. Client Error Logs
     match /client_errors/{errorId} {
-      allow create: if request.auth != null; 
+      allow create: if isCreatingOwnedResource();
       allow read, delete: if isAdmin();
     }
     
@@ -119,7 +119,7 @@ service cloud.firestore {
 
     // 8. Feedback & Bug Reports
     match /feedback/{reportId} {
-      allow create: if request.auth != null;
+      allow create: if isCreatingOwnedResource();
       allow read, update, delete: if isAdmin();
     }
 

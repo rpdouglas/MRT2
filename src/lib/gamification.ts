@@ -57,9 +57,9 @@ export interface UserStats {
 }
 
 // Minimal interfaces for input data to avoid 'any'
-interface ScorableJournal { tags?: string[]; content?: string; moodScore?: number; createdAt: { toDate: () => Date } | Date | Timestamp; }
+export interface ScorableJournal { tags?: string[]; content?: string; moodScore?: number; createdAt: { toDate: () => Date } | Date | Timestamp; }
 
-interface ScorableTask { status?: string; priority?: 'High' | 'Medium' | 'Low'; completed?: boolean; currentStreak?: number; }
+export interface ScorableTask { status?: string; priority?: 'High' | 'Medium' | 'Low'; completed?: boolean; currentStreak?: number; }
 
 // --- HELPER FUNCTIONS ---
 

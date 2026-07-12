@@ -6,11 +6,11 @@ import VibrantHeader from '../components/VibrantHeader';
 import { WrenchScrewdriverIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { subDays, startOfDay } from 'date-fns';
 import { THEME } from '../lib/theme';
+import type { Task } from '../lib/tasks';
 
 export default function DebugTools() {
     const { user } = useAuth();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
 
@@ -21,7 +21,7 @@ export default function DebugTools() {
         try {
             const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
             const snap = await getDocs(q);
-            setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() } as Task)));
         } catch (e) {
             console.error("Failed to load tasks", e);
         } finally {
@@ -97,19 +97,19 @@ export default function DebugTools() {
                                 <div className="font-bold">{task.title}</div>
                                 <div className="text-xs text-gray-500 font-mono">
                                     Streak: {task.currentStreak} | Status: {task.status} <br/>
-                                    Due: {task.dueDate?.toDate().toLocaleDateString()}
+                                    Due: {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : task.dueDate?.toLocaleDateString()}
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button 
-                                    onClick={() => simulateCompletedYesterday(task.id)}
+                                <button
+                                    onClick={() => task.id && simulateCompletedYesterday(task.id)}
                                     className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-200"
                                 >
                                     <ClockIcon className="h-3 w-3 inline mr-1" />
                                     Sim: Done Yest.
                                 </button>
-                                <button 
-                                    onClick={() => simulateMissedYesterday(task.id)}
+                                <button
+                                    onClick={() => task.id && simulateMissedYesterday(task.id)}
                                     className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200"
                                 >
                                     <ClockIcon className="h-3 w-3 inline mr-1" />
