@@ -38,6 +38,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-62` Tech Debt Quick Wins — Logging, Rules, Duplicate Reads, `any` Suppressions (Cleared five deep-review quick-win chores: removed a debug console.log, hardened the CI service-account heredoc, tightened ai_logs/client_errors/feedback Firestore rules to uid-match, extracted Tasks.tsx's raw onSnapshot into useTasksList, and fixed the last four any-type suppressions (two of which were masking real latent bugs).)
 * `PROJ-61` Test Coverage Backfill — ZK-Adjacent & Firestore-Write Paths (Backfilled test coverage for exporter.ts, useROSCAssessments, useRateLimits, and functions/prompts.ts prompt-construction logic.)
 * `PROJ-60` God File Decomposition — Vitality & Data Management (Split Vitality.tsx and DataManagement.tsx along independent concerns, isolating account deletion and fixing a ZK plaintext-write bug in Vitality journal saves.)
 * `PROJ-59` Data Access Layer Consolidation (Consolidated Firestore data-access layer onto TanStack Query: fixed two stale-cache bugs, extracted a shared query/mutation factory, migrated all raw CRUD call sites.)
