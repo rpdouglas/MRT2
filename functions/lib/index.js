@@ -47,6 +47,7 @@ exports.computeMilestoneAlert = computeMilestoneAlert;
 exports.computeHabitAlert = computeHabitAlert;
 exports.processUserBatch = processUserBatch;
 exports.identifyStaleTokensByUser = identifyStaleTokensByUser;
+exports.buildBatchPrompt = buildBatchPrompt;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");

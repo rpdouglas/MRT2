@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.10] - 2026-07-12
+### 🛠️ Test Coverage Backfill (Internal)
+- **Quality [PROJ-61]:** Added automated test coverage for data export, ROSC check-ins, AI feature rate limiting, and Daily Reading prompt generation — closing the last of the zero-coverage gaps flagged in the codebase deep review. No user-facing behavior changed.
+
 ## [v1.8.9] - 2026-07-12
 ### 🛠️ Vitality & Data Management Architecture Cleanup
 - **Security Fix [PROJ-60]:** Vitality entries (Movement, Fuel, Breathwork logs) are now properly encrypted client-side before being saved, closing a gap where they were written unencrypted. A confirmation toast now appears when a Vitality entry is logged.
