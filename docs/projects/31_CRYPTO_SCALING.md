@@ -2,7 +2,7 @@
 
 **Status:** ✅ Completed (2026-04-28)
 **Post-Sprint Audit:** [`archive/31_CRYPTO_SCALING_AUDIT.md`](./archive/31_CRYPTO_SCALING_AUDIT.md)
-**Primary Persona:** The Architect (Admin)
+**Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Scale the AES-GCM Key Rotation engine so it can seamlessly decrypt and re-encrypt 10,000+ records without crashing mobile browsers or freezing the UI.
 
 ---

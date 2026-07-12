@@ -8,8 +8,8 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 3-column Quick Action Bar replacing the static daily pledge. |
-| 🟡 **Queued** | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
-| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | CEO | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
+| ⚪ Planned | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
+| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
 
 ## 🌊 Wave 2: Retention & Community (Weeks 7–16)
 *The secondary goal: Keep users past Day 30 through peer support and shame-free resets.*
@@ -27,7 +27,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). |
 | ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt / Lisa | AI analysis of Insights collection to generate proactive warning tasks. |
-| ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | Admin | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
+| ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | All | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
 
 ## 🌊 Wave 4: Enterprise & Ecosystem (Weeks 27–52)
 *The final goal: Defensible technical moats and B2B expansion.*
@@ -45,6 +45,7 @@
 * `PROJ-59` Data Access Layer Consolidation (Consolidated Firestore data-access layer onto TanStack Query: fixed two stale-cache bugs, extracted a shared query/mutation factory, migrated all raw CRUD call sites.)
 * `PROJ-58` Profile UX Remediation (Unified three incompatible save models into one autosave pattern; fixed a TanStack Query bypass that could desync Dashboard badges after a Profile save; restyled the vault-reset confirmation into a Headless UI dialog; made Security/Data tabs deep-linkable routes; cause-specific import-failure messages; distinct partial-failure state for the displayName auth sync; 44px touch targets)
 * `PROJ-57` Journal Template Modality Expansion (Default journal template picker expanded from 4 Twelve-Step-only templates to 15 templates across 11 recovery modalities — CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, General — grouped by modality; new templates render as guided multi-prompt forms reusing the existing custom-template rendering path)
+* `PROJ-56` Sobriety Hero Color Themes (Swatch button on the dashboard hero plus a matching "Hero Appearance" picker in Profile → General; 5 curated presets stored as a plaintext `heroColor` field on `users/{uid}`, defaulting to today's amber look when unset.)
 * `PROJ-55` Workbook Remediation (Real, step-specific content for 12-Step Steps 2-11 with unique literature-grounded contexts; migrated Workbook pages off direct Firestore calls onto a TanStack Query hook; fixed a fragile decryption heuristic; removed orphaned data module; dynamic gamification denominator)
 * `PROJ-50` Guided CBT/REBT Interactive Workflows (Step-locked guided flows for ABCDE, CBA, and DENTS Scenario Mode; new Thought Record and Five Questions tools; AI coaching prompts; Tools Hub redesign with Start Fresh/Resume/History entry points and completion tracking)
 * `PROJ-54` Journal Insights Momentum UI Redesign (GlassCard, dark theme, smooth charts, and typography upgrade)
@@ -58,6 +59,7 @@
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
 * `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
 * `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
+* `PROJ-26` The Beacon (Push Notification Engine) — server-scheduled Web Push (FCM) for sobriety milestones and overdue-habit reminders; spec backfilled 2026-07-09 as part of the notification-system remediation.
 * `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
 * `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
