@@ -5,6 +5,11 @@
 - **Security [PROJ-62]:** Tightened Firestore rules so `ai_logs`, `client_errors`, and `feedback` writes must match the authenticated user's ID, closing a gap where any signed-in user could write a log entry under an arbitrary `uid`. No user-facing behavior changed.
 - **Architecture [PROJ-62]:** Extracted the Tasks page's live data feed into a dedicated hook, removed a leftover debug log, hardened a CI secret-handling step, and fixed the last four `any`-typed inference gaps flagged in the codebase deep review — two of which turned out to be masking real (harmless in practice) type bugs. No user-facing behavior changed.
 
+## [v1.8.11] - 2026-07-12
+### ✨ Journal Sharing Enhancements
+- **Domain Link:** Appended a blank line followed by `myrecoverytoolkit.ca` to the end of the plaintext journal entry share text.
+- **Accessibility:** Added `title="Share Entry"` to the Journal History share button to improve screen reader accessibility and testability.
+
 ## [v1.8.10] - 2026-07-12
 ### 🛠️ Test Coverage Backfill (Internal)
 - **Quality [PROJ-61]:** Added automated test coverage for data export, ROSC check-ins, AI feature rate limiting, and Daily Reading prompt generation — closing the last of the zero-coverage gaps flagged in the codebase deep review. No user-facing behavior changed.
