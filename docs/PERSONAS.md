@@ -34,6 +34,7 @@ Features must pass the "Persona Check" based on the user's emotional state, stag
 | **Primary Engagement Driver** | Ned | Daily retention, task completion, and gamification features are optimised for Ned. His metrics determine whether the product builds habit. |
 | **Primary Depth Driver** | Walt + Maya | AI analysis, journaling depth, workbook completion, and data export features are optimised for these two. Their engagement justifies the Premium tier. |
 | **Primary Viral Driver** | Lisa | The sponsor invite flow is the primary mechanism for organic user acquisition. Lisa bringing her sponsees into MRT is MRT's most important growth loop. |
+| **Primary Stabilization Driver** | Jordan | Medical-behavioral integration, craving management, and harm reduction tracking are optimized for Jordan. Ensures MRT remains a non-stigmatizing partner. |
 
 ---
 
@@ -43,6 +44,7 @@ Users are not static. The same person may move through multiple persona stages o
 
 ```
 Day 1-30      → David (Survival, crisis-first design)
+Day 1-365+    → Jordan (Parallel track - Medical integration, craving management, MAT compliance)
 Day 30-90     → Ned (Momentum, gamification, habit building)
 Day 90+       → Pink Cloud Crash transition point — highest design risk
 Month 3-18    → Maya (Systematic learning, CBT, workbook completion)
@@ -55,6 +57,7 @@ Year 7+       → Lisa (Service, sponsorship, giving back — Step 12)
 - **Day 90 (Pink Cloud Crash):** The highest-risk design moment. Reduce streak-count prominence. Shift from quantity metrics (tasks completed) to quality metrics (journal depth, step progress). Surface CBT tools and deeper AI analysis. Do not let the app feel "empty" when streaks break.
 - **Month 6 (Ned → Maya/Walt):** Introduce structured workbook pathways. Offer deeper AI comparative analysis. Reduce onboarding prompts.
 - **Year 1+ (Any → Lisa):** Surface service features and sponsor tooling when sobriety milestones suggest readiness.
+- **Day 1+ (Parallel MAT Track):** Surface the discrete medication compliance logs and craving-correlation indicators in the Vitality and Insights tabs if MAT mode is enabled.
 
 ---
 
@@ -410,12 +413,74 @@ At Month 18, Maya faces a transition: she has completed the available curricula 
 * **Insight Frequency:** How often she triggers the Deep Pattern Recognition engine and marks insights as "useful."
 * **Export Engagement:** Regular generation of workbook-inclusive PDF exports.
 
-#### 🖼️ Asset Metadata
-> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
-* `ASSETS.personas.maya.headshot`
-* `ASSETS.personas.maya.bio_feature`
-* `ASSETS.personas.maya.full_body`
 * `ASSETS.personas.maya.looking_left`
+
+---
+
+### 6. "Jordan" (The Stabiliser)
+> *"My recovery combines medicine and behavior. I need tools that support my physical stability without judgment."*
+
+| Attribute | Profile |
+| :--- | :--- |
+| **Recovery Stage** | Early-to-Mid (Day 1 to Month 12+, on active MAT) |
+| **Recovery Path** | MAT (Buprenorphine/Suboxone or Naltrexone) + MARA / SMART Recovery |
+| **System Archetype** | **The Stabiliser** (High Compliance Drive) |
+| **Core Motivation** | Physical stabilization, craving management, and rebuilding life/routine. |
+| **Tech Literacy** | Moderate-High (Expects automated reminders and correlation stats). |
+| **Environment** | Daily routine on the go. Mobile-primary. Needs discrete visual alerts to avoid sharing medical status. |
+| **Fellowship Notes** | MARA (Medication-Assisted Recovery Anonymous) or SMART Recovery. Jordan faces systemic stigma in traditional 12-Step rooms where peers or sponsors might declare they are "not clean" due to taking recovery medications. Jordan needs non-spiritual, science-backed behavioral tools and customizable counters. |
+
+#### 📖 Bio & Narrative
+Jordan is 35 years old and recovering from severe opioid use disorder. After experiencing multiple painful relapse cycles in traditional abstinence-only settings (leaving them with intense shame), they transitioned to a Buprenorphine (Suboxone) MAT program managed by an addiction specialist. Jordan is now stable, employed, and rebuilding family relationships. They use MRT as a behavioral tracker, but are highly sensitive to preachy language or rigid counters that exclude their medical path. They attend MARA meetings online and practice secular SMART techniques.
+
+#### 🌡️ Emotional State Spectrum
+| State | Context | Design Response |
+| :--- | :--- | :--- |
+| **Best case** | Stable daily routine, medication taken, craving level low. | Simple check-in, positive reinforcement of stability streak, calendar view. |
+| **Typical case** | Busy work day, mild cravings, needs to track a side effect. | Single-tap dose logging, craving intensity slider, quick note entry. |
+| **Worst case** | Experiencing withdrawal, intense cravings, or severe side effects. | Immediate grounding exercises, craving tracker, emergency clinician contact shortcut. |
+
+#### 🎯 Goals & Needs
+* **Medication Adherence:** A secure, automated log to track daily doses without fail.
+* **Craving/Side-Effect Correlation:** AI insights correlating craving peaks, mood, and medication timing.
+* **Custom Counters:** Sobriety dates that celebrate "Days of Stability" or "Harm-Free Days" instead of absolute chemical abstinence.
+* **Discrete Privacy:** Notifications that protect their medical privacy on lock screens.
+
+#### 🚧 Frustrations & Pain Points
+* **Rigid Dogmatism:** App language or metrics implying that taking prescribed recovery medication is "cheating."
+* **Cluttered Inputs:** Having to navigate multiple screens to record a simple daily dose.
+* **Public Alerts:** Reminder notifications that show terms like "Suboxone" or "Opioid" on the lock screen.
+* **Uncorrelated Data:** Cravings spiking without the ability to analyze if it's tied to dose timing or sleep quality.
+
+#### ⚡ UX Constraints & Rules
+* **Primary Constraint: Non-Judgmental Stability.**
+* *Rule:* Daily reminders must be discrete and generic (e.g. "Time for your morning routine check-in"). No drug names.
+* *Rule:* The main counter must support custom text labels (e.g. "Days of Stability" or "Active Recovery Days") to accommodate MAT.
+* *Rule:* Logging a dose must take exactly one tap from the dashboard widget or notification tap.
+* *Rule:* Never show "abstinence broken" states if a user logs an approved prescribed recovery medication.
+
+#### 🛠️ Key Feature Alignment
+* **Discreet Dose Reminders:** Generates push notifications for compliance without exposing medical details.
+* **Side-Effect Correlation Matrix (Insights):** Maps physical symptoms (sleep, headaches) against mood and cravings.
+* **MARA Modality Selector:** Integrates MARA and SMART Recovery templates into the guided journaling tool.
+* **Custom Sobriety Counter:** Allows users to rename their recovery metrics.
+
+#### 🔄 Journey Arc — Stage Transition
+At Month 12, Jordan may begin tapering off medication under clinical supervision. MRT must support this by:
+- Transitioning tracking metrics from "Medication Compliance" to "Somatic Baseline Tracking" (monitoring anxiety, heart rate, sleep).
+- Keeping the option to continue tracking stability counters without forcing an app reset.
+- Introducing advanced CBT modules to cope with tapering-related anxiety.
+
+#### 🏆 Success Metrics
+* **Medication Compliance Rate:** Percentage of scheduled doses logged.
+* **Correlation Rating:** Frequency of tracking side-effects and cravings.
+* **90-Day Retention:** Percentage of MAT-track users who maintain stability logging through the critical first quarter.
+
+#### 🖼️ Asset Metadata
+* `ASSETS.personas.jordan.headshot`
+* `ASSETS.personas.jordan.bio_feature`
+* `ASSETS.personas.jordan.full_body`
+* `ASSETS.personas.jordan.looking_left`
 
 ---
 
@@ -472,7 +537,9 @@ Maintained to prevent design paralysis when two personas have conflicting needs 
 | David ↔ Ned | Both early recovery, both phone-primary | **Emotional state is opposite:** David is in crisis and needs zero friction. Ned is energised and wants reward. The same feature (daily pledge) should be a survival tool for David and a gamification element for Ned — these are handled by stage-based UI adaptation, not separate UIs. |
 | Lisa ↔ Walt | Both long-term, both sponsor others | **Job-to-be-done is different:** Lisa = manage others (service-outward). Walt = reflect inward (introspection-first). Service features are Lisa's primary destination; a secondary one for Walt. |
 | Maya ↔ Ned | Both early-to-mid recovery | **Motivation is opposite:** Ned = momentum and gamification (external validation). Maya = systematic mastery (internal curriculum). The same workbook feature is a completion-tracking tool for Maya and a progress badge for Ned. |
+| Jordan ↔ Ned | Both early-to-mid recovery | **Visibility preferences differ:** Ned wants gamified streaks and public milestone sharing. Jordan wants private medical stability, customized counters, and discreet notifications. |
+| Jordan ↔ David | Both manage cravings | **Temporal focus differs:** David is in acute crisis at 2 AM and needs instant de-escalation. Jordan is focused on daily stabilization, dose compliance, and side-effect correlations. |
 
 ---
 
-*My Recovery Toolkit · docs/PERSONAS.md · v2.1 · May 2026*
+*My Recovery Toolkit · docs/PERSONAS.md · v2.2 · July 2026*
