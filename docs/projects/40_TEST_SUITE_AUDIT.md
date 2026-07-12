@@ -1,7 +1,7 @@
 # 📁 Project 40: Core Logic Test Suite Audit
 
 **Status:** 🟢 Completed
-**Primary Persona:** The Architect (Admin)
+**Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Establish a robust Vitest unit testing pipeline for MRT's uncovered core logic (`milestones`, `grouping`, `rotation`, and `PremiumGate`) to guarantee zero regressions during scaling.
 
 ---

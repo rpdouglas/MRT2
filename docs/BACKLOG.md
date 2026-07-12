@@ -1,6 +1,6 @@
 # 🧊 Feature Backlog (The Persona Icebox)
 
-**Last Reviewed:** 2026-04-24
+**Last Reviewed:** 2026-07-12
 
 **Storage:** Ideas and feature requests that are approved but deferred. Tagged by Persona to ensure we are building for specific psychological needs, not just adding features.
 
@@ -10,6 +10,7 @@
   * **Status:** Deferred to post-Wave 2.
 * **Feature:** Clinical Telehealth Off-Ramps (MAT Resources).
   * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
+  * **Status:** Deferred — unscheduled.
 
 ## 👤 Ned (The Pink Cloud)
 * **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
@@ -22,7 +23,12 @@
 ## 👤 Lisa (The Service Superstar)
 * **Feature:** Accountability Partner Mode.
   * **Concept:** A read-only "Listener" view where a sponsor can see a sponsee's clean time and public mood graph (without seeing encrypted journal entries).
+  * **Status:** Deferred — unscheduled.
 
 ## 👤 Walt (The Zen Master)
 * **Feature:** Photo Attachments in Journal.
   * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64). Deferred indefinitely.
+
+## 🅿️ Parked / Unscheduled (Have specs, not on the Roadmap)
+* **PROJ-38 — The Urge Intervention System ("The Lifeline Protocol").** Full spec exists at `docs/projects/38_URGE_INTERVENTION.md`. Status: ⚪ Planned, not yet scheduled into a Wave.
+* **PROJ-45 — Adaptive Persona UI Engine.** Full spec exists at `docs/projects/45_ADAPTIVE_PERSONA_UI.md`. Status: ⚪ Planned — PARKED, explicitly not in active sprint pending the Open Questions in the spec's §6.

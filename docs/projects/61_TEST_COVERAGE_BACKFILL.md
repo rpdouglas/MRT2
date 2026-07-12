@@ -1,7 +1,7 @@
 # 📁 Project 61: Test Coverage Backfill — ZK-Adjacent & Firestore-Write Paths
 
 **Status:** ✅ Shipped
-**Primary Persona:** The Architect (Admin)
+**Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Close the four highest-risk test-coverage gaps identified in the deep review — one decryption-adjacent module and three Firestore-write paths with zero coverage today.
 
 **Source:** `docs/reports/2026-07_codebase_deep_review.md` §5. Precedent: `PROJ-40` (Core Logic Test Suite Audit) — same template, same "no new user-facing behavior" scope.

@@ -1,5 +1,5 @@
 📁 Project 41: The Dynamic Anchor (Circadian Companion)
-Status: ✅ Completed (2026-05-03)
+Status: ✅ Completed (2026-05-03) — see §6 addendum: Intent Card (Card 3) was descoped, not shipped as specced
 Primary Persona: David (Crisis), Ned (Early Recovery)
 Objective: Replace the rigid "Daily Pledge" with a slim, frictionless, 3-column Quick Action Bar that adapts its journaling prompts based on the local time of day, complete with visual nudges and customizable alerts.
 
