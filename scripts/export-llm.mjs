@@ -26,6 +26,7 @@ const EXCLUDED_SEGMENTS = [
   'docs-site/.vitepress/cache',
   'docs-site/.vitepress/dist',
   'docs-site/public/screenshots',
+  'exports',
 ];
 
 const EXCLUDED_FILENAMES = new Set([
@@ -36,6 +37,8 @@ const EXCLUDED_FILENAMES = new Set([
   'build-info.json',
   'vite.config.bak',
   'docs_dump.txt',
+  'export_config.json',
+  'export_codebase.js',
 ]);
 
 const EXCLUDED_FILENAME_PREFIXES = ['.env', 'service-account'];

@@ -201,7 +201,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleShare = async (entry: JournalEntryWithStatus) => {
     const dateStr = entry.createdAt instanceof Date ? entry.createdAt.toLocaleDateString() : 'Unknown Date';
-    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}`;
+    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}\n\nmyrecoverytoolkit.ca`;
 
     if (navigator.share) {
         try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
@@ -333,7 +333,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                     </div>
                                     
                                     <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleShare(entry)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
+                                        <button onClick={() => handleShare(entry)} title="Share Entry" className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
                                             {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
                                         </button>
                                         <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
