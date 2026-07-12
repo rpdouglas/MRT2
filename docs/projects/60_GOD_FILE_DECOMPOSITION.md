@@ -1,6 +1,6 @@
 # 📁 Project 60: God File Decomposition — Vitality & Data Management
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** David (Vitality — crisis-adjacent breathwork tool) / Walt (Data Management — exports, deletion)
 **Objective:** Split `Vitality.tsx` and `DataManagement.tsx` along their genuinely independent concerns, isolating the single highest-risk operation in the app (account deletion) from lower-risk export/import code so future changes to one can't accidentally touch the other.
 
@@ -53,10 +53,15 @@ No Firestore schema changes. Purely a component/file split.
 * **Somatic Check:** Vitality's breathwork timer is used in moments of acute stress — any refactor must be verified pixel-for-pixel/behavior-for-behavior identical for David. No new loading states, no layout shift.
 * **Reward:** Confirm gamification/XP hooks tied to Vitality entries still fire correctly post-split.
 
+### Phase 4: Post-implementation fixes (found during manual verification)
+Two gaps surfaced only once a real user exercised the split in a live session — not caught by lint/typecheck/unit tests, since both are about runtime wiring rather than logic:
+* **Missing `VaultGate` on `/vitality`:** The route was never wrapped in `<VaultGate>` in `src/App.tsx`, unlike `/journal`, `/workbooks`, `/tools/cba`, `/tools/abc`. This was silently harmless before the Phase 2 ZK fix (the old raw `addDoc()` never called `encrypt()`, so it never needed the vault unlocked) but became a hard "Vault is locked. Key not found." failure once `useVitalityEntries.ts` correctly started encrypting. Fixed by wrapping `<Vitality />` in `<VaultGate>`, matching the existing pattern.
+* **No save confirmation:** Saving a Vitality entry gave no user-facing feedback. Fixed with a one-line `toast.success('Vitality entry logged.')` in `useVitalityEntries.ts`, alongside the existing `triggerHaptic('hold')` call — reuses the `sonner` `<Toaster/>` already mounted globally in `App.tsx` (see `WorkbookDetail.tsx` for the existing pattern).
+
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests:** Add coverage for the newly-extracted modules (bio-balance scoring, mood inference) if none exists today — this is a natural moment to close that gap cheaply since the logic is being isolated anyway.
-* [ ] **The Subway Test:** Re-verify offline resilience for both split files — Vitality's Firestore migration and DataManagement's export/import both need to degrade gracefully offline.
-* [ ] **The "Lost PIN" Test:** N/A — no crypto/rotation logic touched.
-* [ ] **Manual regression:** Full click-through of Export, Import, and Account Deletion flows in `DataManagement.tsx` post-split before merge — deletion is irreversible in production, so this is not optional.
+* [x] **Unit Tests:** `src/lib/__tests__/vitalityScoring.test.ts` (bio-balance scoring, mood inference) and `src/hooks/__tests__/useVitalityEntries.test.ts` (ZK-encryption regression guard) added. Full suite: 61 files / 425 tests passing.
+* [x] **The Subway Test:** Both migrated write paths (`useVitalityEntries` → `useJournalOperations`, `DataExportPanel`'s `lastExportAt` → `useUserProfile.patchFields`) inherit TanStack Query's existing offline mutation queuing/retry — no new offline logic introduced, same reasoning PROJ-59 used for its equivalent migrations.
+* [x] **The "Lost PIN" Test:** N/A — no crypto/rotation logic touched.
+* [x] **Manual regression:** Full click-through completed — Movement/Fuel/Breath tabs in `Vitality.tsx` and Export/Import/Delete-modal-open-and-cancel in `DataManagement.tsx` all confirmed working post-split.

@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.9] - 2026-07-12
+### 🛠️ Vitality & Data Management Architecture Cleanup
+- **Security Fix [PROJ-60]:** Vitality entries (Movement, Fuel, Breathwork logs) are now properly encrypted client-side before being saved, closing a gap where they were written unencrypted. A confirmation toast now appears when a Vitality entry is logged.
+- **Architecture [PROJ-60]:** Split the Vitality and Profile → Data Management screens into smaller, single-purpose files, isolating account deletion from the lower-risk export/import code so changes to one can't accidentally affect the other. No user-facing behavior changed beyond the fixes above.
+
 ## [v1.8.8] - 2026-07-12
 ### 🛠️ Data Layer Consolidation (Internal)
 - **Architecture [PROJ-59]:** Consolidated Firestore access behind TanStack Query across the app — fixed a bug where saving a journal entry didn't refresh the Dashboard streak until next page load, and a crash that could hit the Daily Reading button for users without a saved fellowship preference.

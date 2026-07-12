@@ -109,7 +109,9 @@ export default function App() {
                             </PrivateRoute>} />
                         
                         <Route path="/vitality" element={<PrivateRoute>
-                            <Vitality />
+                            <VaultGate>
+                                <Vitality />
+                            </VaultGate>
                             </PrivateRoute>} />
 
                         <Route path="/tools" element={<PrivateRoute>
