@@ -6,6 +6,7 @@ These instructions are foundational mandates for the Gemini CLI. They take absol
 1. **Strictly adhere to the existing codebase.** Do not pull patterns, file names, or architectural decisions from outside this repository.
 2. **Spec-Driven Development:** Read the `/docs/specs` and `/docs/projects` directories for feature requirements before implementing changes. Never proceed with any feature that lacks a spec file.
 3. **Ask Before Acting:** If required context, files, or patterns are unclear or missing, STOP and ask for clarification before writing code.
+4. **Developer & AI Governance Guide:** Refer to [docs/governance/DEVELOPER_GUIDE.md](file:///workspaces/MRT2/docs/governance/DEVELOPER_GUIDE.md) for detailed AI coding workflows, the 4-phase Recursive Build Protocol, and bi-weekly maintenance protocols.
 
 ## Security & Zero-Knowledge Encryption Boundary (CRITICAL)
 - **Zero-Knowledge Policy:** Client-side AES-GCM zero-knowledge encryption is the absolute boundary. Plain text sensitive data (Journals, Workbook Answers, Service notes) NEVER leaves the client device.

@@ -142,11 +142,9 @@ Branch naming drives environment in `.github/workflows/deploy.yml`:
 
 ## Workflow
 
-**Starting a session:** Use `/clear` before every new feature task — don't carry old context in.  
-**Planning a feature:** Switch to `/model opus` → invoke `/planning` skill. Return to `/model sonnet` for implementation.  
-**Long sessions:** Use `/compact` when context grows long; tell it what to preserve.  
-**Bug/type error:** Use `/fix` skill — paste the error, Claude reads the file from disk.  
-**Closing a ticket:** Use `/ticket-close` skill — checks schema, spec, and guide drift.
+- **Developer & AI Governance Guide:** Refer to [docs/governance/DEVELOPER_GUIDE.md](file:///workspaces/MRT2/docs/governance/DEVELOPER_GUIDE.md) for detailed AI coding workflows, the 4-phase Recursive Build Protocol, and bi-weekly maintenance protocols.
+- **Starting a session:** Clear old context before starting any major new feature or bug fix.
+- **Closing a ticket:** Use the `ticket-close` protocol (schema/spec/guide drift audits and `sync_ticket_docs.py`).
 
-> **Do not proceed with any feature that lacks a `docs/projects/XX_FEATURE.md` spec file.**  
-> Ask me to create one before planning begins.
+> [!IMPORTANT]
+> **Do not proceed with any feature that lacks a `docs/projects/XX_FEATURE.md` spec file.** Ask for one to be created before planning begins.

@@ -243,7 +243,7 @@ const ROOT_CONFIG_FILES = [
   'package.json', 'vite.config.ts', 'tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json',
   'tailwind.config.js', 'postcss.config.js', 'eslint.config.js', '.eslintrc.json',
   'firebase.json', '.firebaserc', 'firestore.rules', 'firestore.indexes.json', 'index.html',
-  'CLAUDE.md', 'README.md', 'AI_Maintenance.md', 'AI_WORKFLOW.md', 'GEMINI.md', '.clinerules',
+  'CLAUDE.md', 'README.md', 'GEMINI.md', '.clinerules',
   'functions/package.json', 'functions/tsconfig.json', 'functions/tsconfig.dev.json',
   'functions/vitest.config.ts', 'functions/.eslintrc.js',
 ];
@@ -265,7 +265,7 @@ const SECTIONS = [
   { id: '07', title: 'src/data', slug: 'src-data', kind: 'dir', targets: ['src/data'] },
   { id: '08', title: 'src tests & setup', slug: 'src-tests-and-setup', kind: 'dir', targets: ['src/__tests__', 'src/test'] },
   { id: '09', title: 'functions/src (Cloud Functions)', slug: 'functions-src', kind: 'dir', targets: ['functions/src'] },
-  { id: '10', title: 'docs (root, design, legal)', slug: 'docs-root', kind: 'docs-root', targets: ['docs/design', 'docs/legal'] },
+  { id: '10', title: 'docs (root, design, legal, governance)', slug: 'docs-root', kind: 'docs-root', targets: ['docs/design', 'docs/legal', 'docs/governance'] },
   { id: '11', title: 'docs/specs', slug: 'docs-specs', kind: 'dir', targets: ['docs/specs'] },
   { id: '12', title: 'docs/projects', slug: 'docs-projects', kind: 'dir', targets: ['docs/projects'] },
   { id: '13', title: 'docs (prompts, templates, reports)', slug: 'docs-misc', kind: 'dir', targets: ['docs/prompts', 'docs/templates', 'docs/reports'] },
