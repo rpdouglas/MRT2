@@ -79,8 +79,27 @@ graph TD
     * `journalEntriesAnalysed` (Int): **UNENCRYPTED** — how many journal entries fed the AI.
     * `encryptedAIContext` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — JSON containing `narrative`, `strengths`, `growth_areas`, and per-domain `evidence` arrays. Empty string for free-tier assessments. Must be included in `executePinRotation` sweep and `executeCryptoShredding`.
 
+### `users/{uid}/templates/{templateId}`
+* **Purpose:** User-authored custom journal templates (Premium feature). **UNENCRYPTED** — template scaffolding/prompt text, not personal disclosure content; not currently in CLAUDE.md's ZK boundary table (pre-existing gap, flagged during PROJ-59 — needs a product decision on whether `content` should be encrypted).
+* **Fields:**
+    * `uid` (String, optional): Owner ID — redundant with the subcollection path, written for export/query convenience.
+    * `name` (String): Template display name.
+    * `content` (String, optional): Free-text Markdown body for current-style templates.
+    * `prompts` (Array\<String\>, optional): Legacy prompt-form templates (superseded by free-text `content`, but still read for backward compatibility).
+    * `defaultTags` (Array\<String\>): Tags auto-applied to journal entries created from this template.
+    * `createdAt`, `updatedAt` (Timestamp, optional): Set on create / every save respectively.
+
 ### `insights/{insightId}`
-* **Purpose:** AI-generated analysis of journals/workbooks.
+* **Purpose:** AI-generated analysis of journals/workbooks. **UNENCRYPTED** (see CLAUDE.md ZK boundary table).
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `type` (String): `'journal'` | `'workbook'`.
+    * `summary` (String): AI narrative.
+    * `pillars` (Map): `understanding`, `blind_spots`, plus a third field that differs by `type` — `growth` for `type: 'journal'`, `emotional_resonance` for `type: 'workbook'`. See `docs/specs/10_INSIGHTS.md` for the full breakdown; `src/lib/insights.ts`'s `InsightPayload` is the source-of-truth type.
+    * `suggested_actions` (Array\<String\>): Up to 3 recommended habits, surfaced as "Add to Quest" buttons.
+    * `scope_context` (String): Human-readable label for the analysis window (e.g. `"Weekly Comparative Review"`, `"Deep Pattern Recognition"`).
+    * `createdAt` (Timestamp).
+    * Journal-type only (all optional): `key_themes`, `strengths`, `risks`, `trajectory`, `core_triggers`, `hidden_correlations`, `emotional_velocity`, `relapse_risk_level`.
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions. (Unencrypted).

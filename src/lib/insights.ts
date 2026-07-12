@@ -6,7 +6,7 @@
  */
 import { collection, addDoc, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
-import type { AnalysisResult, WorkbookAnalysisResult } from "./gemini";
+import type { WorkbookAnalysisResult } from "./gemini";
 
 const COLLECTION = 'insights';
 
@@ -14,10 +14,20 @@ const COLLECTION = 'insights';
 
 export type InsightType = 'journal' | 'workbook';
 
-// Combined type for what we save to Firestore
-export type InsightPayload = 
-  | ({ 
-      type: 'journal'; 
+// Combined type for what we save to Firestore. The 'journal' variant mirrors
+// the same scope_context/summary/pillars/suggested_actions base shape used by
+// the 'workbook' variant (JournalAnalysisWizard's comparative and deep-pattern
+// analyses both save through it), but pillars.growth replaces
+// pillars.emotional_resonance — InsightsLog.tsx already reads both field names
+// for exactly this reason.
+export type InsightPayload =
+  | {
+      type: 'journal';
+      scope_context: string;
+      summary: string;
+      pillars: { understanding: string; growth: string; blind_spots: string };
+      suggested_actions: string[];
+      risks?: string[];
       strengths?: string[];
       key_themes?: string[];
       hidden_correlations?: string[];
@@ -25,7 +35,7 @@ export type InsightPayload =
       trajectory?: string;
       core_triggers?: string[];
       emotional_velocity?: string;
-    } & AnalysisResult)
+    }
   | ({ type: 'workbook' } & WorkbookAnalysisResult);
 
 // The hydrated object returned to the UI

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserProfile } from './useUserProfile';
 import { useTimeOfDay } from './useTimeOfDay';
-import { type JournalEntry, type UserProfile, getProfile } from '../lib/db';
+import { type JournalEntry } from '../lib/db';
 import { isToday } from 'date-fns';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, type Firestore } from 'firebase/firestore';
@@ -9,15 +10,7 @@ import { collection, query, where, orderBy, getDocs, type Firestore } from 'fire
 export function useAnchorStatus() {
   const { user } = useAuth();
   const timeOfDay = useTimeOfDay();
-
-  const { data: profile } = useQuery<UserProfile | null>({
-    queryKey: ['profile', user?.uid],
-    queryFn: async () => {
-        if (!user || !db) return null;
-        return await getProfile(user.uid);
-    },
-    enabled: !!user,
-  });
+  const { profile } = useUserProfile();
 
   const { data: journals } = useQuery<JournalEntry[]>({
     queryKey: ['journals', user?.uid],

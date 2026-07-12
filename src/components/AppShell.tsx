@@ -10,8 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon as WarningIcon } from '@heroicons/react/24/solid';
 import { useLayout } from '../contexts/LayoutContext';
 import { useEncryption } from '../contexts/EncryptionContext';
-import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, type Firestore, type Timestamp } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { fetchAllUserData } from '../lib/db';
 import { prepareDataForExport, generateJSON } from '../lib/exporter';
 import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
@@ -26,23 +26,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
   const { isVaultUnlocked, lockVault, hasDeferredVault } = useEncryption();
+  const { profile, patchFields } = useUserProfile();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const handleLogout = async () => {
-    try { setSidebarOpen(false); await logout(); navigate('/login'); } 
+    try { setSidebarOpen(false); await logout(); navigate('/login'); }
     catch (error) { console.error('Failed to log out', error); }
   };
 
   const handleLock = () => { lockVault(); setSidebarOpen(false); navigate('/dashboard'); };
 
+  const { mutateAsync: patchProfileFields } = patchFields;
+
   const performAutoBackup = useCallback(async () => {
-    if (!user || !db || !driveAccessToken || !isVaultUnlocked || !isOnline) return;
+    if (!user || !driveAccessToken || !isVaultUnlocked || !isOnline || !profile) return;
     try {
-      const userRef = doc(db as Firestore, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) return;
-      
-      const lastExport = userSnap.data().lastExportAt as Timestamp | undefined;
+      const lastExport = profile.lastExportAt;
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
       if (lastExport && lastExport.toMillis() > sevenDaysAgo) return;
 
@@ -55,11 +54,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
       const success = await uploadBackupToDrive(driveAccessToken, textData, existingFileId || undefined);
 
       if (success) {
-        await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
+        await patchProfileFields({ lastExportAt: serverTimestamp() });
         console.log("Background Auto-Backup Successful");
       }
     } catch (e) { console.error("Auto-backup failed silently:", e); }
-  }, [user, driveAccessToken, isVaultUnlocked, isOnline]);
+  }, [user, driveAccessToken, isVaultUnlocked, isOnline, profile, patchProfileFields]);
 
   useEffect(() => { 
       if (isVaultUnlocked && driveAccessToken && isOnline) { 

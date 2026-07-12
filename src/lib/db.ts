@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, query, where, orderBy, Timestamp, type Firestore, type QueryDocumentSnapshot, type DocumentData, type WithFieldValue } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, query, where, orderBy, Timestamp, type Firestore, type QueryDocumentSnapshot, type DocumentData, type WithFieldValue } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
 import type { RecurrenceConfig } from "./dateUtils";
@@ -74,7 +74,16 @@ export interface UserProfile {
   };
 }
 
-export interface JournalTemplate { id: string; name: string; prompts: string[]; defaultTags: string[]; }
+export interface JournalTemplate {
+  id: string;
+  uid?: string;
+  name: string;
+  content?: string;
+  prompts?: string[]; // Legacy prompt-form templates
+  defaultTags: string[];
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
 
 export interface JournalEntry {
   id?: string;
@@ -222,30 +231,6 @@ export async function deleteUserTemplate(uid: string, templateId: string) {
   const docRef = doc(database, 'users', uid, 'templates', templateId);
   await deleteDoc(docRef);
 }
-
-export const addJournalEntry = async (uid: string, entry: Omit<JournalEntry, 'uid' | 'createdAt'>) => {
-  if (!db) throw new Error("Database not initialized");
-  const database: Firestore = db;
-  
-  await addDoc(collection(database, 'journals'), {
-    uid,
-    ...entry,
-    createdAt: Timestamp.now(),
-  });
-};
-
-export const getJournalHistory = async (uid: string) => {
-  if (!db) throw new Error("Database not initialized");
-  const database: Firestore = db;
-
-  const q = query(
-    collection(database, 'journals'),
-    where('uid', '==', uid),
-    orderBy('createdAt', 'desc')
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as JournalEntry));
-};
 
 // --- PROJ-42: Daily Readings Engine ---
 

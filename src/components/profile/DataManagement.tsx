@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback, Fragment } from 'react';
+import React, { useState, useRef, Fragment } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
-import { db } from '../../lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, type Firestore } from 'firebase/firestore';
+import { useUserProfile } from '../../hooks/useUserProfile';
+import { serverTimestamp } from 'firebase/firestore';
 import { fetchAllUserData } from '../../lib/db';
 import { prepareDataForExport, generateJSON, generatePDF } from '../../lib/exporter';
 import { importLegacyJournals } from '../../lib/importer';
@@ -33,12 +33,12 @@ function describeImportError(error: unknown): string {
 export default function DataManagement() {
     const { user, driveAccessToken, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount } = useAuth();
     const { isVaultUnlocked } = useEncryption();
+    const { profile, patchFields } = useUserProfile();
     const navigate = useNavigate();
-    
+
     const [exporting, setExporting] = useState(false);
     const [progress, setProgress] = useState(0);
     const [exportError, setExportError] = useState<string | null>(null);
-    const [lastExportStr, setLastExportStr] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importing, setImporting] = useState(false);
@@ -52,22 +52,14 @@ export default function DataManagement() {
 
     const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
 
-    const loadLastExportDate = useCallback(async () => {
-        if (!user || !db) return;
-        const database: Firestore = db;
-        const snap = await getDoc(doc(database, 'users', user.uid));
-        if (snap.exists() && snap.data().lastExportAt) {
-            const date = snap.data().lastExportAt.toDate() as Date;
-            setLastExportStr(date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }
-    }, [user]);
-
-    useEffect(() => {
-        loadLastExportDate();
-    }, [loadLastExportDate]);
+    const lastExportStr = (() => {
+        if (!profile?.lastExportAt) return null;
+        const date = profile.lastExportAt.toDate();
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    })();
 
     const handleExport = async (format: 'json' | 'pdf') => {
-        if (!user || !db) return;
+        if (!user) return;
         if (!isVaultUnlocked) {
             setExportError("Please unlock your vault (go to Journal) before exporting data.");
             return;
@@ -81,7 +73,7 @@ export default function DataManagement() {
             const rawData = await fetchAllUserData(user.uid);
             setProgress(10);
             const cleanData = await prepareDataForExport(rawData, (p) => setProgress(10 + Math.floor(p * 0.8)));
-            
+
             let blob: Blob;
             let filename: string;
             const dateStr = new Date().toISOString().split('T')[0];
@@ -101,10 +93,7 @@ export default function DataManagement() {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            const database: Firestore = db;
-            const userRef = doc(database, 'users', user.uid);
-            await setDoc(userRef, { lastExportAt: serverTimestamp() }, { merge: true });
-            loadLastExportDate();
+            await patchFields.mutateAsync({ lastExportAt: serverTimestamp() });
 
         } catch (error) { console.error("Export failed", error); setExportError("Failed to generate export. Check console."); } finally {
             setTimeout(() => setExporting(false), 2000);

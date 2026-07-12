@@ -5,11 +5,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { CBATool } from '../CBATool';
 import { useAuth } from '../../../contexts/AuthContext';
 import { generateCBAReflection } from '../../../lib/gemini';
 import { useSearchParams } from 'react-router-dom';
 import * as firestore from 'firebase/firestore';
+
+function renderWithQueryClient(ui: ReactElement) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 vi.mock('../../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({ user: { uid: 'test-uid' }, userTier: 'free' })),
@@ -86,7 +93,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
     });
 
     it('disables Continue with an empty behavior and enables it once typed', async () => {
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
         await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
 
         const continueButton = screen.getByText('Continue →');
@@ -97,7 +104,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
     });
 
     it('transitions to the guided phase and interpolates the entered behavior into the quadrant question', async () => {
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
         await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
 
         fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Drinking' } });
@@ -108,7 +115,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
     });
 
     it('walks through all 4 quadrants and reaches the summary phase', async () => {
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
         await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
         fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Drinking' } });
         fireEvent.click(screen.getByText('Continue →'));
@@ -136,7 +143,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
     });
 
     it('preserves behavior through a mid-guided "Save Progress" call', async () => {
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
         await waitFor(() => screen.getByPlaceholderText('e.g. Drinking, Isolating'));
         fireEvent.change(screen.getByPlaceholderText('e.g. Drinking, Isolating'), { target: { value: 'Isolating' } });
         fireEvent.click(screen.getByText('Continue →'));
@@ -157,7 +164,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             { behavior: 'Drinking', advantagesDoing: ['a'], disadvantagesDoing: ['b'], advantagesStopping: ['c'], disadvantagesStopping: ['d'] },
             ['SMART Tool', 'CBA', 'DRAFT']
         );
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing: Drinking')).toBeInTheDocument());
         fireEvent.click(screen.getByText('Save to Journal'));
@@ -176,7 +183,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             { behavior: 'Drinking', advantagesDoing: ['a'], disadvantagesDoing: ['b'], advantagesStopping: ['c'], disadvantagesStopping: ['d'] },
             ['SMART Tool', 'CBA', 'DRAFT']
         );
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing: Drinking')).toBeInTheDocument());
         expect(screen.queryByText('Continue →')).not.toBeInTheDocument();
@@ -188,7 +195,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             { behavior: 'Drinking', advantagesDoing: [], disadvantagesDoing: [], advantagesStopping: [], disadvantagesStopping: [] },
             ['SMART Tool', 'CBA', 'DRAFT']
         );
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText('Step 1 of 4 — Advantages of Drinking')).toBeInTheDocument());
         expect(screen.queryByText('Continue →')).not.toBeInTheDocument();
@@ -200,7 +207,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             ['SMART Tool', 'CBA', 'DRAFT']
         );
         (useAuth as Mock).mockReturnValue({ user: { uid: 'test-uid' }, userTier: 'free' });
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing: Drinking')).toBeInTheDocument());
         expect(screen.queryByText('What does this tell you?')).not.toBeInTheDocument();
@@ -214,7 +221,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
         );
         (useAuth as Mock).mockReturnValue({ user: { uid: 'test-uid' }, userTier: 'premium' });
         (generateCBAReflection as Mock).mockResolvedValue('You seem to value connection more than you value escape.');
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText('Reviewing: Drinking')).toBeInTheDocument());
         fireEvent.click(screen.getByText('What does this tell you?'));
@@ -231,7 +238,7 @@ describe('⚖️ CBATool (Guided CBA flow)', () => {
             { behavior: 'Drinking', advantagesDoing: ['a'], disadvantagesDoing: ['b'], advantagesStopping: ['c'], disadvantagesStopping: ['d'] },
             ['SMART Tool', 'CBA']
         );
-        render(<CBATool />);
+        renderWithQueryClient(<CBATool />);
 
         await waitFor(() => expect(screen.getByText("What behavior are we analyzing?")).toBeInTheDocument());
         expect(screen.getByPlaceholderText('e.g. Drinking, Isolating')).toHaveValue('');

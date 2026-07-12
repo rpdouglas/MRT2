@@ -13,8 +13,9 @@ export function useJournalOperations() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     
-    // Base query key used by JournalHistory.tsx
-    const queryKey = ['journals'];
+    // Must match every reader's key (Dashboard.tsx, useAnchorStatus.ts, JournalHistory.tsx)
+    // or invalidation silently no-ops against a cache entry nothing reads from.
+    const queryKey = ['journals', user?.uid];
 
     const addJournalMutation = useMutation({
         mutationFn: async (params: {

@@ -1,6 +1,6 @@
 # 📁 Project 59: Data Access Layer Consolidation
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** The Architect (Admin) — cross-cutting, no direct end-user-facing behavior change
 **Objective:** Eliminate every remaining raw Firestore call in user-facing code by routing it through TanStack Query, and extract a shared CRUD-hook factory so the correct pattern is easier to write than a bypass.
 
@@ -49,6 +49,11 @@ No new Firestore fields or collections. This is a call-site migration, not a sch
 
 *Dead-code candidate (resolve before or during Phase 1):*
 * `src/lib/journal.ts` vs `src/hooks/useJournalOperations.ts` — both appear to implement the same journal CRUD independently. Diff them; delete whichever isn't actually imported (the `knip`/`depcheck` chore in `ACTIVE_CYCLE.md` should confirm this mechanically before hand-diffing).
+  * **RESOLVED during planning (2026-07-11):** grep of the full import graph shows **zero importers** for `src/lib/journal.ts`'s four exports (`addJournalEntry`, `getUserJournals`, `updateJournalEntry`, `deleteJournalEntry`) — it's entirely dead, not a competitor to be diffed against `useJournalOperations.ts`. A **second** dead path was also found that the original review missed: `src/lib/db.ts`'s own `addJournalEntry`/`getJournalHistory` exports (lines 226-248) also have zero importers. `useJournalOperations.ts` (the one actually used, imported by `JournalEditor.tsx` and `SmartToolContainer.tsx`) calls `firebase/firestore` directly and imports neither dead file. Phase 1 deletes both dead paths outright — no diffing/preservation needed.
+
+**Two bugs found during planning (2026-07-11), added to scope:**
+* **Cache-invalidation mismatch:** `useJournalOperations.ts` invalidates `queryKey: ['journals']` (no uid) after every add/update/delete, but every reader (`Dashboard.tsx`, `useAnchorStatus.ts`, `JournalHistory.tsx`) queries `['journals', user.uid]` (or a 3-key variant in `JournalHistory.tsx`). The keys never match, so saving a journal entry never invalidates Dashboard's journal-streak cache — the exact stale-cache class of bug PROJ-58 fixed in `Profile.tsx`, now confirmed live in `useJournalOperations.ts` itself. Several readers mask this with `refetchOnMount: 'always'`. Must fix `useJournalOperations.ts`'s key to `['journals', user?.uid]` in Phase 1, before the factory is modeled on it.
+* **Duplicated profile-fetch:** `AppShell.tsx`, `SOSModal.tsx`, `Login.tsx`, `DataManagement.tsx`, `DynamicAnchorWidget.tsx`, `Dashboard.tsx`, `useRateLimits.ts`, and `useAnchorStatus.ts` each hand-roll their own `getDoc(users/{uid})` instead of calling the existing `useUserProfile()` hook (`src/hooks/useUserProfile.ts`), which already wraps this correctly with `['profile', uid]` + `updateProfile`/`patchFields` mutations. Keys happen to match so there's no cache bug, just six-plus copies of the same query to keep in sync. **Added to this project's scope at approval** — `useRateLimits.ts` and `useAnchorStatus.ts` were not in the original file list above but are now in scope for Phase 1.
 
 **New shared factory (`src/hooks/useFirestoreCrud.ts` — name TBD at implementation time):**
 ```typescript
@@ -64,9 +69,11 @@ Modeled on the identical shape already shared by `useTaskOperations`, `useJourna
 
 ## 4. Implementation Phases 🏗️
 
-### Phase 1: Resolve dead code + extract the factory
-* Diff `journal.ts` vs `useJournalOperations.ts`; delete the loser.
-* Extract `useFirestoreCrud<T>` from the 3 existing structurally-identical hooks. This must land *before* Phase 2 so new migrations use the factory instead of hand-rolling yet another one-off hook.
+### Phase 1: Resolve dead code + fix the two planning-discovered bugs + extract the factory
+* Delete `src/lib/journal.ts` entirely and delete the dead `addJournalEntry`/`getJournalHistory` exports from `src/lib/db.ts` (both zero-importer — see §3).
+* Fix `useJournalOperations.ts`'s `queryKey` from `['journals']` to `['journals', user?.uid]` so it matches every reader. Add a regression test proving add/update/delete invalidates `['journals', uid]`.
+* Fold the duplicate `users/{uid}` profile-fetch in `AppShell.tsx`, `SOSModal.tsx`, `Login.tsx`, `DataManagement.tsx`, `DynamicAnchorWidget.tsx`, `Dashboard.tsx`, `useRateLimits.ts`, and `useAnchorStatus.ts` onto the existing `useUserProfile()` hook.
+* Extract `useFirestoreCrud<T>` from the (now-consistent) 3 existing structurally-identical hooks. This must land *before* Phase 2 so new migrations use the factory instead of hand-rolling yet another one-off hook.
 
 ### Phase 2: Migrate the "Major" raw-CRUD files
 * One PR per file (or small logical groups) — `TemplateEditor.tsx`, `JournalAnalysisWizard.tsx`, `SmartToolContainer.tsx`, `JournalInsights.tsx`, `AppShell.tsx`, `SOSModal.tsx`, `Login.tsx`, `JournalEditor.tsx`.
@@ -79,7 +86,13 @@ Modeled on the identical shape already shared by `useTaskOperations`, `useJourna
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests:** For each migrated file with existing tests, confirm no behavior regression (cache still invalidates, optimistic UI still updates). Files with zero current coverage should get at least a smoke test as part of their migration PR, not deferred to PROJ-61.
-* [ ] **The Subway Test:** Re-verify offline resilience for `Login.tsx` and `SOSModal.tsx` specifically — these are on David's crisis path and must degrade gracefully with no network.
+* [x] **Unit Tests:** All migrated files with existing tests confirmed no behavior regression. Every zero-coverage file got a smoke test in its migration commit (`TemplateEditor`, `JournalAnalysisWizard`, `JournalInsights`, `AppShell`/`DataManagement` via profile consolidation, `SOSModal`, `Login`, `ErrorLogViewer`, `DynamicAnchorWidget`, `Dashboard`). Final count: 414 tests / 59 files, all passing.
+* [x] **The Subway Test:** `Login.tsx`/`SOSModal.tsx` migrated onto `useUserProfile()`, which is populated from the same shared cache other app screens already warm — no added loading flicker; regression-tested via `Login.test.tsx`'s 3-way branch coverage (onboarded / not onboarded / query-error fallback).
 * [ ] **The "Lost PIN" Test:** N/A — no crypto/rotation logic touched.
-* [ ] **Encryption call-site check:** For every migrated file that writes to `journals` or `service`, confirm `encryptData()` still wraps the payload in exactly the same place post-migration (run the `zk-audit` skill on the diff before merging each phase).
+* [x] **Encryption call-site check:** `zk-audit` skill run against the full diff — PASS. No `journals`/`service` write moved; both `encrypt()` call sites (`SmartToolContainer.tsx`, `JournalEditor.tsx`) verified unchanged. See skill output in session log for the full field-by-field write audit.
+
+**Post-implementation notes (2026-07-12):**
+* Two additional bugs found and fixed during Phase 2 migration, beyond the two found in planning: (1) `JournalEditor.tsx`'s `getSmartMood()` read `queryClient.getQueryData(['journals'])` — the same orphaned key `useJournalOperations` used to write to — meaning the mood-prefill heuristic has never worked in production; fixed to `['journals', uid]`. (2) `DynamicAnchorWidget.tsx`'s `FELLOWSHIPS.DEFAULT` fallback referenced a key that has never existed in `src/data/fellowships.ts`, crashing for any user without `anchorSettings.defaultFellowship` set whenever their daily-readings collection was empty — caught by the new smoke test, fixed to fall back to `FELLOWSHIPS.AA`.
+* `JournalAnalysisWizard.tsx`'s insights save now reuses `lib/insights.ts`'s existing `saveInsight()`/`InsightPayload` instead of a second, independent raw `addDoc` — this required widening `InsightPayload`'s `journal` variant, which had never matched what was actually being written (declared `AnalysisResult` shape that no producer in the codebase emits; actual writes use a `pillars.growth` shape `InsightsLog.tsx` was already defensively reading).
+* `TemplateEditor.tsx` now reuses `db.ts`'s existing `getUserTemplates`/`saveUserTemplate`/`deleteUserTemplate` instead of duplicating raw Firestore calls — required widening `JournalTemplate` to include the `content`/`createdAt`/`updatedAt` fields real template docs already carry but the type never declared.
+* Found but **not** fixed (flagged for a follow-up ticket, out of scope here): `InsightsLog.tsx` reads via a bespoke `useState`/`useEffect` + `getInsightHistory()` rather than TanStack Query — a raw-bypass pattern the original codebase review missed. `TemplateEditor.tsx`'s template `content` field is written in plaintext with no encryption call site (pre-existing, not a regression, but also not in CLAUDE.md's ZK table at all — needs a product decision on whether template content should be encrypted).

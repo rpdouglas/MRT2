@@ -1,16 +1,16 @@
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Fragment, useState, useEffect, useMemo } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { SparklesIcon, XMarkIcon, CalendarDaysIcon, ChartBarIcon, GlobeAmericasIcon, CheckCircleIcon, ArrowPathIcon, BoltIcon, PlusCircleIcon, TrophyIcon, LockClosedIcon, ShieldExclamationIcon, LinkIcon, HashtagIcon } from '@heroicons/react/24/outline';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFirestoreMutation } from '../../hooks/useFirestoreCrud';
+import { saveInsight, type InsightPayload } from '../../lib/insights';
 import { generateComparativeAnalysis, type ComparativeAnalysisResult } from '../../lib/gemini';
 import type { JournalEntry } from './JournalEditor';
 import { subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
-import { useTaskOperations } from '../../hooks/useTaskOperations'; 
+import { useTaskOperations } from '../../hooks/useTaskOperations';
 import { useRateLimits } from '../../hooks/useRateLimits';
 import { DRAFT_TAG } from '../../lib/types/smart';
 import type { ElementType } from 'react';
@@ -22,13 +22,62 @@ type AnalysisScope = 'weekly' | 'monthly' | 'all-time';
 interface EligibilityStatus { allowed: boolean; reason?: string; progress?: number; requiresUpgrade?: boolean; }
 
 interface SelectionCardProps {
-    type: AnalysisScope;
     title: string;
     subtitle: string;
     icon: ElementType;
     colorClass: string;
     borderClass: string;
     bgClass: string;
+    isSelected: boolean;
+    eligibility: EligibilityStatus;
+    onSelect: () => void;
+    onUpgradeClick: () => void;
+}
+
+// Hoisted to module scope (react-hooks/static-components) — takes its
+// eligibility/selection state as props instead of closing over the wizard's
+// local state, so it isn't recreated every render.
+function SelectionCard({ title, subtitle, icon: Icon, colorClass, borderClass, bgClass, isSelected, eligibility, onSelect, onUpgradeClick }: SelectionCardProps) {
+    const { allowed, reason, progress, requiresUpgrade } = eligibility;
+
+    return (
+        <div className={`w-full relative overflow-hidden rounded-xl border-2 transition-all ${!allowed ? 'bg-gray-50 border-gray-200' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}>
+
+            {/* UPGRADE OVERLAY */}
+            {!allowed && requiresUpgrade && (
+                <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-4">
+                    <div className="bg-amber-100 px-3 py-1 rounded-full mb-2 border border-amber-200">
+                        <LockClosedIcon className="h-4 w-4 text-amber-600 inline mr-1" />
+                        <span className="text-xs font-bold text-amber-800 uppercase">Limit Reached</span>
+                    </div>
+                    <button onClick={onUpgradeClick} className="text-xs font-bold text-blue-600 hover:underline text-center">
+                        {reason}
+                    </button>
+                </div>
+            )}
+
+            <button
+                onClick={() => allowed ? onSelect() : null}
+                disabled={!allowed}
+                className={`w-full flex items-center gap-4 p-4 text-left ${!allowed ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
+                <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
+                <div className="flex-1">
+                    <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
+                    <div className="text-xs text-gray-500">{subtitle}</div>
+                    {!allowed && progress !== undefined && progress < 100 && !requiresUpgrade && (
+                        <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
+                        </div>
+                    )}
+                    {!allowed && !requiresUpgrade && reason && (
+                         <div className="text-[10px] font-bold text-gray-400 mt-1">{reason}</div>
+                    )}
+                </div>
+                {isSelected && allowed && <div className={`w-3 h-3 rounded-full ${colorClass.replace('text-', 'bg-')}`}></div>}
+            </button>
+        </div>
+    );
 }
 
 export default function JournalAnalysisWizard({
@@ -36,26 +85,34 @@ isOpen, onClose, entries }: WizardProps) {
   const navigate = useNavigate();
 
     const { user, userTier } = useAuth();
-    const { addTask } = useTaskOperations(); 
+    const { addTask } = useTaskOperations();
     const { checkEligibility: checkRateLimit, stampUsage, loadingLimits } = useRateLimits();
-    
+    const saveInsightMutation = useFirestoreMutation<InsightPayload>(['insights', user?.uid], {
+        mutationFn: (uid, payload) => saveInsight(uid, payload),
+    });
+
     const [step, setStep] = useState<'select' | 'analyzing' | 'results'>('select');
     const [scope, setScope] = useState<AnalysisScope>('weekly');
-    
+
     const [standardResult, setStandardResult] = useState<ComparativeAnalysisResult | null>(null);
-    
-    const { 
-        analyze: runDeepAnalysis, 
-        progress: deepProgress, 
+
+    const {
+        analyze: runDeepAnalysis,
+        progress: deepProgress,
         result: deepResult,
-        error: deepError 
+        error: deepError
     } = useDeepPatternAnalysis();
 
-    const [saving, setSaving] = useState(false);
     const [addedActions, setAddedActions] = useState<Set<string>>(new Set());
 
-    useEffect(() => { if (isOpen) { setStep('select'); }
-    }, [isOpen]);
+    // Reset to the selection step each time the wizard reopens. Adjusted
+    // during render (React's documented pattern for resetting state when a
+    // prop changes) rather than in an effect, to avoid the extra render pass.
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen);
+        if (isOpen) setStep('select');
+    }
 
     // Exclude in-progress guided-tool drafts — they're incomplete and shouldn't
     // count toward eligibility or feed into AI analysis.
@@ -154,14 +211,13 @@ isOpen, onClose, entries }: WizardProps) {
         }
     };
 
-    const saveInsight = async () => {
-        if (!user || !db) return;
-        setSaving(true);
-        const database: Firestore = db;
+    const handleSaveInsight = async () => {
+        if (!user) return;
         try {
+            let payload: InsightPayload | null = null;
+
             if (scope === 'all-time' && deepResult) {
-                await addDoc(collection(database, 'insights'), {
-                    uid: user.uid,
+                payload = {
                     type: 'journal',
                     summary: deepResult.pattern_summary,
                     pillars: {
@@ -173,14 +229,12 @@ isOpen, onClose, entries }: WizardProps) {
                     hidden_correlations: deepResult.hidden_correlations,
                     emotional_velocity: deepResult.emotional_velocity,
                     relapse_risk_level: deepResult.relapse_risk_level,
-                    suggested_actions: deepResult.long_term_advice.slice(0, 3), 
-                    createdAt: Timestamp.now(),
+                    suggested_actions: deepResult.long_term_advice.slice(0, 3),
                     scope_context: 'Deep Pattern Recognition',
                     risks: [`Risk Level: ${deepResult.relapse_risk_level}`]
-                });
+                };
             } else if (standardResult) {
-                await addDoc(collection(database, 'insights'), {
-                    uid: user.uid,
+                payload = {
                     type: 'journal',
                     summary: standardResult.comparison_summary,
                     pillars: {
@@ -192,62 +246,18 @@ isOpen, onClose, entries }: WizardProps) {
                     trajectory: standardResult.trajectory,
                     strengths: standardResult.wins,
                     risks: standardResult.blind_spots,
-                    suggested_actions: standardResult.actionable_advice.slice(0, 3), 
-                    createdAt: Timestamp.now(),
+                    suggested_actions: standardResult.actionable_advice.slice(0, 3),
                     scope_context: `${scope.charAt(0).toUpperCase() + scope.slice(1)} Comparative Review`
-                });
+                };
+            }
+
+            if (payload) {
+                await saveInsightMutation.mutateAsync(payload);
             }
             onClose();
         } catch (e) {
             console.error(e);
-        } finally {
-            setSaving(false);
         }
-    };
-
-    const SelectionCard = ({ type, title, subtitle, icon: Icon, colorClass, borderClass, bgClass }: SelectionCardProps) => {
-
-        const { allowed, reason, progress, requiresUpgrade } = checkEligibility(type);
-        const isSelected = scope === type;
-        
-        return (
-            <div className={`w-full relative overflow-hidden rounded-xl border-2 transition-all ${!allowed ? 'bg-gray-50 border-gray-200' : isSelected ? `${borderClass} ${bgClass}` : 'border-gray-100 hover:border-gray-300'}`}>
-                
-                {/* UPGRADE OVERLAY */}
-                {!allowed && requiresUpgrade && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-4">
-                        <div className="bg-amber-100 px-3 py-1 rounded-full mb-2 border border-amber-200">
-                            <LockClosedIcon className="h-4 w-4 text-amber-600 inline mr-1" />
-                            <span className="text-xs font-bold text-amber-800 uppercase">Limit Reached</span>
-                        </div>
-                        <button onClick={() => navigate('/premium')} className="text-xs font-bold text-blue-600 hover:underline text-center">
-                            {reason}
-                        </button>
-                    </div>
-                )}
-
-                <button 
-                    onClick={() => allowed ? setScope(type) : null}
-                    disabled={!allowed}
-                    className={`w-full flex items-center gap-4 p-4 text-left ${!allowed ? 'opacity-40 cursor-not-allowed' : ''}`}
-                >
-                    <div className={`p-3 rounded-full shadow-sm ${!allowed ? 'bg-gray-200 text-gray-400' : `bg-white ${colorClass}`}`}><Icon className="h-6 w-6" /></div>
-                    <div className="flex-1">
-                        <div className={`font-bold ${!allowed ? 'text-gray-500' : 'text-gray-900'}`}>{title}</div>
-                        <div className="text-xs text-gray-500">{subtitle}</div>
-                        {!allowed && progress !== undefined && progress < 100 && !requiresUpgrade && (
-                            <div className="mt-2 w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-500" style={{ width: `${progress}%` }}></div>
-                            </div>
-                        )}
-                        {!allowed && !requiresUpgrade && reason && (
-                             <div className="text-[10px] font-bold text-gray-400 mt-1">{reason}</div>
-                        )}
-                    </div>
-                    {isSelected && allowed && <div className={`w-3 h-3 rounded-full ${colorClass.replace('text-', 'bg-')}`}></div>}
-                </button>
-            </div>
-        );
     };
 
     return (
@@ -267,9 +277,9 @@ isOpen, onClose, entries }: WizardProps) {
                                     {loadingLimits ? <div className="text-center py-8 text-gray-400">Checking eligibility...</div> : (
                                         <>
                                             <p className="text-gray-600 text-sm text-center mb-6">Select a timeframe to analyze. The AI will compare your current progress against previous patterns.</p>
-                                            <SelectionCard type="weekly" title="Weekly Check-in" subtitle="Last 7 days vs Previous 7 days" icon={CalendarDaysIcon} colorClass="text-fuchsia-600" bgClass="bg-fuchsia-50" borderClass="border-fuchsia-500" />
-                                            <SelectionCard type="monthly" title="Monthly Review" subtitle="Last 30 days vs Previous 30 days" icon={ChartBarIcon} colorClass="text-purple-600" bgClass="bg-purple-50" borderClass="border-purple-500" />
-                                            <SelectionCard type="all-time" title="Deep Dive (90 Days)" subtitle="Identify relapse triggers & patterns" icon={GlobeAmericasIcon} colorClass="text-indigo-600" bgClass="bg-indigo-50" borderClass="border-indigo-500" />
+                                            <SelectionCard title="Weekly Check-in" subtitle="Last 7 days vs Previous 7 days" icon={CalendarDaysIcon} colorClass="text-fuchsia-600" bgClass="bg-fuchsia-50" borderClass="border-fuchsia-500" isSelected={scope === 'weekly'} eligibility={checkEligibility('weekly')} onSelect={() => setScope('weekly')} onUpgradeClick={() => navigate('/premium')} />
+                                            <SelectionCard title="Monthly Review" subtitle="Last 30 days vs Previous 30 days" icon={ChartBarIcon} colorClass="text-purple-600" bgClass="bg-purple-50" borderClass="border-purple-500" isSelected={scope === 'monthly'} eligibility={checkEligibility('monthly')} onSelect={() => setScope('monthly')} onUpgradeClick={() => navigate('/premium')} />
+                                            <SelectionCard title="Deep Dive (90 Days)" subtitle="Identify relapse triggers & patterns" icon={GlobeAmericasIcon} colorClass="text-indigo-600" bgClass="bg-indigo-50" borderClass="border-indigo-500" isSelected={scope === 'all-time'} eligibility={checkEligibility('all-time')} onSelect={() => setScope('all-time')} onUpgradeClick={() => navigate('/premium')} />
                                             
                                             <button onClick={handleStartAnalysis} disabled={!checkEligibility(scope).allowed} className="w-full mt-4 py-3 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">
                                                 Begin Analysis
@@ -373,7 +383,7 @@ isOpen, onClose, entries }: WizardProps) {
                                             </div>
                                         </>
                                     )}
-                                    <button onClick={saveInsight} disabled={saving} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">{saving ? 'Saving...' : 'Save to Insights Log'}</button>
+                                    <button onClick={handleSaveInsight} disabled={saveInsightMutation.isPending} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-black transition-all disabled:opacity-50">{saveInsightMutation.isPending ? 'Saving...' : 'Save to Insights Log'}</button>
                                 </div>
                             )}
                         </div>

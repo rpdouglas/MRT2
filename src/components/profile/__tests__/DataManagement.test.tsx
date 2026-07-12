@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DataManagement from '../DataManagement';
 import { importLegacyJournals } from '../../../lib/importer';
 
@@ -33,6 +34,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         ...actual,
         doc: vi.fn(() => ({})),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        updateDoc: vi.fn().mockResolvedValue(undefined),
         getDoc: vi.fn().mockResolvedValue({ exists: () => false, data: () => ({}) }),
     };
 });
@@ -50,10 +52,13 @@ vi.mock('../../PremiumGate', () => ({ default: ({ children }: { children: React.
 vi.mock('../../VaultGate', () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 
 function renderDataManagement() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-        <BrowserRouter>
-            <DataManagement />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+                <DataManagement />
+            </BrowserRouter>
+        </QueryClientProvider>
     );
 }
 

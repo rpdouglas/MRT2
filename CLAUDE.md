@@ -68,6 +68,7 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 | `tasks/{id}` | ❌ No | Needed for streak evaluation |
 | `insights/{id}` | ❌ No | |
 | `rosc_assessments/{id}` | ✅ Partial | `scores.*score`, `totalScore`, `trajectory`, `journalEntriesAnalysed` are plaintext; `encryptedAIContext` is AES-GCM |
+| `users/{uid}/templates/{id}` | ❌ No | User-authored journal template scaffolding (name/content/tags) — structural prompt text, not personal disclosure. Flagged during PROJ-59 as a pre-existing gap in this table, not a new decision; revisit if custom templates start carrying more personal content than prompt structure. |
 
 **Before ANY Firestore write:** confirm user-generated content passes through `encryptData()` in `src/lib/crypto.ts`.  
 **Never:** log decrypted data, store plaintext sensitive content server-side, or send decrypted content to Gemini **outside the four approved AI-analysis flows below**.

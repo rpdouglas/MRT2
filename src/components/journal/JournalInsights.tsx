@@ -6,8 +6,9 @@
  * FEAT: Implemented GlassCard primitive.
  * FEAT: Applied Analytical layer design tokens and smoothed typography.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -83,16 +84,30 @@ const RECOVERY_STOP_WORDS = new Set([
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const STORAGE_KEY_BLOCKLIST = 'mrt_word_cloud_ignore_list';
 
+// Fetches the raw journal set once per uid — kept out of the derivation memo
+// below so blocklist edits (which used to re-fetch Firestore on every
+// keystroke via the old effect's [user, userBlockList] deps) now just re-run
+// pure client-side computation against the already-cached data.
+async function fetchJournalsForInsights(uid: string): Promise<JournalEntryRaw[]> {
+    if (!db) return [];
+    const q = query(
+        collection(db, 'journals'),
+        where('uid', '==', uid),
+        orderBy('createdAt', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => d.data() as JournalEntryRaw);
+}
+
 export default function JournalInsights() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, avgMood: 0, streak: 0, trend: 0 });
-  
-  const [dailyTrendData, setDailyTrendData] = useState<DailyStats[]>([]);
-  const [weeklyComparisonData, setWeeklyComparisonData] = useState<WeeklyComparisonStats[]>([]);
-  const [wordCloudData, setWordCloudData] = useState<WordFrequency[]>([]);
+
+  // Shares the ['journals', uid] cache entry with Dashboard.tsx/useAnchorStatus.ts.
+  const { data: rawData = [], isLoading: loading } = useFirestoreQuery<JournalEntryRaw[]>(
+      ['journals', user?.uid],
+      fetchJournalsForInsights,
+  );
 
   // User Blocklist State (Persisted)
   const [userBlockList, setUserBlockList] = useState<string[]>(() => {
@@ -106,148 +121,130 @@ export default function JournalInsights() {
       localStorage.setItem(STORAGE_KEY_BLOCKLIST, JSON.stringify(userBlockList));
   }, [userBlockList]);
 
-  // Load Data Effect
-  useEffect(() => {
-    async function loadData() {
-        if (!user || !db) return;
+  const { dailyTrendData, weeklyComparisonData, wordCloudData, stats }: {
+      dailyTrendData: DailyStats[];
+      weeklyComparisonData: WeeklyComparisonStats[];
+      wordCloudData: WordFrequency[];
+      stats: { total: number; avgMood: number; streak: number; trend: number };
+  } = useMemo(() => {
+        // Containers
+        const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
+        const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
+            dayName: DAYS_OF_WEEK[i],
+            currentTotal: 0, currentCount: 0,
+            prevTotal: 0, prevCount: 0
+        }));
+        const wordFreq: Record<string, number> = {};
 
-        try {
-            const q = query(
-                collection(db, 'journals'), 
-                where('uid', '==', user.uid),
-                orderBy('createdAt', 'asc')
-            );
-            
-            const snapshot = await getDocs(q);
-            const rawData = snapshot.docs.map(d => d.data() as JournalEntryRaw);
+        // Dates
+        const today = startOfDay(new Date());
+        const thirtyDaysAgo = subDays(today, 30);
+        const sixtyDaysAgo = subDays(today, 60);
 
-            // Containers
-            const dailyMap = new Map<string, { moodSum: number; moodCount: number; tempSum: number; tempCount: number, timestamp: Date }>();
-            const weeklyBuckets = Array.from({ length: 7 }, (_, i) => ({
-                dayName: DAYS_OF_WEEK[i],
-                currentTotal: 0, currentCount: 0,
-                prevTotal: 0, prevCount: 0
-            }));
-            const wordFreq: Record<string, number> = {};
+        // Globals
+        let totalMoodSum = 0;
+        let totalEntries = 0;
+        let current30Total = 0; let current30Count = 0;
+        let prev30Total = 0; let prev30Count = 0;
 
-            // Dates
-            const today = startOfDay(new Date());
-            const thirtyDaysAgo = subDays(today, 30);
-            const sixtyDaysAgo = subDays(today, 60);
+        // Combined Block Set for Filtering
+        const activeBlockSet = new Set([...Array.from(RECOVERY_STOP_WORDS), ...userBlockList]);
 
-            // Globals
-            let totalMoodSum = 0;
-            let totalEntries = 0;
-            let current30Total = 0; let current30Count = 0;
-            let prev30Total = 0; let prev30Count = 0;
+        rawData.forEach(entry => {
+            if (!entry.createdAt) return;
+            const dateObj = entry.createdAt.toDate();
+            const dateKey = format(dateObj, 'yyyy-MM-dd');
 
-            // Combined Block Set for Filtering
-            const activeBlockSet = new Set([...Array.from(RECOVERY_STOP_WORDS), ...userBlockList]);
+            // 1. Daily Trend
+            if (!dailyMap.has(dateKey)) {
+                dailyMap.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
+            }
+            const dayStat = dailyMap.get(dateKey)!;
 
-            rawData.forEach(entry => {
-                if (!entry.createdAt) return;
-                const dateObj = entry.createdAt.toDate(); 
-                const dateKey = format(dateObj, 'yyyy-MM-dd'); 
+            if (entry.moodScore !== undefined) {
+                dayStat.moodSum += entry.moodScore;
+                dayStat.moodCount += 1;
+                totalMoodSum += entry.moodScore;
+                totalEntries++;
 
-                // 1. Daily Trend
-                if (!dailyMap.has(dateKey)) {
-                    dailyMap.set(dateKey, { moodSum: 0, moodCount: 0, tempSum: 0, tempCount: 0, timestamp: dateObj });
+                // 2. Weekly Comparison
+                const dayIndex = getDay(dateObj); // 0 = Sun
+
+                if (dateObj >= thirtyDaysAgo) {
+                    weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
+                    weeklyBuckets[dayIndex].currentCount += 1;
+                    current30Total += entry.moodScore;
+                    current30Count += 1;
+                } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
+                    weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
+                    weeklyBuckets[dayIndex].prevCount += 1;
+                    prev30Total += entry.moodScore;
+                    prev30Count += 1;
                 }
-                const dayStat = dailyMap.get(dateKey)!;
+            }
 
-                if (entry.moodScore !== undefined) {
-                    dayStat.moodSum += entry.moodScore;
-                    dayStat.moodCount += 1;
-                    totalMoodSum += entry.moodScore;
-                    totalEntries++;
+            if (entry.weather?.temp !== undefined) {
+                dayStat.tempSum += entry.weather.temp;
+                dayStat.tempCount += 1;
+            }
 
-                    // 2. Weekly Comparison
-                    const dayIndex = getDay(dateObj); // 0 = Sun
-                    
-                    if (dateObj >= thirtyDaysAgo) {
-                        weeklyBuckets[dayIndex].currentTotal += entry.moodScore;
-                        weeklyBuckets[dayIndex].currentCount += 1;
-                        current30Total += entry.moodScore;
-                        current30Count += 1;
-                    } else if (dateObj >= sixtyDaysAgo && dateObj < thirtyDaysAgo) {
-                        weeklyBuckets[dayIndex].prevTotal += entry.moodScore;
-                        weeklyBuckets[dayIndex].prevCount += 1;
-                        prev30Total += entry.moodScore;
-                        prev30Count += 1;
+            // 3. Word Cloud
+            if (entry.content) {
+                const cleanContent = entry.content.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
+                const words = cleanContent.split(/\s+/);
+                words.forEach(word => {
+                    // Check against the combined active block set
+                    if (word.length > 3 && !activeBlockSet.has(word)) {
+                        wordFreq[word] = (wordFreq[word] || 0) + 1;
                     }
-                }
+                });
+            }
+        });
 
-                if (entry.weather?.temp !== undefined) {
-                    dayStat.tempSum += entry.weather.temp;
-                    dayStat.tempCount += 1;
-                }
+        // Finalize Daily Trend
+        const dailyStatsArray = Array.from(dailyMap.values()).map(stat => ({
+            date: format(stat.timestamp, 'yyyy-MM-dd'),
+            displayDate: format(stat.timestamp, 'MMM d'),
+            avgMood: stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0,
+            avgTemp: stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0,
+            entryCount: stat.moodCount
+        })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-                // 3. Word Cloud
-                if (entry.content) {
-                    const cleanContent = entry.content.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
-                    const words = cleanContent.split(/\s+/);
-                    words.forEach(word => {
-                        // Check against the combined active block set
-                        if (word.length > 3 && !activeBlockSet.has(word)) {
-                            wordFreq[word] = (wordFreq[word] || 0) + 1;
-                        }
-                    });
-                }
-            });
+        // Finalize Weekly (Reorder to Mon-Sun)
+        const sunday = weeklyBuckets.shift();
+        if (sunday) weeklyBuckets.push(sunday);
 
-            // Finalize Daily Trend
-            const dailyStatsArray = Array.from(dailyMap.values()).map(stat => ({
-                date: format(stat.timestamp, 'yyyy-MM-dd'),
-                displayDate: format(stat.timestamp, 'MMM d'),
-                avgMood: stat.moodCount > 0 ? parseFloat((stat.moodSum / stat.moodCount).toFixed(1)) : 0,
-                avgTemp: stat.tempCount > 0 ? Math.round(stat.tempSum / stat.tempCount) : 0,
-                entryCount: stat.moodCount
-            })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            
-            setDailyTrendData(dailyStatsArray.slice(-14));
+        const finalizedWeekly: WeeklyComparisonStats[] = weeklyBuckets.map(b => ({
+            dayName: b.dayName,
+            currentAvg: b.currentCount > 0 ? parseFloat((b.currentTotal / b.currentCount).toFixed(1)) : 0,
+            prevAvg: b.prevCount > 0 ? parseFloat((b.prevTotal / b.prevCount).toFixed(1)) : 0,
+            currentCount: b.currentCount,
+            prevCount: b.prevCount
+        }));
 
-            // Finalize Weekly (Reorder to Mon-Sun)
-            const sunday = weeklyBuckets.shift(); 
-            if (sunday) weeklyBuckets.push(sunday);
-            
-            const finalizedWeekly: WeeklyComparisonStats[] = weeklyBuckets.map(b => ({
-                dayName: b.dayName,
-                currentAvg: b.currentCount > 0 ? parseFloat((b.currentTotal / b.currentCount).toFixed(1)) : 0,
-                prevAvg: b.prevCount > 0 ? parseFloat((b.prevTotal / b.prevCount).toFixed(1)) : 0,
-                currentCount: b.currentCount,
-                prevCount: b.prevCount
-            }));
-            setWeeklyComparisonData(finalizedWeekly);
+        // Finalize Word Cloud
+        const topWords = Object.entries(wordFreq)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20)
+            .map(([text, value]) => ({ text, value }));
 
-            // Finalize Word Cloud
-            const topWords = Object.entries(wordFreq)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 20)
-                .map(([text, value]) => ({ text, value }));
-            setWordCloudData(topWords);
+        // Global Trend
+        const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
+        const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
+        const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
 
-            // Global Trend
-            const current30Avg = current30Count > 0 ? current30Total / current30Count : 0;
-            const prev30Avg = prev30Count > 0 ? prev30Total / prev30Count : 0;
-            const trend = (prev30Count > 0 && current30Count > 0) ? parseFloat((current30Avg - prev30Avg).toFixed(1)) : 0;
-
-            setStats({
+        return {
+            dailyTrendData: dailyStatsArray.slice(-14),
+            weeklyComparisonData: finalizedWeekly,
+            wordCloudData: topWords,
+            stats: {
                 total: rawData.length,
                 avgMood: totalEntries > 0 ? Math.round((totalMoodSum / totalEntries) * 10) / 10 : 0,
                 streak: rawData.length,
                 trend
-            });
-
-        } catch (error) {
-            console.error("Error loading insights:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    loadData();
-    // Re-run when blocklist changes to filter immediately
-  }, [user, userBlockList]);
+            },
+        };
+  }, [rawData, userBlockList]);
 
   // --- Handlers for Blocklist ---
   const handleAddBlockWord = (word: string) => {
