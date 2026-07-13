@@ -18,11 +18,12 @@
 
 ## 🧹 Chores & Tech Debt
 - [ ] **React 19 Refactor:** Incrementally migrate legacy `e.preventDefault()` form submissions to native `useActionState`.
-- [ ] **Tighten `tsconfig.app.json`:** add `noUncheckedIndexedAccess` (catches real out-of-bounds-index bugs at compile time). Separately evaluate `exactOptionalPropertyTypes` — may surface a batch of new type errors to clean up first. (Source: §6)
-- [ ] **Document `syncStripeSubscription` trust dependency:** the function has no in-function auth check and is safe *only* because `subscriptions` writes are rules-locked to `if false` (admin SDK only) — add a one-line code comment so a future rules change doesn't silently reopen it. (Source: §4)
+- [ ] **Tighten `tsconfig.app.json`:** add `noUncheckedIndexedAccess` (Deferred: Evaluated in Sprint 9.0 and found 164 compiler errors; needs dedicated refactoring cycle). Separately evaluate `exactOptionalPropertyTypes` — may surface a batch of new type errors to clean up first. (Source: §6)
+- [x] **Document `syncStripeSubscription` trust dependency:** Added a security warning comment to `syncStripeSubscription` in `functions/src/index.ts` explaining the firestore.rules trust dependency boundary. (Source: §4)
 - [ ] **Converge the three "admin" definitions:** `AuthContext.tsx:50` hardcodes `currentUser.email === 'rpdouglas@gmail.com'` as a client-side admin-UI bypass alongside the real custom claim and the `role` field — no privilege-escalation risk (every real admin read/write still requires the custom claim), but three informal definitions of "admin" should converge on one. (Source: §4)
-- [ ] **Align Cloud Functions lint tooling:** `functions/package.json` pins ESLint `^8.9.0` / `@typescript-eslint/*` `^5.12.0`, noticeably older than root (`^9.39.2`/`^8.50.0`). Dev-tooling drift only. (Source: §7)
-- [ ] **Add bundle/dead-code tooling:** install `rollup-plugin-visualizer` (dev-only, wire into `vite.config.ts`, run on demand) and `knip` or `depcheck` (one-time dead-export sweep). The `journal.ts` vs `useJournalOperations.ts` question this was meant to resolve is now moot — PROJ-59 hand-diffed the import graph directly, found `journal.ts` and two `db.ts` exports had zero importers, and deleted both. Restructuring the `vendor` chunk in `vite.config.ts:93-110` is intentionally **not** scoped yet — do that only after the visualizer shows what's actually driving its size. (Source: §6, §7)
+- [x] **Align Cloud Functions lint tooling:** Aligned ESLint to `^9.39.2`, TypeScript to `~5.9.3`, and `@typescript-eslint/*` to `^8.50.0` inside `functions/package.json`. Migrated functions to flat config `eslint.config.js` and removed legacy `.eslintrc.js`. (Source: §7)
+- [x] **Add bundle visualizer:** Installed `rollup-plugin-visualizer` (dev-only) and configured it in `vite.config.ts` to output size stats to `stats.html`.
+- [ ] **Add dead-code tooling:** Install `knip` or `depcheck` for a one-time dead-export sweep. (Source: §6, §7)
 
 ## ✅ Resolved This Cycle
 - [x] **PROJ-63:** Mobile Screenshot Generator — Implement automated mobile screenshot generator with persona-based mock bypass.
