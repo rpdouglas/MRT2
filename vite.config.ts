@@ -1,6 +1,7 @@
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
 import { defineConfig, configDefaults } from 'vitest/config';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
   plugins: [
@@ -69,6 +70,12 @@ export default defineConfig({
             }
         ]
       }
+    }),
+    visualizer({
+      filename: 'stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
     })
   ],
   server: {

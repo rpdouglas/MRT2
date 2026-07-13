@@ -493,6 +493,11 @@ exports.generateReadingsAdmin = (0, https_1.onCall)({
     return { success: true, results };
 });
 // ─── PROJ-BILLING: Stripe Subscription Sync ───────────────────────────────────
+// SECURITY WARNING: This function executes onDocumentWritten and trust-updates user subscription tiers
+// without internal caller verification. This is secure ONLY because write rules for the
+// "users/{userId}/subscriptions/{subscriptionId}" subcollection are locked to "allow write: if false"
+// in firestore.rules (preventing client-side writes; only writable by admin SDK/Stripe extensions).
+// DO NOT modify firestore.rules to allow client writes without implementing caller validation here.
 exports.syncStripeSubscription = (0, firestore_2.onDocumentWritten)({
     document: "users/{userId}/subscriptions/{subscriptionId}",
     region: "northamerica-northeast1",
