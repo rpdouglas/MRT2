@@ -2,6 +2,17 @@
 
 The Tasks module helps you build consistent routines and track actionable recovery steps.
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/ned-tasks.webp" 
+    alt="My Tasks - Habits Ledger" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Tasks Ledger:</strong> Ned's Amber Theme showing checklist compliance for daily recovery habits.
+  </figcaption>
+</figure>
+
 ## Smart Tabs
 Your tasks are automatically sorted into three lanes so you always know exactly what needs attention:
 

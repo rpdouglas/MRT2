@@ -2,6 +2,29 @@
 
 Recovery is about interrupting automatic reactions with intentional logic. The **Tools Hub** contains interactive Cognitive Behavioral Therapy (CBT) exercises, adapted from evidence-based models like SMART Recovery and REBT.
 
+<div class="flex flex-col sm:flex-row gap-6 justify-center my-8">
+  <figure class="text-center flex-1">
+    <img 
+      src="/screenshots/ned-tools.webp" 
+      alt="CBT Tools Hub" 
+      class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[260px] mx-auto block mb-3"
+    />
+    <figcaption class="text-xs text-slate-500 font-medium max-w-[260px] mx-auto">
+      <strong>Tools Hub:</strong> Ned's Amber Theme showing the category-filtered grid of worksheets.
+    </figcaption>
+  </figure>
+  <figure class="text-center flex-1">
+    <img 
+      src="/screenshots/maya-thought-record.webp" 
+      alt="CBT Thought Record Wizard" 
+      class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[260px] mx-auto block mb-3"
+    />
+    <figcaption class="text-xs text-slate-500 font-medium max-w-[260px] mx-auto">
+      <strong>Thought Record:</strong> Maya's Violet Theme showing the multi-step Cognitive Distortions workbook.
+    </figcaption>
+  </figure>
+</div>
+
 ## Accessing the Tools
 From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the Tools Hub, where each tool's card shows a time estimate, a "Best for" tag, and — once you've completed it at least once — how many times you've used it.
 
@@ -74,6 +97,17 @@ Recovery isn't just about not using; it's about building a life. This tool asks 
 **When to use it:** When you are in acute crisis, panicking, or physically craving and cannot focus on writing.
 
 A 5-minute interactive grounding timer that uses the 5-4-3-2-1 somatic method to help you regulate your nervous system.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/david-urgesurfer.webp" 
+    alt="Urge Surfer Grounding Tool" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Urge Surfer Grounding Tool:</strong> David's Rose Theme showing the 5-4-3-2-1 somatic grounding pacer for riding out active cravings without relapse.
+  </figcaption>
+</figure>
 
 ---
 

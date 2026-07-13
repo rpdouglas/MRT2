@@ -2,6 +2,17 @@
 
 My Recovery Toolkit operates on a "Freemium" model. Our core belief is that tools for acute crisis de-escalation should **always be free**. We only charge for features that cost us money to run (like advanced AI processing) or power-user tools for established sponsors.
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/david-premium.webp" 
+    alt="Premium Upgrade Tier Comparison" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Premium Supporter Upgrade:</strong> David's Rose Theme showing the supporter tier upgrade screen detailing features like advanced AI insights and sponsee tracking.
+  </figcaption>
+</figure>
+
 ## 🟢 The Free Tier (Standard)
 Designed for immediate relief, habit building, and finding stability.
 * **Unlimited Journaling:** Secure, zero-knowledge encryption for all entries.
@@ -13,6 +24,17 @@ Designed for immediate relief, habit building, and finding stability.
 
 ## 🌟 MRT Premium (Supporter)
 Designed for users in the maintenance phase looking for deep insights, and sponsors managing commitments.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/lisa-sponsees.webp" 
+    alt="Sponsor Sponsee Directory" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Sponsor Rolodex:</strong> Lisa's profile showing the secure sponsee tracking directory, step statuses, and private notes.
+  </figcaption>
+</figure>
 * **Unlimited AI Compass:** Unlimited, on-demand Gemini pattern recognition and deep-dive journal analysis.
 * **Recovery Capital Matrix (ROSC):** Full AI-powered monthly assessment — Gemini reads your last 30 journal entries alongside your check-in answers and produces blended domain scores (1–10), a personalised narrative, identified strengths, and compassionate growth suggestions. All AI output is encrypted before storage.
 * **Custom Templates:** Build and save your own Markdown-powered journal structures.

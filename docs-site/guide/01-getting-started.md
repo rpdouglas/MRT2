@@ -22,3 +22,14 @@ If you need to update your security settings, navigate to **Profile -> Security*
 
 * **Change PIN:** If you know your current PIN, you can change it here. The app will securely re-encrypt all your historical journals and workbooks with the new PIN in the background. *Please do not close the app while the progress bar is running.*
 * **Reset Vault:** If you forgot your PIN, your data is mathematically unrecoverable. You can use the **Reset Vault** option to permanently destroy your old encrypted data and set up a brand new Vault.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/ned-profile-security.webp" 
+    alt="User Profile - Security Settings" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Vault Security Settings:</strong> Ned's Amber Theme (representing 45 days sober) showing change PIN controls and offline backup tools.
+  </figcaption>
+</figure>

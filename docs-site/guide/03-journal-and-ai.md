@@ -6,6 +6,29 @@ The Journal is your secure space to process emotions, log triggers, and track yo
 * **Text Mode:** Select a template or free-write. Templates are grouped by recovery modality — Twelve-Step (e.g. "Morning Intention", "Urge Log"), CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, and General — 15 templates in all. Twelve-Step templates drop straight into free-write text; the rest open a short guided form, one labeled box per prompt.
 * **Metadata:** Always slide the 1-10 Mood scale and add custom tags (e.g., `#Anxiety`, `#Meeting`) to help the AI track your patterns later.
 
+<div class="flex flex-col sm:flex-row gap-6 justify-center my-8">
+  <figure class="text-center flex-1">
+    <img 
+      src="/screenshots/ned-journal-write.webp" 
+      alt="My Journal - Free Write" 
+      class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[260px] mx-auto block mb-3"
+    />
+    <figcaption class="text-xs text-slate-500 font-medium max-w-[260px] mx-auto">
+      <strong>Free Write check-in:</strong> Ned's check-in interface showing mood selection, tags, and template selection options.
+    </figcaption>
+  </figure>
+  <figure class="text-center flex-1">
+    <img 
+      src="/screenshots/jordan-mat-log.webp" 
+      alt="My Journal - MAT Form" 
+      class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[260px] mx-auto block mb-3"
+    />
+    <figcaption class="text-xs text-slate-500 font-medium max-w-[260px] mx-auto">
+      <strong>MAT Check-In Form:</strong> Jordan's profile showing the structured Medication-Assisted Treatment logs.
+    </figcaption>
+  </figure>
+</div>
+
 ### Voice-to-Vault
 Tap the **Microphone** icon to dictate your entry instead of typing.
 
@@ -20,6 +43,18 @@ The final entry is **Zero-Knowledge encrypted** before it is written to Firestor
 
 ## 2. History & Navigation
 Navigate to the **History** tab to view past entries.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/walt-journal-history.webp" 
+    alt="My Journal - History Tab" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Journal History:</strong> Walt's Emerald Theme showing chronological decryption of journal logs from the secure vault.
+  </figcaption>
+</figure>
+
 * **Timeline View:** Your entries are grouped by **Year** and **Month**.
 * **Navigation:** By default, only the current month is open. Tap any Year or Month header to expand it and view older entries.
 * **Search:** Use the top search bar to filter by keyword or tag. Searching automatically expands all groups to show every matching result.
@@ -28,6 +63,17 @@ Navigate to the **History** tab to view past entries.
 ## 3. AI Analysis Wizard (The Compass)
 Click the floating **Analyze** button to have the AI review your past entries and generate an actionable recovery strategy.
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/walt-journal-ai-wizard.webp" 
+    alt="AI Analysis Wizard Results" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>AI Analysis Results:</strong> Walt's Emerald Theme showing the completed pattern scan, themes, wins, blind spots, and actionable coaching tasks.
+  </figcaption>
+</figure>
+
 ### Usage Limits
 To protect the system and ensure fair usage, AI analysis is governed by your tier:
 * **Standard (Free) Tier:** Limited to 1 Weekly Analysis per week, 1 Monthly Analysis per month, and 1 Deep Pattern scan per month.
@@ -35,6 +81,17 @@ To protect the system and ensure fair usage, AI analysis is governed by your tie
 
 ## 4. Insights & Analytics
 Navigate to the **Insights** tab to view your data visually.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/walt-journal-insights.webp" 
+    alt="Journal Insights Analytics" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Journal Insights:</strong> Walt's Emerald Theme showing mood-over-time velocity vs temperature metrics and word frequencies.
+  </figcaption>
+</figure>
 
 ### 📊 Emotional Velocity
 This gradient chart shows the "flow" of your mood over the last 14 days.

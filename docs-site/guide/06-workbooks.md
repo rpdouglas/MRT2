@@ -1,4 +1,17 @@
-# 🧭 My Workbooks & The Compass
+# 📚 My Workbooks (The Library)
+
+Workbooks are interactive, structured guides for working through clinical curricula like CBT, 12-Step recovery, and secular/Buddhist Recovery Dharma steps.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/maya-workbooks.webp" 
+    alt="My Workbooks Hub" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Workbooks:</strong> Maya's Violet Theme (representing structured study) displaying active CBT modules and step progress rings.
+  </figcaption>
+</figure>
 
 The Workbooks module is your centralized hub for structured, deep-dive recovery literature (like the 12-Steps, Recovery Dharma, and Women for Recovery). **All answers are Zero-Knowledge Encrypted.**
 

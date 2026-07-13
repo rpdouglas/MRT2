@@ -2,6 +2,17 @@
 
 You own your recovery data. MRT provides multiple ways to ensure you never lose it, even if you lose your phone, or completely remove it if you wish to leave.
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/ned-profile-general.webp" 
+    alt="My Profile - General Settings" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Profile Settings:</strong> Ned's Amber Theme showing profile customization, sponsor contact info, and substance cost configurations.
+  </figcaption>
+</figure>
+
 ## 1. Google Drive Auto-Sync
 If you created your account using **Google Sign-In**, MRT can automatically back up your data.
 * Ensure your Vault is unlocked.

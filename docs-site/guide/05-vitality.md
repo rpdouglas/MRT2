@@ -2,6 +2,17 @@
 
 Somatic regulation—managing your physical body—is critical to preventing emotional relapse. The Vitality module tracks three pillars of physical health.
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/david-vitality.webp" 
+    alt="My Vitality - Somatic Logs" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Vitality:</strong> David's Rose Theme (representing early crisis stabilization) showing Bio-Balance tracking scores and somatic activity logging cards.
+  </figcaption>
+</figure>
+
 ## The Bio-Rhythm Score
 At the top of the screen, you will see a percentage ring. Logging an activity in any of the three categories below adds 33.3% to your daily score. Aim for 100% every day!
 

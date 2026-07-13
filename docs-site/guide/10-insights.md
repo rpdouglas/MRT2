@@ -2,6 +2,17 @@
 
 The **Insights** page (sidebar icon) is your analytical home — it combines the Recovery Capital Matrix (a monthly holistic check-in) with your full AI Insights log (a history of every Compass analysis you've ever generated).
 
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/walt-insights.webp" 
+    alt="My Insights Dashboard" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Insights:</strong> Walt's Emerald Theme (representing long-term reflection) displaying AI-generated pattern summaries, Resilience Pillars, and relapse risk levels.
+  </figcaption>
+</figure>
+
 ---
 
 ## 1. Recovery Capital Matrix (ROSC)
