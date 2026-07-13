@@ -86,6 +86,7 @@ graph TD
 * **Goal:** Document architectural decisions and update project board status.
 * **Actions:**
   * Update spec files in `docs/specs/` to match any approved deviations.
+  * Update the living master documentation in [SYSTEM_OVERVIEW.md](file:///workspaces/MRT2/docs/SYSTEM_OVERVIEW.md) if any schemas, contexts, hooks, page directories, or architectural patterns have changed.
   * Run the `ticket-close` protocol.
   * Execute:
     ```bash

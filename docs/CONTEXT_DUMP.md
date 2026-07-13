@@ -31,11 +31,14 @@
 ### Module Themes (Atmospheric Tinting)
 | Module | Persona Match | Gradient Source | Glow (Shadow) | Vibe |
 | :--- | :--- | :--- | :--- | :--- |
-| **Dashboard** | David (Crisis) | Sky → Blue | `bg-slate-200` | Hope & Clarity |
-| **Tasks** | Ned (Pink Cloud) | Cyan → Teal | `bg-cyan-200` | Energy & Action |
-| **Service** | Lisa (Service) | Rose → Amber | `bg-orange-200` | Warmth & Connection |
-| **Insights** | Walt (Zen) | Fuchsia → Rose | `bg-fuchsia-200` | Mystical & AI |
-| **Vitality** | Universal | Rose → Amber | `bg-orange-200` | Somatic Health |
+| **Dashboard** | David (Crisis) | Sky → Blue → Indigo | `bg-slate-200` | Hope & Clarity |
+| **My Journal** | Walt (Zen) | Indigo → Purple → Violet | `bg-indigo-200` | Quiet Reflection & Focus |
+| **Tasks** | Ned (Pink Cloud) | Cyan → Teal → Emerald | `bg-cyan-200` | Energy & Action |
+| **Workbooks** | Maya (Systematic) | Emerald → Green → Lime | `bg-emerald-200` | Systematic Growth & Literature |
+| **Insights** | Walt (Zen) | Fuchsia → Pink → Rose | `bg-fuchsia-200` | Mystical & AI |
+| **Vitality** | Universal | Rose → Orange → Amber | `bg-orange-200` | Somatic Health |
+| **Service** (Future) | Lisa (Service) | Rose → Amber | `bg-orange-200` | Warmth & Connection |
+| **Profile** | Universal | Slate → Gray → Zinc | `bg-zinc-300` | Identity & Security Settings |
 
 ## 🛠️ Coding Standards
 * **Strict Typing:** No `any`. Interfaces for `JournalEntry` and `Task` are mandatory.

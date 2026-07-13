@@ -11,13 +11,13 @@ Unlike traditional wellness apps, MRT is built on the principle that **we cannot
 
 ## 🚀 Key Features
 
-* **The Horizon (Dashboard):** Real-time sobriety counter, habit streaks, and a "Bio-Rhythm" snapshot of your daily balance.
-* **The Vault (Secure Journaling):** Encrypted reflections with integrated **Gemini AI** for sentiment analysis and pattern recognition.
-* **The Library (Interactive Workbooks):** Structured 12-Step, CBT, and Recovery Dharma modules to facilitate deep inner work.
-* **The Pulse (Vitality):** Somatic regulation tools including a guided **4-7-8 Breathwork** pacer and activity logging.
+* **My Dashboard:** Real-time sobriety counter, habit streaks, and a "Bio-Rhythm" snapshot of your daily balance.
+* **My Journal:** Encrypted reflections with integrated **Gemini AI** for sentiment analysis and pattern recognition.
+* **My Workbooks:** Structured 12-Step, CBT, and Recovery Dharma modules to facilitate deep inner work.
+* **My Vitality:** Somatic regulation tools including a guided **4-7-8 Breathwork** pacer and activity logging.
 * **The Anchor (Urge Surfer):** Acute crisis intervention and somatic regulation tool for immediate relief.
-* **Tasks & Habits:** Structured daily task and recurring habit tracking for building healthy routines.
-* **The Compass (AI Insights):** Analyzes decrypted history to identify subtle relapse triggers and emotional trends.
+* **My Tasks:** Structured daily task and recurring habit tracking for building healthy routines.
+* **My Insights:** Analyzes decrypted history to identify subtle relapse triggers and emotional trends.
 * **Premium Supporter Access:** Optional Stripe-integrated subscription model to unlock advanced platform features.
 
 ## 🎨 Design System: Vibrant Momentum

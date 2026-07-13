@@ -198,7 +198,7 @@ export default function Dashboard() {
       {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
-            title="Dashboard" 
+            title="My Dashboard" 
             subtitle={slogan}
             icon={HomeIcon}
             fromColor={THEME.dashboard.header.from}

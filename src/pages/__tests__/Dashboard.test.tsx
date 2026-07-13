@@ -68,7 +68,7 @@ describe('Dashboard', () => {
   it('renders the dashboard once data loads', async () => {
     renderDashboard();
 
-    expect(await screen.findByText('Dashboard')).toBeInTheDocument();
+    expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Anchor Widget')).toBeInTheDocument();
   });
 

@@ -1,4 +1,4 @@
-# 📖 Feature Specification: The Journal (The Vault)
+# 📖 Feature Specification: My Journal
 
 **Status:** Live (v2.3)
 **Security Level:** Zero-Knowledge (Client-Side AES-GCM)

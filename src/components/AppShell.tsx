@@ -68,13 +68,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [isVaultUnlocked, driveAccessToken, performAutoBackup, isOnline]);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Journal', href: '/journal', icon: BookOpenIcon },
-    { name: 'Vitality', href: '/vitality', icon: HeartIcon },
-    { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
-    { name: 'Workbooks', href: '/workbooks', icon: AcademicCapIcon },
-    { name: 'Insights', href: '/insights', icon: LightBulbIcon },
-    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
+    { name: 'My Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'My Journal', href: '/journal', icon: BookOpenIcon },
+    { name: 'My Vitality', href: '/vitality', icon: HeartIcon },
+    { name: 'My Tasks', href: '/tasks', icon: ClipboardDocumentListIcon },
+    { name: 'My Workbooks', href: '/workbooks', icon: AcademicCapIcon },
+    { name: 'My Insights', href: '/insights', icon: LightBulbIcon },
+    { name: 'My Profile', href: '/profile', icon: UserCircleIcon },
   ];
   if (isAdmin) navigation.push({ name: 'Admin', href: '/admin', icon: CommandLineIcon });
 

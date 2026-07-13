@@ -1,4 +1,4 @@
-# 📖 The Vault (Journal & AI)
+# 📖 My Journal (Journal & AI)
 
 The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**
 

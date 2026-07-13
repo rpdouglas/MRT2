@@ -31,7 +31,7 @@ export default function Workbooks() {
       {/* HEADER */}
       <div className="flex-shrink-0 z-10">
           <VibrantHeader 
-            title="Recovery Library"
+            title="My Workbooks"
             subtitle="Structured guides to process your journey."
             icon={AcademicCapIcon}
             fromColor={THEME.workbooks.header.from}
