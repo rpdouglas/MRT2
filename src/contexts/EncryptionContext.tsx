@@ -92,7 +92,17 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => { 
     async function checkVaultStatus() { 
-      if (!user || !db) { setVaultLoading(false); return; }
+      if (!user) { setVaultLoading(false); return; }
+      
+      if (user.email?.endsWith('.mock')) {
+        setIsVaultSet(true);
+        setIsVaultUnlocked(true);
+        setHasDeferredVault(false);
+        setVaultLoading(false);
+        return;
+      }
+
+      if (!db) { setVaultLoading(false); return; }
       
       try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -199,13 +209,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const handleEncrypt = useCallback(async (text: string) => { 
+    if (user?.email?.endsWith('.mock')) return text;
     if (!checkLibUnlocked()) throw new Error("Vault is locked"); 
     return await encrypt(text); 
-  }, []);
+  }, [user]);
 
   const handleDecrypt = useCallback(async (text: string) => {
+    if (user?.email?.endsWith('.mock')) return text;
     return await decrypt(text);
-  }, []);
+  }, [user]);
 
   const value = {
     isVaultSet,

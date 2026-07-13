@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.13] - 2026-07-12
+### 🛠️ Automated Mobile Screenshot Generator (Internal)
+- **Developer Experience [PROJ-63]:** Implemented a zero-manual-effort Playwright automation script (`npm run screenshots:generate`) to capture key app pages in mobile view. Bypassed Firebase Auth and the ZK encryption boundary client-side using type-safe mock personas (Ned, Maya, David, Walt) and duck-typed offline stores. Added WebP asset optimization and output direct to docs-site.
+
 ## [v1.8.12] - 2026-07-12
 ### 🛠️ Tech Debt Quick Wins (Internal)
 - **Security [PROJ-62]:** Tightened Firestore rules so `ai_logs`, `client_errors`, and `feedback` writes must match the authenticated user's ID, closing a gap where any signed-in user could write a log entry under an arbitrary `uid`. No user-facing behavior changed.

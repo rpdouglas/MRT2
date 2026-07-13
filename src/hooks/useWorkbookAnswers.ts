@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { getWorkbookAnswers, saveWorkbookAnswer } from '../lib/workbookAnswers';
 import type { WorkbookAnswer } from '../lib/db';
+import { getMockWorkbookAnswers } from '../lib/mockData';
 
 export type DecryptedWorkbookAnswer = WorkbookAnswer & { id: string };
 
@@ -16,6 +17,16 @@ export function useWorkbookAnswers(workbookId?: string) {
   const { data: answers = [], isLoading } = useQuery<DecryptedWorkbookAnswer[]>({
     queryKey,
     queryFn: async () => {
+      if (user?.email?.endsWith('.mock')) {
+        const raw = getMockWorkbookAnswers(user.email);
+        const filtered = workbookId ? raw.filter(a => a.workbookId === workbookId) : raw;
+        return filtered.map(a => ({
+          ...a,
+          id: `${a.workbookId}_${a.questionId}`,
+          updatedAt: a.updatedAt instanceof Date ? Timestamp.fromDate(a.updatedAt) : a.updatedAt
+        } as unknown as DecryptedWorkbookAnswer));
+      }
+
       const raw = await getWorkbookAnswers(user!.uid, workbookId);
       return Promise.all(raw.map(async (entry) => {
         if (!entry.isEncrypted) return entry;
@@ -32,6 +43,7 @@ export function useWorkbookAnswers(workbookId?: string) {
   const saveMutation = useMutation({
     mutationFn: async (params: { sectionId: string; questionId: string; plaintext: string }) => {
       if (!user) throw new Error('Not authenticated');
+      if (user.email?.endsWith('.mock')) return;
       if (!workbookId) throw new Error('workbookId is required to save a workbook answer');
 
       const encryptedAnswer = await encrypt(params.plaintext);

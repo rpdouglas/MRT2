@@ -3,6 +3,7 @@ import { doc, updateDoc, type Firestore } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile, updateProfileData, type UserProfile } from '../lib/db';
+import { getMockProfile } from '../lib/mockData';
 
 export function useUserProfile() {
   const { user } = useAuth();
@@ -11,7 +12,12 @@ export function useUserProfile() {
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['profile', uid],
-    queryFn: () => getProfile(uid as string),
+    queryFn: () => {
+      if (user?.email?.endsWith('.mock')) {
+        return getMockProfile(user.email);
+      }
+      return getProfile(uid as string);
+    },
     enabled: !!uid,
   });
 
@@ -20,8 +26,9 @@ export function useUserProfile() {
   // Top-level merge write — safe for scalar fields with no sibling nested keys
   // owned by another hook.
   const updateProfile = useMutation({
-    mutationFn: (data: Partial<UserProfile>) => {
+    mutationFn: async (data: Partial<UserProfile>) => {
       if (!uid) throw new Error('Not authenticated');
+      if (user?.email?.endsWith('.mock')) return;
       return updateProfileData(uid, data);
     },
     onSuccess: invalidate,
@@ -32,8 +39,10 @@ export function useUserProfile() {
   // written by useReadingPreferences, so a raw `anchorSettings: {...}` merge
   // here would silently wipe it.
   const patchFields = useMutation({
-    mutationFn: (fields: Record<string, unknown>) => {
-      if (!uid || !db) throw new Error('Not authenticated');
+    mutationFn: async (fields: Record<string, unknown>) => {
+      if (!uid) throw new Error('Not authenticated');
+      if (user?.email?.endsWith('.mock')) return;
+      if (!db) throw new Error('Not authenticated');
       return updateDoc(doc(db as Firestore, 'users', uid), fields);
     },
     onSuccess: invalidate,

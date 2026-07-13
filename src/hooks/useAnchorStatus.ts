@@ -6,6 +6,7 @@ import { type JournalEntry } from '../lib/db';
 import { isToday } from 'date-fns';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, type Firestore } from 'firebase/firestore';
+import { getMockJournals } from '../lib/mockData';
 
 export function useAnchorStatus() {
   const { user } = useAuth();
@@ -15,7 +16,11 @@ export function useAnchorStatus() {
   const { data: journals } = useQuery<JournalEntry[]>({
     queryKey: ['journals', user?.uid],
     queryFn: async () => {
-        if (!user || !db) return [];
+        if (!user) return [];
+        if (user.email?.endsWith('.mock')) {
+            return getMockJournals(user.email);
+        }
+        if (!db) return [];
         const database: Firestore = db;
         const q = query(
             collection(database, 'journals'),
