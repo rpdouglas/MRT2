@@ -26,6 +26,7 @@ export function useToolHistory(toolType: SmartToolType | undefined) {
         queryKey: ['toolHistory', user?.uid, toolType, isVaultUnlocked],
         enabled: Boolean(user && db && toolType && isVaultUnlocked),
         queryFn: async () => {
+            if (user?.email?.endsWith('.mock')) return [];
             if (!user || !db || !toolType) return [];
             const database: Firestore = db;
             const q = query(

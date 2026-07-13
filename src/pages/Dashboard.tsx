@@ -17,6 +17,7 @@ import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
+import { getMockJournals, getMockTasks, getMockWorkbookAnswers } from '../lib/mockData';
 
 export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
@@ -62,7 +63,11 @@ export default function Dashboard() {
   const { data: journals = [], isLoading: journalLoading } = useQuery({
     queryKey: ['journals', user?.uid],
     queryFn: async (): Promise<ScorableJournal[]> => {
-        if (!user || !db) return [];
+        if (!user) return [];
+        if (user.email?.endsWith('.mock')) {
+            return getMockJournals(user.email) as unknown as ScorableJournal[];
+        }
+        if (!db) return [];
         const database: Firestore = db;
         const q = query(
             collection(database, 'journals'),
@@ -82,7 +87,11 @@ export default function Dashboard() {
   const { data: tasks = [], isLoading: taskLoading } = useQuery({
     queryKey: ['tasks', user?.uid],
     queryFn: async (): Promise<ScorableTask[]> => {
-        if (!user || !db) return [];
+        if (!user) return [];
+        if (user.email?.endsWith('.mock')) {
+            return getMockTasks(user.email) as unknown as ScorableTask[];
+        }
+        if (!db) return [];
         const database: Firestore = db;
         const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
         const snap = await getDocs(q);
@@ -95,7 +104,11 @@ export default function Dashboard() {
   const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
     queryKey: ['workbooks', user?.uid],
     queryFn: async () => {
-        if (!user || !db) return 0;
+        if (!user) return 0;
+        if (user.email?.endsWith('.mock')) {
+            return getMockWorkbookAnswers(user.email).length;
+        }
+        if (!db) return 0;
         const database: Firestore = db;
         const q = query(collection(database, 'users', user.uid, 'workbook_answers'));
         const snap = await getDocs(q);
@@ -108,7 +121,11 @@ export default function Dashboard() {
   const { data: roscCount = 0 } = useQuery({
     queryKey: ['rosc_count', user?.uid],
     queryFn: async () => {
-        if (!user || !db) return 0;
+        if (!user) return 0;
+        if (user.email?.endsWith('.mock')) {
+            return user.email.startsWith('ned') ? 1 : 0;
+        }
+        if (!db) return 0;
         const database: Firestore = db;
         const snap = await getDocs(collection(database, 'users', user.uid, 'rosc_assessments'));
         return snap.size;

@@ -1,5 +1,5 @@
 import { useQuery, useQueries } from '@tanstack/react-query';
-import { doc, getDoc, type Firestore } from 'firebase/firestore';
+import { doc, getDoc, type Firestore, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { DailyReading, ReadingModality } from '../lib/db';
 
@@ -16,6 +16,20 @@ function localDateString(): string {
 }
 
 async function fetchReading(modality: ReadingModality, date: string): Promise<DailyReading | null> {
+  if (localStorage.getItem('mrt_mock_user')) {
+    return {
+      id: `${modality}_${date}`,
+      modality,
+      date,
+      theme: 'Clarity and Peace',
+      title: 'One Day at a Time',
+      body: 'Today, we focus only on the next 24 hours. We do not look too far ahead or behind. We stay anchored in the present moment.',
+      reflection: 'What can I do today to support my recovery path?',
+      affirmation: 'I am grounded, I am clear, and I am sober today.',
+      generatedAt: Timestamp.now(),
+      bufferBatch: 1
+    };
+  }
   if (!db) return null;
   const ref = doc(db as Firestore, 'daily_readings', readingDocId(modality, date));
   const snap = await getDoc(ref);

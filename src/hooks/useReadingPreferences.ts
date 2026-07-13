@@ -41,6 +41,9 @@ export function useReadingPreferences() {
   const { data: preferences } = useQuery<UserReadingPreferences>({
     queryKey: ['reading-preferences', user?.uid],
     queryFn: async () => {
+      if (user?.email?.endsWith('.mock')) {
+        return { uid: user.uid, selectedModalities: ALL_MODALITIES, lastReadDate: '', readingHistory: [] };
+      }
       if (!user || !db) {
         return { uid: '', selectedModalities: ALL_MODALITIES, lastReadDate: '', readingHistory: [] };
       }

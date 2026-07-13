@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, type Firestore } from 'firebase/firestore';
 import type { Task } from '../lib/tasks';
+import { getMockTasks } from '../lib/mockData';
 
 // Real-time listener for the full task list (Today/Later/Log tabs all read
 // from this one set). Kept as a dedicated onSnapshot subscription — like
@@ -14,7 +15,18 @@ export function useTasksList(): { tasks: Task[]; loading: boolean } {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user || !db) return;
+        if (!user) return;
+
+        if (user.email?.endsWith('.mock')) {
+            const mockTasks = getMockTasks(user.email);
+            const timer = setTimeout(() => {
+                setTasks(mockTasks);
+                setLoading(false);
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+
+        if (!db) return;
         const database: Firestore = db;
 
         const q = query(

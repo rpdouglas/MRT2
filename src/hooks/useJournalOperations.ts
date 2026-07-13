@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import type { DocumentReference } from 'firebase/firestore';
 
 export function useJournalOperations() {
     const { user } = useAuth();
@@ -26,7 +27,9 @@ export function useJournalOperations() {
             tags: string[];
             isEncrypted: boolean;
         }) => {
-            if (!user || !db) throw new Error("Not authenticated");
+            if (!user) throw new Error("Not authenticated");
+            if (user.email?.endsWith('.mock')) return {} as unknown as DocumentReference;
+            if (!db) throw new Error("Not authenticated");
             return await addDoc(collection(db, 'journals'), {
                 uid: user.uid,
                 content: params.content,
@@ -51,6 +54,7 @@ export function useJournalOperations() {
             tags: string[];
             isEncrypted: boolean;
         }) => {
+            if (user?.email?.endsWith('.mock')) return;
             if (!db) throw new Error("DB not initialized");
             const docRef = doc(db, 'journals', params.id);
             await updateDoc(docRef, {
@@ -67,6 +71,7 @@ export function useJournalOperations() {
 
     const deleteJournalMutation = useMutation({
         mutationFn: async (id: string) => {
+            if (user?.email?.endsWith('.mock')) return;
             if (!db) throw new Error("DB not initialized");
             await deleteDoc(doc(db, 'journals', id));
         },

@@ -13,6 +13,7 @@ import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
+import { getMockJournals } from '../../lib/mockData';
 import { groupItemsByYearAndMonth } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
@@ -69,7 +70,11 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const { data: allEntries = [], isLoading } = useQuery({
     queryKey: ['journals', user?.uid, isVaultUnlocked],
     queryFn: async () => {
-        if (!user || !db) return [];
+        if (!user) return [];
+        if (user.email?.endsWith('.mock')) {
+            return getMockJournals(user.email) as unknown as (JournalEntry & { isError?: boolean })[];
+        }
+        if (!db) return [];
         const database: Firestore = db;
         const q = query(
             collection(database, 'journals'), 

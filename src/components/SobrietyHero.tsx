@@ -37,10 +37,12 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
         updateHeroColor.mutate(key);
     };
 
-    // Fetch latest AI insight for export card safely in the background
     const { data: latestInsight } = useQuery({
         queryKey: ['latest-insight', userProfile?.uid],
         queryFn: async () => {
+            if (userProfile?.uid?.includes('mock')) {
+                return { summary: "One day at a time. The horizon is bright." };
+            }
             if (!userProfile?.uid || !db) return null;
             const insightsRef = collection(db as Firestore, 'insights');
             const q = query(

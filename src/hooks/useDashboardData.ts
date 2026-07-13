@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import type { JournalEntry, Task } from '../lib/db';
+import { getMockTasks, getMockJournals } from '../lib/mockData';
 
 export function useDashboardData() {
     const { user } = useAuth(); 
@@ -12,6 +13,17 @@ export function useDashboardData() {
         staleTime: 1000 * 60 * 5, 
         queryFn: async () => {
             if (!user) throw new Error("No authenticated user");
+            
+            if (user.email?.endsWith('.mock')) {
+                const mockTasks = getMockTasks(user.email);
+                const mockJournals = getMockJournals(user.email);
+                return {
+                    recentJournals: mockJournals,
+                    recentTasks: mockTasks,
+                    activeStreak: calculateBoundedStreak(mockTasks),
+                };
+            }
+
             if (!db) throw new Error("Firestore instance is undefined");
 
             const thirtyDaysAgo = new Date();

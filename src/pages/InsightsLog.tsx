@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ElementType } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getInsightHistory, type SavedInsight } from '../lib/insights';
+import { getMockInsights } from '../lib/mockData';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
 import { useTaskOperations } from '../hooks/useTaskOperations';
@@ -103,6 +104,10 @@ export default function InsightsLog() {
     const loadData = useCallback(async () => {
         if (!user) return;
         try {
+            if (user.email?.endsWith('.mock')) {
+                setInsights(getMockInsights(user.email));
+                return;
+            }
             const data = await getInsightHistory(user.uid);
             setInsights(data);
         } catch (error) {

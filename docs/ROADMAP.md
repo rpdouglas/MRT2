@@ -38,6 +38,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-63` Mobile Screenshot Generator (Implement automated mobile screenshot generator with persona-based mock bypass.)
 * `PROJ-62` Tech Debt Quick Wins — Logging, Rules, Duplicate Reads, `any` Suppressions (Cleared five deep-review quick-win chores: removed a debug console.log, hardened the CI service-account heredoc, tightened ai_logs/client_errors/feedback Firestore rules to uid-match, extracted Tasks.tsx's raw onSnapshot into useTasksList, and fixed the last four any-type suppressions (two of which were masking real latent bugs).)
 * `Maintenance` Journal Sharing Format (Appended `myrecoverytoolkit.ca` to the end of the plaintext journal entry share text and added screen reader accessibility title to the Share button.)
 * `PROJ-61` Test Coverage Backfill — ZK-Adjacent & Firestore-Write Paths (Backfilled test coverage for exporter.ts, useROSCAssessments, useRateLimits, and functions/prompts.ts prompt-construction logic.)
