@@ -1,4 +1,5 @@
 // src/lib/crypto.ts
+import posthog from 'posthog-js';
 
 // --- Configuration ---
 const PBKDF2_ITERATIONS = 100000;
@@ -120,15 +121,34 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
         { name: "AES-GCM", iv },
         globalKey,
         data
-      ).catch((e) => { console.error("Decryption failed:", e); return "[Locked Content - Verify PIN]"; });
+      ).catch((e) => {
+        console.error("Decryption failed:", e);
+        try {
+          posthog.capture("vault_decryption_failed", {
+            error_name: e instanceof Error ? e.name : "SubtleCryptoError",
+            error_message: e instanceof Error ? e.message : String(e)
+          });
+        } catch (phError) {
+          console.warn("PostHog event capture failed:", phError);
+        }
+        return "[Locked Content - Verify PIN]";
+      });
 
       if (typeof decryptedBuffer === 'string') {
             return decryptedBuffer;
         }
-        if (typeof decryptedBuffer === 'string') return decryptedBuffer; return new TextDecoder().decode(decryptedBuffer);
+        return new TextDecoder().decode(decryptedBuffer);
 
   } catch (error) {
       console.error("Decryption failed:", error);
+      try {
+        posthog.capture("vault_decryption_failed", {
+          error_name: error instanceof Error ? error.name : "TypeError",
+          error_message: error instanceof Error ? error.message : String(error)
+        });
+      } catch (phError) {
+        console.warn("PostHog event capture failed:", phError);
+      }
       // Return a safe fallback so the UI renders instead of crashing
       return "[Locked Content - Verify PIN]"; 
   }

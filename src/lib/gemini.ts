@@ -1,34 +1,27 @@
 /**
  * src/lib/gemini.ts
- * GITHUB COMMENT:
- * [gemini.ts]
- * REFACTOR: Surgical realignment of AI models (March 2026).
- * - Upgraded deep reasoning tasks to 'gemini-3.1-pro-preview'.
- * - Downgraded low-reasoning tasks to 'gemini-2.5-flash-lite' for speed/cost.
- * - Updated MODEL_CASCADE to prioritize 'gemini-3-flash-preview'.
+ * REFACTOR: Secure AI Proxy Alignment (July 2026).
+ * Routes all client-side Gemini prompts through Firebase Cloud Functions.
  */
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { auth } from './firebase'; // To capture current user for logging
-import { logAIUsage } from './analytics';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import app from './firebase';
 import type { SmartToolType } from './types/smart';
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
+let functionsInstance: ReturnType<typeof getFunctions> | null = null;
 
-// --- Configuration ---
-const GENERATION_CONFIG = { temperature: 0.7, topP: 0.8, topK: 40, maxOutputTokens: 8192, };
-
-// --- Model Cascade Configuration ---
-const MODEL_CASCADE = [
-  'gemini-3-flash-preview', 
-  'gemini-2.5-flash', 
-  'gemini-2.5-flash-lite'
-];
+function getFunctionsInstance() {
+    if (!functionsInstance) {
+        if (!app) {
+            throw new Error("Firebase app is not initialized");
+        }
+        functionsInstance = getFunctions(app);
+    }
+    return functionsInstance;
+}
 
 // --- Interfaces ---
 
 export interface AIAnalysisResult { sentiment: 'Positive' | 'Neutral' | 'Negative'; moodScore: number; summary: string; actionableSteps: string[]; risks: string[]; }
-// Alias for backward compatibility
 export type AnalysisResult = AIAnalysisResult;
 
 export interface AudioAnalysisResult {
@@ -45,7 +38,7 @@ export interface ComparativeAnalysisResult {
     wins: string[];
     blind_spots: string[];
     actionable_advice: string[];
-    action_contexts?: string[]; // Parallel one-sentence explanations for each actionable_advice item
+    action_contexts?: string[];
 }
 
 export interface WorkbookAnalysisResult {
@@ -57,21 +50,19 @@ export interface WorkbookAnalysisResult {
         blind_spots: string;
     };
     suggested_actions: string[];
-    action_contexts?: string[]; // Parallel one-sentence explanations for each suggested_actions item
+    action_contexts?: string[];
 }
 
-// Deep Pattern Recognition Interface
 export interface DeepPatternResult {
     core_triggers: string[];
     emotional_velocity: string;
     hidden_correlations: string[];
     relapse_risk_level: 'Low' | 'Moderate' | 'High' | 'Critical';
     long_term_advice: string[];
-    action_contexts?: string[]; // Parallel one-sentence explanations for each long_term_advice item
+    action_contexts?: string[];
     pattern_summary: string;
 }
 
-// System Health Interface
 export interface SystemHealthAnalysis {
     status: 'Critical' | 'Warning' | 'Stable';
     summary: string;
@@ -81,13 +72,25 @@ export interface SystemHealthAnalysis {
         suspected_root_cause: string;
         suggested_fix: string;
     }[];
-    environment_patterns: string; // e.g. "Mostly iOS devices"
+    environment_patterns: string;
 }
 
-// --- Core Helper: Smart Cascade Generation ---
+export interface ROSCAnalysisResult {
+  scores: {
+    health: { score: number; evidence: string[] };
+    home: { score: number; evidence: string[] };
+    purpose: { score: number; evidence: string[] };
+    community: { score: number; evidence: string[] };
+  };
+  trajectory: 'Improving' | 'Stable' | 'Declining' | 'Insufficient Data';
+  narrative: string;
+  strengths: string[];
+  growth_areas: string[];
+}
+
 // --- Mock AI Fallbacks for Offline & Dev Environments ---
-function getMockAIResponse(contextTag: string): string {
-    switch (contextTag) {
+function getMockAIResponse(analysisType: string): string {
+    switch (analysisType) {
         case 'journal_analysis':
             return JSON.stringify({
                 sentiment: 'Positive',
@@ -147,63 +150,35 @@ function getMockAIResponse(contextTag: string): string {
                 environment_patterns: 'Across all devices'
             });
 
-        case 'cbt_coaching_prompt':
         case 'workbook_coach':
+        case 'cbt_coaching_prompt':
             return 'How does it feel to notice that automatic thought in your body right now?';
 
         case 'cba_reflection':
             return 'Notice the tension between the immediate escape and the long-term freedom you are building.';
 
         default:
-            return 'Mock response for ' + contextTag;
+            return 'Mock response for ' + analysisType;
     }
 }
 
-// --- Core Helper: Smart Cascade Generation ---
-async function generateWithCascade(prompt: string, contextTag: string, specificModel?: string): Promise<string> {
+// --- Helper calling the Firebase HTTPS Callable Function Proxy ---
+async function callAIProxy(analysisType: string, dataPayload: unknown): Promise<string> {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey || apiKey === 'placeholder_replace_me' || apiKey === 'placeholder') {
-        return getMockAIResponse(contextTag);
+        return getMockAIResponse(analysisType);
     }
 
-    const modelsToTry = specificModel 
-        ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
-        : MODEL_CASCADE;
-    
-    let lastError: Error | null = null;
-
-    for (let i = 0; i < modelsToTry.length; i++) {
-        const currentModelName = modelsToTry[i];
-        
-        try {
-            if (import.meta.env.DEV) {
-                // console.log(`🤖 AI Attempt ${i + 1}/${modelsToTry.length}: Using ${currentModelName}`);
-            }
-
-            const model = genAI.getGenerativeModel({ model: currentModelName, generationConfig: GENERATION_CONFIG });
-            
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            
-            if (!text) throw new Error(`Empty response from ${currentModelName}`);
-            
-            // --- LOGGING ---
-            if (auth?.currentUser?.uid) {
-                logAIUsage(auth.currentUser.uid, currentModelName, contextTag, response.usageMetadata);
-            }
-            // ----------------
-            
-            return text;
-
-        } catch (error) {
-            console.warn(`⚠️ Attempt failed with ${currentModelName}:`, error);
-            lastError = error as Error;
-            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1))); 
-        }
+    try {
+        const functions = getFunctionsInstance();
+        const proxy = httpsCallable(functions, "generateAIInsights");
+        const response = await proxy({ analysisType, dataPayload });
+        const data = response.data as { text: string };
+        return data.text;
+    } catch (error) {
+        console.error(`AI Proxy failed for ${analysisType}:`, error);
+        throw error;
     }
-
-    throw new Error(`All AI models failed. Last error: ${lastError?.message}`);
 }
 
 function cleanJSON(text: string): string {
@@ -214,108 +189,18 @@ function cleanJSON(text: string): string {
 //  EXPOSED FUNCTIONS
 // ============================================================================
 
-/**
- * VOICE-TO-VAULT: Multimodal Analysis
- * Sends audio blob data to Gemini for transcription and analysis.
- */
 export async function generateAudioAnalysis(base64Audio: string, mimeType: string): Promise<AudioAnalysisResult> {
-    // Explicitly 2.5 Flash for multimodal stability
-    const modelName = 'gemini-2.5-flash'; 
-    const model = genAI.getGenerativeModel({ model: modelName });
-
-    const prompt = `
-    Listen to this audio journal entry.
-    1. Transcribe the audio verbatim.
-    2. Analyze the sentiment and mood.
-    3. Generate 3-5 relevant tags.
-
-    Return JSON format:
-    {
-      "transcription": "Full text here...",
-      "sentiment_label": "Positive" | "Neutral" | "Negative",
-      "mood_score": 1-10,
-      "tags": ["Tag1", "Tag2"]
-    }
-    `;
-
-    try {
-        const result = await model.generateContent([
-            {
-                inlineData: {
-                    mimeType: mimeType,
-                    data: base64Audio
-                }
-            },
-            { text: prompt }
-        ]);
-        
-        const response = await result.response;
-        const text = response.text();
-
-        // Logging
-        if (auth?.currentUser?.uid) {
-            logAIUsage(auth.currentUser.uid, modelName, 'voice_to_vault', response.usageMetadata);
-        }
-
-        return JSON.parse(cleanJSON(text)) as AudioAnalysisResult;
-
-    } catch (error) { console.error("Audio Analysis Failed:", error); throw new Error("Failed to process audio."); }
+    const text = await callAIProxy('audio_analysis', { base64Audio, mimeType });
+    return JSON.parse(cleanJSON(text)) as AudioAnalysisResult;
 }
 
 export async function analyzeSystemHealth(errorLogs: string): Promise<SystemHealthAnalysis> {
-    const prompt = `
-    You are a Senior React & Firebase Engineer. I am providing you with a raw dump of client-side error logs.
-    Your job is to triage these errors, group duplicates, and identify root causes.
-
-    RAW ERROR LOGS:
-    ${errorLogs}
-
-    Return a JSON object with this EXACT structure:
-    {
-        "status": "Critical" | "Warning" | "Stable",
-        "summary": "A 1-sentence executive summary of the system health.",
-        "top_issues": [
-            {
-                "error_signature": "Short description (e.g. 'Undefined in JournalEditor')",
-                "occurrence_count": 0 (Integer estimate based on logs provided),
-                "suspected_root_cause": "Technical explanation",
-                "suggested_fix": "Code-level recommendation"
-            }
-        ],
-        "environment_patterns": "Note any patterns (e.g., 'Only failing on Mobile Safari' or 'Across all devices')."
-    }
-    IMPORTANT: Return ONLY valid JSON. No Markdown.
-    `;
-
-    const text = await generateWithCascade(prompt, 'system_health_analysis', 'gemini-3.1-pro-preview');
+    const text = await callAIProxy('system_health_analysis', { errorLogs });
     return JSON.parse(cleanJSON(text)) as SystemHealthAnalysis;
 }
 
-export async function generateDeepPatternAnalysis(
-    journalHistory: string
-): Promise<DeepPatternResult> {
-    const prompt = `
-    Perform a "Deep Pattern Recognition" analysis on the following 90 days of journal entries.
-    Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity that a human might miss.
-
-    JOURNAL DATA:
-    ${journalHistory}
-
-    Return a JSON object with this EXACT structure:
-    {
-        "pattern_summary": "A comprehensive paragraph describing the user's psychological landscape over this period.",
-        "core_triggers": ["Trigger 1", "Trigger 2", "Trigger 3"],
-        "emotional_velocity": "A brief description (MAX 15 words) of how quickly their mood shifts (e.g. 'Volatile swings between AM and PM', 'Stable but low baseline').",
-        "hidden_correlations": ["Correlation 1 (e.g. 'Poor sleep correlates with high anxiety 2 days later')", "Correlation 2"],
-        "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
-        "long_term_advice": ["Action 1", "Action 2", "Action 3"],
-        "action_contexts": ["One sentence explaining why Action 1 is recommended, referencing a specific pattern (max 120 chars, no jargon).", "...", "..."]
-    }
-    IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items and a matching "action_contexts" array of the same length.
-    Return ONLY raw JSON.
-    `;
-
-    const text = await generateWithCascade(prompt, 'deep_pattern_analysis', 'gemini-3.1-pro-preview');
+export async function generateDeepPatternAnalysis(journalHistory: string): Promise<DeepPatternResult> {
+    const text = await callAIProxy('deep_pattern_analysis', { journalHistory });
     return JSON.parse(cleanJSON(text)) as DeepPatternResult;
 }
 
@@ -324,73 +209,12 @@ export async function generateComparativeAnalysis(
     previousSet: string | null, 
     scope: 'weekly' | 'monthly' | 'all-time'
 ): Promise<ComparativeAnalysisResult> {
-    
-    let promptContext = "";
-
-    if (scope === 'all-time') {
-        promptContext = `
-        Perform a holistic review of this entire journal history.
-        Identify long-term patterns and the overall arc of recovery.
-        
-        JOURNAL DATA:
-        ${currentSet}
-        `;
-    } else {
-        promptContext = `
-        Perform a Comparative Review between two time periods (${scope}).
-        Compare the "Current Period" against the "Previous Period" to identify trajectory.
-
-        CURRENT PERIOD:
-        ${currentSet}
-
-        PREVIOUS PERIOD:
-        ${previousSet || "No data available for previous period."}
-        `;
-    }
-
-    const systemPrompt = `
-    You are a wise and empathetic Recovery Coach specialized in pattern recognition.
-    Analyze the provided journal entries and return a JSON object with this EXACT structure:
-    {
-        "trajectory": "Improving" | "Stable" | "Declining" | "Fluctuating",
-        "key_themes": ["Theme 1", "Theme 2", "Theme 3"],
-        "comparison_summary": "A 2-3 sentence narrative comparing the periods (or summarizing the journey).",
-        "wins": ["Specific win 1", "Specific win 2"],
-        "blind_spots": ["Potential risk or overlooked area 1", "Area 2"],
-        "actionable_advice": ["Step 1", "Step 2", "Step 3"],
-        "action_contexts": ["One sentence explaining why Step 1 is recommended, referencing the user's specific pattern (max 120 chars, no jargon).", "...", "..."]
-    }
-    IMPORTANT: Provide EXACTLY 3 distinct "actionable_advice" items and a matching "action_contexts" array of the same length.
-    DO NOT use Markdown formatting. Return ONLY the raw JSON string.
-    `;
-
-    const text = await generateWithCascade(
-        systemPrompt + promptContext, 
-        `comparative_analysis_${scope}`, 
-        'gemini-3.1-pro-preview'
-    );
-    
+    const text = await callAIProxy('comparative_analysis', { currentSet, previousSet, scope });
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
 export async function generateJournalAnalysis(content: string): Promise<AIAnalysisResult> {
-    const prompt = `
-      You are a Recovery AI Assistant. Analyze the following journal entries for emotional tone, risks, and actionable steps.
-      ENTRIES: ${content}
-      Return a JSON object with this structure:
-      {
-        "sentiment": "Positive" | "Neutral" | "Negative",
-        "moodScore": number (1-10 integer based on tone),
-        "summary": "1 sentence summary of the user's state",
-        "actionableSteps": ["Step 1", "Step 2", "Step 3"],
-        "risks": ["Risk 1", "Risk 2"] (If none, return empty array)
-      }
-      IMPORTANT: "actionableSteps" must contain EXACTLY 3 items.
-      Return ONLY raw JSON.
-    `;
-    
-    // Fast & cheap model for simple parsing tasks
-    const text = await generateWithCascade(prompt, 'journal_analysis', 'gemini-2.5-flash-lite');
+    const text = await callAIProxy('journal_analysis', { content });
     return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
 }
 
@@ -398,149 +222,45 @@ export async function analyzeFullWorkbook(
     workbookTitle: string, 
     qaPairs: { question: string; answer: string }[]
 ): Promise<WorkbookAnalysisResult> {
-    
-    const formattedContent = qaPairs.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n');
-
-    const prompt = `
-    Analyze the following responses from the user's "${workbookTitle}" workbook.
-    Act as a compassionate but insightful Recovery Sponsor.
-    
-    USER RESPONSES:
-    ${formattedContent}
-
-    Generate a JSON object with this EXACT structure:
-    {
-        "scope_context": "A short label for this analysis (e.g., 'Step 4 Review')",
-        "summary": "A paragraph summarizing their understanding of this step/topic.",
-        "pillars": {
-            "understanding": "Analysis of their cognitive grasp of the concept.",
-            "emotional_resonance": "Current emotional state (e.g. Resentful, Accepting).",
-            "blind_spots": "Potential risks or overlooked areas."
-        },
-        "suggested_actions": ["Action 1", "Action 2", "Action 3"],
-        "action_contexts": ["One sentence explaining why Action 1 is recommended, referencing the user's specific pattern (max 120 chars, no jargon).", "...", "..."]
-    }
-    IMPORTANT: "suggested_actions" must contain EXACTLY 3 items and "action_contexts" must match the same length.
-    Return ONLY raw JSON.
-    `;
-
-    const text = await generateWithCascade(prompt, 'workbook_analysis', 'gemini-3.1-pro-preview');
+    const questionsAndAnswers = qaPairs.map(qa => ({ q: qa.question, a: qa.answer }));
+    const text = await callAIProxy('workbook_analysis', { workbookTitle, questionsAndAnswers });
     return JSON.parse(cleanJSON(text)) as WorkbookAnalysisResult;
 }
 
-// Alias for backward compatibility
 export const analyzeWorkbookContent = analyzeFullWorkbook;
-
-export interface ROSCAnalysisResult {
-  scores: {
-    health: { score: number; evidence: string[] };
-    home: { score: number; evidence: string[] };
-    purpose: { score: number; evidence: string[] };
-    community: { score: number; evidence: string[] };
-  };
-  trajectory: 'Improving' | 'Stable' | 'Declining' | 'Insufficient Data';
-  narrative: string;
-  strengths: string[];
-  growth_areas: string[];
-}
 
 export async function generateROSCAnalysis(
   selfReport: { health: number; home: number; purpose: number; community: number; resilience: number },
   journalSummary: string,
   entryCount: number
 ): Promise<ROSCAnalysisResult> {
-  const prompt = `You are an expert in Recovery Capital assessment, grounded in SAMHSA's four recovery dimensions.
-Your role is to act as a wise and empathetic Recovery Coach — not a clinician — helping a user understand their holistic life in recovery this month.
-
-IMPORTANT CONSTRAINTS:
-- Do NOT reproduce any journal entry verbatim in your response
-- Do NOT make clinical diagnoses or treatment recommendations
-- Frame ALL findings with compassion — avoid language that implies failure
-- Scores reflect evidence quality, not moral judgment
-- If you see very few entries (fewer than 5), return trajectory: "Insufficient Data"
-
-SELF-REPORTED CHECK-IN (user's own assessment, scale 1-5):
+  const answers = `Self-reported check-in:
 - Health: ${selfReport.health}/5
 - Home: ${selfReport.home}/5
 - Purpose: ${selfReport.purpose}/5
 - Community: ${selfReport.community}/5
-- Resilience this month: ${selfReport.resilience}/5
+- Resilience: ${selfReport.resilience}/5
 
-JOURNAL HISTORY (last 30 days, ${entryCount} entries):
-${journalSummary}
+Journal history has ${entryCount} entries. Summary:
+${journalSummary}`;
 
-SCORING INSTRUCTIONS:
-Score each domain 1-10 by blending:
-- The user's own self-report (weight: 40%)
-- Evidence from journal entries (weight: 60%)
-
-Domain criteria:
-- HEALTH (1-10): Physical activity mentions, sleep quality, mood trend, substance-free references, self-care practices, emotional regulation.
-- HOME (1-10): Stability signals (routine, safe environment references), stress around housing or finances as negative signals. Weight self-report heavily here.
-- PURPOSE (1-10): Work/career mentions, creative pursuits, service work references, goal completion, meaningful activity descriptions.
-- COMMUNITY (1-10): Meeting attendance references, sponsor contact, social connections, helping others, feelings of belonging vs. isolation.
-
-Return ONLY this JSON structure, no markdown:
-{
-  "scores": {
-    "health": { "score": 0, "evidence": ["brief reference"] },
-    "home": { "score": 0, "evidence": ["brief reference"] },
-    "purpose": { "score": 0, "evidence": ["brief reference"] },
-    "community": { "score": 0, "evidence": ["brief reference"] }
-  },
-  "trajectory": "Improving",
-  "narrative": "2-3 sentence compassionate overview of this month's recovery capital",
-  "strengths": ["Domain name: brief strength observation"],
-  "growth_areas": ["Domain name: compassionate growth suggestion"]
-}`;
-
-  const text = await generateWithCascade(prompt, 'rosc_assessment', 'gemini-3.1-pro-preview');
+  const text = await callAIProxy('rosc_assessment', { answers });
   return JSON.parse(cleanJSON(text)) as ROSCAnalysisResult;
 }
 
-export async function getGeminiCoaching(
-    context: string, 
-    userAnswer: string
-): Promise<string> {
-    const prompt = `
-    Context: The user is working on a recovery workbook. 
-    Question Context: ${context}
-    User's Answer: "${userAnswer}"
-    Provide a brief, encouraging, and insightful comment (max 2 sentences). 
-    `;
-    
-    // Low latency model for instant chat-like feedback
-    return await generateWithCascade(prompt, 'workbook_coach', 'gemini-2.5-flash-lite');
+export async function getGeminiCoaching(context: string, userAnswer: string): Promise<string> {
+    return await callAIProxy('workbook_coach', { context, userAnswer });
 }
 
-// PROJ-50: Approved Gemini exception — see CLAUDE.md Zero-Knowledge Encryption
-// Boundary section. Called only from GuidedWorkflowEngine.tsx with the live,
-// in-memory step input the user is currently typing.
 export async function generateCBTCoachingPrompt(
     toolType: SmartToolType,
     stepId: string,
     userInput: string
 ): Promise<string> {
-    const prompt = `
-    You are a peer-support recovery coach, not a clinician. The user is working through a "${toolType}" guided CBT exercise, currently on step "${stepId}".
-    Their current input: "${userInput}"
-
-    Write ONE follow-up question (max 15 words) that helps them go one layer deeper into this step.
-    Rules:
-    - It must be a question, never a statement or advice.
-    - Do not restate their input back to them.
-    - Keep it warm, non-clinical, recovery-appropriate language.
-    Return ONLY the question text, no quotes, no markdown, no preamble.
-    `;
-
-    // Low latency model — fired after a short pause while the user is mid-step
-    const text = await generateWithCascade(prompt, 'cbt_coaching_prompt', 'gemini-2.5-flash-lite');
-    return text.trim();
+    const context = `Tool: ${toolType}, Step: ${stepId}`;
+    return await callAIProxy('cbt_coaching_prompt', { context, input: userInput });
 }
 
-// PROJ-50 Phase 3: Approved Gemini exception — see CLAUDE.md Zero-Knowledge
-// Encryption Boundary section. Called only from CBATool.tsx, Premium-gated,
-// on the completed four-quadrant CBA data once the user reaches the Summary phase.
 export async function generateCBAReflection(
     behavior: string,
     quadrants: {
@@ -550,24 +270,5 @@ export async function generateCBAReflection(
         disadvantagesStopping: string[];
     }
 ): Promise<string> {
-    const prompt = `
-    You are a peer-support recovery coach, not a clinician. The user just completed a Cost-Benefit
-    Analysis of the behavior "${behavior}".
-
-    Advantages of ${behavior}: ${quadrants.advantagesDoing.join('; ')}
-    Disadvantages of ${behavior}: ${quadrants.disadvantagesDoing.join('; ')}
-    Advantages of stopping: ${quadrants.advantagesStopping.join('; ')}
-    Disadvantages of stopping: ${quadrants.disadvantagesStopping.join('; ')}
-
-    Write ONE sentence (max 30 words) reflecting back a pattern or tension you notice across
-    these four lists. This is a mirror, not advice.
-    Rules:
-    - Never give a recommendation, instruction, or opinion about what the user should do.
-    - Do not use clinical language.
-    - Do not simply restate their own words back verbatim.
-    Return ONLY the sentence, no quotes, no markdown, no preamble.
-    `;
-
-    const text = await generateWithCascade(prompt, 'cba_reflection', 'gemini-2.5-flash-lite');
-    return text.trim();
+    return await callAIProxy('cba_reflection', { behavior, quadrants });
 }
