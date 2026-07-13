@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // 1. Construct config directly from individual environment variables
 // These will be injected by Vite during the build
@@ -23,7 +23,13 @@ if (!app) {
 }
 
 export const auth = app ? getAuth(app) : undefined;
-export const db = app ? getFirestore(app) : undefined;
+export const db = app 
+  ? initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    })
+  : undefined;
 export const googleProvider = new GoogleAuthProvider();
 
 export default app;

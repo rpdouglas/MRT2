@@ -40,7 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.checkBufferHealth = exports.dailyBeacon = void 0;
+exports.generateAIInsights = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.checkBufferHealth = exports.dailyBeacon = void 0;
 exports.getMilestone = getMilestone;
 exports.getMilestoneLabel = getMilestoneLabel;
 exports.computeMilestoneAlert = computeMilestoneAlert;
@@ -523,6 +523,311 @@ exports.syncStripeSubscription = (0, firestore_2.onDocumentWritten)({
     }
     catch (error) {
         logger.error(`Failed to provision access for ${userId}`, error);
+    }
+});
+function getDaysDiff(d1, d2) {
+    return Math.floor((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
+}
+function getModelForType(analysisType) {
+    switch (analysisType) {
+        case "journal_analysis":
+        case "workbook_coach":
+        case "cbt_coaching_prompt":
+        case "cba_reflection":
+        case "audio_analysis":
+            return "gemini-2.5-flash-lite";
+        default:
+            return "gemini-3.1-pro-preview";
+    }
+}
+function getPromptForType(analysisType, dataPayload) {
+    switch (analysisType) {
+        case "journal_analysis": {
+            const payload = dataPayload;
+            return {
+                prompt: `Analyze this journal entry: "${payload.content}"`,
+                systemPrompt: `You are a warm, peer-support recovery coach. You are reading a journal entry written by a user in recovery.
+Analyze the entry and extract:
+1. Overall emotional sentiment (Positive, Neutral, or Negative).
+2. A mood score from 1 to 10.
+3. A one-sentence compassionate summary.
+4. Two actionable next steps.
+5. Up to two potential risks/triggers.
+
+Return JSON format:
+{
+  "sentiment": "Positive" | "Neutral" | "Negative",
+  "moodScore": number,
+  "summary": "compassionate summary...",
+  "actionableSteps": ["step 1", "step 2"],
+  "risks": ["risk 1", "risk 2"]
+}`,
+            };
+        }
+        case "deep_pattern_analysis": {
+            const payload = dataPayload;
+            return {
+                prompt: `Perform a "Deep Pattern Recognition" analysis on the following 90 days of journal entries.
+JOURNAL DATA:
+${payload.journalHistory}`,
+                systemPrompt: `You are an expert recovery coach. Use your advanced reasoning to identify subtle correlations, triggers, and emotional velocity.
+Return a JSON object with this EXACT structure:
+{
+    "pattern_summary": "A comprehensive paragraph describing the user's psychological landscape over this period.",
+    "core_triggers": ["Trigger 1", "Trigger 2", "Trigger 3"],
+    "emotional_velocity": "A brief description (MAX 15 words) of how quickly their mood shifts.",
+    "hidden_correlations": ["Correlation 1", "Correlation 2"],
+    "relapse_risk_level": "Low" | "Moderate" | "High" | "Critical",
+    "long_term_advice": ["Action 1", "Action 2", "Action 3"],
+    "action_contexts": ["Why Action 1 is recommended.", "Why Action 2 is recommended.", "Why Action 3 is recommended."]
+}
+IMPORTANT: Provide EXACTLY 3 distinct, high-impact "long_term_advice" items and a matching "action_contexts" array of the same length.`,
+            };
+        }
+        case "comparative_analysis": {
+            const payload = dataPayload;
+            let promptContext = "";
+            if (payload.scope === "all-time") {
+                promptContext = `Perform a holistic review of this entire journal history. Identify long-term patterns and the overall arc of recovery.
+JOURNAL DATA:
+${payload.currentSet}`;
+            }
+            else {
+                promptContext = `Perform a Comparative Review between two time periods (${payload.scope}).
+Compare the "Current Period" against the "Previous Period" to identify trajectory.
+
+CURRENT PERIOD:
+${payload.currentSet}
+
+PREVIOUS PERIOD:
+${payload.previousSet || "No data available for previous period."}`;
+            }
+            return {
+                prompt: promptContext,
+                systemPrompt: `You are a wise and empathetic Recovery Coach specialized in pattern recognition.
+Return a JSON object with this EXACT structure:
+{
+    "trajectory": "Improving" | "Stable" | "Declining" | "Fluctuating",
+    "key_themes": ["Theme 1", "Theme 2"],
+    "comparison_summary": "Comparison narrative...",
+    "wins": ["Win 1", "Win 2"],
+    "blind_spots": ["Blind spot 1"],
+    "actionable_advice": ["Advice 1", "Advice 2"],
+    "action_contexts": ["One-sentence context for Advice 1.", "One-sentence context for Advice 2."]
+}`,
+            };
+        }
+        case "system_health_analysis": {
+            const payload = dataPayload;
+            return {
+                prompt: `Analyze these raw client-side error logs:
+${payload.errorLogs}`,
+                systemPrompt: `You are a Senior React & Firebase Engineer. Triage these errors, group duplicates, and identify root causes.
+Return a JSON object with this EXACT structure:
+{
+    "status": "Critical" | "Warning" | "Stable",
+    "summary": "A 1-sentence executive summary of the system health.",
+    "top_issues": [
+        {
+            "error_signature": "signature",
+            "occurrence_count": number,
+            "suspected_root_cause": "technical explanation",
+            "suggested_fix": "code recommendation"
+        }
+    ],
+    "environment_patterns": "Note any patterns."
+}`,
+            };
+        }
+        case "workbook_analysis": {
+            const payload = dataPayload;
+            const qaString = payload.questionsAndAnswers.map((qa) => `Q: ${qa.q}\nA: ${qa.a}`).join("\n\n");
+            return {
+                prompt: `Workbook Title: ${payload.workbookTitle}
+QUESTIONS & ANSWERS:
+${qaString}`,
+                systemPrompt: `You are a supportive recovery companion. Review this completed workbook session.
+Return a JSON object with this EXACT structure:
+{
+  "summary": "Compassionate overview of their answers...",
+  "key_learnings": ["Learning 1", "Learning 2"],
+  "coaching_question": "One reflective open-ended follow-up question (max 20 words)"
+}`,
+            };
+        }
+        case "rosc_assessment": {
+            const payload = dataPayload;
+            return {
+                prompt: `Perform a Recovery Capital (ROSC) Assessment based on this month's check-in:
+${payload.answers}`,
+                systemPrompt: `Analyze the user's answers across the 4 SAMHSA domains (Health, Home, Purpose, Community) and rate them.
+Return a JSON object with this EXACT structure:
+{
+  "scores": {
+    "health": { "score": number, "evidence": ["evidence"] },
+    "home": { "score": number, "evidence": ["evidence"] },
+    "purpose": { "score": number, "evidence": ["evidence"] },
+    "community": { "score": number, "evidence": ["evidence"] }
+  },
+  "trajectory": "Improving" | "Stable" | "Declining" | "Insufficient Data",
+  "narrative": "Compassionate overview...",
+  "strengths": ["Domain: strength"],
+  "growth_areas": ["Domain: growth suggestion"]
+}`,
+            };
+        }
+        case "workbook_coach": {
+            const payload = dataPayload;
+            return {
+                prompt: `Question: ${payload.context}
+User's Answer: "${payload.userAnswer}"`,
+                systemPrompt: `The user is working on a recovery workbook. Provide a brief, encouraging, and insightful comment (max 2 sentences).`,
+            };
+        }
+        case "cbt_coaching_prompt": {
+            const payload = dataPayload;
+            return {
+                prompt: `Step Context: ${payload.context}
+User's Input: "${payload.input}"`,
+                systemPrompt: `The user is completing an interactive CBT worksheet step. Write ONE follow-up question (max 15 words) that helps them go one layer deeper into this step.`,
+            };
+        }
+        case "cba_reflection": {
+            const payload = dataPayload;
+            return {
+                prompt: `Behavior: ${payload.behavior}
+Advantages of doing: ${payload.quadrants.advantagesDoing.join("; ")}
+Disadvantages of doing: ${payload.quadrants.disadvantagesDoing.join("; ")}
+Advantages of stopping: ${payload.quadrants.advantagesStopping.join("; ")}
+Disadvantages of stopping: ${payload.quadrants.disadvantagesStopping.join("; ")}`,
+                systemPrompt: `Reflect on this Cost-Benefit Analysis behavior. Write ONE sentence (max 30 words) reflecting back a pattern or tension you notice.`,
+            };
+        }
+        case "audio_analysis": {
+            return {
+                prompt: `Listen to this audio journal entry.`,
+                systemPrompt: `Transcribe the audio verbatim, analyze sentiment, and generate tags.
+Return JSON format:
+{
+  "transcription": "Verbatim transcription...",
+  "sentiment_label": "Positive" | "Neutral" | "Negative",
+  "mood_score": 1-10,
+  "tags": ["tag1", "tag2"]
+}`,
+            };
+        }
+        default:
+            throw new Error(`Unknown analysisType: ${analysisType}`);
+    }
+}
+exports.generateAIInsights = (0, https_1.onCall)({
+    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
+    memory: "512MiB",
+    region: "northamerica-northeast1",
+}, async (request) => {
+    // 1. Authentication Check
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Authentication required.");
+    }
+    const uid = request.auth.uid;
+    const { analysisType, dataPayload } = request.data;
+    if (!analysisType || !dataPayload) {
+        throw new https_1.HttpsError("invalid-argument", "Missing analysisType or dataPayload.");
+    }
+    // 2. Fetch User Profile and Enforce Rate Limits
+    const userDoc = await db.collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+        throw new https_1.HttpsError("not-found", "User profile not found.");
+    }
+    const userData = userDoc.data() || {};
+    const userTier = userData.tier || "free";
+    if (userTier === "free") {
+        const limits = userData.usage_limits || {};
+        const now = new Date();
+        if (analysisType === "deep_pattern_analysis" || analysisType === "rosc_assessment") {
+            const lastDeepDive = limits.lastDeepDive ? limits.lastDeepDive.toDate() : null;
+            if (lastDeepDive) {
+                const diff = getDaysDiff(now, lastDeepDive);
+                if (diff < 30) {
+                    throw new https_1.HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
+                }
+            }
+        }
+        else if (analysisType === "comparative_analysis") {
+            const compPayload = dataPayload;
+            if (compPayload.scope === "weekly") {
+                const lastWeeklyInsight = limits.lastWeeklyInsight ? limits.lastWeeklyInsight.toDate() : null;
+                if (lastWeeklyInsight) {
+                    const diff = getDaysDiff(now, lastWeeklyInsight);
+                    if (diff < 7) {
+                        throw new https_1.HttpsError("resource-exhausted", `Available in ${7 - diff} days. Upgrade to unlock.`);
+                    }
+                }
+            }
+            else if (compPayload.scope === "monthly" || compPayload.scope === "all-time") {
+                const field = compPayload.scope === "monthly" ? "lastMonthlyInsight" : "lastDeepDive";
+                const lastRun = limits[field] ? limits[field].toDate() : null;
+                if (lastRun) {
+                    const diff = getDaysDiff(now, lastRun);
+                    if (diff < 30) {
+                        throw new https_1.HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
+                    }
+                }
+            }
+        }
+    }
+    // 3. Prepare AI Prompts and Model Selection
+    const { prompt, systemPrompt } = getPromptForType(analysisType, dataPayload);
+    const modelName = getModelForType(analysisType);
+    const apiKey = geminiApiKey.value();
+    const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
+    try {
+        const model = genAI.getGenerativeModel(Object.assign({ model: modelName, generationConfig: { temperature: 0.7, topP: 0.8, topK: 40, maxOutputTokens: 8192 } }, (systemPrompt && { systemInstruction: systemPrompt })));
+        let text = "";
+        if (analysisType === "audio_analysis") {
+            const audioPayload = dataPayload;
+            if (!audioPayload.base64Audio || !audioPayload.mimeType) {
+                throw new https_1.HttpsError("invalid-argument", "Missing base64Audio or mimeType.");
+            }
+            const result = await model.generateContent([
+                {
+                    inlineData: {
+                        mimeType: audioPayload.mimeType,
+                        data: audioPayload.base64Audio,
+                    },
+                },
+                { text: prompt },
+            ]);
+            text = (await result.response).text();
+        }
+        else {
+            const result = await model.generateContent(prompt);
+            text = (await result.response).text();
+        }
+        if (!text) {
+            throw new https_1.HttpsError("internal", "Received empty response from AI model.");
+        }
+        // 4. Update Server-Side Usage Timestamp
+        if (userTier === "free") {
+            const stampField = analysisType === "deep_pattern_analysis" || (analysisType === "comparative_analysis" && dataPayload.scope === "all-time")
+                ? "lastDeepDive"
+                : (analysisType === "comparative_analysis" && dataPayload.scope === "monthly")
+                    ? "lastMonthlyInsight"
+                    : (analysisType === "comparative_analysis" && dataPayload.scope === "weekly")
+                        ? "lastWeeklyInsight"
+                        : null;
+            if (stampField) {
+                await db.collection("users").doc(uid).update({
+                    [`usage_limits.${stampField}`]: firestore_1.FieldValue.serverTimestamp(),
+                });
+            }
+        }
+        return { text };
+    }
+    catch (error) {
+        logger.error("AI Insight generation failed:", error);
+        throw new https_1.HttpsError("internal", error instanceof Error ? error.message : "AI Generation failed.");
     }
 });
 //# sourceMappingURL=index.js.map
