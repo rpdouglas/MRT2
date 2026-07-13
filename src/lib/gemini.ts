@@ -85,7 +85,87 @@ export interface SystemHealthAnalysis {
 }
 
 // --- Core Helper: Smart Cascade Generation ---
+// --- Mock AI Fallbacks for Offline & Dev Environments ---
+function getMockAIResponse(contextTag: string): string {
+    switch (contextTag) {
+        case 'journal_analysis':
+            return JSON.stringify({
+                sentiment: 'Positive',
+                moodScore: 8,
+                summary: 'Strong emotional momentum, gratitude for milestones, and solid habit completion.',
+                actionableSteps: [
+                    'Write down one key learning from today\'s reflections',
+                    'Share this positive milestone with your sponsor'
+                ],
+                risks: ['Pink Cloud overconfidence — stay grounded in daily routines']
+            });
+
+        case 'deep_pattern_analysis':
+            return JSON.stringify({
+                core_triggers: ['Fatigue', 'Mid-week work pressure', 'Social withdrawal'],
+                emotional_velocity: 'Stable and gradually upward, indicating nervous system regulation.',
+                hidden_correlations: [
+                    'Somatic breathwork frequency directly correlates with higher late-evening mood ratings.',
+                    'Late screen usage correlates with a minor drop in next-day task completion.'
+                ],
+                relapse_risk_level: 'Low',
+                long_term_advice: [
+                    'Implement a digital sunset: turn off screens 30 minutes before bed',
+                    'Log a Box Breathing session on high-stress Wednesdays'
+                ],
+                action_contexts: [
+                    'A digital sunset improves sleep quality, directly lifting next-day mood.',
+                    'Wednesdays are identified as your weekly work-stress day.'
+                ],
+                pattern_summary: 'Overall recovery trajectory is solid. The somatic breathwork habits you have built are acting as a powerful buffer against cumulative fatigue.'
+            });
+
+        case 'rosc_assessment':
+            return JSON.stringify({
+                scores: {
+                    health: { score: 8, evidence: ['Consistent sleep logs', 'Breathwork completed daily'] },
+                    home: { score: 7, evidence: ['Stable environment established'] },
+                    purpose: { score: 9, evidence: ['Deeply engaged in step-work and service commitments'] },
+                    community: { score: 8, evidence: ['Regular weekly connection with sponsor and peers'] }
+                },
+                trajectory: 'Improving',
+                narrative: 'Your recovery capital shows strong improvement, especially in your sense of purpose and commitment to service. Somatic baselines show stability.',
+                strengths: [
+                    'Purpose: Excellent completion rate of CBT workbooks and daily reflections',
+                    'Health: Proactive stress reduction through 4-7-8 breathing pacing'
+                ],
+                growth_areas: [
+                    'Home: Establishing firmer boundaries around personal recovery time'
+                ]
+            });
+
+        case 'system_health_analysis':
+            return JSON.stringify({
+                status: 'Stable',
+                summary: 'All telemetry metrics indicate high health and fast client response times.',
+                top_issues: [],
+                environment_patterns: 'Across all devices'
+            });
+
+        case 'cbt_coaching_prompt':
+        case 'workbook_coach':
+            return 'How does it feel to notice that automatic thought in your body right now?';
+
+        case 'cba_reflection':
+            return 'Notice the tension between the immediate escape and the long-term freedom you are building.';
+
+        default:
+            return 'Mock response for ' + contextTag;
+    }
+}
+
+// --- Core Helper: Smart Cascade Generation ---
 async function generateWithCascade(prompt: string, contextTag: string, specificModel?: string): Promise<string> {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    if (!apiKey || apiKey === 'placeholder_replace_me' || apiKey === 'placeholder') {
+        return getMockAIResponse(contextTag);
+    }
+
     const modelsToTry = specificModel 
         ? [specificModel, ...MODEL_CASCADE.filter(m => m !== specificModel)]
         : MODEL_CASCADE;
@@ -109,9 +189,6 @@ async function generateWithCascade(prompt: string, contextTag: string, specificM
             if (!text) throw new Error(`Empty response from ${currentModelName}`);
             
             // --- LOGGING ---
-            // Fire-and-forget telemetry; skip rather than log under a sentinel
-            // uid the Firestore rules would reject (create requires
-            // resource.data.uid === request.auth.uid).
             if (auth?.currentUser?.uid) {
                 logAIUsage(auth.currentUser.uid, currentModelName, contextTag, response.usageMetadata);
             }

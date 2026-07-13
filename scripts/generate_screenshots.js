@@ -115,6 +115,37 @@ async function captureScreenshots() {
         {
             name: 'maya-thought-record',
             url: `${BASE_URL}/tools/thought-record?mockUser=maya`,
+        },
+        {
+            name: 'david-sos-modal',
+            url: `${BASE_URL}/dashboard?mockUser=david`,
+            action: async (page) => {
+                await page.click('button[aria-label="Emergency SOS"]');
+            }
+        },
+        {
+            name: 'lisa-sponsees',
+            url: `${BASE_URL}/admin?mockUser=admin`,
+            action: async (page) => {
+                await page.click('button:has-text("Users")');
+            }
+        },
+        {
+            name: 'jordan-mat-log',
+            url: `${BASE_URL}/journal?mockUser=jordan&tab=write&template=mat_check_in`,
+        },
+        {
+            name: 'walt-journal-insights',
+            url: `${BASE_URL}/journal?mockUser=walt&tab=insights`,
+        },
+        {
+            name: 'walt-journal-ai-wizard',
+            url: `${BASE_URL}/journal?mockUser=walt&tab=history`,
+            action: async (page) => {
+                await page.click('button:has-text("Analyze")');
+                await page.waitForTimeout(1000);
+                await page.click('button:has-text("Begin Analysis")');
+            }
         }
     ];
 
@@ -126,6 +157,11 @@ async function captureScreenshots() {
         
         // Wait 3 seconds for layout calculations, mock state paints, and fonts to stabilize
         await page.waitForTimeout(3000);
+
+        if (target.action) {
+            await target.action(page);
+            await page.waitForTimeout(1000);
+        }
 
         const screenshotPath = path.join(RAW_DIR, `${target.name}.png`);
         await page.screenshot({ path: screenshotPath });

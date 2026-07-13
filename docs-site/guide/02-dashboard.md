@@ -1,6 +1,17 @@
-# 🌅 The Horizon Dashboard
+# 🌅 My Dashboard
 
 Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/ned-dashboard.webp" 
+    alt="My Dashboard (Ned's Amber Theme)" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>My Dashboard:</strong> Ned's Amber Theme (representing 45 days sober) highlighting clean time, streak metrics, and the daily activity bento grid.
+  </figcaption>
+</figure>
 
 ## 1. The Identity & Momentum Card
 At the very top of your dashboard is your unified Identity Card.
@@ -13,6 +24,17 @@ At the very top of your dashboard is your unified Identity Card.
 
 ## 2. Crisis Tools (Urge Surfer & SOS)
 If you are experiencing a craving or a panic attack, tap the red **Warning Triangle (SOS)** in the top right corner of the dashboard header.
+
+<figure class="my-8 text-center">
+  <img 
+    src="/screenshots/david-sos-modal.webp" 
+    alt="Emergency SOS Modal" 
+    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
+  />
+  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+    <strong>Emergency SOS Modal:</strong> David's Rose Theme showing the bypassed PIN emergency screen with one-tap sponsor calling, hotlines, and grounding tools.
+  </figcaption>
+</figure>
 * **Urge Surfer:** A 5-minute interactive grounding tool that uses the 5-4-3-2-1 method. It helps you "ride the wave" of a craving without fighting it.
 * **Call Sponsor:** One-tap access to call or WhatsApp your sponsor (configurable in Profile).
 * **Emergency Lines:** Instant routing to the 988 Lifeline or 911.

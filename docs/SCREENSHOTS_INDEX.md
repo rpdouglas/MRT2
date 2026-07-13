@@ -34,6 +34,11 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 | **[`david-vitality.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-vitality.webp)** | `/vitality?mockUser=david` | David | Somatic Vitality. Displays daily Fuel, Movement, and Breath logs, a Bio-Balance progress meter, and quick log check-in action items. |
 | **[`david-premium.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-premium.webp)** | `/premium?mockUser=david` | David | Premium Upgrade page. Displays subscription benefits, pricing tiers, and the "Unlock Toolkit" call to action seen by free users. |
 | **[`maya-thought-record.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-thought-record.webp)** | `/tools/thought-record?mockUser=maya` | Maya | CBT Thought Record. Multi-step workbook showing input fields for: Triggering Situation, Automatic Thoughts, Distortions, and Reframing. |
+| **[`david-sos-modal.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-sos-modal.webp)** | `/dashboard?mockUser=david` (Click SOS) | David | Emergency SOS Modal. Bypasses lock screens to show crisis hotlines, sponsor dialer, and grounding breath pacers. |
+| **[`lisa-sponsees.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-sponsees.webp)** | `/admin?mockUser=admin` (Tab Users) | Lisa | Sponsor Sponsee Directory. Shows the anonymous directory of sponsees, step progress tracking, and secure, encrypted private notes. |
+| **[`jordan-mat-log.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/jordan-mat-log.webp)** | `/journal?mockUser=jordan&tab=write&template=mat_check_in` | Jordan | MAT Check-In Form. Form prompts for logging daily medication adherence, side-effects, cravings, and treatment plan reflections. |
+| **[`walt-journal-insights.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-insights.webp)** | `/journal?mockUser=walt&tab=insights` | Walt | Journal Insights. Displays weekly and monthly mood trends, somatic balance charts, and check-in word cloud frequencies. |
+| **[`walt-journal-ai-wizard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-ai-wizard.webp)** | `/journal?mockUser=walt&tab=history` (Trigger AI) | Walt | AI Analysis Results. Displays the completed Comparative Analysis result showing trajectory, key themes, wins, blind spots, and actionable advice. |
 
 ---
 
@@ -107,3 +112,28 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 *   **Route**: `/tools/thought-record?mockUser=maya`
 *   **Visual Structure**: Structured multi-step wizard. Active step shows text input fields populated with Maya's triggers ("Work stress, isolation") and automatic thoughts ("I need an escape").
 *   **Semantic Meaning**: The clinical Cognitive Behavioral Therapy (CBT) Thought Record tool, guiding the user through dissecting distortions and generating rational reframes.
+
+### 14. David's Emergency SOS Modal (`david-sos-modal.webp`)
+*   **Route**: `/dashboard?mockUser=david` (Triggered via SOS icon)
+*   **Visual Structure**: High-visibility rose/red color scheme. Overlays the entire screen (bypassing vault limits) to display three large-target sections: Call Sponsor (primary), Call 988/911 (emergency), and Start Somatic Breathwork (grounding pacer).
+*   **Semantic Meaning**: Bypasses the Zero-Knowledge PIN requirement to guarantee instant, single-tap safety routing for users in acute distress or relapse crisis.
+
+### 15. Lisa's Sponsor Directory (`lisa-sponsees.webp`)
+*   **Route**: `/admin?mockUser=admin` (Active on Users Tab)
+*   **Visual Structure**: Slate/zinc theme. Displays a clean directory list of active sponsees identified anonymously (e.g. "Sponsee #1", "Sponsee #2"). Expanding a sponsee reveals their 12-step status dropdown, quick communication buttons, and a text block showing encrypted sponsor meeting notes.
+*   **Semantic Meaning**: The Service network sponsee rolodex, allowing sponsors to track progress securely with Zero-Knowledge encryption protecting sponsee confidentiality.
+
+### 16. Jordan's MAT Medication Log (`jordan-mat-log.webp`)
+*   **Route**: `/journal?mockUser=jordan&tab=write&template=mat_check_in`
+*   **Visual Structure**: Cyan/slate theme. Renders the MAT Check-In template within the journal write editor, featuring custom form fields: dose adherence confirmation checkbox, side-effects checklist, and craving level input.
+*   **Semantic Meaning**: Tracks daily medication-assisted treatment compliance discretely alongside somatic metrics, removing traditional abstinence-only barriers.
+
+### 17. Walt's Journal Insights (`walt-journal-insights.webp`)
+*   **Route**: `/journal?mockUser=walt&tab=insights`
+*   **Visual Structure**: Emerald theme. Displays analytics dashboards featuring mood-over-time vs temperature/weather line graphs, weekly check-in frequency comparisons, and the check-in word cloud list.
+*   **Semantic Meaning**: Interactive somatic tracking and vocabulary frequency metrics for long-term recovery insight.
+
+### 18. Walt's AI Analysis Results (`walt-journal-ai-wizard.webp`)
+*   **Route**: `/journal?mockUser=walt&tab=history` (Completed AI Analysis Wizard)
+*   **Visual Structure**: Glassmorphic result modal containing sections for: Trajectory ('Improving'), Key Themes list, Comparative Summary narrative, Wins list, Blind Spots list, and Actionable Advice checklists with one-sentence contexts.
+*   **Semantic Meaning**: Generative analysis output helping long-term users identify hidden emotional triggers and direct actionable steps.

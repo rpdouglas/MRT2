@@ -120,13 +120,16 @@ isOpen, onClose, entries }: WizardProps) {
 
     const checkEligibility = (targetScope: AnalysisScope): EligibilityStatus => {
         const entryCount = analyzableEntries.length;
+        const isDev = import.meta.env.DEV;
 
-        // 1. Check strict data volume requirements
-        if (targetScope === 'weekly' && entryCount < 7) {
-            return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
-        }
-        if ((targetScope === 'monthly' || targetScope === 'all-time') && entryCount < 30) {
-            return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
+        // 1. Check strict data volume requirements (bypassed in DEV mode for testing/screenshots)
+        if (!isDev) {
+            if (targetScope === 'weekly' && entryCount < 7) {
+                return { allowed: false, reason: `Need ${7 - entryCount} more entries`, progress: (entryCount / 7) * 100 };
+            }
+            if ((targetScope === 'monthly' || targetScope === 'all-time') && entryCount < 30) {
+                return { allowed: false, reason: `Need ${30 - entryCount} more entries`, progress: (entryCount / 30) * 100 };
+            }
         }
 
         // 2. Check cost-shield rate limits
