@@ -292,7 +292,7 @@ isOpen, onClose, entries }: WizardProps) {
                             {step === 'analyzing' && (
                                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
                                     <div className="relative"><div className="animate-spin rounded-full h-16 w-16 border-b-2 border-fuchsia-600"></div>{scope === 'all-time' && <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-fuchsia-600">{deepProgress}%</div>}</div>
-                                    <h4 className="text-lg font-bold text-gray-900">{scope === 'all-time' ? 'Processing Vault...' : 'Consulting the Compass...'}</h4>
+                                    <h4 className="text-lg font-bold text-gray-900">{scope === 'all-time' ? 'Analyzing Journal History...' : 'Consulting the Compass...'}</h4>
                                 </div>
                             )}
 

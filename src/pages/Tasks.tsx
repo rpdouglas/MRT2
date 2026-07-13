@@ -271,7 +271,7 @@ export default function Tasks() {
         <div className={`min-h-screen flex flex-col bg-gray-50 pb-20`}>
             <div className="flex-shrink-0 z-10">
                 <VibrantHeader 
-                    title="Tasks" 
+                    title="My Tasks" 
                     subtitle="Daily Actions & Goals" 
                     icon={ClipboardDocumentListIcon}
                     fromColor={THEME.tasks.header.from}

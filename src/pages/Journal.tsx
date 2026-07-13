@@ -38,7 +38,7 @@ export default function Journal() {
       {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
         <VibrantHeader 
-            title="Journal"
+            title="My Journal"
             subtitle="Capture your thoughts."
             icon={BookOpenIcon}
             fromColor={THEME.journal.header.from}

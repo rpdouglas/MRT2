@@ -169,7 +169,7 @@ export default function InsightsLog() {
     return (
         <div className={`pb-24 relative min-h-screen ${THEME.insights.page}`}>
             <VibrantHeader 
-                title="Insights" 
+                title="My Insights" 
                 subtitle="Daily analysis and coaching history." 
                 icon={LightBulbIcon} 
                 fromColor={THEME.insights.header.from} 

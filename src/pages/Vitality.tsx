@@ -18,7 +18,7 @@ export default function Vitality() {
 
             <div className="flex-shrink-0 z-10">
                 <VibrantHeader
-                    title="Vitality & Health"
+                    title="My Vitality"
                     subtitle={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                     icon={HeartIcon}
                     fromColor={THEME.vitality.header.from}

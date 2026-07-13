@@ -23,7 +23,7 @@ export default defineConfig({
         text: 'Core Features',
         items: [
           { text: 'The Horizon (Dashboard)', link: '/guide/02-dashboard' },
-          { text: 'The Vault (Journal & AI)', link: '/guide/03-journal-and-ai' },
+          { text: 'My Journal (Journal & AI)', link: '/guide/03-journal-and-ai' },
           { text: 'The Ledger (Tasks)', link: '/guide/04-tasks-habits' },
           { text: 'The Pulse (Vitality)', link: '/guide/05-vitality' },
           { text: 'The Compass (Workbooks)', link: '/guide/06-workbooks' },

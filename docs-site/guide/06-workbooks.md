@@ -1,8 +1,8 @@
-# 🧭 The Library & The Compass
+# 🧭 My Workbooks & The Compass
 
 The Workbooks module is your centralized hub for structured, deep-dive recovery literature (like the 12-Steps, Recovery Dharma, and Women for Recovery). **All answers are Zero-Knowledge Encrypted.**
 
-## The Library Hub
+## The Workbooks Hub
 When you open the Workbooks page, you will see two tabs:
 * **Workbooks:** Interactive step-work, cognitive behavioral therapy (CBT) exercises, and specialty paths.
 * **Literature:** A fellowship resources directory with direct links to official websites and core literature for AA, NA, SMART Recovery, Recovery Dharma, and other programs.
