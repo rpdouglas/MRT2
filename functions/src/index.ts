@@ -638,7 +638,7 @@ function getModelForType(analysisType: string): string {
         case "audio_analysis":
             return "gemini-2.5-flash-lite";
         default:
-            return "gemini-3.1-pro-preview";
+            return "gemini-2.5-pro";
     }
 }
 

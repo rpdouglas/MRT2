@@ -170,12 +170,12 @@ isOpen, onClose, entries }: WizardProps) {
             const currentTxt = formatSet(currentSet);
             const prevTxt = formatSet(previousSet);
 
-            if (!currentTxt) { alert("Not enough journal data for this period."); setStep('select'); return; }
+            if (!currentTxt) { toast.error("Not enough journal data for this period."); setStep('select'); return; }
 
             const analysis = await generateComparativeAnalysis(currentTxt, prevTxt, scope);
             setStandardResult(analysis);
             setStep('results');
-        } catch (error) { console.error(error); alert("Analysis failed."); setStep('select'); }
+        } catch (error) { console.error(error); toast.error("Analysis failed."); setStep('select'); }
     };
 
     const handleStartAnalysis = async () => {
