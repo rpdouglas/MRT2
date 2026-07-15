@@ -86,7 +86,7 @@ isOpen, onClose, entries }: WizardProps) {
 
     const { user, userTier } = useAuth();
     const { addTask } = useTaskOperations();
-    const { checkEligibility: checkRateLimit, stampUsage, loadingLimits } = useRateLimits();
+    const { checkEligibility: checkRateLimit, loadingLimits } = useRateLimits();
     const saveInsightMutation = useFirestoreMutation<InsightPayload>(['insights', user?.uid], {
         mutationFn: (uid, payload) => saveInsight(uid, payload),
     });
@@ -144,7 +144,6 @@ isOpen, onClose, entries }: WizardProps) {
     const runStandardAnalysis = async () => {
         setStep('analyzing');
         setAddedActions(new Set());
-        await stampUsage(scope);
         
         try {
             const now = new Date();
@@ -186,7 +185,6 @@ isOpen, onClose, entries }: WizardProps) {
         if (scope === 'all-time') {
             setStep('analyzing');
             setAddedActions(new Set());
-            await stampUsage('all-time');
             runDeepAnalysis().then(() => setStep('results'));
         } else {
             runStandardAnalysis();

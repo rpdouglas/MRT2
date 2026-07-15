@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.8.14] - 2026-07-15
+### 🛠️ Secure AI Insights Cloud Functions Alignment (Internal)
+- **Security & Reliability [PROJ-54]:** Removed the client-side `VITE_GEMINI_API_KEY` presence check, enabling the PWA client to securely invoke the Firebase Cloud Function proxy directly without exposing secrets. Added `VITE_USE_MOCK_AI` environment variable configuration for local development/offline fallbacks.
+- **Data Schemas [PROJ-54]:** Aligned the Cloud Function prompt structure for workbook reviews to output the expected `pillars` (understanding, emotional_resonance, blind_spots) and `suggested_actions` fields, resolving a critical JSON schema mismatch that was crashing the Workbook details page.
+- **Rate Limiting [PROJ-54]:** Purged redundant client-side `stampUsage` writes from the Journal Analysis wizard to prevent free users from being locked out if an AI call fails, and corrected the ROSC assessment rate limiting on the server to check and update `lastROSCAssessment` instead of `lastDeepDive`.
+
 ## [v1.8.13] - 2026-07-12
 ### 🛠️ Automated Mobile Screenshot Generator (Internal)
 - **Developer Experience [PROJ-63]:** Implemented a zero-manual-effort Playwright automation script (`npm run screenshots:generate`) to capture key app pages in mobile view. Bypassed Firebase Auth and the ZK encryption boundary client-side using type-safe mock personas (Ned, Maya, David, Walt) and duck-typed offline stores. Added WebP asset optimization and output direct to docs-site.

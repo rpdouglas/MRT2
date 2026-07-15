@@ -654,9 +654,15 @@ ${qaString}`,
                 systemPrompt: `You are a supportive recovery companion. Review this completed workbook session.
 Return a JSON object with this EXACT structure:
 {
+  "scope_context": "${payload.workbookTitle} Analysis",
   "summary": "Compassionate overview of their answers...",
-  "key_learnings": ["Learning 1", "Learning 2"],
-  "coaching_question": "One reflective open-ended follow-up question (max 20 words)"
+  "pillars": {
+    "understanding": "Analysis of their comprehension of the material...",
+    "emotional_resonance": "Emotional strengths or breakthroughs noted in their responses...",
+    "blind_spots": "Potential areas of avoidance, rationalization, or struggle..."
+  },
+  "suggested_actions": ["Action Step 1", "Action Step 2", "Action Step 3"],
+  "action_contexts": ["Context for Action 1", "Context for Action 2", "Context for Action 3"]
 }`,
             };
         }
@@ -750,10 +756,19 @@ exports.generateAIInsights = (0, https_1.onCall)({
     if (userTier === "free") {
         const limits = userData.usage_limits || {};
         const now = new Date();
-        if (analysisType === "deep_pattern_analysis" || analysisType === "rosc_assessment") {
+        if (analysisType === "deep_pattern_analysis") {
             const lastDeepDive = limits.lastDeepDive ? limits.lastDeepDive.toDate() : null;
             if (lastDeepDive) {
                 const diff = getDaysDiff(now, lastDeepDive);
+                if (diff < 30) {
+                    throw new https_1.HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
+                }
+            }
+        }
+        else if (analysisType === "rosc_assessment") {
+            const lastROSCAssessment = limits.lastROSCAssessment ? limits.lastROSCAssessment.toDate() : null;
+            if (lastROSCAssessment) {
+                const diff = getDaysDiff(now, lastROSCAssessment);
                 if (diff < 30) {
                     throw new https_1.HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
                 }
@@ -821,7 +836,9 @@ exports.generateAIInsights = (0, https_1.onCall)({
                     ? "lastMonthlyInsight"
                     : (analysisType === "comparative_analysis" && dataPayload.scope === "weekly")
                         ? "lastWeeklyInsight"
-                        : null;
+                        : analysisType === "rosc_assessment"
+                            ? "lastROSCAssessment"
+                            : null;
             if (stampField) {
                 await db.collection("users").doc(uid).update({
                     [`usage_limits.${stampField}`]: firestore_1.FieldValue.serverTimestamp(),

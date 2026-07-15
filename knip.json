@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/main.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/test/setup.ts",
+    "src/**/*.test.{ts,tsx}",
+    "src/__tests__/**/*.{ts,tsx}"
+  ],
+  "ignoreDependencies": [
+    "@tailwindcss/typography",
+    "autoprefixer",
+    "postcss",
+    "vite-plugin-pwa"
+  ],
+  "ignoreBinaries": ["npm", "node", "python"],
+  "ignoreWorkspaces": ["functions"]
+}

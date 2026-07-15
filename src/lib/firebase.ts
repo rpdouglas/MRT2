@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // 1. Construct config directly from individual environment variables
@@ -30,6 +30,5 @@ export const db = app
       })
     })
   : undefined;
-export const googleProvider = new GoogleAuthProvider();
 
 export default app;

@@ -14,7 +14,7 @@ function getFunctionsInstance() {
         if (!app) {
             throw new Error("Firebase app is not initialized");
         }
-        functionsInstance = getFunctions(app);
+        functionsInstance = getFunctions(app, 'northamerica-northeast1');
     }
     return functionsInstance;
 }
@@ -164,8 +164,7 @@ function getMockAIResponse(analysisType: string): string {
 
 // --- Helper calling the Firebase HTTPS Callable Function Proxy ---
 async function callAIProxy(analysisType: string, dataPayload: unknown): Promise<string> {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (!apiKey || apiKey === 'placeholder_replace_me' || apiKey === 'placeholder') {
+    if (import.meta.env.VITE_USE_MOCK_AI === 'true') {
         return getMockAIResponse(analysisType);
     }
 
@@ -213,12 +212,7 @@ export async function generateComparativeAnalysis(
     return JSON.parse(cleanJSON(text)) as ComparativeAnalysisResult;
 }
 
-export async function generateJournalAnalysis(content: string): Promise<AIAnalysisResult> {
-    const text = await callAIProxy('journal_analysis', { content });
-    return JSON.parse(cleanJSON(text)) as AIAnalysisResult;
-}
-
-export async function analyzeFullWorkbook(
+async function analyzeFullWorkbook(
     workbookTitle: string, 
     qaPairs: { question: string; answer: string }[]
 ): Promise<WorkbookAnalysisResult> {

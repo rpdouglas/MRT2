@@ -1,22 +1,7 @@
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, query, where, orderBy, Timestamp, type Firestore, type QueryDocumentSnapshot, type DocumentData, type WithFieldValue } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, query, where, orderBy, Timestamp, type Firestore } from "firebase/firestore";
 import { db } from "./firebase";
 import type { User } from "firebase/auth";
 import type { RecurrenceConfig } from "./dateUtils";
-
-export const createConverter = <T extends object>() => ({ toFirestore(data: WithFieldValue<T>): DocumentData { return data; },
-  fromFirestore(snapshot: QueryDocumentSnapshot): T {
-    const data = snapshot.data();
-    const converted = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => {
-        if (value instanceof Timestamp) {
-          return [key, value.toDate()];
-        }
-        return [key, value];
-      })
-    );
-    return { id: snapshot.id, ...converted } as T;
-  },
-});
 
 export type HeroColorKey = 'amber' | 'sky' | 'emerald' | 'violet' | 'rose';
 
@@ -185,15 +170,6 @@ export async function updateProfileData(uid: string, data: Partial<UserProfile>)
   await setDoc(userRef, { ...data }, { merge: true });
 }
 
-export async function updateSobrietyDate(uid: string, date: Date) {
-  if (!db) throw new Error("Database not initialized");
-  const database: Firestore = db;
-  
-  const userRef = doc(database, "users", uid);
-  await updateDoc(userRef, {
-    sobrietyDate: Timestamp.fromDate(date)
-  });
-}
 
 export async function getUserTemplates(uid: string): Promise<JournalTemplate[]> {
   if (!db) throw new Error("Database not initialized");
