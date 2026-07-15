@@ -765,9 +765,15 @@ ${qaString}`,
                 systemPrompt: `You are a supportive recovery companion. Review this completed workbook session.
 Return a JSON object with this EXACT structure:
 {
+  "scope_context": "${payload.workbookTitle} Analysis",
   "summary": "Compassionate overview of their answers...",
-  "key_learnings": ["Learning 1", "Learning 2"],
-  "coaching_question": "One reflective open-ended follow-up question (max 20 words)"
+  "pillars": {
+    "understanding": "Analysis of their comprehension of the material...",
+    "emotional_resonance": "Emotional strengths or breakthroughs noted in their responses...",
+    "blind_spots": "Potential areas of avoidance, rationalization, or struggle..."
+  },
+  "suggested_actions": ["Action Step 1", "Action Step 2", "Action Step 3"],
+  "action_contexts": ["Context for Action 1", "Context for Action 2", "Context for Action 3"]
 }`,
             };
         }
@@ -872,10 +878,18 @@ export const generateAIInsights = onCall({
         const limits = userData.usage_limits || {};
         const now = new Date();
 
-        if (analysisType === "deep_pattern_analysis" || analysisType === "rosc_assessment") {
+        if (analysisType === "deep_pattern_analysis") {
             const lastDeepDive = limits.lastDeepDive ? (limits.lastDeepDive as Timestamp).toDate() : null;
             if (lastDeepDive) {
                 const diff = getDaysDiff(now, lastDeepDive);
+                if (diff < 30) {
+                    throw new HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
+                }
+            }
+        } else if (analysisType === "rosc_assessment") {
+            const lastROSCAssessment = limits.lastROSCAssessment ? (limits.lastROSCAssessment as Timestamp).toDate() : null;
+            if (lastROSCAssessment) {
+                const diff = getDaysDiff(now, lastROSCAssessment);
                 if (diff < 30) {
                     throw new HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
                 }
@@ -951,6 +965,8 @@ export const generateAIInsights = onCall({
                     ? "lastMonthlyInsight"
                     : (analysisType === "comparative_analysis" && (dataPayload as ComparativePayload).scope === "weekly")
                     ? "lastWeeklyInsight"
+                    : analysisType === "rosc_assessment"
+                    ? "lastROSCAssessment"
                     : null;
 
             if (stampField) {

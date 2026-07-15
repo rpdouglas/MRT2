@@ -7,11 +7,11 @@
 ## 1. The Privacy Boundary
 **Rule:** AI analysis is strictly "Opt-In" and "Stateless".
 * Data is decrypted **in-browser**.
-* The plain text is sent to the Gemini API via a secure HTTPS request.
+* The plain text is sent to the Gemini API proxy via a secure Firebase Cloud Function (`generateAIInsights`).
 * Gemini processes the data, returns the payload, and discards the prompt. User data is **never** stored by Google to train public models.
 
 ## 2. The Cascade & Model Optimization Engine
-**Location:** `src/lib/gemini.ts`
+**Location:** Client-side proxy requests originate from `src/lib/gemini.ts` and run securely server-side inside `functions/src/index.ts`.
 To balance speed, cost, and advanced reasoning, MRT maps specific tasks to optimal models:
 
 * **The Heavy Lifter (gemini-3.1-pro-preview):** Used exclusively for high-context, deep-reasoning tasks. 

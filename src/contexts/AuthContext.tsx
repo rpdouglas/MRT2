@@ -81,8 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (currentUser) {
           const profile = await getOrCreateUserProfile(currentUser);
+          const idTokenResult = await currentUser.getIdTokenResult();
+          const isAdminUser = !!idTokenResult.claims.admin || profile.role === 'admin';
+
           setUser(currentUser);
-          setIsAdmin(profile.role === 'admin' || currentUser.email === 'rpdouglas@gmail.com');
+          setIsAdmin(isAdminUser);
           posthog.identify(currentUser.uid, { tier: profile.tier || 'free' });
           refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
           if (!unsubscribeForegroundMessages) {
