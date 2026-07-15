@@ -542,7 +542,7 @@ function getModelForType(analysisType) {
         case "audio_analysis":
             return "gemini-2.5-flash-lite";
         default:
-            return "gemini-3.1-pro-preview";
+            return "gemini-2.5-pro";
     }
 }
 function getPromptForType(analysisType, dataPayload) {
