@@ -199,9 +199,9 @@ Follow the existing pattern in `useDeepPatternAnalysis`. Fetch the last 30 journ
 `[${format(entry.createdAt, 'MMM dd')}] Mood: ${entry.moodScore}/10 | Tags: ${entry.tags.join(', ')} | Entry: ${decryptedContent}`
 ```
 
-**The Gemini Prompt — Model: `gemini-3.1-pro-preview`**
+**The Gemini Prompt — Model: `gemini-2.5-flash`**
 
-The ROSC analysis requires high-context reasoning (reading 30 journal entries and cross-referencing against domain criteria). Use `gemini-3.1-pro-preview` via `generateWithCascade()` with the pro model as the primary.
+The ROSC analysis requires high-context reasoning (reading 30 journal entries and cross-referencing against domain criteria). The model is resolved server-side by `getModelForType("rosc_assessment")` in `functions/src/index.ts`, currently `gemini-2.5-flash`.
 
 ```
 You are an expert in Recovery Capital assessment, grounded in SAMHSA's four recovery dimensions.
@@ -449,7 +449,7 @@ expect(data?.encryptedAIContext).not.toContain('evidence');
 - [ ] `users/{uid}/rosc_assessments` Firestore security rule added and deployed
 - [ ] `lastROSCAssessment` added to `usage_limits` in `UserProfile` without breaking existing rate limit checks
 - [ ] `rosc_assessments` added to `executePinRotation` sweep in `rotation.ts`
-- [ ] `generateROSCAnalysis()` in `gemini.ts` — model `gemini-3.1-pro-preview`, AI usage logged, sanitisation constraints enforced
+- [ ] `generateROSCAnalysis()` in `gemini.ts` — proxies to `generateAIInsights`, server-side model `gemini-2.5-flash`, AI usage logged, sanitisation constraints enforced
 - [ ] ZK boundary confirmed: `scores.*score` readable in raw Firestore doc; `encryptedAIContext` is ciphertext
 - [ ] `ROSCCheckIn.tsx` — 5 questions, strength-based language, no shame framing, 60-90 second flow
 - [ ] `ROSCRadarChart.tsx` — Recharts radar, animated on mount, dual-overlay for longitudinal comparison

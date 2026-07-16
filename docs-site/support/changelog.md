@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.15] - 2026-07-16
+### 🛠️ AI Insights Reliability Hotfix (Internal)
+- **Reliability [PROJ-54]:** Fixed the Journal Analysis Wizard's "Consulting the Compass" flow hanging indefinitely on failure. `generateAIInsights` was defaulting Deep Pattern, Comparative, System Health, Workbook, and ROSC analyses to a Gemini model with zero free-tier quota, causing every call to fail instantly with a 429; the client's native `alert()` calls in the same error path could then get suppressed in installed-PWA contexts, leaving the spinner stuck even after the server had already responded. Switched the default model to `gemini-2.5-flash` and replaced `alert()` with `toast.error()` for reliable error surfacing.
+
 ## [v1.8.14] - 2026-07-15
 ### 🛠️ Secure AI Insights Cloud Functions Alignment (Internal)
 - **Security & Reliability [PROJ-54]:** Removed the client-side `VITE_GEMINI_API_KEY` presence check, enabling the PWA client to securely invoke the Firebase Cloud Function proxy directly without exposing secrets. Added `VITE_USE_MOCK_AI` environment variable configuration for local development/offline fallbacks.
