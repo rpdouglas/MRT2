@@ -152,10 +152,10 @@ export default function WorkbookSession() {
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full flex-1 flex flex-col min-h-0">
                     
                     {/* QUESTION / CONTENT (Shrink-0 protects it from the keyboard) */}
-                    <div className="prose prose-slate prose-base sm:prose-lg max-w-none mb-4 shrink-0">
+                    <div className="prose prose-slate prose-lg sm:prose-xl max-w-none mb-4 shrink-0">
                         {isIntroSlide ? (
                            <div className="text-center py-6 sm:py-10">
-                               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4 sm:mb-6">{section.title}</h1>
+                               <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4 sm:mb-6">{section.title}</h1>
                                <div className="whitespace-pre-wrap text-gray-600 leading-loose mb-8 sm:mb-10 text-left sm:text-center px-2">{currentQuestion.text}</div>
                                <button 
                                    onClick={handleNext}
@@ -166,9 +166,9 @@ export default function WorkbookSession() {
                            </div>
                         ) : (
                            <div className="animate-fadeIn">
-                               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">{currentQuestion.text}</h3>
+                               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 leading-snug">{currentQuestion.text}</h3>
                                {currentQuestion.context && (
-                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-sm sm:text-base">
+                                   <blockquote className="not-italic bg-blue-50 border-l-4 border-blue-500 py-2 px-4 text-blue-900 rounded-r-lg text-base sm:text-lg">
                                        <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5 inline mr-2 text-blue-500" />
                                        {currentQuestion.context}
                                    </blockquote>
@@ -225,7 +225,7 @@ export default function WorkbookSession() {
                                 value={currentAnswer}
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                                 placeholder="Reflect here..."
-                                className="w-full flex-1 min-h-[150px] p-4 sm:p-6 rounded-b-xl border-2 border-gray-100 bg-white text-base sm:text-lg leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                className="w-full flex-1 min-h-[150px] p-4 sm:p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg sm:text-xl leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
                                 autoFocus
                             />
                             

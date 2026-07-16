@@ -86,12 +86,12 @@ export default function Workbooks() {
                               </div>
                               <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between mb-1">
-                                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
                                           {workbook.title}
                                       </h3>
                                       <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                                   </div>
-                                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                  <p className="text-base text-gray-600 mb-3 line-clamp-2">
                                       {workbook.description}
                                   </p>
                                   <div className="flex items-center gap-3">

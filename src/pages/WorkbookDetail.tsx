@@ -156,7 +156,7 @@ export default function WorkbookDetail() {
 
       {/* 2. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-24">
-          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-emerald-100 text-sm text-emerald-900 mb-6">
+          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-emerald-100 text-base text-emerald-900 mb-6">
               {workbook.description}
           </div>
 
@@ -170,11 +170,11 @@ export default function WorkbookDetail() {
                   <div key={section.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-300 transition-all group">
                       <div className="flex items-center justify-between">
                           <div className="flex-1">
-                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                   {section.title}
                                   {isComplete && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
                              </h3>
-                              <p className="text-sm text-gray-500 line-clamp-1">{section.description}</p>
+                              <p className="text-base text-gray-500 line-clamp-1">{section.description}</p>
                               
                              <div className="mt-3 w-full max-w-xs bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                   <div className={`h-full transition-all ${isComplete ? 'bg-emerald-500' : 'bg-blue-600'}`} style={{ width: `${progressPercent}%` }} />
