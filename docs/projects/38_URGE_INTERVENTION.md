@@ -67,6 +67,8 @@ export interface UrgeEvent {
   reflection?: string; // encrypted blob
 }
 
+**Implementation note (added 2026-07-16 governance audit):** When this collection is built, add an owner-scoped `firestore.rules` entry in the same PR that ships the first write path (matching the `journals`/`tasks` pattern: `allow create: if isCreatingOwnedResource(); allow read, update, delete: if isResourceOwner();`) — do not defer it to a follow-up.
+
 Type Location
 src/lib/types/urge.ts
 

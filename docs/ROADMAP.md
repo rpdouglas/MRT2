@@ -7,8 +7,7 @@
 
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 3-column Quick Action Bar replacing the static daily pledge. |
-| ⚪ Planned | `NEW` | **Changelog Beacon** | All | Keep users informed of rapid updates without modal fatigue. |
+| ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 2-column Quick Action Bar replacing the static daily pledge. |
 | ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
 
 ## 🌊 Wave 2: Retention & Community (Weeks 7–16)
@@ -56,11 +55,12 @@
 * `PROJ-48` User Guide Synchronization Sprint (Daily Readings page, Dynamic Anchor, Voice-to-Vault, Recurrence Table, Smart Reset expansion)
 * `PROJ-46` The Ledger — Frictionless Task Module Upgrade (Swipe Gestures, Quick Capture, Rhythm Score, AI Context Cards)
 * `PROJ-42` Daily Readings Engine (Multi-Modality Content)
-* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget)
+* `PROJ-41` The Dynamic Anchor (Circadian Companion Widget) — ships as a 2-card Check-In/Reading bar; the spec'd 3rd "Intent" card was descoped and its dead code removed, see docs/projects/41_DYNAMIC_ANCHOR.md §6.
 * `PROJ-40` Test Suite Audit (Vitest Pipeline Overhaul)
 * `PROJ-39` Deferred Vault Lock (Frictionless Onboarding)
 * `PROJ-31` Crypto Chunking Pipeline (Zero-Knowledge Scaling)
 * `PROJ-26` The Beacon (Push Notification Engine) — server-scheduled Web Push (FCM) for sobriety milestones and overdue-habit reminders; spec backfilled 2026-07-09 as part of the notification-system remediation.
+* `PROJ-17` Changelog Beacon (Dashboard toast comparing a build hash against what the user last saw) — shipped 2026-03-17 but had been silently non-functional since 2026-02-17 due to an unwired build-manifest generator; found and fixed 2026-07-16 as part of a governance audit, spec backfilled at the same time — see `docs/projects/17_CHANGELOG_BEACON.md`.
 * `PROJ-19` The Landing Page (Vibrant Momentum & Persona Showcase)
 * `PROJ-24` The Asset Engine (Strict-Typed Image Dictionary)
 * `PROJ-18` Command Center (AI Telemetry Dashboard & SRE Rate Limiting)
