@@ -1,3 +1,5 @@
+> Parked — tracked in [`docs/BACKLOG.md`](../../BACKLOG.md) (Parked / Unscheduled) as of 2026-07-16. The Playwright E2E golden-path suite scoped here has not been built; PROJ-40 covered unit-test coverage only.
+
 # 📁 Project 23: The QA Sentinel
 
 **Status:** ⚪ Planned

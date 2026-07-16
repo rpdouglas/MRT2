@@ -32,3 +32,4 @@
 ## 🅿️ Parked / Unscheduled (Have specs, not on the Roadmap)
 * **PROJ-38 — The Urge Intervention System ("The Lifeline Protocol").** Full spec exists at `docs/projects/38_URGE_INTERVENTION.md`. Status: ⚪ Planned, not yet scheduled into a Wave.
 * **PROJ-45 — Adaptive Persona UI Engine.** Full spec exists at `docs/projects/45_ADAPTIVE_PERSONA_UI.md`. Status: ⚪ Planned — PARKED, explicitly not in active sprint pending the Open Questions in the spec's §6.
+* **PROJ-23 — The QA Sentinel (Playwright E2E pipeline).** Full spec exists at `docs/projects/archive/23_QA_SENTINEL.md`. Status: ⚪ Planned — not yet built; PROJ-40 backfilled unit-test coverage only, so the E2E golden-path suite this spec scopes remains an open gap. Surfaced during the 2026-07-16 governance audit (previously an orphan spec referenced nowhere).

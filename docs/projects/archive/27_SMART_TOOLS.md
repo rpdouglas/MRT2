@@ -1,3 +1,5 @@
+> Extended by PROJ-50 (Guided CBT/REBT Interactive Workflows) — see [`../50_GUIDED_CBT.md`](../50_GUIDED_CBT.md). This spec remains the as-built baseline PROJ-50 built on top of.
+
 # 📁 Project 27: The CBT Engine (SMART Tools)
 
 **Status:** ✅ Completed (2026-04-01)
