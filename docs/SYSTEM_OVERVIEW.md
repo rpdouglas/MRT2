@@ -90,18 +90,18 @@ graph TD
 ---
 
 ## 4. AI Isolation & Integration Boundary
-MRT integrates Google Gemini (models 3.1 Pro and 2.5 Flash) via Cloud Functions and client-side SDK requests, respecting the Zero-Knowledge boundary.
+MRT integrates Google Gemini (2.5 Flash and 2.5 Flash-Lite) via a Cloud Function proxy, respecting the Zero-Knowledge boundary.
 
 ### Stateless Processing
 *   No training is performed on MRT user data. Prompts are treated statelessly.
 *   Plaintext is decrypted *only* in-browser, sent directly to Gemini via secure HTTPS, and the response is handled immediately.
 
-### Model Cascade Engine (`src/lib/gemini.ts`)
-MRT selects models dynamically based on task complexity, cost, and context limits:
-1.  **gemini-3.1-pro-preview (Deep Reasoning):** Reserved for high-context tasks: `generateDeepPatternAnalysis` (90-day journal reviews), `generateComparativeAnalysis`, `analyzeFullWorkbook`, and `analyzeSystemHealth`.
-2.  **gemini-2.5-flash-lite (Cost-Effective Speed):** Low-complexity, rapid feedback: `getGeminiCoaching` (instant coaching) and `generateJournalAnalysis` (sentiment scores and tag extraction).
-3.  **gemini-2.5-flash (Multimodal):** Standard model reserved for `generateAudioAnalysis` (Voice-to-Vault) voice transcription.
-4.  **Fallback Path:** If rate limits occur, the API falls back sequentially through: `['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']`.
+### Model Selection (`getModelForType()` in `functions/src/index.ts`)
+The `generateAIInsights` Cloud Function resolves a model server-side based on `analysisType`:
+1.  **gemini-2.5-flash (Deep Reasoning default):** Used for high-context tasks: `deep_pattern_analysis` (90-day journal reviews), `comparative_analysis`, `system_health_analysis`, `workbook_analysis`, and `rosc_assessment`.
+2.  **gemini-2.5-flash-lite (Cost-Effective Speed):** Low-complexity, rapid feedback: `journal_analysis`, `workbook_coach`, `cbt_coaching_prompt`, `cba_reflection`, and `audio_analysis`.
+
+There is no client-side model cascade or fallback path — model selection is a single server-side switch, and the client (`src/lib/gemini.ts`) only calls the `generateAIInsights` proxy.
 
 ### Strict JSON Structure enforcement
 *   Prompts append: `Return ONLY raw JSON. No Markdown.`

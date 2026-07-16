@@ -1,7 +1,7 @@
 # 🧠 Feature Spec: AI Integration & Intelligence Layer
 
 **Status:** Live (v4.5)
-**Stack:** Google Gemini 3.1 & 2.5
+**Stack:** Google Gemini 2.5
 **Context:** The architecture governing how MRT generates coaching, pattern recognition, and system health checks without compromising zero-knowledge security.
 
 ## 1. The Privacy Boundary
@@ -10,17 +10,15 @@
 * The plain text is sent to the Gemini API proxy via a secure Firebase Cloud Function (`generateAIInsights`).
 * Gemini processes the data, returns the payload, and discards the prompt. User data is **never** stored by Google to train public models.
 
-## 2. The Cascade & Model Optimization Engine
-**Location:** Client-side proxy requests originate from `src/lib/gemini.ts` and run securely server-side inside `functions/src/index.ts`.
-To balance speed, cost, and advanced reasoning, MRT maps specific tasks to optimal models:
+## 2. Model Selection Engine
+**Location:** Client-side proxy requests originate from `src/lib/gemini.ts` and are resolved server-side inside `functions/src/index.ts` via `getModelForType(analysisType)` — a single switch statement, not a cascade or fallback chain.
 
-* **The Heavy Lifter (gemini-3.1-pro-preview):** Used exclusively for high-context, deep-reasoning tasks. 
-    * Functions: `generateDeepPatternAnalysis` (90-day scans), `generateComparativeAnalysis`, `analyzeFullWorkbook`, and `analyzeSystemHealth`.
-* **The Speed Demon (gemini-2.5-flash-lite):** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
-    * Functions: `getGeminiCoaching` (2-sentence feedback) and `generateJournalAnalysis` (Sentiment/Tag extraction).
-* **The Multimodal Anchor (gemini-2.5-flash):** Hardcoded for `generateAudioAnalysis` (Voice-to-Vault) to ensure stable transcription.
+* **gemini-2.5-flash (default):** Used for high-context, deep-reasoning tasks.
+    * Analysis types: `deep_pattern_analysis` (90-day scans), `comparative_analysis`, `system_health_analysis`, `workbook_analysis`, `rosc_assessment`.
+* **gemini-2.5-flash-lite:** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
+    * Analysis types: `journal_analysis`, `workbook_coach`, `cbt_coaching_prompt`, `cba_reflection`, `audio_analysis`.
 
-* **The Fallback Cascade:** If a specific model is not provided or fails due to rate limits, the system falls back through: `['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']`.
+There is no automatic fallback if a model call fails (e.g. quota exhaustion) — the error propagates to the client, which surfaces it via a toast rather than retrying against a different model.
 
 ## 3. Strict JSON Enforcement
 * **Prompting:** Every system prompt explicitly outlines the required JSON schema and includes the directive: `Return ONLY raw JSON. No Markdown.`
