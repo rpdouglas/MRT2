@@ -32,6 +32,9 @@ graph TD
 * **Purpose:** Profile, Auth, & Settings.
 * **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens` (Array), `fcmSwVersion` (Number — SW version stamp for one-time token migration on login), `timezone`, `anchorSettings` (Object), `heroColor` (String, optional — one of `amber`/`sky`/`emerald`/`violet`/`rose`; PROJ-56, **UNENCRYPTED** cosmetic preference, defaults to `amber` when absent), etc.
 * **`usage_limits` (Map, optional):** Rate-limit timestamps for AI features. Fields: `lastWeeklyInsight`, `lastMonthlyInsight`, `lastDeepDive`, `lastROSCAssessment` (all Timestamps, all optional). Premium users bypass all limits.
+* **`pendingRotation` (Map, optional):** `{ salt, verifier }` — marks an in-flight PIN rotation (`src/lib/rotation.ts`) so an interrupted rotation can resume instead of orphaning already-migrated documents. Present only between the start and successful completion of `executePinRotation`.
+* **`pinAttempts` (Map, optional; PROJ-65, server-write-only):** `{ count, lockedUntil?, lastAttemptAt? }` (Timestamps). Rate-limit state for the `verifyVaultPin` Cloud Function — `firestore.rules` denies any client write to this field so the vault-PIN lockout can't be reset or forged client-side.
+* **`usesPepperV2` (Boolean, optional; PROJ-65):** True once this account's vault key derivation has moved from direct PBKDF2 to the peppered scheme (PBKDF2 output combined via HMAC with a rate-limited server-held pepper). Set on new vault creation and on every `executePinRotation` completion — see `docs/projects/65_VAULT_KEY_HARDENING.md`.
 
 ### `journals/{entryId}`
 * **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.

@@ -2,82 +2,82 @@
   "meta": {
     "env": "PRODUCTION",
     "branch": "main",
-    "globalHash": "6ade2d6",
-    "coreHash": "d86f283f",
-    "buildTime": "2026-07-16T02:16:28.104Z"
+    "globalHash": "152c935",
+    "coreHash": "9f321081",
+    "buildTime": "2026-07-17T03:15:56.944Z"
   },
   "pages": {
     "AdminDashboard": {
-      "hash": "4b614f38",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "72c87015",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Dashboard": {
-      "hash": "c2de37b4",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "8ffc1703",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "DebugTools": {
-      "hash": "2a47056f",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "72b8bc64",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "InsightsLog": {
-      "hash": "cf8dc37b",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "449c725d",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Journal": {
-      "hash": "5e5997dc",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "728a1a15",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Links": {
-      "hash": "922808e6",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "dbef5762",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Login": {
-      "hash": "bfa50bf6",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "c736feb7",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "PremiumUpgrade": {
-      "hash": "dae5d654",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "b4fd9d00",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Profile": {
-      "hash": "abddd654",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "f1a562be",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Tasks": {
-      "hash": "15bede7e",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "6956c077",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "ToolHistory": {
-      "hash": "717654e0",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "67898d60",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "ToolsHub": {
-      "hash": "dfd45d52",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "68f6ce51",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "UrgeSurfer": {
-      "hash": "4a745aaf",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "9090d322",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Vitality": {
-      "hash": "ac1974b9",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "0e985943",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Welcome": {
-      "hash": "9b4e2860",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "c39d4393",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "WorkbookDetail": {
-      "hash": "47597787",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "7ca001f3",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "WorkbookSession": {
-      "hash": "9fd9a3ca",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "523ffd4d",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     },
     "Workbooks": {
-      "hash": "7c08ebbc",
-      "lastModified": "2026-07-16T02:16:28.104Z"
+      "hash": "d7e4314d",
+      "lastModified": "2026-07-17T03:15:56.944Z"
     }
   }
 }

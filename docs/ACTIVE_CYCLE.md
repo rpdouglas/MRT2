@@ -7,11 +7,13 @@
 *Issues bypassing the backlog to protect user retention.*
 - [x] **Overdue Task Completion Fix:** Fixed a bug where overdue recurring tasks calculated their next due date relative to their past due date instead of today.
 - [x] **PROJ-26 Hotfix:** FCM SW token migration — fixed notification click-through (absolute URL) and stale token re-registration on SW version bump.
+- [ ] **PROJ-65:** Vault PIN Brute-Force Hardening — a 2026-07-13 commit's message claimed the PIN key-derivation scheme was hardened against brute-force; it wasn't (only telemetry landed, `crypto.ts`'s key derivation is untouched). `/planning` session (2026-07-17) resolved the multi-device objection with a rate-limited server-pepper design (not the originally-proposed IndexedDB Master Key); implemented same day across `functions/src/index.ts`, `crypto.ts`, `rotation.ts`, `EncryptionContext.tsx`, `firestore.rules`. A `zk-audit` pass caught one bug via code review (rotation's new-PIN pepper fetch didn't recognize `pendingRotation.verifier`). Manual end-to-end verification against real local Firebase emulators (new: `firebase.json` emulators block, dev-only emulator wiring in `firebase.ts`/`gemini.ts`/`vaultAuth.ts`) then caught a second, more serious bug code review missed — a Firestore transaction that threw to reject a wrong PIN was also discarding its own attempt-counter write, making the rate limiter a silent no-op. Fixed and re-verified: Subway Test (session-cached offline unlock) and Lost-PIN Test (escalating lockout, pepper never persisted) both pass for real. Remaining before this can be marked resolved: an external security review — see `docs/projects/65_VAULT_KEY_HARDENING.md` §5.
 *(Queue Empty)*
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
-- [⛔ BLOCKED] **PROJ-07:** Play Store TWA (Waiting on DUNS Number for Google Play Developer Account verification).
+- [🟡 Sprint 9.1 ACTIVE] **PROJ-07:** Play Store TWA — Pre-Submission & PWA Optimizations (Sprint 9.1 active for manifest, CSS, and legal/deletion overrides; Sprint 9.2 Bubblewrap compile and submission is blocked waiting on DUNS).
+
 
 ## ⏸️ Paused (Not in this cycle)
 - **PROJ-05:** The Service Network -> Build encrypted Sponsee Rolodex to unblock organic viral growth. Paused per ROADMAP.md (Wave 3) to focus on Wave 1 Onboarding — no code exists yet beyond a Firestore rules stub; `Dashboard.tsx` still shows a "Coming Soon" placeholder. Was previously listed here as an active Priority-2 item, which didn't match its Wave-3/Paused status elsewhere — moved here to keep this file honest about what's actually being worked on.
@@ -25,6 +27,7 @@
 - [x] **Add dead-code tooling:** Installed `knip` dev-only and configured `knip.json`. Executed a live dead-code sweep, deleting 10 unused files and 5 unused package dependencies (removing 109 packages from the node tree). (Source: §6, §7)
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-64:** Gemini AI Proxy & Platform Hardening — Cloud Functions proxy (`generateAIInsights`) removes the client-exposed Gemini API key and moves AI rate-limit enforcement server-side; Firestore now boots with a persistent multi-tab `IndexedDB` cache for offline resilience; `crypto.ts`'s `decrypt()` now reports HMAC/decryption failures to PostHog. Shipped 2026-07-13 (commit `6748388`); spec backfilled 2026-07-16 during a governance audit that also found the shipping commit's message overstated its scope — see `PROJ-65`.
 - [⛔ Abandoned] **React 19 Refactor:** Incremental migration to `useActionState` evaluated and abandoned due to poor ROI on purely client-side SPA forms. See [react19_action_state_assessment.md](file:///home/node/.gemini/antigravity-cli/brain/7fdfa35e-619b-4a30-852b-93e6ba4e406b/react19_action_state_assessment.md).
 - [x] **PROJ-63:** Mobile Screenshot Generator — Implement automated mobile screenshot generator with persona-based mock bypass.
 - [x] **Report archived:** `docs/reports/2026-07_codebase_deep_review.md` → `docs/reports/archive/`. Verified against current code: 26 of 30 findings fixed (Firestore-bypass consolidation, dead-code removal, god-file splits, `any` suppressions, Firestore rules, CI heredoc, debug log, test-coverage backfill). Remaining 5 open items carried forward below (`noUncheckedIndexedAccess`, `syncStripeSubscription` trust-dependency comment, hardcoded admin-email convergence, Cloud Functions lint alignment, bundle/dead-code tooling).

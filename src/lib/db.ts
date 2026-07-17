@@ -57,6 +57,19 @@ export interface UserProfile {
     salt: string;
     verifier: string;
   };
+  // --- NEW: PROJ-65 (Vault PIN Brute-Force Hardening) ---
+  // Server-write-only (see firestore.rules) — tracks failed verifyVaultPin
+  // attempts for per-uid rate limiting. Never written by client code.
+  pinAttempts?: {
+    count: number;
+    lockedUntil?: Timestamp;
+    lastAttemptAt?: Timestamp;
+  };
+  // True once this account's vault key derivation has moved from the direct
+  // PBKDF2 scheme to the peppered scheme (see src/lib/rotation.ts's
+  // executeVaultRekey). Unset/false means the legacy derivation is still
+  // used and a transparent rekey should run on next unlock.
+  usesPepperV2?: boolean;
 }
 
 export interface JournalTemplate {

@@ -8,7 +8,8 @@
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 2-column Quick Action Bar replacing the static daily pledge. |
-| ⛔ **Blocked** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. (Waiting on DUNS). |
+| 🟡 **In Progress** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. Sprint 9.1 code fixes active; Sprint 9.2 packaging blocked on DUNS. |
+| 🟡 In Progress | `PROJ-65` | **Vault PIN Brute-Force Hardening** | All | Rate-limited server-pepper key derivation (multi-device-safe alternative to the originally-proposed IndexedDB Master Key, which was rejected) so a Firestore breach doesn't reduce to a 10,000-combination PIN search. Implemented 2026-07-17; external security review still recommended before final — see `docs/projects/65_VAULT_KEY_HARDENING.md`. |
 
 ## 🌊 Wave 2: Retention & Community (Weeks 7–16)
 *The secondary goal: Keep users past Day 30 through peer support and shame-free resets.*
@@ -37,6 +38,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-64` Gemini AI Proxy & Platform Hardening (Cloud Functions proxy removes the client-exposed Gemini API key, server-side AI rate limiting, Firestore persistent offline cache, PostHog decryption-failure telemetry — shipped 2026-07-13 in commit `6748388`, spec backfilled 2026-07-16 after a governance audit found the shipping commit's message overstated its scope; the key-derivation hardening it also claimed was never actually implemented and is tracked separately as `PROJ-65`.)
 * `PROJ-63` Mobile Screenshot Generator (Implement automated mobile screenshot generator with persona-based mock bypass.)
 * `PROJ-62` Tech Debt Quick Wins — Logging, Rules, Duplicate Reads, `any` Suppressions (Cleared five deep-review quick-win chores: removed a debug console.log, hardened the CI service-account heredoc, tightened ai_logs/client_errors/feedback Firestore rules to uid-match, extracted Tasks.tsx's raw onSnapshot into useTasksList, and fixed the last four any-type suppressions (two of which were masking real latent bugs).)
 * `Maintenance` Journal Sharing Format (Appended `myrecoverytoolkit.ca` to the end of the plaintext journal entry share text and added screen reader accessibility title to the Share button.)

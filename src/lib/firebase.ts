@@ -1,6 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { initializeFirestore, connectFirestoreEmulator, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+
+// Local-only test harness: set VITE_USE_EMULATORS=true (e.g. in a
+// gitignored .env.local) to point the app at `firebase emulators:start`
+// instead of the real mrt2-app-dev project. Never set in committed env
+// files — this must never affect a real deploy.
+const USE_EMULATORS = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true';
 
 // 1. Construct config directly from individual environment variables
 // These will be injected by Vite during the build
@@ -23,12 +29,18 @@ if (!app) {
 }
 
 export const auth = app ? getAuth(app) : undefined;
-export const db = app 
+export const db = app
   ? initializeFirestore(app, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
       })
     })
   : undefined;
+
+if (USE_EMULATORS && auth && db) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  console.warn("[MRT] Using local Firebase emulators (VITE_USE_EMULATORS=true) — not the real mrt2-app-dev project.");
+}
 
 export default app;

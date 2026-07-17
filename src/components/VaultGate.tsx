@@ -3,6 +3,7 @@ import { useEncryption } from '../contexts/EncryptionContext';
 import { LockClosedIcon, KeyIcon, ShieldCheckIcon, ExclamationCircleIcon, ExclamationTriangleIcon, TrashIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { updateProfileData } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
+import { VaultPinLockedError } from '../lib/vaultAuth';
 
 interface VaultGateProps {
   children: React.ReactNode;
@@ -142,10 +143,19 @@ export default function VaultGate({ children }: VaultGateProps) {
     setIsSubmitting(true);
     setError('');
 
-    const success = await unlockVault(pin);
-    
-    if (!success) {
-      setError("Improper PIN. Access Denied.");
+    try {
+      const success = await unlockVault(pin);
+      if (!success) {
+        setError("Improper PIN. Access Denied.");
+        setPin('');
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      if (err instanceof VaultPinLockedError) {
+        setError("Too many attempts. Please wait before trying again.");
+      } else {
+        setError("Couldn't reach the server to unlock. Check your connection and try again.");
+      }
       setPin('');
       setIsSubmitting(false);
     }
