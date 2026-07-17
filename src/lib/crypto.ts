@@ -45,6 +45,69 @@ export async function generateKey(pin: string, saltBase64: string): Promise<Cryp
 }
 
 /**
+ * PROJ-65: Derives the local half of the vault key as raw bits (not a CryptoKey).
+ * This is combined with a server-issued pepper (see deriveVaultKeyWithPepper)
+ * rather than used as the vault key directly, so a Firestore-only breach
+ * (which exposes saltBase64 but never the pepper) can't derive a working key
+ * offline no matter how many PIN guesses are tried.
+ */
+export async function deriveLocalBits(pin: string, saltBase64: string): Promise<ArrayBuffer> {
+  const enc = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    enc.encode(pin),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+
+  const salt = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+
+  return window.crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    KEY_LENGTH
+  );
+}
+
+/**
+ * PROJ-65: Combines the local PIN-derived secret with a server-issued pepper
+ * (fetched via src/lib/vaultAuth.ts's fetchVaultPepper, itself gated by a
+ * rate-limited Cloud Function) to produce the actual vault key. Neither half
+ * is sufficient alone — this is the mechanism that keeps a Firestore-only
+ * breach from reducing to an offline PIN search. Sets the module-level key
+ * used by encrypt()/decrypt(), same as generateKey().
+ */
+export async function deriveVaultKeyWithPepper(localBits: ArrayBuffer, pepperBase64: string): Promise<CryptoKey> {
+  const hmacKey = await window.crypto.subtle.importKey(
+    "raw",
+    localBits,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const pepperBytes = Uint8Array.from(atob(pepperBase64), c => c.charCodeAt(0));
+  const finalBits = await window.crypto.subtle.sign("HMAC", hmacKey, pepperBytes);
+
+  const key = await window.crypto.subtle.importKey(
+    "raw",
+    finalBits,
+    { name: "AES-GCM", length: KEY_LENGTH },
+    false,
+    ["encrypt", "decrypt"]
+  );
+
+  globalKey = key;
+  return key;
+}
+
+/**
  * Computes a secure hash of the PIN + Salt for identity verification.
  * This allows us to validate the PIN before attempting to derive the encryption key.
  * @param pin - The input PIN

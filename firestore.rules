@@ -46,9 +46,12 @@ service cloud.firestore {
       // by syncStripeSubscription (Cloud Function, admin SDK), and role is
       // admin-managed. This prevents client-side self-escalation to Premium
       // or to the admin UI (AuthContext.tsx trusts profile.role === 'admin').
+      // pinAttempts is likewise server-write-only (verifyVaultPin, PROJ-65) —
+      // a client that could reset/forge its own lockout state would defeat
+      // the vault-PIN brute-force rate limiter entirely.
       allow update: if isAdmin() || (
         isOwner(userId) &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'tierSource', 'role'])
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'tierSource', 'role', 'pinAttempts'])
       );
 
       allow delete: if isOwner(userId) || isAdmin();

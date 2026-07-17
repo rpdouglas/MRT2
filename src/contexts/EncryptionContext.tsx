@@ -9,10 +9,12 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
-import { generateSalt, generateKey, computePinHash, encrypt, decrypt, clearKey, isVaultUnlocked as checkLibUnlocked } from '../lib/crypto';
+import { generateSalt, generateKey, computePinHash, encrypt, decrypt, clearKey, isVaultUnlocked as checkLibUnlocked, deriveLocalBits, deriveVaultKeyWithPepper } from '../lib/crypto';
 import { executeCryptoShredding, executePinRotation } from '../lib/rotation';
+import { fetchVaultPepper, VaultPinLockedError } from '../lib/vaultAuth';
 
 const SESSION_PIN_KEY = 'mrt_vault_pin';
+const SESSION_PEPPER_KEY = 'mrt_vault_pepper';
 
 interface EncryptionContextType {
   isVaultSet: boolean;
@@ -49,15 +51,37 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   
   const [salt, setSalt] = useState<string | null>(null);
   const [verifier, setVerifier] = useState<string | null>(null);
+  const [usesPepperV2, setUsesPepperV2] = useState(false);
 
-  const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null): Promise<boolean> => {
+  const performUnlock = useCallback(async (pin: string, currentSalt: string, currentVerifier: string | null, currentUsesPepperV2: boolean): Promise<boolean> => {
       try {
         if (currentVerifier) {
             const checkHash = await computePinHash(pin, currentSalt);
             if (checkHash !== currentVerifier) return false;
-        }
 
-        await generateKey(pin, currentSalt);
+            if (currentUsesPepperV2) {
+                // PROJ-65: derive the vault key from the local PIN-derived secret
+                // combined with a rate-limited server pepper. The pepper is cached
+                // in sessionStorage (same lifetime as the cached PIN) so a tab
+                // reload within the same session stays fully offline-capable —
+                // only the first unlock of a new session needs the network.
+                let pepper = sessionStorage.getItem(SESSION_PEPPER_KEY);
+                if (!pepper) {
+                    pepper = await fetchVaultPepper(checkHash);
+                    sessionStorage.setItem(SESSION_PEPPER_KEY, pepper);
+                }
+                const localBits = await deriveLocalBits(pin, currentSalt);
+                await deriveVaultKeyWithPepper(localBits, pepper);
+            } else {
+                await generateKey(pin, currentSalt);
+            }
+        } else {
+            // No verifier yet — legacy discovery path below always uses the
+            // pre-peppered scheme until a verifier exists; this account gets
+            // upgraded transparently the next time it rotates its PIN (see
+            // executePinRotation).
+            await generateKey(pin, currentSalt);
+        }
 
         if (!currentVerifier && db && user) {
             const q = query(collection(db, 'journals'), where('uid', '==', user.uid), limit(1));
@@ -87,7 +111,11 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         sessionStorage.setItem(SESSION_PIN_KEY, pin);
         return true;
 
-      } catch (error) { console.error("Unlock logic failed", error); return false; }
+      } catch (error) {
+        if (error instanceof VaultPinLockedError) throw error;
+        console.error("Unlock logic failed", error);
+        return false;
+      }
   }, [user]);
 
   useEffect(() => { 
@@ -116,10 +144,19 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
             
             const currentVerifier = data.pinVerifier || null;
             if (currentVerifier) setVerifier(currentVerifier);
+            const currentUsesPepperV2 = !!data.usesPepperV2;
+            setUsesPepperV2(currentUsesPepperV2);
 
             const cachedPin = sessionStorage.getItem(SESSION_PIN_KEY);
             if (cachedPin) {
-                await performUnlock(cachedPin, data.encryptionSalt, currentVerifier);
+                try {
+                  await performUnlock(cachedPin, data.encryptionSalt, currentVerifier, currentUsesPepperV2);
+                } catch (e) {
+                  // Locked out on session resume — fall through to the locked
+                  // screen instead of crashing; the user re-enters their PIN
+                  // and VaultGate surfaces the lockout message.
+                  console.warn("Session resume unlock failed:", e);
+                }
             }
           } else if (data.hasDeferredVault) {
             setIsVaultSet(false);
@@ -143,22 +180,39 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const setupVault = async (pin: string) => {
     if (!user || !db) return;
-    
+
     try {
       setVaultLoading(true);
       const newSalt = generateSalt();
-      await generateKey(pin, newSalt);
       const newVerifier = await computePinHash(pin, newSalt);
-      
+
       const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { 
+      await setDoc(userDocRef, {
           encryptionSalt: newSalt,
           pinVerifier: newVerifier,
           hasDeferredVault: false // Turn off bypass once proper vault is set
       }, { merge: true });
 
+      // PROJ-65: derive the initial vault key via the peppered scheme. If the
+      // server round-trip fails (e.g. offline during setup), fall back to the
+      // legacy direct derivation rather than blocking setup — this account
+      // self-heals to the peppered scheme on its next PIN rotation.
+      let newUsesPepperV2 = false;
+      try {
+        const pepper = await fetchVaultPepper(newVerifier);
+        sessionStorage.setItem(SESSION_PEPPER_KEY, pepper);
+        const localBits = await deriveLocalBits(pin, newSalt);
+        await deriveVaultKeyWithPepper(localBits, pepper);
+        await setDoc(userDocRef, { usesPepperV2: true }, { merge: true });
+        newUsesPepperV2 = true;
+      } catch (pepperError) {
+        console.warn("Vault pepper setup failed, falling back to legacy derivation:", pepperError);
+        await generateKey(pin, newSalt);
+      }
+
       setSalt(newSalt);
       setVerifier(newVerifier);
+      setUsesPepperV2(newUsesPepperV2);
       setIsVaultSet(true);
       setIsVaultUnlocked(true);
       setHasDeferredVault(false);
@@ -174,14 +228,16 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     try {
       setVaultLoading(true);
       await executeCryptoShredding(user.uid);
-      
+
       clearKey();
       sessionStorage.removeItem(SESSION_PIN_KEY);
+      sessionStorage.removeItem(SESSION_PEPPER_KEY);
       setIsVaultSet(false);
       setIsVaultUnlocked(false);
       setHasDeferredVault(false);
       setSalt(null);
       setVerifier(null);
+      setUsesPepperV2(false);
     } catch (error) { console.error("Vault reset failed:", error); throw error; } finally {
       setVaultLoading(false);
     }
@@ -189,22 +245,25 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const changePin = async (oldPin: string, newPin: string, onProgress: (p: number) => void) => {
     if (!user || !salt) throw new Error("Missing auth state");
-    const { newSalt, newVerifier } = await executePinRotation(user.uid, oldPin, newPin, salt, verifier, onProgress);
-    
+    const { newSalt, newVerifier, newPepper } = await executePinRotation(user.uid, oldPin, newPin, salt, verifier, usesPepperV2, onProgress);
+
     setSalt(newSalt);
     setVerifier(newVerifier);
+    setUsesPepperV2(true);
+    sessionStorage.setItem(SESSION_PEPPER_KEY, newPepper);
     setIsVaultUnlocked(true);
     sessionStorage.setItem(SESSION_PIN_KEY, newPin);
   };
 
-  const unlockVault = async (pin: string): Promise<boolean> => { 
-    if (!salt || !user || !db) return false; 
-    return await performUnlock(pin, salt, verifier); 
+  const unlockVault = async (pin: string): Promise<boolean> => {
+    if (!salt || !user || !db) return false;
+    return await performUnlock(pin, salt, verifier, usesPepperV2);
   };
 
-  const lockVault = useCallback(() => { 
-    clearKey(); 
-    sessionStorage.removeItem(SESSION_PIN_KEY); 
+  const lockVault = useCallback(() => {
+    clearKey();
+    sessionStorage.removeItem(SESSION_PIN_KEY);
+    sessionStorage.removeItem(SESSION_PEPPER_KEY);
     setIsVaultUnlocked(false); 
   }, []);
 

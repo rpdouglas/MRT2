@@ -6,9 +6,27 @@
  */
 import { db } from './firebase';
 import { collection, query, where, getDocs, getDoc, setDoc, writeBatch, doc, deleteField, limit, startAfter, type Firestore, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
-import { generateSalt, generateKey, computePinHash, encrypt, decrypt } from './crypto';
+import { generateSalt, generateKey, computePinHash, encrypt, decrypt, deriveLocalBits, deriveVaultKeyWithPepper } from './crypto';
+import { fetchVaultPepper } from './vaultAuth';
 
 const BATCH_SIZE = 50;
+
+/**
+ * PROJ-65: Derives the active vault key for one side (old or new) of a PIN
+ * rotation. Legacy (pre-migration) accounts use the direct PBKDF2 key;
+ * everything rotates onto the peppered scheme going forward — this is how
+ * existing accounts get upgraded, piggybacking on the PIN-rotation flow's
+ * existing blocking/progress-tracked re-encryption pass rather than a
+ * separate background migration (which would race the shared module-level
+ * key against concurrent foreground encrypt/decrypt calls).
+ */
+async function deriveKeyForScheme(pin: string, salt: string, usePepper: boolean, pepper: string | null): Promise<CryptoKey> {
+    if (usePepper && pepper) {
+        const localBits = await deriveLocalBits(pin, salt);
+        return deriveVaultKeyWithPepper(localBits, pepper);
+    }
+    return generateKey(pin, salt);
+}
 
 /**
  * Permanently deletes all encrypted user data and destroys the encryption salt.
@@ -91,7 +109,12 @@ export async function executeCryptoShredding(uid: string) {
 
     // 4. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
-    currentBatch.update(pRef, { encryptionSalt: deleteField(), pinVerifier: deleteField() });
+    currentBatch.update(pRef, {
+        encryptionSalt: deleteField(),
+        pinVerifier: deleteField(),
+        usesPepperV2: deleteField(),
+        pinAttempts: deleteField(),
+    });
     opCount++;
     commitBatch();
 
@@ -107,8 +130,9 @@ export async function executePinRotation(
     newPin: string,
     currentSalt: string,
     currentVerifier: string | null,
+    currentUsesPepperV2: boolean,
     onProgress: (p: number) => void
-): Promise<{ newSalt: string, newVerifier: string }> {
+): Promise<{ newSalt: string, newVerifier: string, newPepper: string }> {
     if (!db) throw new Error("Database not initialized");
     const database = db as Firestore;
 
@@ -119,6 +143,13 @@ export async function executePinRotation(
             throw new Error("INCORRECT_PIN");
         }
     }
+
+    // PROJ-65: fetch the pepper for the OLD key once up front (only needed if
+    // this account is already on the peppered scheme) — legitimate call,
+    // already gated on a locally-verified correct old PIN above.
+    const oldPepper = currentUsesPepperV2 && currentVerifier
+        ? await fetchVaultPepper(currentVerifier)
+        : null;
 
     onProgress(2);
 
@@ -153,6 +184,13 @@ export async function executePinRotation(
         await setDoc(pRef, { pendingRotation: { salt: newSalt, verifier: newVerifier } }, { merge: true });
     }
 
+    // PROJ-65: the new key is always on the peppered scheme — this is how
+    // legacy accounts get upgraded, transparently, the next time they
+    // rotate their PIN. The pepper is deterministic (HMAC of the server
+    // secret over newVerifier), so re-fetching it on a resumed/retried
+    // rotation yields the identical value and stays safe to resume.
+    const newPepper = await fetchVaultPepper(newVerifier);
+
     try {
         // --- PROCESS JOURNALS ---
         let lastJDoc: QueryDocumentSnapshot<DocumentData> | null = null;
@@ -174,12 +212,12 @@ export async function executePinRotation(
                 const data = document.data();
                 if (data.isEncrypted && data.content) {
                     // Decrypt with OLD key
-                    await generateKey(oldPin, currentSalt);
+                    await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
                     const plain = await decrypt(data.content);
                     if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
                         // May already be re-encrypted under the new key from an
                         // interrupted prior attempt — check before failing.
-                        await generateKey(newPin, newSalt);
+                        await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                         const alreadyMigrated = await decrypt(data.content);
                         if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
                             throw new Error("DECRYPTION_FAILED");
@@ -188,7 +226,7 @@ export async function executePinRotation(
                     }
 
                     // Encrypt with NEW key
-                    await generateKey(newPin, newSalt);
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                     const cipher = await encrypt(plain);
                     currentBatch.update(document.ref, { content: cipher });
                 }
@@ -223,12 +261,12 @@ export async function executePinRotation(
                 const data = document.data();
                 if (data.isEncrypted && data.answer) {
                     // Decrypt with OLD key
-                    await generateKey(oldPin, currentSalt);
+                    await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
                     const plain = await decrypt(data.answer);
                     if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
                         // May already be re-encrypted under the new key from an
                         // interrupted prior attempt — check before failing.
-                        await generateKey(newPin, newSalt);
+                        await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                         const alreadyMigrated = await decrypt(data.answer);
                         if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
                             throw new Error("DECRYPTION_FAILED");
@@ -237,7 +275,7 @@ export async function executePinRotation(
                     }
 
                     // Encrypt with NEW key
-                    await generateKey(newPin, newSalt);
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                     const cipher = await encrypt(plain);
                     currentBatch.update(document.ref, { answer: cipher });
                 }
@@ -270,12 +308,12 @@ export async function executePinRotation(
             for (const document of rSnap.docs) {
                 const data = document.data();
                 if (data.encryptedAIContext) {
-                    await generateKey(oldPin, currentSalt);
+                    await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
                     const plain = await decrypt(data.encryptedAIContext);
                     if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
                         // May already be re-encrypted under the new key from an
                         // interrupted prior attempt — check before failing.
-                        await generateKey(newPin, newSalt);
+                        await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                         const alreadyMigrated = await decrypt(data.encryptedAIContext);
                         if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
                             throw new Error("DECRYPTION_FAILED");
@@ -283,7 +321,7 @@ export async function executePinRotation(
                         continue; // already migrated in a previous attempt
                     }
 
-                    await generateKey(newPin, newSalt);
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
                     const cipher = await encrypt(plain);
                     currentBatch.update(document.ref, { encryptedAIContext: cipher });
                 }
@@ -295,15 +333,16 @@ export async function executePinRotation(
 
         // 4. Finalize Profile Updates — clears the pendingRotation marker now
         // that every document has been confirmed migrated to the new key.
-        await generateKey(newPin, newSalt); // Ensure app state rests on the new key
+        await deriveKeyForScheme(newPin, newSalt, true, newPepper); // Ensure app state rests on the new key
         await writeBatch(database).update(pRef, {
             encryptionSalt: newSalt,
             pinVerifier: newVerifier,
             pendingRotation: deleteField(),
+            usesPepperV2: true,
         }).commit();
 
         onProgress(100);
-        return { newSalt, newVerifier };
+        return { newSalt, newVerifier, newPepper };
 
     } catch (error) {
         // Do NOT silently reset the in-memory key to the old PIN here: any

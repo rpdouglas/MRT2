@@ -40,7 +40,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateAIInsights = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.checkBufferHealth = exports.dailyBeacon = void 0;
+exports.verifyVaultPin = exports.generateAIInsights = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.checkBufferHealth = exports.dailyBeacon = void 0;
+exports.computeLockoutSeconds = computeLockoutSeconds;
 exports.getMilestone = getMilestone;
 exports.getMilestoneLabel = getMilestoneLabel;
 exports.computeMilestoneAlert = computeMilestoneAlert;
@@ -52,6 +53,7 @@ const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const logger = __importStar(require("firebase-functions/logger"));
+const crypto = __importStar(require("node:crypto"));
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
@@ -63,6 +65,21 @@ const prompts_1 = require("./prompts");
 const db = (0, firestore_1.getFirestore)();
 const messaging = (0, messaging_1.getMessaging)();
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
+const vaultPepperSecret = (0, params_1.defineSecret)("VAULT_PEPPER");
+// ─── PROJ-65 constants ────────────────────────────────────────────────────────
+// Escalating lockout applied to failed vault-PIN verification attempts.
+// Deliberately gives a few free retries (David persona — crisis-state fat-fingering)
+// before any friction, then escalates fast enough that offline-equivalent guessing
+// across the 10,000-combination PIN space is infeasible within any reasonable window.
+function computeLockoutSeconds(attemptCount) {
+    if (attemptCount >= 12)
+        return 24 * 60 * 60;
+    if (attemptCount >= 8)
+        return 15 * 60;
+    if (attemptCount >= 5)
+        return 60;
+    return null;
+}
 // ─── PROJ-26 constants ────────────────────────────────────────────────────────
 // Override via Firebase Functions env var if using a custom domain.
 const APP_URL = (_a = process.env.APP_URL) !== null && _a !== void 0 ? _a : "https://mrt2-app-prod.web.app";
@@ -850,6 +867,90 @@ exports.generateAIInsights = (0, https_1.onCall)({
     catch (error) {
         logger.error("AI Insight generation failed:", error);
         throw new https_1.HttpsError("internal", error instanceof Error ? error.message : "AI Generation failed.");
+    }
+});
+/**
+ * PROJ-65: Vault PIN Brute-Force Hardening.
+ * Verifies a client-supplied PIN hash (never the raw PIN) against the stored
+ * pinVerifier under a per-uid rate limit, and on success returns
+ * HMAC-SHA256(VAULT_PEPPER, pinHash) — a secret the client combines with its
+ * local PBKDF2 output to derive the actual vault key. The pepper never
+ * touches Firestore, so a Firestore-only breach cannot recover it; it's only
+ * reachable via this authenticated, rate-limited call.
+ */
+exports.verifyVaultPin = (0, https_1.onCall)({
+    secrets: [vaultPepperSecret],
+    region: "northamerica-northeast1",
+}, async (request) => {
+    try {
+        if (!request.auth) {
+            throw new https_1.HttpsError("unauthenticated", "Authentication required.");
+        }
+        const uid = request.auth.uid;
+        const { pinHash } = request.data;
+        if (!pinHash || typeof pinHash !== "string" || !/^[0-9a-f]{64}$/.test(pinHash)) {
+            throw new https_1.HttpsError("invalid-argument", "Missing or malformed pinHash.");
+        }
+        const userRef = db.collection("users").doc(uid);
+        const result = await db.runTransaction(async (tx) => {
+            var _a, _b;
+            const snap = await tx.get(userRef);
+            if (!snap.exists) {
+                return { ok: false, reason: "not-found" };
+            }
+            const data = snap.data() || {};
+            const now = firestore_1.Timestamp.now();
+            const attempts = data.pinAttempts;
+            if ((attempts === null || attempts === void 0 ? void 0 : attempts.lockedUntil) && attempts.lockedUntil.toMillis() > now.toMillis()) {
+                return { ok: false, reason: "locked" };
+            }
+            const storedVerifier = data.pinVerifier;
+            // A rotation-in-progress (src/lib/rotation.ts) needs the pepper for its
+            // NEW verifier before that verifier has been committed to pinVerifier
+            // (it only lives in pendingRotation until the rotation's final,
+            // all-documents-migrated commit). Accepting either the current
+            // verifier or a pending one lets legitimate old-key and new-key
+            // fetches both succeed mid-rotation without changing the resumability
+            // model — pendingRotation is only ever set by a client that already
+            // locally validated the old PIN before starting the rotation, so this
+            // doesn't widen the guessable space.
+            const pendingVerifier = (_a = data.pendingRotation) === null || _a === void 0 ? void 0 : _a.verifier;
+            if (!storedVerifier && !pendingVerifier) {
+                return { ok: false, reason: "not-initialized" };
+            }
+            if (pinHash !== storedVerifier && pinHash !== pendingVerifier) {
+                const newCount = ((_b = attempts === null || attempts === void 0 ? void 0 : attempts.count) !== null && _b !== void 0 ? _b : 0) + 1;
+                const lockoutSeconds = computeLockoutSeconds(newCount);
+                tx.set(userRef, {
+                    pinAttempts: Object.assign({ count: newCount, lastAttemptAt: firestore_1.FieldValue.serverTimestamp() }, (lockoutSeconds
+                        ? { lockedUntil: firestore_1.Timestamp.fromMillis(now.toMillis() + lockoutSeconds * 1000) }
+                        : {})),
+                }, { merge: true });
+                return { ok: false, reason: "wrong-pin" };
+            }
+            // Correct guess — reset the attempt counter.
+            tx.set(userRef, {
+                pinAttempts: { count: 0, lastAttemptAt: firestore_1.FieldValue.serverTimestamp() },
+            }, { merge: true });
+            const pepper = vaultPepperSecret.value();
+            return { ok: true, pepper: crypto.createHmac("sha256", pepper).update(pinHash).digest("base64") };
+        });
+        if (!result.ok) {
+            if (result.reason === "not-found")
+                throw new https_1.HttpsError("not-found", "User profile not found.");
+            if (result.reason === "locked")
+                throw new https_1.HttpsError("resource-exhausted", "Too many attempts. Try again later.");
+            if (result.reason === "not-initialized")
+                throw new https_1.HttpsError("failed-precondition", "Vault verifier not initialized.");
+            throw new https_1.HttpsError("permission-denied", "Incorrect PIN.");
+        }
+        return { pepper: result.pepper };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        logger.error("verifyVaultPin failed unexpectedly:", err);
+        throw err;
     }
 });
 //# sourceMappingURL=index.js.map

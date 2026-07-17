@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as firestore from 'firebase/firestore';
 import { executePinRotation } from '../rotation';
-import { generateKey, encrypt, computePinHash, generateSalt, isVaultUnlocked, clearKey } from '../crypto';
+import { generateKey, encrypt, computePinHash, generateSalt, isVaultUnlocked, clearKey, deriveLocalBits, deriveVaultKeyWithPepper } from '../crypto';
+
+// A fixed, deterministic mock pepper standing in for verifyVaultPin's
+// HMAC(VAULT_PEPPER, pinHash) response — rotation.ts always fetches a fresh
+// pepper for the new key (see deriveKeyForScheme), so every test that
+// exercises the "new key" path needs this mocked.
+const MOCK_PEPPER = 'dGVzdC1wZXBwZXItdmFsdWU=';
 
 // Mock Firebase config — rotation.ts only needs `db` to be truthy.
 vi.mock('../firebase', () => ({
     db: {}
+}));
+
+vi.mock('../vaultAuth', () => ({
+    fetchVaultPepper: vi.fn().mockResolvedValue('dGVzdC1wZXBwZXItdmFsdWU='),
 }));
 
 // Mock Firestore reads/writes; crypto.ts is left un-mocked so real
@@ -88,7 +98,7 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
             pageSnapshot([{ id: 'j1', ref: { __id: 'j1' }, data: () => ({ isEncrypted: true, content: staleCipher }) }]),
         ]);
 
-        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {});
+        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
 
         // Content was re-encrypted (not left as the stale ciphertext).
         const journalUpdate = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'j1');
@@ -114,9 +124,15 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         // Simulate a PRIOR attempt that got partway through: it generated
         // pendingSalt/pendingVerifier and successfully re-encrypted doc "j1"
         // under it before the process died. "j2" is still on the old key.
+        // The prior attempt's "new key" is the peppered scheme (matching what
+        // a real rotation always derives — see deriveKeyForScheme) built from
+        // the same deterministic mock pepper this test's actual rotation call
+        // will also fetch, since fetchVaultPepper's response is a pure
+        // function of pendingVerifier + the server secret.
         const pendingSalt = generateSalt();
-        await generateKey(NEW_PIN, pendingSalt);
         const pendingVerifier = await computePinHash(NEW_PIN, pendingSalt);
+        const pendingLocalBits = await deriveLocalBits(NEW_PIN, pendingSalt);
+        await deriveVaultKeyWithPepper(pendingLocalBits, MOCK_PEPPER);
         const migratedCipher = await encrypt('Already migrated by the prior attempt');
 
         await generateKey(OLD_PIN, oldSalt);
@@ -132,7 +148,7 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
             ]),
         ]);
 
-        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {});
+        const result = await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
 
         // The resumed attempt reuses the SAME pending salt/verifier — it does
         // not mint a third, unrelated salt that would orphan "j1".
@@ -162,7 +178,7 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         ]);
 
         await expect(
-            executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, () => {})
+            executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {})
         ).rejects.toThrow('PARTIAL_ROTATION_FAILURE');
 
         // The vault must still be unlocked — the old catch-block behavior of
@@ -188,7 +204,7 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         const realVerifier = await computePinHash(OLD_PIN, oldSalt);
 
         await expect(
-            executePinRotation('user_1', 'wrong-pin', NEW_PIN, oldSalt, realVerifier, () => {})
+            executePinRotation('user_1', 'wrong-pin', NEW_PIN, oldSalt, realVerifier, false, () => {})
         ).rejects.toThrow('INCORRECT_PIN');
 
         expect(firestore.getDocs).not.toHaveBeenCalled();

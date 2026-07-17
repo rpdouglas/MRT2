@@ -3,9 +3,11 @@
  * REFACTOR: Secure AI Proxy Alignment (July 2026).
  * Routes all client-side Gemini prompts through Firebase Cloud Functions.
  */
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import app from './firebase';
 import type { SmartToolType } from './types/smart';
+
+const USE_EMULATORS = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true';
 
 let functionsInstance: ReturnType<typeof getFunctions> | null = null;
 
@@ -15,6 +17,9 @@ function getFunctionsInstance() {
             throw new Error("Firebase app is not initialized");
         }
         functionsInstance = getFunctions(app, 'northamerica-northeast1');
+        if (USE_EMULATORS) {
+            connectFunctionsEmulator(functionsInstance, "127.0.0.1", 5001);
+        }
     }
     return functionsInstance;
 }

@@ -17,6 +17,8 @@ MRT uses **Zero-Knowledge Encryption**. This means your journals and workbook an
 
 > **💡 Pro Tip:** Your PIN is temporarily cached in your browser while the app is open so you don't have to type it on every page. Clicking "Lock Vault" in the sidebar instantly clears it from memory.
 
+> **📶 A note on connectivity:** The *first* time you unlock your Vault in a browsing session, MRT briefly checks in with our servers to guard against PIN-guessing — this needs a connection. Every unlock after that (until you lock the Vault or close the tab) stays fully offline, same as before. If you enter the wrong PIN too many times in a row, the Vault temporarily locks you out for a short cooldown before you can try again — this protects your data even if our database were ever breached.
+
 ## 🔄 Managing Your Vault
 If you need to update your security settings, navigate to **Profile -> Security**.
 

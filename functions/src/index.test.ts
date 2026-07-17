@@ -8,6 +8,7 @@ import {
     processUserBatch,
     identifyStaleTokensByUser,
     buildBatchPrompt,
+    computeLockoutSeconds,
     type BeaconUserDoc,
 } from "./index";
 import { MODALITY_CONFIGS, READING_MODALITIES, type ReadingModality } from "./prompts";
@@ -262,5 +263,24 @@ describe("buildBatchPrompt", () => {
             expect(prompt).toContain(config.themes[0]);
             expect(prompt.includes("attribution")).toBe(config.requiresAttribution);
         }
+    });
+});
+
+describe("computeLockoutSeconds (PROJ-65 vault-PIN rate limiting)", () => {
+    it("gives a few free retries before any lockout", () => {
+        expect(computeLockoutSeconds(1)).toBeNull();
+        expect(computeLockoutSeconds(4)).toBeNull();
+    });
+
+    it("escalates through short, then long, then day-long lockouts", () => {
+        expect(computeLockoutSeconds(5)).toBe(60);
+        expect(computeLockoutSeconds(7)).toBe(60);
+        expect(computeLockoutSeconds(8)).toBe(15 * 60);
+        expect(computeLockoutSeconds(11)).toBe(15 * 60);
+        expect(computeLockoutSeconds(12)).toBe(24 * 60 * 60);
+    });
+
+    it("never de-escalates as attempts keep climbing", () => {
+        expect(computeLockoutSeconds(50)).toBe(24 * 60 * 60);
     });
 });
