@@ -1,17 +1,13 @@
 # 📐 Feature Spec: User Guide & Onboarding
 
-**Status:** Live (v4.0)
-**Context:** In-app education and PWA installation support.
-**Primary Code:** `src/pages/UserGuide.tsx`, `src/components/PWAInstallBanner.tsx`
+**Status:** Live (v4.1)
+**Context:** External education site and PWA installation support.
+**Primary Code:** `docs-site/` (published VitePress site), link-out from `src/pages/Profile.tsx` ("View User Guide") and `src/pages/Links.tsx` ("Install App Guide"), `src/components/PWAInstallBanner.tsx`
 
-## 1. The Interactive Handbook
-A native, scrollable guide available via the Profile page.
-* **Visuals:** Uses architectural placeholders (CSS-styled containers) to represent Pixel 9 Pro XL screenshots, ensuring the guide evolves with the design system without needing constant image updates.
-* **Content:** Covers the "4 Pillars" of the app:
-    1.  **The Horizon:** Dashboard & Clean Time.
-    2.  **The Vault:** Security & Encryption.
-    3.  **The Deep Dive:** Journaling & AI.
-    4.  **The Pulse:** Vitality & Breathwork.
+## 1. The Published Guide
+There is no native in-app guide component — `src/pages/UserGuide.tsx` does not exist in the codebase. The guide is a standalone VitePress static site (`docs-site/`) published to `https://rpdouglas.github.io/MRT2/`. The Profile page and the Links page link out to it in a new tab; the app itself does not render guide content inline.
+* **Visuals:** Guide pages embed persona-themed screenshots (e.g. `/screenshots/ned-tasks.webp`) captured from the live app, not architectural placeholders.
+* **Content:** Organized by feature page, matching the in-app "My X" nav labels (`src/components/AppShell.tsx`): My Dashboard, My Journal, My Tasks, My Vitality, My Workbooks, My Insights, plus CBT Tools, Daily Readings, Account & Vault setup, and Exports & Data. See `docs-site/.vitepress/config.mts` for the current sidebar structure and `docs/projects/66_USER_GUIDE_RELABEL_SYNC.md` for the terminology-sync history.
 
 ## 2. PWA Installation Engine
 * **Component:** `PWAInstallBanner.tsx`.
@@ -22,4 +18,4 @@ A native, scrollable guide available via the Profile page.
 
 ## 3. Verification
 * [ ] **iOS Detection:** Open in Safari Dev Tools (User Agent iPhone). Does the custom iOS instruction appear?
-* [ ] **Navigation:** Does the "Back" button in the Guide return to Profile?
+* [ ] **Navigation:** Does the "View User Guide" link on Profile and the "Install App Guide" link on Links open the published site in a new tab?

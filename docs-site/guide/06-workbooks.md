@@ -1,4 +1,4 @@
-# 📚 My Workbooks (The Library)
+# 📚 My Workbooks
 
 Workbooks are interactive, structured guides for working through clinical curricula like CBT, 12-Step recovery, and secular/Buddhist Recovery Dharma steps.
 

@@ -1,4 +1,4 @@
-# ❤️ The Pulse (Vitality & Breathwork)
+# ❤️ My Vitality (Vitality & Breathwork)
 
 Somatic regulation—managing your physical body—is critical to preventing emotional relapse. The Vitality module tracks three pillars of physical health.
 
