@@ -22,14 +22,14 @@ export default defineConfig({
       {
         text: 'Core Features',
         items: [
-          { text: 'The Horizon (Dashboard)', link: '/guide/02-dashboard' },
+          { text: 'My Dashboard', link: '/guide/02-dashboard' },
           { text: 'My Journal (Journal & AI)', link: '/guide/03-journal-and-ai' },
-          { text: 'The Ledger (Tasks)', link: '/guide/04-tasks-habits' },
-          { text: 'The Pulse (Vitality)', link: '/guide/05-vitality' },
-          { text: 'The Compass (Workbooks)', link: '/guide/06-workbooks' },
+          { text: 'My Tasks (Tasks & Habits)', link: '/guide/04-tasks-habits' },
+          { text: 'My Vitality', link: '/guide/05-vitality' },
+          { text: 'My Workbooks', link: '/guide/06-workbooks' },
           { text: 'The Toolbox (CBT)', link: '/guide/08-cbt-tools' },
           { text: 'Daily Readings', link: '/guide/09-daily-readings' },
-          { text: 'Insights & Recovery Capital', link: '/guide/10-insights' }
+          { text: 'My Insights & Recovery Capital', link: '/guide/10-insights' }
         ]
       },
       {

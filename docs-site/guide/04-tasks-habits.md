@@ -1,4 +1,4 @@
-# 📋 The Ledger (Tasks & Habits)
+# 📋 My Tasks (Tasks & Habits)
 
 The Tasks module helps you build consistent routines and track actionable recovery steps.
 

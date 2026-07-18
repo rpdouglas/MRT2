@@ -1,4 +1,4 @@
-# 📐 Feature Spec: Tasks & Habits (The Ledger)
+# 📐 Feature Spec: Tasks & Habits (My Tasks)
 
 **Status:** Live (v2.4 — updated PROJ-47)
 **Context:** High-density professional task management with AI action routing.
