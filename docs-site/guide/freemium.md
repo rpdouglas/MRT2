@@ -16,9 +16,9 @@ My Recovery Toolkit operates on a "Freemium" model. Our core belief is that tool
 ## 🟢 The Free Tier (Standard)
 Designed for immediate relief, habit building, and finding stability.
 * **Unlimited Journaling:** Secure, zero-knowledge encryption for all entries.
-* **The Ledger:** Unlimited task and habit tracking with "Smart Resets."
-* **The Horizon:** Full dashboard tracking for clean time and gamification streaks.
-* **The Pulse:** Unlimited somatic tracking (Fuel, Movement) and 4-7-8 Breathwork.
+* **My Tasks:** Unlimited task and habit tracking with "Smart Resets."
+* **My Dashboard:** Full dashboard tracking for clean time and gamification streaks.
+* **My Vitality:** Unlimited somatic tracking (Fuel, Movement) and 4-7-8 Breathwork.
 * **AI Access (Metered):** Limited to 1 Weekly Check-in per week, 1 Monthly Review per month, and 1 Deep Pattern Scan per month.
 * **Recovery Capital Check-in (ROSC):** One self-report check-in per calendar month. Domain scores are based on your own answers — no AI journal analysis on the free tier.
 
