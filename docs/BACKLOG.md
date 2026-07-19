@@ -11,6 +11,9 @@
 * **Feature:** Clinical Telehealth Off-Ramps (MAT Resources).
   * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
   * **Status:** Deferred — unscheduled.
+* **Feature:** Bundle Size / Code-Splitting Reduction.
+  * **Concept:** The `vendor` chunk is 1.8MB (567KB gzipped); the service worker precaches ~19MB total — a heavy first install for a TWA aimed partly at users in acute crisis on mobile connections.
+  * **Status:** Deferred — worth doing before scaling, not submission-blocking. Surfaced in `docs/reports/2026-07_app_readiness_review.md` (2026-07-18).
 
 ## 👤 Ned (The Pink Cloud)
 * **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
@@ -32,4 +35,4 @@
 ## 🅿️ Parked / Unscheduled (Have specs, not on the Roadmap)
 * **PROJ-38 — The Urge Intervention System ("The Lifeline Protocol").** Full spec exists at `docs/projects/38_URGE_INTERVENTION.md`. Status: ⚪ Planned, not yet scheduled into a Wave.
 * **PROJ-45 — Adaptive Persona UI Engine.** Full spec exists at `docs/projects/45_ADAPTIVE_PERSONA_UI.md`. Status: ⚪ Planned — PARKED, explicitly not in active sprint pending the Open Questions in the spec's §6.
-* **PROJ-23 — The QA Sentinel (Playwright E2E pipeline).** Full spec exists at `docs/projects/archive/23_QA_SENTINEL.md`. Status: ⚪ Planned — not yet built; PROJ-40 backfilled unit-test coverage only, so the E2E golden-path suite this spec scopes remains an open gap. Surfaced during the 2026-07-16 governance audit (previously an orphan spec referenced nowhere).
+* **PROJ-23 — The QA Sentinel (Playwright E2E pipeline).** Full spec exists at `docs/projects/archive/23_QA_SENTINEL.md`. Status: ⚪ Planned — not yet built; PROJ-40 backfilled unit-test coverage only, so the E2E golden-path suite this spec scopes remains an open gap. Surfaced during the 2026-07-16 governance audit (previously an orphan spec referenced nowhere). **Priority raised 2026-07-18:** `docs/reports/2026-07_app_readiness_review.md` flags zero browser-level regression coverage of golden paths (login → vault unlock → journal encrypt/decrypt) as a scaling risk ahead of Play Store submission. Recommend scheduling into an active Wave rather than leaving parked.

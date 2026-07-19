@@ -1,6 +1,6 @@
 # 📁 Project PROJ-07: Play Store TWA
 
-**Status:** 🟡 Active (Sprint 9.1 is Active; Sprint 9.2 is Blocked)
+**Status:** ⚪ Not Started (Sprint 9.1 scoped, not yet started — see 2026-07-18 governance audit; Sprint 9.2 blocked on Google Play Console verification, DUNS received)
 **Primary Persona:** All (David, Ned, Maya, Walt, Lisa)
 **Objective:** Package the My Recovery Toolkit (MRT) Progressive Web App into an Android package (AAB/APK) using Google Bubblewrap (TWA) and resolve all Google Play Store compliance and mobile UX requirements.
 
@@ -77,7 +77,7 @@ gantt
 
 ---
 
-### 🚧 Sprint 9.2: TWA Compilation & Release (BLOCKED ON DUNS)
+### 🚧 Sprint 9.2: TWA Compilation & Release (BLOCKED ON GOOGLE PLAY CONSOLE VERIFICATION)
 
 #### Epic 4: Bubblewrap Wrapper and Submission
 *   **Local Build:** Initialize the Android project using Bubblewrap:

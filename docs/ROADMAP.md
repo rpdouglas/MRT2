@@ -2,13 +2,16 @@
 
 **Methodology:** Strategic Waves (Prioritizing User Acquisition & Retention)
 
+> **Spec-file note:** IDs referenced here without a `docs/projects/XX_FEATURE.md` file (PROJ-18, 19, 24, 32, 33, 34, 35, 37, 39, 48, and `[BILLING]`) predate CLAUDE.md's spec-file requirement and are exempt from backfill — flagged and resolved during the 2026-07-18 governance audit. Any of these picked up for new work should get a proper spec at that time.
+
 ## 🌊 Wave 1: Acquisition & Friction (Weeks 1–6)
 *The immediate goal: Stop users from abandoning the app on Day 1 by removing the "Security Tax."*
 
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | ✅ **Shipped** | `PROJ-41` | **The Dynamic Anchor** | David / Ned | A slim, frictionless, 2-column Quick Action Bar replacing the static daily pledge. |
-| 🟡 **In Progress** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. Sprint 9.1 code fixes active; Sprint 9.2 packaging blocked on DUNS. |
+| ⚪ **Not Started** | `PROJ-07` | **Play Store TWA** | All | Generate assetlinks.json and finalize Google Play Store deployment. Sprint 9.1 (manifest/CSS/delete-account) scoped but not yet started per 2026-07-18 governance audit; DUNS received, Sprint 9.2 packaging now waiting on remaining Google Play Console verification steps, plus PROJ-67 keystore rotation and a Stripe/Play Billing policy determination (see `docs/ACTIVE_CYCLE.md`). |
+| 🔴 **Not Started — Critical** | `PROJ-67` | **Signing Key & Secrets Hygiene** | All | Rotate the Android signing keystore (currently tracked in git, functionally compromised) and purge it from git history before any Bubblewrap build runs. Blocks PROJ-07 Sprint 9.2. See `docs/projects/67_SIGNING_KEY_SECRETS_HYGIENE.md`. |
 | 🟡 In Progress | `PROJ-65` | **Vault PIN Brute-Force Hardening** | All | Rate-limited server-pepper key derivation (multi-device-safe alternative to the originally-proposed IndexedDB Master Key, which was rejected) so a Firestore breach doesn't reduce to a 10,000-combination PIN search. Implemented 2026-07-17; external security review still recommended before final — see `docs/projects/65_VAULT_KEY_HARDENING.md`. |
 
 ## 🌊 Wave 2: Retention & Community (Weeks 7–16)
@@ -38,6 +41,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-66` User Guide Relabel Sync (Brought the published docs-site user guide and its dev spec into alignment with the in-app "My X" navigation labels from commit `a05a24f` — sidebar nav, page H1s, freemium bullets, and `docs/specs/12_USER_GUIDE.md`'s architecture description corrected. Found via the 2026-07-18 governance audit as a spec with no prior ROADMAP/ACTIVE_CYCLE reference.)
 * `PROJ-64` Gemini AI Proxy & Platform Hardening (Cloud Functions proxy removes the client-exposed Gemini API key, server-side AI rate limiting, Firestore persistent offline cache, PostHog decryption-failure telemetry — shipped 2026-07-13 in commit `6748388`, spec backfilled 2026-07-16 after a governance audit found the shipping commit's message overstated its scope; the key-derivation hardening it also claimed was never actually implemented and is tracked separately as `PROJ-65`.)
 * `PROJ-63` Mobile Screenshot Generator (Implement automated mobile screenshot generator with persona-based mock bypass.)
 * `PROJ-62` Tech Debt Quick Wins — Logging, Rules, Duplicate Reads, `any` Suppressions (Cleared five deep-review quick-win chores: removed a debug console.log, hardened the CI service-account heredoc, tightened ai_logs/client_errors/feedback Firestore rules to uid-match, extracted Tasks.tsx's raw onSnapshot into useTasksList, and fixed the last four any-type suppressions (two of which were masking real latent bugs).)
