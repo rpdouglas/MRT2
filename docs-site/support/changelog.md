@@ -1,5 +1,11 @@
 # 🚀 Changelog
 
+## [v1.8.18] - 2026-07-19
+### ✨ Play Store Pre-Submission Prep (Sprint 9.1)
+- **Compliance [PROJ-07]:** Added a new web-accessible account deletion path at myrecoverytoolkit.ca/delete-account — sign in and confirm without needing to open the app first, required by Google Play's Data Safety policy ahead of Play Store submission. Runs the same cryptographic-shredding deletion pipeline as the existing in-app "Danger Zone" flow.
+- **Trust [PROJ-07]:** Added Privacy Policy and Terms of Service links to the Login screen and Profile settings.
+- **Mobile Polish [PROJ-07]:** Disabled browser pull-to-refresh and text-selection highlighting for a more native feel when installed as an app.
+
 ## [v1.8.17] - 2026-07-19
 ### 🛠️ Gate Stripe Checkout Out of the Android TWA (Internal)
 - **Compliance [PROJ-68]:** Rather than resolve the jurisdiction-dependent question of whether Stripe-in-TWA satisfies Google Play's Payments policy, sidestepped it: the in-app "Become a Supporter" purchase flow is now hidden specifically when running inside the Play Store–installed app, replaced by an "Upgrade on the Web" link to complete checkout in a browser instead. Existing Supporters can still manage or cancel their subscription from inside the app. No change for web/desktop users.

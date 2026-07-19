@@ -34,3 +34,5 @@ If you wish to permanently destroy your account and wipe all data from our serve
 2. Scroll down to the red **Danger Zone** and click **Request Account Deletion**.
 3. To protect against unauthorized deletion, the app will ask you to **verify your password** or **re-verify with Google**.
 4. Once verified, the app will cryptographically shred all of your journals, tasks, and settings before permanently deleting your account. **This action cannot be undone.**
+
+**Don't have the app open, or don't want to install it?** You can also request deletion from any browser at **myrecoverytoolkit.ca/delete-account** — sign in with your email/password or Google account, confirm, and the same cryptographic shredding runs immediately. No need to open the app first.
