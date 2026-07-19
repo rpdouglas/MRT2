@@ -1,6 +1,6 @@
 # 📁 Project 67: Signing Key & Secrets Hygiene
 
-**Status:** 🔴 Not Started — Critical
+**Status:** 🟡 In Progress — Phase 1 complete (2026-07-19): new keystore generated, uploaded to Google Secret Manager (`mrt2-app-prod`), and `assetlinks.json`'s fingerprint updated. Phase 2 (git history purge of the old keystore) is intentionally still pending — held for a separate explicit confirmation given its destructive, coordination-required nature. The old keystore is still tracked in git history as of this writing.
 **Primary Persona:** All (internal/architecture — no persona-specific UX; protects the integrity of every user's installed app)
 **Objective:** Rotate the compromised Android signing keystore, purge it from git history, and establish a secrets-manager-based storage pattern so no future signing credential is ever committed to the repository.
 
@@ -35,7 +35,7 @@ No Firestore schema changes. No application code changes. This project is entire
 
 ## 4. Implementation Phases 🏗️
 
-### Phase 1: Generate & Store the Replacement Credential
+### Phase 1: Generate & Store the Replacement Credential — ✅ Done 2026-07-19
 * Generate a new release keystore (`keytool -genkeypair`), matching the alias/validity conventions the original used (confirm exact parameters before regenerating — a mismatched alias or validity period could complicate future Bubblewrap builds).
 * Create the secret in the project's existing Google Secret Manager (same GCP project as `GEMINI_API_KEY`/`VAULT_PEPPER`) — split into separate secrets for the keystore binary and each password, rather than one bundled secret, so IAM/audit logging can distinguish access to the file from access to the passwords:
   ```bash
@@ -58,7 +58,7 @@ No Firestore schema changes. No application code changes. This project is entire
 
 ### Phase 3: Treat the Old Key as Compromised
 * Confirm the old keystore was never used to sign a production Play Store release (true as of this audit — PROJ-07 Sprint 9.2 hasn't run yet). If it had been, this phase would also require Google's key-reset process; since it hasn't, no further remediation beyond rotation is needed.
-* Update `assetlinks.json`'s local/dev fingerprint entry to the new keystore's SHA-256 (see `docs/reports/google_play_readiness_report.md` Appendix for the `keytool -list -v` verification command).
+* ✅ **Done 2026-07-19:** `assetlinks.json`'s fingerprint entry replaced with the new keystore's SHA-256 (`7A:BD:0E:9A:76:14:56:03:7D:DB:F0:61:5E:A3:2B:60:7A:9C:12:F0:5A:F1:17:83:C6:7E:15:46:A4:34:C8:45`) — the old fingerprint was removed entirely, not kept alongside the new one, since leaving it would still let anything signed with the compromised key pass domain verification. (A second fingerprint entry will be added in PROJ-07 Sprint 9.2, once Google Play App Signing issues its own production-managed key — that is a legitimate two-fingerprint case, distinct from this old/new rotation.)
 
 ### Phase 4: Edge Cases
 * [ ] What if a Bubblewrap build was already run against the old keystore before this project starts? Not applicable — confirmed no production build has occurred yet (Sprint 9.2 was blocked on DUNS until this audit cycle).
@@ -69,7 +69,7 @@ No Firestore schema changes. No application code changes. This project is entire
 ## 5. QA & Verification 🧪
 * [ ] **Verification:** `git log --all --full-history -- mrt-release.keystore` returns zero results after the history rewrite.
 * [ ] **Verification:** `git ls-files | grep keystore` returns zero results in the current working tree (new keystore lives only in the secrets manager).
-* [ ] **Verification:** `keytool -list -v -keystore <new-keystore>` fingerprint matches the updated first entry in `assetlinks.json`.
+* [x] **Verification (2026-07-19):** `keytool -list -v -keystore <new-keystore>` fingerprint matches the updated first entry in `assetlinks.json`.
 * [ ] **Verification:** Every active collaborator has confirmed their local clone is reconciled with the rewritten history (re-cloned or hard-reset) before any further pushes to the shared remote.
 * [ ] **The Subway Test:** N/A — no runtime/offline behavior affected.
 * [ ] **The "Lost PIN" Test:** N/A — unrelated to the vault key system.
