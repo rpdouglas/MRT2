@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.17] - 2026-07-19
+### 🛠️ Gate Stripe Checkout Out of the Android TWA (Internal)
+- **Compliance [PROJ-68]:** Rather than resolve the jurisdiction-dependent question of whether Stripe-in-TWA satisfies Google Play's Payments policy, sidestepped it: the in-app "Become a Supporter" purchase flow is now hidden specifically when running inside the Play Store–installed app, replaced by an "Upgrade on the Web" link to complete checkout in a browser instead. Existing Supporters can still manage or cancel their subscription from inside the app. No change for web/desktop users.
+
 ## [v1.8.16] - 2026-07-19
 ### 🛠️ Signing Key & Secrets Hygiene (Internal)
 - **Security [PROJ-67]:** Rotated the Android app-signing keystore after discovering it was tracked in git history; new keystore stored in Google Secret Manager, old one purged from all commits and force-pushed. Separately found and fixed a CI logging gap in `deploy.yml` that was leaking the production Firebase Admin SDK service account key into every deploy log in plaintext — rotated the leaked key, disabled the old one, and fixed the workflow to mask derived secrets and stop broadcasting them into every step's environment. Also closed a `PROJ-65` rollout gap (`VAULT_PEPPER` was never set in Secret Manager for prod or dev, breaking Cloud Functions deploys). No user-facing behavior changed.

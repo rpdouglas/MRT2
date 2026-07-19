@@ -47,3 +47,5 @@ If you encounter a premium feature, you will see a **Premium Gate** (a blurred o
 1. Click on any locked feature or navigate directly to **Profile -> Upgrade**.
 2. You will be redirected to a secure Stripe Checkout portal.
 3. Once completed, your app will automatically unlock all Premium features without needing to restart.
+
+**If you installed MRT from the Google Play Store:** new purchases happen on the web, not inside the app — tap **"Upgrade on the Web"** to open your browser to myrecoverytoolkit.ca and complete checkout there, then return to the app. Once you've subscribed, your app unlocks automatically — no need to purchase again from inside the app. If you're already a Supporter, managing or cancelling your subscription still works directly from inside the app.
