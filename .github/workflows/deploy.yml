@@ -51,7 +51,6 @@ jobs:
     # Initialize empty vars to satisfy linter
     env:
       FIREBASE_PROJECT_ID: ""
-      SERVICE_ACCOUNT_JSON: ""
       # Standard Vite Env Vars
       VITE_FIREBASE_API_KEY: ""
       VITE_FIREBASE_AUTH_DOMAIN: ""
@@ -140,11 +139,24 @@ jobs:
       # --- BUILD & DEPLOY ---
       
       - name: Load Service Account
+        id: load-service-account
         run: |
+          # Mask every non-empty line (private_key, private_key_id, client_email, etc.)
+          # BEFORE it's referenced anywhere — GitHub's automatic secret redaction only
+          # catches the literal base64 secret; this file is a *decoded* derived value
+          # it doesn't recognize on its own.
+          while IFS= read -r line; do
+            if [ -n "$line" ]; then
+              echo "::add-mask::$line"
+            fi
+          done < ./service-account.json
+          # Step output (not $GITHUB_ENV) so this only reaches the one step that
+          # consumes it below, instead of being broadcast as an env var into every
+          # subsequent step's environment (and their logged env: debug blocks).
           EOF_DELIM="EOF_$(openssl rand -hex 8)"
-          echo "SERVICE_ACCOUNT_JSON<<$EOF_DELIM" >> $GITHUB_ENV
-          cat ./service-account.json >> $GITHUB_ENV
-          echo "$EOF_DELIM" >> $GITHUB_ENV
+          echo "service_account_json<<$EOF_DELIM" >> "$GITHUB_OUTPUT"
+          cat ./service-account.json >> "$GITHUB_OUTPUT"
+          echo "$EOF_DELIM" >> "$GITHUB_OUTPUT"
 
       - name: Build
         run: npm run build
@@ -166,7 +178,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: "${{ env.SERVICE_ACCOUNT_JSON }}"
+          firebaseServiceAccount: "${{ steps.load-service-account.outputs.service_account_json }}"
           projectId: "${{ env.FIREBASE_PROJECT_ID }}"
           channelId: live
 

@@ -1,6 +1,6 @@
 # 📁 Project 67: Signing Key & Secrets Hygiene
 
-**Status:** ✅ Shipped (2026-07-19) — new keystore generated and stored in Google Secret Manager (`mrt2-app-prod`), `assetlinks.json` updated, and the old compromised keystore purged from all git history via `git filter-repo` + force-push to `origin/main`. Verified: `git log --all --full-history -- mrt-release.keystore` returns zero results against both local and `origin/main`.
+**Status:** ✅ Shipped (2026-07-19) — two separate secrets-hygiene incidents closed in this project. Incident 1: signing keystore rotated, new keystore stored in Google Secret Manager (`mrt2-app-prod`), `assetlinks.json` updated, old compromised keystore purged from all git history via `git filter-repo` + force-push to `origin/main` — verified zero remaining references. Incident 2 (found the same day, during the first post-rotation deploy attempt): the production Firebase Admin SDK service account key was leaking in plaintext into every GitHub Actions deploy log via a CI masking gap — see §7. Both incidents share the same root theme (secrets exposure) and are tracked under this one project rather than fragmenting into a second ticket.
 **Primary Persona:** All (internal/architecture — no persona-specific UX; protects the integrity of every user's installed app)
 **Objective:** Rotate the compromised Android signing keystore, purge it from git history, and establish a secrets-manager-based storage pattern so no future signing credential is ever committed to the repository.
 
@@ -80,3 +80,43 @@ No Firestore schema changes. No application code changes. This project is entire
 ## 6. Related
 * Blocks: `docs/projects/07_PLAY_STORE_TWA.md` Sprint 9.2 (Bubblewrap build cannot proceed on a compromised keystore).
 * Source audit: `docs/reports/2026-07_app_readiness_review.md` §1.
+
+---
+
+## 7. Incident 2: Leaked Production Admin SDK Key via CI Log Exposure (2026-07-19)
+
+**Discovered:** during the first deploy attempt after Incident 1's keystore rotation, the `main` branch deploy failed (`VAULT_PEPPER` secret missing — an unrelated PROJ-65 rollout gap, fixed separately, see below). The user pasted the full failed-run log for diagnosis; it contained the complete `firebase-adminsdk-fbsvc@mrt2-app-prod.iam.gserviceaccount.com` private key in plaintext, printed multiple times.
+
+### Root Cause
+
+`.github/workflows/deploy.yml`'s "Load Service Account" step decoded the properly-masked `FIREBASE_SERVICE_ACCOUNT_PROD_BASE64` GitHub secret to a file (`base64 -d > ./service-account.json`), then wrote that **decoded** content into `$GITHUB_ENV` as `SERVICE_ACCOUNT_JSON` so the `FirebaseExtended/action-hosting-deploy@v0` action's `firebaseServiceAccount` input could consume it. GitHub's automatic log redaction only masks the literal registered secret string (the base64 blob) — the decoded JSON is a *derived* value it doesn't recognize, so it printed unredacted. Because `$GITHUB_ENV` writes persist as an environment variable for every subsequent step in the job, and the runner logs an `env:` debug block per step, the leaked key appeared repeatedly throughout the run. A vestigial job-level `SERVICE_ACCOUNT_JSON: ""` declaration (line 54) meant it even appeared in steps *before* the value was ever set.
+
+### Scope
+
+This pattern is identical for all three environments (`FIREBASE_SERVICE_ACCOUNT_DEV_BASE64`, `_UAT_BASE64`, `_PROD_BASE64`) — every deploy of any environment, since this pattern was introduced, has leaked that environment's Admin SDK key into its own run log. Only the `main` (prod) leak was directly observed and confirmed exposed in this incident.
+
+### Remediation — ✅ Done 2026-07-19
+
+1. Identified the exact leaked key via `gcloud iam service-accounts keys list` — `private_key_id: d4e47ec5568df2e54b3acbde2d9371d57bd5af22`, created 2025-12-16, no expiration set. One of 7 keys accumulated on that service account.
+2. Generated a replacement key via `gcloud iam service-accounts keys create`, output written directly to a local file — never printed to any log or chat transcript.
+3. New key's base64 set as the `FIREBASE_SERVICE_ACCOUNT_PROD_BASE64` GitHub secret by the user directly via the GitHub web UI (this session's `gh` auth is a GitHub App user-to-server token — identifiable by its `ghu_` prefix and empty `X-Oauth-Scopes` header — scoped by its installation to exclude Secrets and Administration permissions regardless of the user's own repo-admin role; likely an intentional sandbox boundary, not something to route around by widening the App's grant).
+4. Old key (`d4e47ec5568df2e54b3acbde2d9371d57bd5af22`) disabled via `gcloud iam service-accounts keys disable`, only after the new secret was confirmed live — disabling first would have broken every deploy in between.
+5. Local key file and its base64 export both deleted after use.
+6. `.gitignore` hardened with `*firebase-adminsdk*.json` and `*-key.json` patterns, since the newly-generated key file was initially **not** covered by the existing `service-account*.json` pattern — the same category of gap (a protective pattern added too narrowly) that caused Incident 1.
+7. `deploy.yml` fixed: the decoded JSON is now masked line-by-line via `::add-mask::` before any reference to it, and delivery switched from a job-wide `$GITHUB_ENV` variable to a step-scoped `$GITHUB_OUTPUT`, so it no longer broadcasts into every subsequent step's logged environment — only the one step that actually consumes it. The dead `SERVICE_ACCOUNT_JSON: ""` job-level declaration was removed.
+
+### Related Gap Found and Fixed: Missing `VAULT_PEPPER` Secret
+
+The actual build failure that surfaced this incident (`Error: In non-interactive mode but have no value for the secret: VAULT_PEPPER`) was a separate, unrelated PROJ-65 rollout gap — `functions/src/index.ts`'s `defineSecret("VAULT_PEPPER")` (line 30) had no corresponding value ever set in Secret Manager for `mrt2-app-prod`. Fixed:
+* Generated a random 256-bit value via `openssl rand -base64 32`, piped directly into `firebase functions:secrets:set VAULT_PEPPER --data-file=- --project=mrt2-app-prod` — never written to disk or printed anywhere.
+* Found and fixed a second gap along the way: the new secret had zero IAM bindings, which would have failed at runtime even after a successful deploy. Granted `roles/secretmanager.secretAccessor` to `405528797784-compute@developer.gserviceaccount.com`, matching the already-working binding on `GEMINI_API_KEY`.
+* **Not done:** `mrt2-app-dev` has zero secrets set and `mrt2-app-uat` doesn't even have the Secret Manager API enabled. Neither is currently blocking anything (only `main`/prod deploy was attempted), but both will hit the identical `VAULT_PEPPER` failure the next time either environment deploys Cloud Functions.
+
+### QA & Verification — Incident 2
+
+* [x] `git log`/repo scan confirms no key material was ever committed (the leak was log-only, not a repo-tracked file — no history rewrite required for this incident).
+* [x] Old key confirmed `DISABLED` via `gcloud iam service-accounts keys list`.
+* [x] `VAULT_PEPPER` secret existence and IAM binding both confirmed via `gcloud secrets get-iam-policy`.
+* [x] `deploy.yml` YAML syntax validated after edits.
+* [ ] **Outstanding:** the next real deploy run hasn't been executed yet — this fix is verified by inspection and direct `gcloud`/`gh` checks, not by a live end-to-end run. Recommend treating the next `main` deploy as the real confirmation.
+* [ ] **Outstanding:** `mrt2-app-dev`/`mrt2-app-uat` `VAULT_PEPPER` gap, noted above, not yet closed.
