@@ -6,14 +6,16 @@ import VibrantHeader from '../components/VibrantHeader';
 import { db } from '../lib/firebase';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { isAndroidTWA } from '../lib/platform';
 import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, UserGroupIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function PremiumUpgrade() {
     const { user, userTier } = useAuth();
     const navigate = useNavigate();
-    
+
     const [isSubscribing, setIsSubscribing] = useState(false);
     const [isManaging, setIsManaging] = useState(false);
+    const isTWA = isAndroidTWA();
 
     const handleSubscribe = async () => {
         if (!user || !db) return;
@@ -142,8 +144,23 @@ export default function PremiumUpgrade() {
                             >
                                 {isManaging ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Manage Subscription'}
                             </button>
+                        ) : isTWA ? (
+                            <div className="w-full text-center">
+                                <a
+                                    href="https://www.myrecoverytoolkit.ca/premium"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full min-h-[44px] py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                >
+                                    <SparklesIcon className="h-5 w-5" />
+                                    Upgrade on the Web
+                                </a>
+                                <p className="text-slate-400 text-xs mt-3">
+                                    Visit myrecoverytoolkit.ca to become a Supporter
+                                </p>
+                            </div>
                         ) : (
-                            <button 
+                            <button
                                 onClick={handleSubscribe}
                                 disabled={isSubscribing}
                                 className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-75"
