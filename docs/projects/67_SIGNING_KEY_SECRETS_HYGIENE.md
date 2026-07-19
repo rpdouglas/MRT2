@@ -111,7 +111,7 @@ The actual build failure that surfaced this incident (`Error: In non-interactive
 * Generated a random 256-bit value via `openssl rand -base64 32`, piped directly into `firebase functions:secrets:set VAULT_PEPPER --data-file=- --project=mrt2-app-prod` — never written to disk or printed anywhere.
 * Found and fixed a second gap along the way: the new secret had zero IAM bindings, which would have failed at runtime even after a successful deploy. Granted `roles/secretmanager.secretAccessor` to `405528797784-compute@developer.gserviceaccount.com`, matching the already-working binding on `GEMINI_API_KEY`.
 * **`mrt2-app-dev` — done 2026-07-19:** `VAULT_PEPPER` set with the matching IAM binding (`roles/secretmanager.secretAccessor` on `1040431613138-compute@developer.gserviceaccount.com`), same pattern as prod.
-* **`mrt2-app-uat` — still not done:** doesn't even have the Secret Manager API enabled yet. Not currently blocking anything (no uat deploy has been attempted), but will hit the identical `VAULT_PEPPER` failure the first time it does.
+* **`mrt2-app-uat`:** deliberately deferred, not fixed here — uat isn't currently in active use. Moved to `docs/BACKLOG.md` (Parked/Unscheduled) 2026-07-19 rather than left as an open item on this now-closed ticket.
 
 ### QA & Verification — Incident 2
 
@@ -119,5 +119,5 @@ The actual build failure that surfaced this incident (`Error: In non-interactive
 * [x] Old key confirmed `DISABLED` via `gcloud iam service-accounts keys list`.
 * [x] `VAULT_PEPPER` secret existence and IAM binding both confirmed via `gcloud secrets get-iam-policy`.
 * [x] `deploy.yml` YAML syntax validated after edits.
-* [ ] **Outstanding:** the next real deploy run hasn't been executed yet — this fix is verified by inspection and direct `gcloud`/`gh` checks, not by a live end-to-end run. Recommend treating the next `main` deploy as the real confirmation.
-* [ ] **Outstanding:** `mrt2-app-dev`/`mrt2-app-uat` `VAULT_PEPPER` gap, noted above, not yet closed.
+* [x] **Verified (2026-07-19):** confirmed against a real `main` deploy run (`29669316182`) — `verify` and `deploy` jobs both green, zero `BEGIN PRIVATE KEY` occurrences in the log, zero `SERVICE_ACCOUNT_JSON:` job-wide env entries, 113 masked redactions confirming the mask engaged, and the `VAULT_PEPPER` step succeeded.
+* [x] **`mrt2-app-dev` `VAULT_PEPPER` gap closed (2026-07-19).** `mrt2-app-uat` deliberately deferred to `docs/BACKLOG.md` rather than left open here — see §7 above.
