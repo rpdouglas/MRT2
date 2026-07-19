@@ -14,6 +14,11 @@ export default defineConfig({
         short_name: 'MRT',
         description: 'A Buddhist-inspired and 12-step recovery companion toolkit.',
         theme_color: '#2563eb',
+        background_color: '#f8fafc',
+        display: 'standalone',
+        start_url: '/',
+        id: 'ca.myrecoverytoolkit.app',
+        orientation: 'portrait',
         icons: [
           {
             src: 'pwa-192x192.png',

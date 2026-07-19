@@ -671,6 +671,14 @@ export default function Profile() {
                         </a>
                     </div>
                 )}
+
+                {!isOnboarding && (
+                    <div className="text-center text-xs text-gray-400 space-x-4 pt-2">
+                        <a href="https://rpdouglas.github.io/MRT2/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Privacy Policy</a>
+                        <span>&middot;</span>
+                        <a href="https://rpdouglas.github.io/MRT2/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Terms of Service</a>
+                    </div>
+                )}
             </div>
         )}
 

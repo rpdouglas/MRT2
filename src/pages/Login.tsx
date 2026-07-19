@@ -291,6 +291,12 @@ export default function Login() {
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5 mr-3" />
               Sign in with Google
             </button>
+
+            <div className="mt-8 text-center text-xs text-slate-400 space-x-4">
+                <a href="https://rpdouglas.github.io/MRT2/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Privacy Policy</a>
+                <span>&middot;</span>
+                <a href="https://rpdouglas.github.io/MRT2/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Terms of Service</a>
+            </div>
         </div>
       </div>
 

@@ -11,7 +11,7 @@
 
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
-- [⚪ Not Started] **PROJ-07:** Play Store TWA — Pre-Submission & PWA Optimizations (Sprint 9.1 is scoped — manifest hardening, CSS overrides, delete-account route — but not yet started; the 2026-07-18 governance audit found zero code evidence for any of the three Epic deliverables against `docs/projects/07_PLAY_STORE_TWA.md`. DUNS number has been received; Sprint 9.2 Bubblewrap compile is now waiting on remaining Google Play Console verification steps, not DUNS. Both prior Sprint 9.2 blockers are now resolved: PROJ-67 (keystore rotation, 2026-07-19) and PROJ-68 (Stripe gated out of the TWA in place of a Play Billing policy determination, 2026-07-19) — see Resolved This Cycle below. Sprint 9.1 can proceed now.)
+- [🟡 Sprint 9.1 Done] **PROJ-07:** Play Store TWA — Pre-Submission & PWA Optimizations. Sprint 9.1 implemented 2026-07-19: PWA manifest hardening (`display`/`start_url`/`background_color`/`id`/`orientation`), mobile UX CSS overrides (`overscroll-behavior-y`, `user-select`), Privacy/Terms footer links (Login + Profile), and a new public `/delete-account` route reusing the existing crypto-shredding deletion logic. Full `npm run check` clean, 464/464 tests. Not yet verified on a real device/TWA build (Subway Test, TWA URL-bar check) — code-level only, see `docs/projects/07_PLAY_STORE_TWA.md` §5. Sprint 9.2 (Bubblewrap compile, Play Console submission) still blocked on remaining Google Play Console verification steps, not DUNS — both prior blockers (PROJ-67 keystore, PROJ-68 Stripe/TWA gating) are resolved.
 
 
 ## ⏸️ Paused (Not in this cycle)

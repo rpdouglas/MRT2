@@ -7,7 +7,8 @@ import { EncryptionProvider } from './contexts/EncryptionContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome'; 
-import Links from './pages/Links'; 
+import Links from './pages/Links';
+import DeleteAccount from './pages/DeleteAccount';
 import Dashboard from './pages/Dashboard';
 import DebugTools from './pages/DebugTools';
 import Journal from './pages/Journal';
@@ -76,6 +77,7 @@ export default function App() {
                         <Route path="/" element={<Welcome />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/links" element={<Links />} />
+                        <Route path="/delete-account" element={<DeleteAccount />} />
                         
                         {/* PROTECTED ROUTES */}
                         <Route path="/dashboard" element={<PrivateRoute>

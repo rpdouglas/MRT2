@@ -1,6 +1,6 @@
 # 📁 Project PROJ-07: Play Store TWA
 
-**Status:** ⚪ Not Started (Sprint 9.1 scoped, not yet started — see 2026-07-18 governance audit; Sprint 9.2 blocked on Google Play Console verification, DUNS received)
+**Status:** 🟡 In Progress — Sprint 9.1 implemented and code-verified 2026-07-19 (Epics 1-3; see §4/§5). Sprint 9.2 still blocked on Google Play Console verification steps (DUNS received).
 **Primary Persona:** All (David, Ned, Maya, Walt, Lisa)
 **Objective:** Package the My Recovery Toolkit (MRT) Progressive Web App into an Android package (AAB/APK) using Google Bubblewrap (TWA) and resolve all Google Play Store compliance and mobile UX requirements.
 
@@ -55,25 +55,19 @@ gantt
     Epic 4: TWA Build & Submission  :milestone, ep4, 2026-07-24, 5d
 ```
 
-### 🏃 Sprint 9.1: Pre-Submission & PWA Optimizations (UNBLOCKED)
+### 🏃 Sprint 9.1: Pre-Submission & PWA Optimizations — ✅ Implemented 2026-07-19
 
-#### Epic 1: PWA Manifest Hardening
-*   Update [vite.config.ts](file:///workspaces/MRT2/vite.config.ts) to define full installability properties.
-*   Properties to add:
-    *   `display: 'standalone'`
-    *   `start_url: '/'`
-    *   `background_color: '#f8fafc'`
-    *   `id: 'ca.myrecoverytoolkit.app'`
-    *   `orientation: 'portrait'`
+#### Epic 1: PWA Manifest Hardening — ✅ Done
+*   `vite.config.ts`'s `VitePWA` manifest now includes `display: 'standalone'`, `start_url: '/'`, `background_color: '#f8fafc'`, `id: 'ca.myrecoverytoolkit.app'`, `orientation: 'portrait'`. Confirmed via build output: `manifest.webmanifest` grew from 0.50 kB to 0.56 kB.
 
-#### Epic 2: Mobile UX & Native Overrides
-*   Prevent browser "pull-to-refresh" gestures globally (which resets `sessionStorage` PIN caches) by adding `overscroll-behavior-y: contain` to `body` in `src/index.css`.
-*   Disable browser text-selection highlights on interactive components (`user-select: none`).
-*   Verify and resize all touch targets (like color swatches in [Profile.tsx](file:///workspaces/MRT2/src/pages/Profile.tsx)) to satisfy the minimum `44px` (design system) / `48px` (Android accessibility) floor.
+#### Epic 2: Mobile UX & Native Overrides — ✅ Done
+*   `overscroll-behavior-y: contain` added to `body` in `src/index.css`.
+*   `user-select: none` + `-webkit-tap-highlight-color: transparent` added, scoped to `button`, `a`, `[role="button"]` — deliberately excludes text inputs/textareas, which still need normal text selection.
+*   Touch targets: the Profile.tsx hero-color swatches this Epic originally flagged were already fixed to `h-11 w-11` (44px) by PROJ-58 — confirmed still in place, not re-broken. No broader touch-target regression found during this pass.
 
-#### Epic 3: Google Play Policy Compliance
-*   **UI Footers:** Add clickable links to the Login and Profile screens referencing the hosted privacy policy and terms.
-*   **Web Deletion Link:** Implement an interactive `/delete-account` web route. When visited, it should prompt the user for their email and password, authenticate, and call the existing account deletion logic (wiping Firestore and Auth records) client-side.
+#### Epic 3: Google Play Policy Compliance — ✅ Done
+*   **UI Footers:** Privacy Policy / Terms of Service links added to `Login.tsx` (below the Google sign-in button) and `Profile.tsx` (General tab, below the "View User Guide" card) — both link to the already-published `docs-site` pages (`https://rpdouglas.github.io/MRT2/privacy` / `/tos`), the same GitHub Pages base PROJ-17's changelog link already established, rather than duplicating the legal text into a new static file.
+*   **Web Deletion Link:** New public route `/delete-account` (`src/pages/DeleteAccount.tsx`) — prompts for email/password or Google sign-in, authenticates fresh (distinct from `AccountDeletionModal.tsx`'s re-auth of an *already active* session, since a visitor here may have no session on this browser/device at all), shows an explicit confirmation step, then runs `executeTotalAccountAnnihilation()` (Firestore shred) before `deleteAccount()` (Auth deletion) — same order and same underlying functions `AccountDeletionModal.tsx` already uses, not a parallel deletion implementation.
 
 ---
 
@@ -92,6 +86,6 @@ gantt
 
 ## 5. QA & Verification 🧪
 
-*   **[ ] Unit Tests:** Write tests for the `/delete-account` route to ensure it runs authentication checks and triggers profile deletions without exceptions.
-*   **[ ] The Subway Test (Offline Resilience):** Load the app in Airplane mode. Verify the service worker serves static pages and routes cleanly, and the app warns of offline mode without crashing or hanging.
-*   **[ ] TWA Verification:** Build the TWA shell locally. When running in the Android Emulator, verify that the browser URL bar is hidden, indicating that the local `assetlinks.json` verification was successful.
+*   **[x] Unit Tests (2026-07-19):** `src/pages/__tests__/DeleteAccount.test.tsx` (5 tests) — sign-in form shown before confirmation; advances to confirm step on successful login; specific error message on wrong-password without proceeding; `executeTotalAccountAnnihilation()` confirmed called before `deleteAccount()` (assertion on `invocationCallOrder`, not just "both were called"); Google sign-in path calls `loginWithGoogle`. Full suite: 464/464 passing, `npm run check` clean (lint, 31/31 spec-quality, build).
+*   **[ ] The Subway Test (Offline Resilience):** Not performed — needs a real device/emulator in Airplane mode; not exercisable in this sandboxed environment.
+*   **[ ] TWA Verification:** Not performed — needs an actual built TWA shell (Sprint 9.2, not yet reached) to confirm the manifest/CSS changes produce a hidden URL bar in practice. Everything in this QA section up to this point is code-level verification (tests, build output, `tsc`), not a live-device confirmation.

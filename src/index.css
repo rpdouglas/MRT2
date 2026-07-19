@@ -5,10 +5,23 @@
 @layer base {
   body {
     @apply text-slate-800 antialiased;
+    /* Prevents browser pull-to-refresh, which would otherwise wipe the
+       sessionStorage-cached PIN/pepper mid-session inside the installed TWA. */
+    overscroll-behavior-y: contain;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold text-blue-900;
+  }
+
+  /* Native-app feel inside the TWA: no browser text-selection highlight or
+     tap-highlight flash on buttons/links, since selecting UI chrome text
+     reveals the web-wrapper nature of the shell. Inputs/textareas are
+     explicitly excluded — users still need to select their own typed text. */
+  button, a, [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
