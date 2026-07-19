@@ -110,7 +110,8 @@ This pattern is identical for all three environments (`FIREBASE_SERVICE_ACCOUNT_
 The actual build failure that surfaced this incident (`Error: In non-interactive mode but have no value for the secret: VAULT_PEPPER`) was a separate, unrelated PROJ-65 rollout gap — `functions/src/index.ts`'s `defineSecret("VAULT_PEPPER")` (line 30) had no corresponding value ever set in Secret Manager for `mrt2-app-prod`. Fixed:
 * Generated a random 256-bit value via `openssl rand -base64 32`, piped directly into `firebase functions:secrets:set VAULT_PEPPER --data-file=- --project=mrt2-app-prod` — never written to disk or printed anywhere.
 * Found and fixed a second gap along the way: the new secret had zero IAM bindings, which would have failed at runtime even after a successful deploy. Granted `roles/secretmanager.secretAccessor` to `405528797784-compute@developer.gserviceaccount.com`, matching the already-working binding on `GEMINI_API_KEY`.
-* **Not done:** `mrt2-app-dev` has zero secrets set and `mrt2-app-uat` doesn't even have the Secret Manager API enabled. Neither is currently blocking anything (only `main`/prod deploy was attempted), but both will hit the identical `VAULT_PEPPER` failure the next time either environment deploys Cloud Functions.
+* **`mrt2-app-dev` — done 2026-07-19:** `VAULT_PEPPER` set with the matching IAM binding (`roles/secretmanager.secretAccessor` on `1040431613138-compute@developer.gserviceaccount.com`), same pattern as prod.
+* **`mrt2-app-uat` — still not done:** doesn't even have the Secret Manager API enabled yet. Not currently blocking anything (no uat deploy has been attempted), but will hit the identical `VAULT_PEPPER` failure the first time it does.
 
 ### QA & Verification — Incident 2
 

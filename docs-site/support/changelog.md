@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.16] - 2026-07-19
+### 🛠️ Signing Key & Secrets Hygiene (Internal)
+- **Security [PROJ-67]:** Rotated the Android app-signing keystore after discovering it was tracked in git history; new keystore stored in Google Secret Manager, old one purged from all commits and force-pushed. Separately found and fixed a CI logging gap in `deploy.yml` that was leaking the production Firebase Admin SDK service account key into every deploy log in plaintext — rotated the leaked key, disabled the old one, and fixed the workflow to mask derived secrets and stop broadcasting them into every step's environment. Also closed a `PROJ-65` rollout gap (`VAULT_PEPPER` was never set in Secret Manager for prod or dev, breaking Cloud Functions deploys). No user-facing behavior changed.
+
 ## [v1.8.15] - 2026-07-16
 ### 🛠️ AI Insights Reliability Hotfix (Internal)
 - **Reliability [PROJ-54]:** Fixed the Journal Analysis Wizard's "Consulting the Compass" flow hanging indefinitely on failure. `generateAIInsights` was defaulting Deep Pattern, Comparative, System Health, Workbook, and ROSC analyses to a Gemini model with zero free-tier quota, causing every call to fail instantly with a 429; the client's native `alert()` calls in the same error path could then get suppressed in installed-PWA contexts, leaving the spinner stuck even after the server had already responded. Switched the default model to `gemini-2.5-flash` and replaced `alert()` with `toast.error()` for reliable error surfacing.
