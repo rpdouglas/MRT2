@@ -25,6 +25,6 @@
 ### 📤 REQUIRED OUTPUT FORMAT
 1. **Root Cause Analysis:** One sentence identifying exactly why the error occurred.
 2. **Diff Plan:** Show exact removals and additions.
-3. **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to apply the patch. 
+3. **Surgical Fix:** Provide a **Python script** (`scripts/fix_error.py`) using raw strings (`r"""`) to apply the patch.
     * **CRITICAL:** Use `.replace(old_block, new_block)` for targeted patching rather than overwriting the entire file. Use `FENCE` protection for markdown.
 4. **Verification:** Specific command to run (e.g., `npm run check`).

@@ -27,7 +27,7 @@
 **Architectural Decision:** We will NOT create new collections. We will use a **"Virtual Module"** approach (identical to Vitality). Tools will save to the `journals` collection.
 
 **Firestore Collections Impacted:**
-* `journals`: 
+* `journals`:
   * `content`: Encrypted stringified JSON.
   * `tags`: e.g., `["SMART Tool", "CBA"]` or `["SMART Tool", "ABC"]`.
   * `moodScore`: Defaults to 5 (or user selected).

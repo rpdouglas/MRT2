@@ -14,7 +14,7 @@
 
 ## 2. Security & Zero-Knowledge Audit 🛡️
 * [x] **Data Sensitivity:** Critical. This touches every single decrypted thought a user has logged.
-* [x] **Encryption Strategy:** Data is fetched as `ciphertext` from Firestore. It MUST be decrypted strictly in browser memory. 
+* [x] **Encryption Strategy:** Data is fetched as `ciphertext` from Firestore. It MUST be decrypted strictly in browser memory.
 * [x] **File Generation:** Files (JSON/PDF) must be compiled using Blob/ArrayBuffer entirely client-side. The file must trigger a direct `<a>` download. No third-party PDF-generation APIs can be used.
 
 ---

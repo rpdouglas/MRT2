@@ -34,7 +34,7 @@ export const generateAIInsights = onCall({
     const userDoc = await db.collection("users").doc(uid).get();
     const userData = userDoc.data() || {};
     const userTier = userData.tier || "free";
-    
+
     // Server-side limit validation for Free Tier
     if (userTier === "free") {
         const limits = userData.usage_limits || {};
@@ -102,7 +102,7 @@ const app = firebaseConfig.apiKey ? initializeApp(firebaseConfig) : undefined;
 export const auth = app ? getAuth(app) : undefined;
 
 // Enable persistent multi-tab local cache
-export const db = app 
+export const db = app
   ? initializeFirestore(app, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
@@ -144,13 +144,13 @@ export async function decrypt(encryptedPackage: string): Promise<string> {
     return new TextDecoder().decode(decrypted);
   } catch (error) {
     console.error("Decryption failed:", error);
-    
+
     // Capture anonymized metric in PostHog
     posthog.capture("vault_decryption_failed", {
         error_name: error instanceof Error ? error.name : "UnknownError",
         error_message: error instanceof Error ? error.message : "unknown"
     });
-    
+
     throw error;
   }
 }

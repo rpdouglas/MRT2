@@ -12,7 +12,7 @@ The system segregates tasks into three actionability-based lanes (redesigned in 
 2. **Later:** All pending tasks where `dueDate > startOfDay(today)`. Sorted by `dueDate` ascending. AI tasks route here when `dueDate > today`. No badge.
 3. **Log:** All tasks where `status === 'completed'` (one-time tasks), plus any recurring task whose `lastCompletedAt` is today. Grouped by Year/Month. No badge.
 
-**Action Plan tab removed (PROJ-47):** AI tasks (`source === 'ai'`) no longer have a dedicated tab. They route by `dueDate` alongside manual tasks. The purple sparkle icon and AI Context Card (PROJ-46) continue to visually distinguish them. 
+**Action Plan tab removed (PROJ-47):** AI tasks (`source === 'ai'`) no longer have a dedicated tab. They route by `dueDate` alongside manual tasks. The purple sparkle icon and AI Context Card (PROJ-46) continue to visually distinguish them.
 
 ## 3. Data Structure
 **Collection:** `tasks`

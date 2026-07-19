@@ -19,8 +19,8 @@ The log handles polymorphic data types with rich, AI-extracted arrays depending 
 | `suggested_actions` | Array | List of 3 recommended habits |
 
 ## 2. UI Architecture & Navigation
-* **Collapsible Timeline:** To prevent cognitive overload, insights are passed through `groupItemsByYearAndMonth` and rendered as a grouped timeline. 
-* **Accordion Rows:** Each insight is wrapped in a `@headlessui/react` `<Disclosure>`. The collapsed header displays the Date, Scope Context, and Risk/Trajectory badges. 
+* **Collapsible Timeline:** To prevent cognitive overload, insights are passed through `groupItemsByYearAndMonth` and rendered as a grouped timeline.
+* **Accordion Rows:** Each insight is wrapped in a `@headlessui/react` `<Disclosure>`. The collapsed header displays the Date, Scope Context, and Risk/Trajectory badges.
 * **Bento Grid Panels:** Expanding the accordion reveals the high-density "Bento Grid" (Strengths, Risks, Key Themes, Hidden Links) using vibrant background colors (`bg-purple-50`, `bg-rose-50`) aligned with the "Vibrant Momentum" design system.
 
 ## 3. Action Integration

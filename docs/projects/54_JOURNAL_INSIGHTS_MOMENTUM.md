@@ -7,10 +7,10 @@
 ---
 
 ## 1. The Executive Summary
-**User Story:** 
+**User Story:**
 * **As** Walt, I want to review my recovery metrics, emotional velocity, and recurring themes in a calming, narrative-focused interface so that I can gain deep reflection and long-term insight without sensory overload.
 
-**Competitive Gap:** 
+**Competitive Gap:**
 Unlike traditional recovery apps that treat data as dry, clinical dashboards, this redesign shifts the insights tab to an atmospheric, reflection-first "Glass and Glow" interface (using the Walt persona rules). The interface itself responds to the emotional weight of recovery, utilizing ambient motion and semantic colors.
 
 ---
@@ -46,7 +46,7 @@ Unlike traditional recovery apps that treat data as dry, clinical dashboards, th
 ### Phase 2: UI/UX & Gamification
 * **Component 1: GlassCard Wrappers:** Replace the existing `bg-white border-indigo-50` cards with the new Momentum Kinetic v3.0 `GlassCard` component. Use the "Insights" module design tokens (Analytical gradients: `#E879F9` to `#EC4899`, dark background `#1A0528`).
 * **Component 2: Typography Upgrade:** Apply `JetBrains Mono` for all data figures (Top Stats, Chart Axes, Word Frequencies) and `DM Sans` for prose, labels, and the word cloud text.
-* **Component 3: Chart Styling (Kinetic Rules):** 
+* **Component 3: Chart Styling (Kinetic Rules):**
   * Update Recharts `AreaChart` (Emotional Velocity) to use smooth curves, translucent fills dropping from 15% opacity to 0%, and replace circular dots with horizontal ticks (if applicable).
   * Reduce chart grid line opacity to max 8%.
   * Replace the basic "Weekly Rhythm" bars with the signature Momentum Kinetic `PillBar` component or styled Recharts bars that match the pill aesthetic.

@@ -7,7 +7,7 @@
 ---
 
 ## 1. The Executive Summary
-**User Story:** 
+**User Story:**
 * **As** the Lead Architect, I want comprehensive automated tests for all missing utility functions and boundary components so that I can confidently deploy rapid updates (like the React 19 refactor) without breaking the UI or corrupting the Zero-Knowledge vault during PIN rotations.
 **Competitive Gap:** Indie wellness apps frequently corrupt user data during major framework updates. MRT relies on an enterprise-grade automated safety net to ensure mathematical privacy and gamification accuracy are never compromised.
 
@@ -38,7 +38,7 @@
 
 ### Phase 1: Pure Functions (Milestones & Grouping)
 * **Goal:** Verify the data parsing that drives the UI.
-* **Target 1 (`milestones.test.ts`):** 
+* **Target 1 (`milestones.test.ts`):**
   * Test: `getMilestone(totalDays)` returns the correct milestone number (e.g., 30, 60, 365) and handles non-milestone days (e.g., 42 returns null).
   * Test: `getMilestoneLabel` correctly formats days vs. years.
 * **Target 2 (`grouping.test.ts`):**

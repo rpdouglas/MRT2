@@ -7,7 +7,7 @@
 ---
 
 ## 1. The Executive Summary
-**User Story:** 
+**User Story:**
 * **As** any MRT user (from David in acute crisis to Lisa supervising sponsees),
 * **I want to** install My Recovery Toolkit directly from the Google Play Store,
 * **so that** I can launch the app instantly from my app drawer without browser chrome, access tools offline, and receive milestone notifications seamlessly.

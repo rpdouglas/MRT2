@@ -15,7 +15,7 @@
 ---
 
 ## 2. Security & Zero-Knowledge Audit 🛡️
-* [x] **Data Sensitivity:** High. The component renders decrypted ROSC scores. 
+* [x] **Data Sensitivity:** High. The component renders decrypted ROSC scores.
 * [x] **Encryption Strategy:** UNCHANGED. This is strictly a Presentation Layer update. The underlying Firestore structure (`ROSCScore`, `trajectory`, `encryptedAIContext`) and the local decryption boundary remain completely unaffected.
 * [x] **Key Rotation:** Not impacted by this presentation update.
 
@@ -37,7 +37,7 @@
 ## 4. Implementation Phases 🏗️
 
 ### Phase 1: Component Porting & Tailwind Conversion
-* Create `src/components/insights/ROSCPillCapsules.tsx`. 
+* Create `src/components/insights/ROSCPillCapsules.tsx`.
 * Translate the inline styles from the `pillcapsule_sample.jsx` mockup into idiomatic Tailwind CSS classes (keeping inline styles only for dynamic attributes like animation delays or specific hex gradients).
 * Port the `useSegReveal` hook to handle the staggered 1-10 segment fill animation.
 * Build the Pill Segments: Convert the 10 discrete capsule segments into a flex container. Implement the visual diffing between the `current` score (gradient + glow) and the `previous` score (subtle fill).

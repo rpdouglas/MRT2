@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary
 
-This report evaluates the readiness of the My Recovery Toolkit (MRT) codebase for its first submission to the Google Play Store. Because MRT is designed as an offline-first Progressive Web App (PWA) built on Vite, React, and Firebase, the most efficient and native-aligned packaging strategy is deploying a **Trusted Web Activity (TWA)** using Google’s official **Bubblewrap** toolchain. 
+This report evaluates the readiness of the My Recovery Toolkit (MRT) codebase for its first submission to the Google Play Store. Because MRT is designed as an offline-first Progressive Web App (PWA) built on Vite, React, and Firebase, the most efficient and native-aligned packaging strategy is deploying a **Trusted Web Activity (TWA)** using Google’s official **Bubblewrap** toolchain.
 
 Our audit has identified **5 primary gaps** that must be resolved prior to submission to prevent app rejection, compiler errors, or a poor user experience (such as the browser URL bar remaining visible to users).
 
@@ -85,7 +85,7 @@ The project contains [assetlinks.json](file:///workspaces/MRT2/public/.well-know
 *   **SHA-256 Certificate Fingerprint:** `EA:86:AB:FE:7E:34:04:A1:00:85:57:F9:8F:7E:5D:82:5C:BA:45:91:7C:27:55:37:28:3D:4D:E2:4D:C8:D9:97`
 
 ### Critical Gap: The Google Play App Signing Trap
-When building the app locally using `bubblewrap` and the local keystore `mrt-release.keystore`, the generated package will match the fingerprint in [assetlinks.json](file:///workspaces/MRT2/public/.well-known/assetlinks.json). 
+When building the app locally using `bubblewrap` and the local keystore `mrt-release.keystore`, the generated package will match the fingerprint in [assetlinks.json](file:///workspaces/MRT2/public/.well-known/assetlinks.json).
 
 However, when submitting to the Play Store:
 1.  **Google Play App Signing** is mandatory for new apps. Google strips the local developer signature and replaces it with a Google-managed production signing key.
@@ -125,10 +125,10 @@ Google Play’s **Data Safety & Account Deletion Policy** dictates that if your 
 ### Gap B: Privacy Policy & Terms Link in UI
 Google requires the Privacy Policy to be accessible both on the Play Store listing page and **from within the app's user interface**.
 *   **Current Status:** [PRIVACY_POLICY.md](file:///workspaces/MRT2/docs/legal/PRIVACY_POLICY.md) and [TERMS_OF_SERVICE.md](file:///workspaces/MRT2/docs/legal/TERMS_OF_SERVICE.md) are saved in the project files but are not exposed in the React application.
-*   **Remediation:** 
+*   **Remediation:**
     1. Place copies of these files in `public/legal/privacy.html` and `public/legal/terms.html` during the build or host them dynamically.
     2. Add text links in [Login.tsx](file:///workspaces/MRT2/src/pages/Login.tsx) below the "Privacy Guarantee" and in the footer of the General section in [Profile.tsx](file:///workspaces/MRT2/src/pages/Profile.tsx).
-    
+
     *Example update in [Login.tsx](file:///workspaces/MRT2/src/pages/Login.tsx) footer area:*
     ```tsx
     <div className="mt-8 text-center text-xs text-slate-500 space-x-4">
@@ -166,8 +166,8 @@ When swiping downwards near the top of the viewport on Android, Chrome's native 
 Accidental double-taps on navigation items or action buttons (such as check-in triggers or the SOS button) can highlight them with the browser’s blue selection mask, exposing the web-wrapper nature of the TWA.
 *   **Remediation:** Apply user-select styling to all interactive components in your global CSS:
     ```css
-    button, 
-    a, 
+    button,
+    a,
     [role="button"],
     .nav-item {
       -webkit-user-select: none;

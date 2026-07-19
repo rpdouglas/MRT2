@@ -8,7 +8,7 @@
 ---
 
 ### 📥 INSTRUCTION: SYSTEM INITIALIZATION (v1.1)
-You have just received a massive text file containing the complete source code and documentation of **My Recovery Toolkit (MRT)**[cite: 1, 2]. The files are separated by `<file path="...">` tags[cite: 1, 2]. 
+You have just received a massive text file containing the complete source code and documentation of **My Recovery Toolkit (MRT)**[cite: 1, 2]. The files are separated by `<file path="...">` tags[cite: 1, 2].
 
 You must deeply ingest this entire document[cite: 2]. Build a strict, relational mental map of these four pillars[cite: 2]:
 

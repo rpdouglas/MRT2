@@ -35,7 +35,7 @@ Standard form inputs that compile into markdown strings and save as Journal entr
 A clinical-grade somatic anchor combining visual, haptic, and hardware APIs.
 * **State Management:** Bypasses React's standard `setState` rendering batching for the core timer. Uses mutable `useRef` hooks (`timeLeftRef`, `currentPhaseIndex`) to ensure the interval perfectly matches real-world seconds without drifting.
 * **Visuals (Organic Halo):** Uses a multi-layered CSS `border-radius` morphing animation linked to dynamic `transitionDuration` properties to emulate the expansion of human lungs.
-* **Haptic Engine:** Triggers `navigator.vibrate()` on phase boundaries. 
+* **Haptic Engine:** Triggers `navigator.vibrate()` on phase boundaries.
     * `Inhale/Exhale`: Single distinct pulse (`[40]`).
     * `Hold`: Gentle double-tap (`[20, 50, 20]`).
 * **Hardware Safeguard:** Utilizes the `useWakeLock` hook (`navigator.wakeLock.request('screen')`) to strictly prevent the device screen from sleeping or dimming while the engine is running.

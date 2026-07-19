@@ -30,7 +30,7 @@
 * If a user has a massive database, the UI must show "Encrypting batch 4 of 200... Please keep app open."
 
 ### Phase 3: Transaction Safety (Rollbacks)
-* If the app closes midway through a rotation, the database is in a split state (some docs use Key A, some use Key B). 
+* If the app closes midway through a rotation, the database is in a split state (some docs use Key A, some use Key B).
 * **Migration Flag:** Add a `keyVersion` field to documents during rotation. If a failure occurs, the app must detect the split state on next login and resume the chunking process automatically.
 
 ---

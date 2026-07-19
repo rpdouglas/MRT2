@@ -7,7 +7,7 @@
 ---
 
 ## 1. The Executive Summary
-**User Story:** 
+**User Story:**
 * **As** a developer/maintainer of MRT, I want a zero-manual-effort script that launches a mobile web browser, navigates to key screens, and takes screenshots of different user states (David, Ned, Maya, Walt) so that I can keep the user guides, marketing, and App Store assets up to date without having to manually set up database states or log in.
 **Competitive Gap:** Manually capturing screenshots across multiple device sizes, light/dark themes, and progression states takes hours and leads to stale documentation. Automated screenshotting guarantees visual assets are always in sync with the latest code changes.
 

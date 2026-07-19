@@ -177,9 +177,9 @@ export interface ReadingPrompt {
 
 The `twelve-step-ca.ts` system prompt example:
 ```
-You are writing a daily recovery reading for someone in a CA (Cocaine Anonymous) inspired 
-12-Step programme. The reading should be grounded in the 12-Step principles of powerlessness, 
-Higher Power, inventory, making amends, and service — applied specifically to stimulant and 
+You are writing a daily recovery reading for someone in a CA (Cocaine Anonymous) inspired
+12-Step programme. The reading should be grounded in the 12-Step principles of powerlessness,
+Higher Power, inventory, making amends, and service — applied specifically to stimulant and
 cocaine addiction recovery.
 
 RULES:

@@ -190,13 +190,13 @@ src/components/tools/
     StepCoachingCard.tsx          ← Psychoeducation card per step (new)
     EmotionIntensitySelector.tsx  ← Emotion + % slider for Thought Record (new)
     CognitiveDistortionPicker.tsx ← Multi-select chip grid, 12 distortion types (new)
-    
+
     // Existing tools — replace current open-form with guided flow:
     tools/ABCTool.tsx             ← Guided ABCDE 5-step flow (replace)
     tools/CBATool.tsx             ← Guided CBA with quadrant-by-quadrant reveal (replace)
     tools/DENTSTool.tsx           ← Guided DENTS with scenario pre-planning mode (replace)
     tools/FiveQuestionsTool.tsx   ← Guided self-enquiry flow (replace)
-    
+
     // New tools:
     tools/ThoughtRecordTool.tsx   ← New 7-column guided thought record (new)
 ```

@@ -9,7 +9,7 @@
 2. App generates random 16-byte `Salt`.
 3. App derives `Key` using PBKDF2 (100k iterations).
 4. App creates `Verifier` = Hash(PIN + Salt).
-5. App sends `Salt` and `Verifier` to Firestore. 
+5. App sends `Salt` and `Verifier` to Firestore.
 6. **Session Caching:** The user's PIN is temporarily cached in the browser's `sessionStorage`. This prevents the user from having to re-enter their PIN every time they navigate between pages, while ensuring the PIN is automatically wiped by the OS the moment the browser tab is closed.
 
 ### B. Storage (Writing Data)
@@ -43,7 +43,7 @@ When a user asks for AI Analysis:
 ## 4. Third-Party Data (The Service Model)
 * **Context:** Users like "Lisa" store data about *other people* (Sponsees).
 * **Rule:** This is a **Digital Rolodex**, not a Social Network.
-* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**. 
+* **Mechanism:** * "Sponsee" data is encrypted with **Lisa's Key**.
     * The actual Sponsee (if they use the app) has no access to Lisa's notes about them.
     * **Zero-Knowledge applies:** If Lisa loses her PIN, the names and notes of her sponsees are lost.
 
@@ -68,7 +68,7 @@ If the user forgot their PIN, rotation is mathematically impossible.
 
 
 ## Key Rotation (Zero-Knowledge)
-PIN rotation is an asynchronous, chunked process running in 50-document batches using Firestore cursors. 
+PIN rotation is an asynchronous, chunked process running in 50-document batches using Firestore cursors.
 
 **Fail-Safe Rollback:**
 If a network drop occurs mid-rotation, the ```try/catch``` block successfully ensures the ```globalKey``` strictly reverts to the ```oldPin``` state in memory, preventing permanent data lockouts. The old and new AES-GCM keys are rotated sequentially within the chunking loop, never leaving the localized ```lib/rotation.ts``` scope.

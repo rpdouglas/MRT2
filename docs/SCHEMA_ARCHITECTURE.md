@@ -8,7 +8,7 @@
 ```mermaid
 graph TD
     root[🔥 Firestore Root]
-    
+
     root --> users[📂 users]
     users --> userDoc[📄 User Profile]
     userDoc --> workbook_answers[📂 workbook_answers]
@@ -17,7 +17,7 @@ graph TD
     userDoc --> checkout_sessions[💳 checkout_sessions]
     userDoc --> subscriptions[💳 subscriptions]
     userDoc --> payments[💳 payments]
-    
+
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
     root --> insights[📂 insights]

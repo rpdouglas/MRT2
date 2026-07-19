@@ -75,7 +75,7 @@ graph TD
     ```typescript
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
-    export const db = app 
+    export const db = app
       ? initializeFirestore(app, {
           localCache: persistentLocalCache({
             tabManager: persistentMultipleTabManager()

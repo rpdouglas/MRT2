@@ -17,7 +17,7 @@
     * *Mobile:* Tapping opens a clean modal with the Bio image stacked above the Persona's YouTube Video.
 
 ### B. The Auth Consolidation
-* A single, clean tabbed glassmorphism card in `Login.tsx`. 
+* A single, clean tabbed glassmorphism card in `Login.tsx`.
 * Users can cleanly toggle between "Sign In" and "Create Account".
 * The "Create Account" tab dynamically reveals "Confirm Password" and "Privacy Guarantee" trust badges.
 

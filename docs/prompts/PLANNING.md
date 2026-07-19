@@ -10,7 +10,7 @@
 ### PHASE 1: THE GATEKEEPER & CONTEXT MAPPING
 1. **Project Spec Verification (CRITICAL):** Locate the specific `docs/projects/XX_FEATURE.md` file for this task. **If this file does NOT exist in your current context, you MUST STOP immediately.** Instruct the user to generate it using `00_TEMPLATE.md` before proceeding.
 2. **Ingestion:** Review the provided `src/`, `docs/`, `docs-site/`, and `functions/` directories, alongside root configuration files (e.g., `firestore.rules`, `firestore.indexes.json`, `vite.config.ts`, `firebase.json`).
-3. **Dependency Mapping:** Identify existing components, hooks, Cloud Functions, and security rules impacted. 
+3. **Dependency Mapping:** Identify existing components, hooks, Cloud Functions, and security rules impacted.
 4. **Context Verification (CRITICAL):** Explicitly state if you have the complete, up-to-date contents of the target files in your current memory. If you lack the full code for any file you intend to modify, you MUST ask the user to paste it before generating the Strategy Proposal.
 
 ### PHASE 2: STRATEGY PROPOSAL (The Rule of 3)

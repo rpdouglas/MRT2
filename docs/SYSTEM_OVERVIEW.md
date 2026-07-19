@@ -1,13 +1,13 @@
 # 🛡️ My Recovery Toolkit (MRT) — Living System Overview
 
 > [!NOTE]
-> This is a living document outlining MRT's architecture, security boundaries, database schemas, contexts, hooks, pages, components, and design system. 
+> This is a living document outlining MRT's architecture, security boundaries, database schemas, contexts, hooks, pages, components, and design system.
 > Keep this document updated in **Phase 4 (Crystallization)** of the Recursive Build Protocol whenever files are modified, refactored, or added.
 
 ---
 
 ## 1. Executive Summary & Mission
-My Recovery Toolkit (MRT) is a high-performance, mobile-first **Zero-Knowledge** digital companion designed for individuals navigating Twelve-Step, CBT, DBT, Mindfulness, and Buddhist-inspired recovery journeys. 
+My Recovery Toolkit (MRT) is a high-performance, mobile-first **Zero-Knowledge** digital companion designed for individuals navigating Twelve-Step, CBT, DBT, Mindfulness, and Buddhist-inspired recovery journeys.
 
 ### Core Product Philosophy
 *   **"We cannot leak what we cannot read":** Sensitive personal disclosures are encrypted client-side and never exist in plaintext outside the user's device.
@@ -78,7 +78,7 @@ graph TD
 *   **Vault Locking:** When locked, the `globalKey` in memory is set to `null` and `sessionStorage` is cleared.
 
 ### Key Lifecycle Operations
-*   **PIN Rotation (`src/lib/rotation.ts`):** 
+*   **PIN Rotation (`src/lib/rotation.ts`):**
     1.  Downloads all encrypted user data.
     2.  Decrypts data using the old key.
     3.  Derives a new key using the new PIN/Salt.
