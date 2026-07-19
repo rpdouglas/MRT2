@@ -1,6 +1,6 @@
 # 📁 Project 67: Signing Key & Secrets Hygiene
 
-**Status:** 🟡 In Progress — Phase 1 complete (2026-07-19): new keystore generated, uploaded to Google Secret Manager (`mrt2-app-prod`), and `assetlinks.json`'s fingerprint updated. Phase 2 (git history purge of the old keystore) is intentionally still pending — held for a separate explicit confirmation given its destructive, coordination-required nature. The old keystore is still tracked in git history as of this writing.
+**Status:** ✅ Shipped (2026-07-19) — new keystore generated and stored in Google Secret Manager (`mrt2-app-prod`), `assetlinks.json` updated, and the old compromised keystore purged from all git history via `git filter-repo` + force-push to `origin/main`. Verified: `git log --all --full-history -- mrt-release.keystore` returns zero results against both local and `origin/main`.
 **Primary Persona:** All (internal/architecture — no persona-specific UX; protects the integrity of every user's installed app)
 **Objective:** Rotate the compromised Android signing keystore, purge it from git history, and establish a secrets-manager-based storage pattern so no future signing credential is ever committed to the repository.
 
@@ -50,11 +50,12 @@ No Firestore schema changes. No application code changes. This project is entire
   Delete the locally-materialized file again once the build completes — it should exist on disk only for the duration of the `bubblewrap build` invocation, never persist between sessions.
 * Grant Secret Manager access only to the specific IAM principals (individuals or a dedicated release-engineering group) who actually run Play Store builds — not necessarily the same broader access level `GEMINI_API_KEY`/`VAULT_PEPPER` may already have, since this credential's blast radius (impersonating the published app to every installed user) is more severe than an API key's.
 
-### Phase 2: Purge the Old Keystore From Git History
-* **This step rewrites git history — coordinate with every active collaborator before running it. Anyone with an existing clone will need to re-clone or hard-reset after the rewrite, or their local history will silently diverge.**
-* Use `git filter-repo` (preferred over BFG per current maintainer guidance) to remove `mrt-release.keystore` from every commit in history.
-* Force-push the rewritten history to the remote — **do not run this without explicit, separate confirmation at execution time**, per this repo's guidance on destructive/hard-to-reverse operations.
-* Verify via `git log --all --full-history -- mrt-release.keystore` that no commit still references the file after the rewrite.
+### Phase 2: Purge the Old Keystore From Git History — ✅ Done 2026-07-19
+* A full mirror-clone backup was taken first (`git clone --mirror`) as a rollback safety net before any rewrite.
+* Used `git filter-repo --path mrt-release.keystore --invert-paths --force` to remove the file from all 3 commits that contained it. `filter-repo` auto-removed the `origin` remote as its own safety default; re-added afterward.
+* Force-pushed the rewritten history to `origin/main` with explicit, separate confirmation at execution time, per this repo's destructive-operation guidance. GitHub accepted the push (`main` moved from `0a34bc2` → `c25c90b`) — no branch protection blocked it.
+* Verified via `git log --all --full-history -- mrt-release.keystore` against both local and a fresh `git fetch origin main` — zero results either way.
+* **Caveat, not fully closed:** GitHub may retain the purged commits in its own caches for a period (old PR diff views, reflog, any existing forks) independent of this repo's own history. The credential itself is already rotated and non-functional (Phase 1), so this is a residual hygiene/exposure-surface concern, not a live security gap. If a fully guaranteed purge from GitHub's side matters, that requires a support request to GitHub directly — out of scope for what's achievable from the repo alone.
 
 ### Phase 3: Treat the Old Key as Compromised
 * Confirm the old keystore was never used to sign a production Play Store release (true as of this audit — PROJ-07 Sprint 9.2 hasn't run yet). If it had been, this phase would also require Google's key-reset process; since it hasn't, no further remediation beyond rotation is needed.
@@ -67,10 +68,10 @@ No Firestore schema changes. No application code changes. This project is entire
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Verification:** `git log --all --full-history -- mrt-release.keystore` returns zero results after the history rewrite.
-* [ ] **Verification:** `git ls-files | grep keystore` returns zero results in the current working tree (new keystore lives only in the secrets manager).
+* [x] **Verification (2026-07-19):** `git log --all --full-history -- mrt-release.keystore` returns zero results, checked against both local history and `origin/main` post-push.
+* [x] **Verification (2026-07-19):** `git ls-files | grep keystore` returns zero results in the current working tree (new keystore lives only in Secret Manager).
 * [x] **Verification (2026-07-19):** `keytool -list -v -keystore <new-keystore>` fingerprint matches the updated first entry in `assetlinks.json`.
-* [ ] **Verification:** Every active collaborator has confirmed their local clone is reconciled with the rewritten history (re-cloned or hard-reset) before any further pushes to the shared remote.
+* [ ] **Outstanding:** Confirm every other collaborator with an existing local clone (if any) has reconciled with the rewritten history (re-cloned or hard-reset) — this can't be verified from this session and needs manual follow-up if anyone else has cloned this repo.
 * [ ] **The Subway Test:** N/A — no runtime/offline behavior affected.
 * [ ] **The "Lost PIN" Test:** N/A — unrelated to the vault key system.
 
