@@ -39,6 +39,7 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv('VITE_STRIPE_PREMIUM_PRICE_ID', 'price_test123');
   mockUseAuth.mockReturnValue({ user: { uid: 'test-uid' }, userTier: 'free' });
 });
 
