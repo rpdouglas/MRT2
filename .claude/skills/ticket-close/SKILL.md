@@ -8,6 +8,19 @@ description: Drift detection and project board sync after completing a ticket or
 
 ## Drift Checklist
 
+### 0. User-visible classification (PROJ-69)
+Before anything else, decide: **did this ticket change anything an end user can see, feel, or experience?** State the answer explicitly in the drift report — don't skip this as implied by the other checks.
+
+**Do not use the ticket's own internal label/category as a proxy for this.** PROJ-69's own retroactive changelog scrub found five entries tagged `(Internal)` that actually described real user-facing fixes (a Dashboard streak bug, a Vitality confirmation toast, a Workbook-page crash, an AI flow hanging indefinitely, and an Android purchase-flow change) — "internal" described the engineering framing, not the user impact. Read what the ticket actually *did*, not what it was filed as.
+
+- **Not user-visible** (pure refactor, tech debt, CI/infra, dependency bump, test coverage) → state this explicitly in the report. Do not pass `--public-note` to `sync_ticket_docs.py`.
+- **User-visible** → draft the `--public-note` text inline in the drift report, for review before running the script:
+  - Plain language only — no `PROJ-` ID, no file/hook/component/Cloud Function names, no architecture or "why" rationale (that detail belongs in `--summary` and the spec, not here).
+  - One sentence per distinct user-facing change; skip anything that's implementation detail even if it was the bulk of the actual work.
+- **Hard rule, no exceptions:** a ticket involving a security incident, credential rotation, or vulnerability fix never gets a public changelog note — not even a softened one ("we improved our security posture"). If it has a genuine required end-user action, that's a direct-communication decision, not a changelog entry — flag it to the user rather than drafting one.
+
+If unsure whether something counts as user-visible, err toward drafting a note and asking rather than silently omitting it — the leak guard in `sync_ticket_docs.py` will catch internal detail if the note strays, but nothing catches a missed entry.
+
 ### 1. Schema drift
 Does `docs/SCHEMA_ARCHITECTURE.md` match every change in `src/lib/db.ts`?
 - New collections or subcollections present in Mermaid topology?
@@ -49,11 +62,16 @@ For every Firestore write introduced by the ticket:
 ---
 
 ## Project Board Updates
-The mechanical part of this (spec Status field, `ACTIVE_CYCLE.md` Resolved line, `ROADMAP.md` Recently Shipped line) is handled by the reusable script — don't hand-generate a one-off script for it:
+The mechanical part of this (spec Status field, `ACTIVE_CYCLE.md` Resolved line, `ROADMAP.md` Recently Shipped line, and — only for user-visible tickets per Check 0 — the public changelog entry) is handled by the reusable script — don't hand-generate a one-off script for it:
 ```
-python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line description of what shipped." --apply
+# Internal-only ticket:
+python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line internal description of what shipped." --apply
+
+# User-visible ticket — --public-note drafted per Check 0, --version chosen by judgment:
+python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line internal description of what shipped." \
+    --public-note "Plain-language description for end users." --version 1.9.0 --apply
 ```
-Run it without `--apply` first to preview. It deliberately does NOT touch `docs-site/support/changelog.md` (version-bump semantics need judgment) — state what to prepend there manually.
+Run it without `--apply` first to preview. `--summary` always feeds the internal record (spec/`ACTIVE_CYCLE`/`ROADMAP`) only; `--public-note` is the *only* thing that reaches `docs-site/support/changelog.md`, and only when passed. The script refuses to run if `--public-note` looks like it contains a ticket ID or file path, but it cannot judge tone or omission — that's Check 0's job.
 
 ---
 

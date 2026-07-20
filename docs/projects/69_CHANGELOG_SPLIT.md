@@ -1,6 +1,6 @@
 # 📁 Project 69: Changelog Split — Public/Internal Separation
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** All (internal/process — no primary end-user persona; David is the indirect beneficiary as the eventual reader via the PROJ-17 in-app toast)
 **Objective:** Stop publishing internal engineering detail — including live security-incident disclosures — to the public-facing `docs-site/support/changelog.md`, by classifying every ticket as user-visible or not at close time and only writing curated, plain-language entries to the public file.
 
