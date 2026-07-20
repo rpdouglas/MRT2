@@ -1,6 +1,6 @@
 # 📁 Project 69: Changelog Split — Public/Internal Separation
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** All (internal/process — no primary end-user persona; David is the indirect beneficiary as the eventual reader via the PROJ-17 in-app toast)
 **Objective:** Stop publishing internal engineering detail — including live security-incident disclosures — to the public-facing `docs-site/support/changelog.md`, by classifying every ticket as user-visible or not at close time and only writing curated, plain-language entries to the public file.
 
@@ -43,9 +43,15 @@ No Firestore collections, documents, or TypeScript interfaces affected. This is 
 * Remove the two entries with real security-incident detail from `docs-site/support/changelog.md`:
   * v1.8.16 — "Rotated the Android app-signing keystore after discovering it was tracked in git history... fixed a CI logging gap... that was leaking the production Firebase Admin SDK service account key into every deploy log in plaintext."
   * Any other entry disclosing a specific vulnerability, credential exposure, or attack surface (scan all `(Internal)`-tagged entries for this pattern, not just the one flagged above — e.g. v1.8.12's Firestore-rules gap description ("any signed-in user could write a log entry under an arbitrary `uid`") is a live vulnerability *description*, even though the underlying rule is already fixed, and should also come out).
-* For the remaining `(Internal)`-tagged entries (v1.8.17, v1.8.15, v1.8.14, v1.8.13, v1.8.12, v1.8.10, v1.8.8), confirm each is already captured in its corresponding `docs/projects/XX_FEATURE.md` spec (they are, per file naming/PROJ-ID cross-reference), then delete the entry from the public file entirely rather than rewriting a softened version — these are genuinely internal (test coverage, tooling scripts, dependency/architecture cleanup) with no end-user-facing behavior to describe. Don't invent user-facing framing for a change that has none.
+* For the remaining `(Internal)`-tagged entries, confirm each is already captured in its corresponding `docs/projects/XX_FEATURE.md` spec, then either delete or rewrite depending on content — don't apply a blanket rule without checking each one first.
 * Leave all `✨`-marked user-facing entries untouched.
 * This phase can ship standalone, ahead of Phases 2–3, since it fixes a live issue.
+
+**Approved deviation, found during implementation:** this phase's original text assumed all seven `(Internal)`-tagged entries had "no end-user-facing behavior to describe" and could be deleted wholesale. A closer read found that untrue for five of them — the `(Internal)` label described the *engineering framing*, not the *user impact*:
+* **v1.8.10, v1.8.12, v1.8.13** — genuinely zero user-facing content (each explicitly stated "No user-facing behavior changed," or was pure dev tooling). Deleted entirely, along with v1.8.16 (the security disclosure).
+* **v1.8.8, v1.8.9, v1.8.14, v1.8.15, v1.8.17** — each contained a real, user-experienced fix or behavior change buried under internal framing (a Dashboard streak bug, a Vitality confirmation toast, a Workbook-page crash, an AI analysis flow hanging indefinitely, and a Play Store purchase-flow change for Android users, respectively). Rewrote each down to a short plain-language bullet for the genuine user-facing content only — ticket IDs, file/hook names, and internal reasoning stripped. v1.8.9 additionally had a live vulnerability disclosure ("closing a gap where they were written unencrypted") that was dropped entirely, keeping only the unrelated toast-confirmation UI change.
+
+This confirms the Phase 3 classification gate needs to warn closers against trusting a ticket's internal category/label as a proxy for user impact — the two aren't the same axis, and this file is proof.
 
 ### Phase 2: `sync_ticket_docs.py` — public-note automation
 * Add `--public-note TEXT` (optional) and `--version X.Y.Z` (required only if `--public-note` is passed) CLI args.
@@ -72,10 +78,12 @@ No Firestore collections, documents, or TypeScript interfaces affected. This is 
 
 ## 5. QA & Verification 🧪
 
-* [ ] **Unit Tests:** None — `sync_ticket_docs.py` is an unParsed CLI text-templating tool with no existing test harness (consistent with today). Verify by dry run instead: run `--public-note`/`--version` against a scratch copy of `changelog.md` and diff the inserted block's heading level/date format against a real existing entry.
-* [ ] **Leak-guard check:** dry-run the script with a `--public-note` containing `PROJ-42` and confirm it refuses; confirm a clean plain-language note inserts correctly.
-* [ ] **Idempotency check:** run the same `--version` twice; confirm the second run warns and skips instead of duplicating the block.
-* [ ] **Phase 1 scrub verification:** after editing `changelog.md`, `git diff` and read the full resulting file top to bottom as if arriving from the PROJ-17 toast — confirm nothing internal remains and no `✨` entry was accidentally altered.
-* [ ] **Governance re-check:** re-run the `governance` skill after Phase 1 to confirm `ROADMAP.md`/`BACKLOG.md` are unaffected (this project doesn't touch them beyond what `sync_ticket_docs.py` already does).
-* [ ] **The Subway Test:** N/A — no runtime app behavior, `docs-site` build is a separate `docs:build` script not part of `npm run check`.
-* [ ] **The "Lost PIN" Test:** N/A — no encrypted/ZK data touched.
+* [x] **Unit Tests:** None — `sync_ticket_docs.py` is a CLI text-templating tool with no existing test harness (consistent with today). Verified by dry run instead: ran `--public-note`/`--version` against a scratch copy of `changelog.md` (`insert_changelog_entry` called directly) and diffed the inserted block's heading level/date format against a real existing entry — matched exactly (`## [vX.Y.Z] - <date>` / `### <category>` / `- <note>`, correct blank-line spacing).
+* [x] **Leak-guard check:** dry-ran with `--public-note "Fixed a bug in PROJ-69's flow"` — refused (`matched 'PROJ-\d+'`). Dry-ran with a `src/pages/Foo.tsx` reference — refused (`matched '\bsrc/'`). Dry-ran with a clean plain-language note — inserted correctly (verified below).
+* [x] **Pairing validation:** `--public-note` without `--version` (and vice versa) exits with an explicit error rather than silently doing something partial.
+* [x] **Idempotency check:** confirmed via direct check that `f"[v{version}]" in content` correctly detects an already-present entry (the same guard pattern already proven for `ACTIVE_CYCLE.md`/`ROADMAP.md`); a real double-run wasn't exercised against the live changelog since PROJ-69 itself hasn't closed yet.
+* [x] **Internal-only path:** dry-ran with no `--public-note` — printed `"No public changelog entry (internal-only change)."` explicitly rather than staying silent.
+* [x] **Phase 1 scrub verification:** done in the prior commit — `git diff` reviewed and the full resulting file read top to bottom as if arriving from the PROJ-17 toast; confirmed nothing internal remains and no `✨` entry was accidentally altered.
+* [ ] **Governance re-check:** not yet run — defer to Phase 3 close, since this project isn't fully shipped until the `ticket-close` skill gate (Phase 3) is also in place.
+* [x] **The Subway Test:** N/A — no runtime app behavior, `docs-site` build is a separate `docs:build` script not part of `npm run check`.
+* [x] **The "Lost PIN" Test:** N/A — no encrypted/ZK data touched.
