@@ -17,7 +17,8 @@
 **What's changed since the original spec — read before implementing:** the original spec (Phases 1-2) is largely already satisfied by later, unrelated work:
 - **Phase 1 (milestone logic unit tests)** — done. `src/lib/__tests__/milestones.test.ts` exists, shipped as part of `PROJ-40` (Test Suite Audit).
 - **Phase 2 (Firebase emulator integration)** — done, in a more complete form than originally scoped. `firebase.json`'s `emulators` block (Auth `:9099`, Firestore `:8080`, Functions `:5001`, UI `:4000`) and the `VITE_USE_EMULATORS` dev-only gate in `src/lib/firebase.ts`/`vaultAuth.ts`/`gemini.ts` were built for `PROJ-65`'s manual verification pass, not for E2E testing — but they're the exact same harness this project needs. No new emulator wiring required.
-- **Playwright itself** — the raw `playwright` browser-automation library (`^1.61.1`) was already a project dependency, installed for `PROJ-63`'s screenshot generator, which already drives headless Chromium against this same app. Confirmed working in this environment (Chromium + its dependencies install and launch cleanly, Java 21 is present for the emulators). `@playwright/test` — the actual test-runner package (`defineConfig`/`test`/`expect`) — was not installed and was added fresh for this project.
+- **Playwright itself** — the raw `playwright` browser-automation library (`^1.61.1`) was already a project dependency, installed for `PROJ-63`'s screenshot generator, which already drives headless Chromium against this same app. Confirmed working in this environment (Chromium + its dependencies install and launch cleanly). `@playwright/test` — the actual test-runner package (`defineConfig`/`test`/`expect`) — was not installed and was added fresh for this project.
+- **Java 21** — present in the dev container this project was built in (masking the gap the same way a globally-installed `firebase-tools` did, see §3), but not on GitHub Actions' `ubuntu-latest` runners. The Firestore emulator requires it and fails with `firebase-tools no longer supports Java version before 21` without it. Fixed by adding an `actions/setup-java@v4` step (`temurin`, `21`) to the CI workflow, ahead of the E2E step.
 
 **What's actually left, and the only real scope of this project now:** Phase 3 (the three golden-path E2E tests) and the CI/QA wiring in §5 — nothing else.
 
@@ -52,7 +53,7 @@ e2e/
 ```
 
 **Modified files:**
-* `.github/workflows/deploy.yml` — two new steps in the `verify` job (install Chromium via `playwright install --with-deps`, then `npm run test:e2e`), after the existing unit-test gates and before `deploy`.
+* `.github/workflows/deploy.yml` — three new steps in the `verify` job (install Java 21 via `actions/setup-java@v4`, install Chromium via `playwright install --with-deps`, then `npm run test:e2e`), after the existing unit-test gates and before `deploy`.
 * `package.json` — new `"test:e2e"` script. Actual command is `firebase emulators:exec --project=mrt2-app-dev --only auth,firestore "playwright test"`, not the bare `playwright test` originally sketched here — `emulators:exec` is what starts/tears down the Auth+Firestore emulators around the run and gives CI a non-zero exit if they fail to start.
 * `vite.config.ts` — added `e2e/**` to the Vitest `exclude` list; without it, Vitest's `*.spec.ts` default pattern also picks up the Playwright specs and fails trying to run them as unit tests.
 * `eslint.config.js` — scoped `react-hooks/rules-of-hooks` and `react-refresh/only-export-components` off for `e2e/**` and `playwright.config.ts`; Playwright fixtures' `use()` callback parameter name false-positives the React Hook naming heuristic.

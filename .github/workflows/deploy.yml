@@ -44,6 +44,12 @@ jobs:
       # gate; cheaper checks above fail fast first. Firebase emulators are
       # started/torn down automatically by `firebase emulators:exec`, so
       # this never touches a real Firebase project.
+      - name: Setup Java (required by the Firestore emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
