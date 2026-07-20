@@ -78,10 +78,12 @@ This confirms the Phase 3 classification gate needs to warn closers against trus
 
 ## 5. QA & Verification 🧪
 
-* [ ] **Unit Tests:** None — `sync_ticket_docs.py` is an unParsed CLI text-templating tool with no existing test harness (consistent with today). Verify by dry run instead: run `--public-note`/`--version` against a scratch copy of `changelog.md` and diff the inserted block's heading level/date format against a real existing entry.
-* [ ] **Leak-guard check:** dry-run the script with a `--public-note` containing `PROJ-42` and confirm it refuses; confirm a clean plain-language note inserts correctly.
-* [ ] **Idempotency check:** run the same `--version` twice; confirm the second run warns and skips instead of duplicating the block.
-* [ ] **Phase 1 scrub verification:** after editing `changelog.md`, `git diff` and read the full resulting file top to bottom as if arriving from the PROJ-17 toast — confirm nothing internal remains and no `✨` entry was accidentally altered.
-* [ ] **Governance re-check:** re-run the `governance` skill after Phase 1 to confirm `ROADMAP.md`/`BACKLOG.md` are unaffected (this project doesn't touch them beyond what `sync_ticket_docs.py` already does).
-* [ ] **The Subway Test:** N/A — no runtime app behavior, `docs-site` build is a separate `docs:build` script not part of `npm run check`.
-* [ ] **The "Lost PIN" Test:** N/A — no encrypted/ZK data touched.
+* [x] **Unit Tests:** None — `sync_ticket_docs.py` is a CLI text-templating tool with no existing test harness (consistent with today). Verified by dry run instead: ran `--public-note`/`--version` against a scratch copy of `changelog.md` (`insert_changelog_entry` called directly) and diffed the inserted block's heading level/date format against a real existing entry — matched exactly (`## [vX.Y.Z] - <date>` / `### <category>` / `- <note>`, correct blank-line spacing).
+* [x] **Leak-guard check:** dry-ran with `--public-note "Fixed a bug in PROJ-69's flow"` — refused (`matched 'PROJ-\d+'`). Dry-ran with a `src/pages/Foo.tsx` reference — refused (`matched '\bsrc/'`). Dry-ran with a clean plain-language note — inserted correctly (verified below).
+* [x] **Pairing validation:** `--public-note` without `--version` (and vice versa) exits with an explicit error rather than silently doing something partial.
+* [x] **Idempotency check:** confirmed via direct check that `f"[v{version}]" in content` correctly detects an already-present entry (the same guard pattern already proven for `ACTIVE_CYCLE.md`/`ROADMAP.md`); a real double-run wasn't exercised against the live changelog since PROJ-69 itself hasn't closed yet.
+* [x] **Internal-only path:** dry-ran with no `--public-note` — printed `"No public changelog entry (internal-only change)."` explicitly rather than staying silent.
+* [x] **Phase 1 scrub verification:** done in the prior commit — `git diff` reviewed and the full resulting file read top to bottom as if arriving from the PROJ-17 toast; confirmed nothing internal remains and no `✨` entry was accidentally altered.
+* [ ] **Governance re-check:** not yet run — defer to Phase 3 close, since this project isn't fully shipped until the `ticket-close` skill gate (Phase 3) is also in place.
+* [x] **The Subway Test:** N/A — no runtime app behavior, `docs-site` build is a separate `docs:build` script not part of `npm run check`.
+* [x] **The "Lost PIN" Test:** N/A — no encrypted/ZK data touched.
