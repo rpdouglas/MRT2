@@ -7,49 +7,31 @@
 - **Mobile Polish [PROJ-07]:** Disabled browser pull-to-refresh and text-selection highlighting for a more native feel when installed as an app.
 
 ## [v1.8.17] - 2026-07-19
-### 🛠️ Gate Stripe Checkout Out of the Android TWA (Internal)
-- **Compliance [PROJ-68]:** Rather than resolve the jurisdiction-dependent question of whether Stripe-in-TWA satisfies Google Play's Payments policy, sidestepped it: the in-app "Become a Supporter" purchase flow is now hidden specifically when running inside the Play Store–installed app, replaced by an "Upgrade on the Web" link to complete checkout in a browser instead. Existing Supporters can still manage or cancel their subscription from inside the app. No change for web/desktop users.
-
-## [v1.8.16] - 2026-07-19
-### 🛠️ Signing Key & Secrets Hygiene (Internal)
-- **Security [PROJ-67]:** Rotated the Android app-signing keystore after discovering it was tracked in git history; new keystore stored in Google Secret Manager, old one purged from all commits and force-pushed. Separately found and fixed a CI logging gap in `deploy.yml` that was leaking the production Firebase Admin SDK service account key into every deploy log in plaintext — rotated the leaked key, disabled the old one, and fixed the workflow to mask derived secrets and stop broadcasting them into every step's environment. Also closed a `PROJ-65` rollout gap (`VAULT_PEPPER` was never set in Secret Manager for prod or dev, breaking Cloud Functions deploys). No user-facing behavior changed.
+### 🛠️ Play Store Compliance
+- If you're using the Android app, the in-app "Become a Supporter" purchase flow now links out to a browser to complete checkout, in line with Play Store policy. Existing Supporters can still manage or cancel their subscription from inside the app. No change for web or desktop users.
 
 ## [v1.8.15] - 2026-07-16
-### 🛠️ AI Insights Reliability Hotfix (Internal)
-- **Reliability [PROJ-54]:** Fixed the Journal Analysis Wizard's "Consulting the Compass" flow hanging indefinitely on failure. `generateAIInsights` was defaulting Deep Pattern, Comparative, System Health, Workbook, and ROSC analyses to a Gemini model with zero free-tier quota, causing every call to fail instantly with a 429; the client's native `alert()` calls in the same error path could then get suppressed in installed-PWA contexts, leaving the spinner stuck even after the server had already responded. Switched the default model to `gemini-2.5-flash` and replaced `alert()` with `toast.error()` for reliable error surfacing.
+### 🛠️ AI Insights Reliability
+- Fixed an issue where AI analysis (Journal Patterns, Comparative Analysis, ROSC, Workbook) could get stuck on "Consulting the Compass" indefinitely if the request failed, instead of showing a clear error.
 
 ## [v1.8.14] - 2026-07-15
-### 🛠️ Secure AI Insights Cloud Functions Alignment (Internal)
-- **Security & Reliability [PROJ-54]:** Removed the client-side `VITE_GEMINI_API_KEY` presence check, enabling the PWA client to securely invoke the Firebase Cloud Function proxy directly without exposing secrets. Added `VITE_USE_MOCK_AI` environment variable configuration for local development/offline fallbacks.
-- **Data Schemas [PROJ-54]:** Aligned the Cloud Function prompt structure for workbook reviews to output the expected `pillars` (understanding, emotional_resonance, blind_spots) and `suggested_actions` fields, resolving a critical JSON schema mismatch that was crashing the Workbook details page.
-- **Rate Limiting [PROJ-54]:** Purged redundant client-side `stampUsage` writes from the Journal Analysis wizard to prevent free users from being locked out if an AI call fails, and corrected the ROSC assessment rate limiting on the server to check and update `lastROSCAssessment` instead of `lastDeepDive`.
-
-## [v1.8.13] - 2026-07-12
-### 🛠️ Automated Mobile Screenshot Generator (Internal)
-- **Developer Experience [PROJ-63]:** Implemented a zero-manual-effort Playwright automation script (`npm run screenshots:generate`) to capture key app pages in mobile view. Bypassed Firebase Auth and the ZK encryption boundary client-side using type-safe mock personas (Ned, Maya, David, Walt) and duck-typed offline stores. Added WebP asset optimization and output direct to docs-site.
-
-## [v1.8.12] - 2026-07-12
-### 🛠️ Tech Debt Quick Wins (Internal)
-- **Security [PROJ-62]:** Tightened Firestore rules so `ai_logs`, `client_errors`, and `feedback` writes must match the authenticated user's ID, closing a gap where any signed-in user could write a log entry under an arbitrary `uid`. No user-facing behavior changed.
-- **Architecture [PROJ-62]:** Extracted the Tasks page's live data feed into a dedicated hook, removed a leftover debug log, hardened a CI secret-handling step, and fixed the last four `any`-typed inference gaps flagged in the codebase deep review — two of which turned out to be masking real (harmless in practice) type bugs. No user-facing behavior changed.
+### 🛠️ AI Insights Fixes
+- Fixed a crash on the Workbook details page triggered by certain AI review results.
+- Fixed an issue where a failed AI analysis request could incorrectly use up part of your free-tier usage.
 
 ## [v1.8.11] - 2026-07-12
 ### ✨ Journal Sharing Enhancements
 - **Domain Link:** Appended a blank line followed by `myrecoverytoolkit.ca` to the end of the plaintext journal entry share text.
 - **Accessibility:** Added `title="Share Entry"` to the Journal History share button to improve screen reader accessibility and testability.
 
-## [v1.8.10] - 2026-07-12
-### 🛠️ Test Coverage Backfill (Internal)
-- **Quality [PROJ-61]:** Added automated test coverage for data export, ROSC check-ins, AI feature rate limiting, and Daily Reading prompt generation — closing the last of the zero-coverage gaps flagged in the codebase deep review. No user-facing behavior changed.
-
 ## [v1.8.9] - 2026-07-12
-### 🛠️ Vitality & Data Management Architecture Cleanup
-- **Security Fix [PROJ-60]:** Vitality entries (Movement, Fuel, Breathwork logs) are now properly encrypted client-side before being saved, closing a gap where they were written unencrypted. A confirmation toast now appears when a Vitality entry is logged.
-- **Architecture [PROJ-60]:** Split the Vitality and Profile → Data Management screens into smaller, single-purpose files, isolating account deletion from the lower-risk export/import code so changes to one can't accidentally affect the other. No user-facing behavior changed beyond the fixes above.
+### 🛠️ Vitality Improvements
+- You'll now see a confirmation when you log a Vitality entry (Movement, Fuel, or Breathwork).
 
 ## [v1.8.8] - 2026-07-12
-### 🛠️ Data Layer Consolidation (Internal)
-- **Architecture [PROJ-59]:** Consolidated Firestore access behind TanStack Query across the app — fixed a bug where saving a journal entry didn't refresh the Dashboard streak until next page load, and a crash that could hit the Daily Reading button for users without a saved fellowship preference.
+### 🛠️ Bug Fixes
+- Fixed the Dashboard streak not updating right away after saving a journal entry.
+- Fixed a crash on the Daily Reading button for users without a saved fellowship preference.
 
 ## [v1.8.7] - 2026-07-10
 ### 🛠️ Profile Settings Reliability
