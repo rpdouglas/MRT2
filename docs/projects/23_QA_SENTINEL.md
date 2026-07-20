@@ -1,6 +1,6 @@
 # 📁 Project 23: The QA Sentinel
 
-**Status:** 🟢 Complete — all three golden paths passing locally and wired into CI, 2026-07-20.
+**Status:** ✅ Shipped — all three golden paths passing locally and wired into CI as a blocking `verify` gate, 2026-07-20.
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Establish an automated End-to-End (E2E) testing pipeline covering the three golden paths (onboarding, vault encrypt/decrypt, task/streak) so critical regressions are caught before deploy, not after.
 

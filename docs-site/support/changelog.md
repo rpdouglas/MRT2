@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.19] - 2026-07-20
+### 🛠️ Bug Fixes
+- Fixed a rare issue where a new journal entry could be silently cleared while you were still writing it.
+- **Accessibility:** Added screen reader labels to the task-complete checkbox and the add-task button on the Tasks page.
+
 ## [v1.8.18] - 2026-07-19
 ### ✨ Play Store Pre-Submission Prep
 - **Compliance:** Added a new web-accessible account deletion path at myrecoverytoolkit.ca/delete-account — sign in and confirm without needing to open the app first, required by Google Play's Data Safety policy ahead of Play Store submission. Runs the same cryptographic-shredding deletion pipeline as the existing in-app "Danger Zone" flow.
