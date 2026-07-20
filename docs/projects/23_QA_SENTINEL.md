@@ -37,6 +37,8 @@
 
 No Firestore schema changes. **One correction to §1's claim:** `playwright` (the raw browser-automation library, `^1.61.1`) was already installed for PROJ-63's screenshot generator, but `@playwright/test` — the actual test-runner package providing `defineConfig`/`test`/`expect` — was not. Added as a new devDependency 2026-07-19.
 
+**A second dependency gap found only in CI:** `test:e2e` shells out to the bare `firebase` command (`firebase emulators:exec ...`). Locally this resolved against a globally-installed `firebase-tools`, which masked that the project itself didn't depend on it — the first CI run failed immediately with `firebase: not found`, since GitHub Actions runners don't have it preinstalled and `npm ci` had nothing to install. Fixed by adding `firebase-tools` (`^15.24.0`) as a devDependency, so `firebase` resolves via `node_modules/.bin` the same way `playwright` already does, in CI and locally alike.
+
 **New files:**
 ```
 playwright.config.ts                    ← project root, E2E-specific config (baseURL, emulator startup, browser projects)
