@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Playwright's fixture `use()` callback isn't a React Hook — the
+    // react-hooks plugin's name-based heuristic misfires on it otherwise.
+    files: ['e2e/**/*.{ts,tsx}', 'playwright.config.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

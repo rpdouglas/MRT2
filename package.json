@@ -16,6 +16,7 @@
     "docs:build": "vitepress build docs-site",
     "docs:check-specs": "node scripts/check_spec_quality.mjs",
     "test:once": "vitest run",
+    "test:e2e": "firebase emulators:exec --project=mrt2-app-dev --only auth,firestore \"playwright test\"",
     "check": "npm run lint && npm run docs:check-specs && npm run test:once && npm run build",
     "export:llm": "node scripts/export-llm.mjs",
     "screenshots:generate": "node scripts/generate_screenshots.js",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",

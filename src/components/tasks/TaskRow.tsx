@@ -46,8 +46,9 @@ export default function TaskRow({ task, onToggle, onDelete, onEdit, isLogView = 
     return (
         <div className={`group flex items-start gap-3 p-3 bg-white border-b border-gray-100 transition-all hover:bg-slate-50 ${isChecked ? 'opacity-60 bg-slate-50' : ''}`}>
             
-            <button 
+            <button
                 onClick={(e) => { e.stopPropagation(); onToggle({task, isCompleting: !isChecked}); }}
+                aria-label={isChecked ? 'Mark task incomplete' : 'Mark task complete'}
                 className="flex-shrink-0 text-slate-300 hover:text-green-500 transition-colors mt-0.5"
             >
                 {isChecked ? (

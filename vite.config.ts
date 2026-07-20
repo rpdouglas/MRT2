@@ -99,7 +99,9 @@ export default defineConfig({
     // functions/ is a separate npm workspace with its own vitest.config.ts and
     // dependency tree — the root suite must never sweep it in (CI never installs
     // functions/node_modules for this job, so firebase-functions can't resolve).
-    exclude: [...configDefaults.exclude, 'functions/**'],
+    // e2e/ is Playwright's suite (PROJ-23) — its own runner (`test:e2e`) picks
+    // it up; Vitest must not also try to import these as unit tests.
+    exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**'],
   },
   build: {
     chunkSizeWarningLimit: 1000, 

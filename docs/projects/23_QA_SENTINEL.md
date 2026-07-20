@@ -1,6 +1,6 @@
 # 📁 Project 23: The QA Sentinel
 
-**Status:** ⚪ Planned — pulled from `docs/BACKLOG.md` (Parked/Unscheduled) 2026-07-19 ahead of Play Store submission.
+**Status:** 🟢 Complete — all three golden paths passing locally and wired into CI, 2026-07-20.
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Establish an automated End-to-End (E2E) testing pipeline covering the three golden paths (onboarding, vault encrypt/decrypt, task/streak) so critical regressions are caught before deploy, not after.
 
@@ -17,9 +17,11 @@
 **What's changed since the original spec — read before implementing:** the original spec (Phases 1-2) is largely already satisfied by later, unrelated work:
 - **Phase 1 (milestone logic unit tests)** — done. `src/lib/__tests__/milestones.test.ts` exists, shipped as part of `PROJ-40` (Test Suite Audit).
 - **Phase 2 (Firebase emulator integration)** — done, in a more complete form than originally scoped. `firebase.json`'s `emulators` block (Auth `:9099`, Firestore `:8080`, Functions `:5001`, UI `:4000`) and the `VITE_USE_EMULATORS` dev-only gate in `src/lib/firebase.ts`/`vaultAuth.ts`/`gemini.ts` were built for `PROJ-65`'s manual verification pass, not for E2E testing — but they're the exact same harness this project needs. No new emulator wiring required.
-- **Playwright itself** — already a project dependency (`^1.61.1`), installed for `PROJ-63`'s screenshot generator, which already drives headless Chromium against this same app. No new tooling install required, though a dedicated `playwright.config.ts` for E2E (distinct from the screenshot script's ad-hoc Playwright usage) does not yet exist.
+- **Playwright itself** — the raw `playwright` browser-automation library (`^1.61.1`) was already a project dependency, installed for `PROJ-63`'s screenshot generator, which already drives headless Chromium against this same app. Confirmed working in this environment (Chromium + its dependencies install and launch cleanly, Java 21 is present for the emulators). `@playwright/test` — the actual test-runner package (`defineConfig`/`test`/`expect`) — was not installed and was added fresh for this project.
 
 **What's actually left, and the only real scope of this project now:** Phase 3 (the three golden-path E2E tests) and the CI/QA wiring in §5 — nothing else.
+
+**A real bug the Vault Test caught (exactly what this project is for):** `JournalEditor.tsx`'s entry-initialization `useEffect` listed `handleTemplateSelect` in its dependency array. That callback's identity changes whenever its own `customTemplates` state updates (i.e. whenever the async custom-templates fetch resolves) — and since the effect was still watching it, that unrelated resolution re-ran the effect and called `setNewEntry(initialContent || '')`, silently wiping out anything the user had already typed if the fetch resolved after they started writing. Fixed by dropping `handleTemplateSelect`/`fetchLocalWeather` from the dependency array (both `eslint-disable-next-line react-hooks/exhaustive-deps`'d, with a comment explaining why) so the effect only re-runs when the entry actually being edited changes. This was invisible to the existing unit tests (nothing exercises the real async timing of a Firestore-backed hook racing against user input) and only surfaced once the Vault Test ran back-to-back with other tests against a shared, already-warm Firestore emulator connection, slowing that fetch down enough to lose the race consistently.
 
 ---
 
@@ -33,7 +35,7 @@
 
 ## 3. Schema & Architecture 🗄️
 
-No Firestore schema changes. No new npm dependencies (Playwright already installed).
+No Firestore schema changes. **One correction to §1's claim:** `playwright` (the raw browser-automation library, `^1.61.1`) was already installed for PROJ-63's screenshot generator, but `@playwright/test` — the actual test-runner package providing `defineConfig`/`test`/`expect` — was not. Added as a new devDependency 2026-07-19.
 
 **New files:**
 ```
@@ -48,8 +50,11 @@ e2e/
 ```
 
 **Modified files:**
-* `.github/workflows/deploy.yml` — new step in the `verify` job (or a new job) running `npx playwright test` against emulators, before the existing `deploy` job.
-* `package.json` — new `"test:e2e": "playwright test"` script.
+* `.github/workflows/deploy.yml` — two new steps in the `verify` job (install Chromium via `playwright install --with-deps`, then `npm run test:e2e`), after the existing unit-test gates and before `deploy`.
+* `package.json` — new `"test:e2e"` script. Actual command is `firebase emulators:exec --project=mrt2-app-dev --only auth,firestore "playwright test"`, not the bare `playwright test` originally sketched here — `emulators:exec` is what starts/tears down the Auth+Firestore emulators around the run and gives CI a non-zero exit if they fail to start.
+* `vite.config.ts` — added `e2e/**` to the Vitest `exclude` list; without it, Vitest's `*.spec.ts` default pattern also picks up the Playwright specs and fails trying to run them as unit tests.
+* `eslint.config.js` — scoped `react-hooks/rules-of-hooks` and `react-refresh/only-export-components` off for `e2e/**` and `playwright.config.ts`; Playwright fixtures' `use()` callback parameter name false-positives the React Hook naming heuristic.
+* `src/components/journal/JournalEditor.tsx` — one-line dependency-array fix, found *by* the Vault Test, not written for it (see below).
 
 ---
 
@@ -68,17 +73,17 @@ Three resilient E2E tests, each running against a freshly-seeded Firebase Emulat
 **Test data isolation:** each test creates its own fresh emulator-only user (e.g. `e2e-gate-{timestamp}@test.local`) — no shared fixtures or ordering dependencies between the three specs, so they can run in parallel and don't leave cross-test state.
 
 **Edge Cases:**
-* [ ] What if the emulator fails to start in CI? The Playwright config's `webServer`/global setup should fail loudly and fast, not hang — CI should show a clear "emulators failed to start" error, not a mysterious timeout.
-* [ ] Flakiness: E2E tests are inherently more flake-prone than unit tests. Retry policy (Playwright's built-in `retries` config) should be set for CI runs, not for local dev runs, so a genuinely broken golden path doesn't get masked by a retry passing on the second attempt while also not failing CI on a one-off network blip.
+* [x] What if the emulator fails to start in CI? `firebase emulators:exec` exits non-zero if the emulators fail to start, and never runs the wrapped `playwright test` command in that case — CI fails on emulator startup, not a downstream test timeout.
+* [x] Flakiness: `playwright.config.ts` sets `retries: 1` for CI runs only (`retries: 0` locally), matching the reasoning above. In practice, the one real flake found during implementation (see the `JournalEditor.tsx` bug above) was a genuine bug, not test flakiness — retries would have masked it rather than caught it, which is exactly the failure mode this edge case warns about.
 
 ---
 
 ## 5. QA & Verification 🧪 (this project's own definition of done)
 
-* [ ] **CI/CD Pipeline:** New step in `.github/workflows/deploy.yml`'s `verify` job — start Firebase emulators, run `npm run test:e2e`, tear down — before the `deploy` job runs. A failing golden path must block deploy, the same way a failing unit test already does.
-* [ ] **Local dev command:** `npm run test:e2e` documented and working against a locally-started `firebase emulators:start`.
-* [ ] **All three golden paths passing** in both CI and local runs.
-* [ ] **Runtime budget:** confirm the added CI time (emulator startup + 3 browser tests) doesn't meaningfully regress the existing `verify` job's runtime — if it does, consider running E2E as a separate, parallel CI job rather than serially inside `verify`.
+* [x] **CI/CD Pipeline:** `.github/workflows/deploy.yml`'s `verify` job installs Chromium and runs `npm run test:e2e` as Gate 5, after unit tests and before `deploy`. A failing golden path blocks deploy.
+* [x] **Local dev command:** `npm run test:e2e` works against the emulators it starts itself via `firebase emulators:exec` — no separately-running `firebase emulators:start` required.
+* [x] **All three golden paths passing** — verified locally across multiple consecutive full-suite runs (`gate.spec.ts`, `ledger.spec.ts`, `vault.spec.ts`, ~35-45s total). Not yet observed passing in CI itself (that only happens on the next push through the `verify` job).
+* [x] **Runtime budget:** ~35-45s locally for all three tests plus emulator startup — small relative to the existing `verify` job's other gates (lint, unit tests, functions tests, build). No need for a separate parallel CI job at this scope.
 
 ---
 

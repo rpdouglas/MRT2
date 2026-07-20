@@ -51,3 +51,9 @@ export__docs_.txt
 # Codebase export output
 /exports/
 llm-export/
+
+# Playwright E2E (PROJ-23) runtime output
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

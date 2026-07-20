@@ -165,7 +165,14 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
       fetchLocalWeather(); 
       if (initialTemplateId) handleTemplateSelect(initialTemplateId);
     }
-  }, [initialEntry, initialTemplateId, initialContent, initialTags, handleTemplateSelect, fetchLocalWeather]);
+    // handleTemplateSelect/fetchLocalWeather deliberately excluded: both are
+    // useCallbacks that change identity when their own async data resolves
+    // (customTemplates loading, in handleTemplateSelect's case) — including
+    // them here re-runs this effect on that unrelated resolution and wipes
+    // out newEntry via setNewEntry(initialContent || '') mid-composition,
+    // clobbering whatever the user has already typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialEntry, initialTemplateId, initialContent, initialTags]);
 
   const handleAddTag = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
         setTags(prev => prev.slice(0, -1));

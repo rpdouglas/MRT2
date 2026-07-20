@@ -40,6 +40,16 @@ jobs:
       - name: Functions Unit Tests
         run: npm test --prefix functions
 
+      # GATE 5: E2E Golden Paths (PROJ-23) — runs last since it's the slowest
+      # gate; cheaper checks above fail fast first. Firebase emulators are
+      # started/torn down automatically by `firebase emulators:exec`, so
+      # this never touches a real Firebase project.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E Golden Paths
+        run: npm run test:e2e
+
   # --- JOB 2: BUILD & DEPLOY (Only if Verify passes) ---
   deploy:
     needs: verify
