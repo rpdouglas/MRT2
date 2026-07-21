@@ -4,6 +4,8 @@
 **Status:** ⏸️ Paused (paused per ROADMAP.md Wave 3 to focus on Wave 1 Onboarding — see docs/ACTIVE_CYCLE.md)
 **Personas Involved:** Lisa (The Service Superstar)
 
+> **Note (2026-07-21):** The Dashboard's "Service — Coming Soon" placeholder tile (`Dashboard.tsx:347-359`, referenced below in Phase 3) is being reassigned to `PROJ-72` Recovery Games. When this project resumes, its Phase 3 "Dashboard: Create `ServiceWidget`" item will need a different entry point (e.g. a sidebar/nav item) rather than reclaiming that dashboard slot. See `docs/projects/72_RECOVERY_GAMES.md`.
+
 ## 🏗️ Phase 1: Schema & Crypto
 * [ ] **Schema:** Create `service` collection structure.
 * [ ] **Crypto:** Verify `src/lib/crypto.ts` can handle small, discrete fields individually without breaking decryption.
