@@ -23,13 +23,14 @@
 | ⚪ Planned | `NEW` | **Privacy-Preserving Community** | All | Opt-in, pseudonymized social feed moderated by Gemini. (Requires heavy Zero-Knowledge schema design). |
 | ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers immediately following a relapse. |
 | ⚪ Planned | `NEW` | **Multi-Addiction Clocks** | All | Tracking multiple habits/substances simultaneously. |
+| ⚪ Planned | `PROJ-72` | **Recovery Games** | All | Zero-knowledge, anti-shame persona-targeted mini-games and psychoeducation tools (Craving Busters, Thought Challenge, Trigger Match, Knowledge Quests) layered on the existing XP/streak system. Replaces the Dashboard's dead "Service — Coming Soon" tile. See `docs/projects/72_RECOVERY_GAMES.md`. |
 
 ## 🌊 Wave 3: Platform Maturity & Sponsors (Weeks 17–26)
 *The third goal: Capture the "Lisa" (Sponsor) and "Walt" (Long-term) demographics.*
 
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). |
+| ⏸️ **Paused** | `PROJ-05` | **The Service Network** | Lisa | Encrypted Sponsee Rolodex. (Paused to focus on Wave 1 Onboarding). Its Dashboard "Coming Soon" placeholder slot is being reassigned to `PROJ-72` Recovery Games — when unpaused, this needs a new entry point (e.g. a nav item) instead. |
 | ⚪ Planned | `PROJ-33` | **Predictive Relapse Engine** | Walt / Lisa | AI analysis of Insights collection to generate proactive warning tasks. |
 | ⚪ Planned | `PROJ-34` | **Aggregated Stats Engine** | All | Cloud Functions to calculate stats on-write to reduce Firestore read costs. |
 
