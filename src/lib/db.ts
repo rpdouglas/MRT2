@@ -149,6 +149,21 @@ export interface GameProgressRecord {
   isEncrypted: true;
 }
 
+// PROJ-72 (Recovery Games), Phase 4. A resumable, continuously-updated
+// save-slot for multi-session games (e.g. Fast Lane) — distinct from
+// game_progress's append-only completed-play log. One doc per (uid, gameId),
+// doc ID `${uid}_${gameId}`, upserted via setDoc. The whole state is
+// encrypted (no plaintext fields) since this is live in-progress data, not a
+// completed-event snapshot with fields needed for streak/XP math.
+export interface GameSaveRecord {
+  id?: string;
+  uid: string;
+  gameId: string;
+  encryptedState: string; // IV:Ciphertext (base64) — JSON.stringify(save state), see src/lib/crypto.ts
+  updatedAt: Timestamp | Date;
+  isEncrypted: true;
+}
+
 export async function getProfile(uid: string): Promise<UserProfile | null> {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;

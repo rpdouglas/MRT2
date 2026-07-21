@@ -127,7 +127,27 @@ export async function executeCryptoShredding(uid: string) {
         }
     }
 
-    // 5. Clear Profile Fields
+    // 5. Delete Game Saves (PROJ-72, Recovery Games Phase 4)
+    let lastSaveDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+    let hasMoreGameSaves = true;
+    while (hasMoreGameSaves) {
+        let sQ = query(collection(database, 'game_saves'), where('uid', '==', uid), limit(500));
+        if (lastSaveDoc) sQ = query(collection(database, 'game_saves'), where('uid', '==', uid), startAfter(lastSaveDoc), limit(500));
+
+        const sSnap = await getDocs(sQ);
+        if (sSnap.empty) {
+            hasMoreGameSaves = false;
+        } else {
+            sSnap.docs.forEach(d => {
+                currentBatch.delete(d.ref);
+                opCount++;
+                if (opCount >= 450) commitBatch();
+            });
+            lastSaveDoc = sSnap.docs[sSnap.docs.length - 1];
+        }
+    }
+
+    // 6. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
     currentBatch.update(pRef, {
         encryptionSalt: deleteField(),
@@ -399,6 +419,46 @@ export async function executePinRotation(
 
             await currentBatch.commit();
             lastGDoc = gSnap.docs[gSnap.docs.length - 1];
+        }
+
+        // --- PROCESS GAME SAVES (PROJ-72, Recovery Games Phase 4) ---
+        let lastSaveDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+        let hasMoreGameSaves = true;
+
+        while (hasMoreGameSaves) {
+            let sQ = query(collection(database, 'game_saves'), where('uid', '==', uid), limit(BATCH_SIZE));
+            if (lastSaveDoc) sQ = query(collection(database, 'game_saves'), where('uid', '==', uid), startAfter(lastSaveDoc), limit(BATCH_SIZE));
+
+            const sSnap = await getDocs(sQ);
+            if (sSnap.empty) {
+                hasMoreGameSaves = false;
+                continue;
+            }
+
+            const currentBatch = writeBatch(database);
+
+            for (const document of sSnap.docs) {
+                const data = document.data();
+                if (data.encryptedState) {
+                    await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
+                    const plain = await decrypt(data.encryptedState);
+                    if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                        await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                        const alreadyMigrated = await decrypt(data.encryptedState);
+                        if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                            throw new Error("DECRYPTION_FAILED");
+                        }
+                        continue; // already migrated in a previous attempt
+                    }
+
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                    const cipher = await encrypt(plain);
+                    currentBatch.update(document.ref, { encryptedState: cipher });
+                }
+            }
+
+            await currentBatch.commit();
+            lastSaveDoc = sSnap.docs[sSnap.docs.length - 1];
         }
 
         // 4. Finalize Profile Updates — clears the pendingRotation marker now
