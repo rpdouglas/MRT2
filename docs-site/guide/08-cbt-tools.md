@@ -10,7 +10,7 @@ Recovery is about interrupting automatic reactions with intentional logic. The *
       class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[260px] mx-auto block mb-3"
     />
     <figcaption class="text-xs text-slate-500 font-medium max-w-[260px] mx-auto">
-      <strong>Tools Hub:</strong> Ned's Amber Theme showing the category-filtered grid of worksheets.
+      <strong>Tools Hub:</strong> Ned's Amber Theme showing the grouped, expandable sections of worksheets.
     </figcaption>
   </figure>
   <figure class="text-center flex-1">
@@ -27,6 +27,14 @@ Recovery is about interrupting automatic reactions with intentional logic. The *
 
 ## Accessing the Tools
 From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the Tools Hub, where each tool's card shows a time estimate, a "Best for" tag, and — once you've completed it at least once — how many times you've used it.
+
+Tools are grouped into four sections based on when you'd reach for them:
+* **Right Now** — Urge Surfer and The Resentment Burner, for cravings and crisis. Always open when you arrive, so these are never more than a tap away.
+* **Before It Happens** — D.E.N.T.S. Strategy and Cost Benefit Analysis, for planning ahead of a risky moment.
+* **After a Hard Moment** — ABC Coping, Personify & Disarm, Thought Record, and Five Questions, for processing what just happened.
+* **Big Picture** — Lifestyle Balance and SMART Goal, for stepping back and planning.
+
+The other three sections start collapsed — tap a section's header to open it. If you have an unfinished tool session waiting, a **"Continue where you left off"** shortcut appears at the top of the page regardless of which section that tool lives in.
 
 Every guided tool (CBA, ABC, D.E.N.T.S., Thought Record, Five Questions) offers up to three ways in:
 * **Start Fresh** — always available. Opens the tool at Step 1 with a blank slate, even if you have an unfinished session sitting in the background.

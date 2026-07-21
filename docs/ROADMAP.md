@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-71` Tools Hub Regrouping (Regrouped the flat Tools Hub into four moment-based collapsible accordion sections (Right Now / Before It Happens / After a Hard Moment / Big Picture) with Right Now expanded by default, added a resume-draft callout, and brought the page onto the Momentum Kinetic visual system via a new tools GlassCard variant.)
 * `PROJ-23` The QA Sentinel (Playwright E2E golden-path suite (Gate/Vault/Ledger) wired into CI as a blocking pre-deploy gate against local Firebase emulators. Found and fixed a real journal-entry data-loss race condition along the way, plus three CI-only environment gaps (firebase-tools, Java 21, Firebase client env vars) invisible in local dev.)
 * `PROJ-70` Changelog Historical Scrub (Rewrote all remaining changelog entries (v1.0.0-v1.8.18) into plain user-facing language: stripped PROJ-ID tags, file/hook/component names, and engineering jargon; deleted or trimmed entries with zero user-facing content (admin-only tooling, pure test/architecture work).)
 * `PROJ-69` Changelog Split — Public/Internal Separation (Split the public docs-site changelog from internal engineering detail: scrubbed two live security disclosures and rewrote five mislabeled entries, added a leak-guarded --public-note/--version path to sync_ticket_docs.py, and added a Check 0 user-visible classification gate to the ticket-close skill.)

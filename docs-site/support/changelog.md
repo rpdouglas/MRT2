@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.20] - 2026-07-21
+### 🛠️ Update
+- Recovery Tools are now organized into sections based on when you'd need them — the tools for cravings and crisis are always open right at the top. A new shortcut also lets you jump back into any tool session you didn't finish.
+
 ## [v1.8.19] - 2026-07-20
 ### 🛠️ Bug Fixes
 - Fixed a rare issue where a new journal entry could be silently cleared while you were still writing it.
