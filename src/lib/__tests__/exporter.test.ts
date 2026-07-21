@@ -15,6 +15,7 @@ function baseData(overrides: Partial<FullUserData> = {}): FullUserData {
         tasks: [],
         templates: [],
         workbookAnswers: [],
+        gameProgress: [],
         ...overrides,
     };
 }
@@ -154,22 +155,61 @@ describe('🔓 prepareDataForExport (decryption-adjacent)', () => {
         expect(decryptedAnswers.fine).toBe('Plain scalar answer');
     });
 
-    it('reports progress across the 0-80% (journals) and 80-100% (workbooks) ranges', async () => {
+    it('reports progress across the 0-60% (journals), 60-80% (workbooks), and 80-100% (game history) ranges', async () => {
         const cipher = await encrypt('short entry');
         const journal: JournalEntry = {
             id: 'j4', uid: 'user_1', content: cipher, moodScore: 6, tags: [],
             createdAt: Timestamp.now(), isEncrypted: true,
         };
         const workbookAnswer = { id: 'w3', answers: { q1: { isEncrypted: true, text: cipher } } };
+        const gameRecord = { id: 'g1', gameId: 'craving-buster', score: 42, encryptedStats: await encrypt('{"tapsHit":10}') };
 
         const progressValues: number[] = [];
         await prepareDataForExport(
-            baseData({ journals: [journal], workbookAnswers: [workbookAnswer] }),
+            baseData({ journals: [journal], workbookAnswers: [workbookAnswer], gameProgress: [gameRecord] }),
             (p) => progressValues.push(p)
         );
 
         expect(progressValues.length).toBeGreaterThan(0);
         expect(Math.max(...progressValues)).toBeLessThanOrEqual(100);
         expect(Math.min(...progressValues)).toBeGreaterThanOrEqual(0);
+    });
+
+    it('decrypts game_progress encryptedStats into a parsed stats object, PROJ-72 Phase 7', async () => {
+        const cipher = await encrypt('{"tapsHit":10,"tapsTotal":12}');
+        const gameRecord = { id: 'g2', gameId: 'craving-buster', score: 42, encryptedStats: cipher };
+
+        const result = await prepareDataForExport(baseData({ gameProgress: [gameRecord] }), () => {});
+
+        expect(result.gameProgress[0].stats).toEqual({ tapsHit: 10, tapsTotal: 12 });
+        expect(result.gameProgress[0].encryptedStats).toBeUndefined();
+        expect(result.gameProgress[0].gameId).toBe('craving-buster');
+        expect(result.gameProgress[0].score).toBe(42);
+    });
+
+    it('decrypts an optional game_progress encryptedReflection when present', async () => {
+        const statsCipher = await encrypt('{"correct":5,"total":10}');
+        const reflectionCipher = await encrypt('I noticed I was catastrophizing.');
+        const gameRecord = {
+            id: 'g3', gameId: 'thought-challenge', score: 5,
+            encryptedStats: statsCipher, encryptedReflection: reflectionCipher,
+        };
+
+        const result = await prepareDataForExport(baseData({ gameProgress: [gameRecord] }), () => {});
+
+        expect(result.gameProgress[0].reflection).toBe('I noticed I was catastrophizing.');
+    });
+
+    it('surfaces a decryption-failure marker for game_progress instead of aborting the batch', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const cipher = await encrypt('{"tapsHit":1}');
+        clearKey();
+
+        const gameRecord = { id: 'g4', gameId: 'craving-buster', score: 1, encryptedStats: cipher };
+        const result = await prepareDataForExport(baseData({ gameProgress: [gameRecord] }), () => {});
+
+        expect(result.gameProgress[0].stats).toBe('[DECRYPTION FAILED]');
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
     });
 });

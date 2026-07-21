@@ -34,7 +34,7 @@ export async function prepareDataForExport(
       }
       return entry;
     },
-    (p) => onProgress(Math.floor(p * 0.8)) // Map to 0-80% range
+    (p) => onProgress(Math.floor(p * 0.6)) // Map to 0-60% range
   );
 
   // Decrypt Workbook Answers
@@ -45,12 +45,12 @@ export async function prepareDataForExport(
       // Check if this answer record matches our encryption pattern
       const anyAns = ans as Record<string, unknown>;
       const newAns = { ...anyAns };
-      
+
       // Handle specific schema structure from WorkbookSession
       if (newAns.answers && typeof newAns.answers === 'object') {
          const ansMap = newAns.answers as Record<string, unknown>;
          const decryptedMap: Record<string, unknown> = {};
-         
+
          for (const [key, val] of Object.entries(ansMap)) {
              if (val && typeof val === 'object' && 'isEncrypted' in val && (val as {isEncrypted: boolean}).isEncrypted) {
                  try {
@@ -68,10 +68,42 @@ export async function prepareDataForExport(
       }
       return newAns;
     },
+    (p) => onProgress(60 + Math.floor(p * 0.2)) // Map to 60-80% range
+  );
+
+  // Decrypt Recovery Games history (PROJ-72 Phase 7)
+  const decryptedGameProgress = await processInChunks(
+    data.gameProgress,
+    20,
+    async (record) => {
+      const raw = record as Record<string, unknown>;
+      const { encryptedStats, encryptedReflection, ...rest } = raw;
+      const result: Record<string, unknown> = { ...rest };
+
+      if (typeof encryptedStats === 'string') {
+        try {
+          result.stats = JSON.parse(await decrypt(encryptedStats));
+        } catch (e) {
+          console.error(`Failed to decrypt game_progress stats ${String(rest.id)}`, e);
+          result.stats = '[DECRYPTION FAILED]';
+        }
+      }
+
+      if (typeof encryptedReflection === 'string') {
+        try {
+          result.reflection = await decrypt(encryptedReflection);
+        } catch (e) {
+          console.error(`Failed to decrypt game_progress reflection ${String(rest.id)}`, e);
+          result.reflection = '[DECRYPTION FAILED]';
+        }
+      }
+
+      return result;
+    },
     (p) => onProgress(80 + Math.floor(p * 0.2)) // Map to 80-100% range
   );
 
-  return { ...data, journals: decryptedJournals, workbookAnswers: decryptedWorkbooks };
+  return { ...data, journals: decryptedJournals, workbookAnswers: decryptedWorkbooks, gameProgress: decryptedGameProgress };
 }
 
 /**
@@ -153,6 +185,24 @@ export async function generatePDF(data: FullUserData): Promise<Blob> {
   });
 
   autoTable(doc, { startY: 25, head: [['Title', 'Category', 'Priority', 'Frequency', 'Status']], body: taskRows, });
+
+  // 4. Recovery Games (PROJ-72 Phase 7)
+  if (data.gameProgress.length > 0) {
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Recovery Games", 14, 20);
+
+    const gameRows = data.gameProgress.map((g) => {
+      const record = g as Record<string, unknown>;
+      const createdAt = record.createdAt as { toDate?: () => Date } | undefined;
+      const date = createdAt?.toDate ? createdAt.toDate().toLocaleDateString() : 'Unknown';
+      const gameId = typeof record.gameId === 'string' ? record.gameId : 'Unknown';
+      const score = typeof record.score === 'number' ? String(record.score) : '-';
+      return [date, gameId, score];
+    });
+
+    autoTable(doc, { startY: 25, head: [['Date', 'Game', 'Score']], body: gameRows });
+  }
 
   return doc.output('blob');
 }

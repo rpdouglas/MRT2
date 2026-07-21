@@ -1,10 +1,11 @@
 // src/components/games/jeopardy/FinalJeopardy.tsx
 // PROJ-72 (Recovery Games), Phase 3. Ported from the legacy Recovery
 // Jeopardy game, restyled onto MRT's Tailwind system.
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { jeopardyData } from '../../../lib/games/jeopardy/jeopardyData';
 import { calculateWagerOutcome, determineWinner } from '../../../lib/games/jeopardy/scoring';
 import type { JeopardyPlayer } from '../../../lib/games/jeopardy/types';
+import { useShareImage } from '../../../hooks/useShareImage';
 
 interface FinalJeopardyProps {
   players: JeopardyPlayer[];
@@ -20,6 +21,8 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
   const [wagers, setWagers] = useState<number[]>(Array(players.length).fill(0));
   const [answers, setAnswers] = useState<string[]>(Array(players.length).fill(''));
   const [stage, setStage] = useState<Stage>('wager');
+  const { shareImage, isSharing } = useShareImage();
+  const revealRef = useRef<HTMLDivElement>(null);
 
   const finalQuestion = jeopardyData.finalJeopardy;
 
@@ -109,7 +112,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
   const winner = determineWinner(players);
 
   return (
-    <div className="p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
+    <div ref={revealRef} className="p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
       <h2 className="text-2xl font-bold text-indigo-800 mb-2">Correct Answer</h2>
       <p className="text-3xl font-black text-slate-800 mb-8">{finalQuestion.answer}</p>
       <h3 className="text-xl font-bold mb-4 text-slate-700">Final Scores</h3>
@@ -121,12 +124,26 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
         ))}
       </div>
       <h2 className="text-3xl font-black text-emerald-600 mb-8">Nice work, {winner.name}!</h2>
-      <button
-        onClick={onRestartGame}
-        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-8 rounded-xl active:scale-95 transition-transform"
-      >
-        Play Again
-      </button>
+      {!isSharing && (
+        <div className="flex flex-col items-center gap-3">
+          <button
+            onClick={onRestartGame}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-8 rounded-xl active:scale-95 transition-transform"
+          >
+            Play Again
+          </button>
+          <button
+            onClick={() => shareImage(revealRef, {
+              filename: 'recovery-jeopardy-milestone.png',
+              title: 'Recovery Jeopardy',
+              text: `${winner.name} won our Recovery Jeopardy game on My Recovery Toolkit.`,
+            })}
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+          >
+            Share this win
+          </button>
+        </div>
+      )}
     </div>
   );
 }

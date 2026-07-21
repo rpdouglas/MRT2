@@ -22,8 +22,8 @@ If you created your account using **Google Sign-In**, MRT can automatically back
 
 ## 2. Manual Export
 You can manually export your data at any time from the **Profile -> Data** tab.
-* **JSON Backup:** A raw data file containing your entire history.
-* **PDF Document:** A beautifully formatted, readable document containing your Journals and Tasks. Perfect for printing and bringing to a therapy session.
+* **JSON Backup:** A raw data file containing your entire history, including your Recovery Games activity.
+* **PDF Document:** A beautifully formatted, readable document containing your Journals, Tasks, and Recovery Games history. Perfect for printing and bringing to a therapy session.
 
 ## 3. Import Legacy Data
 If you have a JSON backup file, you can upload it in the **Data** tab to merge old entries into your current timeline.

@@ -1,6 +1,6 @@
 # 📁 Project 30: The Data Sovereignty Engine (Export)
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped — this spec file was stale (still marked `⚪ Planned`) despite the engine being fully built; corrected during PROJ-72 Phase 7 when it was extended to cover Recovery Games data. Live behavior is documented in `docs/specs/09_PROFILE.md` §4 (Manual Export Engine) and §6 (Annihilation Engine).
 **Primary Persona:** Walt (The Zen Master)
 **Objective:** Establish a formal, zero-knowledge pathway for users to export decades of encrypted data into highly readable local files (PDF/JSON) without unencrypted data ever touching an external server.
 
