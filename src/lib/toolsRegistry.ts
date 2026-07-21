@@ -14,6 +14,9 @@ import type { SmartToolType } from './types/smart';
 
 export type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
+/** Which recovery moment a tool belongs to — drives the Tools Hub's grouped sections (PROJ-71). */
+export type ToolPhase = 'right-now' | 'before' | 'after' | 'big-picture';
+
 export interface ToolRegistryEntry {
     id: string;
     title: string;
@@ -32,7 +35,33 @@ export interface ToolRegistryEntry {
     toolType?: SmartToolType;
     /** True only for the GuidedWorkflowEngine-backed tools, which have a step-locked session that can be resumed mid-flow. */
     hasGuidedFlow?: boolean;
+    /** Which Tools Hub section (PROJ-71) this tool is grouped under. */
+    phase: ToolPhase;
 }
+
+/** Section metadata for the Tools Hub's grouped accordion layout (PROJ-71), keyed by ToolPhase and rendered in this fixed order. */
+export const PHASE_META: Record<ToolPhase, { label: string; subtitle: string; icon: IconType }> = {
+    'right-now': {
+        label: 'Right Now',
+        subtitle: 'In the moment — for cravings and crisis',
+        icon: ShieldExclamationIcon,
+    },
+    before: {
+        label: 'Before It Happens',
+        subtitle: 'Plan ahead of a risky moment',
+        icon: BoltIcon,
+    },
+    after: {
+        label: 'After a Hard Moment',
+        subtitle: 'Process what just happened',
+        icon: ArrowPathIcon,
+    },
+    'big-picture': {
+        label: 'Big Picture',
+        subtitle: 'Step back and plan',
+        icon: FlagIcon,
+    },
+};
 
 export const TOOLS: ToolRegistryEntry[] = [
     {
@@ -45,6 +74,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         bg: 'bg-indigo-50',
         border: 'border-l-indigo-500',
         status: 'active',
+        phase: 'right-now',
     },
     {
         id: 'resentment-burner',
@@ -56,6 +86,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         bg: 'bg-red-50',
         border: 'border-l-red-500',
         status: 'active',
+        phase: 'right-now',
     },
     {
         id: 'cba',
@@ -71,6 +102,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'CBA',
         hasGuidedFlow: true,
+        phase: 'before',
     },
     {
         id: 'abc',
@@ -86,6 +118,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'ABC',
         hasGuidedFlow: true,
+        phase: 'after',
     },
     {
         id: 'dents',
@@ -101,6 +134,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'DENTS',
         hasGuidedFlow: true,
+        phase: 'before',
     },
     {
         id: 'personify',
@@ -115,6 +149,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         border: 'border-l-purple-500',
         status: 'active',
         toolType: 'PERSONIFY',
+        phase: 'after',
     },
     {
         id: 'lifestyle-balance',
@@ -129,6 +164,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         border: 'border-l-cyan-500',
         status: 'active',
         toolType: 'LIFESTYLE_BALANCE',
+        phase: 'big-picture',
     },
     {
         id: 'thought-record',
@@ -144,6 +180,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'THOUGHT_RECORD',
         hasGuidedFlow: true,
+        phase: 'after',
     },
     {
         id: 'five-questions',
@@ -159,6 +196,7 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'FIVE_QUESTIONS',
         hasGuidedFlow: true,
+        phase: 'after',
     },
     {
         id: 'smart-goal',
@@ -172,5 +210,6 @@ export const TOOLS: ToolRegistryEntry[] = [
         border: 'border-l-slate-400',
         status: 'coming_soon',
         toolType: 'SMART_GOAL',
+        phase: 'big-picture',
     },
 ];

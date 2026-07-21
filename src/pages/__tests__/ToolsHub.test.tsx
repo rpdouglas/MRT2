@@ -1,10 +1,10 @@
 /**
  * src/pages/__tests__/ToolsHub.test.tsx
- * PROJ-50 §5: Tools Hub Redesign
+ * PROJ-50 §5: Tools Hub Redesign / PROJ-71: Tools Hub Regrouping
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import ToolsHub from '../ToolsHub';
 import { useSmartToolCompletions } from '../../hooks/useSmartToolCompletions';
 import { hasGuidedDraft } from '../../hooks/useGuidedDraft';
@@ -19,8 +19,22 @@ vi.mock('react-router-dom', () => ({
     ),
 }));
 
+/**
+ * Finds a tool's card by title, disambiguating from the resume-callout chip
+ * (PROJ-71) which can carry the same title text — only the real card matches
+ * the `rounded-2xl` selector, the callout chip uses `rounded-xl`.
+ */
 function cardFor(title: string) {
-    return screen.getByText(title).closest('div.bg-white, a.group') as HTMLElement;
+    const card = screen.getAllByText(title)
+        .map(el => el.closest('div.rounded-2xl, a.rounded-2xl'))
+        .find((el): el is HTMLElement => el !== null);
+    if (!card) throw new Error(`No card found for "${title}"`);
+    return card;
+}
+
+/** CBA/D.E.N.T.S. live in "Before It Happens"; Lifestyle Balance/SMART Goal live in "Big Picture" — both collapsed by default. */
+function expandSection(label: string) {
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(label) }));
 }
 
 describe('🧩 ToolsHub page', () => {
@@ -32,12 +46,14 @@ describe('🧩 ToolsHub page', () => {
 
     it('always shows a Start Fresh link for a real guided tool, pointing at ?fresh=1', () => {
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('Cost Benefit Analysis');
         expect(within(card).getByText('Start Fresh').closest('a')).toHaveAttribute('href', '/tools/cba?fresh=1');
     });
 
     it('hides Resume when there is no draft anywhere', () => {
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('Cost Benefit Analysis');
         expect(within(card).queryByText('Resume')).not.toBeInTheDocument();
     });
@@ -45,6 +61,7 @@ describe('🧩 ToolsHub page', () => {
     it('shows Resume when a same-session sessionStorage draft exists', () => {
         (hasGuidedDraft as Mock).mockImplementation((toolType: string) => toolType === 'CBA');
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('Cost Benefit Analysis');
         expect(within(card).getByText('Resume').closest('a')).toHaveAttribute('href', '/tools/cba');
     });
@@ -52,6 +69,7 @@ describe('🧩 ToolsHub page', () => {
     it('shows Resume when a cross-session Firestore DRAFT doc exists, even with no sessionStorage draft', () => {
         (useSmartToolCompletions as Mock).mockReturnValue({ data: { counts: {}, hasDraftDoc: { DENTS: true } } });
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('D.E.N.T.S. Strategy');
         expect(within(card).getByText('Resume')).toBeInTheDocument();
     });
@@ -59,6 +77,7 @@ describe('🧩 ToolsHub page', () => {
     it('never shows Resume for a non-guided-flow tool (Lifestyle Balance), even if hasDraftDoc were somehow true', () => {
         (useSmartToolCompletions as Mock).mockReturnValue({ data: { counts: {}, hasDraftDoc: { LIFESTYLE_BALANCE: true } } });
         render(<ToolsHub />);
+        expandSection('Big Picture');
         const card = cardFor('Lifestyle Balance');
         expect(within(card).queryByText('Resume')).not.toBeInTheDocument();
     });
@@ -66,6 +85,7 @@ describe('🧩 ToolsHub page', () => {
     it('shows the completion badge and a History link once a tool has completions', () => {
         (useSmartToolCompletions as Mock).mockReturnValue({ data: { counts: { CBA: 3 }, hasDraftDoc: {} } });
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('Cost Benefit Analysis');
         expect(within(card).getByText('Completed 3 times')).toBeInTheDocument();
         expect(within(card).getByText('History').closest('a')).toHaveAttribute('href', '/tools/CBA/history');
@@ -74,11 +94,13 @@ describe('🧩 ToolsHub page', () => {
     it('uses singular phrasing for exactly one completion', () => {
         (useSmartToolCompletions as Mock).mockReturnValue({ data: { counts: { CBA: 1 }, hasDraftDoc: {} } });
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         expect(within(cardFor('Cost Benefit Analysis')).getByText('Completed 1 time')).toBeInTheDocument();
     });
 
     it('hides the completion badge and History link when the count is zero', () => {
         render(<ToolsHub />);
+        expandSection('Before It Happens');
         const card = cardFor('Cost Benefit Analysis');
         expect(within(card).queryByText(/Completed/)).not.toBeInTheDocument();
         expect(within(card).queryByText('History')).not.toBeInTheDocument();
@@ -86,6 +108,7 @@ describe('🧩 ToolsHub page', () => {
 
     it('renders SMART Goal as a disabled Coming Soon card with no action buttons', () => {
         render(<ToolsHub />);
+        expandSection('Big Picture');
         expect(screen.getByText('Coming Soon')).toBeInTheDocument();
         const card = cardFor('SMART Goal');
         expect(within(card).queryByText('Start Fresh')).not.toBeInTheDocument();
@@ -97,5 +120,47 @@ describe('🧩 ToolsHub page', () => {
         expect(within(card).queryByText('Start Fresh')).not.toBeInTheDocument();
         expect(card.tagName).toBe('A');
         expect(card).toHaveAttribute('href', '/tools/urge-surfer');
+    });
+
+    describe('moment-based grouping (PROJ-71)', () => {
+        it('expands the "Right Now" section by default, showing crisis tools without any interaction', () => {
+            render(<ToolsHub />);
+            expect(screen.getByText('Urge Surfer')).toBeInTheDocument();
+            expect(screen.getByText('The Resentment Burner')).toBeInTheDocument();
+        });
+
+        it('keeps the other three sections collapsed by default', () => {
+            render(<ToolsHub />);
+            expect(screen.queryByText('Cost Benefit Analysis')).not.toBeInTheDocument();
+            expect(screen.queryByText('Thought Record')).not.toBeInTheDocument();
+            expect(screen.queryByText('Lifestyle Balance')).not.toBeInTheDocument();
+        });
+
+        it('reveals a collapsed section\'s tools once its header is clicked', () => {
+            render(<ToolsHub />);
+            expandSection('Before It Happens');
+            expect(screen.getByText('Cost Benefit Analysis')).toBeInTheDocument();
+            expect(screen.getByText('D.E.N.T.S. Strategy')).toBeInTheDocument();
+        });
+
+        it('shows a tool count badge per section', () => {
+            render(<ToolsHub />);
+            const beforeHeader = screen.getByRole('button', { name: /Before It Happens/ });
+            expect(within(beforeHeader).getByText('2')).toBeInTheDocument();
+        });
+    });
+
+    describe('resume callout (PROJ-71)', () => {
+        it('is absent when nothing is resumable', () => {
+            render(<ToolsHub />);
+            expect(screen.queryByText('Continue where you left off')).not.toBeInTheDocument();
+        });
+
+        it('surfaces a resumable tool without needing its section expanded, linking to the plain path (no ?fresh=1)', () => {
+            (hasGuidedDraft as Mock).mockImplementation((toolType: string) => toolType === 'CBA');
+            render(<ToolsHub />);
+            expect(screen.getByText('Continue where you left off')).toBeInTheDocument();
+            expect(screen.getByText('Cost Benefit Analysis').closest('a')).toHaveAttribute('href', '/tools/cba');
+        });
     });
 });

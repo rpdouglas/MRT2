@@ -1,24 +1,167 @@
 /**
  * src/pages/ToolsHub.tsx
- * PROJ-27: The CBT Engine / PROJ-50 §5: Tools Hub Redesign
- * Central routing directory for all interactive recovery tools. The 8 real,
- * journal-persisted guided/CBT tools get three entry points (Start Fresh /
- * Resume / View History) plus richer cards (time estimate, "Best for",
- * completion count). Urge Surfer and Resentment Burner keep their original
- * simple card — neither has steps, drafts, or (for Resentment Burner) any
- * persistence at all, so entry-modes/history/completion-count don't apply.
+ * PROJ-27: The CBT Engine / PROJ-50 §5: Tools Hub Redesign / PROJ-71: Tools Hub Regrouping
+ * Central routing directory for all interactive recovery tools, grouped into four
+ * moment-based accordion sections (Right Now / Before It Happens / After a Hard
+ * Moment / Big Picture) so crisis-relevant tools (Urge Surfer, Resentment Burner)
+ * are unconditionally first and expanded by default. The 8 real, journal-persisted
+ * guided/CBT tools keep their three entry points (Start Fresh / Resume / View
+ * History) plus richer cards (time estimate, "Best for", completion count).
+ * Urge Surfer and Resentment Burner keep their original simple card — neither has
+ * steps, drafts, or (for Resentment Burner) any persistence at all, so entry-modes/
+ * history/completion-count don't apply.
  */
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import { PuzzlePieceIcon, ClockIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
-import { TOOLS } from '../lib/toolsRegistry';
+import GlassCard from '../components/ui/GlassCard';
+import { PuzzlePieceIcon, ClockIcon, CheckBadgeIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { TOOLS, PHASE_META, type ToolPhase, type ToolRegistryEntry } from '../lib/toolsRegistry';
 import { hasGuidedDraft } from '../hooks/useGuidedDraft';
 import { useSmartToolCompletions } from '../hooks/useSmartToolCompletions';
+
+const PHASE_ORDER: ToolPhase[] = ['right-now', 'before', 'after', 'big-picture'];
+
+interface ToolCardProps {
+    tool: ToolRegistryEntry;
+    count: number;
+    canResume: boolean;
+}
+
+function ToolCard({ tool, count, canResume }: ToolCardProps) {
+    const isComingSoon = tool.status === 'coming_soon';
+
+    // Coming Soon: SMART Goal today — no component exists yet.
+    if (isComingSoon) {
+        return (
+            <div className={`relative bg-white/5 rounded-2xl p-5 border border-white/10 opacity-60 cursor-not-allowed ${tool.border} border-l-[6px]`}>
+                <div className="flex items-start gap-4">
+                    <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
+                        <tool.icon className="h-7 w-7" />
+                    </div>
+                    <div className="flex-1 min-w-0 pt-1">
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-base font-bold text-white/70">{tool.title}</h3>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-white/40 bg-white/10 px-2 py-0.5 rounded">
+                                Coming Soon
+                            </span>
+                        </div>
+                        <p className="text-sm text-white/50 leading-relaxed pr-2">{tool.description}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Real, journal-persisted guided/CBT tools: three entry points + richer card.
+    if (tool.toolType) {
+        return (
+            <div className={`bg-white/5 rounded-2xl p-5 border border-white/10 ${tool.border} border-l-[6px] space-y-3`}>
+                <div className="flex items-start gap-4">
+                    <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
+                        <tool.icon className="h-7 w-7" />
+                    </div>
+                    <div className="flex-1 min-w-0 pt-1">
+                        <div className="flex flex-wrap items-start gap-2 mb-1">
+                            <h3 className="text-base font-bold text-white flex-1 min-w-[120px]">{tool.title}</h3>
+                            {tool.bestFor && (
+                                <span className="shrink-0 mt-0.5 text-[9px] uppercase tracking-widest font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded">
+                                    Best for: {tool.bestFor}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            {tool.timeEstimate && (
+                                <span className="flex items-center gap-1 text-xs text-white/40 font-medium">
+                                    <ClockIcon className="w-3.5 h-3.5" /> {tool.timeEstimate}
+                                </span>
+                            )}
+                            {count > 0 && (
+                                <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold">
+                                    <CheckBadgeIcon className="w-3.5 h-3.5" /> Completed {count} time{count === 1 ? '' : 's'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Link
+                        to={`${tool.path}?fresh=1`}
+                        className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors active:scale-95"
+                    >
+                        Start Fresh
+                    </Link>
+                    {canResume && (
+                        <Link
+                            to={tool.path}
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-sm font-bold rounded-xl transition-colors active:scale-95"
+                        >
+                            Resume
+                        </Link>
+                    )}
+                    {count > 0 && (
+                        <Link
+                            to={`/tools/${tool.toolType}/history`}
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold rounded-xl transition-colors active:scale-95"
+                        >
+                            History
+                        </Link>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // Not a SMART Tool (Urge Surfer, Resentment Burner) — original simple card.
+    return (
+        <Link
+            to={tool.path}
+            className={`block relative group bg-white/5 rounded-2xl p-5 border border-white/10 transition-colors hover:bg-white/10 active:scale-95 ${tool.border} border-l-[6px]`}
+        >
+            <div className="flex items-start gap-4">
+                <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
+                    <tool.icon className="h-7 w-7" />
+                </div>
+                <div className="flex-1 min-w-0 pt-1">
+                    <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
+                        {tool.title}
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                </div>
+            </div>
+        </Link>
+    );
+}
 
 export default function ToolsHub() {
     const { data: completions } = useSmartToolCompletions();
     const counts = completions?.counts ?? {};
     const hasDraftDoc = completions?.hasDraftDoc ?? {};
+
+    const [expanded, setExpanded] = useState<Record<ToolPhase, boolean>>({
+        'right-now': true,
+        before: false,
+        after: false,
+        'big-picture': false,
+    });
+
+    const togglePhase = (phase: ToolPhase) => {
+        setExpanded((prev) => ({ ...prev, [phase]: !prev[phase] }));
+    };
+
+    const groupedTools = useMemo(() => {
+        const map = new Map<ToolPhase, ToolRegistryEntry[]>(PHASE_ORDER.map((phase) => [phase, []]));
+        for (const tool of TOOLS) {
+            map.get(tool.phase)?.push(tool);
+        }
+        return map;
+    }, []);
+
+    const resumableTools = TOOLS.filter((tool) => (
+        Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]))
+    ));
 
     return (
         <div className={`pb-24 relative min-h-screen bg-slate-50`}>
@@ -28,130 +171,85 @@ export default function ToolsHub() {
                     title="Recovery Tools"
                     subtitle="Practical exercises to manage cravings and rewire thoughts."
                     icon={PuzzlePieceIcon}
-                    fromColor="from-blue-600"
-                    viaColor="via-indigo-600"
-                    toColor="to-violet-600"
+                    fromColor="from-amber-500"
+                    viaColor="via-orange-500"
+                    toColor="to-orange-600"
                 />
             </div>
 
             <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-30 space-y-4">
 
-                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100 text-sm text-blue-900 mb-6 shadow-sm">
+                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100 text-sm text-blue-900 shadow-sm">
                     <strong>SMART Recovery & CBT:</strong> These tools are designed to help you interrupt the cycle of addiction by applying logic and planning to emotional urges.
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {TOOLS.map((tool) => {
-                        const isComingSoon = tool.status === 'coming_soon';
+                {resumableTools.length > 0 && (
+                    <GlassCard variant="tools">
+                        <div className="flex items-center gap-2 mb-3">
+                            <ClockIcon className="w-4 h-4 text-amber-300" />
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-amber-300">Continue where you left off</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {resumableTools.slice(0, 3).map((tool) => (
+                                <Link
+                                    key={tool.id}
+                                    to={tool.path}
+                                    className="min-h-[44px] flex items-center gap-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold transition-colors active:scale-95"
+                                >
+                                    <tool.icon className="h-4 w-4" />
+                                    {tool.title}
+                                </Link>
+                            ))}
+                        </div>
+                    </GlassCard>
+                )}
 
-                        // Coming Soon: SMART Goal today — no component exists yet.
-                        if (isComingSoon) {
-                            return (
-                                <div key={tool.id} className={`block relative bg-white rounded-2xl p-5 border border-gray-200 opacity-60 cursor-not-allowed ${tool.border} border-l-[6px]`}>
-                                    <div className="flex items-start gap-4">
-                                        <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
-                                            <tool.icon className="h-7 w-7" />
-                                        </div>
-                                        <div className="flex-1 min-w-0 pt-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <h3 className="text-base font-bold text-slate-500">{tool.title}</h3>
-                                                <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                                                    Coming Soon
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-slate-400 leading-relaxed pr-2">{tool.description}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        }
+                {PHASE_ORDER.map((phase) => {
+                    const meta = PHASE_META[phase];
+                    const tools = groupedTools.get(phase) ?? [];
+                    const isOpen = expanded[phase];
+                    const ChevronIcon = isOpen ? ChevronUpIcon : ChevronDownIcon;
 
-                        // Real, journal-persisted guided/CBT tools: three entry points + richer card.
-                        if (tool.toolType) {
-                            const count = counts[tool.toolType] ?? 0;
-                            const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType) || Boolean(hasDraftDoc[tool.toolType]));
-
-                            return (
-                                <div key={tool.id} className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-200 ${tool.border} border-l-[6px] space-y-3`}>
-                                    <div className="flex items-start gap-4">
-                                        <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
-                                            <tool.icon className="h-7 w-7" />
-                                        </div>
-                                        <div className="flex-1 min-w-0 pt-1">
-                                            <div className="flex items-start justify-between gap-2 mb-1">
-                                                <h3 className="text-base font-bold text-gray-900">{tool.title}</h3>
-                                                {tool.bestFor && (
-                                                    <span className="shrink-0 mt-0.5 text-[9px] uppercase tracking-widest font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                                                        Best for: {tool.bestFor}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-600 leading-relaxed pr-2">{tool.description}</p>
-                                            <div className="flex items-center gap-3 mt-2 flex-wrap">
-                                                {tool.timeEstimate && (
-                                                    <span className="flex items-center gap-1 text-xs text-slate-400 font-medium">
-                                                        <ClockIcon className="w-3.5 h-3.5" /> {tool.timeEstimate}
-                                                    </span>
-                                                )}
-                                                {count > 0 && (
-                                                    <span className="flex items-center gap-1 text-xs text-emerald-600 font-bold">
-                                                        <CheckBadgeIcon className="w-3.5 h-3.5" /> Completed {count} time{count === 1 ? '' : 's'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <Link
-                                            to={`${tool.path}?fresh=1`}
-                                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors active:scale-95"
-                                        >
-                                            Start Fresh
-                                        </Link>
-                                        {canResume && (
-                                            <Link
-                                                to={tool.path}
-                                                className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-bold rounded-xl transition-colors active:scale-95"
-                                            >
-                                                Resume
-                                            </Link>
-                                        )}
-                                        {count > 0 && (
-                                            <Link
-                                                to={`/tools/${tool.toolType}/history`}
-                                                className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 text-sm font-bold rounded-xl transition-colors active:scale-95"
-                                            >
-                                                History
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        }
-
-                        // Not a SMART Tool (Urge Surfer, Resentment Burner) — original simple card.
-                        return (
-                            <Link
-                                key={tool.id}
-                                to={tool.path}
-                                className={`block relative group bg-white rounded-2xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md active:scale-95 ${tool.border} border-l-[6px]`}
+                    return (
+                        <div key={phase}>
+                            <button
+                                onClick={() => togglePhase(phase)}
+                                aria-expanded={isOpen}
+                                className="w-full min-h-[44px] flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white shadow-sm border border-gray-200 text-left hover:bg-slate-50 active:scale-[0.99] transition-colors"
                             >
-                                <div className="flex items-start gap-4">
-                                    <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
-                                        <tool.icon className="h-7 w-7" />
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-amber-50 text-amber-600">
+                                        <meta.icon className="h-5 w-5" />
                                     </div>
-                                    <div className="flex-1 min-w-0 pt-1">
-                                        <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors mb-1">
-                                            {tool.title}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed pr-2">{tool.description}</p>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-sm font-bold text-gray-900">{meta.label}</h2>
+                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                                                {tools.length}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate">{meta.subtitle}</p>
                                     </div>
                                 </div>
-                            </Link>
-                        );
-                    })}
-                </div>
+                                <ChevronIcon className="h-5 w-5 text-slate-400 flex-shrink-0 transition-transform motion-reduce:transition-none" />
+                            </button>
+
+                            {isOpen && (
+                                <div className="mt-3">
+                                    <GlassCard variant="tools">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {tools.map((tool) => {
+                                                const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
+                                                const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
+                                                return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
+                                            })}
+                                        </div>
+                                    </GlassCard>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
