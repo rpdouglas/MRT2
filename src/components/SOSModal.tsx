@@ -1,7 +1,7 @@
 import { MapPin, ExternalLink } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
+import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
 
@@ -133,6 +133,20 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                         </h4>
                         <p className="text-sm text-indigo-700">
                             A 5-minute interactive grounding technique. Ride the wave, don't fight it.
+                        </p>
+                    </button>
+
+                    {/* OPTION 2b: CRAVING BUSTER (PROJ-72) */}
+                    <button
+                        onClick={() => handleNavigation('/games/craving-buster')}
+                        className="group bg-sky-50 p-4 rounded-xl border border-sky-100 hover:border-sky-300 transition-all text-left"
+                    >
+                        <h4 className="font-bold text-sky-900 flex items-center gap-2 mb-1">
+                            <TrophyIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            Craving Buster
+                        </h4>
+                        <p className="text-sm text-sky-700">
+                            A short (90-second) breathing rhythm game — something to do with your hands while the wave passes.
                         </p>
                     </button>
 

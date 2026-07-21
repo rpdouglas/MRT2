@@ -18,6 +18,7 @@ import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
 import { getMockJournals, getMockTasks, getMockWorkbookAnswers } from '../lib/mockData';
+import { useGameProgress } from '../hooks/useGameProgress';
 
 export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
@@ -134,6 +135,8 @@ export default function Dashboard() {
     staleTime: 24 * 60 * 60 * 1000,
   });
 
+  const { history: gameHistory } = useGameProgress();
+
   const stats = useMemo(() => {
     if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
 
@@ -148,7 +151,7 @@ export default function Dashboard() {
     const tStats = calculateTaskStats(tasks);
     const wStats = calculateWorkbookStats(workbookCount);
     const vStats = calculateVitalityStats(journals);
-    const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount);
+    const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount, gameHistory.length);
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
     const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
@@ -162,7 +165,7 @@ export default function Dashboard() {
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, roscCount, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
+  }, [journals, tasks, workbookCount, roscCount, gameHistory, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {

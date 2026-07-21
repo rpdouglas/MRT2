@@ -8,7 +8,7 @@
 import type { ComponentType, SVGProps } from 'react';
 import {
     ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon,
-    ChartPieIcon, FireIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, FlagIcon,
+    ChartPieIcon, FireIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, FlagIcon, SunIcon,
 } from '@heroicons/react/24/outline';
 import type { SmartToolType } from './types/smart';
 
@@ -158,6 +158,22 @@ export const TOOLS: ToolRegistryEntry[] = [
         toolType: 'ABC',
         hasGuidedFlow: true,
         phase: 'after',
+    },
+    {
+        id: 'morning-intent',
+        title: 'Morning Intent',
+        description: "When you want to get ahead of today's challenges before they arrive",
+        bestFor: 'Start of day',
+        timeEstimate: '~5 minutes',
+        path: '/tools/morning-intent',
+        icon: SunIcon,
+        color: 'text-sky-600',
+        bg: 'bg-sky-50',
+        border: 'border-l-sky-500',
+        status: 'active',
+        toolType: 'MORNING_INTENT',
+        hasGuidedFlow: true,
+        phase: 'before',
     },
     {
         id: 'dents',
