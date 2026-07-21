@@ -25,6 +25,7 @@ graph TD
     root --> feedback[📂 feedback]
     root --> service[📂 service]
     root --> game_progress[📂 game_progress]
+    root --> game_saves[📂 game_saves]
 ```
 
 ## 2. Collection Definitions
@@ -110,12 +111,21 @@ graph TD
 * **Fields:**
     * `uid` (String): Owner ID.
     * `gameId` (String): **UNENCRYPTED** — e.g. `'craving-buster'`.
-    * `personaTarget` (String): **UNENCRYPTED** — `'David'` | `'Ned'` | `'Lisa'` | `'Walt'`.
+    * `personaTarget` (String): **UNENCRYPTED** — `'David'` | `'Ned'` | `'Lisa'` | `'Walt'` | `'All'` (Phase 6 — games not tied to one persona, e.g. Knowledge Quests).
     * `score` (Int): **UNENCRYPTED** — feeds `gamification.ts`'s `calculateUserLevel` (`action` bucket) without a decrypt.
     * `encryptedStats` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's per-play stats (e.g. `{ tapsHit, tapsTotal, rhythmAccuracy }` for Craving Buster).
     * `encryptedReflection` (String, optional): **ENCRYPTED BLOB** (`iv:ciphertext`) — only present for games with a reflective component (`recordReflection` on the `IRecoveryGame` interface).
     * `createdAt` (Timestamp).
-    * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation` and `executeCryptoShredding` (both `encryptedStats` and `encryptedReflection` are migrated/deleted).
+    * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation`, `executeCryptoShredding`, and `executeTotalAccountAnnihilation` (Phase 7).
+
+### `game_saves/{id}`
+* **Purpose:** PROJ-72 Phase 4. A resumable, continuously-updated save-slot for multi-session games (e.g. Fast Lane) — distinct from `game_progress`'s append-only completed-play log. One doc per `(uid, gameId)`, doc ID `${uid}_${gameId}`, upserted via `setDoc`. Fully encrypted — this is live in-progress state, not a completed-event snapshot, so there are no plaintext fields needed for streak/XP math.
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `gameId` (String): **UNENCRYPTED** — e.g. `'fast-lane'`.
+    * `encryptedState` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's full save state.
+    * `updatedAt` (Timestamp).
+    * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation`, `executeCryptoShredding`, and `executeTotalAccountAnnihilation` (Phase 7).
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions. (Unencrypted).
