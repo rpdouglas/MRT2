@@ -23,7 +23,7 @@
 | ⚪ Planned | `NEW` | **Privacy-Preserving Community** | All | Opt-in, pseudonymized social feed moderated by Gemini. (Requires heavy Zero-Knowledge schema design). |
 | ⚪ Planned | `PROJ-35` | **The Autopsy Engine** | David | A shame-free CBT reset flow that captures triggers immediately following a relapse. |
 | ⚪ Planned | `NEW` | **Multi-Addiction Clocks** | All | Tracking multiple habits/substances simultaneously. |
-| 🟡 **In Progress** | `PROJ-72` | **Recovery Games** | All | Zero-knowledge, anti-shame persona-targeted mini-games and psychoeducation tools layered on the existing XP/streak system. Replaces the Dashboard's dead "Service — Coming Soon" tile. Foundation + Craving Buster (David) + Morning Intent + Recovery Jeopardy (group activity) + Fast Lane (Walt, a multi-week economic life-sim) + Goal Ladder (Ned) + Thought Challenge (Lisa) + Trigger Match (Walt) + Knowledge Quests (general psychoeducation, decoupled content packs) all shipped. Only the data-export/data-sovereignty phase remains. See `docs/projects/72_RECOVERY_GAMES.md`. |
+| ✅ **Shipped** | `PROJ-72` | **Recovery Games** | All | Zero-knowledge, anti-shame persona-targeted mini-games and psychoeducation tools layered on the existing XP/streak system. Replaces the Dashboard's dead "Service — Coming Soon" tile. All 7 phases shipped: Craving Buster (David), Morning Intent, Recovery Jeopardy (group activity), Fast Lane (Walt, a multi-week economic life-sim), Goal Ladder (Ned), Thought Challenge (Lisa), Trigger Match (Walt), Knowledge Quests (general psychoeducation, decoupled content packs), and a Phase 7 closing pass that extended the existing PROJ-30 export/deletion engine to cover Recovery Games data (also fixing a pre-existing account-deletion gap) and added Milestone Image sharing to Fast Lane/Jeopardy win screens. See `docs/projects/72_RECOVERY_GAMES.md`. |
 
 ## 🌊 Wave 3: Platform Maturity & Sponsors (Weeks 17–26)
 *The third goal: Capture the "Lisa" (Sponsor) and "Walt" (Long-term) demographics.*
@@ -39,7 +39,7 @@
 
 | Status | ID | Project Name | Persona | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| ⚪ Planned | `PROJ-30` | **Data Sovereignty Engine** | Walt | Formalize the local decryption and structured export (JSON/PDF) protocol. |
+| ✅ **Shipped** | `PROJ-30` | **Data Sovereignty Engine** | Walt | Local decryption and structured export (JSON/PDF) via `DataExportPanel.tsx`/`exporter.ts`, plus Google Drive auto-sync and account deletion. This row was stale (still `⚪ Planned` despite being fully built); corrected during PROJ-72 Phase 7 when the engine was extended to cover Recovery Games data. See `docs/specs/09_PROFILE.md`. |
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED

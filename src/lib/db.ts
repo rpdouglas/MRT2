@@ -294,6 +294,10 @@ export interface FullUserData {
   tasks: Task[];
   templates: JournalTemplate[];
   workbookAnswers: Record<string, unknown>[];
+  // PROJ-72 Phase 7. Loosely typed like workbookAnswers — prepareDataForExport
+  // reshapes encryptedStats/encryptedReflection into plain stats/reflection
+  // fields, so the raw GameProgressRecord shape doesn't survive the decrypt step.
+  gameProgress: Record<string, unknown>[];
 }
 
 export async function fetchAllUserData(uid: string): Promise<FullUserData> {
@@ -316,11 +320,16 @@ export async function fetchAllUserData(uid: string): Promise<FullUserData> {
   const wbSnap = await getDocs(wbQ);
   const workbookAnswers = wbSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+  const gpQ = query(collection(database, 'game_progress'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+  const gpSnap = await getDocs(gpQ);
+  const gameProgress = gpSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
   return {
     profile,
     journals,
     tasks,
     templates,
-    workbookAnswers
+    workbookAnswers,
+    gameProgress
   };
 }

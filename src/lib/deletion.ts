@@ -34,7 +34,9 @@ export async function executeTotalAccountAnnihilation(uid: string, onProgress?: 
     await collectRefs('insights');
     await collectRefs('ai_logs');
     await collectRefs('feedback');
-    
+    await collectRefs('game_progress'); // PROJ-72 Phase 7
+    await collectRefs('game_saves'); // PROJ-72 Phase 7
+
     // 2. Scan Subcollections
     await collectRefs('workbook_answers', true);
     await collectRefs('templates', true);

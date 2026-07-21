@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.8.27] - 2026-07-21
+### 🛠️ Update
+- Your Data export (JSON and PDF, in Profile → Data) now includes your Recovery Games history alongside journals and tasks.
+- Reaching your goals in Fast Lane, or winning a round of Recovery Jeopardy, now lets you share a milestone image — the same one-tap sharing you already have for sobriety milestones.
+
 ## [v1.8.26] - 2026-07-21
 ### 🛠️ Update
 - Added Knowledge Quests to the Games section — short quiz packs on recovery-adjacent topics like stress, habits, and sleep. More packs are on the way.

@@ -7,10 +7,10 @@ import { db } from '../lib/firebase';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
 import { calculateSavings } from '../lib/financial';
 import { getMilestone, getMilestoneLabel, getMilestoneImage } from '../lib/milestones';
-import { toPng } from 'html-to-image';
 import type { UserProfile, HeroColorKey } from '../lib/db';
 import { HERO_COLORS, getHeroColorTheme } from '../lib/heroColors';
 import { useHeroColor } from '../hooks/useHeroColor';
+import { useShareImage } from '../hooks/useShareImage';
 import { Link } from 'react-router-dom';
 
 interface SobrietyHeroProps {
@@ -30,6 +30,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
     const [isExporting, setIsExporting] = useState(false);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const { updateHeroColor } = useHeroColor();
+    const { shareImage } = useShareImage();
     const heroTheme = getHeroColorTheme(userProfile?.heroColor);
 
     const handleSelectColor = (key: HeroColorKey) => {
@@ -87,33 +88,13 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!heroRef.current) return;
         try {
             setIsExporting(true);
-            
-            // Give React time to flush the DOM, and allow cached images to paint
-            await new Promise(resolve => setTimeout(resolve, 250));
-            
-            // FIX: Removed cacheBust: true to allow the preloaded image to be used
-            const dataUrl = await toPng(heroRef.current, { pixelRatio: 2 });
-            
-            const blob = await (await fetch(dataUrl)).blob();
-            const file = new File([blob], 'mrt-milestone.png', { type: 'image/png' });
-
-            if (navigator.share && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: 'My Recovery Milestone',
-                    text: 'Tracking my journey with My Recovery Toolkit. 🛡️',
-                    files: [file]
-                });
-            } else {
-                const link = document.createElement('a');
-                link.download = 'mrt-milestone.png';
-                link.href = dataUrl;
-                link.click();
-            }
-        } catch (err) {
-            console.error('Failed to share image', err);
+            await shareImage(heroRef, {
+                filename: 'mrt-milestone.png',
+                title: 'My Recovery Milestone',
+                text: 'Tracking my journey with My Recovery Toolkit. 🛡️',
+            });
         } finally {
             setIsExporting(false);
         }

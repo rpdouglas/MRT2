@@ -13,12 +13,13 @@
 // a calm log note that lets the player keep playing toward their own
 // goals — no forced "you lose" state — while the win screen itself (and
 // the comparison bars throughout) keep the competitive mechanic intact.
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GameShell from '../GameShell';
 import { useGameSession } from '../../../contexts/GameSessionContext';
 import { useGameProgress } from '../../../hooks/useGameProgress';
 import { useGameSave } from '../../../hooks/useGameSave';
+import { useShareImage } from '../../../hooks/useShareImage';
 import { DIFFICULTY_LEVELS, RIVAL_NAME, SHOP_ITEMS } from '../../../lib/games/fastLane/gameData';
 import {
   createNewGameState,
@@ -82,6 +83,8 @@ function FastLaneGame() {
   const { startSession, setScore, completeSession } = useGameSession();
   const { recordProgress } = useGameProgress();
   const { save, isLoading, saveGame, clearSave } = useGameSave(GAME_ID);
+  const { shareImage, isSharing } = useShareImage();
+  const winScreenRef = useRef<HTMLDivElement>(null);
 
   const [localState, setLocalState] = useState<FastLaneSaveState | null>(null);
   const [activeTab, setActiveTab] = useState<'status' | 'planner' | 'log'>('status');
@@ -172,25 +175,39 @@ function FastLaneGame() {
 
   if (outcome === 'won') {
     return (
-      <div className="flex flex-col items-center justify-center text-center gap-3 py-12 px-4">
+      <div ref={winScreenRef} className="flex flex-col items-center justify-center text-center gap-3 py-12 px-4 bg-white">
         <p className="text-lg font-bold text-slate-800">You reached your goals.</p>
         <p className="text-slate-600 max-w-xs">
           It took {gameState.player.week} weeks to build the stability you set out for.
         </p>
-        <div className="flex gap-3 mt-2">
-          <button
-            onClick={handleStartOver}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold active:scale-95 transition-transform"
-          >
-            {confirmingReset ? 'Confirm: Start Over?' : 'Play Again'}
-          </button>
-          <button
-            onClick={() => navigate('/games')}
-            className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold active:scale-95 transition-transform"
-          >
-            Back to Games
-          </button>
-        </div>
+        {!isSharing && (
+          <>
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={handleStartOver}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold active:scale-95 transition-transform"
+              >
+                {confirmingReset ? 'Confirm: Start Over?' : 'Play Again'}
+              </button>
+              <button
+                onClick={() => navigate('/games')}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold active:scale-95 transition-transform"
+              >
+                Back to Games
+              </button>
+            </div>
+            <button
+              onClick={() => shareImage(winScreenRef, {
+                filename: 'fast-lane-milestone.png',
+                title: 'My Fast Lane Milestone',
+                text: 'I just reached my goals in Fast Lane on My Recovery Toolkit.',
+              })}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+            >
+              Share this milestone
+            </button>
+          </>
+        )}
       </div>
     );
   }

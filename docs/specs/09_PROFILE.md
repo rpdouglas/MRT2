@@ -26,11 +26,11 @@ The Profile is split into three distinct horizontal tabs to manage complexity an
 ## 4. The Manual Export Engine
 **Philosophy:** The user owns their data.
 * **JSON Export:**
-    * Fetches ALL collections (`journals`, `tasks`, `workbooks`).
-    * **Decryption:** Decrypts all content client-side before generation.
+    * Fetches ALL collections (`journals`, `tasks`, `workbooks`, `game_progress` — PROJ-72 Phase 7).
+    * **Decryption:** Decrypts all content client-side before generation, including Recovery Games' `encryptedStats`/`encryptedReflection` fields via the same chunked-decrypt helper (`processInChunks`) used for journals/workbooks.
     * **Output:** Plain text JSON file. *User is warned in the UI to store this securely.*
 * **PDF Export:**
-    * Generates a formatted report of Journals and Tasks suitable for printing or sharing with a therapist, utilizing `jsPDF` and `jspdf-autotable`.
+    * Generates a formatted report of Journals, Tasks, and (if any exist) Recovery Games history, suitable for printing or sharing with a therapist, utilizing `jsPDF` and `jspdf-autotable`.
 
 ## 5. The Import Engine
 * **Logic:** Parses JSON backups (both legacy formats and new full-schema formats).
@@ -44,11 +44,11 @@ The Profile is split into three distinct horizontal tabs to manage complexity an
 * **The Flow:**
     1. User clicks "Request Account Deletion" in the Danger Zone.
     2. A modal intercepts the request and forces **Re-Authentication** (Email/Password or Google OAuth) to refresh the token.
-    3. The client-side script recursively queries and chunks `batch.delete()` operations across `journals`, `tasks`, `insights`, `ai_logs`, `feedback`, and all user subcollections.
+    3. The client-side script recursively queries and chunks `batch.delete()` operations across `journals`, `tasks`, `insights`, `ai_logs`, `feedback`, `game_progress`, `game_saves` (PROJ-72 Phase 7), and all user subcollections.
     4. Once Firestore is completely scrubbed, `deleteUser()` is called to destroy the Auth record.
 
 ## 7. Verification
 * [x] **Onboarding Lock:** Does a new user get forced to the General tab with the other tabs hidden?
 * [x] **Export:** Unlock vault -> Export JSON. Is the content readable (not ciphertext)?
 * [x] **Auto-Sync:** Sign in with Google, manually change `lastExportAt` in Firestore to 8 days ago, refresh, unlock vault. Does the file appear in Google Drive?
-* [x] **Deletion:** Ensure deleting an account does not leave orphaned records in the `feedback` or `ai_logs` collections.
+* [x] **Deletion:** Ensure deleting an account does not leave orphaned records in the `feedback`, `ai_logs`, `game_progress`, or `game_saves` collections.
