@@ -54,9 +54,9 @@ Three tools (CBA, DENTS, Five Questions) add their own **`intro` phase** before 
 **Bypasses `SmartToolContainer` and Firestore entirely:**
 * **The Resentment Burner:** An ephemeral journaling tool featuring a layer-based SVG combustion engine, to guarantee absolute zero-knowledge data destruction upon execution.
 
-## 4. Routing & Discovery (Tools Hub, PROJ-50 §5)
+## 4. Routing & Discovery (Tools Hub, PROJ-50 §5, regrouped PROJ-71)
 
-* **Tools Hub (`/tools`):** A centralized directory. The 8 real, journal-persisted tools each show three entry points on their card:
+* **Tools Hub (`/tools`):** A centralized directory, grouped into four collapsible, moment-based sections (`right-now` / `before` / `after` / `big-picture`, defined in `toolsRegistry.ts`'s `phase` field and `PHASE_META`): **Right Now** (Urge Surfer, Resentment Burner — expanded by default so crisis tools are always visible with no interaction), **Before It Happens** (D.E.N.T.S., Cost Benefit Analysis), **After a Hard Moment** (ABC Coping, Personify & Disarm, Thought Record, Five Questions), and **Big Picture** (Lifestyle Balance, SMART Goal) — the latter three collapsed by default, expandable via a tap on their header. The 8 real, journal-persisted tools each show three entry points on their card:
   * **Start Fresh** (`${path}?fresh=1`) — always available; forces the guided flow (or intro phase) to start blank, per §2.C's `forceFresh`.
   * **Resume** — shown only when a same-session `sessionStorage` draft (`hasGuidedDraft(toolType)`) or a cross-session Firestore `DRAFT` doc exists for a guided-flow tool; simply links to the tool's normal route, since `SmartToolContainer`'s existing `resumeSession` rehydration does the rest.
   * **History** — shown once a tool has at least one completion; links to `/tools/:toolType/history`.

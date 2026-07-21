@@ -1,6 +1,6 @@
 # 📁 Project 71: Tools Hub Regrouping
 
-**Status:** 🟡 Active
+**Status:** ✅ Shipped
 **Primary Persona:** David (primary), Walt (secondary)
 **Objective:** Regroup the flat "My Tools" list into four moment-based sections (Right Now / Before It Happens / After a Hard Moment / Big Picture) and bring the page onto the Momentum Kinetic v3.0 visual system already shipped in Insights (PROJ-54) and the ROSC Matrix (PROJ-53).
 
@@ -93,3 +93,17 @@ export const PHASE_META: Record<ToolRegistryEntry['phase'], { label: string; sub
 * [x] **The "Lost PIN" Test:** N/A — no encrypted content on this page.
 * [x] **Design system checklist (per `.claude/skills/design/SKILL.md`):** correct module color (new dedicated `tools` token), David's ≤3-tap test still holds (Tools Hub → Start Fresh is still 2 taps, unchanged), 44px touch targets on accordion headers, glassmorphism consistent with Insights/ROSC, no guilt/shame states introduced.
 * [x] **Full pipeline:** `npm run check` (lint, `docs:check-specs`, tests, build) clean.
+
+---
+
+## 6. Approved Deviations From Plan
+
+* **"Best for" badge overflow, found via visual QA:** Manual Playwright screenshot verification at a 412px mobile viewport (§5's 320px edge case) caught the "Best for" badge clipping off the right edge of the card on narrow screens — the additional `GlassCard` nesting introduced by this project narrows available card width versus the original flat layout, which had less padding to divide. Fixed by changing the title/badge header row from `flex items-start justify-between` to `flex flex-wrap items-start`, letting the badge wrap onto its own line under the title instead of being squeezed. No plan change beyond this: card structure, colors, and grouping are unchanged from §4.
+* **Icon chips left unchanged, not re-skinned:** The plan's Phase 2 suggested re-skinning `tool.bg`/`tool.color` icon-chip classes (e.g. `bg-indigo-50` → `bg-indigo-500/20`) for dark-glass legibility. On inspection this wasn't necessary — each icon chip is a self-contained light box independent of the card's background, so the existing per-tool color combinations remain legible unchanged against the new dark card. Only the surrounding title/description/badge text (previously assuming a white card) was recolored for legibility.
+
+---
+
+## 7. Post-Ship Amendments
+
+* **Resume callout removed (2026-07-21):** The "Continue where you left off" callout (§4 Phase 2) was removed at the product owner's request shortly after shipping — direct product feedback, not a bug. Per-card **Resume** entry points (§5 Phase 2 of the original PROJ-50 spec) are unaffected; only the standalone top-of-page callout and its `resumableTools` computation were deleted from `ToolsHub.tsx`. `docs/specs/18_CBT_ENGINE.md` §4 and the user guide (`docs-site/guide/08-cbt-tools.md`) updated to match.
+* **Font sizes increased 10% (2026-07-21):** All text sizes within `ToolsHub.tsx` (both `ToolCard` and the page shell) bumped ~10% via arbitrary Tailwind values (e.g. `text-sm` → `text-[15.4px]`, `text-base` → `text-[17.6px]`) at the product owner's request. Scoped to this page only — shared components (`VibrantHeader`, `GlassCard`) were not touched, so no other page is affected.

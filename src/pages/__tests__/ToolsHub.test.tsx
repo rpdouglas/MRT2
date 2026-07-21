@@ -19,11 +19,7 @@ vi.mock('react-router-dom', () => ({
     ),
 }));
 
-/**
- * Finds a tool's card by title, disambiguating from the resume-callout chip
- * (PROJ-71) which can carry the same title text — only the real card matches
- * the `rounded-2xl` selector, the callout chip uses `rounded-xl`.
- */
+/** Finds a tool's card by title, resolving to the element matching the card's `rounded-2xl` shell. */
 function cardFor(title: string) {
     const card = screen.getAllByText(title)
         .map(el => el.closest('div.rounded-2xl, a.rounded-2xl'))
@@ -147,20 +143,6 @@ describe('🧩 ToolsHub page', () => {
             render(<ToolsHub />);
             const beforeHeader = screen.getByRole('button', { name: /Before It Happens/ });
             expect(within(beforeHeader).getByText('2')).toBeInTheDocument();
-        });
-    });
-
-    describe('resume callout (PROJ-71)', () => {
-        it('is absent when nothing is resumable', () => {
-            render(<ToolsHub />);
-            expect(screen.queryByText('Continue where you left off')).not.toBeInTheDocument();
-        });
-
-        it('surfaces a resumable tool without needing its section expanded, linking to the plain path (no ?fresh=1)', () => {
-            (hasGuidedDraft as Mock).mockImplementation((toolType: string) => toolType === 'CBA');
-            render(<ToolsHub />);
-            expect(screen.getByText('Continue where you left off')).toBeInTheDocument();
-            expect(screen.getByText('Cost Benefit Analysis').closest('a')).toHaveAttribute('href', '/tools/cba');
         });
     });
 });
