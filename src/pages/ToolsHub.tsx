@@ -41,12 +41,12 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                         <div className="flex items-center justify-between mb-1">
-                            <h3 className="text-base font-bold text-white/70">{tool.title}</h3>
-                            <span className="text-[9px] uppercase tracking-widest font-bold text-white/40 bg-white/10 px-2 py-0.5 rounded">
+                            <h3 className="text-[17.6px] font-bold text-white/70">{tool.title}</h3>
+                            <span className="text-[9.9px] uppercase tracking-widest font-bold text-white/40 bg-white/10 px-2 py-0.5 rounded">
                                 Coming Soon
                             </span>
                         </div>
-                        <p className="text-sm text-white/50 leading-relaxed pr-2">{tool.description}</p>
+                        <p className="text-[15.4px] text-white/50 leading-relaxed pr-2">{tool.description}</p>
                     </div>
                 </div>
             </div>
@@ -63,22 +63,22 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                         <div className="flex flex-wrap items-start gap-2 mb-1">
-                            <h3 className="text-base font-bold text-white flex-1 min-w-[120px]">{tool.title}</h3>
+                            <h3 className="text-[17.6px] font-bold text-white flex-1 min-w-[120px]">{tool.title}</h3>
                             {tool.bestFor && (
-                                <span className="shrink-0 mt-0.5 text-[9px] uppercase tracking-widest font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded">
+                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded">
                                     Best for: {tool.bestFor}
                                 </span>
                             )}
                         </div>
-                        <p className="text-sm text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                        <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                             {tool.timeEstimate && (
-                                <span className="flex items-center gap-1 text-xs text-white/40 font-medium">
+                                <span className="flex items-center gap-1 text-[13.2px] text-white/40 font-medium">
                                     <ClockIcon className="w-3.5 h-3.5" /> {tool.timeEstimate}
                                 </span>
                             )}
                             {count > 0 && (
-                                <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold">
+                                <span className="flex items-center gap-1 text-[13.2px] text-emerald-400 font-bold">
                                     <CheckBadgeIcon className="w-3.5 h-3.5" /> Completed {count} time{count === 1 ? '' : 's'}
                                 </span>
                             )}
@@ -89,14 +89,14 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                 <div className="flex items-center gap-2 flex-wrap">
                     <Link
                         to={`${tool.path}?fresh=1`}
-                        className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors active:scale-95"
+                        className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
                     >
                         Start Fresh
                     </Link>
                     {canResume && (
                         <Link
                             to={tool.path}
-                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-sm font-bold rounded-xl transition-colors active:scale-95"
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
                         >
                             Resume
                         </Link>
@@ -104,7 +104,7 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     {count > 0 && (
                         <Link
                             to={`/tools/${tool.toolType}/history`}
-                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm font-bold rounded-xl transition-colors active:scale-95"
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
                         >
                             History
                         </Link>
@@ -125,10 +125,10 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     <tool.icon className="h-7 w-7" />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
+                    <h3 className="text-[17.6px] font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
                         {tool.title}
                     </h3>
-                    <p className="text-sm text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                    <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
                 </div>
             </div>
         </Link>
@@ -159,10 +159,6 @@ export default function ToolsHub() {
         return map;
     }, []);
 
-    const resumableTools = TOOLS.filter((tool) => (
-        Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]))
-    ));
-
     return (
         <div className={`pb-24 relative min-h-screen bg-slate-50`}>
 
@@ -179,30 +175,9 @@ export default function ToolsHub() {
 
             <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-30 space-y-4">
 
-                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100 text-sm text-blue-900 shadow-sm">
+                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100 text-[15.4px] text-blue-900 shadow-sm">
                     <strong>SMART Recovery & CBT:</strong> These tools are designed to help you interrupt the cycle of addiction by applying logic and planning to emotional urges.
                 </div>
-
-                {resumableTools.length > 0 && (
-                    <GlassCard variant="tools">
-                        <div className="flex items-center gap-2 mb-3">
-                            <ClockIcon className="w-4 h-4 text-amber-300" />
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-amber-300">Continue where you left off</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {resumableTools.slice(0, 3).map((tool) => (
-                                <Link
-                                    key={tool.id}
-                                    to={tool.path}
-                                    className="min-h-[44px] flex items-center gap-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold transition-colors active:scale-95"
-                                >
-                                    <tool.icon className="h-4 w-4" />
-                                    {tool.title}
-                                </Link>
-                            ))}
-                        </div>
-                    </GlassCard>
-                )}
 
                 {PHASE_ORDER.map((phase) => {
                     const meta = PHASE_META[phase];
@@ -223,12 +198,12 @@ export default function ToolsHub() {
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <h2 className="text-sm font-bold text-gray-900">{meta.label}</h2>
-                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                                            <h2 className="text-[15.4px] font-bold text-gray-900">{meta.label}</h2>
+                                            <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
                                                 {tools.length}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-500 truncate">{meta.subtitle}</p>
+                                        <p className="text-[13.2px] text-gray-500 truncate">{meta.subtitle}</p>
                                     </div>
                                 </div>
                                 <ChevronIcon className="h-5 w-5 text-slate-400 flex-shrink-0 transition-transform motion-reduce:transition-none" />

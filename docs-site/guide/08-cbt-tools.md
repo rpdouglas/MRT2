@@ -34,7 +34,7 @@ Tools are grouped into four sections based on when you'd reach for them:
 * **After a Hard Moment** — ABC Coping, Personify & Disarm, Thought Record, and Five Questions, for processing what just happened.
 * **Big Picture** — Lifestyle Balance and SMART Goal, for stepping back and planning.
 
-The other three sections start collapsed — tap a section's header to open it. If you have an unfinished tool session waiting, a **"Continue where you left off"** shortcut appears at the top of the page regardless of which section that tool lives in.
+The other three sections start collapsed — tap a section's header to open it.
 
 Every guided tool (CBA, ABC, D.E.N.T.S., Thought Record, Five Questions) offers up to three ways in:
 * **Start Fresh** — always available. Opens the tool at Step 1 with a blank slate, even if you have an unfinished session sitting in the background.
