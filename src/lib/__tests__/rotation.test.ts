@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as firestore from 'firebase/firestore';
-import { executePinRotation } from '../rotation';
+import { executePinRotation, executeCryptoShredding } from '../rotation';
 import { generateKey, encrypt, computePinHash, generateSalt, isVaultUnlocked, clearKey, deriveLocalBits, deriveVaultKeyWithPepper } from '../crypto';
 
 // A fixed, deterministic mock pepper standing in for verifyVaultPin's
@@ -56,33 +56,51 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
     const OLD_PIN = '1111';
     const NEW_PIN = '2222';
     let updateCalls: Array<[unknown, Record<string, unknown>]>;
+    let deleteCalls: unknown[];
     let commitMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.clearAllMocks();
         clearKey();
         updateCalls = [];
+        deleteCalls = [];
         commitMock = vi.fn().mockResolvedValue(undefined);
 
         // Shared chainable batch: every writeBatch() call returns an object
-        // that records .update() calls and resolves .commit().
+        // that records .update()/.delete() calls and resolves .commit().
         const batch = {
             update: vi.fn((ref: unknown, data: Record<string, unknown>) => { updateCalls.push([ref, data]); return batch; }),
             set: vi.fn(() => batch),
-            delete: vi.fn(() => batch),
+            delete: vi.fn((ref: unknown) => { deleteCalls.push(ref); return batch; }),
             commit: commitMock,
         };
         vi.mocked(firestore.writeBatch).mockReturnValue(batch as unknown as ReturnType<typeof firestore.writeBatch>);
     });
 
     // Journals is always processed first, then workbook_answers, then
-    // rosc_assessments — each collection's paginated while-loop issues a
-    // getDocs call per page and needs a final EMPTY page to terminate. This
-    // test suite only exercises the journals collection, so: N journal pages
-    // with docs, then one empty journal page to end that loop, then one
-    // empty page each for workbook_answers and rosc_assessments.
+    // rosc_assessments, then game_progress (PROJ-72) — each collection's
+    // paginated while-loop issues a getDocs call per page and needs a final
+    // EMPTY page to terminate. This test suite only exercises the journals
+    // collection, so: N journal pages with docs, then one empty journal page
+    // to end that loop, then one empty page each for workbook_answers,
+    // rosc_assessments, and game_progress.
     function queueGetDocs(journalPages: FakeSnapshot[]) {
-        const calls = [...journalPages, emptySnapshot(), emptySnapshot(), emptySnapshot()];
+        const calls = [...journalPages, emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot()];
+        for (const page of calls) {
+            vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+        }
+    }
+
+    // Same shape as queueGetDocs, but lets a test supply explicit pages for
+    // every stage instead of only journals — used by the game_progress test
+    // below, which needs non-empty pages past the journals stage.
+    function queueGetDocsForStages(stages: { journals?: FakeSnapshot[]; workbooks?: FakeSnapshot[]; rosc?: FakeSnapshot[]; gameProgress?: FakeSnapshot[] }) {
+        const calls = [
+            ...(stages.journals ?? []), emptySnapshot(),
+            ...(stages.workbooks ?? []), emptySnapshot(),
+            ...(stages.rosc ?? []), emptySnapshot(),
+            ...(stages.gameProgress ?? []), emptySnapshot(),
+        ];
         for (const page of calls) {
             vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
         }
@@ -116,6 +134,27 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         expect(finalUpdate).toBeDefined();
         expect(finalUpdate![1].encryptionSalt).toBe(result.newSalt);
         expect(finalUpdate![1]).toHaveProperty('pendingRotation');
+    });
+
+    it('re-encrypts game_progress documents, including both encryptedStats and an optional encryptedReflection (PROJ-72)', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+        const staleStats = await encrypt('{"rounds":3}');
+        const staleReflection = await encrypt('I noticed I was catastrophizing.');
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocsForStages({
+            gameProgress: [pageSnapshot([
+                { id: 'g1', ref: { __id: 'g1' }, data: () => ({ encryptedStats: staleStats, encryptedReflection: staleReflection }) },
+            ])],
+        });
+
+        await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
+
+        const g1Update = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'g1');
+        expect(g1Update).toBeDefined();
+        expect(g1Update![1].encryptedStats).not.toBe(staleStats);
+        expect(g1Update![1].encryptedReflection).not.toBe(staleReflection);
     });
 
     it('resumes an interrupted rotation: skips documents already migrated under a pending key instead of failing', async () => {
@@ -209,5 +248,49 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
 
         expect(firestore.getDocs).not.toHaveBeenCalled();
         expect(firestore.setDoc).not.toHaveBeenCalled();
+    });
+});
+
+describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
+    let deleteCalls: unknown[];
+    let commitMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // getDocs accumulates a queue of mockResolvedValueOnce entries across
+        // tests (clearAllMocks does not drain that queue) — reset it
+        // explicitly so a prior test's unconsumed pages (e.g. one that threw
+        // before reaching every collection's loop) can't leak into this
+        // describe's page ordering.
+        vi.mocked(firestore.getDocs).mockReset();
+        deleteCalls = [];
+        commitMock = vi.fn().mockResolvedValue(undefined);
+
+        const batch = {
+            update: vi.fn(() => batch),
+            set: vi.fn(() => batch),
+            delete: vi.fn((ref: unknown) => { deleteCalls.push(ref); return batch; }),
+            commit: commitMock,
+        };
+        vi.mocked(firestore.writeBatch).mockReturnValue(batch as unknown as ReturnType<typeof firestore.writeBatch>);
+    });
+
+    it('deletes game_progress documents alongside journals/workbooks/rosc', async () => {
+        // Order matches executeCryptoShredding: journals, workbooks, rosc,
+        // then game_progress — each loop needs a terminating empty page.
+        const pages = [
+            emptySnapshot(), // journals
+            emptySnapshot(), // workbooks
+            emptySnapshot(), // rosc
+            pageSnapshot([{ id: 'g1', ref: { __id: 'g1' }, data: () => ({ encryptedStats: 'x' }) }]), // game_progress page 1
+            emptySnapshot(), // game_progress terminator
+        ];
+        for (const page of pages) {
+            vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+        }
+
+        await executeCryptoShredding('user_1');
+
+        expect(deleteCalls).toContainEqual({ __id: 'g1' });
     });
 });

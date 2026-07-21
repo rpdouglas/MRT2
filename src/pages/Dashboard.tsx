@@ -12,7 +12,7 @@ import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
-import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, UserGroupIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, TrophyIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
@@ -344,19 +344,19 @@ export default function Dashboard() {
                 </div>
             </Link>
 
-            <div className="relative overflow-hidden rounded-2xl px-5 py-4 bg-slate-200 text-slate-400 border border-slate-300 opacity-60 cursor-not-allowed">
-                <div className="absolute right-0 top-0 p-3 opacity-10 transform translate-x-2 -translate-y-2">
-                    <UserGroupIcon className="h-16 w-16 rotate-12" />
+            <Link to="/games" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200 transition-transform active:scale-95 hover:shadow-xl">
+                <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2">
+                    <TrophyIcon className="h-16 w-16 rotate-12" />
                 </div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 bg-slate-300/50 rounded-lg"><UserGroupIcon className="h-4 w-4 text-slate-500" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider">Service</span>
+                        <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><TrophyIcon className="h-4 w-4 text-white" /></div>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Games</span>
                     </div>
-                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-slate-500">Coming Soon</div>
-                    <p className="text-[10px] leading-tight pr-2">Encrypted sponsee management.</p>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Recovery Games</div>
+                    <p className="text-[10px] leading-tight pr-2 opacity-90">Zero-knowledge, anti-shame mini-games.</p>
                 </div>
-            </div>
+            </Link>
 
             <Link to="/tools" className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-lg shadow-blue-200 transition-transform active:scale-95 hover:shadow-xl group">
                 <div className="absolute right-0 top-0 p-3 opacity-20 transform translate-x-2 -translate-y-2 group-hover:rotate-12 transition-transform">

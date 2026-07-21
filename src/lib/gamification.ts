@@ -14,6 +14,11 @@ const XP_VALUES = {
     CLEAN_DAY_MILESTONE: 500, // XP per 30 days
     ROSC_ASSESSMENT: 25,
     SMART_TOOL_COMPLETION: 25, // Guided CBT tool completion — equivalent to a Medium-priority task (TASK_MEDIUM)
+    // PROJ-72 (Recovery Games), Phase 1 foundation. Reused by future games via
+    // useGameProgress rather than a parallel XP economy — see
+    // docs/projects/72_RECOVERY_GAMES.md §3. Which calculateUserLevel bucket
+    // this feeds is an open design question deferred until a real game ships.
+    GAME_COMPLETION: 20,
 };
 
 // --- INTERFACES ---

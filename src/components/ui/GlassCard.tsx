@@ -3,7 +3,7 @@ import React from 'react';
 interface GlassCardProps {
     children: React.ReactNode;
     className?: string;
-    variant?: 'insights' | 'dashboard' | 'tasks' | 'service' | 'workbooks' | 'tools';
+    variant?: 'insights' | 'dashboard' | 'tasks' | 'service' | 'workbooks' | 'tools' | 'games';
 }
 
 const MODULE_TOKENS = {
@@ -12,7 +12,8 @@ const MODULE_TOKENS = {
     service: { gradA: '#FB7185', gradB: '#F59E0B' },
     insights: { gradA: '#E879F9', gradB: '#EC4899' },
     workbooks: { gradA: '#818CF8', gradB: '#6D28D9' },
-    tools: { gradA: '#3B82F6', gradB: '#0284C7' } // blue-500 -> sky-600, matches the Dashboard's Tools tile
+    tools: { gradA: '#3B82F6', gradB: '#0284C7' }, // blue-500 -> sky-600, matches the Dashboard's Tools tile
+    games: { gradA: '#818CF8', gradB: '#9333EA' } // indigo-400 -> purple-600, PROJ-72 (distinct from 'service' — that slot may resurface elsewhere later)
 };
 
 export default function GlassCard({ children, className = '', variant = 'insights' }: GlassCardProps) {

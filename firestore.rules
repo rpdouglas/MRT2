@@ -120,6 +120,12 @@ service cloud.firestore {
         allow read, update, delete: if isResourceOwner();
     }
 
+    // 7b. Recovery Games — encrypted game_progress (PROJ-72, Phase 1)
+    match /game_progress/{progressId} {
+        allow create: if isCreatingOwnedResource();
+        allow read, update, delete: if isResourceOwner();
+    }
+
     // 8. Feedback & Bug Reports
     match /feedback/{reportId} {
       allow create: if isCreatingOwnedResource();

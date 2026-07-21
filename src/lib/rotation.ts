@@ -107,7 +107,27 @@ export async function executeCryptoShredding(uid: string) {
         }
     }
 
-    // 4. Clear Profile Fields
+    // 4. Delete Game Progress (PROJ-72, Recovery Games)
+    let lastGDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+    let hasMoreGameProgress = true;
+    while (hasMoreGameProgress) {
+        let gQ = query(collection(database, 'game_progress'), where('uid', '==', uid), limit(500));
+        if (lastGDoc) gQ = query(collection(database, 'game_progress'), where('uid', '==', uid), startAfter(lastGDoc), limit(500));
+
+        const gSnap = await getDocs(gQ);
+        if (gSnap.empty) {
+            hasMoreGameProgress = false;
+        } else {
+            gSnap.docs.forEach(d => {
+                currentBatch.delete(d.ref);
+                opCount++;
+                if (opCount >= 450) commitBatch();
+            });
+            lastGDoc = gSnap.docs[gSnap.docs.length - 1];
+        }
+    }
+
+    // 5. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
     currentBatch.update(pRef, {
         encryptionSalt: deleteField(),
@@ -329,6 +349,56 @@ export async function executePinRotation(
 
             await currentBatch.commit();
             lastRoscDoc = rSnap.docs[rSnap.docs.length - 1];
+        }
+
+        // --- PROCESS GAME PROGRESS (PROJ-72) ---
+        // Two possibly-encrypted fields per document (encryptedStats always
+        // present, encryptedReflection optional) — both must be migrated.
+        let lastGDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+        let hasMoreGameProgress = true;
+
+        while (hasMoreGameProgress) {
+            let gQ = query(collection(database, 'game_progress'), where('uid', '==', uid), limit(BATCH_SIZE));
+            if (lastGDoc) gQ = query(collection(database, 'game_progress'), where('uid', '==', uid), startAfter(lastGDoc), limit(BATCH_SIZE));
+
+            const gSnap = await getDocs(gQ);
+            if (gSnap.empty) {
+                hasMoreGameProgress = false;
+                continue;
+            }
+
+            const currentBatch = writeBatch(database);
+
+            for (const document of gSnap.docs) {
+                const data = document.data();
+                const updates: Record<string, string> = {};
+
+                for (const field of ['encryptedStats', 'encryptedReflection'] as const) {
+                    const cipherText = data[field];
+                    if (!cipherText) continue;
+
+                    await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
+                    const plain = await decrypt(cipherText);
+                    if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                        await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                        const alreadyMigrated = await decrypt(cipherText);
+                        if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                            throw new Error("DECRYPTION_FAILED");
+                        }
+                        continue; // already migrated in a previous attempt
+                    }
+
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                    updates[field] = await encrypt(plain);
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    currentBatch.update(document.ref, updates);
+                }
+            }
+
+            await currentBatch.commit();
+            lastGDoc = gSnap.docs[gSnap.docs.length - 1];
         }
 
         // 4. Finalize Profile Updates — clears the pendingRotation marker now
