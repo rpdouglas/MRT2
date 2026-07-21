@@ -1,29 +1,15 @@
 /**
  * src/pages/GamesHub.tsx
- * PROJ-72 (Recovery Games), Phase 1: Architecture & Foundation.
- * Landing page for the games route — foundation-only for now, so every game
- * card is a "Coming Soon" placeholder (Phase 2+ ships the real games behind
- * these slots). Persona palette matches docs/projects/72_RECOVERY_GAMES.md /
- * the informal master plan: David sky, Ned green/cyan, Lisa amber, Walt fuchsia.
+ * PROJ-72 (Recovery Games). Landing page for the games route. All persona
+ * games shipped as of Phase 5 — Craving Buster (David), Recovery Jeopardy
+ * (Groups), Fast Lane (Walt), Goal Ladder (Ned), Thought Challenge (Lisa),
+ * Trigger Match (Walt). Persona palette matches
+ * docs/projects/72_RECOVERY_GAMES.md: David sky, Ned green/cyan, Lisa amber,
+ * Walt fuchsia.
  */
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
 import { TrophyIcon } from '@heroicons/react/24/outline';
-
-interface GameSlot {
-  title: string;
-  persona: 'Ned' | 'Lisa' | 'Walt';
-  description: string;
-  gradient: string;
-}
-
-// Craving Buster (David) shipped in Phase 2 — see the live card below.
-// Remaining slots ship in later phases per docs/projects/72_RECOVERY_GAMES.md §4.
-const GAME_SLOTS: GameSlot[] = [
-  { title: 'Goal Ladder', persona: 'Ned', description: 'Momentum-building steps that never punish a broken streak.', gradient: 'from-emerald-400 to-cyan-500' },
-  { title: 'Thought Challenge', persona: 'Lisa', description: 'A CBT-style reframing game for service burnout.', gradient: 'from-amber-400 to-orange-500' },
-  { title: 'Trigger Match', persona: 'Walt', description: 'Pattern-recognition practice grounded in your own history.', gradient: 'from-fuchsia-400 to-rose-500' },
-];
 
 export default function GamesHub() {
   return (
@@ -78,23 +64,44 @@ export default function GamesHub() {
           </div>
         </Link>
 
-        {GAME_SLOTS.map((slot) => (
-          <div
-            key={slot.title}
-            className={`relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br ${slot.gradient} text-white shadow-lg opacity-70`}
-          >
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold uppercase tracking-wider opacity-90">{slot.title}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">
-                  Coming Soon
-                </span>
-              </div>
-              <p className="text-xs leading-relaxed opacity-90 mb-2">{slot.description}</p>
-              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For {slot.persona}</span>
+        <Link
+          to="/games/goal-ladder"
+          className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-emerald-400 to-cyan-500 text-white shadow-lg transition-transform active:scale-95 hover:shadow-xl"
+        >
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider opacity-90">Goal Ladder</span>
             </div>
+            <p className="text-xs leading-relaxed opacity-90 mb-2">Momentum-building steps that never punish a broken streak.</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Ned</span>
           </div>
-        ))}
+        </Link>
+
+        <Link
+          to="/games/thought-challenge"
+          className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg transition-transform active:scale-95 hover:shadow-xl"
+        >
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider opacity-90">Thought Challenge</span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90 mb-2">A CBT-style reframing game for service burnout.</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Lisa</span>
+          </div>
+        </Link>
+
+        <Link
+          to="/games/trigger-match"
+          className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-fuchsia-400 to-rose-500 text-white shadow-lg transition-transform active:scale-95 hover:shadow-xl"
+        >
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider opacity-90">Trigger Match</span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90 mb-2">Pattern-recognition practice for spotting a trigger before it lands.</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Walt</span>
+          </div>
+        </Link>
       </div>
     </div>
   );

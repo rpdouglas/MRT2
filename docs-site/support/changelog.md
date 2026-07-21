@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.25] - 2026-07-21
+### 🛠️ Update
+- Added three new mini-games to the Games section: Goal Ladder (a short momentum-building session), Thought Challenge (a CBT-style reframing game for sponsors and service workers), and Trigger Match (practice spotting common recovery triggers before they land).
+
 ## [v1.8.24] - 2026-07-21
 ### 🛠️ Update
 - Added Fast Lane to the Games section — a multi-week life-management simulation where you build financial and personal stability week by week, with an AI companion working toward the same goals. Progress saves automatically, so you can pick up where you left off.

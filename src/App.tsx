@@ -43,6 +43,9 @@ const GamesHub = lazy(() => import('./pages/GamesHub')); // PROJ-72
 const CravingBuster = lazy(() => import('./components/games/CravingBuster')); // PROJ-72
 const RecoveryJeopardy = lazy(() => import('./components/games/jeopardy/RecoveryJeopardy')); // PROJ-72
 const FastLane = lazy(() => import('./components/games/fastLane/FastLane')); // PROJ-72
+const GoalLadder = lazy(() => import('./components/games/goalLadder/GoalLadder')); // PROJ-72
+const ThoughtChallenge = lazy(() => import('./components/games/thoughtChallenge/ThoughtChallenge')); // PROJ-72
+const TriggerMatch = lazy(() => import('./components/games/triggerMatch/TriggerMatch')); // PROJ-72
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
@@ -194,6 +197,21 @@ export default function App() {
                         <Route path="/games/fast-lane" element={<PrivateRoute>
                             <VaultGate>
                                 <FastLane />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/games/goal-ladder" element={<PrivateRoute>
+                            <VaultGate>
+                                <GoalLadder />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/games/thought-challenge" element={<PrivateRoute>
+                            <VaultGate>
+                                <ThoughtChallenge />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/games/trigger-match" element={<PrivateRoute>
+                            <VaultGate>
+                                <TriggerMatch />
                             </VaultGate>
                             </PrivateRoute>} />
 
