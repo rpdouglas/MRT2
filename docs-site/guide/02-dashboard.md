@@ -86,7 +86,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
 * **Vitality:** View your biological regulation streak and total logs.
 * **Wisdom:** See how many questions you've answered out of the total available across all workbooks, with your overall completion percentage shown just below.
-* **Games:** Zero-knowledge, anti-shame mini-games — Craving Buster is live now, with more on the way for each stage of recovery.
+* **Games:** Zero-knowledge, anti-shame mini-games — Craving Buster and Recovery Jeopardy (a pass-the-device trivia game for your group, sponsor, or sponsee) are live now, with more on the way for each stage of recovery.
 * **Tools:** Access CBT exercises and grounding tools.
 
 ## 7. The Gamification Engine

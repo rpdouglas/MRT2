@@ -41,6 +41,7 @@ const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
 const GamesHub = lazy(() => import('./pages/GamesHub')); // PROJ-72
 const CravingBuster = lazy(() => import('./components/games/CravingBuster')); // PROJ-72
+const RecoveryJeopardy = lazy(() => import('./components/games/jeopardy/RecoveryJeopardy')); // PROJ-72
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
@@ -183,6 +184,11 @@ export default function App() {
                             persistence is a best-effort no-op if the vault happens to be locked. */}
                         <Route path="/games/craving-buster" element={<PrivateRoute>
                             <CravingBuster />
+                            </PrivateRoute>} />
+                        <Route path="/games/recovery-jeopardy" element={<PrivateRoute>
+                            <VaultGate>
+                                <RecoveryJeopardy />
+                            </VaultGate>
                             </PrivateRoute>} />
 
                         <Route path="/insights" element={<PrivateRoute>
