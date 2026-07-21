@@ -13,7 +13,7 @@ import { processInChunks } from '../lib/utils';
 import { generateDeepPatternAnalysis, type DeepPatternResult } from '../lib/gemini';
 import { DRAFT_TAG } from '../lib/types/smart';
 import { parseSmartToolPayload } from '../lib/smartToolPayload';
-import { humanizeKey } from '../lib/toolHistorySummary';
+import { getFieldLabel, formatFieldValueText } from '../lib/toolHistorySummary';
 import { TOOLS } from '../lib/toolsRegistry';
 
 interface UseDeepPatternAnalysisReturn {
@@ -90,7 +90,7 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
                         const toolTitle = TOOLS.find(t => t.toolType === toolPayload.type)?.title ?? toolPayload.type;
                         const fields = Object.entries(toolPayload.data)
                             .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
-                            .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                            .map(([key, value]) => `${getFieldLabel(toolPayload.type, key, toolPayload.data)}: ${formatFieldValueText(toolPayload.type, value)}`)
                             .join('\n');
                         return `Date: ${date.toLocaleDateString()}\n[${toolTitle}]\n${fields}`;
                     }

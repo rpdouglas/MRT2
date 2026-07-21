@@ -51,4 +51,25 @@ describe('📋 PayloadSummaryList', () => {
         render(<PayloadSummaryList data={{ behavior: '', tags: [] }} />);
         expect(screen.getByText('No details recorded.')).toBeInTheDocument();
     });
+
+    it('shows the real question text next to the answer when toolType is provided', () => {
+        render(<PayloadSummaryList data={{ thought: 'I need this drink', q1IsTrue: 'no' }} toolType="FIVE_QUESTIONS" />);
+        expect(screen.getByText('Is It True?')).toBeInTheDocument();
+        expect(screen.getByText('no')).toBeInTheDocument();
+        expect(screen.queryByText('Q1 Is True')).not.toBeInTheDocument();
+    });
+
+    it('renders an array of plain objects as readable labeled rows instead of [object Object]', () => {
+        render(
+            <PayloadSummaryList
+                data={{ personas: [{ id: 1, name: 'The Critic', action: 'You always fail.', result: "That's not true." }] }}
+                toolType="PERSONIFY"
+            />
+        );
+        expect(screen.getByText("Rogue's Name:")).toBeInTheDocument();
+        expect(screen.getByText('The Critic')).toBeInTheDocument();
+        expect(screen.getByText('The Lie It Tells:')).toBeInTheDocument();
+        expect(screen.getByText('You always fail.')).toBeInTheDocument();
+        expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
+    });
 });

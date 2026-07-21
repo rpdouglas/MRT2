@@ -21,7 +21,7 @@ import { Virtuoso } from 'react-virtuoso';
 import { format } from 'date-fns';
 import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { parseSmartToolPayload } from '../../lib/smartToolPayload';
-import { HEADLINE_FIELD, humanizeKey } from '../../lib/toolHistorySummary';
+import { HEADLINE_FIELD, getFieldLabel, formatFieldValueText } from '../../lib/toolHistorySummary';
 import { PayloadSummaryList } from '../tools/PayloadSummaryList';
 import { TOOLS } from '../../lib/toolsRegistry';
 import { DRAFT_TAG } from '../../lib/types/smart';
@@ -222,13 +222,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleShare = async (entry: JournalEntryWithStatus) => {
     const dateStr = entry.createdAt instanceof Date ? entry.createdAt.toLocaleDateString() : 'Unknown Date';
-    const body = entry.toolPayload
+    const toolPayload = entry.toolPayload;
+    const body = toolPayload
         ? [
-            TOOLS.find(t => t.toolType === entry.toolPayload?.type)?.title ?? 'SMART Tool',
+            TOOLS.find(t => t.toolType === toolPayload.type)?.title ?? 'SMART Tool',
             '',
-            ...Object.entries(entry.toolPayload.data)
+            ...Object.entries(toolPayload.data)
                 .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
-                .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                .map(([key, value]) => `${getFieldLabel(toolPayload.type, key, toolPayload.data)}: ${formatFieldValueText(toolPayload.type, value)}`)
         ].join('\n')
         : entry.content;
     const textToShare = `${dateStr} - My Recovery Toolkit\n\n${body}\n\nmyrecoverytoolkit.ca`;
@@ -405,7 +406,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                         </button>
                                         {isToolExpanded && (
                                             <div className="mt-3 pt-3 border-t border-indigo-50">
-                                                <PayloadSummaryList data={entry.toolPayload.data} />
+                                                <PayloadSummaryList data={entry.toolPayload.data} toolType={entry.toolPayload.type} />
                                             </div>
                                         )}
                                     </div>
