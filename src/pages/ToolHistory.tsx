@@ -93,7 +93,7 @@ export default function ToolHistory() {
                             </button>
                             {isExpanded && (
                                 <div className="px-4 pb-4 pt-3 border-t border-blue-50">
-                                    <PayloadSummaryList data={entry.data} />
+                                    <PayloadSummaryList data={entry.data} toolType={toolType} />
                                 </div>
                             )}
                         </div>

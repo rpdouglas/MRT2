@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.21] - 2026-07-21
+### 🐛 Bug Fixes
+- Journal entries created by completing a tool from the Tools Hub (like a Cost Benefit Analysis or Thought Record) now show up in your Journal History as clear, readable summaries instead of raw text data — searching and sharing those entries works correctly too.
+
 ## [v1.8.20] - 2026-07-21
 ### 🛠️ Update
 - Recovery Tools are now organized into sections based on when you'd need them — the tools for cravings and crisis are always open right at the top. A new shortcut also lets you jump back into any tool session you didn't finish.

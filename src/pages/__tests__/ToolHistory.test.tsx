@@ -63,6 +63,8 @@ describe('🗂️ ToolHistory page', () => {
 
         fireEvent.click(screen.getByText('Drinking'));
         expect(screen.getByText('Relief')).toBeInTheDocument();
+        // Real question text, dynamically referencing the saved behavior — not a generic humanized field name.
+        expect(screen.getByText('What does Drinking actually give you?')).toBeInTheDocument();
     });
 
     it('falls back to the entry date as the headline when the headline field is empty', () => {

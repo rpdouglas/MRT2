@@ -14,6 +14,7 @@ To avoid schema bloat, CBT tools do not have their own Firestore collections.
 * They are saved directly to the `journals` collection.
 * **The Payload:** The tool's state is wrapped in a metadata object, passed through `JSON.stringify()`, encrypted via AES-GCM, and stored in the `content` field.
 * **Tags:** They are flagged with `['SMART Tool', toolType]` so the `JournalHistory` timeline can render them and the `JournalAnalysisWizard` can read them.
+* **Shared parsing:** The envelope is parsed by one shared helper, `parseSmartToolPayload` (`src/lib/smartToolPayload.ts`), used by `useToolHistory`, the main `JournalHistory` timeline, and both AI analysis paths (`JournalAnalysisWizard`, `useDeepPatternAnalysis`) — so a decrypted entry is identified as a tool save (vs. freeform text) in exactly one place. Everywhere that renders the parsed `data` for a human reuses the same generic `PayloadSummaryList` (humanized field labels) `ToolHistory` already used, rather than a bespoke renderer per surface.
 * **`DRAFT` tag (PROJ-50):** A partial, in-progress guided save carries an extra `'DRAFT'` tag. Only the tool's true completion gate (a dedicated summary phase's "Save to Journal", not just reaching the last guided step) drops it. See `docs/SCHEMA_ARCHITECTURE.md`.
 
 ### B. The `SmartToolContainer` (HOC / Render Prop)

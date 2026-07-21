@@ -14,7 +14,7 @@ import { useTaskOperations } from '../../hooks/useTaskOperations';
 import { useRateLimits } from '../../hooks/useRateLimits';
 import { DRAFT_TAG } from '../../lib/types/smart';
 import { parseSmartToolPayload } from '../../lib/smartToolPayload';
-import { humanizeKey } from '../../lib/toolHistorySummary';
+import { getFieldLabel, formatFieldValueText } from '../../lib/toolHistorySummary';
 import { TOOLS } from '../../lib/toolsRegistry';
 import type { ElementType } from 'react';
 
@@ -177,7 +177,7 @@ isOpen, onClose, entries }: WizardProps) {
                 const toolTitle = TOOLS.find(t => t.toolType === toolPayload.type)?.title ?? toolPayload.type;
                 const fields = Object.entries(toolPayload.data)
                     .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
-                    .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .map(([key, value]) => `${getFieldLabel(toolPayload.type, key, toolPayload.data)}: ${formatFieldValueText(toolPayload.type, value)}`)
                     .join('\n');
                 return `${header}\n[${toolTitle}]\n${fields}`;
             };

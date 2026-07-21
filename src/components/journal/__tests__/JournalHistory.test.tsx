@@ -81,6 +81,10 @@ const renderHistory = (entries: unknown[]) => {
         defaultOptions: {
             queries: {
                 retry: false,
+                // Manually-seeded cache data (below) is the test's source of truth — without this,
+                // the default staleTime triggers a background refetch on mount that resolves via the
+                // module-level getDocs mock (empty docs) and silently overwrites it once anything awaits.
+                staleTime: Infinity,
             },
         },
     });
@@ -186,7 +190,8 @@ describe('JournalHistory SMART Tool entries', () => {
             fireEvent.click(headlineBtn!);
         });
 
-        expect(screen.getByText('Behavior')).toBeInTheDocument();
+        // The real question text (not a generic humanized field name) for CBA's `behavior` field.
+        expect(screen.getByText('What behavior are we analyzing?')).toBeInTheDocument();
     });
 
     it('shares humanized text instead of raw JSON', async () => {
@@ -199,7 +204,7 @@ describe('JournalHistory SMART Tool entries', () => {
 
         expect(mockShare).toHaveBeenCalled();
         const shareArg = mockShare.mock.calls[0][0];
-        expect(shareArg.text).toContain('Behavior: Drinking');
+        expect(shareArg.text).toContain('What behavior are we analyzing?: Drinking');
         expect(shareArg.text).not.toContain('"metadata"');
     });
 
@@ -207,5 +212,61 @@ describe('JournalHistory SMART Tool entries', () => {
         renderHistory(toolEntries);
 
         expect(screen.queryByTitle('Edit Entry')).not.toBeInTheDocument();
+    });
+
+    it('shows the real question text for a Five Questions entry, not a generic field-name label', async () => {
+        const fiveQuestionsEntry = {
+            id: 'tool-entry-2',
+            content: JSON.stringify({
+                metadata: { type: 'FIVE_QUESTIONS', version: '2.0', lastSaved: createdAt.toISOString() },
+                data: { thought: 'I need this drink', q1IsTrue: 'no' },
+            }),
+            isEncrypted: false,
+            createdAt,
+            moodScore: 5,
+            tags: ['SMART Tool', 'FIVE_QUESTIONS'],
+            toolPayload: { type: 'FIVE_QUESTIONS', data: { thought: 'I need this drink', q1IsTrue: 'no' } },
+        };
+
+        renderHistory([fiveQuestionsEntry]);
+
+        const headlineBtn = screen.getByText('I need this drink').closest('button');
+        await act(async () => {
+            fireEvent.click(headlineBtn!);
+        });
+
+        expect(screen.getByText('Is It True?')).toBeInTheDocument();
+        expect(screen.getByText('no')).toBeInTheDocument();
+        expect(screen.queryByText('Q1 Is True')).not.toBeInTheDocument();
+    });
+
+    it('renders a Personify entry\'s personas as readable rows, not [object Object]', async () => {
+        const personifyEntry = {
+            id: 'tool-entry-3',
+            content: JSON.stringify({
+                metadata: { type: 'PERSONIFY', version: '2.0', lastSaved: createdAt.toISOString() },
+                data: { personas: [{ id: 1, name: 'The Critic', action: 'You always fail.', result: "That's not true." }] },
+            }),
+            isEncrypted: false,
+            createdAt,
+            moodScore: 5,
+            tags: ['SMART Tool', 'PERSONIFY'],
+            toolPayload: {
+                type: 'PERSONIFY',
+                data: { personas: [{ id: 1, name: 'The Critic', action: 'You always fail.', result: "That's not true." }] },
+            },
+        };
+
+        renderHistory([personifyEntry]);
+
+        // "Personify & Disarm" appears twice (tool badge + headline fallback, since PERSONIFY has no HEADLINE_FIELD) — target the headline inside the toggle button.
+        const headlineBtn = screen.getAllByText('Personify & Disarm').map(el => el.closest('button')).find(Boolean);
+        await act(async () => {
+            fireEvent.click(headlineBtn!);
+        });
+
+        expect(screen.getByText("Rogue's Name:")).toBeInTheDocument();
+        expect(screen.getByText('The Critic')).toBeInTheDocument();
+        expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     });
 });
