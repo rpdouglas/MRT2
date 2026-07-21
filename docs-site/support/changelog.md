@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.24] - 2026-07-21
+### 🛠️ Update
+- Added Fast Lane to the Games section — a multi-week life-management simulation where you build financial and personal stability week by week, with an AI companion working toward the same goals. Progress saves automatically, so you can pick up where you left off.
+
 ## [v1.8.23] - 2026-07-21
 ### 🛠️ Update
 - Added Recovery Jeopardy to the Games section — a pass-the-device trivia game for your group, sponsor, or sponsee, with two rounds and a Final Jeopardy wager round.

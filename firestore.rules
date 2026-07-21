@@ -126,6 +126,12 @@ service cloud.firestore {
         allow read, update, delete: if isResourceOwner();
     }
 
+    // 7c. Recovery Games — encrypted, resumable game_saves (PROJ-72, Phase 4)
+    match /game_saves/{saveId} {
+        allow create: if isCreatingOwnedResource();
+        allow read, update, delete: if isResourceOwner();
+    }
+
     // 8. Feedback & Bug Reports
     match /feedback/{reportId} {
       allow create: if isCreatingOwnedResource();
