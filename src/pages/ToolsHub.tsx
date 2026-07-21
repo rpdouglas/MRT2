@@ -14,7 +14,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import GlassCard from '../components/ui/GlassCard';
 import { PuzzlePieceIcon, ClockIcon, CheckBadgeIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { TOOLS, PHASE_META, type ToolPhase, type ToolRegistryEntry } from '../lib/toolsRegistry';
 import { hasGuidedDraft } from '../hooks/useGuidedDraft';
@@ -34,19 +33,19 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
     // Coming Soon: SMART Goal today — no component exists yet.
     if (isComingSoon) {
         return (
-            <div className={`relative bg-white/5 rounded-2xl p-5 border border-white/10 opacity-60 cursor-not-allowed ${tool.border} border-l-[6px]`}>
+            <div className={`relative bg-white rounded-2xl p-5 border border-gray-200 opacity-60 cursor-not-allowed ${tool.border} border-l-[6px]`}>
                 <div className="flex items-start gap-4">
                     <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
                         <tool.icon className="h-7 w-7" />
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                         <div className="flex items-center justify-between mb-1">
-                            <h3 className="text-[17.6px] font-bold text-white/70">{tool.title}</h3>
-                            <span className="text-[9.9px] uppercase tracking-widest font-bold text-white/40 bg-white/10 px-2 py-0.5 rounded">
+                            <h3 className="text-[17.6px] font-bold text-slate-500">{tool.title}</h3>
+                            <span className="text-[9.9px] uppercase tracking-widest font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                                 Coming Soon
                             </span>
                         </div>
-                        <p className="text-[15.4px] text-white/50 leading-relaxed pr-2">{tool.description}</p>
+                        <p className="text-[15.4px] text-slate-400 leading-relaxed pr-2">{tool.description}</p>
                     </div>
                 </div>
             </div>
@@ -56,29 +55,29 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
     // Real, journal-persisted guided/CBT tools: three entry points + richer card.
     if (tool.toolType) {
         return (
-            <div className={`bg-white/5 rounded-2xl p-5 border border-white/10 ${tool.border} border-l-[6px] space-y-3`}>
+            <div className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-200 ${tool.border} border-l-[6px] space-y-3`}>
                 <div className="flex items-start gap-4">
                     <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
                         <tool.icon className="h-7 w-7" />
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                         <div className="flex flex-wrap items-start gap-2 mb-1">
-                            <h3 className="text-[17.6px] font-bold text-white flex-1 min-w-[120px]">{tool.title}</h3>
+                            <h3 className="text-[17.6px] font-bold text-gray-900 flex-1 min-w-[120px]">{tool.title}</h3>
                             {tool.bestFor && (
-                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded">
+                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                                     Best for: {tool.bestFor}
                                 </span>
                             )}
                         </div>
-                        <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                        <p className="text-[15.4px] text-gray-600 leading-relaxed pr-2">{tool.description}</p>
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                             {tool.timeEstimate && (
-                                <span className="flex items-center gap-1 text-[13.2px] text-white/40 font-medium">
+                                <span className="flex items-center gap-1 text-[13.2px] text-slate-400 font-medium">
                                     <ClockIcon className="w-3.5 h-3.5" /> {tool.timeEstimate}
                                 </span>
                             )}
                             {count > 0 && (
-                                <span className="flex items-center gap-1 text-[13.2px] text-emerald-400 font-bold">
+                                <span className="flex items-center gap-1 text-[13.2px] text-emerald-600 font-bold">
                                     <CheckBadgeIcon className="w-3.5 h-3.5" /> Completed {count} time{count === 1 ? '' : 's'}
                                 </span>
                             )}
@@ -96,7 +95,7 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     {canResume && (
                         <Link
                             to={tool.path}
-                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/10 hover:bg-white/20 text-amber-300 border border-amber-400/30 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
                         >
                             Resume
                         </Link>
@@ -104,7 +103,7 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                     {count > 0 && (
                         <Link
                             to={`/tools/${tool.toolType}/history`}
-                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
+                            className="flex-1 min-w-[100px] min-h-[44px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 text-[15.4px] font-bold rounded-xl transition-colors active:scale-95"
                         >
                             History
                         </Link>
@@ -118,17 +117,17 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
     return (
         <Link
             to={tool.path}
-            className={`block relative group bg-white/5 rounded-2xl p-5 border border-white/10 transition-colors hover:bg-white/10 active:scale-95 ${tool.border} border-l-[6px]`}
+            className={`block relative group bg-white rounded-2xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md active:scale-95 ${tool.border} border-l-[6px]`}
         >
             <div className="flex items-start gap-4">
                 <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
                     <tool.icon className="h-7 w-7" />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-[17.6px] font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
+                    <h3 className="text-[17.6px] font-bold text-gray-900 group-hover:text-amber-700 transition-colors mb-1">
                         {tool.title}
                     </h3>
-                    <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                    <p className="text-[15.4px] text-gray-600 leading-relaxed pr-2">{tool.description}</p>
                 </div>
             </div>
         </Link>
@@ -187,39 +186,41 @@ export default function ToolsHub() {
 
                     return (
                         <div key={phase}>
-                            <button
-                                onClick={() => togglePhase(phase)}
-                                aria-expanded={isOpen}
-                                className="w-full min-h-[44px] flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white shadow-sm border border-gray-200 text-left hover:bg-slate-50 active:scale-[0.99] transition-colors"
+                            <div
+                                className="rounded-[14px] p-[1.5px]"
+                                style={{ background: 'linear-gradient(145deg, #FBBF2455, #EA580C33)' }}
                             >
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-amber-50 text-amber-600">
-                                        <meta.icon className="h-5 w-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-[15.4px] font-bold text-gray-900">{meta.label}</h2>
-                                            <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
-                                                {tools.length}
-                                            </span>
+                                <button
+                                    onClick={() => togglePhase(phase)}
+                                    aria-expanded={isOpen}
+                                    className="w-full min-h-[44px] flex items-center justify-between gap-3 px-4 py-3 rounded-[12.5px] bg-[#0804149e] text-left hover:brightness-125 active:scale-[0.99] transition-[filter,transform]"
+                                    style={{ backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)' }}
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-300">
+                                            <meta.icon className="h-5 w-5" />
                                         </div>
-                                        <p className="text-[13.2px] text-gray-500 truncate">{meta.subtitle}</p>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h2 className="text-[15.4px] font-bold text-white">{meta.label}</h2>
+                                                <span className="text-[11px] font-bold text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-full">
+                                                    {tools.length}
+                                                </span>
+                                            </div>
+                                            <p className="text-[13.2px] text-white/60 truncate">{meta.subtitle}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <ChevronIcon className="h-5 w-5 text-slate-400 flex-shrink-0 transition-transform motion-reduce:transition-none" />
-                            </button>
+                                    <ChevronIcon className="h-5 w-5 text-white/50 flex-shrink-0 transition-transform motion-reduce:transition-none" />
+                                </button>
+                            </div>
 
                             {isOpen && (
-                                <div className="mt-3">
-                                    <GlassCard variant="tools">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {tools.map((tool) => {
-                                                const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
-                                                const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
-                                                return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
-                                            })}
-                                        </div>
-                                    </GlassCard>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                    {tools.map((tool) => {
+                                        const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
+                                        const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
+                                        return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
+                                    })}
                                 </div>
                             )}
                         </div>
