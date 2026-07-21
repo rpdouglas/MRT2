@@ -12,7 +12,7 @@ const MODULE_TOKENS = {
     service: { gradA: '#FB7185', gradB: '#F59E0B' },
     insights: { gradA: '#E879F9', gradB: '#EC4899' },
     workbooks: { gradA: '#818CF8', gradB: '#6D28D9' },
-    tools: { gradA: '#FBBF24', gradB: '#EA580C' }
+    tools: { gradA: '#3B82F6', gradB: '#0284C7' } // blue-500 -> sky-600, matches the Dashboard's Tools tile
 };
 
 export default function GlassCard({ children, className = '', variant = 'insights' }: GlassCardProps) {

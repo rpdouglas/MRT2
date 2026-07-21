@@ -57,5 +57,13 @@ export const THEME = {
       via: 'via-gray-800',
       to: 'to-zinc-900'
     }
+  },
+  tools: {
+    page: 'bg-blue-200', // Bright sky clarity — matches the Dashboard's Tools tile
+    header: {
+      from: 'from-blue-600',
+      via: 'via-blue-500',
+      to: 'to-sky-500'
+    }
   }
 } as const;

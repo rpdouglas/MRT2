@@ -14,10 +14,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
+import GlassCard from '../components/ui/GlassCard';
 import { PuzzlePieceIcon, ClockIcon, CheckBadgeIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { TOOLS, PHASE_META, type ToolPhase, type ToolRegistryEntry } from '../lib/toolsRegistry';
 import { hasGuidedDraft } from '../hooks/useGuidedDraft';
 import { useSmartToolCompletions } from '../hooks/useSmartToolCompletions';
+import { THEME } from '../lib/theme';
 
 const PHASE_ORDER: ToolPhase[] = ['right-now', 'before', 'after', 'big-picture'];
 
@@ -64,7 +66,7 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                         <div className="flex flex-wrap items-start gap-2 mb-1">
                             <h3 className="text-[17.6px] font-bold text-gray-900 flex-1 min-w-[120px]">{tool.title}</h3>
                             {tool.bestFor && (
-                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                                     Best for: {tool.bestFor}
                                 </span>
                             )}
@@ -114,20 +116,23 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
     }
 
     // Not a SMART Tool (Urge Surfer, Resentment Burner) — original simple card.
+    // Only tools in the "Right Now" phase lack a toolType, and that section's expanded
+    // body is always wrapped in the dark GlassCard "tools" hero treatment — so this
+    // branch is styled for a dark background, not the light one the other two use.
     return (
         <Link
             to={tool.path}
-            className={`block relative group bg-white rounded-2xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md active:scale-95 ${tool.border} border-l-[6px]`}
+            className={`block relative group bg-white/5 rounded-2xl p-5 border border-white/10 transition-colors hover:bg-white/10 active:scale-95 ${tool.border} border-l-[6px]`}
         >
             <div className="flex items-start gap-4">
                 <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
                     <tool.icon className="h-7 w-7" />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-[17.6px] font-bold text-gray-900 group-hover:text-amber-700 transition-colors mb-1">
+                    <h3 className="text-[17.6px] font-bold text-white group-hover:text-sky-300 transition-colors mb-1">
                         {tool.title}
                     </h3>
-                    <p className="text-[15.4px] text-gray-600 leading-relaxed pr-2">{tool.description}</p>
+                    <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
                 </div>
             </div>
         </Link>
@@ -159,16 +164,16 @@ export default function ToolsHub() {
     }, []);
 
     return (
-        <div className={`pb-24 relative min-h-screen bg-slate-50`}>
+        <div className={`pb-24 relative min-h-screen ${THEME.tools.page}`}>
 
             <div className="flex-shrink-0 z-10">
                 <VibrantHeader
                     title="Recovery Tools"
                     subtitle="Practical exercises to manage cravings and rewire thoughts."
                     icon={PuzzlePieceIcon}
-                    fromColor="from-amber-500"
-                    viaColor="via-orange-500"
-                    toColor="to-orange-600"
+                    fromColor={THEME.tools.header.from}
+                    viaColor={THEME.tools.header.via}
+                    toColor={THEME.tools.header.to}
                 />
             </div>
 
@@ -188,7 +193,7 @@ export default function ToolsHub() {
                         <div key={phase}>
                             <div
                                 className="rounded-[14px] p-[1.5px]"
-                                style={{ background: 'linear-gradient(145deg, #FBBF2455, #EA580C33)' }}
+                                style={{ background: 'linear-gradient(145deg, #3B82F655, #0284C733)' }}
                             >
                                 <button
                                     onClick={() => togglePhase(phase)}
@@ -197,13 +202,13 @@ export default function ToolsHub() {
                                     style={{ backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)' }}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-300">
+                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10 text-sky-300">
                                             <meta.icon className="h-5 w-5" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h2 className="text-[15.4px] font-bold text-white">{meta.label}</h2>
-                                                <span className="text-[11px] font-bold text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-full">
+                                                <span className="text-[11px] font-bold text-sky-200 bg-white/10 px-1.5 py-0.5 rounded-full">
                                                     {tools.length}
                                                 </span>
                                             </div>
@@ -215,13 +220,25 @@ export default function ToolsHub() {
                             </div>
 
                             {isOpen && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                    {tools.map((tool) => {
-                                        const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
-                                        const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
-                                        return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
-                                    })}
-                                </div>
+                                phase === 'right-now' ? (
+                                    <div className="mt-3">
+                                        <GlassCard variant="tools">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {tools.map((tool) => (
+                                                    <ToolCard key={tool.id} tool={tool} count={0} canResume={false} />
+                                                ))}
+                                            </div>
+                                        </GlassCard>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        {tools.map((tool) => {
+                                            const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
+                                            const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
+                                            return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
+                                        })}
+                                    </div>
+                                )
                             )}
                         </div>
                     );
