@@ -13,6 +13,9 @@ import { useDeepPatternAnalysis } from '../../hooks/useDeepPatternAnalysis';
 import { useTaskOperations } from '../../hooks/useTaskOperations';
 import { useRateLimits } from '../../hooks/useRateLimits';
 import { DRAFT_TAG } from '../../lib/types/smart';
+import { parseSmartToolPayload } from '../../lib/smartToolPayload';
+import { humanizeKey } from '../../lib/toolHistorySummary';
+import { TOOLS } from '../../lib/toolsRegistry';
 import type { ElementType } from 'react';
 
 interface WizardProps { isOpen: boolean; onClose: () => void; entries: JournalEntry[]; }
@@ -166,7 +169,19 @@ isOpen, onClose, entries }: WizardProps) {
                 previousSet = analyzableEntries.filter(e => isAfter(getDate(e), twoMonthsAgo) && isBefore(getDate(e), oneMonthAgo));
             }
 
-            const formatSet = (set: JournalEntry[]) => set.map(e => `[${getDate(e).toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}\n${e.content}`).join('\n---\n');
+            const formatEntry = (e: JournalEntry): string => {
+                const header = `[${getDate(e).toLocaleDateString()}] Mood: ${e.moodScore || 'N/A'}`;
+                const toolPayload = parseSmartToolPayload(e.content);
+                if (!toolPayload) return `${header}\n${e.content}`;
+
+                const toolTitle = TOOLS.find(t => t.toolType === toolPayload.type)?.title ?? toolPayload.type;
+                const fields = Object.entries(toolPayload.data)
+                    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+                    .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .join('\n');
+                return `${header}\n[${toolTitle}]\n${fields}`;
+            };
+            const formatSet = (set: JournalEntry[]) => set.map(formatEntry).join('\n---\n');
             const currentTxt = formatSet(currentSet);
             const prevTxt = formatSet(previousSet);
 

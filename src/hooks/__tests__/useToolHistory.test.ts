@@ -33,7 +33,7 @@ const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryCl
 type AuthContextValue = ReturnType<typeof AuthContext.useAuth>;
 type EncryptionContextValue = ReturnType<typeof EncryptionContext.useEncryption>;
 
-const encEntry = (data: Record<string, unknown>) => `ENC:${JSON.stringify({ data })}`;
+const encEntry = (data: Record<string, unknown>, type = 'CBA') => `ENC:${JSON.stringify({ metadata: { type, version: '2.0', lastSaved: new Date().toISOString() }, data })}`;
 
 const mockDocs = (docs: Array<{ id: string; tags: string[]; content: string; isEncrypted?: boolean; createdAt?: Date }>) => ({
     docs: docs.map(d => ({

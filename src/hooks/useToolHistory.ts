@@ -10,6 +10,7 @@ import { collection, query, where, orderBy, getDocs, type Firestore } from 'fire
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { db } from '../lib/firebase';
+import { parseSmartToolPayload } from '../lib/smartToolPayload';
 import { DRAFT_TAG, type SmartToolType } from '../lib/types/smart';
 
 export interface ToolHistoryEntry {
@@ -46,8 +47,8 @@ export function useToolHistory(toolType: SmartToolType | undefined) {
 
                 try {
                     const plainText = await decrypt(raw.content);
-                    const parsed = JSON.parse(plainText) as { data?: Record<string, unknown> };
-                    if (parsed?.data) {
+                    const parsed = parseSmartToolPayload(plainText);
+                    if (parsed) {
                         entries.push({
                             id: docSnap.id,
                             createdAt: raw.createdAt?.toDate ? raw.createdAt.toDate() : new Date(),

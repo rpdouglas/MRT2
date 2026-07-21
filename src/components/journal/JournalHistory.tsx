@@ -18,8 +18,13 @@ import { groupItemsByYearAndMonth } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
 import { Virtuoso } from 'react-virtuoso';
-import { format } from 'date-fns'; 
+import { format } from 'date-fns';
 import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { parseSmartToolPayload } from '../../lib/smartToolPayload';
+import { HEADLINE_FIELD, humanizeKey } from '../../lib/toolHistorySummary';
+import { PayloadSummaryList } from '../tools/PayloadSummaryList';
+import { TOOLS } from '../../lib/toolsRegistry';
+import { DRAFT_TAG } from '../../lib/types/smart';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
@@ -53,6 +58,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [expandedToolId, setExpandedToolId] = useState<string | null>(null);
   
   // --- COLLAPSIBILITY STATE ---
   // Default: Current Year is expanded
@@ -82,8 +88,8 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             orderBy('createdAt', 'desc')
         );
         const snapshot = await getDocs(q);
-        
-        return await Promise.all(snapshot.docs.map(async (docSnap) => {
+
+        const results = await Promise.all(snapshot.docs.map(async (docSnap) => {
             const data = docSnap.data();
             let content = data.content;
             let isError = false;
@@ -98,6 +104,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 }
             }
 
+            const toolPayload = isError ? null : parseSmartToolPayload(content);
+            // Hide in-progress guided-flow drafts — they aren't a finished journal entry yet (matches useToolHistory.ts).
+            if (toolPayload && (data.tags as string[] | undefined)?.includes(DRAFT_TAG)) return null;
+
             let createdDate = new Date();
             if (data.createdAt?.toDate) {
                 createdDate = data.createdAt.toDate();
@@ -105,14 +115,17 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 createdDate = data.createdAt.toDate();
             }
 
-            return { 
-                id: docSnap.id, 
-                ...data, 
-                content, 
+            return {
+                id: docSnap.id,
+                ...data,
+                content,
                 createdAt: createdDate,
-                isError                
+                isError,
+                toolPayload
             } as unknown as JournalEntryWithStatus;
         }));
+
+        return results.filter((entry): entry is JournalEntryWithStatus => entry !== null);
     },
     enabled: !!user,
   });
@@ -122,7 +135,10 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
       if (!searchQuery.trim()) return allEntries;
       const lowerQuery = searchQuery.toLowerCase();
       return allEntries.filter(entry => {
-          const textMatch = entry.content?.toLowerCase().includes(lowerQuery);
+          const searchableText = entry.toolPayload
+              ? Object.values(entry.toolPayload.data).join(' ')
+              : entry.content;
+          const textMatch = searchableText?.toLowerCase().includes(lowerQuery);
           const tagMatch = entry.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
           return textMatch || tagMatch;
       });
@@ -206,7 +222,16 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
   const handleShare = async (entry: JournalEntryWithStatus) => {
     const dateStr = entry.createdAt instanceof Date ? entry.createdAt.toLocaleDateString() : 'Unknown Date';
-    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${entry.content}\n\nmyrecoverytoolkit.ca`;
+    const body = entry.toolPayload
+        ? [
+            TOOLS.find(t => t.toolType === entry.toolPayload?.type)?.title ?? 'SMART Tool',
+            '',
+            ...Object.entries(entry.toolPayload.data)
+                .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+                .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+        ].join('\n')
+        : entry.content;
+    const textToShare = `${dateStr} - My Recovery Toolkit\n\n${body}\n\nmyrecoverytoolkit.ca`;
 
     if (navigator.share) {
         try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
@@ -310,6 +335,14 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
                         // === TYPE 3: ENTRY CARD ===
                         const entry = item.data;
+                        const tool = entry.toolPayload ? TOOLS.find(t => t.toolType === entry.toolPayload?.type) : undefined;
+                        const headlineField = entry.toolPayload ? HEADLINE_FIELD[entry.toolPayload.type] : undefined;
+                        const headlineValue = headlineField ? entry.toolPayload?.data[headlineField] : undefined;
+                        const headline = typeof headlineValue === 'string' && headlineValue.trim()
+                            ? headlineValue
+                            : (tool?.title ?? 'Tool Entry');
+                        const isToolExpanded = expandedToolId === entry.id;
+                        const ToolIcon = tool?.icon;
                         return (
                             <div className={`bg-white rounded-xl p-4 mb-3 ml-4 shadow-sm border relative group max-w-[96%] ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
                                 <div className="flex justify-between items-start mb-2">
@@ -318,9 +351,17 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                             {/* Day Only (e.g. "12th") since header has Month */}
                                             {entry.createdAt instanceof Date ? format(entry.createdAt, 'do (EEE)') : ''}
                                         </span>
-                                        
-                                        {/* MOOD BADGE */}
-                                        {entry.moodScore && (
+
+                                        {/* TOOL BADGE (SMART Tool entries) */}
+                                        {tool && (
+                                            <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold border border-transparent ${tool.color} ${tool.bg}`}>
+                                                {ToolIcon && <ToolIcon className="h-3 w-3" />}
+                                                {tool.title}
+                                            </span>
+                                        )}
+
+                                        {/* MOOD BADGE (freeform entries only — tool saves default to a neutral mood, not meaningful) */}
+                                        {!entry.toolPayload && entry.moodScore && (
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${entry.moodScore >= 7 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-indigo-50 text-indigo-700 border-indigo-100'}`}>
                                                 Mood: {entry.moodScore}
                                             </span>
@@ -336,18 +377,43 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
 
                                         {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
                                     </div>
-                                    
+
                                     <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => handleShare(entry)} title="Share Entry" className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors">
                                             {copiedId === entry.id ? <CheckIcon className="h-4 w-4 text-green-600" /> : <ShareIcon className="h-4 w-4" />}
                                         </button>
-                                        <button onClick={() => onEdit(entry)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                        {!entry.toolPayload && (
+                                            <button onClick={() => onEdit(entry)} title="Edit Entry" className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"><PencilSquareIcon className="h-4 w-4" /></button>
+                                        )}
                                         <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors"><TrashIcon className="h-4 w-4" /></button>
                                     </div>
                                 </div>
-                                <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
-                                    {entry.content}
-                                </p>
+                                {entry.toolPayload ? (
+                                    <div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpandedToolId(isToolExpanded ? null : entry.id)}
+                                            className="w-full flex items-center justify-between gap-2 text-left"
+                                            aria-expanded={isToolExpanded}
+                                        >
+                                            <p className="text-sm font-bold text-slate-800 truncate">{headline}</p>
+                                            {isToolExpanded ? (
+                                                <ChevronDownIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                                            ) : (
+                                                <ChevronRightIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                                            )}
+                                        </button>
+                                        {isToolExpanded && (
+                                            <div className="mt-3 pt-3 border-t border-indigo-50">
+                                                <PayloadSummaryList data={entry.toolPayload.data} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                        {entry.content}
+                                    </p>
+                                )}
                             </div>
                         );
                     }}
