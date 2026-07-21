@@ -3,10 +3,12 @@
  * PROJ-27: The CBT Engine / PROJ-50 §5: Tools Hub Redesign / PROJ-71: Tools Hub Regrouping
  * Central routing directory for all interactive recovery tools, grouped into four
  * moment-based accordion sections (Right Now / Before It Happens / After a Hard
- * Moment / Big Picture) so crisis-relevant tools (Urge Surfer, Resentment Burner)
- * are unconditionally first and expanded by default. The 8 real, journal-persisted
- * guided/CBT tools keep their three entry points (Start Fresh / Resume / View
- * History) plus richer cards (time estimate, "Best for", completion count).
+ * Moment / Big Picture), all collapsed by default. Each section reuses one of the
+ * ROSC Matrix's 4 pillar hues (rose/orange/purple/green, defined per-phase in
+ * toolsRegistry.ts's PHASE_META) for its dark header glass and light "frosted"
+ * body glass. The 8 real, journal-persisted guided/CBT tools keep their three
+ * entry points (Start Fresh / Resume / View History) plus richer cards (time
+ * estimate, "Best for", completion count).
  * Urge Surfer and Resentment Burner keep their original simple card — neither has
  * steps, drafts, or (for Resentment Burner) any persistence at all, so entry-modes/
  * history/completion-count don't apply.
@@ -14,7 +16,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import GlassCard from '../components/ui/GlassCard';
 import { PuzzlePieceIcon, ClockIcon, CheckBadgeIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { TOOLS, PHASE_META, type ToolPhase, type ToolRegistryEntry } from '../lib/toolsRegistry';
 import { hasGuidedDraft } from '../hooks/useGuidedDraft';
@@ -66,7 +67,7 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
                         <div className="flex flex-wrap items-start gap-2 mb-1">
                             <h3 className="text-[17.6px] font-bold text-gray-900 flex-1 min-w-[120px]">{tool.title}</h3>
                             {tool.bestFor && (
-                                <span className="shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                                <span className={`shrink-0 mt-0.5 text-[9.9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded ${PHASE_META[tool.phase].pillBg} ${PHASE_META[tool.phase].pillText}`}>
                                     Best for: {tool.bestFor}
                                 </span>
                             )}
@@ -116,26 +117,48 @@ function ToolCard({ tool, count, canResume }: ToolCardProps) {
     }
 
     // Not a SMART Tool (Urge Surfer, Resentment Burner) — original simple card.
-    // Only tools in the "Right Now" phase lack a toolType, and that section's expanded
-    // body is always wrapped in the dark GlassCard "tools" hero treatment — so this
-    // branch is styled for a dark background, not the light one the other two use.
+    // Only tools in the "Right Now" phase lack a toolType; that section's expanded body
+    // uses the same light frosted-glass treatment as every other section (PROJ-71 round 4),
+    // so this branch is styled for a light background like the other two branches.
     return (
         <Link
             to={tool.path}
-            className={`block relative group bg-white/5 rounded-2xl p-5 border border-white/10 transition-colors hover:bg-white/10 active:scale-95 ${tool.border} border-l-[6px]`}
+            className={`block relative group bg-white rounded-2xl p-5 shadow-sm border border-gray-200 transition-all hover:shadow-md active:scale-95 ${tool.border} border-l-[6px]`}
         >
             <div className="flex items-start gap-4">
                 <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${tool.bg} ${tool.color}`}>
                     <tool.icon className="h-7 w-7" />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-[17.6px] font-bold text-white group-hover:text-sky-300 transition-colors mb-1">
+                    <h3 className={`text-[17.6px] font-bold text-gray-900 transition-colors mb-1 ${PHASE_META[tool.phase].hoverText}`}>
                         {tool.title}
                     </h3>
-                    <p className="text-[15.4px] text-slate-300 leading-relaxed pr-2">{tool.description}</p>
+                    <p className="text-[15.4px] text-gray-600 leading-relaxed pr-2">{tool.description}</p>
                 </div>
             </div>
         </Link>
+    );
+}
+
+/**
+ * Light "frosted glass" section-body shell (PROJ-71 round 4) — the same gradient-border +
+ * blur + ambient-glow recipe GlassCard.tsx uses for its dark module cards, rebuilt with a
+ * light translucent base instead of near-black, tinted per Tools Hub section via `gradA`/`gradB`.
+ * Kept local to this page rather than added to GlassCard.tsx since these are per-section
+ * accent colors, not a module-level design token.
+ */
+function LightGlass({ gradA, gradB, children }: { gradA: string; gradB: string; children: React.ReactNode }) {
+    return (
+        <div className="relative overflow-hidden rounded-[20px] p-[1.5px]" style={{ background: `linear-gradient(145deg, ${gradA}55, ${gradB}33)` }}>
+            <div
+                className="relative overflow-hidden rounded-[19px] p-[18px_16px]"
+                style={{ background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(24px) saturate(1.4)', WebkitBackdropFilter: 'blur(24px) saturate(1.4)' }}
+            >
+                <div className="pointer-events-none absolute -right-[30px] -top-[40px] h-[140px] w-[140px] rounded-full" style={{ background: `radial-gradient(circle, ${gradA}30 0%, transparent 65%)` }} />
+                <div className="pointer-events-none absolute -bottom-[30px] -left-[10px] h-[100px] w-[100px] rounded-full" style={{ background: `radial-gradient(circle, ${gradB}25 0%, transparent 65%)` }} />
+                <div className="relative z-10">{children}</div>
+            </div>
+        </div>
     );
 }
 
@@ -145,7 +168,7 @@ export default function ToolsHub() {
     const hasDraftDoc = completions?.hasDraftDoc ?? {};
 
     const [expanded, setExpanded] = useState<Record<ToolPhase, boolean>>({
-        'right-now': true,
+        'right-now': false,
         before: false,
         after: false,
         'big-picture': false,
@@ -193,7 +216,7 @@ export default function ToolsHub() {
                         <div key={phase}>
                             <div
                                 className="rounded-[14px] p-[1.5px]"
-                                style={{ background: 'linear-gradient(145deg, #3B82F655, #0284C733)' }}
+                                style={{ background: `linear-gradient(145deg, ${meta.gradA}55, ${meta.gradB}33)` }}
                             >
                                 <button
                                     onClick={() => togglePhase(phase)}
@@ -202,13 +225,13 @@ export default function ToolsHub() {
                                     style={{ backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)' }}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10 text-sky-300">
+                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10" style={{ color: meta.gradA }}>
                                             <meta.icon className="h-5 w-5" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h2 className="text-[15.4px] font-bold text-white">{meta.label}</h2>
-                                                <span className="text-[11px] font-bold text-sky-200 bg-white/10 px-1.5 py-0.5 rounded-full">
+                                                <span className="text-[11px] font-bold bg-white/10 px-1.5 py-0.5 rounded-full" style={{ color: meta.gradA }}>
                                                     {tools.length}
                                                 </span>
                                             </div>
@@ -220,25 +243,17 @@ export default function ToolsHub() {
                             </div>
 
                             {isOpen && (
-                                phase === 'right-now' ? (
-                                    <div className="mt-3">
-                                        <GlassCard variant="tools">
-                                            <div className="grid grid-cols-1 gap-4">
-                                                {tools.map((tool) => (
-                                                    <ToolCard key={tool.id} tool={tool} count={0} canResume={false} />
-                                                ))}
-                                            </div>
-                                        </GlassCard>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                        {tools.map((tool) => {
-                                            const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
-                                            const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
-                                            return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
-                                        })}
-                                    </div>
-                                )
+                                <div className="mt-3">
+                                    <LightGlass gradA={meta.gradA} gradB={meta.gradB}>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {tools.map((tool) => {
+                                                const count = tool.toolType ? counts[tool.toolType] ?? 0 : 0;
+                                                const canResume = Boolean(tool.hasGuidedFlow) && (hasGuidedDraft(tool.toolType!) || Boolean(hasDraftDoc[tool.toolType!]));
+                                                return <ToolCard key={tool.id} tool={tool} count={count} canResume={canResume} />;
+                                            })}
+                                        </div>
+                                    </LightGlass>
+                                </div>
                             )}
                         </div>
                     );
