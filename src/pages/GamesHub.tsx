@@ -102,6 +102,19 @@ export default function GamesHub() {
             <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Walt</span>
           </div>
         </Link>
+
+        <Link
+          to="/games/knowledge-quests"
+          className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-yellow-400 to-lime-500 text-white shadow-lg transition-transform active:scale-95 hover:shadow-xl"
+        >
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider opacity-90">Knowledge Quests</span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90 mb-2">Short quiz packs on recovery-adjacent topics — stress, habits, sleep, and more.</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Everyone</span>
+          </div>
+        </Link>
       </div>
     </div>
   );

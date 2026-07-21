@@ -46,6 +46,7 @@ const FastLane = lazy(() => import('./components/games/fastLane/FastLane')); // 
 const GoalLadder = lazy(() => import('./components/games/goalLadder/GoalLadder')); // PROJ-72
 const ThoughtChallenge = lazy(() => import('./components/games/thoughtChallenge/ThoughtChallenge')); // PROJ-72
 const TriggerMatch = lazy(() => import('./components/games/triggerMatch/TriggerMatch')); // PROJ-72
+const KnowledgeQuests = lazy(() => import('./components/games/knowledgeQuests/KnowledgeQuests')); // PROJ-72
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
@@ -212,6 +213,11 @@ export default function App() {
                         <Route path="/games/trigger-match" element={<PrivateRoute>
                             <VaultGate>
                                 <TriggerMatch />
+                            </VaultGate>
+                            </PrivateRoute>} />
+                        <Route path="/games/knowledge-quests" element={<PrivateRoute>
+                            <VaultGate>
+                                <KnowledgeQuests />
                             </VaultGate>
                             </PrivateRoute>} />
 

@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.26] - 2026-07-21
+### 🛠️ Update
+- Added Knowledge Quests to the Games section — short quiz packs on recovery-adjacent topics like stress, habits, and sleep. More packs are on the way.
+
 ## [v1.8.25] - 2026-07-21
 ### 🛠️ Update
 - Added three new mini-games to the Games section: Goal Ladder (a short momentum-building session), Thought Challenge (a CBT-style reframing game for sponsors and service workers), and Trigger Match (practice spotting common recovery triggers before they land).
