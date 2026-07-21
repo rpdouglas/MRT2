@@ -132,7 +132,9 @@ export interface WorkbookAnswer {
   updatedAt: Timestamp | Date;
 }
 
-export type GamePersonaTarget = 'David' | 'Ned' | 'Lisa' | 'Walt';
+// 'All' (PROJ-72 Phase 6) is for games that aren't persona-specific, e.g.
+// Knowledge Quests' general psychoeducation content packs.
+export type GamePersonaTarget = 'David' | 'Ned' | 'Lisa' | 'Walt' | 'All';
 
 // PROJ-72 (Recovery Games), Phase 1. score/gameId/personaTarget/createdAt stay
 // plaintext — same partial-encryption precedent as rosc_assessments — so

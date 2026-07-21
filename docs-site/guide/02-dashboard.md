@@ -86,7 +86,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
 * **Vitality:** View your biological regulation streak and total logs.
 * **Wisdom:** See how many questions you've answered out of the total available across all workbooks, with your overall completion percentage shown just below.
-* **Games:** Zero-knowledge, anti-shame mini-games — Craving Buster, Recovery Jeopardy (a pass-the-device trivia game for your group, sponsor, or sponsee), Fast Lane (a multi-week life-management simulation with an AI companion), Goal Ladder, Thought Challenge, and Trigger Match are all live now.
+* **Games:** Zero-knowledge, anti-shame mini-games — Craving Buster, Recovery Jeopardy (a pass-the-device trivia game for your group, sponsor, or sponsee), Fast Lane (a multi-week life-management simulation with an AI companion), Goal Ladder, Thought Challenge, Trigger Match, and Knowledge Quests (short quiz packs on topics like stress, habits, and sleep) are all live now.
 * **Tools:** Access CBT exercises and grounding tools.
 
 ## 7. The Gamification Engine
