@@ -148,3 +148,64 @@ describe('JournalHistory Sharing', () => {
         expect(copyText.endsWith('myrecoverytoolkit.ca')).toBe(true);
     });
 });
+
+describe('JournalHistory SMART Tool entries', () => {
+    const currentYearStr = new Date().getFullYear().toString();
+    const currentMonthIndex = new Date().getMonth();
+    const createdAt = new Date(`${currentYearStr}-${String(currentMonthIndex + 1).padStart(2, '0')}-02T12:00:00.000Z`);
+
+    const toolEntries = [
+        {
+            id: 'tool-entry-1',
+            content: JSON.stringify({
+                metadata: { type: 'CBA', version: '2.0', lastSaved: createdAt.toISOString() },
+                data: { behavior: 'Drinking' },
+            }),
+            isEncrypted: false,
+            createdAt,
+            moodScore: 5,
+            tags: ['SMART Tool', 'CBA'],
+            toolPayload: { type: 'CBA', data: { behavior: 'Drinking' } },
+        },
+    ];
+
+    it('renders a humanized headline instead of raw JSON', () => {
+        renderHistory(toolEntries);
+
+        expect(screen.getByText('Drinking')).toBeInTheDocument();
+        expect(screen.queryByText(/"metadata"/)).not.toBeInTheDocument();
+        expect(screen.getByText('Cost Benefit Analysis')).toBeInTheDocument();
+    });
+
+    it('expands to show humanized fields via PayloadSummaryList on click', async () => {
+        renderHistory(toolEntries);
+
+        const headlineBtn = screen.getByText('Drinking').closest('button');
+        expect(headlineBtn).not.toBeNull();
+        await act(async () => {
+            fireEvent.click(headlineBtn!);
+        });
+
+        expect(screen.getByText('Behavior')).toBeInTheDocument();
+    });
+
+    it('shares humanized text instead of raw JSON', async () => {
+        renderHistory(toolEntries);
+
+        const shareBtn = screen.getByTitle('Share Entry');
+        await act(async () => {
+            fireEvent.click(shareBtn);
+        });
+
+        expect(mockShare).toHaveBeenCalled();
+        const shareArg = mockShare.mock.calls[0][0];
+        expect(shareArg.text).toContain('Behavior: Drinking');
+        expect(shareArg.text).not.toContain('"metadata"');
+    });
+
+    it('does not render an Edit button for a SMART Tool entry', () => {
+        renderHistory(toolEntries);
+
+        expect(screen.queryByTitle('Edit Entry')).not.toBeInTheDocument();
+    });
+});

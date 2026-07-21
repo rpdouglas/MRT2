@@ -12,6 +12,9 @@ import { useEncryption } from '../contexts/EncryptionContext';
 import { processInChunks } from '../lib/utils';
 import { generateDeepPatternAnalysis, type DeepPatternResult } from '../lib/gemini';
 import { DRAFT_TAG } from '../lib/types/smart';
+import { parseSmartToolPayload } from '../lib/smartToolPayload';
+import { humanizeKey } from '../lib/toolHistorySummary';
+import { TOOLS } from '../lib/toolsRegistry';
 
 interface UseDeepPatternAnalysisReturn {
     analyze: () => Promise<void>;
@@ -82,6 +85,15 @@ export function useDeepPatternAnalysis(): UseDeepPatternAnalysisReturn {
                         } catch (e) { console.error("Decryption failed for an entry:", e); content = "[Skipped: Decryption Error]"; }
                     }
                     const date = docData.createdAt?.toDate ? docData.createdAt.toDate() : new Date();
+                    const toolPayload = parseSmartToolPayload(content);
+                    if (toolPayload) {
+                        const toolTitle = TOOLS.find(t => t.toolType === toolPayload.type)?.title ?? toolPayload.type;
+                        const fields = Object.entries(toolPayload.data)
+                            .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+                            .map(([key, value]) => `${humanizeKey(key)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                            .join('\n');
+                        return `Date: ${date.toLocaleDateString()}\n[${toolTitle}]\n${fields}`;
+                    }
                     return `Date: ${date.toLocaleDateString()}\nMood: ${docData.moodScore}\nContent: ${content}`;
                 },
                 (percent) => {

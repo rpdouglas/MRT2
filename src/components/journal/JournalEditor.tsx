@@ -14,6 +14,7 @@ import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
 import type { AudioAnalysisResult } from '../../lib/gemini';
+import type { SmartToolPayload } from '../../lib/smartToolPayload';
 
 interface JournalDocData { tags?: string[]; [key: string]: unknown; }
 
@@ -22,10 +23,12 @@ export interface JournalEntry {
   content: string;
   moodScore: number;
   sentiment?: string;
-  createdAt: Timestamp; 
+  createdAt: Timestamp;
   tags?: string[];
   weather?: { temp: number; condition: string } | null;
-  isEncrypted?: boolean; 
+  isEncrypted?: boolean;
+  /** Parsed SMART Tool payload, when `content` is a tool save rather than freeform text (derived client-side, never persisted). */
+  toolPayload?: SmartToolPayload | null;
 }
 
 interface ExtendedJournalTemplate extends JournalTemplate {
