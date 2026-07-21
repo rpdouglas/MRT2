@@ -30,13 +30,13 @@ From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the
 
 Tools are grouped into four sections based on when you'd reach for them:
 * **Right Now** — Urge Surfer and The Resentment Burner, for cravings and crisis. Always open when you arrive, so these are never more than a tap away.
-* **Before It Happens** — D.E.N.T.S. Strategy and Cost Benefit Analysis, for planning ahead of a risky moment.
+* **Before It Happens** — D.E.N.T.S. Strategy, Cost Benefit Analysis, and Morning Intent, for planning ahead of a risky moment.
 * **After a Hard Moment** — ABC Coping, Personify & Disarm, Thought Record, and Five Questions, for processing what just happened.
 * **Big Picture** — Lifestyle Balance and SMART Goal, for stepping back and planning.
 
 The other three sections start collapsed — tap a section's header to open it.
 
-Every guided tool (CBA, ABC, D.E.N.T.S., Thought Record, Five Questions) offers up to three ways in:
+Every guided tool (CBA, ABC, D.E.N.T.S., Thought Record, Five Questions, Morning Intent) offers up to three ways in:
 * **Start Fresh** — always available. Opens the tool at Step 1 with a blank slate, even if you have an unfinished session sitting in the background.
 * **Resume** — appears only when you have an in-progress session (from this browser tab, or a partial save from an earlier one) waiting to be picked back up.
 * **History** — appears once you've completed the tool at least once. Opens a readable list of your past completions (not the raw entry) — tap any one to see the full answers.
@@ -69,6 +69,13 @@ The ABC model teaches us that events don't cause our feelings; our *beliefs* abo
 **When to use it:** When you know a challenging situation is coming.
 
 This is a pre-planning safety tool. Start by naming the specific high-risk situation you're planning for (a wedding, a stressful family gathering) — the five D.E.N.T.S. prompts (Deny, Escape, Neutralize, Tasks, Swap) are then worded to reference that exact situation, so your plan is concrete instead of generic.
+
+---
+
+## ☀️ Morning Intent
+**When to use it:** At the start of your day, to get ahead of whatever challenges it might bring.
+
+Instead of examining something that already happened, this tool looks forward: name today's likely terrain, the automatic story your mind might tell if things go badly, a more useful belief to replace it, and one small, concrete intention you can actually act on.
 
 ---
 

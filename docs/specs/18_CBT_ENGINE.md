@@ -5,7 +5,7 @@
 **Primary Code:** `src/components/smart_tools/`, `src/components/tools/`
 
 ## 1. Overview
-The CBT Engine digitizes evidence-based SMART Recovery worksheets into interactive, responsive React components. Five of the eight tools (ABCDE, CBA, DENTS, Thought Record, Five Questions) are **guided, step-locked flows** — one question at a time, with contextual coaching, optional AI-assisted prompts, and in-line psychoeducation — rather than a single open-form page.
+The CBT Engine digitizes evidence-based SMART Recovery worksheets into interactive, responsive React components. Six of the nine tools (ABCDE, CBA, DENTS, Thought Record, Five Questions, Morning Intent) are **guided, step-locked flows** — one question at a time, with contextual coaching, optional AI-assisted prompts, and in-line psychoeducation — rather than a single open-form page.
 
 ## 2. Technical Architecture
 
@@ -25,7 +25,7 @@ A generic wrapper component (`SmartToolContainer<T>`) handles all complex logic,
 * **`hideHeader`:** Lets a tool render its own page chrome (a `VibrantHeader`) instead of the container's default header bar — used by every guided-flow tool.
 
 ### C. `GuidedWorkflowEngine` (PROJ-50) — the step-locked layer
-A generic, tool-agnostic step engine (`src/components/tools/GuidedWorkflowEngine.tsx`) that sits *above* `SmartToolContainer` for ABCDE, CBA, DENTS, Thought Record, and Five Questions. It owns step navigation, `minLength` advancement gating, sessionStorage draft autosave/resume (`useGuidedDraft`, key `guidedDraft_${toolType}`), and the optional AI coaching prompt — never Firestore persistence directly (that's still `SmartToolContainer`'s job, via the `onSaveProgress`/`onComplete` callbacks).
+A generic, tool-agnostic step engine (`src/components/tools/GuidedWorkflowEngine.tsx`) that sits *above* `SmartToolContainer` for ABCDE, CBA, DENTS, Thought Record, Five Questions, and Morning Intent. It owns step navigation, `minLength` advancement gating, sessionStorage draft autosave/resume (`useGuidedDraft`, key `guidedDraft_${toolType}`), and the optional AI coaching prompt — never Firestore persistence directly (that's still `SmartToolContainer`'s job, via the `onSaveProgress`/`onComplete` callbacks).
 
 Each `Step` declares:
 * `inputType: 'textarea' | 'list' | 'emotion'` — the primary input widget (`ListInput`, `EmotionIntensitySelector`, or a plain textarea).
@@ -47,6 +47,7 @@ Three tools (CBA, DENTS, Five Questions) add their own **`intro` phase** before 
 * **D.E.N.T.S. Strategy:** `intro` (Scenario Mode — name the specific high-risk situation) → guided D-E-N-T-S steps, each dynamically worded to reference that scenario → `summary` (all 5 answers, editable, in the original color-coded acronym cards).
 * **Thought Record:** The classic 7-column CBT thought record — guided Situation → Automatic Thought → Emotions (before) → Evidence For → Evidence Against (+ optional persisted distortion picker) → Balanced Thought (+ AI prompt) → Emotions (after, re-rating the same emotions from Step 3) → `summary` ("The Shift" — a before/after emotion comparison).
 * **Five Questions:** Byron Katie's "The Work" adapted for recovery. `intro` (name the thought) → guided Q1–Q5 (Q1/Q2 pair a Yes/No toggle with an explanation; Q5 pairs a turnaround statement with a 1-5 star rating and the flow's one AI coaching prompt) → `summary`.
+* **Morning Intent (PROJ-72):** A forward-looking REBT flow — distinct from ABCDE's retrospective structure. Guided Terrain → Automatic Story → Reframe → Intention, anticipating the day's likely challenges before they arrive rather than examining a belief about something that already happened. No `intro` phase.
 
 **Single-page, `SmartToolContainer`-only (not guided/step-locked):**
 * **Personify & Disarm:** A "Rogue's Gallery" card grid leveraging Narrative Therapy to externalize the addictive voice.
@@ -57,7 +58,7 @@ Three tools (CBA, DENTS, Five Questions) add their own **`intro` phase** before 
 
 ## 4. Routing & Discovery (Tools Hub, PROJ-50 §5, regrouped PROJ-71)
 
-* **Tools Hub (`/tools`):** A centralized directory, grouped into four collapsible, moment-based sections (`right-now` / `before` / `after` / `big-picture`, defined in `toolsRegistry.ts`'s `phase` field and `PHASE_META`): **Right Now** (Urge Surfer, Resentment Burner — expanded by default so crisis tools are always visible with no interaction), **Before It Happens** (D.E.N.T.S., Cost Benefit Analysis), **After a Hard Moment** (ABC Coping, Personify & Disarm, Thought Record, Five Questions), and **Big Picture** (Lifestyle Balance, SMART Goal) — the latter three collapsed by default, expandable via a tap on their header. The 8 real, journal-persisted tools each show three entry points on their card:
+* **Tools Hub (`/tools`):** A centralized directory, grouped into four collapsible, moment-based sections (`right-now` / `before` / `after` / `big-picture`, defined in `toolsRegistry.ts`'s `phase` field and `PHASE_META`): **Right Now** (Urge Surfer, Resentment Burner — expanded by default so crisis tools are always visible with no interaction), **Before It Happens** (D.E.N.T.S., Cost Benefit Analysis, Morning Intent), **After a Hard Moment** (ABC Coping, Personify & Disarm, Thought Record, Five Questions), and **Big Picture** (Lifestyle Balance, SMART Goal) — the latter three collapsed by default, expandable via a tap on their header. The 9 real, journal-persisted tools each show three entry points on their card:
   * **Start Fresh** (`${path}?fresh=1`) — always available; forces the guided flow (or intro phase) to start blank, per §2.C's `forceFresh`.
   * **Resume** — shown only when a same-session `sessionStorage` draft (`hasGuidedDraft(toolType)`) or a cross-session Firestore `DRAFT` doc exists for a guided-flow tool; simply links to the tool's normal route, since `SmartToolContainer`'s existing `resumeSession` rehydration does the rest.
   * **History** — shown once a tool has at least one completion; links to `/tools/:toolType/history`.
