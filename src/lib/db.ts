@@ -127,9 +127,26 @@ export interface WorkbookAnswer {
   workbookId: string;
   sectionId: string;
   questionId: string;
-  answer: string; 
+  answer: string;
   isEncrypted: boolean;
   updatedAt: Timestamp | Date;
+}
+
+export type GamePersonaTarget = 'David' | 'Ned' | 'Lisa' | 'Walt';
+
+// PROJ-72 (Recovery Games), Phase 1. score/gameId/personaTarget/createdAt stay
+// plaintext — same partial-encryption precedent as rosc_assessments — so
+// streak/XP math never needs a decrypt. Only stats/reflection are ciphertext.
+export interface GameProgressRecord {
+  id?: string;
+  uid: string;
+  gameId: string;
+  personaTarget: GamePersonaTarget;
+  score: number;
+  encryptedStats: string; // IV:Ciphertext (base64) — JSON.stringify(stats), see src/lib/crypto.ts
+  encryptedReflection?: string; // IV:Ciphertext (base64) — only present if the game calls recordReflection
+  createdAt: Timestamp | Date;
+  isEncrypted: true;
 }
 
 export async function getProfile(uid: string): Promise<UserProfile | null> {

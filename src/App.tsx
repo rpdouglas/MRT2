@@ -38,6 +38,7 @@ const ThoughtRecordTool = lazy(() => import('./components/smart_tools/ThoughtRec
 const FiveQuestionsTool = lazy(() => import('./components/smart_tools/FiveQuestionsTool').then(m => ({ default: m.FiveQuestionsTool })));
 const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
+const GamesHub = lazy(() => import('./pages/GamesHub')); // PROJ-72
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
@@ -163,6 +164,12 @@ export default function App() {
                         <Route path="/tools/:toolType/history" element={<PrivateRoute>
                             <VaultGate>
                                 <ToolHistory />
+                            </VaultGate>
+                            </PrivateRoute>} />
+
+                        <Route path="/games" element={<PrivateRoute>
+                            <VaultGate>
+                                <GamesHub />
                             </VaultGate>
                             </PrivateRoute>} />
 
