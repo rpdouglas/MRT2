@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.23] - 2026-07-21
+### 🛠️ Update
+- Added Recovery Jeopardy to the Games section — a pass-the-device trivia game for your group, sponsor, or sponsee, with two rounds and a Final Jeopardy wager round.
+
 ## [v1.8.22] - 2026-07-21
 ### 🛠️ Update
 - Added Recovery Games — a new Games section with your first mini-game, Craving Buster, a short breathing exercise you can reach from the SOS button during an urge. Also added Morning Intent, a guided reflection tool to help you get ahead of today's challenges.
