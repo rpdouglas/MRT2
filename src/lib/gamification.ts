@@ -170,7 +170,8 @@ export const calculateUserLevel = (
     tasks: ScorableTask[],
     workbookAnswersCount: number,
     cleanDays: number,
-    roscAssessmentsCount = 0
+    roscAssessmentsCount = 0,
+    gameProgressCount = 0 // PROJ-72: completed Recovery Games — an active-coping action, same bucket as tasks
 ): UserStats => {
     let xp = 0;
     const xpBreakdown = { wisdom: 0, action: 0, vitality: 0, reflection: 0 };
@@ -230,6 +231,11 @@ export const calculateUserLevel = (
 
     // 5. ROSC Assessment XP (monthly check-ins)
     xp += roscAssessmentsCount * XP_VALUES.ROSC_ASSESSMENT;
+
+    // 6. Recovery Games XP (PROJ-72) — active-coping action, same bucket as tasks
+    const gameXP = gameProgressCount * XP_VALUES.GAME_COMPLETION;
+    xp += gameXP;
+    xpBreakdown.action += gameXP;
 
     // 5. Determine Archetype
     const maxVal = Math.max(xpBreakdown.wisdom, xpBreakdown.action, xpBreakdown.vitality, xpBreakdown.reflection);

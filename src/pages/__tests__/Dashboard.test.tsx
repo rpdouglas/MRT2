@@ -42,6 +42,10 @@ vi.mock('../../hooks/useUserProfile', () => ({
   }),
 }));
 
+vi.mock('../../hooks/useGameProgress', () => ({
+  useGameProgress: () => ({ history: [], isLoading: false, recordProgress: vi.fn(), isRecording: false }),
+}));
+
 vi.mock('../../components/dashboard/DynamicAnchorWidget', () => ({ default: () => <div>Anchor Widget</div> }));
 vi.mock('../../components/SobrietyHero', () => ({ default: () => <div>Sobriety Hero</div> }));
 vi.mock('../../components/NotificationBanner', () => ({ default: () => null }));

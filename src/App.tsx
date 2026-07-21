@@ -36,9 +36,11 @@ const PersonifyTool = lazy(() => import('./components/smart_tools/PersonifyTool'
 const LifestyleBalanceTool = lazy(() => import('./components/smart_tools/LifestyleBalanceTool').then(m => ({ default: m.LifestyleBalanceTool })));
 const ThoughtRecordTool = lazy(() => import('./components/smart_tools/ThoughtRecordTool').then(m => ({ default: m.ThoughtRecordTool })));
 const FiveQuestionsTool = lazy(() => import('./components/smart_tools/FiveQuestionsTool').then(m => ({ default: m.FiveQuestionsTool })));
+const MorningIntentTool = lazy(() => import('./components/smart_tools/MorningIntentTool').then(m => ({ default: m.MorningIntentTool }))); // PROJ-72
 const UrgeSurfer = lazy(() => import('./pages/UrgeSurfer')); // PROJ-10
 const ResentmentBurner = lazy(() => import('./components/smart_tools/ResentmentBurner')); // PROJ-28
 const GamesHub = lazy(() => import('./pages/GamesHub')); // PROJ-72
+const CravingBuster = lazy(() => import('./components/games/CravingBuster')); // PROJ-72
 
 // --- QUERY CLIENT ---
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
@@ -161,6 +163,11 @@ export default function App() {
                                 <FiveQuestionsTool />
                             </VaultGate>
                             </PrivateRoute>} />
+                        <Route path="/tools/morning-intent" element={<PrivateRoute>
+                            <VaultGate>
+                                <MorningIntentTool />
+                            </VaultGate>
+                            </PrivateRoute>} />
                         <Route path="/tools/:toolType/history" element={<PrivateRoute>
                             <VaultGate>
                                 <ToolHistory />
@@ -171,6 +178,11 @@ export default function App() {
                             <VaultGate>
                                 <GamesHub />
                             </VaultGate>
+                            </PrivateRoute>} />
+                        {/* No VaultGate — crisis-tool precedent, matches /tools/urge-surfer. Score
+                            persistence is a best-effort no-op if the vault happens to be locked. */}
+                        <Route path="/games/craving-buster" element={<PrivateRoute>
+                            <CravingBuster />
                             </PrivateRoute>} />
 
                         <Route path="/insights" element={<PrivateRoute>

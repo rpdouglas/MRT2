@@ -138,7 +138,8 @@ describe('🧩 ToolsHub page', () => {
         it('shows a tool count badge per section', () => {
             render(<ToolsHub />);
             const beforeHeader = screen.getByRole('button', { name: /Before It Happens/ });
-            expect(within(beforeHeader).getByText('2')).toBeInTheDocument();
+            // PROJ-72: Morning Intent joined CBA and D.E.N.T.S. in this section.
+            expect(within(beforeHeader).getByText('3')).toBeInTheDocument();
         });
     });
 });

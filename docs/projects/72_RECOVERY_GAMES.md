@@ -1,6 +1,6 @@
 # 📁 Project 72: Recovery Games
 
-**Status:** ⚪ Planned
+**Status:** 🟡 Active
 **Primary Persona:** All (David, Ned, Lisa, Walt)
 **Objective:** Layer a zero-knowledge, anti-shame set of persona-targeted mini-games and psychoeducation tools onto the existing gamification system, replacing the dead "Service — Coming Soon" Dashboard tile with a live entry point.
 
@@ -71,8 +71,8 @@ Mapped from the informal master plan's 5 phases / 10 sprints onto our template s
 * Security audit: confirm every `game_progress` write passes through `encryptData()` before hitting Firestore and all reads go through `useGameProgress` — not a "zero network calls" audit as the master plan framed it, since this feature does sync (encrypted) by design.
 
 ### Phase 2: UI/UX & Gamification — *Core CBT/REBT Loops (sub-sprints .2–.3)*, *Migration & Compliance (.4–.5)*, *Persona Expansion (.6–.7)*
-* Morning Intent CBT/REBT tool routed to the Encrypted Journal.
-* Craving-Buster mini-games hooked into the existing 1-Tap SOS button (David — must stay ≤3 taps, zero cognitive load, no red/alarm imagery per CLAUDE.md's persona rules).
+* ✅ **Shipped:** Morning Intent CBT/REBT tool routed to the Encrypted Journal. Built as a new `GuidedWorkflowEngine`/`SmartToolContainer` SMART tool (`src/components/smart_tools/MorningIntentTool.tsx`, `toolType: 'MORNING_INTENT'`) — **not** on the `GameShell`/`IRecoveryGame` scaffolding, since it doesn't produce a score or persist to `game_progress`. Gets XP for free via the existing generic `'SMART Tool'`-tag path in `gamification.ts`.
+* ✅ **Shipped:** Craving-Buster mini-game hooked into the existing 1-Tap SOS button (David) and GamesHub, at `/games/craving-buster`. The first concrete `IRecoveryGame` — a ~96s breathing-rhythm tap game, deliberately distinct from `UrgeSurfer`'s static 5-minute 5-4-3-2-1 checklist. **Deliberately not wrapped in `VaultGate`**, matching `UrgeSurfer`'s crisis-tool precedent — the game always completes locally; persisting the score via `useGameProgress` is a best-effort no-op if the vault happens to be locked.
 * Port legacy "Fast Lane" game onto the `IRecoveryGame` interface.
 * Port "12-Step Jeopardy" with a **strict trademark content scrub**: no fellowship names/logos/literature quotes, neutral category arrays ("Support Groups," "Peer Principles") — Tradition 6 compliance.
 * Persona-targeted games: Coping Skills Challenge (David), Goal Ladder (Ned — apply DEVELOPER_GUIDE's "Day 90 Pink Cloud Crash" warning, don't make a broken streak feel punitive), Thought Challenge (Lisa), Trigger Match (Walt).
@@ -99,6 +99,6 @@ Mapped from the informal master plan's 5 phases / 10 sprints onto our template s
 
 ## 6. Explicitly Deferred (not decided in this spec)
 * Exact `game_progress` document shape (one doc per game vs. per user).
-* Whether games get a 5th `calculateUserLevel` bucket or fold into an existing one.
-* Whether pure mini-games (no persisted state) are playable before vault unlock.
+* ~~Whether games get a 5th `calculateUserLevel` bucket or fold into an existing one.~~ **Resolved in Phase 2:** games fold into the existing `action` bucket (same category as task completion) via a new `gameProgressCount` parameter on `calculateUserLevel`, contributing `XP_VALUES.GAME_COMPLETION`. No 5th bucket.
+* ~~Whether pure mini-games (no persisted state) are playable before vault unlock.~~ **Resolved narrowly for Craving Buster only** (not as a blanket policy): it skips `VaultGate` entirely, matching `UrgeSurfer`'s crisis-tool precedent. The game always completes locally; `game_progress` persistence is a best-effort no-op when the vault is locked. Future games should decide this individually based on whether they're crisis-reachable (skip gate) or not (require it, like `GamesHub` itself does).
 * Full Rule-of-3 technical design — happens in a `/planning` pass after this spec is approved, per `docs/governance/DEVELOPER_GUIDE.md`'s Recursive Build Protocol.

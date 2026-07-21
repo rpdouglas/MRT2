@@ -5,17 +5,18 @@
  * within the zero-knowledge journal storage.
  */
 
-export type SmartToolType = 
-    | 'CBA' 
-    | 'ABC' 
-    | 'DENTS' 
-    | 'FIVE_QUESTIONS' 
-    | 'LIFESTYLE_BALANCE' 
-    | 'PERSONIFY' 
-    | 'SELF_COMPASSION' 
+export type SmartToolType =
+    | 'CBA'
+    | 'ABC'
+    | 'DENTS'
+    | 'FIVE_QUESTIONS'
+    | 'LIFESTYLE_BALANCE'
+    | 'PERSONIFY'
+    | 'SELF_COMPASSION'
     | 'SMART_GOAL'
     | 'BOUNDARIES'
-    | 'THOUGHT_RECORD';
+    | 'THOUGHT_RECORD'
+    | 'MORNING_INTENT';
 
 export interface SmartToolMetadata {
     type: SmartToolType;
@@ -84,6 +85,13 @@ export interface SmartGoalPayload {
 }
 
 export interface BoundariesPayload { boundaries: Array<{ id: number; who: string; what: string; how: string; type: 'Small' | 'Large'; }>;
+}
+
+export interface MorningIntentPayload {
+    terrain: string;    // What's likely to challenge me today?
+    story: string;      // What automatic thought/belief might show up?
+    reframe: string;    // What's a more useful, realistic belief?
+    intention: string;  // One concrete intention for today
 }
 
 export interface ThoughtRecordPayload {
