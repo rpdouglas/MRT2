@@ -24,6 +24,7 @@ graph TD
     root --> ai_logs[📂 ai_logs]
     root --> feedback[📂 feedback]
     root --> service[📂 service]
+    root --> game_progress[📂 game_progress]
 ```
 
 ## 2. Collection Definitions
@@ -103,6 +104,18 @@ graph TD
     * `scope_context` (String): Human-readable label for the analysis window (e.g. `"Weekly Comparative Review"`, `"Deep Pattern Recognition"`).
     * `createdAt` (Timestamp).
     * Journal-type only (all optional): `key_themes`, `strengths`, `risks`, `trajectory`, `core_triggers`, `hidden_correlations`, `emotional_velocity`, `relapse_risk_level`.
+
+### `game_progress/{id}`
+* **Purpose:** PROJ-72 (Recovery Games). Per-play completion records for mini-games (e.g. Craving Buster). Partial encryption — same precedent as `rosc_assessments`, so streak/XP math never needs a decrypt.
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `gameId` (String): **UNENCRYPTED** — e.g. `'craving-buster'`.
+    * `personaTarget` (String): **UNENCRYPTED** — `'David'` | `'Ned'` | `'Lisa'` | `'Walt'`.
+    * `score` (Int): **UNENCRYPTED** — feeds `gamification.ts`'s `calculateUserLevel` (`action` bucket) without a decrypt.
+    * `encryptedStats` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's per-play stats (e.g. `{ tapsHit, tapsTotal, rhythmAccuracy }` for Craving Buster).
+    * `encryptedReflection` (String, optional): **ENCRYPTED BLOB** (`iv:ciphertext`) — only present for games with a reflective component (`recordReflection` on the `IRecoveryGame` interface).
+    * `createdAt` (Timestamp).
+    * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation` and `executeCryptoShredding` (both `encryptedStats` and `encryptedReflection` are migrated/deleted).
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions. (Unencrypted).

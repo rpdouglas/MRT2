@@ -36,6 +36,7 @@ If you are experiencing a craving or a panic attack, tap the red **Warning Trian
   </figcaption>
 </figure>
 * **Urge Surfer:** A 5-minute interactive grounding tool that uses the 5-4-3-2-1 method. It helps you "ride the wave" of a craving without fighting it.
+* **Craving Buster:** A shorter (~90-second) breathing-rhythm mini-game — tap along as you breathe out. No PIN prompt in the way, so it's available the instant you tap SOS.
 * **Call Sponsor:** One-tap access to call or WhatsApp your sponsor (configurable in Profile).
 * **Emergency Lines:** Instant routing to the 988 Lifeline or 911.
 
@@ -85,7 +86,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
 * **Vitality:** View your biological regulation streak and total logs.
 * **Wisdom:** See how many questions you've answered out of the total available across all workbooks, with your overall completion percentage shown just below.
-* **Service** *(Coming Soon):* Encrypted sponsee management — the tile is visible but inactive until the module launches.
+* **Games:** Zero-knowledge, anti-shame mini-games — Craving Buster is live now, with more on the way for each stage of recovery.
 * **Tools:** Access CBT exercises and grounding tools.
 
 ## 7. The Gamification Engine
