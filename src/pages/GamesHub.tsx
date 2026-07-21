@@ -52,6 +52,19 @@ export default function GamesHub() {
           </div>
         </Link>
 
+        <Link
+          to="/games/recovery-jeopardy"
+          className="relative overflow-hidden rounded-2xl px-5 py-4 bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg transition-transform active:scale-95 hover:shadow-xl"
+        >
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider opacity-90">Recovery Jeopardy</span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90 mb-2">A pass-the-device trivia game — play it with your group, sponsor, or sponsee.</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-75">For Groups</span>
+          </div>
+        </Link>
+
         {GAME_SLOTS.map((slot) => (
           <div
             key={slot.title}
