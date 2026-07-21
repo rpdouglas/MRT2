@@ -24,6 +24,15 @@ import { THEME } from '../lib/theme';
 
 const PHASE_ORDER: ToolPhase[] = ['right-now', 'before', 'after', 'big-picture'];
 
+/**
+ * Fixed blue accent for every section's collapsed header (gradient border + icon/count-badge
+ * color) — the same blue-500/sky-600 hex pair as GlassCard.tsx's `tools` MODULE_TOKENS and the
+ * Dashboard's "Tools" bento tile, so all four headers share one consistent identity regardless
+ * of each section's own body color. Distinct from PHASE_META's gradA/gradB, which still drive
+ * the expanded LightGlass body and "Best for" pill per section.
+ */
+const HEADER_ACCENT = { gradA: '#3B82F6', gradB: '#0284C7' };
+
 interface ToolCardProps {
     tool: ToolRegistryEntry;
     count: number;
@@ -216,7 +225,7 @@ export default function ToolsHub() {
                         <div key={phase}>
                             <div
                                 className="rounded-[14px] p-[1.5px]"
-                                style={{ background: `linear-gradient(145deg, ${meta.gradA}55, ${meta.gradB}33)` }}
+                                style={{ background: `linear-gradient(145deg, ${HEADER_ACCENT.gradA}55, ${HEADER_ACCENT.gradB}33)` }}
                             >
                                 <button
                                     onClick={() => togglePhase(phase)}
@@ -225,13 +234,13 @@ export default function ToolsHub() {
                                     style={{ backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)' }}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10" style={{ color: meta.gradA }}>
+                                        <div className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-white/10" style={{ color: HEADER_ACCENT.gradA }}>
                                             <meta.icon className="h-5 w-5" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h2 className="text-[15.4px] font-bold text-white">{meta.label}</h2>
-                                                <span className="text-[11px] font-bold bg-white/10 px-1.5 py-0.5 rounded-full" style={{ color: meta.gradA }}>
+                                                <span className="text-[11px] font-bold bg-white/10 px-1.5 py-0.5 rounded-full" style={{ color: HEADER_ACCENT.gradA }}>
                                                     {tools.length}
                                                 </span>
                                             </div>
