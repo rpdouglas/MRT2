@@ -112,6 +112,7 @@ describe('🧩 ToolsHub page', () => {
 
     it('renders Urge Surfer as the original simple card with no entry-mode buttons', () => {
         render(<ToolsHub />);
+        expandSection('Right Now');
         const card = cardFor('Urge Surfer');
         expect(within(card).queryByText('Start Fresh')).not.toBeInTheDocument();
         expect(card.tagName).toBe('A');
@@ -119,14 +120,9 @@ describe('🧩 ToolsHub page', () => {
     });
 
     describe('moment-based grouping (PROJ-71)', () => {
-        it('expands the "Right Now" section by default, showing crisis tools without any interaction', () => {
+        it('keeps all four sections collapsed by default', () => {
             render(<ToolsHub />);
-            expect(screen.getByText('Urge Surfer')).toBeInTheDocument();
-            expect(screen.getByText('The Resentment Burner')).toBeInTheDocument();
-        });
-
-        it('keeps the other three sections collapsed by default', () => {
-            render(<ToolsHub />);
+            expect(screen.queryByText('Urge Surfer')).not.toBeInTheDocument();
             expect(screen.queryByText('Cost Benefit Analysis')).not.toBeInTheDocument();
             expect(screen.queryByText('Thought Record')).not.toBeInTheDocument();
             expect(screen.queryByText('Lifestyle Balance')).not.toBeInTheDocument();

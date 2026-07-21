@@ -39,27 +39,66 @@ export interface ToolRegistryEntry {
     phase: ToolPhase;
 }
 
-/** Section metadata for the Tools Hub's grouped accordion layout (PROJ-71), keyed by ToolPhase and rendered in this fixed order. */
-export const PHASE_META: Record<ToolPhase, { label: string; subtitle: string; icon: IconType }> = {
+interface PhaseMeta {
+    label: string;
+    subtitle: string;
+    icon: IconType;
+    /** Gradient-border stops for this section's dark header glass and light body glass (PROJ-71 round 4). */
+    gradA: string;
+    gradB: string;
+    /** Tailwind classes for the "Best for" pill inside this section's tool cards. */
+    pillBg: string;
+    pillText: string;
+    /** Literal Tailwind hover-state class for the legacy simple card's title (Urge Surfer, Resentment Burner) — must stay a complete literal string for Tailwind's JIT scanner to pick up, not built by concatenation. */
+    hoverText: string;
+}
+
+/**
+ * Section metadata for the Tools Hub's grouped accordion layout (PROJ-71), keyed by ToolPhase
+ * and rendered in this fixed order. Each section reuses one of the ROSC Matrix's 4 pillar
+ * hues (rose/orange/purple/green — see ROSCPillCapsules.tsx) rather than a single uniform
+ * Tools color, mapped to whichever pillar's connotation fits the section best.
+ */
+export const PHASE_META: Record<ToolPhase, PhaseMeta> = {
     'right-now': {
         label: 'Right Now',
         subtitle: 'In the moment — for cravings and crisis',
         icon: ShieldExclamationIcon,
+        gradA: '#FB7185', // rose-400 — echoes ROSC's "Health" pillar; warm, caring urgency
+        gradB: '#E11D48', // rose-600
+        pillBg: 'bg-rose-50',
+        pillText: 'text-rose-700',
+        hoverText: 'group-hover:text-rose-700',
     },
     before: {
         label: 'Before It Happens',
         subtitle: 'Plan ahead of a risky moment',
         icon: BoltIcon,
+        gradA: '#FB923C', // orange-400 — echoes ROSC's "Home" pillar; vigilance, preparedness
+        gradB: '#EA580C', // orange-600
+        pillBg: 'bg-orange-50',
+        pillText: 'text-orange-700',
+        hoverText: 'group-hover:text-orange-700',
     },
     after: {
         label: 'After a Hard Moment',
         subtitle: 'Process what just happened',
         icon: ArrowPathIcon,
+        gradA: '#A78BFA', // violet-400 — echoes ROSC's "Purpose" pillar; introspection
+        gradB: '#7C3AED', // violet-600
+        pillBg: 'bg-violet-50',
+        pillText: 'text-violet-700',
+        hoverText: 'group-hover:text-violet-700',
     },
     'big-picture': {
         label: 'Big Picture',
         subtitle: 'Step back and plan',
         icon: FlagIcon,
+        gradA: '#34D399', // emerald-400 — echoes ROSC's "Community" pillar; growth, long-term view
+        gradB: '#059669', // emerald-600
+        pillBg: 'bg-emerald-50',
+        pillText: 'text-emerald-700',
+        hoverText: 'group-hover:text-emerald-700',
     },
 };
 
