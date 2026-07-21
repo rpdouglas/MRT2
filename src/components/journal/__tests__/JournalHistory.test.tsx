@@ -81,6 +81,10 @@ const renderHistory = (entries: unknown[]) => {
         defaultOptions: {
             queries: {
                 retry: false,
+                // Manually-seeded cache data (below) is the test's source of truth — without this,
+                // the default staleTime triggers a background refetch on mount that resolves via the
+                // module-level getDocs mock (empty docs) and silently overwrites it once anything awaits.
+                staleTime: Infinity,
             },
         },
     });
