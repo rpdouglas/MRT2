@@ -12,6 +12,7 @@
 ## 🛠️ Active Projects (Priority 2)
 *Core feature work for the current cycle.*
 - [🟡 Sprint 9.1 Done] **PROJ-07:** Play Store TWA — Pre-Submission & PWA Optimizations. Sprint 9.1 implemented 2026-07-19: PWA manifest hardening (`display`/`start_url`/`background_color`/`id`/`orientation`), mobile UX CSS overrides (`overscroll-behavior-y`, `user-select`), Privacy/Terms footer links (Login + Profile), and a new public `/delete-account` route reusing the existing crypto-shredding deletion logic. Full `npm run check` clean, 464/464 tests. Not yet verified on a real device/TWA build (Subway Test, TWA URL-bar check) — code-level only, see `docs/projects/07_PLAY_STORE_TWA.md` §5. Sprint 9.2 (Bubblewrap compile, Play Console submission) still blocked on remaining Google Play Console verification steps, not DUNS — both prior blockers (PROJ-67 keystore, PROJ-68 Stripe/TWA gating) are resolved.
+- **PROJ-71:** Tools Hub Regrouping — Regrouped the flat "My Tools" list into four moment-based collapsible accordion sections (Right Now / Before It Happens / After a Hard Moment / Big Picture), with Right Now expanded by default so David's crisis tools (Urge Surfer, Resentment Burner) are always immediately visible. Added a "Continue where you left off" resume callout and brought the page onto the Momentum Kinetic visual system via a new `tools` `GlassCard` variant (amber → orange). See `docs/projects/71_TOOLS_HUB_REGROUPING.md`.
 
 
 ## ⏸️ Paused (Not in this cycle)
