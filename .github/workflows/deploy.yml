@@ -53,6 +53,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # PROJ-73: the Functions emulator (now included in test:e2e's --only
+      # list, so vault.spec.ts actually exercises verifyVaultPin instead of
+      # silently falling back to the pre-PROJ-65 unpeppered derivation) needs
+      # a local value for every defineSecret() the codebase declares, or it
+      # blocks waiting for interactive input. Placeholder only — never the
+      # real Secret Manager values used at actual deploy time.
+      - name: Write emulator-only secret placeholders
+        run: |
+          echo "GEMINI_API_KEY=emulator-placeholder-not-a-real-key" >> functions/.secret.local
+          echo "VAULT_PEPPER=emulator-placeholder-not-a-real-pepper" >> functions/.secret.local
+
       - name: E2E Golden Paths
         run: npm run test:e2e
         env:

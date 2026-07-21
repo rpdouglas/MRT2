@@ -13,13 +13,33 @@ test('journal content is unreadable while the vault is locked, and restored on u
   const pin = '1234';
   const entryText = `E2E vault test entry ${Date.now()}`;
 
+  // PROJ-73: EncryptionContext.setupVault() silently falls back to the
+  // pre-PROJ-65 unpeppered derivation if the verifyVaultPin Cloud Function
+  // call fails (e.g. the Functions emulator isn't running) — a fallback
+  // this test would otherwise never detect, since it only observes the
+  // resulting key material working, not which derivation produced it.
+  // Fail loudly instead so this test actually proves the peppered scheme
+  // (the current production default for every new vault) is exercised.
+  const pepperFallbackWarnings: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.text().includes('Vault pepper setup failed')) pepperFallbackWarnings.push(msg.text());
+  });
+
   await page.goto('/journal');
 
   // First visit to a VaultGate-wrapped route with no vault set up yet ->
   // the "Secure My Journal" setup form, not the unlock form.
   await page.getByPlaceholder('New Security PIN').fill(pin);
   await page.getByPlaceholder('Confirm PIN').fill(pin);
+  const verifyVaultPinResponse = page.waitForResponse((resp) => resp.url().includes('verifyVaultPin'));
   await page.getByRole('button', { name: 'Secure My Journal' }).click();
+
+  // The actual PROJ-73 assertion: the real verifyVaultPin Cloud Function
+  // call succeeded (proving the Functions emulator + peppered derivation
+  // ran end-to-end), and the silent-fallback warning never fired.
+  const pepperResponse = await verifyVaultPinResponse;
+  expect(pepperResponse.ok()).toBe(true);
+  expect(pepperFallbackWarnings).toEqual([]);
 
   // Write and save an entry.
   await page.getByRole('textbox').first().fill(entryText);

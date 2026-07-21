@@ -16,7 +16,7 @@
     "docs:build": "vitepress build docs-site",
     "docs:check-specs": "node scripts/check_spec_quality.mjs",
     "test:once": "vitest run",
-    "test:e2e": "firebase emulators:exec --project=mrt2-app-dev --only auth,firestore \"playwright test\"",
+    "test:e2e": "npm run build --prefix functions && firebase emulators:exec --project=mrt2-app-dev --only auth,firestore,functions \"playwright test\"",
     "check": "npm run lint && npm run docs:check-specs && npm run test:once && npm run build",
     "export:llm": "node scripts/export-llm.mjs",
     "screenshots:generate": "node scripts/generate_screenshots.js",
