@@ -1,7 +1,8 @@
 # 📐 Feature Spec: Gamification Engine (Updated)
 
-**Status:** Live (v1.8)
+**Status:** Live (v1.9)
 **Asset Engine:** 12-Medallion Circular Pipeline active.
+**UI Placement (PROJ-76):** The Rank/Level/XP display no longer renders on the Dashboard's `SobrietyHero` widget — it now lives in Profile → Achievements (`AchievementsTab.tsx`). The XP economy and level/archetype calculation below are unchanged; only the display location moved.
 
 ## 1. XP Economy
 | Action | XP Value |

@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.29] - 2026-07-22
+### 🛠️ Update
+- Your Dashboard is a little calmer now — Level, Rank, and streak numbers have moved to a new Achievements tab in Profile. Nothing was removed, it's just easier to find when you want to check it.
+
 ## [v1.8.28] - 2026-07-22
 ### 🛠️ Update
 - You can now add or remove official workbooks from your Workbooks library using the new Marketplace tab. Removing a workbook only hides it — your saved answers are kept and come back if you add it again.
