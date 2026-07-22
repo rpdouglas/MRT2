@@ -49,6 +49,11 @@ export interface UserProfile {
     lastReadingDate?: string;
     defaultFellowship?: string;
   };
+  // --- NEW: PROJ-75 (Workbook Marketplace) ---
+  // Which official workbook ids appear in the user's "My Workbooks" library.
+  // undefined means legacy/new user — treat as all official workbooks installed
+  // (see getDefaultInstalledWorkbookIds in src/data/workbooks.ts).
+  installedWorkbookIds?: string[];
   // Marks an in-flight PIN rotation (src/lib/rotation.ts). Present only
   // between the start of executePinRotation and its successful completion —
   // lets an interrupted rotation resume with the same salt/verifier instead

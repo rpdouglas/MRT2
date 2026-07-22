@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { WORKBOOKS } from '../data/workbooks';
+import { useWorkbookLibrary } from '../hooks/useWorkbookLibrary';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon, BuildingStorefrontIcon, PlusIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Globe, BookOpen, ExternalLink } from 'lucide-react';
 
 const FELLOWSHIP_RESOURCES = [
@@ -15,7 +15,8 @@ const FELLOWSHIP_RESOURCES = [
 ];
 
 export default function Workbooks() {
-  const [activeTab, setActiveTab] = useState<'workbooks' | 'literature'>('workbooks');
+  const [activeTab, setActiveTab] = useState<'workbooks' | 'marketplace' | 'literature'>('workbooks');
+  const { installedWorkbooks, catalog, isInstalled, addWorkbook, removeWorkbook, isUpdating } = useWorkbookLibrary();
 
   const getTheme = (type: string) => {
     switch (type) {
@@ -56,6 +57,17 @@ export default function Workbooks() {
             Workbooks
           </button>
           <button
+            onClick={() => setActiveTab('marketplace')}
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
+              activeTab === 'marketplace'
+                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
+                : 'text-emerald-700 hover:bg-white/50'
+            }`}
+          >
+            <BuildingStorefrontIcon className="w-4 h-4" />
+            Marketplace
+          </button>
+          <button
             onClick={() => setActiveTab('literature')}
             className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
               activeTab === 'literature'
@@ -71,7 +83,13 @@ export default function Workbooks() {
         {/* WORKBOOKS CONTENT */}
         {activeTab === 'workbooks' && (
             <div className="space-y-4 animate-fadeIn">
-              {WORKBOOKS.map((workbook) => {
+              {installedWorkbooks.length === 0 && (
+                <div className="text-center py-10 px-4 bg-white/70 rounded-xl border border-emerald-200/50">
+                  <p className="text-emerald-800 font-medium">Your library is empty.</p>
+                  <p className="text-sm text-emerald-700/80 mt-1">Visit the Marketplace tab to add a workbook.</p>
+                </div>
+              )}
+              {installedWorkbooks.map((workbook) => {
                   const theme = getTheme(workbook.type);
                   
                   return (
@@ -107,6 +125,72 @@ export default function Workbooks() {
                               </div>
                           </div>
                       </Link>
+                  );
+              })}
+            </div>
+        )}
+
+        {/* MARKETPLACE CONTENT (OFFICIAL CATALOG — ADD/REMOVE FROM MY WORKBOOKS) */}
+        {activeTab === 'marketplace' && (
+            <div className="space-y-4 animate-fadeIn">
+              <p className="text-sm text-emerald-700/80 px-1">
+                Add or remove official workbooks from your library. Removing a workbook only hides it here — your saved answers are kept and restored if you add it back.
+              </p>
+              {catalog.map((workbook) => {
+                  const theme = getTheme(workbook.type);
+                  const installed = isInstalled(workbook.id);
+
+                  return (
+                      <div
+                          key={workbook.id}
+                          className={`relative bg-white rounded-xl p-5 shadow-sm border border-gray-200 ${theme.border} border-l-[6px]`}
+                      >
+                          <div className="flex items-start gap-4">
+                              <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme.bg} ${theme.color}`}>
+                                  <theme.icon className="h-6 w-6" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-1 gap-3">
+                                      <h3 className="text-xl font-bold text-gray-900">
+                                          {workbook.title}
+                                      </h3>
+                                      {installed ? (
+                                          <button
+                                              onClick={() => removeWorkbook(workbook.id)}
+                                              disabled={isUpdating}
+                                              className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+                                          >
+                                              <XMarkIcon className="w-4 h-4" />
+                                              Remove
+                                          </button>
+                                      ) : (
+                                          <button
+                                              onClick={() => addWorkbook(workbook.id)}
+                                              disabled={isUpdating}
+                                              className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                                          >
+                                              <PlusIcon className="w-4 h-4" />
+                                              Add
+                                          </button>
+                                      )}
+                                  </div>
+                                  <p className="text-base text-gray-600 mb-3 line-clamp-2">
+                                      {workbook.description}
+                                  </p>
+                                  <div className="flex items-center gap-3">
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${theme.bg} ${theme.color} border-transparent`}>
+                                          {workbook.sections.length} Sections
+                                      </span>
+                                      {installed && (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                              <CheckCircleIcon className="w-3.5 h-3.5" />
+                                              In My Workbooks
+                                          </span>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
                   );
               })}
             </div>

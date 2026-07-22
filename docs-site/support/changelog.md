@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.28] - 2026-07-22
+### 🛠️ Update
+- You can now add or remove official workbooks from your Workbooks library using the new Marketplace tab. Removing a workbook only hides it — your saved answers are kept and come back if you add it again.
+
 ## [v1.8.27] - 2026-07-21
 ### 🛠️ Update
 - Your Data export (JSON and PDF, in Profile → Data) now includes your Recovery Games history alongside journals and tasks.
