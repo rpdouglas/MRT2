@@ -951,3 +951,11 @@ export const WORKBOOKS: Workbook[] = [
 export function getWorkbook(id: string): Workbook | undefined {
   return WORKBOOKS.find(w => w.id === id);
 }
+
+// PROJ-75 (Workbook Marketplace): default "My Workbooks" library for legacy
+// users (no installedWorkbookIds field yet) and brand-new signups — everyone
+// starts with the full official catalog installed, matching pre-marketplace
+// behavior, and can remove workbooks from the Marketplace tab afterward.
+export function getDefaultInstalledWorkbookIds(): string[] {
+  return WORKBOOKS.map(w => w.id);
+}
