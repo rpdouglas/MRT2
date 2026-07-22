@@ -6,7 +6,7 @@ import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore }
 import { useQuery } from '@tanstack/react-query';
 import { useUserProfile } from '../hooks/useUserProfile';
 import Confetti from 'react-confetti';
-import { calculateJournalStats, calculateTaskStats, calculateWorkbookStats, calculateVitalityStats, calculateUserLevel, type ScorableJournal, type ScorableTask } from '../lib/gamification';
+import { calculateWorkbookStats, calculateVitalityStats, type ScorableJournal } from '../lib/gamification';
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
@@ -17,8 +17,7 @@ import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
-import { getMockJournals, getMockTasks, getMockWorkbookAnswers } from '../lib/mockData';
-import { useGameProgress } from '../hooks/useGameProgress';
+import { getMockJournals, getMockWorkbookAnswers } from '../lib/mockData';
 
 export default function Dashboard() {
   const { user, driveAccessToken } = useAuth();
@@ -85,23 +84,6 @@ export default function Dashboard() {
     refetchOnMount: 'always',
   });
 
-  const { data: tasks = [], isLoading: taskLoading } = useQuery({
-    queryKey: ['tasks', user?.uid],
-    queryFn: async (): Promise<ScorableTask[]> => {
-        if (!user) return [];
-        if (user.email?.endsWith('.mock')) {
-            return getMockTasks(user.email) as unknown as ScorableTask[];
-        }
-        if (!db) return [];
-        const database: Firestore = db;
-        const q = query(collection(database, 'tasks'), where('uid', '==', user.uid));
-        const snap = await getDocs(q);
-        return snap.docs.map(d => d.data());
-    },
-    enabled: !!user,
-    refetchOnMount: 'always',
-  });
-
   const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
     queryKey: ['workbooks', user?.uid],
     queryFn: async () => {
@@ -119,26 +101,8 @@ export default function Dashboard() {
     refetchOnMount: 'always',
   });
 
-  const { data: roscCount = 0 } = useQuery({
-    queryKey: ['rosc_count', user?.uid],
-    queryFn: async () => {
-        if (!user) return 0;
-        if (user.email?.endsWith('.mock')) {
-            return user.email.startsWith('ned') ? 1 : 0;
-        }
-        if (!db) return 0;
-        const database: Firestore = db;
-        const snap = await getDocs(collection(database, 'users', user.uid, 'rosc_assessments'));
-        return snap.size;
-    },
-    enabled: !!user,
-    staleTime: 24 * 60 * 60 * 1000,
-  });
-
-  const { history: gameHistory } = useGameProgress();
-
   const stats = useMemo(() => {
-    if (journalLoading || taskLoading || workbookLoading || profileLoading) return null;
+    if (journalLoading || workbookLoading || profileLoading) return null;
 
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
@@ -147,25 +111,19 @@ export default function Dashboard() {
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    const jStats = calculateJournalStats(journals);
-    const tStats = calculateTaskStats(tasks);
     const wStats = calculateWorkbookStats(workbookCount);
     const vStats = calculateVitalityStats(journals);
-    const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount, gameHistory.length);
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
     const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
 
     return {
-        journal: { streak: jStats.journalStreak, consistency: jStats.consistencyRate },
-        task: { rate: tStats.completionRate, fire: tStats.habitFire },
         workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion, total: wStats.totalQuestions },
         vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
-        level,
         showBackup,
         daysClean
     };
-  }, [journals, tasks, workbookCount, roscCount, gameHistory, userProfile, journalLoading, taskLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
+  }, [journals, workbookCount, userProfile, journalLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {
@@ -184,7 +142,7 @@ export default function Dashboard() {
       }
   }, [stats?.daysClean]);
 
-  const loading = journalLoading || taskLoading || workbookLoading || profileLoading;
+  const loading = journalLoading || workbookLoading || profileLoading;
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
@@ -212,10 +170,8 @@ export default function Dashboard() {
 
       {/* 2. FLOATING HERO */}
       <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
-         <SobrietyHero 
-            date={userProfile?.sobrietyDate} 
-            levelData={stats.level.levelData}
-            archetype={stats.level.archetype}
+         <SobrietyHero
+            date={userProfile?.sobrietyDate}
             userProfile={userProfile as UserProfile}
          />
       </div>
@@ -276,14 +232,8 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><ChartBarIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.journal.streak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Days</div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Consistency</span>
-                        <span className="text-base font-bold">{stats.journal.consistency}/wk</span>
-                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Reflect</div>
+                    <p className="text-[10px] leading-tight pr-2 opacity-90">Write down what's on your mind today.</p>
                 </div>
             </Link>
 
@@ -296,14 +246,8 @@ export default function Dashboard() {
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><FireIcon className="h-4 w-4 text-white" /></div>
                         <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.task.fire}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Fire</div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Rate</span>
-                        <span className="text-base font-bold">{stats.task.rate}%</span>
-                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Today's Routine</div>
+                    <p className="text-[10px] leading-tight pr-2 opacity-90">Check off your recovery tasks.</p>
                 </div>
             </Link>
 

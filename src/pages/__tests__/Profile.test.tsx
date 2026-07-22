@@ -50,6 +50,7 @@ vi.mock('../../hooks/useUserProfile', () => ({
 vi.mock('../../lib/messaging', () => ({ requestNotificationPermission: vi.fn() }));
 
 vi.mock('../../components/profile/DataManagement', () => ({ default: () => <div>Data Management Mock</div> }));
+vi.mock('../../components/profile/AchievementsTab', () => ({ default: () => <div>Achievements Mock</div> }));
 vi.mock('../../components/readings/ModalitySelector', () => ({ default: () => <div>Modality Selector Mock</div> }));
 
 function renderProfile(initialPath = '/profile') {
@@ -189,6 +190,11 @@ describe('👤 Profile — Deep-Linkable Tabs (Project 58 Phase 4)', () => {
         expect(screen.getByText('Data Management Mock')).toBeInTheDocument();
     });
 
+    it('11b. renders the Achievements tab directly when landing on /profile/achievements', () => {
+        renderProfile('/profile/achievements');
+        expect(screen.getByText('Achievements Mock')).toBeInTheDocument();
+    });
+
     it('12. falls back to General for an unrecognized tab segment', () => {
         renderProfile('/profile/not-a-real-tab');
         expect(screen.getByText('Identity')).toBeInTheDocument();
@@ -198,6 +204,12 @@ describe('👤 Profile — Deep-Linkable Tabs (Project 58 Phase 4)', () => {
         renderProfile('/profile/general');
         fireEvent.click(screen.getByRole('button', { name: /security/i }));
         expect(screen.getByRole('heading', { name: /change vault pin/i })).toBeInTheDocument();
+    });
+
+    it('13b. clicking the Achievements tab button navigates to /profile/achievements', () => {
+        renderProfile('/profile/general');
+        fireEvent.click(screen.getByRole('button', { name: /achievements/i }));
+        expect(screen.getByText('Achievements Mock')).toBeInTheDocument();
     });
 
     it('14. redirects a deep link to /profile/security back to General while onboarding is incomplete', async () => {

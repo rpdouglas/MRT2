@@ -231,54 +231,56 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                             </div>
                         </div>
                     ) : (
-                        levelData && archetype && (
-                            <div className="mt-3 pt-3 border-t border-white/20 space-y-2.5">
-                                
-                                {/* Gamification Stats */}
-                                <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
-                                    <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                        <span className="truncate">Rank: {archetype}</span>
-                                        <span className="opacity-50">|</span>
-                                        <span>LVL: {levelData.level}</span>
+                        <div className="mt-3 pt-3 border-t border-white/20 space-y-2.5">
+
+                            {levelData && archetype && (
+                                <>
+                                    {/* Gamification Stats */}
+                                    <div className="flex justify-between items-end text-xs sm:text-sm font-bold uppercase tracking-widest drop-shadow-sm opacity-95 gap-2">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                            <span className="truncate">Rank: {archetype}</span>
+                                            <span className="opacity-50">|</span>
+                                            <span>LVL: {levelData.level}</span>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
+                                            <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+                                        </div>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                        <span className="hidden sm:inline opacity-80 mr-1.5">Progress</span>
-                                        <span className="font-mono tracking-normal">{levelData.currentXP.toLocaleString()} / {levelData.nextLevelXP.toLocaleString()} XP</span>
+
+                                    {/* Shimmer Progress Bar */}
+                                    <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
+                                        <div
+                                            className="h-full bg-white transition-all duration-1000 ease-out relative"
+                                            style={{ width: `${levelData.progressPercent}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                                        </div>
                                     </div>
-                                </div>
-                                    
-                                {/* Shimmer Progress Bar */}
-                                <div className="relative h-2 w-full bg-black/20 rounded-full overflow-hidden shadow-inner">
-                                    <div 
-                                        className="h-full bg-white transition-all duration-1000 ease-out relative"
-                                        style={{ width: `${levelData.progressPercent}%` }}
-                                    >
-                                        <div className="absolute inset-0 bg-white/50 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                                    </div>
+                                </>
+                            )}
+
+                            {/* Metrics Row (Days & Financial) */}
+                            <div className="pt-1 flex items-center justify-between text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                    <CalendarDaysIcon className="h-4 w-4" />
+                                    <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
                                 </div>
 
-                                {/* Metrics Row (Days & Financial) */}
-                                <div className="pt-1 flex items-center justify-between text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
-                                    <div className="flex items-center gap-1.5 sm:gap-2">
-                                        <CalendarDaysIcon className="h-4 w-4" />
-                                        <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-1.5 sm:gap-2">
-                                        {totalSaved !== null ? (
-                                            <>
-                                               <BanknotesIcon className="h-4 w-4" />
-                                               <span>Saved: <span className="font-mono font-bold text-emerald-100 ml-1">{userProfile?.currencySymbol || '$'}{totalSaved.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span></span>
-                                            </>
-                                        ) : (
-                                            <Link to="/profile" className="text-white hover:text-emerald-100 flex items-center gap-1 transition-colors underline decoration-white/50 underline-offset-2">
-                                                <BanknotesIcon className="h-4 w-4" /> Setup Financial Freedom
-                                            </Link>
-                                        )}
-                                    </div>
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                    {totalSaved !== null ? (
+                                        <>
+                                           <BanknotesIcon className="h-4 w-4" />
+                                           <span>Saved: <span className="font-mono font-bold text-emerald-100 ml-1">{userProfile?.currencySymbol || '$'}{totalSaved.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span></span>
+                                        </>
+                                    ) : (
+                                        <Link to="/profile" className="text-white hover:text-emerald-100 flex items-center gap-1 transition-colors underline decoration-white/50 underline-offset-2">
+                                            <BanknotesIcon className="h-4 w-4" /> Setup Financial Freedom
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
-                        )
+                        </div>
                     )}
                 </div>
 

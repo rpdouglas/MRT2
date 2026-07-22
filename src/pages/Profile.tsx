@@ -8,7 +8,8 @@ import { Dialog, Transition } from '@headlessui/react';
 import { requestNotificationPermission } from '../lib/messaging';
 import VibrantHeader from '../components/VibrantHeader';
 import DataManagement from '../components/profile/DataManagement';
-import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
+import AchievementsTab from '../components/profile/AchievementsTab';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import ModalitySelector from '../components/readings/ModalitySelector';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -19,10 +20,10 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import AutosaveStatus, { type AutosaveState } from '../components/profile/AutosaveStatus';
 import type { HeroColorKey } from '../lib/db';
 
-type TabType = 'general' | 'security' | 'data';
+type TabType = 'general' | 'security' | 'data' | 'achievements';
 
 function isTabType(value: string | undefined): value is TabType {
-  return value === 'general' || value === 'security' || value === 'data';
+  return value === 'general' || value === 'security' || value === 'data' || value === 'achievements';
 }
 
 export default function Profile() {
@@ -405,6 +406,12 @@ export default function Profile() {
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'data' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                     <CircleStackIcon className="h-4 w-4" /> Data
+                </button>
+                <button
+                    onClick={() => { navigate('/profile/achievements'); setMessage(null); }}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'achievements' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                    <TrophyIcon className="h-4 w-4" /> Achievements
                 </button>
             </div>
         )}
@@ -912,6 +919,11 @@ export default function Profile() {
         {/* TAB 3: DATA MANAGEMENT */}
         {activeTab === 'data' && !isOnboarding && (
             <DataManagement />
+        )}
+
+        {/* TAB 4: ACHIEVEMENTS */}
+        {activeTab === 'achievements' && !isOnboarding && (
+            <AchievementsTab />
         )}
 
         {/* LOGOUT BUTTON (Always visible at bottom) */}
