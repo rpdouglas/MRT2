@@ -1,6 +1,6 @@
 # 📁 Project 73: Test Suite Hardening — Vault-PIN Pepper Coverage
 
-**Status:** 🟡 Active — Phases 1-2 shipped, Phase 3 (`verifyVaultPin`/`vaultAuth.ts`) and Phase 4 (stretch) remain
+**Status:** 🟡 Active — Phases 1-3 shipped, Phase 4 (stretch — Recovery Games coverage) remains
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Close the coverage gap left by PROJ-65 (Vault Key Hardening) so the peppered PIN-derivation scheme — the current production default for every new vault — is actually exercised by an automated test somewhere, at every layer (Cloud Function handler, client orchestration, browser e2e).
 
@@ -79,15 +79,17 @@ No Firestore schema changes. Test files, one CI/tooling change, and one small e2
 * Test: `changePin` — calls `executePinRotation` with the correct current `usesPepperV2` state and updates the session pepper cache on success.
 * **Delivered:** `src/contexts/__tests__/EncryptionContext.test.tsx` (12 tests, real `EncryptionProvider` rendered via `renderHook`, `crypto.ts` left un-mocked for real WebCrypto round-trips — only Auth/Firestore/`vaultAuth`/`rotation.ts` mocked). Covers both `setupVault` branches, five `performUnlock`/`unlockVault` scenarios (peppered fetch-and-cache, cached-pepper reuse, legacy no-fetch, wrong PIN fails closed, `VaultPinLockedError` propagation), all three legacy pre-verifier discovery branches (including one that pins down a real existing quirk — a decrypt mismatch against the sampled journal entry resolves `true` from `performUnlock` without ever actually flipping `isVaultUnlocked`, since the catch block at `EncryptionContext.tsx`'s legacy-discovery branch returns early, before the state-setting code below it — documented as-is, not fixed, per this project's test-only scope), `changePin`'s delegation to `executePinRotation`, and `lockVault`. 574/574 suite-wide, lint clean, build clean.
 
-### Phase 3: `verifyVaultPin` Cloud Function handler + `vaultAuth.ts` client wrapper
+### Phase 3: `verifyVaultPin` Cloud Function handler + `vaultAuth.ts` client wrapper — ✅ Shipped
 * **Goal:** Cover the actual security boundary logic, not just its pure helper.
-* Mock Firestore (`db.runTransaction`, matching the existing `functions/src` test conventions) and `vaultPepperSecret.value()`.
-* Test: correct `pinHash` against `pinVerifier` resets `pinAttempts.count` to 0 and returns a pepper (assert the HMAC is deterministic for a fixed pepper+pinHash, without asserting a live secret value).
-* Test: incorrect `pinHash` increments `pinAttempts.count` and sets `lockedUntil` once `computeLockoutSeconds` returns non-null.
-* Test: a request during an active lockout window is rejected with `resource-exhausted` and does *not* further increment the counter.
-* Test: `pendingVerifier` (mid-PIN-rotation) is accepted alongside `pinVerifier`, per the documented rationale in `functions/src/index.ts`.
-* Test: missing/malformed `pinHash` (not 64 hex chars) is rejected with `invalid-argument` before touching Firestore.
-* `src/lib/vaultAuth.ts`: test `fetchVaultPepper`'s error mapping — `functions/resource-exhausted` → `VaultPinLockedError`, `functions/permission-denied` → `VaultPinIncorrectError`, anything else rethrown as-is.
+* **Delivered approach (refined during `/planning`, supersedes this bullet's original "mock `db.runTransaction`" sketch):** extracted the transaction's decision logic into two plain, exported functions — `evaluateVaultPinAttempt` (rate-limit + verifier/pendingVerifier matching) and `deriveVaultPepper` (the HMAC formula) — in `functions/src/index.ts`, visibility-only, zero behavior change, mirroring this same file's existing `buildBatchPrompt`/`processUserBatch` precedent. The `onCall` wrapper (and the `pinHash` format regex check that still lives inline in it) stays a thin, untested shell around them — matching how `dailyBeacon`'s `onSchedule` wrapper delegates to `processUserBatch`. This avoids mocking `firebase-admin`'s `runTransaction`/`DocumentSnapshot` entirely (evaluated and rejected as Strategy B during planning: no precedent anywhere in this codebase, higher ongoing maintenance risk).
+* Test: correct `pinHash` against `pinVerifier` resets `pinAttempts.count` to 0 and returns `ok: true`.
+* Test: incorrect `pinHash` increments `pinAttempts.count`, and sets `lockedUntil` once `computeLockoutSeconds` crosses its threshold (asserted against the exact millisecond value, not just presence).
+* Test: an active lockout window rejects with `reason: "locked"` and carries no `attemptsUpdate` — so the (untested) wrapper naturally can't write anything for it; also confirms an *expired* lockout window is correctly no longer treated as locked.
+* Test: `pendingVerifier` (mid-PIN-rotation) is accepted alongside `pinVerifier`, and alone with no committed `pinVerifier` yet.
+* Test: `deriveVaultPepper` matches `HMAC-SHA256(pepper, pinHash)` base64-encoded — against both an independently-computed value in the test and a pinned literal, is deterministic for repeated calls (rotation-resumability depends on this), and differs for a different `pinHash`.
+* **Deliberately not covered directly:** the `pinHash` format regex (`invalid-argument`) and `unauthenticated` checks remain inline in the untested `onCall` wrapper per the extraction boundary above — consistent with Strategy A's scope, not an oversight. Phase 1's e2e `vault.spec.ts` already exercises the wrapper end-to-end against a real request.
+* `src/lib/vaultAuth.ts`: `fetchVaultPepper`'s error mapping — `functions/resource-exhausted` → `VaultPinLockedError`, `functions/permission-denied` → `VaultPinIncorrectError`, any other `FunctionsError` code or non-`FunctionsError` rethrown unmapped, success path resolves the pepper. `FunctionsError` left as the real SDK class (not mocked) so `instanceof` checks behave exactly as they would against a genuine failure.
+* **Delivered:** `functions/src/index.test.ts` (+12 tests, 49/49 total) and `src/lib/__tests__/vaultAuth.test.ts` (new, 5 tests). 579/579 suite-wide (root) + 49/49 (functions), lint clean on both, build clean on both.
 
 ### Phase 4 (stretch, not blocking): Recovery Games e2e/component gap
 * Noted in the review but lower priority than Phases 1-3 — PROJ-72's own spec already flags "Subway Test / browser QA still needs a human pass," and 18 of 19 game components have no component test (only `CravingBuster` does), though the underlying game-logic libs are well covered.
