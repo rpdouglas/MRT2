@@ -341,3 +341,9 @@ const COPYRIGHT_TRIGGERS = [
 - [ ] All test contract items passing
 - [ ] Recovery Dharma attribution present on all RD readings
 - [ ] No trademarked fellowship names in any UI label or generated content
+
+---
+
+## 14. As-Built Note (added 2026-07-22 governance audit)
+
+The Dashboard integration described in §7 shipped differently than specced: there is no standalone `DailyReadingCard.tsx`. The reading feature (data layer, modality selection, share button, buffer-health Cloud Functions) shipped exactly as designed, but its UI entry point was folded into `DynamicAnchorWidget.tsx`'s existing "Reading" card (`docs/projects/41_DYNAMIC_ANCHOR.md`) rather than added as a second, separate Dashboard card. See `docs/projects/41_DYNAMIC_ANCHOR.md` for the as-built widget.

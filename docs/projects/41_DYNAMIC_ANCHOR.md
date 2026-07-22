@@ -99,3 +99,5 @@ The spec above (Phase 2 Card 3, Phase 3 Action 3, and the `notifyIntent` toggle 
 Status correction: despite the header above, this project was **not fully completed** as specced — the QA checkboxes in Section 5 were never checked off, which is consistent with Card 3 never shipping.
 
 Decision (2026-07-09): descope and remove Card 3 entirely rather than build it. `notifyIntent`, `needsIntent`, and `Task.source: 'anchor_intent'` were deleted as part of the notification-system remediation (see `docs/projects/26_THE_BEACON.md`). The Quick Action Bar remains a 2-card layout (Check-In, Reading) going forward. Any future revival of an "Intent" concept should be scoped as a new ticket, not a resurrection of this dead code.
+
+**Cross-reference (added 2026-07-22 governance audit):** Card 2 (Reading) is also the shipped UI entry point for `docs/projects/42_DAILY_READINGS.md` (PROJ-42) — the dropdown chevron opens `ModalitySelector`-configured readings via `ReadingModal`, not just the static external fellowship link originally specced in Phase 3 above. PROJ-42's own standalone `DailyReadingCard.tsx` was never built; its functionality lives entirely inside this widget.

@@ -75,5 +75,5 @@ export const generateAIInsights = onCall({
 
 ## 6. Follow-ups spun out of this backfill
 * `PROJ-65` — the key-derivation hardening this commit's message claimed but didn't deliver.
-* CLAUDE.md's "Approved Gemini exception" wording needs updating to describe the Cloud Function proxy hop.
+* ~~CLAUDE.md's "Approved Gemini exception" wording needs updating to describe the Cloud Function proxy hop.~~ **✅ Done** — confirmed 2026-07-22 governance audit: CLAUDE.md's Zero-Knowledge Encryption Boundary section now documents the proxy hop explicitly.
 * `useRateLimits.ts`'s dead `stampUsage()` — minor cleanup candidate for a future tech-debt pass.
