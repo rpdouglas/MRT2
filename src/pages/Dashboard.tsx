@@ -1,12 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore } from 'firebase/firestore';
-import { useQuery } from '@tanstack/react-query';
+import { Timestamp } from 'firebase/firestore';
 import { useUserProfile } from '../hooks/useUserProfile';
 import Confetti from 'react-confetti';
-import { calculateWorkbookStats, calculateVitalityStats, type ScorableJournal } from '../lib/gamification';
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
@@ -17,10 +14,9 @@ import { THEME } from '../lib/theme';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
-import { getMockJournals, getMockWorkbookAnswers } from '../lib/mockData';
 
 export default function Dashboard() {
-  const { user, driveAccessToken } = useAuth();
+  const { driveAccessToken } = useAuth();
   const meta = useBuildInfo();
   
   // Evaluate current time purely once on mount to satisfy react-hooks/purity
@@ -60,49 +56,8 @@ export default function Dashboard() {
       }
   }, [userProfile, meta.globalHash, patchProfileFields]);
 
-  const { data: journals = [], isLoading: journalLoading } = useQuery({
-    queryKey: ['journals', user?.uid],
-    queryFn: async (): Promise<ScorableJournal[]> => {
-        if (!user) return [];
-        if (user.email?.endsWith('.mock')) {
-            return getMockJournals(user.email) as unknown as ScorableJournal[];
-        }
-        if (!db) return [];
-        const database: Firestore = db;
-        const q = query(
-            collection(database, 'journals'),
-            where('uid', '==', user.uid),
-            orderBy('createdAt', 'desc')
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({
-            ...d.data(),
-            createdAt: d.data().createdAt
-        }));
-    },
-    enabled: !!user,
-    refetchOnMount: 'always',
-  });
-
-  const { data: workbookCount = 0, isLoading: workbookLoading } = useQuery({
-    queryKey: ['workbooks', user?.uid],
-    queryFn: async () => {
-        if (!user) return 0;
-        if (user.email?.endsWith('.mock')) {
-            return getMockWorkbookAnswers(user.email).length;
-        }
-        if (!db) return 0;
-        const database: Firestore = db;
-        const q = query(collection(database, 'users', user.uid, 'workbook_answers'));
-        const snap = await getDocs(q);
-        return snap.size;
-    },
-    enabled: !!user,
-    refetchOnMount: 'always',
-  });
-
   const stats = useMemo(() => {
-    if (journalLoading || workbookLoading || profileLoading) return null;
+    if (profileLoading) return null;
 
     let daysClean = 0;
     if (userProfile?.sobrietyDate) {
@@ -111,19 +66,14 @@ export default function Dashboard() {
         daysClean = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    const wStats = calculateWorkbookStats(workbookCount);
-    const vStats = calculateVitalityStats(journals);
-
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
     const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
 
     return {
-        workbook: { wisdom: wStats.wisdomScore, completion: wStats.masterCompletion, total: wStats.totalQuestions },
-        vitality: { bioStreak: vStats.bioStreak, totalLogs: vStats.totalLogs },
         showBackup,
         daysClean
     };
-  }, [journals, workbookCount, userProfile, journalLoading, workbookLoading, profileLoading, driveAccessToken, nowMs]);
+  }, [userProfile, profileLoading, driveAccessToken, nowMs]);
 
   // Milestone Confetti Logic
   useEffect(() => {
@@ -142,7 +92,7 @@ export default function Dashboard() {
       }
   }, [stats?.daysClean]);
 
-  const loading = journalLoading || workbookLoading || profileLoading;
+  const loading = profileLoading;
 
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
@@ -230,7 +180,7 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><ChartBarIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Journal</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Journal</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Reflect</div>
                     <p className="text-[10px] leading-tight pr-2 opacity-90">Write down what's on your mind today.</p>
@@ -244,7 +194,7 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><FireIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Habits</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Tasks</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Today's Routine</div>
                     <p className="text-[10px] leading-tight pr-2 opacity-90">Check off your recovery tasks.</p>
@@ -258,16 +208,10 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><HeartIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Vitality</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Vitality</span>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.vitality.bioStreak}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">Rhythm</div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Logs</span>
-                        <span className="text-base font-bold">{stats.vitality.totalLogs}</span>
-                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Check In</div>
+                    <p className="text-[10px] leading-tight pr-2 opacity-90">Log your sleep, movement, and energy.</p>
                 </div>
             </Link>
 
@@ -278,16 +222,10 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><SparklesIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Wisdom</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Workbooks</span>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-black">{stats.workbook.wisdom}</div>
-                        <div className="text-base font-bold opacity-80 uppercase tracking-wide">/ {stats.workbook.total} Answered</div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
-                        <span className="text-base font-bold opacity-75">Progress</span>
-                        <span className="text-base font-bold">{stats.workbook.completion}%</span>
-                    </div>
+                    <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Guided Steps</div>
+                    <p className="text-[10px] leading-tight pr-2 opacity-90">Work through your recovery workbooks.</p>
                 </div>
             </Link>
 
@@ -298,7 +236,7 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><TrophyIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Games</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Games</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider opacity-80">Recovery Games</div>
                     <p className="text-[10px] leading-tight pr-2 opacity-90">Zero-knowledge, anti-shame mini-games.</p>
@@ -312,7 +250,7 @@ export default function Dashboard() {
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="p-1.5 bg-white/20 backdrop-blur-sm rounded-lg"><PuzzlePieceIcon className="h-4 w-4 text-white" /></div>
-                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">Tools</span>
+                        <span className="text-sm font-bold uppercase tracking-wider opacity-90">My Tools</span>
                     </div>
                     <div className="text-xs font-bold mt-3 mb-1 uppercase tracking-wider text-sky-100 flex items-center gap-1">
                         <SparklesIcon className="h-3 w-3" /> Active

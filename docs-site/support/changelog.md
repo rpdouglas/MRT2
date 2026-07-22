@@ -2,7 +2,7 @@
 
 ## [v1.8.29] - 2026-07-22
 ### 🛠️ Update
-- Your Dashboard is a little calmer now — Level, Rank, and streak numbers have moved to a new Achievements tab in Profile. Nothing was removed, it's just easier to find when you want to check it.
+- Your Dashboard is a little calmer now — Level, Rank, and streak numbers (Journal, Habits, Vitality, and Workbooks) have moved to a new Achievements tab in Profile. Nothing was removed, it's just easier to find when you want to check it.
 
 ## [v1.8.28] - 2026-07-22
 ### 🛠️ Update
