@@ -1,6 +1,6 @@
 # 📁 Project 73: Test Suite Hardening — Vault-PIN Pepper Coverage
 
-**Status:** ⚪ Planned
+**Status:** 🟡 Active — Phases 1-2 shipped, Phase 3 (`verifyVaultPin`/`vaultAuth.ts`) and Phase 4 (stretch) remain
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Close the coverage gap left by PROJ-65 (Vault Key Hardening) so the peppered PIN-derivation scheme — the current production default for every new vault — is actually exercised by an automated test somewhere, at every layer (Cloud Function handler, client orchestration, browser e2e).
 
@@ -61,21 +61,23 @@ No Firestore schema changes. Test files, one CI/tooling change, and one small e2
 
 ## 4. Implementation Phases 🏗️
 
-### Phase 1: Make the e2e Vault Test exercise the real production path
+### Phase 1: Make the e2e Vault Test exercise the real production path — ✅ Shipped
 * **Goal:** `vault.spec.ts` fails loudly if the peppered derivation breaks, instead of silently passing via fallback.
 * Add `functions` to `test:e2e`'s `--only` emulator list.
 * Create `functions/.secret.local` with a placeholder `VAULT_PEPPER` value for local/CI emulator use; document in a comment that this is never the real secret and is emulator-only (the Functions emulator reads `defineSecret` values from this file automatically — no other wiring needed).
 * Add the same placeholder-secret step to `.github/workflows/deploy.yml`'s `verify` job, before the `test:e2e` step.
 * In `vault.spec.ts`, after "Secure My Journal" setup, assert the peppered path was actually taken — e.g. read the seeded user doc via the Firestore emulator's REST API (`http://127.0.0.1:8080/...`) and assert `usesPepperV2 === true`, or add a `page.on('console')` listener asserting the `"Vault pepper setup failed"` warning never fires during the test. Prefer the Firestore-doc assertion — it verifies the actual persisted state, not just the absence of a log line.
 * **Edge case:** if the Functions emulator fails to start (e.g. Java/secret misconfiguration), `firebase emulators:exec` should still fail closed (non-zero exit) rather than the test silently falling back and passing — confirm this is the existing behavior (PROJ-23 already established this for auth/firestore) and doesn't regress with `functions` added.
+* **Verified this session:** lint, unit suite (562/562 at the time), functions unit tests (37/37), production build, and a `--debug` emulator trace all confirmed `verifyVaultPin` loads with its `.secret.local`-supplied secret resolved correctly (no interactive-prompt hang). A full Playwright browser run could not complete in the sandbox this was built in — an unrelated, pre-existing Firestore-triggered function (`syncStripeSubscription`, PROJ-68) fails to self-register with the Firestore emulator because that sandbox's network proxy intercepts loopback HTTP between the two emulators. Not present on GitHub Actions runners or normal local dev; confirm the actual browser run passes in CI on the next push.
 
-### Phase 2: Direct unit coverage of `EncryptionContext.tsx`
+### Phase 2: Direct unit coverage of `EncryptionContext.tsx` — ✅ Shipped
 * **Goal:** Verify the orchestration logic itself, not just its downstream dependencies.
 * Mock `vaultAuth.ts`'s `fetchVaultPepper` and `src/lib/crypto.ts`'s primitives (matching `rotation.test.ts`'s existing mocking approach).
 * Test: `setupVault` — successful pepper fetch sets `usesPepperV2: true` and persists it to the user doc.
 * Test: `setupVault` — pepper fetch failure falls back to legacy `generateKey` and sets `usesPepperV2: false` (this is intended, documented behavior — the test should pin it down explicitly rather than leave it implicit).
 * Test: `performUnlock` — reuses a cached `mrt_vault_pepper` from `sessionStorage` without a second network call; a cleared/absent cache triggers a fresh `fetchVaultPepper`.
 * Test: `changePin` — calls `executePinRotation` with the correct current `usesPepperV2` state and updates the session pepper cache on success.
+* **Delivered:** `src/contexts/__tests__/EncryptionContext.test.tsx` (12 tests, real `EncryptionProvider` rendered via `renderHook`, `crypto.ts` left un-mocked for real WebCrypto round-trips — only Auth/Firestore/`vaultAuth`/`rotation.ts` mocked). Covers both `setupVault` branches, five `performUnlock`/`unlockVault` scenarios (peppered fetch-and-cache, cached-pepper reuse, legacy no-fetch, wrong PIN fails closed, `VaultPinLockedError` propagation), all three legacy pre-verifier discovery branches (including one that pins down a real existing quirk — a decrypt mismatch against the sampled journal entry resolves `true` from `performUnlock` without ever actually flipping `isVaultUnlocked`, since the catch block at `EncryptionContext.tsx`'s legacy-discovery branch returns early, before the state-setting code below it — documented as-is, not fixed, per this project's test-only scope), `changePin`'s delegation to `executePinRotation`, and `lockVault`. 574/574 suite-wide, lint clean, build clean.
 
 ### Phase 3: `verifyVaultPin` Cloud Function handler + `vaultAuth.ts` client wrapper
 * **Goal:** Cover the actual security boundary logic, not just its pure helper.
