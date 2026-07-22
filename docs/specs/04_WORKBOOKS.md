@@ -1,6 +1,6 @@
 # 📐 Feature Spec: Wisdom (My Workbooks)
 
-**Status:** Live (v2.2 — see Project 55: Workbook Remediation)
+**Status:** Live (v2.3 — see Project 55: Workbook Remediation, Project 75: Workbook Marketplace)
 **Storage:** `users/{uid}/workbook_answers/{workbookId_questionId}`
 
 ## 1. Data Structure
@@ -10,9 +10,10 @@ To prevent state conflicts, each answer is stored as an individual document.
 * **Reads/writes:** exclusively through the `useWorkbookAnswers` hook (`src/hooks/useWorkbookAnswers.ts`), which wraps `src/lib/workbookAnswers.ts`'s plain Firestore CRUD in TanStack Query (`useQuery` for reads, `useMutation` with optimistic rollback for writes) — no page calls `getDocs`/`setDoc` directly. Decryption is gated strictly on the `isEncrypted` field.
 
 ## 2. The Workbooks Hub (`Workbooks.tsx`)
-The main entry point is structured via a dual-tab navigation system:
-* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks.
+The main entry point is structured via a three-tab navigation system:
+* **Workbooks Tab:** Renders the interactive, 12-Step, Buddhist logic flows, and Specialty workbooks the user has installed in their library (see Project 75 below).
     * **Core Asset:** Includes the fully populated "Women for Recovery" workbook. (This asset is active in the codebase and should be heavily utilized in Go-To-Market campaigns targeting the "Lisa" persona).
+* **Marketplace Tab (Project 75):** Lists the full official workbook catalog with Add/Remove controls, backed by `UserProfile.installedWorkbookIds` — see `docs/projects/75_WORKBOOK_MARKETPLACE.md` for the full spec. Removing a workbook only hides it from the Workbooks tab; it does not delete `workbook_answers`.
 * **Fellowships Tab:** A dedicated directory featuring outbound links to official websites and core literature for major recovery modalities (AA, NA, SMART, Recovery Dharma, WFS).
 
 ## 3. Reading Experience & Mobile UX (`WorkbookSession.tsx`)

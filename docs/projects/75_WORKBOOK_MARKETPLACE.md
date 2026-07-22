@@ -1,6 +1,6 @@
 # 📁 Project 75: Workbook Marketplace (v1 — Official Catalog)
 
-**Status:** 🟢 Done (v1 — Official Catalog Only)
+**Status:** ✅ Shipped
 **Primary Persona:** Walt, Ned
 **Objective:** Let a user add or remove official (MRT-authored) workbooks from their personal "My Workbooks" library, laying the per-user "installed" foundation that a future community-authored phase can plug into without rework.
 

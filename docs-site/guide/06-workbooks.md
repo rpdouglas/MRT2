@@ -16,9 +16,10 @@ Workbooks are interactive, structured guides for working through clinical curric
 The Workbooks module is your centralized hub for structured, deep-dive recovery literature (like the 12-Steps, Recovery Dharma, and Women for Recovery). **All answers are Zero-Knowledge Encrypted.**
 
 ## The Workbooks Hub
-When you open the Workbooks page, you will see two tabs:
-* **Workbooks:** Interactive step-work, cognitive behavioral therapy (CBT) exercises, and specialty paths.
-* **Literature:** A fellowship resources directory with direct links to official websites and core literature for AA, NA, SMART Recovery, Recovery Dharma, and other programs.
+When you open the Workbooks page, you will see three tabs:
+* **Workbooks:** Interactive step-work, cognitive behavioral therapy (CBT) exercises, and specialty paths — this tab only shows the workbooks currently in your library.
+* **Marketplace:** Browse the full catalog of official workbooks and add or remove them from your library with one tap. Removing a workbook only hides it here — your saved answers are kept, and reappear if you add it back.
+* **Fellowships:** A resources directory with direct links to official websites and core literature for AA, NA, SMART Recovery, Recovery Dharma, and other programs.
 
 ## Zen Mode & Auto-Save
 * When you open a section, the app enters a distraction-free reading mode.
