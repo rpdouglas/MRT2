@@ -1,12 +1,13 @@
 // PROJ-76: extracted so Profile.tsx doesn't own gamification query/calc logic directly —
 // mirrors DataManagement.tsx's role as a self-contained Profile tab component. Fetches the
 // same plaintext data Dashboard.tsx used to (journals/tasks/workbook_answers/rosc_assessments
-// counts, game_progress via useGameProgress) purely to relocate the Rank/Level/XP,
-// journal-streak, and habit-fire displays here — see docs/projects/76_GAMIFICATION_DASHBOARD_RELOCATION.md.
+// counts, game_progress via useGameProgress) purely to relocate the Rank/Level/XP, journal
+// streak, habit fire, vitality rhythm, and workbook wisdom displays here — see
+// docs/projects/76_GAMIFICATION_DASHBOARD_RELOCATION.md.
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, getDocs, type Firestore } from 'firebase/firestore';
-import { TrophyIcon, FireIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { TrophyIcon, FireIcon, ChartBarIcon, HeartIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useGameProgress } from '../../hooks/useGameProgress';
@@ -15,6 +16,8 @@ import { getMockJournals, getMockTasks, getMockWorkbookAnswers } from '../../lib
 import {
     calculateJournalStats,
     calculateTaskStats,
+    calculateVitalityStats,
+    calculateWorkbookStats,
     calculateUserLevel,
     type ScorableJournal,
     type ScorableTask,
@@ -111,9 +114,11 @@ export default function AchievementsTab() {
 
         const jStats = calculateJournalStats(journals);
         const tStats = calculateTaskStats(tasks);
+        const vStats = calculateVitalityStats(journals);
+        const wStats = calculateWorkbookStats(workbookCount);
         const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount, gameHistory.length);
 
-        return { journal: jStats, task: tStats, level };
+        return { journal: jStats, task: tStats, vitality: vStats, workbook: wStats, level };
     }, [journals, tasks, workbookCount, roscCount, gameHistory, userProfile, nowMs]);
 
     const loading = profileLoading || gameLoading || journalLoading || taskLoading || workbookLoading;
@@ -180,6 +185,38 @@ export default function AchievementsTab() {
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-bold text-gray-500">Completion Rate</span>
                     <span className="text-sm font-bold text-gray-900">{stats.task.completionRate}%</span>
+                </div>
+            </div>
+
+            {/* Vitality Rhythm Card */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <HeartIcon className="h-5 w-5 text-rose-600" />
+                    <h3 className="text-lg font-bold text-gray-900">Vitality Rhythm</h3>
+                </div>
+                <div className="flex items-baseline gap-2 mb-2">
+                    <div className="text-3xl font-black text-gray-900">{stats.vitality.bioStreak}</div>
+                    <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Day Streak</div>
+                </div>
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-sm font-bold text-gray-500">Logs</span>
+                    <span className="text-sm font-bold text-gray-900">{stats.vitality.totalLogs}</span>
+                </div>
+            </div>
+
+            {/* Workbook Wisdom Card */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="h-5 w-5 text-emerald-600" />
+                    <h3 className="text-lg font-bold text-gray-900">Workbook Wisdom</h3>
+                </div>
+                <div className="flex items-baseline gap-2 mb-2">
+                    <div className="text-3xl font-black text-gray-900">{stats.workbook.wisdomScore}</div>
+                    <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">/ {stats.workbook.totalQuestions} Answered</div>
+                </div>
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-sm font-bold text-gray-500">Progress</span>
+                    <span className="text-sm font-bold text-gray-900">{stats.workbook.masterCompletion}%</span>
                 </div>
             </div>
         </div>

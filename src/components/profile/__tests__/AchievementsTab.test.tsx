@@ -1,8 +1,9 @@
 /**
  * src/components/profile/__tests__/AchievementsTab.test.tsx
- * PROJ-76: Rank/Level/XP, journal streak, and habit fire were relocated from the
- * Dashboard's SobrietyHero/bento tiles into this new Profile tab. These tests verify
- * the relocated data still renders correctly, both with and without existing activity.
+ * PROJ-76: Rank/Level/XP, journal streak, habit fire, vitality rhythm, and workbook
+ * wisdom were relocated from the Dashboard's SobrietyHero/bento tiles into this new
+ * Profile tab. These tests verify the relocated data still renders correctly, both
+ * with and without existing activity.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -62,11 +63,13 @@ describe('🏆 AchievementsTab', () => {
         expect(screen.getByText(/LVL: 1/)).toBeInTheDocument();
     });
 
-    it('renders zeroed Journal Streak and Habit Fire cards when there is no activity yet', async () => {
+    it('renders zeroed Journal Streak, Habit Fire, Vitality Rhythm, and Workbook Wisdom cards when there is no activity yet', async () => {
         renderAchievementsTab();
 
         expect(await screen.findByText('Journal Streak')).toBeInTheDocument();
         expect(screen.getByText('Habit Fire')).toBeInTheDocument();
+        expect(screen.getByText('Vitality Rhythm')).toBeInTheDocument();
+        expect(screen.getByText('Workbook Wisdom')).toBeInTheDocument();
         expect(screen.getAllByText('0')).not.toHaveLength(0);
     });
 

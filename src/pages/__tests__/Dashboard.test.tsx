@@ -20,19 +20,6 @@ vi.mock('../../lib/versioning', () => ({
 
 vi.mock('../../lib/firebase', () => ({ db: { type: 'mock-db' } }));
 
-const mockGetDocs = vi.fn();
-vi.mock('firebase/firestore', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('firebase/firestore')>();
-  return {
-    ...actual,
-    collection: vi.fn(() => ({})),
-    query: vi.fn(() => ({})),
-    where: vi.fn(() => ({})),
-    orderBy: vi.fn(() => ({})),
-    getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  };
-});
-
 const mockPatchFieldsMutate = vi.fn();
 vi.mock('../../hooks/useUserProfile', () => ({
   useUserProfile: () => ({
@@ -62,7 +49,6 @@ function renderDashboard() {
 describe('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetDocs.mockResolvedValue({ docs: [] });
   });
 
   it('renders the dashboard once data loads', async () => {
@@ -76,5 +62,17 @@ describe('Dashboard', () => {
     renderDashboard();
 
     await waitFor(() => expect(mockPatchFieldsMutate).toHaveBeenCalledWith({ lastSeenBuildHash: 'hash-v2' }));
+  });
+
+  it('renders "My X" bento tile labels with no gamification numbers (PROJ-76: relocated to Profile → Achievements)', async () => {
+    renderDashboard();
+
+    await screen.findByText('My Dashboard');
+    expect(screen.getByText('My Journal')).toBeInTheDocument();
+    expect(screen.getByText('My Tasks')).toBeInTheDocument();
+    expect(screen.getByText('My Vitality')).toBeInTheDocument();
+    expect(screen.getByText('My Workbooks')).toBeInTheDocument();
+    expect(screen.getByText('My Games')).toBeInTheDocument();
+    expect(screen.getByText('My Tools')).toBeInTheDocument();
   });
 });
