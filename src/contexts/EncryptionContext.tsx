@@ -97,7 +97,18 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
                         const userDocRef = doc(db, 'users', user.uid);
                         await setDoc(userDocRef, { pinVerifier: newVerifier }, { merge: true });
                         setVerifier(newVerifier);
-                    } catch (e) { console.warn("Legacy Verification Failed", e); return true; }
+                    } catch (e) {
+                        // PROJ-74: fail closed. A decrypt failure here is positive
+                        // evidence the entered PIN doesn't match the key that
+                        // encrypted this user's existing content — unlike the
+                        // "no journals yet" branch below (no evidence either way,
+                        // legitimately trust-on-first-use), this must not report
+                        // success. Returning `true` here previously left
+                        // isVaultUnlocked stuck at `false` while claiming success,
+                        // hanging VaultGate's unlock button indefinitely.
+                        console.warn("Legacy Verification Failed", e);
+                        return false;
+                    }
                 }
             } else {
                  const newVerifier = await computePinHash(pin, currentSalt);

@@ -248,13 +248,16 @@ describe('EncryptionProvider', () => {
             expect(firestore.setDoc).toHaveBeenCalledWith(expect.anything(), { pinVerifier: expect.any(String) }, { merge: true });
         });
 
-        it('documents the existing decrypt-mismatch quirk: resolves true but never actually flips isVaultUnlocked', async () => {
-            // src/contexts/EncryptionContext.tsx's legacy-discovery catch block
-            // (~line 100) `return true`s directly from inside the catch, before
-            // reaching the setIsVaultUnlocked(true)/sessionStorage write a few
-            // lines below — so the resolved boolean and the real state disagree
-            // on a decrypt mismatch. Pinned down as-is; PROJ-73 is test-only
-            // scope, not a behavior fix.
+        it('PROJ-74: fails closed on a decrypt mismatch instead of hanging with a mismatched return value', async () => {
+            // Regression test for the bug PROJ-73's coverage surfaced: the
+            // legacy-discovery catch block used to `return true` on a decrypt
+            // mismatch without ever setting isVaultUnlocked, which hung
+            // VaultGate's unlock button indefinitely (its `if (!success)`
+            // branch never fired, so no error showed and isSubmitting never
+            // reset). Fixed to `return false`, matching the normal
+            // verifier-mismatch path's fail-closed behavior — a decrypt
+            // failure here is positive evidence of a wrong PIN, unlike the
+            // "no journals yet" branch's legitimate trust-on-first-use.
             const salt = generateSalt();
             await generateKey('9999', salt); // encrypt under a different PIN
             const foreignCipher = await encrypt('not this user\'s key');
@@ -269,7 +272,7 @@ describe('EncryptionProvider', () => {
             await act(async () => { unlockResult = await result.current.unlockVault(PIN); });
             warnSpy.mockRestore();
 
-            expect(unlockResult).toBe(true);
+            expect(unlockResult).toBe(false);
             expect(result.current.isVaultUnlocked).toBe(false);
         });
     });

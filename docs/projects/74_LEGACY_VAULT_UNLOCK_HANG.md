@@ -1,6 +1,6 @@
 # 📁 Project 74: Legacy Vault Unlock Hang on Decrypt-Mismatch
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** David (High anxiety, acute crisis — a frozen, unexplained PIN screen is close to worst-case UX for this persona) and Walt (long-term users are the ones most likely to still be on a pre-verifier legacy account)
 **Objective:** Fix `performUnlock`'s legacy pre-verifier discovery path so a decrypt mismatch against the sampled journal entry fails closed with a visible error, instead of silently hanging the PIN-entry screen forever.
 
@@ -46,7 +46,11 @@
 * [x] **Encryption Strategy:** No change to `crypto.ts`/derivation logic. The fix only changes what `performUnlock` does *after* a decrypt attempt already completed — specifically, ensuring a failed one reports failure consistently instead of a mismatched true/false-but-not-really state.
 * [x] **Key Rotation:** N/A — this path only runs pre-verifier, pre-rotation.
 
-**Open design question before implementation (needs a decision, not just a fix):** should a decrypt mismatch here fail closed (report `false`, like the normal verifier-mismatch path does) or should it preserve today's apparent original intent — treat "can't verify" as fail-open, since a sampled journal entry could itself be corrupted/legacy-unencrypted and wrongly blame a correct PIN? The `console.warn("Legacy Verification Failed", ...)` naming and the deliberate `return true` (rather than an unguarded exception) both suggest the original author intended fail-open, not fail-closed — the bug is that the fail-open path doesn't actually *open* the vault (state never flips), not that fail-open is the wrong policy. Recommendation: keep fail-open intent, fix the implementation to match — i.e. treat this exactly like the "no journals yet" branch (trust-on-first-use, adopt the entered PIN as canonical, write a fresh `pinVerifier`), rather than switching to fail-closed. Confirm before implementing.
+**Design decision (resolved 2026-07-22):** fail closed — `return false` instead of `return true`, matching the normal verifier-mismatch path a few lines above it in the same function.
+
+Initial analysis (above, superseded) leaned toward preserving an apparent fail-open intent. On closer inspection that was wrong: by the time this branch runs, `generateKey(pin, currentSalt)` has already derived a key from the entered PIN, and the decrypt failure is *positive evidence* that key doesn't match the one that encrypted the user's existing journal content — this is not the same "no evidence either way" situation as the "no journals yet" branch, which legitimately trusts-on-first-use. Fail-open here would let the user into the app with a wrong key in memory, so every existing encrypted entry would silently render as `"[Locked Content - Verify PIN]"` placeholder garbage with no error shown — for David (acute crisis persona), that reads as "my recovery journal is corrupted," which is worse than a hang, not better. It happens to be non-destructive under today's exact code (this catch path never persists a new `pinVerifier`, so nothing is permanently corrupted and the user gets another chance next session) — but only by accident, not by design, and isn't something to build a fix around.
+
+Fail-closed is also simpler and more internally consistent: `VaultGate.tsx`'s existing `if (!success) { setError("Improper PIN. Access Denied."); ... }` already handles it correctly with zero changes needed there, and the rest of `performUnlock` already fails closed on any *positive* evidence of a wrong PIN (the verifier-mismatch branch above it) — only the true no-evidence case ("no journals yet") should trust blindly. One accepted cost: a legitimate user whose *correct* PIN happens to fail against a single corrupted/edge-case sampled entry will incorrectly see "wrong PIN" — narrow, and far less harmful than silently unlocking with the wrong key.
 
 ---
 
@@ -60,9 +64,8 @@ No schema changes. Single-function control-flow fix.
 ## 4. Implementation Phases 🏗️
 
 ### Phase 1: Fix the state/return-value mismatch
-* Pending the design-question answer in §2, the likely fix: on decrypt mismatch, fall through to the same trust-on-first-use behavior as the "no journals" branch — derive and persist a fresh `pinVerifier` for the entered PIN, then actually unlock (`setIsVaultUnlocked(true)`, cache the PIN) — rather than silently no-op'ing.
-* Alternative (if the design question resolves toward fail-closed instead): `return false` from the catch block, and confirm `VaultGate.tsx`'s existing `if (!success)` branch already handles it correctly (it should, unchanged).
-* Either way: the fix must make the resolved boolean and `isVaultUnlocked` state agree, so `VaultGate.tsx` never needs its own changes to handle this branch correctly.
+* `return false` from the catch block instead of `return true`, so the resolved boolean and `isVaultUnlocked` state finally agree (both "not unlocked").
+* Confirm `VaultGate.tsx`'s existing `if (!success) { setError(...); setIsSubmitting(false); }` branch handles this correctly with no changes of its own — it should, since it's the same code path a normal wrong-PIN already takes.
 
 ### Phase 2: Regression test
 * Update the existing test in `src/contexts/__tests__/EncryptionContext.test.tsx` ("documents the existing decrypt-mismatch quirk") from a documentation-of-current-behavior test into a real regression test asserting the fixed behavior (`isVaultUnlocked` matches the resolved boolean, whichever policy is chosen).
@@ -71,6 +74,6 @@ No schema changes. Single-function control-flow fix.
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit test:** Updated `EncryptionContext.test.tsx` passes with the new expected behavior.
-* [ ] **Manual check:** Simulate a legacy pre-verifier account (Firestore emulator doc with `encryptionSalt` but no `pinVerifier`, one journal entry encrypted under a different PIN) against the real `VaultGate.tsx` UI — confirm the unlock button no longer hangs and either succeeds or shows a clear error.
-* [ ] **Run Suite:** `npm run check` — all green.
+* [x] **Unit test:** `EncryptionContext.test.tsx`'s regression test updated to assert `unlockVault` resolves `false` and `isVaultUnlocked` stays `false` on a decrypt mismatch (was: documented the mismatched-true/false quirk). 579/579 suite-wide.
+* [ ] **Manual check:** Simulate a legacy pre-verifier account (Firestore emulator doc with `encryptionSalt` but no `pinVerifier`, one journal entry encrypted under a different PIN) against the real `VaultGate.tsx` UI — confirm the unlock button no longer hangs and shows "Improper PIN. Access Denied." Not yet performed against a live emulator/browser in this pass — the fix and its unit-level regression coverage are verified; this is the one remaining manual-QA step.
+* [x] **Run Suite:** lint, unit suite, and build all clean.
