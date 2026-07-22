@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import * as crypto from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import {
     getMilestone,
@@ -9,7 +10,10 @@ import {
     identifyStaleTokensByUser,
     buildBatchPrompt,
     computeLockoutSeconds,
+    evaluateVaultPinAttempt,
+    deriveVaultPepper,
     type BeaconUserDoc,
+    type VaultPinAttemptState,
 } from "./index";
 import { MODALITY_CONFIGS, READING_MODALITIES, type ReadingModality } from "./prompts";
 
@@ -282,5 +286,104 @@ describe("computeLockoutSeconds (PROJ-65 vault-PIN rate limiting)", () => {
 
     it("never de-escalates as attempts keep climbing", () => {
         expect(computeLockoutSeconds(50)).toBe(24 * 60 * 60);
+    });
+});
+
+describe("evaluateVaultPinAttempt (PROJ-73: verifyVaultPin's decision logic)", () => {
+    const NOW = Timestamp.now();
+    const PIN_HASH = "a".repeat(64);
+    const OTHER_HASH = "b".repeat(64);
+
+    function state(overrides: Partial<VaultPinAttemptState> = {}): VaultPinAttemptState {
+        return { exists: true, pinVerifier: PIN_HASH, ...overrides };
+    }
+
+    it("rejects with not-found when the user document doesn't exist", () => {
+        expect(evaluateVaultPinAttempt(state({ exists: false }), PIN_HASH, NOW)).toEqual({
+            ok: false,
+            reason: "not-found",
+        });
+    });
+
+    it("rejects with locked while inside an active lockout window, without touching attempt counts", () => {
+        const decision = evaluateVaultPinAttempt(
+            state({ attempts: { count: 5, lockedUntil: Timestamp.fromMillis(NOW.toMillis() + 60_000) } }),
+            PIN_HASH,
+            NOW
+        );
+        expect(decision).toEqual({ ok: false, reason: "locked" });
+    });
+
+    it("does not treat an expired lockout window as still locked", () => {
+        const decision = evaluateVaultPinAttempt(
+            state({ attempts: { count: 5, lockedUntil: Timestamp.fromMillis(NOW.toMillis() - 1_000) } }),
+            PIN_HASH,
+            NOW
+        );
+        expect(decision.ok).toBe(true);
+    });
+
+    it("rejects with not-initialized when there's a salt but no verifier of any kind yet", () => {
+        expect(evaluateVaultPinAttempt(state({ pinVerifier: undefined }), PIN_HASH, NOW)).toEqual({
+            ok: false,
+            reason: "not-initialized",
+        });
+    });
+
+    it("accepts a match against the current pinVerifier and resets the attempt counter", () => {
+        const decision = evaluateVaultPinAttempt(state({ attempts: { count: 3 } }), PIN_HASH, NOW);
+        expect(decision).toEqual({ ok: true, attemptsReset: { count: 0 } });
+    });
+
+    it("accepts a match against a pendingRotation verifier even with no committed pinVerifier yet", () => {
+        const decision = evaluateVaultPinAttempt(
+            state({ pinVerifier: undefined, pendingVerifier: PIN_HASH }),
+            PIN_HASH,
+            NOW
+        );
+        expect(decision.ok).toBe(true);
+    });
+
+    it("increments the attempt count on a wrong PIN without locking out yet, below the threshold", () => {
+        const decision = evaluateVaultPinAttempt(state({ attempts: { count: 1 } }), OTHER_HASH, NOW);
+        expect(decision).toEqual({ ok: false, reason: "wrong-pin", attemptsUpdate: { count: 2 } });
+    });
+
+    it("sets lockedUntil once the incremented count crosses computeLockoutSeconds' threshold", () => {
+        const decision = evaluateVaultPinAttempt(state({ attempts: { count: 4 } }), OTHER_HASH, NOW);
+        expect(decision.ok).toBe(false);
+        if (decision.ok || decision.reason !== "wrong-pin") throw new Error("expected wrong-pin");
+        expect(decision.attemptsUpdate.count).toBe(5);
+        expect(decision.attemptsUpdate.lockedUntil?.toMillis()).toBe(NOW.toMillis() + computeLockoutSeconds(5)! * 1000);
+    });
+
+    it("treats a missing attempts field as a first attempt (count starts at 0)", () => {
+        const decision = evaluateVaultPinAttempt(state(), OTHER_HASH, NOW);
+        expect(decision).toEqual({ ok: false, reason: "wrong-pin", attemptsUpdate: { count: 1 } });
+    });
+});
+
+describe("deriveVaultPepper (PROJ-73: verifyVaultPin's pepper derivation)", () => {
+    it("matches HMAC-SHA256(pepper, pinHash) exactly, base64-encoded", () => {
+        const pepper = "unit-test-pepper-value";
+        const pinHash = "a".repeat(64);
+        const expected = crypto.createHmac("sha256", pepper).update(pinHash).digest("base64");
+
+        expect(deriveVaultPepper(pepper, pinHash)).toBe(expected);
+        // Pinned literal (independently computed) so a change to the formula
+        // itself — not just an internal refactor — fails this test.
+        expect(deriveVaultPepper(pepper, pinHash)).toBe("rkoyHFR1p78oPP5XvkACKnoiNezoT280pvn8flQT6GU=");
+    });
+
+    it("is deterministic for the same inputs (rotation resumability depends on this)", () => {
+        const first = deriveVaultPepper("pepper", "c".repeat(64));
+        const second = deriveVaultPepper("pepper", "c".repeat(64));
+        expect(first).toBe(second);
+    });
+
+    it("produces a different pepper for a different pinHash under the same secret", () => {
+        const a = deriveVaultPepper("pepper", "a".repeat(64));
+        const b = deriveVaultPepper("pepper", "b".repeat(64));
+        expect(a).not.toBe(b);
     });
 });

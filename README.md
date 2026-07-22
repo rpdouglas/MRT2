@@ -77,6 +77,13 @@ Ensure everything is working correctly by running the integrated pipeline (lint,
 npm run check
 ```
 
+### E2E golden paths
+`npm run test:e2e` runs the Playwright golden-path suite against a local Firebase Emulator Suite (Auth, Firestore, and Functions — never a real project). The Functions emulator needs a local value for every secret the codebase declares via `defineSecret()`, or it blocks waiting for interactive input. Create `functions/.secret.local` (gitignored, never the real Secret Manager values) before running it the first time:
+```bash
+echo "GEMINI_API_KEY=emulator-placeholder-not-a-real-key" >> functions/.secret.local
+echo "VAULT_PEPPER=emulator-placeholder-not-a-real-pepper" >> functions/.secret.local
+```
+
 ## 📜 Documentation
 For detailed technical specifications, refer to the `docs/` directory:
 * [Infrastructure & DevOps](./docs/specs/13_INFRASTRUCTURE.md)

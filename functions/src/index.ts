@@ -997,6 +997,74 @@ export const generateAIInsights = onCall({
     }
 });
 
+export interface VaultPinAttemptState {
+    exists: boolean;
+    pinVerifier?: string;
+    pendingVerifier?: string;
+    attempts?: { count?: number; lockedUntil?: Timestamp };
+}
+
+export type VaultPinAttemptDecision =
+    | { ok: true; attemptsReset: { count: 0 } }
+    | { ok: false; reason: "not-found" | "not-initialized" | "locked" }
+    | { ok: false; reason: "wrong-pin"; attemptsUpdate: { count: number; lockedUntil?: Timestamp } };
+
+/**
+ * PROJ-73: the rate-limit and verifier-matching decision logic extracted
+ * from verifyVaultPin's transaction body (visibility-only, zero behavior
+ * change — same pattern already used for buildBatchPrompt/processUserBatch
+ * in this file) so it's unit-testable without mocking a Firestore
+ * transaction. Takes already-fetched document state; the caller still owns
+ * the actual tx.get()/tx.set() calls and their exact write shape.
+ */
+export function evaluateVaultPinAttempt(state: VaultPinAttemptState, pinHash: string, now: Timestamp): VaultPinAttemptDecision {
+    if (!state.exists) {
+        return { ok: false, reason: "not-found" };
+    }
+
+    if (state.attempts?.lockedUntil && state.attempts.lockedUntil.toMillis() > now.toMillis()) {
+        return { ok: false, reason: "locked" };
+    }
+
+    // A rotation-in-progress (src/lib/rotation.ts) needs the pepper for its
+    // NEW verifier before that verifier has been committed to pinVerifier
+    // (it only lives in pendingRotation until the rotation's final,
+    // all-documents-migrated commit). Accepting either the current verifier
+    // or a pending one lets legitimate old-key and new-key fetches both
+    // succeed mid-rotation without changing the resumability model —
+    // pendingRotation is only ever set by a client that already locally
+    // validated the old PIN before starting the rotation, so this doesn't
+    // widen the guessable space.
+    if (!state.pinVerifier && !state.pendingVerifier) {
+        return { ok: false, reason: "not-initialized" };
+    }
+
+    if (pinHash !== state.pinVerifier && pinHash !== state.pendingVerifier) {
+        const newCount = (state.attempts?.count ?? 0) + 1;
+        const lockoutSeconds = computeLockoutSeconds(newCount);
+        return {
+            ok: false,
+            reason: "wrong-pin",
+            attemptsUpdate: {
+                count: newCount,
+                ...(lockoutSeconds ? { lockedUntil: Timestamp.fromMillis(now.toMillis() + lockoutSeconds * 1000) } : {}),
+            },
+        };
+    }
+
+    return { ok: true, attemptsReset: { count: 0 } };
+}
+
+/**
+ * PROJ-73: extracted alongside evaluateVaultPinAttempt for the same reason —
+ * pins down the exact pepper-derivation formula so a change to it fails a
+ * fast unit test instead of surfacing only via external security review
+ * (as happened for two other PROJ-65 bugs, see docs/ACTIVE_CYCLE.md).
+ */
+export function deriveVaultPepper(pepperSecretValue: string, pinHash: string): string {
+    return crypto.createHmac("sha256", pepperSecretValue).update(pinHash).digest("base64");
+}
+
 /**
  * PROJ-65: Vault PIN Brute-Force Hardening.
  * Verifies a client-supplied PIN hash (never the raw PIN) against the stored
@@ -1037,54 +1105,31 @@ export const verifyVaultPin = onCall({
 
     const result: VerifyResult = await db.runTransaction(async (tx) => {
         const snap = await tx.get(userRef);
-        if (!snap.exists) {
-            return { ok: false, reason: "not-found" };
-        }
         const data = snap.data() || {};
         const now = Timestamp.now();
 
-        const attempts = data.pinAttempts as { count?: number; lockedUntil?: Timestamp } | undefined;
-        if (attempts?.lockedUntil && attempts.lockedUntil.toMillis() > now.toMillis()) {
-            return { ok: false, reason: "locked" };
-        }
+        const decision = evaluateVaultPinAttempt({
+            exists: snap.exists,
+            pinVerifier: data.pinVerifier as string | undefined,
+            pendingVerifier: (data.pendingRotation as { verifier?: string } | undefined)?.verifier,
+            attempts: data.pinAttempts as { count?: number; lockedUntil?: Timestamp } | undefined,
+        }, pinHash, now);
 
-        const storedVerifier = data.pinVerifier as string | undefined;
-        // A rotation-in-progress (src/lib/rotation.ts) needs the pepper for its
-        // NEW verifier before that verifier has been committed to pinVerifier
-        // (it only lives in pendingRotation until the rotation's final,
-        // all-documents-migrated commit). Accepting either the current
-        // verifier or a pending one lets legitimate old-key and new-key
-        // fetches both succeed mid-rotation without changing the resumability
-        // model — pendingRotation is only ever set by a client that already
-        // locally validated the old PIN before starting the rotation, so this
-        // doesn't widen the guessable space.
-        const pendingVerifier = (data.pendingRotation as { verifier?: string } | undefined)?.verifier;
-        if (!storedVerifier && !pendingVerifier) {
-            return { ok: false, reason: "not-initialized" };
-        }
-
-        if (pinHash !== storedVerifier && pinHash !== pendingVerifier) {
-            const newCount = (attempts?.count ?? 0) + 1;
-            const lockoutSeconds = computeLockoutSeconds(newCount);
+        if (decision.ok) {
             tx.set(userRef, {
-                pinAttempts: {
-                    count: newCount,
-                    lastAttemptAt: FieldValue.serverTimestamp(),
-                    ...(lockoutSeconds
-                        ? { lockedUntil: Timestamp.fromMillis(now.toMillis() + lockoutSeconds * 1000) }
-                        : {}),
-                },
+                pinAttempts: { ...decision.attemptsReset, lastAttemptAt: FieldValue.serverTimestamp() },
+            }, { merge: true });
+            return { ok: true, pepper: deriveVaultPepper(vaultPepperSecret.value(), pinHash) };
+        }
+
+        if (decision.reason === "wrong-pin") {
+            tx.set(userRef, {
+                pinAttempts: { ...decision.attemptsUpdate, lastAttemptAt: FieldValue.serverTimestamp() },
             }, { merge: true });
             return { ok: false, reason: "wrong-pin" };
         }
 
-        // Correct guess — reset the attempt counter.
-        tx.set(userRef, {
-            pinAttempts: { count: 0, lastAttemptAt: FieldValue.serverTimestamp() },
-        }, { merge: true });
-
-        const pepper = vaultPepperSecret.value();
-        return { ok: true, pepper: crypto.createHmac("sha256", pepper).update(pinHash).digest("base64") };
+        return decision;
     });
 
     if (!result.ok) {
