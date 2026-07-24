@@ -146,6 +146,10 @@ async function captureScreenshots() {
                 await page.waitForTimeout(1000);
                 await page.click('button:has-text("Begin Analysis")');
             }
+        },
+        {
+            name: 'ned-games-hub',
+            url: `${BASE_URL}/games?mockUser=ned`,
         }
     ];
 
