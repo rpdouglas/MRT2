@@ -126,12 +126,16 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 
 ## Personas — Reference for Every UX Decision
 
-- **David** — High anxiety, acute crisis, Day 1-30. Max 3 taps per flow. Zero cognitive load. Crisis-first design.
-- **Ned** — Early sobriety, motivated, Pink Cloud phase. Wants gamification and streaks.
-- **Walt** — Long-term, analytical, data-driven. Wants depth, exports, AI insights.
-- **Lisa** — Sponsor managing multiple sponsees. Needs Service Module.
+Full detail, journey arcs, anti-personas, and overlap resolution: `docs/PERSONAS.md`. Internal stakeholder personas (Alex/Dev/Morgan/Taylor — code & business concerns, not UX): `docs/governance/INTERNAL_PERSONAS.md`.
 
-When reviewing any UI change: ask "how does this feel for David in an acute crisis state?"
+- **David** — High anxiety, acute crisis, Day 1-30 (CA). Max 3 taps per flow. Zero cognitive load. Crisis-first design. Primary Safety Anchor — his worst case sets the UX floor for the whole product.
+- **Ned** — Early sobriety, motivated, Pink Cloud phase, Day 30-90 (NA). Wants gamification and streaks. Watch the Day 90 Pink Cloud Crash — streak breaks must never feel punishing.
+- **Lisa** — Sponsor (AA) managing 3-6 sponsees. Needs Service Module, urgency-sorted rolodex, anonymity compliance. Primary Viral Driver.
+- **Walt** — Long-term (35+ yrs, AA-origin/Recovery Dharma), analytical, reflection-mode. Wants depth, exports, traceable AI insights, zero gamification in his flows.
+- **Maya** — Systematiser, 6-18 months (Secular/CBT/SMART), completion-mode. Wants linear workbook progress, completion %, auditable AI insights. Mirror-opposite UX posture from Walt on the same features (see overlap register).
+- **Jordan** — Stabiliser, Day 1-12mo+ on MAT (Buprenorphine/Naltrexone) + MARA/SMART. Needs non-judgmental, discreet tooling: custom counter labels, one-tap dose logging, no drug names on lock-screen notifications.
+
+When reviewing any UI change: ask "how does this feel for David in an acute crisis state?" For depth/export features, also run the Walt Sovereignty Test and Maya's traceability check. For any social/connection feature, run the surveillance test (§0 of `docs/PERSONAS.md`).
 
 ---
 
