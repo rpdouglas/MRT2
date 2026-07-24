@@ -21,24 +21,25 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 
 | Filename | Route & Mock Params | Persona | Primary Objective & Description |
 | :--- | :--- | :--- | :--- |
-| **[`ned-dashboard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-dashboard.webp)** | `/dashboard?mockUser=ned` | Ned | Main app entry point. Displays the Sobriety Hero card (45 days, $900 saved), streak indicator, daily check-in button, and recovery action lists. |
-| **[`maya-workbooks.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-workbooks.webp)** | `/workbooks?mockUser=maya` | Maya | The Workbook Hub. Displays active CBT courses (e.g. Guided CBT, Relapse Prevention) showing completion percentage rings (e.g., 66% complete). |
+| **[`ned-dashboard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-dashboard.webp)** | `/dashboard?mockUser=ned` | Ned | Main app entry point. Displays the Sobriety Hero card (45 days, $900 saved), dismissible reminder/backup nudge cards, and a 4-tile bento grid (Journal, Tasks, Vitality, Workbooks) for quick navigation. |
+| **[`maya-workbooks.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-workbooks.webp)** | `/workbooks?mockUser=maya` | Maya | The Workbook Marketplace (v1). Tabbed Workbooks / Marketplace / Fellowships catalog listing available workbooks (General Recovery, 12-Step, Recovery Dharma, Women for Recovery) with section counts and compatibility tags. |
 | **[`david-urgesurfer.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-urgesurfer.webp)** | `/tools/urge-surfer?mockUser=david` | David | Urge Surfing tool. Displays a countdown timer, breathing pace guides, crisis helpline button, and quick recovery grounding statements. |
 | **[`walt-insights.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-insights.webp)** | `/insights?mockUser=walt` | Walt | AI Insights Log. Displays generated cognitive summaries, resilience pillars, blind spots, emotional velocity indicators, and risk warnings. |
 | **[`ned-journal-write.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-journal-write.webp)** | `/journal?mockUser=ned&tab=write` | Ned | Journal Editor. Displays a rich text area, mood selection slider (1-10), tag list autocomplete, and template selection options. |
 | **[`walt-journal-history.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-history.webp)** | `/journal?mockUser=walt&tab=history` | Walt | Journal History. Displays a feed of past entries grouped by Year and Month, indicating mood icons and encryption badges (🔒). |
 | **[`ned-tasks.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-tasks.webp)** | `/tasks?mockUser=ned` | Ned | Habits Ledger. Displays recurring recovery tasks, high/medium priority tags, completion checkboxes, and active habit streak counters. |
-| **[`ned-tools.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-tools.webp)** | `/tools?mockUser=ned` | Ned | Smart Tools Hub. Category-filtered grid of CBT worksheets (CBA, ABC, Resentment Burner, Thought Record) with access status indicators. |
+| **[`ned-tools.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-tools.webp)** | `/tools?mockUser=ned` | Ned | Recovery Tools hub. Moment-based, collapsed-by-default accordion sections — Right Now (crisis), Before It Happens, After a Hard Moment, Big Picture — grouping the CBT/SMART Recovery worksheets. |
 | **[`ned-profile-general.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-profile-general.webp)** | `/profile/general?mockUser=ned` | Ned | User Profile - General. Displays user information, recovery settings, substance cost config ($20/daily), and sponsor detail forms. |
 | **[`ned-profile-security.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-profile-security.webp)** | `/profile/security?mockUser=ned` | Ned | User Profile - Security. Zero-knowledge vault key settings, change PIN form, security recovery word download, and data backup controls. |
-| **[`david-vitality.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-vitality.webp)** | `/vitality?mockUser=david` | David | Somatic Vitality. Displays daily Fuel, Movement, and Breath logs, a Bio-Balance progress meter, and quick log check-in action items. |
+| **[`david-vitality.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-vitality.webp)** | `/vitality?mockUser=david` | David | Somatic Vitality. Tabbed Movement / Fuel / Breath logging form — activity, duration, intensity (Low/Moderate/High), and a body check-in note, submitted via a single Log button. |
 | **[`david-premium.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-premium.webp)** | `/premium?mockUser=david` | David | Premium Upgrade page. Displays subscription benefits, pricing tiers, and the "Unlock Toolkit" call to action seen by free users. |
-| **[`maya-thought-record.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-thought-record.webp)** | `/tools/thought-record?mockUser=maya` | Maya | CBT Thought Record. Multi-step workbook showing input fields for: Triggering Situation, Automatic Thoughts, Distortions, and Reframing. |
+| **[`maya-thought-record.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-thought-record.webp)** | `/tools/thought-record?mockUser=maya` | Maya | CBT Thought Record. Step 1 of 7 ("Situation") of a guided wizard: prompt, collapsible "What does this mean?" helper, and an empty response field. |
 | **[`david-sos-modal.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-sos-modal.webp)** | `/dashboard?mockUser=david` (Click SOS) | David | Emergency SOS Modal. Bypasses lock screens to show crisis hotlines, sponsor dialer, and grounding breath pacers. |
 | **[`lisa-sponsees.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-sponsees.webp)** | `/admin?mockUser=admin` (Tab Users) | Lisa | Sponsor Sponsee Directory. Shows the anonymous directory of sponsees, step progress tracking, and secure, encrypted private notes. |
 | **[`jordan-mat-log.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/jordan-mat-log.webp)** | `/journal?mockUser=jordan&tab=write&template=mat_check_in` | Jordan | MAT Check-In Form. Form prompts for logging daily medication adherence, side-effects, cravings, and treatment plan reflections. |
 | **[`walt-journal-insights.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-insights.webp)** | `/journal?mockUser=walt&tab=insights` | Walt | Journal Insights. Displays weekly and monthly mood trends, somatic balance charts, and check-in word cloud frequencies. |
 | **[`walt-journal-ai-wizard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-ai-wizard.webp)** | `/journal?mockUser=walt&tab=history` (Trigger AI) | Walt | AI Analysis Results. Displays the completed Comparative Analysis result showing trajectory, key themes, wins, blind spots, and actionable advice. |
+| **[`ned-games-hub.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-games-hub.webp)** | `/games?mockUser=ned` | Ned | Recovery Games hub (PROJ-72). Scrollable stack of gradient mini-game cards (Craving Buster, Recovery Jeopardy, Fast Lane, Goal Ladder, Thought Challenge, Trigger Match, Knowledge Quests), each tagged with its target persona. |
 
 ---
 
@@ -46,13 +47,13 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 
 ### 1. Ned's Dashboard (`ned-dashboard.webp`)
 *   **Route**: `/dashboard?mockUser=ned`
-*   **Visual Structure**: Top header displays a gradient (amber/yellow theme for Ned). Central focus is the **Sobriety Hero** component showing "45 Days", with "Money Saved: $900" underneath. Below this are the action cards: "Daily Reading" (completed badge) and "Habit Tracker" (showing 3 out of 4 tasks done).
-*   **Semantic Meaning**: This represents a user who is firmly out of the acute withdrawal stage (45 days) and has built momentum. The daily habits list is highly active, reflecting high recovery activity.
+*   **Visual Structure**: Blue-to-purple header gradient. The **Sobriety Hero** card (orange/amber) shows "0 Years / 1 Month / 15 Days", "Total Days: 45", and "Saved: $900". Below it: a dismissible "Enable Daily Reminders" card and a "Backup Needed" nudge banner, then pill-shaped "Night Check-In" / "Daily Reading" quick links, then a 2x2 bento grid of colored navigation tiles — My Journal (Reflect), My Tasks (Today's Routine), My Vitality (Check In), My Workbooks (Guided Steps).
+*   **Semantic Meaning**: The dashboard is a pure navigation/status hub. Streak counters and completion badges (gamification) were relocated to the Profile > Achievements tab in a later UI pass, keeping this screen low-cognitive-load — closer to David's "max 3 taps" persona need — even though this capture uses Ned's data.
 
 ### 2. Maya's Workbooks (`maya-workbooks.webp`)
 *   **Route**: `/workbooks?mockUser=maya`
-*   **Visual Structure**: Uses a deep violet theme. Displays a series of cards. The primary card is "Guided CBT Workbook" which has a circular progress ring filled to 66%. Below it are secondary cards for "Relapse Prevention Plan" (15% complete) and "12-Step Companion" (0% complete).
-*   **Semantic Meaning**: This shows the app's structured workbook module. It highlights progress and gamified completion rings for cognitive restructuring work.
+*   **Visual Structure**: Green gradient header with **Workbooks / Marketplace / Fellowships** tabs. The active "Workbooks" tab lists catalog cards — General Recovery Workbook (1 section), 12-Step Workbook (12 sections, "12-Step Compatible"), Recovery Dharma (7 sections, "12-Step Compatible"), Women for Recovery Workbook — each with a colored left-edge accent and chevron.
+*   **Semantic Meaning**: This is the Workbook Marketplace (v1), a browsable catalog for adding/removing official workbooks rather than a personal-progress dashboard; per-workbook completion tracking now happens inside each individual workbook, not on this hub screen.
 
 ### 3. David's Urge Surfer (`david-urgesurfer.webp`)
 *   **Route**: `/tools/urge-surfer?mockUser=david`
@@ -85,8 +86,8 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 
 ### 8. Ned's Tools (`ned-tools.webp`)
 *   **Route**: `/tools?mockUser=ned`
-*   **Visual Structure**: Grid of interactive cards, categorizing recovery tools (e.g. CBT worksheets, somatic guides, mindfulness timers).
-*   **Semantic Meaning**: The entry point to all clinical modalities built into the application.
+*   **Visual Structure**: Blue/sky gradient header ("Recovery Tools"), an intro card explaining the SMART Recovery & CBT framing, then four collapsed, moment-based accordion sections: "Right Now" (in-the-moment, crisis), "Before It Happens" (plan ahead), "After a Hard Moment" (process), "Big Picture" (step back and plan) — each with a tool-count badge.
+*   **Semantic Meaning**: The flat tool grid was regrouped into a moment-based mental model so a user in crisis (David) can jump straight to "Right Now" instead of scanning an undifferentiated worksheet list.
 
 ### 9. Ned's Profile General (`ned-profile-general.webp`)
 *   **Route**: `/profile/general?mockUser=ned`
@@ -100,8 +101,8 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 
 ### 11. David's Vitality (`david-vitality.webp`)
 *   **Route**: `/vitality?mockUser=david`
-*   **Visual Structure**: Rose theme. Top displays a **Bio-Balance Score** indicator (Movement, Fuel, and Breathwork tracking). Below this are check-in log cards detailing recent somatic activity.
-*   **Semantic Meaning**: Focuses on body-mind connection logs (energy, exercise, and deep breathing) crucial for early-stage grounding and stabilization.
+*   **Visual Structure**: Rose/orange theme. A Movement / Fuel / Breath tab strip (Movement active), then a "Log Activity" form: Activity + Mins text fields, an Intensity selector (Low/Moderate/High), a free-text body check-in box, and a full-width "Log" submit button.
+*   **Semantic Meaning**: A direct, low-friction logging form rather than a summary dashboard — consistent with the low-cognitive-load bar for David; aggregate scoring/trends live elsewhere (Insights), keeping this screen to a single action.
 
 ### 12. David's Premium Wall (`david-premium.webp`)
 *   **Route**: `/premium?mockUser=david`
@@ -110,8 +111,8 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 
 ### 13. Maya's Thought Record (`maya-thought-record.webp`)
 *   **Route**: `/tools/thought-record?mockUser=maya`
-*   **Visual Structure**: Structured multi-step wizard. Active step shows text input fields populated with Maya's triggers ("Work stress, isolation") and automatic thoughts ("I need an escape").
-*   **Semantic Meaning**: The clinical Cognitive Behavioral Therapy (CBT) Thought Record tool, guiding the user through dissecting distortions and generating rational reframes.
+*   **Visual Structure**: Purple gradient header, "Step 1 of 7 — Situation" with a 7-dot progress indicator. The step prompts "What were you doing? Where were you? When did this happen?", a collapsible "What does this mean?" helper, an empty textarea (placeholder example text only, not pre-filled), and Back / Save Progress / Next controls.
+*   **Semantic Meaning**: The clinical CBT Thought Record tool's first step (Situation) — later steps, not captured here, move on to Automatic Thoughts, Distortions, and Reframing.
 
 ### 14. David's Emergency SOS Modal (`david-sos-modal.webp`)
 *   **Route**: `/dashboard?mockUser=david` (Triggered via SOS icon)
@@ -137,3 +138,8 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 *   **Route**: `/journal?mockUser=walt&tab=history` (Completed AI Analysis Wizard)
 *   **Visual Structure**: Glassmorphic result modal containing sections for: Trajectory ('Improving'), Key Themes list, Comparative Summary narrative, Wins list, Blind Spots list, and Actionable Advice checklists with one-sentence contexts.
 *   **Semantic Meaning**: Generative analysis output helping long-term users identify hidden emotional triggers and direct actionable steps.
+
+### 19. Ned's Recovery Games Hub (`ned-games-hub.webp`)
+*   **Route**: `/games?mockUser=ned`
+*   **Visual Structure**: Purple header ("Recovery Games — Zero-knowledge, anti-shame mini-games") with a back chevron, followed by a vertically scrolling stack of full-width gradient cards, one per mini-game: Craving Buster ("FOR DAVID" — a calming breathing-rhythm game for the middle of an urge), Recovery Jeopardy ("FOR GROUPS" — pass-the-device trivia), Fast Lane ("FOR WALT" — a multi-week, auto-saved life-management simulation), Goal Ladder ("FOR NED" — momentum-building steps that never punish a broken streak), Thought Challenge ("FOR LISA" — a CBT-style reframing game for service burnout), with Trigger Match below the fold.
+*   **Semantic Meaning**: PROJ-72's gamification layer, shipped entirely after this index was last written. Each game is explicitly persona-targeted (breathing regulation for David's crisis state, streak-building for Ned's momentum phase, a long-form sim for Walt's analytical depth, etc.), reinforcing that engagement mechanics now live in their own module rather than on the Dashboard.
