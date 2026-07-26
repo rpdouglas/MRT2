@@ -1,11 +1,12 @@
 # 👥 Persona-Based Development Model
 
-**Version:** 2.1 · **Last Updated:** May 2026 · **Next Review:** November 2026
+**Version:** 2.2 · **Last Updated:** July 2026 · **Next Review:** November 2026
 
 **Change Log:**
 - v1.0 — Original four personas (David, Ned, Lisa, Walt)
 - v2.0 — Added Maya (The Systematiser)
 - v2.1 — Full audit pass: added §0 Usage Guide, §1 Persona Hierarchy, Journey Arc per persona, emotional state spectrums, fellowship-specific notes, anti-personas, Walt bio correction, Maya archetype differentiation, version control
+- v2.2 — Added Jordan (The Stabiliser), MAT/harm-reduction persona (Day 1-365+, MARA/SMART); updated Persona Hierarchy, Journey Arc, and Overlap Register accordingly
 
 ---
 

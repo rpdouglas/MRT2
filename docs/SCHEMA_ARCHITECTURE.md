@@ -26,6 +26,9 @@ graph TD
     root --> service[📂 service]
     root --> game_progress[📂 game_progress]
     root --> game_saves[📂 game_saves]
+    root --> daily_readings[📂 daily_readings]
+    root --> user_reading_preferences[📂 user_reading_preferences]
+    root --> buffer_status[📂 buffer_status]
 ```
 
 ## 2. Collection Definitions
@@ -126,6 +129,33 @@ graph TD
     * `encryptedState` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's full save state.
     * `updatedAt` (Timestamp).
     * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation`, `executeCryptoShredding`, and `executeTotalAccountAnnihilation` (Phase 7).
+
+### `daily_readings/{modality}_{date}`
+* **Purpose:** PROJ-42 (Daily Readings Engine). Admin/Cloud-Function-generated reading content, one doc per `(modality, date)` pair, doc ID `${modality}_${date}`. Server-write-only (`generateReadingBatch`); all-read client rule. **UNENCRYPTED** — curated editorial content, not user disclosure.
+* **Fields:**
+    * `id` (String): Redundant with doc ID, written for query convenience.
+    * `modality` (String): `'12-step'` | `'recovery-dharma'` | `'women-for-recovery'` | `'smart-recovery'` | `'secular-stoic'` | `'mindfulness-buddhist'`.
+    * `date` (String): `"YYYY-MM-DD"`.
+    * `theme`, `title`, `body`, `reflection`, `affirmation` (String): Reading content.
+    * `attribution` (String, optional): Required for `recovery-dharma` (CC BY-SA 4.0 sourcing).
+    * `goDeeper` (Map, optional): `{ label, url }`.
+    * `generatedAt` (Timestamp): Server-set on generation.
+    * `bufferBatch` (Number): Which generation batch produced this doc.
+
+### `user_reading_preferences/{uid}`
+* **Purpose:** PROJ-42. Per-user modality selection and read-progress tracking for Daily Readings. **UNENCRYPTED** — preference/progress metadata, not recovery content.
+* **Fields:**
+    * `uid` (String): Owner ID.
+    * `selectedModalities` (Array\<String\>): Subset of the `ReadingModality` values above.
+    * `lastReadDate` (String): `"YYYY-MM-DD"`.
+    * `readingHistory` (Array\<String\>): Doc IDs of previously-read entries.
+
+### `buffer_status/{modality}`
+* **Purpose:** PROJ-42. Cloud-Function-internal tracker of how far ahead each modality's reading buffer is generated (`checkBufferHealth`/`generateReadingBatch`). No client-facing `firestore.rules` entry — default-deny is correct here, this collection is never read or written from the client, only from Admin-SDK Cloud Functions.
+* **Fields:**
+    * `lastGeneratedDate` (String): `"YYYY-MM-DD"` — last date this modality has a generated reading for.
+    * `totalBuffered` (Number): Count of readings generated in the run that last updated this doc.
+    * `lastBatchGeneratedAt` (Timestamp): Server-set on each generation pass.
 
 ### `feedback/{reportId}`
 * **Purpose:** User bug reports and suggestions. (Unencrypted).
