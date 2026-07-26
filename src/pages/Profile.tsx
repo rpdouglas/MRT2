@@ -7,6 +7,7 @@ import { updateProfile as updateAuthProfile } from 'firebase/auth';
 import { Dialog, Transition } from '@headlessui/react';
 import { requestNotificationPermission } from '../lib/messaging';
 import VibrantHeader from '../components/VibrantHeader';
+import TabBar from '../components/ui/TabBar';
 import DataManagement from '../components/profile/DataManagement';
 import AchievementsTab from '../components/profile/AchievementsTab';
 import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
@@ -388,32 +389,27 @@ export default function Profile() {
 
         {/* TAB NAVIGATION */}
         {!isOnboarding && (
-            <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-200 flex">
-                <button
-                    onClick={() => { navigate('/profile/general'); setMessage(null); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'general' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    <IdentificationIcon className="h-4 w-4" /> General
-                </button>
-                <button
-                    onClick={() => { navigate('/profile/security'); setMessage(null); setRotError(null); setRotSuccess(false); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'security' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    <ShieldCheckIcon className="h-4 w-4" /> Security
-                </button>
-                <button
-                    onClick={() => { navigate('/profile/data'); setMessage(null); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'data' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    <CircleStackIcon className="h-4 w-4" /> Data
-                </button>
-                <button
-                    onClick={() => { navigate('/profile/achievements'); setMessage(null); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'achievements' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    <TrophyIcon className="h-4 w-4" /> Achievements
-                </button>
-            </div>
+            <TabBar
+                tabs={[
+                    { id: 'general', label: 'General', icon: IdentificationIcon },
+                    { id: 'security', label: 'Security', icon: ShieldCheckIcon },
+                    { id: 'data', label: 'Data', icon: CircleStackIcon },
+                    { id: 'achievements', label: 'Achievements', icon: TrophyIcon },
+                ]}
+                activeTab={activeTab}
+                onChange={(id) => {
+                    navigate(`/profile/${id}`);
+                    setMessage(null);
+                    if (id === 'security') {
+                        setRotError(null);
+                        setRotSuccess(false);
+                    }
+                }}
+                border={THEME.profile.tabBar.border}
+                hoverText={THEME.profile.tabBar.hoverText}
+                activeFrom={THEME.profile.header.from}
+                activeTo={THEME.profile.header.to}
+            />
         )}
 
         {/* TAB 1: GENERAL */}

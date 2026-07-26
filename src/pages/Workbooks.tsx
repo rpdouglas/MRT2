@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useWorkbookLibrary } from '../hooks/useWorkbookLibrary';
 import VibrantHeader from '../components/VibrantHeader';
+import TabBar from '../components/ui/TabBar';
 import { THEME } from '../lib/theme';
 import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon, BuildingStorefrontIcon, PlusIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Globe, BookOpen, ExternalLink } from 'lucide-react';
@@ -41,44 +42,22 @@ export default function Workbooks() {
           />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-30 space-y-6 flex flex-col">
-        
+      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6 flex flex-col">
+
         {/* TAB NAVIGATION */}
-        <div className="flex p-1 space-x-1 bg-emerald-100/50 rounded-xl mb-2 overflow-x-auto shadow-sm border border-emerald-200 backdrop-blur-sm">
-          <button
-            onClick={() => setActiveTab('workbooks')}
-            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
-              activeTab === 'workbooks'
-                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
-                : 'text-emerald-700 hover:bg-white/50'
-            }`}
-          >
-            <BookOpenIcon className="w-4 h-4" />
-            Workbooks
-          </button>
-          <button
-            onClick={() => setActiveTab('marketplace')}
-            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
-              activeTab === 'marketplace'
-                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
-                : 'text-emerald-700 hover:bg-white/50'
-            }`}
-          >
-            <BuildingStorefrontIcon className="w-4 h-4" />
-            Marketplace
-          </button>
-          <button
-            onClick={() => setActiveTab('literature')}
-            className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all duration-200 uppercase tracking-wide ${
-              activeTab === 'literature'
-                ? 'bg-white text-emerald-800 shadow-md transform scale-[1.02]'
-                : 'text-emerald-700 hover:bg-white/50'
-            }`}
-          >
-            <DocumentTextIcon className="w-4 h-4" />
-            Fellowships
-          </button>
-        </div>
+        <TabBar
+          tabs={[
+            { id: 'workbooks', label: 'Workbooks', icon: BookOpenIcon },
+            { id: 'marketplace', label: 'Marketplace', icon: BuildingStorefrontIcon },
+            { id: 'literature', label: 'Fellowships', icon: DocumentTextIcon },
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as 'workbooks' | 'marketplace' | 'literature')}
+          border={THEME.workbooks.tabBar.border}
+          hoverText={THEME.workbooks.tabBar.hoverText}
+          activeFrom={THEME.workbooks.header.from}
+          activeTo={THEME.workbooks.header.to}
+        />
 
         {/* WORKBOOKS CONTENT */}
         {activeTab === 'workbooks' && (

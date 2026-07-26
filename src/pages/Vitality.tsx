@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import VibrantHeader from '../components/VibrantHeader';
+import TabBar from '../components/ui/TabBar';
 import { THEME } from '../lib/theme';
 import { useVitalityEntries } from '../hooks/useVitalityEntries';
 import MoveTab from '../components/vitality/MoveTab';
@@ -29,23 +30,25 @@ export default function Vitality() {
                 />
             </div>
 
-            {/* TAB NAVIGATION */}
-            <div className="px-4 py-4 z-20">
-                <div className="flex p-1 bg-white/80 backdrop-blur-sm rounded-xl border border-orange-200 shadow-sm">
-                    <button onClick={() => setActiveTab('move')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'move' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>
-                        Movement
-                    </button>
-                    <button onClick={() => setActiveTab('fuel')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'fuel' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500'}`}>
-                        Fuel
-                    </button>
-                    <button onClick={() => setActiveTab('breath')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'breath' ? 'bg-sky-100 text-sky-700 shadow-sm' : 'text-gray-500'}`}>
-                        Breath
-                    </button>
-                </div>
+            {/* TAB NAVIGATION (Overlaps Header) */}
+            <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
+                <TabBar
+                    tabs={[
+                        { id: 'move', label: 'Movement' },
+                        { id: 'fuel', label: 'Fuel' },
+                        { id: 'breath', label: 'Breath' },
+                    ]}
+                    activeTab={activeTab}
+                    onChange={(id) => setActiveTab(id as VitalityTab)}
+                    border={THEME.vitality.tabBar.border}
+                    hoverText={THEME.vitality.tabBar.hoverText}
+                    activeFrom={THEME.vitality.header.from}
+                    activeTo={THEME.vitality.header.to}
+                />
             </div>
 
             {/* SCROLLABLE CONTENT AREA */}
-            <div className="flex-1 overflow-y-auto px-4 pb-20">
+            <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
                 {activeTab === 'move' && <MoveTab onLog={saveVitalityEntry} saving={isSaving} />}
                 {activeTab === 'fuel' && <FuelTab onLog={saveVitalityEntry} saving={isSaving} />}
                 {activeTab === 'breath' && <BreathTab onLog={saveVitalityEntry} saving={isSaving} />}

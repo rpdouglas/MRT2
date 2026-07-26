@@ -376,7 +376,7 @@ This is a meaningful clinical touchpoint. It must be:
 |---|---|---|---|
 | 1 | **Default mode for new users** | (a) Onboarding quiz routes them · (b) David is default for safety · (c) User chooses at first launch | ❓ Unresolved |
 | 2 | **Mode-switch friction** | (a) Always one tap, no friction · (b) Minimal confirmation ("Switch to Ned mode?") | ❓ Unresolved |
-| 3 | **Navigation consistency** | (a) Each mode determines its own navigation (current prototype) · (b) Shared nav bar across all modes | ❓ Unresolved |
+| 3 | **Navigation consistency** | (a) Each mode determines its own navigation (current prototype) · (b) Shared nav bar across all modes | ❓ Unresolved — Note: `docs/projects/77_NAV_TAB_BAR_UNIFICATION.md` settled this for in-page feature tabs (option (b): one shared visual pattern, differentiated by feature color, not by persona mode). That is a narrower, already-shipped concern and does not decide this question — persona-*mode* navigation (this row) is still open and blocked on PROJ-45 itself starting. |
 | 4 | **Analytics consent model** | (a) Opt-in per feature at onboarding · (b) Part of general onboarding consent flow | ❓ Unresolved |
 | 5 | **Crisis escalation from non-David modes** | (a) App suggests switching to David mode on high-severity trigger · (b) No paternalistic mode-switching — user controls | ❓ Unresolved |
 | 6 | **Community feed (PROJ-04) behaviour per mode** | (a) Mode-specific views (list/card/hidden) · (b) Community feed is mode-agnostic | ❓ Unresolved |

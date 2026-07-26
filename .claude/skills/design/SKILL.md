@@ -22,13 +22,17 @@ Recovery is a return to life — not a punishment. Reject gloomy health app aest
 
 | Module | Vibe | Gradient | Psychological Goal |
 |---|---|---|---|
-| Dashboard | Hope & Clarity | Sky Blue → Blue | Open horizons, fresh start |
-| Tasks | Energy & Action | Cyan → Teal | Momentum and dopamine feedback |
+| Dashboard | Hope & Clarity | Sky Blue → Blue → Indigo | Open horizons, fresh start |
+| Journal | Reflective & Rich | Indigo → Purple → Violet | Quiet introspection, safe disclosure |
+| Tasks | Energy & Action | Cyan → Teal → Emerald | Momentum and dopamine feedback |
+| Workbooks | Structured Growth | Emerald → Green → Lime | Guided progress, herbal groundedness |
 | Service | Warmth & Connection | Rose → Amber | Human-to-human empathy |
-| Insights | Mystical & AI | Fuchsia → Rose | Deep pattern finding, introspection |
-| Vitality | Somatic Health | Amber → Orange | Calm, grounding, vital energy |
+| Insights | Mystical & AI | Fuchsia → Pink → Rose | Deep pattern finding, introspection |
+| Vitality | Somatic Health | Rose → Orange → Amber | Calm, grounding, vital energy |
+| Profile | Grounded & Secure | Slate → Gray → Zinc | Settled, trustworthy, in control |
+| Tools | Bright Clarity | Blue → Sky | Quick utility, sharp focus |
 
-High-saturation gradients. No flat, muted, or grey-dominant palettes.
+High-saturation gradients. No flat, muted, or grey-dominant palettes. This table must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary.
 
 ## Persona Design Constraints
 

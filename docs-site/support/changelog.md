@@ -1,5 +1,13 @@
 # 🚀 Changelog
 
+## [v1.8.31] - 2026-07-26
+### 🐛 Bug Fixes
+- Fixed an issue on My Workbooks where the SOS button could render partly off the edge of the screen on some phones.
+
+## [v1.8.30] - 2026-07-26
+### 🛠️ Update
+- Vitality, Workbooks, Tasks, and Profile now use the same floating tab-bar style as Journal, with each section's own accent color.
+
 ## [v1.8.29] - 2026-07-22
 ### 🛠️ Update
 - Your Dashboard is a little calmer now — Level, Rank, and streak numbers (Journal, Habits, Vitality, and Workbooks) have moved to a new Achievements tab in Profile. Nothing was removed, it's just easier to find when you want to check it.

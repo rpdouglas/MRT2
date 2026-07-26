@@ -4,6 +4,7 @@ import JournalEditor, { type JournalEntry } from '../components/journal/JournalE
 import JournalHistory from '../components/journal/JournalHistory';
 import JournalInsights from '../components/journal/JournalInsights';
 import VibrantHeader from '../components/VibrantHeader';
+import TabBar from '../components/ui/TabBar';
 import { THEME } from '../lib/theme';
 import { PencilSquareIcon, ClockIcon, ChartBarIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
@@ -49,41 +50,19 @@ export default function Journal() {
 
       {/* 2. FLOATING TABS (Overlaps Header) */}
       <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
-        <div className="bg-white p-1.5 rounded-xl shadow-lg border border-indigo-200 flex">
-           <button 
-             onClick={() => handleTabChange('write')} 
-             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
-               activeTab === 'write' 
-                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
-                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
-             }`}
-           >
-             <PencilSquareIcon className="h-4 w-4" />
-             Write
-           </button>
-           <button 
-             onClick={() => handleTabChange('history')} 
-             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
-               activeTab === 'history' 
-                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
-                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
-             }`}
-           >
-             <ClockIcon className="h-4 w-4" />
-             History
-           </button>
-           <button 
-             onClick={() => handleTabChange('insights')} 
-             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition-all uppercase tracking-wide ${
-               activeTab === 'insights' 
-                 ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md transform scale-105' 
-                 : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
-             }`}
-           >
-             <ChartBarIcon className="h-4 w-4" />
-             Insights
-           </button>
-        </div>
+        <TabBar
+          tabs={[
+            { id: 'write', label: 'Write', icon: PencilSquareIcon },
+            { id: 'history', label: 'History', icon: ClockIcon },
+            { id: 'insights', label: 'Insights', icon: ChartBarIcon },
+          ]}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          border={THEME.journal.tabBar.border}
+          hoverText={THEME.journal.tabBar.hoverText}
+          activeFrom={THEME.journal.header.from}
+          activeTo={THEME.journal.header.to}
+        />
       </div>
 
       {/* 3. SCROLLABLE CONTENT */}

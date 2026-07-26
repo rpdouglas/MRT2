@@ -4,6 +4,7 @@ import { PlusIcon, ClipboardDocumentListIcon, CalendarIcon, ClockIcon, ArchiveBo
 import { Dialog, Transition } from '@headlessui/react';
 import { Virtuoso } from 'react-virtuoso';
 import VibrantHeader from '../components/VibrantHeader';
+import TabBar from '../components/ui/TabBar';
 import TaskRow from '../components/tasks/TaskRow';
 import SwipeableTaskRow from '../components/tasks/SwipeableTaskRow';
 import QuickCaptureSheet from '../components/tasks/QuickCaptureSheet';
@@ -268,7 +269,7 @@ export default function Tasks() {
     if (loading) return <div className="p-10 text-center text-gray-400">Loading ledger...</div>;
 
     return (
-        <div className={`min-h-screen flex flex-col bg-gray-50 pb-20`}>
+        <div className={`min-h-screen flex flex-col ${THEME.tasks.page} pb-20`}>
             <div className="flex-shrink-0 z-10">
                 <VibrantHeader 
                     title="My Tasks" 
@@ -282,34 +283,20 @@ export default function Tasks() {
                 />
             </div>
 
-            <div className="px-4 -mt-8 relative z-20">
-                <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200 flex overflow-x-auto no-scrollbar">
-                    {([
-                        { id: 'today', label: 'Today', icon: CalendarIcon },
+            <div className="px-4 -mt-10 relative z-30">
+                <TabBar
+                    tabs={[
+                        { id: 'today', label: 'Today', icon: CalendarIcon, badge: todayCount },
                         { id: 'later', label: 'Later', icon: ClockIcon },
                         { id: 'log',   label: 'Log',   icon: ArchiveBoxIcon },
-                    ] as const).map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
-                                activeTab === tab.id
-                                ? 'bg-slate-800 text-white shadow-md'
-                                : 'text-gray-500 hover:bg-gray-50'
-                            }`}
-                        >
-                            <tab.icon className="h-4 w-4" />
-                            {tab.label}
-                            {tab.id === 'today' && todayCount > 0 && (
-                                <span className={`ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-black px-1 ${
-                                    activeTab === 'today' ? 'bg-white text-slate-800' : 'bg-slate-800 text-white'
-                                }`}>
-                                    {todayCount}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                    ]}
+                    activeTab={activeTab}
+                    onChange={(id) => setActiveTab(id as TabOption)}
+                    border={THEME.tasks.tabBar.border}
+                    hoverText={THEME.tasks.tabBar.hoverText}
+                    activeFrom={THEME.tasks.header.from}
+                    activeTo={THEME.tasks.header.to}
+                />
             </div>
 
             {activeTab !== 'log' && rhythmScore > 0 && (

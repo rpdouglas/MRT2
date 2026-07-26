@@ -13,6 +13,12 @@ export const THEME = {
       from: 'from-indigo-600',
       via: 'via-purple-600',
       to: 'to-violet-600'
+    },
+    // Fully-spelled classes (not built from template literals) so Tailwind's
+    // content scanner picks them up — see TabBar.tsx consumers.
+    tabBar: {
+      border: 'border-indigo-200',
+      hoverText: 'hover:text-indigo-600'
     }
   },
   tasks: {
@@ -22,7 +28,11 @@ export const THEME = {
       via: 'via-teal-500',
       to: 'to-emerald-500'
     },
-    ring: '#34d399' // Emerald-400
+    ring: '#34d399', // Emerald-400
+    tabBar: {
+      border: 'border-cyan-200',
+      hoverText: 'hover:text-cyan-600'
+    }
   },
   workbooks: {
     page: 'bg-emerald-200', // Deep herbal green
@@ -31,7 +41,11 @@ export const THEME = {
       via: 'via-green-600',
       to: 'to-lime-600'
     },
-    ring: '#a3e635' // Lime-400
+    ring: '#a3e635', // Lime-400
+    tabBar: {
+      border: 'border-emerald-200',
+      hoverText: 'hover:text-emerald-600'
+    }
   },
   insights: {
     page: 'bg-fuchsia-200', // Bold pink mist
@@ -48,7 +62,11 @@ export const THEME = {
       via: 'via-orange-500',
       to: 'to-amber-500'
     },
-    ring: '#fbbf24' // Amber-400
+    ring: '#fbbf24', // Amber-400
+    tabBar: {
+      border: 'border-orange-200',
+      hoverText: 'hover:text-orange-600'
+    }
   },
   profile: {
     page: 'bg-zinc-300', // Deep metallic grey
@@ -56,6 +74,10 @@ export const THEME = {
       from: 'from-slate-700',
       via: 'via-gray-800',
       to: 'to-zinc-900'
+    },
+    tabBar: {
+      border: 'border-zinc-300',
+      hoverText: 'hover:text-zinc-600'
     }
   },
   tools: {

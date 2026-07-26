@@ -92,14 +92,14 @@ export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, 
           )}
         </div>
 
-        {/* Center: Title & Subtitle (Shrink-0 maintains width) */}
-        <div className="shrink-0 flex flex-col items-center text-center px-2">
+        {/* Center: Title & Subtitle (min-w-0 lets a long subtitle truncate instead of pushing SOS off-screen) */}
+        <div className="min-w-0 flex flex-col items-center text-center px-2">
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
-            {Icon && <Icon className="h-6 w-6 text-white/90" />}
+            {Icon && <Icon className="h-6 w-6 text-white/90 shrink-0" />}
             {title}
-            {Icon && <Icon className="h-6 w-6 text-white/90" />}
+            {Icon && <Icon className="h-6 w-6 text-white/90 shrink-0" />}
           </h1>
-          <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide">
+          <p className="text-white/80 text-xs sm:text-sm font-medium mt-0.5 tracking-wide truncate max-w-full">
             {subtitle}
           </p>
         </div>
