@@ -14,7 +14,7 @@ You must deeply ingest this entire document[cite: 2]. Build a strict, relational
 
 #### 1. Architecture & AI Data Flow
 * **The Stack:** React 19, Vite, Tailwind v4, Firebase (Firestore/Auth)[cite: 1, 2].
-* **The Gemini Proxy:** Understand `getModelForType()` in `functions/src/index.ts` — `src/lib/gemini.ts` no longer selects models client-side, it only calls the `generateAIInsights` Cloud Function. Deep reasoning tasks use `gemini-2.5-flash`, while low-latency tasks use `gemini-2.5-flash-lite`.
+* **The Gemini Proxy:** Understand `getModelForType()` in `functions/src/index.ts` — `src/lib/gemini.ts` no longer selects models client-side, it only calls the `generateAIInsights` Cloud Function. Deep reasoning tasks use `gemini-2.5-flash`, while low-latency tasks use `gemini-3.5-flash-lite`.
 * **State Management:** Map how `AuthContext`, `EncryptionContext`, and `LayoutContext` wrap the app[cite: 1, 2]. Trace `TanStack Query` hooks for journal and task operations[cite: 1, 2].
 
 #### 2. The Zero-Knowledge Security Boundary (CRITICAL)

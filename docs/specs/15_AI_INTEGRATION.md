@@ -15,7 +15,7 @@
 
 * **gemini-2.5-flash (default):** Used for high-context, deep-reasoning tasks.
     * Analysis types: `deep_pattern_analysis` (90-day scans), `comparative_analysis`, `system_health_analysis`, `workbook_analysis`, `rosc_assessment`.
-* **gemini-2.5-flash-lite:** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
+* **gemini-3.5-flash-lite:** Used for instantaneous, low-complexity parsing to save API costs and reduce UI latency.
     * Analysis types: `journal_analysis`, `workbook_coach`, `cbt_coaching_prompt`, `cba_reflection`, `audio_analysis`.
 
 There is no automatic fallback if a model call fails (e.g. quota exhaustion) — the error propagates to the client, which surfaces it via a toast rather than retrying against a different model.

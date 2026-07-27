@@ -12,10 +12,13 @@ import {
     computeLockoutSeconds,
     evaluateVaultPinAttempt,
     deriveVaultPepper,
+    validateCrosswordCandidates,
+    hasDuplicateClues,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
 import { MODALITY_CONFIGS, READING_MODALITIES, type ReadingModality } from "./prompts";
+import { CROSSWORD_THEME_POOL, pickTheme, CROSSWORDESE_DENYLIST } from "./crosswordPrompts";
 
 describe("getMilestone", () => {
     it("returns null for zero or negative days", () => {
@@ -385,5 +388,81 @@ describe("deriveVaultPepper (PROJ-73: verifyVaultPin's pepper derivation)", () =
         const a = deriveVaultPepper("pepper", "a".repeat(64));
         const b = deriveVaultPepper("pepper", "b".repeat(64));
         expect(a).not.toBe(b);
+    });
+});
+
+// ─── PROJ-79: Daily Crossword ──────────────────────────────────────────────────
+
+describe("validateCrosswordCandidates", () => {
+    const base = { clue: "A clue", themed: false, difficulty: "mid" as const };
+
+    it("drops crosswordese/filler words", () => {
+        const denylisted = CROSSWORDESE_DENYLIST[0];
+        const result = validateCrosswordCandidates(
+            [{ ...base, answer: denylisted }, { ...base, answer: "COURAGE" }],
+            [],
+        );
+        expect(result.map((w) => w.answer)).toEqual(["COURAGE"]);
+    });
+
+    it("drops recently-used words (defense in depth beyond the prompt exclusion)", () => {
+        const result = validateCrosswordCandidates(
+            [{ ...base, answer: "HOPE" }, { ...base, answer: "TRUST" }],
+            ["hope"],
+        );
+        expect(result.map((w) => w.answer)).toEqual(["TRUST"]);
+    });
+
+    it("drops non-letters, too-short, and too-long answers", () => {
+        const result = validateCrosswordCandidates(
+            [
+                { ...base, answer: "AB" },
+                { ...base, answer: "TOO-LONG-WORD-HERE" },
+                { ...base, answer: "SELF ARE" },
+                { ...base, answer: "BALANCE" },
+            ],
+            [],
+        );
+        expect(result.map((w) => w.answer)).toEqual(["BALANCE"]);
+    });
+
+    it("de-duplicates repeated answers", () => {
+        const result = validateCrosswordCandidates(
+            [{ ...base, answer: "HOPE" }, { ...base, answer: "hope" }],
+            [],
+        );
+        expect(result).toHaveLength(1);
+    });
+});
+
+describe("hasDuplicateClues", () => {
+    it("flags case-insensitive duplicate clue text", () => {
+        expect(hasDuplicateClues([{ clue: "A support you lean on" }, { clue: "a support you lean on" }])).toBe(true);
+    });
+
+    it("returns false when every clue is unique", () => {
+        expect(hasDuplicateClues([{ clue: "Clue one" }, { clue: "Clue two" }])).toBe(false);
+    });
+});
+
+describe("pickTheme", () => {
+    it("excludes recently-used themes when eligible alternatives exist", () => {
+        const excluded = CROSSWORD_THEME_POOL.slice(0, CROSSWORD_THEME_POOL.length - 1);
+        const theme = pickTheme(excluded);
+        expect(theme).toBe(CROSSWORD_THEME_POOL[CROSSWORD_THEME_POOL.length - 1]);
+    });
+
+    it("falls back to the full pool if every theme was recently used", () => {
+        const theme = pickTheme([...CROSSWORD_THEME_POOL]);
+        expect(CROSSWORD_THEME_POOL).toContain(theme);
+    });
+
+    it("has no fellowship-specific or branded program names (Tradition 6 precedent)", () => {
+        const denylist = [/\balcoholics anonymous\b/i, /\bnarcotics anonymous\b/i, /\bsmart recovery\b/i, /\brecovery dharma\b/i];
+        for (const theme of CROSSWORD_THEME_POOL) {
+            for (const pattern of denylist) {
+                expect(theme).not.toMatch(pattern);
+            }
+        }
     });
 });

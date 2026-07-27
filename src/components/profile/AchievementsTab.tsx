@@ -116,7 +116,14 @@ export default function AchievementsTab() {
         const tStats = calculateTaskStats(tasks);
         const vStats = calculateVitalityStats(journals);
         const wStats = calculateWorkbookStats(workbookCount);
-        const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount, gameHistory.length);
+        // PROJ-79: Daily Crossword is deliberately excluded from XP — the source
+        // spec frames it as reward-free ("the vehicle, not the point"), which
+        // conflicts with gameProgressCount's blanket count of every game_progress
+        // doc. Filtering here (not by skipping persistence) keeps one completion-
+        // record pattern for all 8 games — see the /planning Strategy C writeup in
+        // docs/projects/79_DAILY_CROSSWORD.md.
+        const xpEligibleGameCount = gameHistory.filter((g) => g.gameId !== 'daily-crossword').length;
+        const level = calculateUserLevel(journals, tasks, workbookCount, daysClean, roscCount, xpEligibleGameCount);
 
         return { journal: jStats, task: tStats, vitality: vStats, workbook: wStats, level };
     }, [journals, tasks, workbookCount, roscCount, gameHistory, userProfile, nowMs]);

@@ -40,7 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyVaultPin = exports.generateAIInsights = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.checkBufferHealth = exports.dailyBeacon = void 0;
+exports.verifyVaultPin = exports.generateAIInsights = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.generateDailyCrossword = exports.checkBufferHealth = exports.dailyBeacon = void 0;
 exports.computeLockoutSeconds = computeLockoutSeconds;
 exports.getMilestone = getMilestone;
 exports.getMilestoneLabel = getMilestoneLabel;
@@ -49,6 +49,8 @@ exports.computeHabitAlert = computeHabitAlert;
 exports.processUserBatch = processUserBatch;
 exports.identifyStaleTokensByUser = identifyStaleTokensByUser;
 exports.buildBatchPrompt = buildBatchPrompt;
+exports.validateCrosswordCandidates = validateCrosswordCandidates;
+exports.hasDuplicateClues = hasDuplicateClues;
 exports.evaluateVaultPinAttempt = evaluateVaultPinAttempt;
 exports.deriveVaultPepper = deriveVaultPepper;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
@@ -63,6 +65,8 @@ const firestore_2 = require("firebase-functions/v2/firestore");
 const auth_1 = require("firebase-admin/auth");
 const generative_ai_1 = require("@google/generative-ai");
 const prompts_1 = require("./prompts");
+const crossword_layout_generator_1 = require("crossword-layout-generator");
+const crosswordPrompts_1 = require("./crosswordPrompts");
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
 const messaging = (0, messaging_1.getMessaging)();
@@ -474,6 +478,178 @@ exports.checkBufferHealth = (0, scheduler_1.onSchedule)({
     }
     logger.info("PROJ-42: Buffer refill complete.");
 });
+// ─── PROJ-79: Daily Crossword ──────────────────────────────────────────────────
+// Nightly, offline generation of the next day's crossword — zero AI cost at
+// runtime, one puzzle per calendar date, shared by all users. See
+// docs/projects/79_DAILY_CROSSWORD.md and the source spec,
+// docs/reports/SPEC-crossword-001 (1).md, §4. The AI selects words and
+// writes clues only (Stage 1: cheap-tier word selection, Stage 2: cheap-tier
+// clue polish); grid layout is deterministic (crossword-layout-generator),
+// never AI-computed. Deliberately a synchronous generateContent() call, not
+// the Gemini Batch API the source spec proposed — see the /planning
+// technical-impact writeup for docs/projects/79_DAILY_CROSSWORD.md: batch
+// mode's async submit/poll semantics don't fit a single onSchedule
+// invocation without new two-phase infrastructure, and this is one small
+// nightly call, not a bulk multi-day job like the readings buffer.
+const CROSSWORD_GENERATOR_VERSION = "1.0.0";
+const CROSSWORD_PROMPT_VERSION = "1";
+const CROSSWORD_RECENCY_WINDOW_DAYS = 45; // within the source spec's 30-60 day guard range
+const CROSSWORD_MIN_PLACED_WORDS = 8; // source spec §4.5 target: 8-10 answers
+async function getRecentThemesAndWords(cutoffDate) {
+    const snap = await db.collection("crossword_puzzles")
+        .where("date", ">=", cutoffDate)
+        .get();
+    const themes = [];
+    const words = [];
+    snap.forEach((docSnap) => {
+        var _a;
+        const data = docSnap.data();
+        if (data.theme)
+            themes.push(data.theme);
+        for (const w of (_a = data.words) !== null && _a !== void 0 ? _a : []) {
+            if (w.answer)
+                words.push(w.answer);
+        }
+    });
+    return { themes, words };
+}
+// Source spec §4.9: crosswordese/filler-word guard, letters-only/length
+// sanity, and de-duplication. Exported for unit testing.
+function validateCrosswordCandidates(candidates, excludeWords) {
+    var _a;
+    const excludeSet = new Set(excludeWords.map((w) => w.toUpperCase()));
+    const denylistSet = new Set(crosswordPrompts_1.CROSSWORDESE_DENYLIST.map((w) => w.toUpperCase()));
+    const seen = new Set();
+    const valid = [];
+    for (const c of candidates) {
+        const answer = ((_a = c.answer) !== null && _a !== void 0 ? _a : "").toUpperCase().trim();
+        if (!/^[A-Z]{3,12}$/.test(answer))
+            continue;
+        if (denylistSet.has(answer))
+            continue;
+        if (excludeSet.has(answer))
+            continue;
+        if (seen.has(answer))
+            continue;
+        seen.add(answer);
+        valid.push(Object.assign(Object.assign({}, c), { answer }));
+    }
+    return valid;
+}
+// Source spec §4.9: no duplicate clue wording within the same puzzle.
+function hasDuplicateClues(words) {
+    const seen = new Set();
+    for (const w of words) {
+        const key = w.clue.trim().toLowerCase();
+        if (seen.has(key))
+            return true;
+        seen.add(key);
+    }
+    return false;
+}
+function stripCodeFence(text) {
+    return text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+}
+async function generateCrosswordForDate(date, apiKey) {
+    var _a, _b, _c, _d;
+    const { themes: recentThemes, words: recentWords } = await getRecentThemesAndWords(addDaysToDate(date, -CROSSWORD_RECENCY_WINDOW_DAYS));
+    const theme = (0, crosswordPrompts_1.pickTheme)(recentThemes);
+    const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+        model: "gemini-3.5-flash-lite",
+        generationConfig: { responseMimeType: "application/json" },
+    });
+    // Stage 1: word selection (cheap tier)
+    const selectionResult = await model.generateContent((0, crosswordPrompts_1.buildWordSelectionPrompt)(theme, recentWords));
+    let candidates;
+    try {
+        candidates = JSON.parse(stripCodeFence(selectionResult.response.text()));
+    }
+    catch (_e) {
+        logger.error(`PROJ-79: word-selection JSON parse error for ${date}`);
+        return false;
+    }
+    if (!Array.isArray(candidates)) {
+        logger.error(`PROJ-79: non-array word-selection response for ${date}`);
+        return false;
+    }
+    const validCandidates = validateCrosswordCandidates(candidates, recentWords);
+    if (validCandidates.length < CROSSWORD_MIN_PLACED_WORDS) {
+        logger.error(`PROJ-79: only ${validCandidates.length} valid candidates for ${date} — aborting, will retry next run.`);
+        return false;
+    }
+    // Stage 2: clue polish (cheap tier by default)
+    const polishResult = await model.generateContent((0, crosswordPrompts_1.buildCluePolishPrompt)(theme, validCandidates));
+    let polished;
+    try {
+        polished = JSON.parse(stripCodeFence(polishResult.response.text()));
+    }
+    catch (_f) {
+        logger.error(`PROJ-79: clue-polish JSON parse error for ${date}`);
+        return false;
+    }
+    if (!Array.isArray(polished.words) || hasDuplicateClues(polished.words)) {
+        logger.error(`PROJ-79: invalid or duplicate-clue polish response for ${date}`);
+        return false;
+    }
+    // Grid layout — deterministic, non-AI (source spec §4.5)
+    const layout = (0, crossword_layout_generator_1.generateLayout)(polished.words.map((w) => ({ answer: w.answer, clue: w.clue })));
+    const placed = layout.result.filter((w) => w.orientation !== "none");
+    if (placed.length < CROSSWORD_MIN_PLACED_WORDS) {
+        logger.error(`PROJ-79: layout only placed ${placed.length} words for ${date} — aborting, will retry next run.`);
+        return false;
+    }
+    const words = placed.map((p) => {
+        var _a, _b, _c, _d, _e, _f, _g;
+        const source = polished.words.find((w) => w.answer === p.answer);
+        return {
+            answer: p.answer,
+            clue: p.clue,
+            clueStyle: (_a = source === null || source === void 0 ? void 0 : source.clueStyle) !== null && _a !== void 0 ? _a : "dictionary",
+            hint: (_b = source === null || source === void 0 ? void 0 : source.hint) !== null && _b !== void 0 ? _b : null,
+            themed: (_c = source === null || source === void 0 ? void 0 : source.themed) !== null && _c !== void 0 ? _c : false,
+            difficulty: (_d = source === null || source === void 0 ? void 0 : source.difficulty) !== null && _d !== void 0 ? _d : "mid",
+            number: (_e = p.position) !== null && _e !== void 0 ? _e : 0,
+            row: ((_f = p.starty) !== null && _f !== void 0 ? _f : 1) - 1,
+            col: ((_g = p.startx) !== null && _g !== void 0 ? _g : 1) - 1,
+            direction: p.orientation,
+        };
+    });
+    await db.collection("crossword_puzzles").doc(date).set({
+        date,
+        theme,
+        themeIntro: polished.theme_intro,
+        generatorVersion: CROSSWORD_GENERATOR_VERSION,
+        promptVersion: CROSSWORD_PROMPT_VERSION,
+        words,
+        insightCard: {
+            text: (_b = (_a = polished.insight_card) === null || _a === void 0 ? void 0 : _a.text) !== null && _b !== void 0 ? _b : "",
+            frameworkTags: (_d = (_c = polished.insight_card) === null || _c === void 0 ? void 0 : _c.framework_tags) !== null && _d !== void 0 ? _d : [],
+        },
+        grid: { rows: layout.rows, cols: layout.cols },
+        generatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    logger.info(`PROJ-79: crossword generated for ${date} — theme "${theme}", ${words.length} words.`);
+    return true;
+}
+exports.generateDailyCrossword = (0, scheduler_1.onSchedule)({
+    schedule: "0 6 * * *",
+    timeoutSeconds: 120,
+    memory: "512MiB",
+    region: "northamerica-northeast1",
+    secrets: [geminiApiKey],
+}, async () => {
+    const tomorrow = addDaysToDate(utcDateString(new Date()), 1);
+    const existing = await db.collection("crossword_puzzles").doc(tomorrow).get();
+    if (existing.exists) {
+        logger.info(`PROJ-79: crossword for ${tomorrow} already exists — skipping.`);
+        return;
+    }
+    const ok = await generateCrosswordForDate(tomorrow, geminiApiKey.value());
+    if (!ok) {
+        logger.error(`PROJ-79: failed to generate crossword for ${tomorrow}.`);
+    }
+});
 exports.generateReadingsAdmin = (0, https_1.onCall)({
     secrets: [geminiApiKey],
     timeoutSeconds: 540,
@@ -559,7 +735,7 @@ function getModelForType(analysisType) {
         case "cbt_coaching_prompt":
         case "cba_reflection":
         case "audio_analysis":
-            return "gemini-2.5-flash-lite";
+            return "gemini-3.5-flash-lite";
         default:
             return "gemini-2.5-flash";
     }

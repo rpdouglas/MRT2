@@ -208,7 +208,7 @@ Add `generateCBTCoachingPrompt()` to `src/lib/gemini.ts`:
 ```typescript
 // Generates a contextual follow-up question to help the user go deeper
 // Called after the user completes a step and pauses for > 3 seconds.
-// Uses gemini-2.5-flash-lite — this is a fast, low-cost call.
+// Uses gemini-3.5-flash-lite — this is a fast, low-cost call.
 
 export async function generateCBTCoachingPrompt(
     toolType: SmartToolType,

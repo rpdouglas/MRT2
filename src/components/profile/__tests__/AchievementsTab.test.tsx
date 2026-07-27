@@ -34,7 +34,7 @@ vi.mock('../../../hooks/useUserProfile', () => ({
     useUserProfile: () => ({ profile: mockProfile, isLoading: false }),
 }));
 
-let mockGameHistory: Array<{ score: number }>;
+let mockGameHistory: Array<{ gameId: string; score: number }>;
 vi.mock('../../../hooks/useGameProgress', () => ({
     useGameProgress: () => ({ history: mockGameHistory, isLoading: false }),
 }));
@@ -78,5 +78,28 @@ describe('🏆 AchievementsTab', () => {
         renderAchievementsTab();
 
         expect(screen.getByText(/loading achievements/i)).toBeInTheDocument();
+    });
+
+    it('PROJ-79: does not award XP for daily-crossword completions', async () => {
+        mockGameHistory = [
+            { gameId: 'daily-crossword', score: 0 },
+            { gameId: 'daily-crossword', score: 0 },
+        ];
+        renderAchievementsTab();
+
+        // Same 0 XP baseline as no game history at all — crossword entries
+        // must not feed calculateUserLevel's gameProgressCount.
+        expect(await screen.findByText(/^0 \/ /)).toBeInTheDocument();
+    });
+
+    it('PROJ-79: still awards XP for a real Recovery Game completion alongside crossword entries', async () => {
+        mockGameHistory = [
+            { gameId: 'daily-crossword', score: 0 },
+            { gameId: 'goal-ladder', score: 8 },
+        ];
+        renderAchievementsTab();
+
+        // GAME_COMPLETION XP (20) from the one non-crossword entry only.
+        expect(await screen.findByText(/^20 \/ /)).toBeInTheDocument();
     });
 });

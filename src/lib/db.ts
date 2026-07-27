@@ -171,6 +171,38 @@ export interface GameSaveRecord {
   isEncrypted: true;
 }
 
+// PROJ-79 (Daily Crossword). Nightly-generated, server-write-only, shared
+// editorial content — same date-keyed/admin-write shape as daily_readings.
+// No user data anywhere in this document, so no encrypted fields (unlike
+// every other Recovery Games collection) — see
+// docs/projects/79_DAILY_CROSSWORD.md §2/§3.
+export type CrosswordClueStyle = 'dictionary' | 'recovery' | 'reflective' | 'metaphor';
+export type CrosswordDifficulty = 'easy' | 'mid' | 'advanced';
+
+export interface CrosswordWordEntry {
+  answer: string;
+  clue: string;
+  clueStyle: CrosswordClueStyle;
+  hint: string | null;
+  themed: boolean;
+  difficulty: CrosswordDifficulty; // internal only — never rendered, see spec §4.4/§7
+  number: number;
+  row: number;
+  col: number;
+  direction: 'across' | 'down';
+}
+
+export interface CrosswordPuzzleRecord {
+  date: string; // YYYY-MM-DD (UTC), also the doc ID
+  theme: string;
+  themeIntro: string;
+  generatorVersion: string;
+  promptVersion: string;
+  words: CrosswordWordEntry[];
+  insightCard: { text: string; frameworkTags: string[] };
+  grid: { rows: number; cols: number };
+}
+
 export async function getProfile(uid: string): Promise<UserProfile | null> {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;

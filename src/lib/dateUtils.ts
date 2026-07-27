@@ -15,6 +15,16 @@ export interface RecurrenceConfig {
 
 export interface SobrietyDuration { years: number; months: number; days: number; totalDays: number; }
 
+// PROJ-79: matches functions/src/index.ts's utcDateString() so a client near
+// UTC midnight computes the same "today" as the server-generated
+// crossword_puzzles doc ID.
+export function getUtcDateString(d: Date = new Date()): string {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
 /**
  * Calculates the breakdown of time since a sobriety date.
  * Returns accurate Years, Months, and remaining Days.

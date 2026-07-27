@@ -99,7 +99,7 @@ MRT integrates Google Gemini (2.5 Flash and 2.5 Flash-Lite) via a Cloud Function
 ### Model Selection (`getModelForType()` in `functions/src/index.ts`)
 The `generateAIInsights` Cloud Function resolves a model server-side based on `analysisType`:
 1.  **gemini-2.5-flash (Deep Reasoning default):** Used for high-context tasks: `deep_pattern_analysis` (90-day journal reviews), `comparative_analysis`, `system_health_analysis`, `workbook_analysis`, and `rosc_assessment`.
-2.  **gemini-2.5-flash-lite (Cost-Effective Speed):** Low-complexity, rapid feedback: `journal_analysis`, `workbook_coach`, `cbt_coaching_prompt`, `cba_reflection`, and `audio_analysis`.
+2.  **gemini-3.5-flash-lite (Cost-Effective Speed):** Low-complexity, rapid feedback: `journal_analysis`, `workbook_coach`, `cbt_coaching_prompt`, `cba_reflection`, and `audio_analysis`.
 
 There is no client-side model cascade or fallback path — model selection is a single server-side switch, and the client (`src/lib/gemini.ts`) only calls the `generateAIInsights` proxy.
 

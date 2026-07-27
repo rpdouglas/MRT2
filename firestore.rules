@@ -148,5 +148,14 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
+
+    // 11. Daily Crossword — nightly-generated content (PROJ-79), one shared
+    // puzzle per calendar date, same read-any/write-admin-only shape as
+    // Daily Readings. No user data in this collection — see
+    // docs/projects/79_DAILY_CROSSWORD.md §2.
+    match /crossword_puzzles/{date} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
   }
 }
