@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.32] - 2026-07-27
+### ✨ New Feature
+- Added a new Daily Crossword game to Recovery Games — a short, no-pressure daily puzzle themed around a recovery concept. There's no score, timer, or penalty for wrong answers, and playing it doesn't affect your XP or level.
+
 ## [v1.8.31] - 2026-07-26
 ### 🐛 Bug Fixes
 - Fixed an issue on My Workbooks where the SOS button could render partly off the edge of the screen on some phones.

@@ -28,6 +28,9 @@ Match short situations to the trigger category they fit best (Hungry, Angry, Lon
 ### 📚 Knowledge Quests — short quiz packs
 Bite-sized quizzes on recovery-adjacent topics — stress physiology, habit science, sleep — not tied to any one persona. Pick a pack from the list to start; more packs are added over time.
 
+### 🧩 Daily Crossword — a quick, no-pressure puzzle
+A short crossword themed around a recovery concept, freshly written each day and the same for everyone. There's no timer, score, or wrong-answer flag — if you get stuck, a gentle hint or full-letter reveal is always available. It's just for fun, so completing it doesn't add to your XP or level the way other games do.
+
 ## Sharing a Milestone
 Reaching your goals in Fast Lane, or winning a round of Recovery Jeopardy, shows a **Share this milestone** (or **Share this win**) button. It works the same way as sharing a sobriety milestone from your Dashboard — it renders a shareable image on your device and opens your phone's normal share sheet (or downloads the image directly if sharing isn't available on your device).
 

@@ -26,6 +26,7 @@ graph TD
     root --> service[📂 service]
     root --> game_progress[📂 game_progress]
     root --> game_saves[📂 game_saves]
+    root --> crossword_puzzles[📂 crossword_puzzles]
     root --> daily_readings[📂 daily_readings]
     root --> user_reading_preferences[📂 user_reading_preferences]
     root --> buffer_status[📂 buffer_status]
@@ -129,6 +130,18 @@ graph TD
     * `encryptedState` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's full save state.
     * `updatedAt` (Timestamp).
     * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation`, `executeCryptoShredding`, and `executeTotalAccountAnnihilation` (Phase 7).
+
+### `crossword_puzzles/{date}`
+* **Purpose:** PROJ-79 (Daily Crossword, Recovery Games #8). One shared, AI-authored puzzle per calendar date (`YYYY-MM-DD` doc ID), identical for every user — generated nightly by `generateDailyCrossword` (a scheduled Cloud Function). Server-write-only (`isAdmin()`), read-any-authenticated — same access shape as `daily_readings`. **UNENCRYPTED** — editorial puzzle content only, no user data of any kind (unlike every other Recovery Games collection).
+* **Fields:**
+    * `date` (String): `YYYY-MM-DD`, also the doc ID.
+    * `theme` (String), `themeIntro` (String): the day's theme and its one-sentence framing.
+    * `generatorVersion` / `promptVersion` (String): reproducibility/rollback markers — a bad puzzle is fixed by bumping one of these and regenerating, not by a code revert.
+    * `words` (Array of `{ answer, clue, clueStyle, hint, themed, difficulty, number, row, col, direction }`): `difficulty` is generation-internal only, never rendered client-side.
+    * `insightCard` (Object): `{ text, frameworkTags }` — a short reflection shown on solve.
+    * `grid` (Object): `{ rows, cols }`, attached by the deterministic (non-AI) `crossword-layout-generator` library post-generation.
+    * `generatedAt` (Timestamp).
+* Per-user solve completion reuses `game_progress` (`gameId: 'daily-crossword'`, `personaTarget: 'All'`) exactly like every other game — no new persistence pattern — but is explicitly excluded from XP (`AchievementsTab.tsx` filters it out of `gameProgressCount`), matching the source spec's reward-free framing.
 
 ### `daily_readings/{modality}_{date}`
 * **Purpose:** PROJ-42 (Daily Readings Engine). Admin/Cloud-Function-generated reading content, one doc per `(modality, date)` pair, doc ID `${modality}_${date}`. Server-write-only (`generateReadingBatch`); all-read client rule. **UNENCRYPTED** — curated editorial content, not user disclosure.
