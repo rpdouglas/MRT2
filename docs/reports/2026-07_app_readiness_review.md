@@ -3,7 +3,7 @@
 **Audit Date:** July 2026
 **Scope:** Full-codebase honest assessment of readiness to (a) submit to the Google Play Store via TWA/Bubblewrap and (b) scale past the current trusted-beta userbase.
 **Trigger:** DUNS number received, unblocking Sprint 9.2 of `docs/projects/07_PLAY_STORE_TWA.md`.
-**Method:** Live verification against the running codebase — `npm run check` (lint, spec-quality, tests, build) executed from a clean install, `npm audit`, direct inspection of `firestore.rules`, `vite.config.ts`, `firebase.json`, git history, and cross-reference against the team's own prior audits (`docs/reports/google_play_readiness_report.md`, `docs/projects/65_VAULT_KEY_HARDENING.md`, `docs/ACTIVE_CYCLE.md`).
+**Method:** Live verification against the running codebase — `npm run check` (lint, spec-quality, tests, build) executed from a clean install, `npm audit`, direct inspection of `firestore.rules`, `vite.config.ts`, `firebase.json`, git history, and cross-reference against the team's own prior audits (`docs/reports/archive/google_play_readiness_report.md`, `docs/projects/65_VAULT_KEY_HARDENING.md`, `docs/ACTIVE_CYCLE.md`).
 
 ---
 
@@ -18,7 +18,7 @@
 ### 1. The Android signing keystore is committed to git
 `mrt-release.keystore` — described in `docs/projects/07_PLAY_STORE_TWA.md` as "the root key" for signing — is tracked in the repository (`git ls-files` confirms it) and present in git history. A `.gitignore` entry (`*.keystore`, `mrt-release.keystore`) exists but was added *after* the file was already tracked, so it has no effect — git continues tracking a file its own ignore rule targets.
 
-Anyone with read access to this repo — every collaborator, every CI runner, every fork — holds the app's signing credential. Under Google Play App Signing this becomes an "upload key," not the final signing key, but a leaked upload key is still a real incident requiring Google's key-reset process. This was not flagged in the prior `google_play_readiness_report.md`, which treats pointing Bubblewrap at the existing keystore as a routine step.
+Anyone with read access to this repo — every collaborator, every CI runner, every fork — holds the app's signing credential. Under Google Play App Signing this becomes an "upload key," not the final signing key, but a leaked upload key is still a real incident requiring Google's key-reset process. This was not flagged in the prior `docs/reports/archive/google_play_readiness_report.md`, which treats pointing Bubblewrap at the existing keystore as a routine step.
 
 **Action:** Generate a new keystore, store it in a secrets manager (never the repo), and purge the old one from git history (`git filter-repo` or BFG). Treat the existing key as already compromised.
 
@@ -74,5 +74,5 @@ Verified against live code, not just docs:
 2. Get a definitive answer on the Stripe-in-TWA billing question before building the Bubblewrap package at all — cheaper to resolve now than after a rejection.
 3. Close PROJ-65's external security review.
 4. `npm audit fix`, redeploy, confirm `npm run check` still passes.
-5. Finish PROJ-07 Sprint 9.1 (manifest/CSS/legal-link items — `docs/reports/google_play_readiness_report.md` already has the exact diffs).
+5. Finish PROJ-07 Sprint 9.1 (manifest/CSS/legal-link items — `docs/reports/archive/google_play_readiness_report.md` already has the exact diffs).
 6. Then, and only then, Sprint 9.2: Bubblewrap build, Play Console internal track, `assetlinks.json` fingerprint round-trip.

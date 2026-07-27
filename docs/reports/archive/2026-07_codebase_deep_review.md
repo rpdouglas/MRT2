@@ -2,7 +2,7 @@
 
 **MRT · Full-Depth Architecture, Quality, Security & Performance Review**
 
-A read-only pass across the entire codebase — `src/lib`, `src/hooks`, `src/components`, `src/pages`, `functions/src`, `firestore.rules`, CI/CD, and build config — looking for refactoring opportunities, tooling gaps, and risk, not feature correctness. Scoped deliberately to avoid repeating ground already covered by `docs/reports/july_2026_features_and_code_review.md` (feature changelog), the `governance` skill (doc-vs-code drift), the `review` skill (session/CLAUDE.md drift), and the `zk-audit` skill (per-feature encryption-boundary checks). This review looks at what none of those cover: cross-cutting architectural consistency, code-quality hotspots, security beyond the ZK boundary, test coverage, and performance/tooling posture.
+A read-only pass across the entire codebase — `src/lib`, `src/hooks`, `src/components`, `src/pages`, `functions/src`, `firestore.rules`, CI/CD, and build config — looking for refactoring opportunities, tooling gaps, and risk, not feature correctness. Scoped deliberately to avoid repeating ground already covered by `docs/reports/archive/july_2026_features_and_code_review.md` (feature changelog), the `governance` skill (doc-vs-code drift), the `review` skill (session/CLAUDE.md drift), and the `zk-audit` skill (per-feature encryption-boundary checks). This review looks at what none of those cover: cross-cutting architectural consistency, code-quality hotspots, security beyond the ZK boundary, test coverage, and performance/tooling posture.
 
 - **Scope:** Full codebase, no exclusions
 - **Method:** Full-file reads across all major directories, cross-checked against `CLAUDE.md` rules; every finding below is file-and-line verified
@@ -27,7 +27,7 @@ A read-only pass across the entire codebase — `src/lib`, `src/hooks`, `src/com
 
 **This is the single highest-value finding in the review.**
 
-`CLAUDE.md` states: *"TanStack Query wraps ALL Firestore reads/writes; no direct Firestore calls."* `docs/reports/profile-gap-analysis.md` flagged `Profile.tsx` for violating this, and PROJ-58 fixed it. But the same smell recurs across at least 10 other user-facing files — it was never a one-off, it's a recurring pattern that new code keeps reintroducing.
+`CLAUDE.md` states: *"TanStack Query wraps ALL Firestore reads/writes; no direct Firestore calls."* `docs/reports/archive/profile-gap-analysis.md` flagged `Profile.tsx` for violating this, and PROJ-58 fixed it. But the same smell recurs across at least 10 other user-facing files — it was never a one-off, it's a recurring pattern that new code keeps reintroducing.
 
 ### 🔴 Critical — Duplicate, competing data paths (not just a missing hook — an existing hook being ignored)
 

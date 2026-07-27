@@ -12,7 +12,7 @@
 
 **Competitive Gap:** "I Am Sober," "Reframe," and "Sober Grid" all rely on visible streak counters and/or social feeds that can shame a user for a reset. MRT's zero-knowledge architecture lets Recovery Games go further than any competitor: game history is client-side encrypted (same as journals/workbooks) rather than just "private" behind a login — even MRT's own servers can't read it. Combined with the anti-shame mechanics below (silent rollover, no penalty screens), this is a genuine differentiator, not just a feature-parity play.
 
-**Origin note:** This spec formalizes and corrects `docs/reports/2026-07_recovery_games_platform_spec.md`, an informal master plan written outside our normal process. Section 4 below documents where this spec deliberately deviates from that document and why.
+**Origin note:** This spec formalizes and corrects `docs/reports/archive/2026-07_recovery_games_platform_spec.md`, an informal master plan written outside our normal process. Section 4 below documents where this spec deliberately deviates from that document and why.
 
 ---
 

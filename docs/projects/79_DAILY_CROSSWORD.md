@@ -12,7 +12,7 @@
 
 **Competitive Gap:** None of "I Am Sober," "Reframe," or "Sober Grid" offer a reflective word-game touchpoint at all — this is new ground, not a parity play. Where it does compete is on MRT's standing differentiator: even a "just for fun" feature stays inside the anti-shame, zero-knowledge posture (no wrong-answer flags, no reveal penalty, no completion pressure) rather than bolting on generic word-game UX.
 
-**Origin note:** This spec formalizes `docs/reports/SPEC-crossword-001 (1).md` (an informal draft written outside the normal process) and its accompanying UI reference mockup `docs/reports/DailyCrossword.jsx`. It supersedes an earlier, discarded design direction (reading-anchored, per-modality crossword with lazy per-(modality, date) generation) in favor of one shared daily puzzle. This is the **8th Recovery Games entry** — read alongside `docs/projects/72_RECOVERY_GAMES.md`, whose schema/hook conventions this spec reuses rather than reinvents.
+**Origin note:** This spec formalizes `docs/reports/archive/SPEC-crossword-001.md` (an informal draft written outside the normal process, archived and renamed from its original download-artifact filename during a 2026-07-27 docs cleanup) and its accompanying UI reference mockup `docs/reports/DailyCrossword.jsx`. It supersedes an earlier, discarded design direction (reading-anchored, per-modality crossword with lazy per-(modality, date) generation) in favor of one shared daily puzzle. This is the **8th Recovery Games entry** — read alongside `docs/projects/72_RECOVERY_GAMES.md`, whose schema/hook conventions this spec reuses rather than reinvents.
 
 ---
 

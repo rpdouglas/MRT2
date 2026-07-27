@@ -1,10 +1,10 @@
 # 📁 Project 64: Gemini AI Proxy & Platform Hardening (Cloud Functions Security Migration)
 
-**Status:** ✅ Shipped (2026-07-13) — spec backfilled 2026-07-16 during a governance audit cross-referencing `docs/reports/codebase_gaps_audit_report.md` against shipped code.
+**Status:** ✅ Shipped (2026-07-13) — spec backfilled 2026-07-16 during a governance audit cross-referencing `docs/reports/archive/codebase_gaps_audit_report.md` against shipped code.
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Remove the client-exposed Gemini API key, enforce AI usage rate limits server-side, restore Firestore offline resilience, and add telemetry for silent vault-decryption failures — closing four of the five gaps identified in the July 2026 codebase audit.
 
-**Source:** `docs/reports/codebase_gaps_audit_report.md` (Gaps A, C, D, E) and `docs/reports/remediation_implementation_plan.md`. Shipped in commit `6748388` ("feat: Implement Firebase Cloud Functions proxy for Gemini API to secure API key and enhance rate limiting"). This spec is a backfill — the work shipped without a spec file, which is a violation of this repo's "no feature without a `docs/projects/XX_FEATURE.md` spec" rule; documented after the fact per the same precedent as `PROJ-17`/`PROJ-26`.
+**Source:** `docs/reports/archive/codebase_gaps_audit_report.md` (Gaps A, C, D, E) and `docs/reports/archive/remediation_implementation_plan.md`. Shipped in commit `6748388` ("feat: Implement Firebase Cloud Functions proxy for Gemini API to secure API key and enhance rate limiting"). This spec is a backfill — the work shipped without a spec file, which is a violation of this repo's "no feature without a `docs/projects/XX_FEATURE.md` spec" rule; documented after the fact per the same precedent as `PROJ-17`/`PROJ-26`.
 
 **Scope correction:** the shipping commit's message also claims *"refactor: Enhance key derivation process for AES-GCM Vault Key to improve security against brute-force attacks."* That claim is false — `src/lib/crypto.ts`'s `generateKey()`/`computePinHash()` are byte-for-byte unchanged in the diff; only PostHog telemetry was added to `decrypt()`. Gap B (the actual key-derivation hardening) was never implemented. It's tracked separately as `PROJ-65` since it still needs real design work, not a backfill.
 

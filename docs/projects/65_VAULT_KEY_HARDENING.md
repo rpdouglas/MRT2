@@ -4,7 +4,7 @@
 **Primary Persona:** All (internal/architecture — protects every persona's data, no persona-specific UX)
 **Objective:** Eliminate the ability to brute-force a user's 4-digit PIN from a Firestore breach alone, by requiring a rate-limited, authenticated round-trip to a Cloud Function to obtain a server-held "pepper" that's combined with the PIN-derived key material — so a stolen database no longer reduces to an offline 10,000-combination search, while every device stays able to unlock the vault (no local-only key material, unlike the rejected Master Key design).
 
-**Source:** `docs/reports/codebase_gaps_audit_report.md`, Gap B. Originally scheduled to ship in commit `6748388` (2026-07-13) — that commit's message claimed this work ("refactor: Enhance key derivation process for AES-GCM Vault Key to improve security against brute-force attacks") but the actual diff never touched `src/lib/crypto.ts`'s key-derivation functions. Found and re-opened during a 2026-07-16 governance audit cross-referencing the audit report against shipped code. See `PROJ-64` for the sibling backfill spec covering the parts of that commit that did ship correctly.
+**Source:** `docs/reports/archive/codebase_gaps_audit_report.md`, Gap B. Originally scheduled to ship in commit `6748388` (2026-07-13) — that commit's message claimed this work ("refactor: Enhance key derivation process for AES-GCM Vault Key to improve security against brute-force attacks") but the actual diff never touched `src/lib/crypto.ts`'s key-derivation functions. Found and re-opened during a 2026-07-16 governance audit cross-referencing the audit report against shipped code. See `PROJ-64` for the sibling backfill spec covering the parts of that commit that did ship correctly.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Status:** 🟢 Done
 **Primary Persona:** Walt | Ned
-**Objective:** Close the seven friction/consistency gaps found in `docs/reports/profile-gap-analysis.md` — three incompatible save models on one page, a TanStack Query architecture bypass that can desync Dashboard badges, two mismatched confirmation patterns for destructive actions, silently swallowed save errors, no deep-linking into Security/Data, and a handful of polish items — without touching the encryption boundary, without adding new Firestore fields, and without regressing the onboarding flow.
+**Objective:** Close the seven friction/consistency gaps found in `docs/reports/archive/profile-gap-analysis.md` — three incompatible save models on one page, a TanStack Query architecture bypass that can desync Dashboard badges, two mismatched confirmation patterns for destructive actions, silently swallowed save errors, no deep-linking into Security/Data, and a handful of polish items — without touching the encryption boundary, without adding new Firestore fields, and without regressing the onboarding flow.
 
 ---
 
