@@ -148,6 +148,13 @@ Using the evidence results from Step 1.5, cross-reference against governance sta
 - **Security gap:** Any project spec that defines a Firestore collection that does not appear in `firestore.rules`. Flag regardless of project status — an unprotected collection is a live security issue.
 - **Partial builds:** Any project with `Code Evidence = ⚠️ PARTIAL` and governance status of `🟢 Done`. The code evidence suggests the project may be incomplete despite being marked finished.
 
+### Check J — Stale Reports & Archive Pointer Hygiene
+Read every file in `docs/reports/` (main tree, not `archive/`) and every file in `docs/projects/archive/`.
+- **Archivable report:** A `docs/reports/*.md` file where every finding it raised is now cited as shipped by a `docs/projects/*.md` spec's `**Source:**`/`**Status:**` line, or where a newer report in the same folder explicitly supersedes it (e.g. says it "cross-references and updates" the older one). Flag it as an archive candidate — do not move it yourself.
+- **Missing pointer:** A file in `docs/projects/archive/` with no `> Superseded by ...` (or equivalent) pointer line at the top, and no citation anywhere in `docs/projects/` or `docs/reports/` explaining why it was archived rather than left in place with `Status: ✅ Shipped` like every other done spec.
+- **Misfiled non-markdown:** A non-`.md` file in `docs/reports/` (main tree) that is not cited by path from anywhere in `src/` (`grep -rn "docs/reports/<file>" src/`). Per `docs/reports/README.md`'s documented exception, a `.jsx`/`.tsx` design-reference mockup cited from a shipped component's comments is *not* a violation — only flag files with no such citation.
+- **Stale citation:** Any doc that cites a `docs/reports/<file>` path where `<file>` no longer exists at that path (e.g. it was archived but the citing doc wasn't updated) — a broken pointer, not just an archive candidate.
+
 ## Step 4: Produce the Report
 
 Output the full report in the following structure. Do not summarise violations — list every one individually.
@@ -182,7 +189,7 @@ List every violation from Checks C, E, and H here.
 
 ### 🔵 Quality Issues (Fix when touching the file)
 
-List every violation from Checks F and G here.
+List every violation from Checks F, G, and J here — except a Check J **stale citation** finding (a broken `docs/reports/<file>` path pointer), which goes in Critical instead, since a broken pointer misleads whoever follows it next.
 
 ---
 
@@ -209,6 +216,7 @@ List every project that passed all applicable checks with no violations. Include
 | G — Backlog Completeness | N | N |
 | H — Blocked Items | N | N |
 | I — Code vs Governance | N | N |
+| J — Stale Reports & Archive Pointers | N | N |
 | **Total** | **N** | **N** |
 
 ---
