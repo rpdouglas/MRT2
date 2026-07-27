@@ -78,3 +78,25 @@ export function advanceCell(
   if (nr < 0 || nr >= grid.length || nc < 0 || nc >= (grid[0]?.length ?? 0)) return null;
   return grid[nr][nc] ? { row: nr, col: nc } : null;
 }
+
+// Grid-sizing constants for the fixed-px cell layout (docs/reports/
+// DailyCrosswordClassic.jsx's `CELL` constant, generalized here since our
+// real generated grids range well beyond that reference's 5-column example
+// — crosswordPrompts.ts requests 10-12 words of 5-9 letters each).
+const GRID_HORIZONTAL_PADDING = 32; // GameShell's p-4 (16px each side)
+const MIN_CELL_PX = 28; // floor for a workable touch target on a wide grid
+const MAX_CELL_PX = 44; // ceiling so small grids don't balloon on desktop
+
+/** Fixed cell size (px) so the grid track always matches its cells — never `1fr`. */
+export function computeCellPx(viewportWidth: number, cols: number): number {
+  if (cols <= 0) return MIN_CELL_PX;
+  const available = viewportWidth - GRID_HORIZONTAL_PADDING;
+  const raw = Math.floor(available / cols);
+  return Math.min(MAX_CELL_PX, Math.max(MIN_CELL_PX, raw));
+}
+
+/** Mirrors the reference mockup's keyboard-open heuristic, relative rather than a hardcoded px threshold. */
+export function isKeyboardOpen(viewportHeight: number, windowInnerHeight: number): boolean {
+  if (windowInnerHeight <= 0) return false;
+  return viewportHeight < windowInnerHeight * 0.75;
+}

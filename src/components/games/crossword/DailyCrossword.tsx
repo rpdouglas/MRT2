@@ -12,13 +12,27 @@
 // no wrong-answer flagging mid-solve, no "hint used" indicator, no timer/
 // streak/score. `useGameSession`'s score badge is deliberately never
 // engaged (no startSession/setScore calls) so GameHeader never shows one.
+//
+// Grid parity follow-up vs. docs/reports/DailyCrosswordClassic.jsx: adopted
+// its fixed-px cell technique (computeCellPx) instead of `1fr` columns, and
+// its `visualViewport` keyboard-open tracking (isKeyboardOpen) — both scoped
+// to this component's own content rather than the shared GameHeader/
+// GameFooter, which sit outside this render tree.
 import { useState, useRef, useMemo, useEffect, useCallback, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import GameShell from '../GameShell';
 import { useGameProgress } from '../../../hooks/useGameProgress';
 import { useDailyCrossword } from '../../../hooks/useDailyCrossword';
-import { buildGrid, wordAt, isInWord, checkSolved, advanceCell } from '../../../lib/games/crossword/crosswordLogic';
+import {
+  buildGrid,
+  wordAt,
+  isInWord,
+  checkSolved,
+  advanceCell,
+  computeCellPx,
+  isKeyboardOpen,
+} from '../../../lib/games/crossword/crosswordLogic';
 import type { CrosswordGrid, CrosswordDirection, CrosswordSelection } from '../../../lib/games/crossword/types';
 import type { CrosswordWordEntry } from '../../../lib/db';
 
@@ -55,6 +69,26 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
   // needing a setState-in-effect to reset it.
   const [hintedWord, setHintedWord] = useState<CrosswordWordEntry | undefined>(undefined);
   const [showInsight, setShowInsight] = useState(false);
+  // Tracks the visible viewport (above the on-screen keyboard), not the full
+  // screen — same intent as the reference mockup's window.visualViewport
+  // tracking, but scoped to this component's own content since GameShell's
+  // shared GameHeader/GameFooter sit outside CrosswordGame's render tree.
+  const [viewport, setViewport] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 400,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+  }));
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => setViewport({ width: vv.width, height: vv.height });
+    handler();
+    vv.addEventListener('resize', handler);
+    return () => vv.removeEventListener('resize', handler);
+  }, []);
+
+  const keyboardOpen = isKeyboardOpen(viewport.height, window.innerHeight);
+  const cellPx = useMemo(() => computeCellPx(viewport.width, cols), [viewport.width, cols]);
 
   const currentWord = useMemo(
     () => wordAt(words, selected.row, selected.col, direction),
@@ -142,13 +176,18 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-white border border-slate-200 px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0E7490' }}>
-          Today's Theme: {theme}
-        </p>
-        <p className="text-sm text-slate-600 mt-1">{themeIntro}</p>
-      </div>
+    <div
+      className="flex flex-col gap-4"
+      style={keyboardOpen ? { maxHeight: viewport.height, overflowY: 'auto' } : undefined}
+    >
+      {!keyboardOpen && (
+        <div className="rounded-2xl bg-white border border-slate-200 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#0E7490' }}>
+            Today's Theme: {theme}
+          </p>
+          <p className="text-sm text-slate-600 mt-1">{themeIntro}</p>
+        </div>
+      )}
 
       {solved && (
         <div
@@ -202,8 +241,8 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
 
       <div className="flex justify-center overflow-x-auto">
         <div
-          className="grid gap-[3px] bg-slate-300 p-[3px] rounded-xl"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          className="grid gap-[2px] bg-slate-300 p-[2px] rounded-lg"
+          style={{ gridTemplateColumns: `repeat(${cols}, ${cellPx}px)` }}
         >
           {grid.map((row, r) =>
             row.map((cell, c) => {
@@ -211,8 +250,8 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
                 return (
                   <div
                     key={`${r}-${c}`}
-                    className="w-11 h-11 sm:w-14 sm:h-14 rounded-[3px]"
-                    style={{ backgroundColor: '#475569' }}
+                    className="rounded-[2px]"
+                    style={{ width: cellPx, height: cellPx, backgroundColor: '#475569' }}
                   />
                 );
               }
@@ -223,20 +262,24 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
                   key={`${r}-${c}`}
                   type="button"
                   onClick={() => selectCell(r, c)}
-                  className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-[3px] flex items-center justify-center transition-colors duration-200"
-                  style={{ backgroundColor: isSelected ? SOMATIC_SELECTED : inWord ? SOMATIC_IN_WORD : '#FFFFFF' }}
+                  className="relative rounded-[2px] flex items-center justify-center transition-colors duration-200"
+                  style={{
+                    width: cellPx,
+                    height: cellPx,
+                    backgroundColor: isSelected ? SOMATIC_SELECTED : inWord ? SOMATIC_IN_WORD : '#FFFFFF',
+                  }}
                   aria-label={`Row ${r + 1} column ${c + 1}${cell.value ? `, ${cell.value}` : ', empty'}`}
                 >
                   {cell.number && (
                     <span
-                      className="absolute top-0.5 left-1 text-[9px] font-medium"
+                      className="absolute top-0 left-0.5 text-[8px] font-medium"
                       style={{ color: isSelected ? '#FFFFFF' : '#64748B' }}
                     >
                       {cell.number}
                     </span>
                   )}
                   <span
-                    className="text-[18px] sm:text-[20px] font-semibold"
+                    className="text-[15px] font-semibold"
                     style={{ color: isSelected ? '#FFFFFF' : solved ? '#0F766E' : '#1E293B' }}
                   >
                     {cell.value}
@@ -256,23 +299,25 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
         tabIndex={-1}
       />
 
-      <div className="flex gap-3">
-        <button
-          onClick={revealLetter}
-          disabled={solved}
-          className="flex-1 rounded-2xl bg-white border border-slate-200 py-3 flex items-center justify-center gap-2 text-slate-600 text-[14px] font-medium transition-colors duration-200 active:bg-slate-100 disabled:opacity-50"
-        >
-          <LightBulbIcon className="h-4 w-4" />
-          Reveal a letter
-        </button>
-        <button
-          onClick={requestHint}
-          disabled={solved || !currentWord?.hint}
-          className="flex-1 rounded-2xl bg-white border border-slate-200 py-3 flex items-center justify-center gap-2 text-slate-600 text-[14px] font-medium transition-colors duration-200 active:bg-slate-100 disabled:opacity-50"
-        >
-          Gentle hint
-        </button>
-      </div>
+      {!keyboardOpen && (
+        <div className="flex gap-3">
+          <button
+            onClick={revealLetter}
+            disabled={solved}
+            className="flex-1 rounded-2xl bg-white border border-slate-200 py-3 flex items-center justify-center gap-2 text-slate-600 text-[14px] font-medium transition-colors duration-200 active:bg-slate-100 disabled:opacity-50"
+          >
+            <LightBulbIcon className="h-4 w-4" />
+            Reveal a letter
+          </button>
+          <button
+            onClick={requestHint}
+            disabled={solved || !currentWord?.hint}
+            className="flex-1 rounded-2xl bg-white border border-slate-200 py-3 flex items-center justify-center gap-2 text-slate-600 text-[14px] font-medium transition-colors duration-200 active:bg-slate-100 disabled:opacity-50"
+          >
+            Gentle hint
+          </button>
+        </div>
+      )}
 
       {solved && (
         <button
@@ -283,9 +328,11 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
         </button>
       )}
 
-      <p className="text-center text-slate-400 text-[12px] px-4 leading-relaxed">
-        No timer, no streak, no score kept. Come back to this one whenever it suits you.
-      </p>
+      {!keyboardOpen && (
+        <p className="text-center text-slate-400 text-[12px] px-4 leading-relaxed">
+          No timer, no streak, no score kept. Come back to this one whenever it suits you.
+        </p>
+      )}
     </div>
   );
 }

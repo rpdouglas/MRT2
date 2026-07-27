@@ -3,7 +3,7 @@
 // reference WORDS/ROWS/COLS so behavior parity with the mockup is verifiable.
 import { describe, it, expect } from 'vitest';
 import type { CrosswordWordEntry } from '../../../db';
-import { buildGrid, wordAt, isInWord, checkSolved, advanceCell } from '../crosswordLogic';
+import { buildGrid, wordAt, isInWord, checkSolved, advanceCell, computeCellPx, isKeyboardOpen } from '../crosswordLogic';
 
 const word = (overrides: Partial<CrosswordWordEntry>): CrosswordWordEntry => ({
   answer: '',
@@ -125,5 +125,43 @@ describe('advanceCell', () => {
   it('returns null when the next cell is a blocked (non-word) cell', () => {
     const grid = buildGrid(WORDS, ROWS, COLS);
     expect(advanceCell(grid, 3, 3, 'across', 1)).toBeNull();
+  });
+});
+
+describe('computeCellPx', () => {
+  it('shrinks toward the floor for a wide grid on a narrow screen', () => {
+    // 13 cols on an iPhone SE-width viewport
+    expect(computeCellPx(320, 13)).toBe(28);
+  });
+
+  it('clamps to the ceiling for a small grid on a wide screen', () => {
+    expect(computeCellPx(1440, 5)).toBe(44);
+  });
+
+  it('computes a fixed track size that matches the reference mockup for its example grid', () => {
+    // Reference mockup: 5 cols in a 420px-max-width container.
+    expect(computeCellPx(420, 5)).toBe(44); // clamps to ceiling since (420-32)/5 > 44
+  });
+
+  it('falls back to the floor for a non-positive column count', () => {
+    expect(computeCellPx(400, 0)).toBe(28);
+  });
+});
+
+describe('isKeyboardOpen', () => {
+  it('is false when the visual viewport matches the full window height', () => {
+    expect(isKeyboardOpen(800, 800)).toBe(false);
+  });
+
+  it('is true once the visual viewport shrinks below the threshold', () => {
+    expect(isKeyboardOpen(400, 800)).toBe(true);
+  });
+
+  it('is false for a small shrink that is not the keyboard (e.g. browser chrome)', () => {
+    expect(isKeyboardOpen(700, 800)).toBe(false);
+  });
+
+  it('is false when windowInnerHeight is not yet known', () => {
+    expect(isKeyboardOpen(400, 0)).toBe(false);
   });
 });
