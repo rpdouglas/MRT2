@@ -722,17 +722,25 @@ export const generateDailyCrossword = onSchedule({
     region: "northamerica-northeast1",
     secrets: [geminiApiKey],
 }, async () => {
-    const tomorrow = addDaysToDate(utcDateString(new Date()), 1);
+    // Checks today's doc as well as tomorrow's — generating only "tomorrow"
+    // relative to each run means today's puzzle never self-heals after a
+    // missed night (or the very first deploy), permanently skipping that
+    // date. Checking both keeps the "stay one day ahead" buffer while
+    // closing that gap.
+    const today = utcDateString(new Date());
+    const tomorrow = addDaysToDate(today, 1);
 
-    const existing = await db.collection("crossword_puzzles").doc(tomorrow).get();
-    if (existing.exists) {
-        logger.info(`PROJ-79: crossword for ${tomorrow} already exists — skipping.`);
-        return;
-    }
+    for (const date of [today, tomorrow]) {
+        const existing = await db.collection("crossword_puzzles").doc(date).get();
+        if (existing.exists) {
+            logger.info(`PROJ-79: crossword for ${date} already exists — skipping.`);
+            continue;
+        }
 
-    const ok = await generateCrosswordForDate(tomorrow, geminiApiKey.value());
-    if (!ok) {
-        logger.error(`PROJ-79: failed to generate crossword for ${tomorrow}.`);
+        const ok = await generateCrosswordForDate(date, geminiApiKey.value());
+        if (!ok) {
+            logger.error(`PROJ-79: failed to generate crossword for ${date}.`);
+        }
     }
 });
 
