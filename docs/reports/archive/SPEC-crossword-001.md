@@ -1,3 +1,5 @@
+> Formalized by `docs/projects/79_DAILY_CROSSWORD.md` (PROJ-79, shipped). Kept as the as-built origin draft, same treatment as `docs/projects/archive/27_SMART_TOOLS.md`.
+
 # SPEC-CROSSWORD-001: Daily Recovery Crossword
 
 **Status:** Draft
