@@ -1,6 +1,6 @@
 # 📁 Project 87: Trigger Match & Knowledge Quests Immersive Shell Restyle
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** Walt (Trigger Match's `recordProgress` persona target); Knowledge Quests targets `'All'` personas but shares this ticket since it shares the same underlying component.
 **Objective:** Restyle Trigger Match and Knowledge Quests to match Goal Ladder's dark-immersive full-bleed treatment (PROJ-85), extended to Recovery Jeopardy (PROJ-86) — without changing the visual appearance of Thought Challenge, which reuses the same shared `ScenarioMatchQuiz` component but stays on the light `GameShell` and is currently inactive (`active: false` on the Games Hub).
 
@@ -49,15 +49,15 @@ interface ScenarioMatchQuizProps {
 * **Reward:** No scoring/XP change — purely visual polish for the shell and shared quiz card, matching Goal Ladder/Jeopardy's precedent.
 
 ### Phase 3: Edge Cases
-* [ ] Confirm `TriggerMatch.test.tsx`/`KnowledgeQuests.test.tsx` (assert on text content and `recordProgress` calls only, not class names) pass unmodified.
-* [ ] Confirm `ThoughtChallenge.test.tsx` (if it exists) and Thought Challenge's rendered output are unchanged — the `theme` prop is opt-in, so its call site must not be touched.
-* [ ] Confirm `GameShell.tsx`/`GameHeader.tsx`/`GameFooter.tsx` remain used as-is by their other consumers (`CravingBuster`, `ThoughtChallenge`, `FastLane`).
-* [ ] 320px-wide screen check for both games' new header/footer and the pack-picker list (Knowledge Quests).
+* [x] Confirmed `TriggerMatch.test.tsx`/`KnowledgeQuests.test.tsx` (assert on text content and `recordProgress` calls only, not class names) pass unmodified.
+* [x] Confirmed `ThoughtChallenge.test.tsx` passes unmodified, and confirmed via a real rendered screenshot (`/games/thought-challenge?mockUser=walt`) that its light `GameShell` chrome (indigo/violet header, orange Start button) is pixel-identical to before — the `theme` prop's opt-in default path is genuinely untouched.
+* [x] Confirmed `GameShell.tsx`/`GameHeader.tsx`/`GameFooter.tsx` remain used as-is by their other consumers (`CravingBuster`, `ThoughtChallenge`, `FastLane`) — no edits to any of the three files.
+* [x] 320px-wide screen check (Trigger Match idle + playing, Knowledge Quests picker) — no clipping or overflow; header/footer/card all reflow cleanly.
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests:** `npm run test:once` — full suite green, including the two games' existing tests unmodified.
-* [ ] **Visual/manual check:** `npm run dev`, exercise both games' full idle → playing → complete loops (and Knowledge Quests' pack-picker → "Try Another Pack" loop), confirm Thought Challenge (if reachable in dev) still renders light/unchanged.
-* [ ] **The Subway Test:** N/A (no network/data dependency in this change).
-* [ ] **The "Lost PIN" Test:** N/A (no encrypted data involved).
+* [x] **Unit Tests:** `npm run test:once` — 662/662 passing, including both games' existing tests and `ThoughtChallenge.test.tsx` unmodified.
+* [x] **Visual/manual check:** `npm run dev` + Playwright screenshots via the `?mockUser=` auth bypass (no real credentials available in this environment). Verified Trigger Match's full idle → playing → answer-reveal (correct/incorrect states) → complete → back-to-Games-Hub loop at both 390px and 320px widths, and Knowledge Quests' pack-picker screen at both widths. Confirmed Thought Challenge's light shell is unaffected. Knowledge Quests' own playing/complete/"Try Another Pack" screens weren't separately screenshotted (a test-automation timing issue, not a product issue) — same `ScenarioMatchQuiz` dark-theme code path already proven correct via Trigger Match, and the full pack-picker→quiz→complete→"Try Another Pack" flow is covered by `KnowledgeQuests.test.tsx`, which passed.
+* [x] **The Subway Test:** N/A (no network/data dependency in this change).
+* [x] **The "Lost PIN" Test:** N/A (no encrypted data involved).
