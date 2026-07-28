@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Generic replacement for the old one-off `close_ticket.py` pattern.
 
