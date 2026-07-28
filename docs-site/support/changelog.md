@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.2] - 2026-07-28
+### 🛠️ Update
+- Redesigned the Goal Ladder game with a real climbing ladder and a calmer dark look. The Dashboard's header and background now pick up whichever color you've chosen for your Sobriety Hero card, instead of always being blue.
+
 ## [v1.9.1] - 2026-07-28
 ### 🛠️ Update
 - Refreshed the look of the dashboard's six shortcut tiles (Journal, Tasks, Vitality, Workbooks, Games, Tools) with richer colors and smoother tap feedback, and darkened the Tasks section's color theme so text is easier to read.

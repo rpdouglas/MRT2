@@ -26,6 +26,7 @@
 - [x] **Add dead-code tooling:** Installed `knip` dev-only and configured `knip.json`. Executed a live dead-code sweep, deleting 10 unused files and 5 unused package dependencies (removing 109 packages from the node tree). (Source: §6, §7)
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-85:** Goal Ladder Immersive Redesign & Hero-Derived Dashboard Theming — Rebuilt Goal Ladder as a self-contained dark-immersive screen with a literal SVG rung-climb visual, and made Dashboard's header/background derive from the user's chosen Sobriety Hero color.
 - [x] **PROJ-84:** Dashboard Bento Tile Refresh & Tasks Contrast Fix — Componentized the six dashboard tiles into a THEME-driven BentoCard, and darkened THEME.tasks.header one shade for white-text legibility.
 - [x] **PROJ-83:** Sobriety Hero Typography Scale-Up — Scaled up Years/Months/Days, Total Days, and Saved text on the Dashboard sobriety hero by one Tailwind type step.
 - [x] **PROJ-82:** PostHog Telemetry Expansion & Zero-Knowledge Alignment — PostHog Telemetry Expansion — safe, ZK-guarded analytics across crisis modal, urge surfer, recovery games, somatic vitality, and React error boundary.
