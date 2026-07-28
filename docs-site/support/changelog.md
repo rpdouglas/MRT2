@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.4] - 2026-07-28
+### 🛠️ Update
+- The Daily Crossword now has the same calmer dark look as the app's other games. Also fixed a bug where typing on some mobile keyboards wouldn't fill in the crossword's letters.
+
 ## [v1.9.3] - 2026-07-28
 ### 🛠️ Update
 - Recovery Jeopardy now has the same calmer dark look throughout the whole game — setup, both trivia rounds, and Final Jeopardy — instead of switching back to a plain light screen once you start playing.
