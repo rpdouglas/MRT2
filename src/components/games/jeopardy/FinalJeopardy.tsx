@@ -46,7 +46,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
 
   if (stage === 'wager') {
     return (
-      <div className="p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
+      <div className="p-8 bg-white rounded-2xl shadow-xl shadow-black/40 border border-white/10 text-center">
         <h2 className="text-2xl font-bold text-indigo-800 mb-2">Final Category</h2>
         <p className="text-3xl font-black text-slate-800 mb-8">{finalQuestion.category}</p>
         <h3 className="text-xl font-bold mb-4 text-slate-700">Place Your Wagers</h3>
@@ -77,7 +77,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
 
   if (stage === 'answer') {
     return (
-      <div className="p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
+      <div className="p-8 bg-white rounded-2xl shadow-xl shadow-black/40 border border-white/10 text-center">
         <h2 className="text-2xl font-bold text-indigo-800 mb-2">Final Question</h2>
         <p className="text-2xl font-bold text-slate-800 mb-8">{finalQuestion.question}</p>
         <h3 className="text-xl font-bold mb-4 text-slate-700">Enter Your Answers</h3>
@@ -112,7 +112,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
   const winner = determineWinner(players);
 
   return (
-    <div ref={revealRef} className="p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
+    <div ref={revealRef} className="p-8 bg-white rounded-2xl shadow-xl shadow-black/40 border border-white/10 text-center">
       <h2 className="text-2xl font-bold text-indigo-800 mb-2">Correct Answer</h2>
       <p className="text-3xl font-black text-slate-800 mb-8">{finalQuestion.answer}</p>
       <h3 className="text-xl font-bold mb-4 text-slate-700">Final Scores</h3>

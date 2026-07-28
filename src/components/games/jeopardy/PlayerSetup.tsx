@@ -27,18 +27,18 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 text-center">
-      <h2 className="text-2xl font-bold text-indigo-800 mb-6">Group Setup</h2>
+    <div className="p-6 bg-white/[0.07] border border-white/10 backdrop-blur-sm rounded-2xl shadow-lg text-center">
+      <h2 className="text-2xl font-bold text-white mb-6">Group Setup</h2>
 
       <div className="mb-6">
-        <label className="text-base font-semibold mb-2 block text-slate-700">How many players or teams?</label>
+        <label className="text-base font-semibold mb-2 block text-white/70">How many players or teams?</label>
         <div className="flex justify-center gap-3">
           {[1, 2, 3].map((num) => (
             <button
               key={num}
               onClick={() => setPlayerCount(num)}
               className={`py-2.5 px-5 text-lg font-bold rounded-xl transition-colors ${
-                playerCount === num ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                playerCount === num ? 'bg-[#C084FC] text-[#1B0F2E]' : 'bg-white/10 text-white/70 hover:bg-white/15'
               }`}
             >
               {num}
@@ -48,7 +48,7 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
       </div>
 
       <div className="mb-6">
-        <label className="text-base font-semibold mb-2 block text-slate-700">Team names</label>
+        <label className="text-base font-semibold mb-2 block text-white/70">Team names</label>
         <div className="flex flex-col items-center gap-3">
           {Array.from({ length: playerCount }).map((_, index) => (
             <input
@@ -56,7 +56,7 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
               type="text"
               value={playerNames[index]}
               onChange={(e) => handleNameChange(index, e.target.value)}
-              className="p-2.5 border border-slate-300 rounded-xl w-64 text-center"
+              className="p-2.5 bg-white/10 border border-white/20 rounded-xl w-64 text-center text-white placeholder:text-white/40"
               placeholder={`Team ${index + 1} name`}
             />
           ))}
@@ -65,7 +65,7 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
 
       <button
         onClick={handleStart}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-xl shadow-md text-lg active:scale-95 transition-transform"
+        className="bg-[#C084FC] hover:bg-[#C084FC]/90 text-[#1B0F2E] font-bold py-3 px-10 rounded-xl shadow-lg shadow-[#C084FC]/30 text-lg active:scale-95 transition-transform"
       >
         Start Game
       </button>
