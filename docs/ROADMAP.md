@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-83` Sobriety Hero Typography Scale-Up (Scaled up Years/Months/Days, Total Days, and Saved text on the Dashboard sobriety hero by one Tailwind type step.)
 * `PROJ-82` PostHog Telemetry Expansion & Zero-Knowledge Alignment (PostHog Telemetry Expansion — safe, ZK-guarded analytics across crisis modal, urge surfer, recovery games, somatic vitality, and React error boundary.)
 * `PROJ-80` Games Hub Unified Hero Restyle (Restyled the Recovery Games hub into one unified dark card with a flat game list (replacing the tile grid), delisted Craving Buster/Thought Challenge from it without touching their routes or components, and surfaced Thought Challenge as a new Tools Hub entry so it isn't left unreachable.)
 * `PROJ-79` Daily Crossword (Added Daily Crossword, the 8th Recovery Games entry — a server-generated, non-personalized daily puzzle persisted like every other game but deliberately excluded from XP, matching its reward-free design.)

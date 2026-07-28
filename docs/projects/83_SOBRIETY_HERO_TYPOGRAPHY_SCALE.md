@@ -1,6 +1,6 @@
 # 📁 Project 83: Sobriety Hero Typography Scale-Up
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** Ned (streak/gamification-focused, benefits most from a bolder counter), David (must not add visual noise/stress)
 **Objective:** Increase the font size of the Years/Months/Days labels, Total Days label+value, and Saved label+value in `SobrietyHero.tsx` by 10%, with no layout regressions at any breakpoint.
 
@@ -31,10 +31,14 @@ N/A — no state or query changes.
 
 ### Phase 2: UI/UX
 * **File:** `src/components/SobrietyHero.tsx`
-* Increase by ~10% (nearest usable Tailwind arbitrary value):
+* **Implemented as Strategy B** (approved deviation from the Strategy A recommendation below) — next Tailwind scale step rather than exact arbitrary-value +10%, to stay within the named design-system scale:
+  * Years/Months/Days **value** — `text-3xl sm:text-5xl` → `text-4xl sm:text-6xl`
+  * Years/Months/Days **label** — `text-[10px] sm:text-xs` → `text-xs sm:text-sm`
+  * Total Days + Saved row (label and value share one wrapping class) — `text-xs sm:text-sm` → `text-sm sm:text-base`
+* Original Strategy A option (exact +10% via Tailwind arbitrary values, not used):
   * Years/Months/Days **value** — `text-3xl sm:text-5xl` → `text-[33px] sm:text-[52.8px]`
   * Years/Months/Days **label** — `text-[10px] sm:text-xs` → `text-[11px] sm:text-[13.2px]`
-  * Total Days + Saved row (label and value share one wrapping class) — `text-xs sm:text-sm` → `text-[13.2px] sm:text-[15.4px]`
+  * Total Days + Saved row — `text-xs sm:text-sm` → `text-[13.2px] sm:text-[15.4px]`
 * **Somatic Check:** Larger numerals reinforce accomplishment; no red/alarm color introduced. Low risk for David — hero is passive display, not an interactive/decision surface.
 * **Reward:** Reinforces the existing streak-as-trophy pattern; no new XP/leveling hook needed.
 

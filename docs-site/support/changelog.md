@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.0] - 2026-07-28
+### 🛠️ Update
+- The sobriety streak counter on your Dashboard now displays larger, bolder numbers.
+
 ## [v1.8.33] - 2026-07-28
 ### 🛠️ Update
 - Redesigned the Recovery Games list with a cleaner, unified layout. Thought Challenge has moved to My Tools (under "After a Hard Moment"); Craving Buster is still available anytime from the SOS button.
