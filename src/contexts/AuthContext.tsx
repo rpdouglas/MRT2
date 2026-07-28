@@ -34,39 +34,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check query params for mockUser bypass
-    const params = new URLSearchParams(window.location.search);
-    const mockParam = params.get('mockUser');
-    if (mockParam) {
-      localStorage.setItem('mrt_mock_user', mockParam.toLowerCase());
-    }
+    // Dev/screenshot-pipeline-only bypass (scripts/generate_screenshots.js drives the Vite
+    // dev server with ?mockUser=<persona>). Never reachable in a production build: SEC-01,
+    // Production Readiness Audit 2026-07-28.
+    if (import.meta.env.DEV) {
+      const params = new URLSearchParams(window.location.search);
+      const mockParam = params.get('mockUser');
+      if (mockParam) {
+        localStorage.setItem('mrt_mock_user', mockParam.toLowerCase());
+      }
 
-    const mockUserKey = localStorage.getItem('mrt_mock_user');
-    if (mockUserKey) {
-      const displayName = mockUserKey.charAt(0).toUpperCase() + mockUserKey.slice(1);
-      const mockUserObj = {
-        uid: `mock-uid-${mockUserKey}`,
-        email: `${mockUserKey}@mrt.mock`,
-        displayName: `${displayName} (Mock)`,
-        emailVerified: true,
-        isAnonymous: false,
-        metadata: {},
-        providerData: [],
-        tenantId: null,
-        delete: async () => {},
-        getIdToken: async () => 'mock-token',
-        getIdTokenResult: async () => ({ token: 'mock-token', claims: {}, authTime: '', expirationTime: '', signInProvider: '', signInSecondFactor: null }),
-        reload: async () => {},
-        toJSON: () => ({}),
-        phoneNumber: null,
-        photoURL: null,
-      } as unknown as User;
+      const mockUserKey = localStorage.getItem('mrt_mock_user');
+      if (mockUserKey) {
+        const displayName = mockUserKey.charAt(0).toUpperCase() + mockUserKey.slice(1);
+        const mockUserObj = {
+          uid: `mock-uid-${mockUserKey}`,
+          email: `${mockUserKey}@mrt.mock`,
+          displayName: `${displayName} (Mock)`,
+          emailVerified: true,
+          isAnonymous: false,
+          metadata: {},
+          providerData: [],
+          tenantId: null,
+          delete: async () => {},
+          getIdToken: async () => 'mock-token',
+          getIdTokenResult: async () => ({ token: 'mock-token', claims: {}, authTime: '', expirationTime: '', signInProvider: '', signInSecondFactor: null }),
+          reload: async () => {},
+          toJSON: () => ({}),
+          phoneNumber: null,
+          photoURL: null,
+        } as unknown as User;
 
-      setUser(mockUserObj);
-      setIsAdmin(mockUserKey === 'admin');
-      setUserTier(mockUserKey === 'ned' || mockUserKey === 'maya' || mockUserKey === 'walt' ? 'premium' : 'free');
-      setLoading(false);
-      return;
+        setUser(mockUserObj);
+        setIsAdmin(mockUserKey === 'admin');
+        setUserTier(mockUserKey === 'ned' || mockUserKey === 'maya' || mockUserKey === 'walt' ? 'premium' : 'free');
+        setLoading(false);
+        return;
+      }
     }
 
     if (!auth) {

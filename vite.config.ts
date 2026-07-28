@@ -118,6 +118,32 @@ export default defineConfig({
             if (id.includes('@google/generative-ai')) {
               return 'gemini';
             }
+            // PERF-01, Production Readiness Audit 2026-07-28: the prior catch-all
+            // 'vendor' bucket combined React, Router, TanStack Query, and both icon
+            // libraries into one 1.83MB chunk. Split by update frequency/size so a
+            // cold load doesn't block on one monolithic file.
+            if (id.includes('react-router')) {
+              return 'react-router';
+            }
+            // Matches the top-level react/react-dom/scheduler packages only —
+            // a broader substring check also caught @use-gesture/react's "react"
+            // subpath, which pulled in @use-gesture/core (bucketed as 'vendor')
+            // and created a vendor <-> react-vendor circular-chunk warning.
+            if (/node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+              return 'react-vendor';
+            }
+            if (id.includes('@tanstack')) {
+              return 'tanstack-query';
+            }
+            if (id.includes('lucide-react') || id.includes('@heroicons')) {
+              return 'icons';
+            }
+            if (id.includes('jspdf')) {
+              return 'pdf-export';
+            }
+            if (id.includes('posthog')) {
+              return 'posthog';
+            }
             return 'vendor';
           }
         }
