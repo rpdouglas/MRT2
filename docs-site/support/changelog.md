@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.5] - 2026-07-28
+### 🛠️ Update
+- Trigger Match and Knowledge Quests now have the same calmer dark look as the app's other games.
+
 ## [v1.9.4] - 2026-07-28
 ### 🛠️ Update
 - The Daily Crossword now has the same calmer dark look as the app's other games. Also fixed a bug where typing on some mobile keyboards wouldn't fill in the crossword's letters.

@@ -26,6 +26,7 @@
 - [x] **Add dead-code tooling:** Installed `knip` dev-only and configured `knip.json`. Executed a live dead-code sweep, deleting 10 unused files and 5 unused package dependencies (removing 109 packages from the node tree). (Source: §6, §7)
 
 ## ✅ Resolved This Cycle
+- [x] **PROJ-87:** Trigger Match & Knowledge Quests Immersive Shell Restyle — Restyled Trigger Match and Knowledge Quests to match the dark-immersive shell used by Goal Ladder/Jeopardy, via an opt-in theme prop on the shared quiz component so the still-light Thought Challenge is unaffected.
 - [x] **PROJ-88:** Daily Crossword Immersive Shell Restyle — Restyled Daily Crossword to match the dark-immersive shell used by Goal Ladder/Jeopardy/Trigger Match/Knowledge Quests, and fixed a mobile on-screen-keyboard bug where typed letters weren't reaching the grid.
 - [x] **PROJ-86:** Recovery Jeopardy Immersive Shell Restyle — Extended the Goal Ladder-style dark-immersive shell (background, header score chip, footer) to Recovery Jeopardy across every round, replacing GameShell's light chrome for this game.
 - [x] **PROJ-85:** Goal Ladder Immersive Redesign & Hero-Derived Dashboard Theming — Rebuilt Goal Ladder as a self-contained dark-immersive screen with a literal SVG rung-climb visual, and made Dashboard's header/background derive from the user's chosen Sobriety Hero color.
