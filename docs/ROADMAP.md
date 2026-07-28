@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-89` Play Store Release Blockers (Fixed the mockUser client-side auth bypass (gated behind DEV-only builds) and split the 1.83MB monolithic vendor bundle into targeted chunks — the two hard blockers from the Production Readiness Audit before Play Store submission.)
 * `PROJ-87` Trigger Match & Knowledge Quests Immersive Shell Restyle (Restyled Trigger Match and Knowledge Quests to match the dark-immersive shell used by Goal Ladder/Jeopardy, via an opt-in theme prop on the shared quiz component so the still-light Thought Challenge is unaffected.)
 * `PROJ-88` Daily Crossword Immersive Shell Restyle (Restyled Daily Crossword to match the dark-immersive shell used by Goal Ladder/Jeopardy/Trigger Match/Knowledge Quests, and fixed a mobile on-screen-keyboard bug where typed letters weren't reaching the grid.)
 * `PROJ-86` Recovery Jeopardy Immersive Shell Restyle (Extended the Goal Ladder-style dark-immersive shell (background, header score chip, footer) to Recovery Jeopardy across every round, replacing GameShell's light chrome for this game.)
