@@ -22,7 +22,7 @@ export default function QuestionModal({ category, question, round, onAnswer, onC
 
   return (
     <div className="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-50 p-4">
-      <div className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-center flex flex-col min-h-[300px]">
+      <div className="relative bg-white p-8 rounded-2xl shadow-2xl ring-1 ring-white/10 w-full max-w-2xl text-center flex flex-col min-h-[300px]">
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl leading-none">
           &times;
         </button>

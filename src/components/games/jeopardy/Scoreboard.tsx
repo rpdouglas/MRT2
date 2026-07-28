@@ -10,7 +10,7 @@ interface ScoreboardProps {
 
 export default function Scoreboard({ players, currentPlayerIndex }: ScoreboardProps) {
   return (
-    <div className="flex justify-around gap-2 mb-4 p-4 bg-white rounded-2xl shadow-sm border border-slate-200">
+    <div className="flex justify-around gap-2 mb-4 p-4 bg-white rounded-2xl shadow-xl shadow-black/40 border border-white/10">
       {players.map((player, index) => (
         <div
           key={index}
