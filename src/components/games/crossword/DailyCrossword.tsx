@@ -295,7 +295,7 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
         ref={inputRef}
         className="opacity-0 absolute -z-10 w-1 h-1"
         onKeyDown={handleKey}
-        aria-hidden="true"
+        aria-label="Crossword letter input"
         tabIndex={-1}
       />
 
