@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-86` Recovery Jeopardy Immersive Shell Restyle (Extended the Goal Ladder-style dark-immersive shell (background, header score chip, footer) to Recovery Jeopardy across every round, replacing GameShell's light chrome for this game.)
 * `PROJ-85` Goal Ladder Immersive Redesign & Hero-Derived Dashboard Theming (Rebuilt Goal Ladder as a self-contained dark-immersive screen with a literal SVG rung-climb visual, and made Dashboard's header/background derive from the user's chosen Sobriety Hero color.)
 * `PROJ-84` Dashboard Bento Tile Refresh & Tasks Contrast Fix (Componentized the six dashboard tiles into a THEME-driven BentoCard, and darkened THEME.tasks.header one shade for white-text legibility.)
 * `PROJ-83` Sobriety Hero Typography Scale-Up (Scaled up Years/Months/Days, Total Days, and Saved text on the Dashboard sobriety hero by one Tailwind type step.)
