@@ -24,7 +24,7 @@ Read every file listed below in full. If any file is absent or unreadable, note 
 
 **Reference files (read for context — do not audit these):**
 - `docs/PERSONAS.md` — used to validate persona assignments
-- `docs/CLAUDE.md` or `CLAUDE.md` — used to understand current sprint priorities
+- `docs/CLAUDE.md`, `CLAUDE.md`, or `GEMINI.md` — used to understand current sprint priorities
 
 After reading, confirm: `"Ingested N governance files and M project specs. All files readable."` If anything is missing: `"WARNING: [filename] not found — audit may be incomplete."`
 

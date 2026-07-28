@@ -1,0 +1,47 @@
+{
+  "permissions": {
+    "allow": [
+      "command(npm run dev:*)",
+      "command(npm run test:*)",
+      "command(npm run lint:*)",
+      "command(npm run check)",
+      "command(git status)",
+      "command(git diff)",
+      "command(git log)",
+      "command(git add)",
+      "command(git commit)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command|command|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .agents/hooks/secrets-scan.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "replace_file_content|write_to_file|multi_replace_file_content|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx eslint --fix '$FILE_PATH' --ext .ts,.tsx 2>&1 | tail -5 || true",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit 2>&1 | tail -10 || true",
+            "timeout": 30,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

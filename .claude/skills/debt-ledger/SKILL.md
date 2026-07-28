@@ -18,12 +18,12 @@ grep -rn "eslint-disable" src/ functions/src/ --include="*.ts" --include="*.tsx"
 grep -rn "@ts-ignore\|@ts-expect-error" src/ functions/src/ --include="*.ts" --include="*.tsx"
 ```
 
-Note: CLAUDE.md already bans `any` outright as a CI-failing rule, so any hit here is either (a) genuinely new debt that slipped past review, or (b) a pre-existing suppression from before that rule was enforced. Don't assume either — check `git blame` on a sample if it's ambiguous, since that changes urgency.
+Note: CLAUDE.md / GEMINI.md already bans `any` outright as a CI-failing rule, so any hit here is either (a) genuinely new debt that slipped past review, or (b) a pre-existing suppression from before that rule was enforced. Don't assume either — check `git blame` on a sample if it's ambiguous, since that changes urgency.
 
 ## Step 2: Filter noise
 
 - Skip matches inside test fixtures or mock data where a loose type is intentional and low-risk (e.g. `as any` in a test-only helper) — but still log them, just mark lower priority.
-- Skip `// eslint-disable-next-line react-refresh/only-export-components` — CLAUDE.md's React Patterns section explicitly sanctions this one for Provider+hook co-exports; it's not debt.
+- Skip `// eslint-disable-next-line react-refresh/only-export-components` — CLAUDE.md / GEMINI.md's React Patterns section explicitly sanctions this one for Provider+hook co-exports; it's not debt.
 - Group by file so the same file with 5 TODOs is one ledger line, not 5.
 
 ## Step 3: Cross-check against existing ledger

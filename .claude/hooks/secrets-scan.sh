@@ -6,7 +6,7 @@
 set -euo pipefail
 
 INPUT=$(cat)
-COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty')
+COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // .tool_input.CommandLine // .CommandLine // .command // empty')
 
 if ! printf '%s' "$COMMAND" | grep -qE '(^|[;&|]|[[:space:]])git[[:space:]]+commit([[:space:]]|$)'; then
   exit 0

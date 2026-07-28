@@ -57,7 +57,7 @@ Scan all new and modified files for:
 ### 6. ZK check
 For every Firestore write introduced by the ticket:
 - User-generated content in a sensitive collection → confirm `encryptData()` / `encrypt()` is called before the write.
-- Plaintext fields in encrypted collections → confirm they are intentional metadata (e.g., scores, timestamps, tags) and documented in `CLAUDE.md`'s ZK boundary table.
+- Plaintext fields in encrypted collections → confirm they are intentional metadata (e.g., scores, timestamps, tags) and documented in `CLAUDE.md` / `GEMINI.md`'s ZK boundary table.
 
 ---
 
