@@ -13,7 +13,7 @@ const MODULE_TOKENS = {
     insights: { gradA: '#E879F9', gradB: '#EC4899' },
     workbooks: { gradA: '#818CF8', gradB: '#6D28D9' },
     tools: { gradA: '#3B82F6', gradB: '#0284C7' }, // blue-500 -> sky-600, matches the Dashboard's Tools tile
-    games: { gradA: '#818CF8', gradB: '#9333EA' } // indigo-400 -> purple-600, PROJ-72 (distinct from 'service' — that slot may resurface elsewhere later)
+    games: { gradA: '#6366F1', gradB: '#9333EA' } // indigo-500 -> purple-600, PROJ-81 — exact match to the Dashboard's My Games tile (was indigo-400 under PROJ-72, never actually consumed until PROJ-81)
 };
 
 export default function GlassCard({ children, className = '', variant = 'insights' }: GlassCardProps) {

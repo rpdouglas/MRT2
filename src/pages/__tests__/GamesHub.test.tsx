@@ -1,9 +1,10 @@
 /**
  * src/pages/__tests__/GamesHub.test.tsx
- * PROJ-80 (Games Hub Unified Hero restyle). Verifies the flat game list
- * renders only active games (Craving Buster/Thought Challenge stay in code
- * but delisted), each row links to its own route, and the Fast Lane chip
- * reflects real useGameSave data rather than a hardcoded placeholder.
+ * PROJ-80 (Games Hub Unified Hero restyle) / PROJ-81 (Design System
+ * Alignment). Verifies the flat game list renders only active games
+ * (Craving Buster/Thought Challenge stay in code but delisted), each row
+ * links to its own route, and the Fast Lane chip reflects real
+ * useGameSave data rather than a hardcoded placeholder.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -13,6 +14,10 @@ import GamesHub from '../GamesHub';
 const mockUseGameSave = vi.fn();
 vi.mock('../../hooks/useGameSave', () => ({
   useGameSave: (gameId: string) => mockUseGameSave(gameId),
+}));
+
+vi.mock('../../contexts/LayoutContext', () => ({
+  useLayout: () => ({ isOnline: true, toggleSidebar: vi.fn(), toggleSOS: vi.fn() }),
 }));
 
 function renderGamesHub() {
@@ -59,5 +64,11 @@ describe('GamesHub', () => {
     mockUseGameSave.mockReturnValue({ save: { player: { week: 4 } } });
     renderGamesHub();
     expect(screen.getByText('Continue · Week 4')).toBeInTheDocument();
+  });
+
+  it('renders the shared VibrantHeader, including the SOS button (PROJ-81 regression fix)', () => {
+    renderGamesHub();
+    expect(screen.getByText('Recovery Games')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Emergency SOS' })).toBeInTheDocument();
   });
 });

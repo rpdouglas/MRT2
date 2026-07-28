@@ -87,5 +87,13 @@ export const THEME = {
       via: 'via-blue-500',
       to: 'to-sky-500'
     }
+  },
+  games: {
+    page: 'bg-violet-200', // Sits between the header's indigo/purple stops; distinct from Journal's indigo-200
+    header: {
+      from: 'from-indigo-500',
+      via: 'via-violet-500',
+      to: 'to-purple-600' // Matches the Dashboard's My Games tile (from-indigo-500 to-purple-600)
+    }
   }
 } as const;

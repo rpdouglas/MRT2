@@ -31,6 +31,7 @@ Recovery is a return to life — not a punishment. Reject gloomy health app aest
 | Vitality | Somatic Health | Rose → Orange → Amber | Calm, grounding, vital energy |
 | Profile | Grounded & Secure | Slate → Gray → Zinc | Settled, trustworthy, in control |
 | Tools | Bright Clarity | Blue → Sky | Quick utility, sharp focus |
+| Games | Playful Mastery | Indigo → Violet → Purple | Lighthearted skill-building, zero shame |
 
 High-saturation gradients. No flat, muted, or grey-dominant palettes. This table must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary.
 

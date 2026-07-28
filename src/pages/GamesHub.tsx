@@ -1,17 +1,17 @@
 /**
  * src/pages/GamesHub.tsx
- * PROJ-72 (Recovery Games) / PROJ-80 (Unified Hero restyle). Landing page
- * for the games route. One dark unified card with a flat list of game rows
- * — persona grouping dropped in favor of a per-row icon tint, matching
- * docs/reports/RecoveryGamesUnifiedHero.jsx. Craving Buster and Thought
- * Challenge are kept in GAMES with `active: false` rather than deleted —
- * their routes/components are untouched, they're just filtered out of what
- * renders here. Flip `active` back to `true` to bring either one back.
+ * PROJ-72 (Recovery Games) / PROJ-80 (Unified Hero restyle) / PROJ-81
+ * (Design System Alignment). Landing page for the games route. One dark
+ * unified card (GlassCard, variant="games") with a flat list of game rows
+ * — persona grouping dropped in favor of a per-row icon tint. Craving
+ * Buster and Thought Challenge are kept in GAMES with `active: false`
+ * rather than deleted — their routes/components are untouched, they're
+ * just filtered out of what renders here. Flip `active` back to `true` to
+ * bring either one back.
  */
 import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ChevronLeftIcon,
   ChevronRightIcon,
   CloudIcon,
   UserGroupIcon,
@@ -21,7 +21,11 @@ import {
   ViewfinderCircleIcon,
   BookOpenIcon,
   Squares2X2Icon,
+  TrophyIcon,
 } from '@heroicons/react/24/outline';
+import VibrantHeader from '../components/VibrantHeader';
+import GlassCard from '../components/ui/GlassCard';
+import { THEME } from '../lib/theme';
 import { useGameSave } from '../hooks/useGameSave';
 import type { FastLaneSaveState } from '../lib/games/fastLane/types';
 
@@ -100,38 +104,22 @@ export default function GamesHub() {
   const fastLaneChip = fastLaneState ? `Continue · Week ${fastLaneState.player.week}` : undefined;
 
   return (
-    <div className="pb-24">
-      <div className="px-5 pt-6 pb-4 flex items-start gap-3">
-        <Link
-          to="/dashboard"
-          className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0 mt-0.5"
-        >
-          <ChevronLeftIcon className="h-5 w-5 text-slate-500" />
-        </Link>
-        <div>
-          <h1 className="font-bold text-2xl text-slate-900 leading-tight">Recovery Games</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Zero-knowledge, anti-shame mini-games</p>
-        </div>
+    <div className={`pb-24 relative min-h-screen ${THEME.games.page}`}>
+      <div className="flex-shrink-0 z-10">
+        <VibrantHeader
+          title="Recovery Games"
+          subtitle="Zero-knowledge, anti-shame mini-games"
+          icon={TrophyIcon}
+          fromColor={THEME.games.header.from}
+          viaColor={THEME.games.header.via}
+          toColor={THEME.games.header.to}
+          backLink="/dashboard"
+        />
       </div>
 
-      <div className="px-4">
-        <div
-          className="relative overflow-hidden rounded-[28px] px-5 pt-5 pb-5"
-          style={{
-            background: 'linear-gradient(160deg, #2E1A47 0%, #1B0F2E 100%)',
-            boxShadow: '0 20px 40px -12px rgba(59, 20, 90, 0.45)',
-          }}
-        >
-          <div
-            className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-30 blur-3xl pointer-events-none"
-            style={{ background: 'radial-gradient(circle, #EC4899, transparent 70%)' }}
-          />
-          <div
-            className="absolute -bottom-16 -left-10 w-40 h-40 rounded-full opacity-20 blur-3xl pointer-events-none"
-            style={{ background: 'radial-gradient(circle, #A855F7, transparent 70%)' }}
-          />
-
-          <div className="relative flex flex-col gap-2">
+      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30">
+        <GlassCard variant="games">
+          <div className="flex flex-col gap-2">
             {ACTIVE_GAMES.map((game) => (
               <GameRow key={game.id} game={game} chip={game.id === 'fast-lane' ? fastLaneChip : undefined} />
             ))}
@@ -140,7 +128,7 @@ export default function GamesHub() {
           <p className="text-[10.5px] text-purple-300/40 mt-4 text-center">
             No timer, no streak, no score kept.
           </p>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );
