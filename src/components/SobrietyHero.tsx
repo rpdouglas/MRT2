@@ -202,16 +202,16 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                     {/* Main Counters */}
                     <div className="grid grid-cols-3 gap-1 text-center divide-x divide-white/30 pt-2">
                         <div className="px-1">
-                            <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
-                            <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
+                            <div className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-md leading-none">{stats.years}</div>
+                            <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Years</div>
                         </div>
                         <div className="px-1">
-                            <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.months}</div>
-                            <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Months</div>
+                            <div className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-md leading-none">{stats.months}</div>
+                            <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Months</div>
                         </div>
                         <div className="px-1">
-                            <div className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
-                            <div className="text-[10px] sm:text-xs font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
+                            <div className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
+                            <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
                         </div>
                     </div>
 
@@ -261,7 +261,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                             )}
 
                             {/* Metrics Row (Days & Financial) */}
-                            <div className="pt-1 flex items-center justify-between text-xs sm:text-sm font-medium drop-shadow-sm opacity-90">
+                            <div className="pt-1 flex items-center justify-between text-sm sm:text-base font-medium drop-shadow-sm opacity-90">
                                 <div className="flex items-center gap-1.5 sm:gap-2">
                                     <CalendarDaysIcon className="h-4 w-4" />
                                     <span>Total Days: <span className="font-mono font-bold text-white ml-1">{stats.totalDays.toLocaleString()}</span></span>
