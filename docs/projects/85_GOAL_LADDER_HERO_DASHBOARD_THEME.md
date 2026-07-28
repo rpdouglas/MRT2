@@ -1,6 +1,6 @@
 # 📁 Project 85: Goal Ladder Immersive Redesign & Hero-Derived Dashboard Theming
 
-**Status:** 🟡 Active (PR #131 open, pending review/merge to `main`)
+**Status:** ✅ Shipped
 **Primary Persona:** Ned (Goal Ladder's target persona; also the persona most engaged by the Dashboard's visual identity)
 **Objective:** Redesign the "Goal Ladder" game screen with a literal SVG ladder visual and a dark-immersive treatment matching the app's existing dark-glass visual family, and make the Dashboard's header/background derive from whichever of the 5 colors the user has picked for their Sobriety Hero card instead of a fixed color for everyone.
 
