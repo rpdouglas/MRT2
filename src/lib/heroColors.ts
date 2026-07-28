@@ -34,7 +34,7 @@ export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
     glow: 'bg-yellow-300',
     swatchClass: 'bg-gradient-to-br from-amber-400 via-orange-400 to-yellow-500',
     dashboardHeader: { from: 'from-amber-700', via: 'via-orange-700', to: 'to-yellow-700' },
-    dashboardPage: 'bg-amber-100',
+    dashboardPage: 'bg-amber-200',
   },
   sky: {
     label: 'Sky',
@@ -44,7 +44,7 @@ export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
     glow: 'bg-sky-300',
     swatchClass: 'bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500',
     dashboardHeader: { from: 'from-sky-600', via: 'via-blue-500', to: 'to-indigo-500' },
-    dashboardPage: 'bg-sky-100',
+    dashboardPage: 'bg-sky-200',
   },
   emerald: {
     label: 'Emerald',
@@ -54,7 +54,7 @@ export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
     glow: 'bg-emerald-300',
     swatchClass: 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500',
     dashboardHeader: { from: 'from-emerald-600', via: 'via-green-700', to: 'to-teal-600' },
-    dashboardPage: 'bg-emerald-100',
+    dashboardPage: 'bg-emerald-200',
   },
   violet: {
     label: 'Violet',
@@ -64,7 +64,7 @@ export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
     glow: 'bg-violet-300',
     swatchClass: 'bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-500',
     dashboardHeader: { from: 'from-violet-500', via: 'via-purple-500', to: 'to-fuchsia-500' },
-    dashboardPage: 'bg-violet-100',
+    dashboardPage: 'bg-violet-200',
   },
   rose: {
     label: 'Rose',
@@ -74,7 +74,7 @@ export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
     glow: 'bg-rose-300',
     swatchClass: 'bg-gradient-to-br from-rose-400 via-pink-500 to-red-500',
     dashboardHeader: { from: 'from-rose-500', via: 'via-pink-500', to: 'to-red-500' },
-    dashboardPage: 'bg-rose-100',
+    dashboardPage: 'bg-rose-200',
   },
 };
 
