@@ -22,7 +22,7 @@ Recovery is a return to life — not a punishment. Reject gloomy health app aest
 
 | Module | Vibe | Gradient | Psychological Goal |
 |---|---|---|---|
-| Dashboard | Hope & Clarity | Sky Blue → Blue → Indigo | Open horizons, fresh start |
+| Dashboard | Personal, hero-derived | Follows the user's chosen Sobriety Hero color (see below) | Reflects the identity the user picked for themselves |
 | Journal | Reflective & Rich | Indigo → Purple → Violet | Quiet introspection, safe disclosure |
 | Tasks | Energy & Action | Cyan → Teal → Emerald | Momentum and dopamine feedback |
 | Workbooks | Structured Growth | Emerald → Green → Lime | Guided progress, herbal groundedness |
@@ -33,7 +33,7 @@ Recovery is a return to life — not a punishment. Reject gloomy health app aest
 | Tools | Bright Clarity | Blue → Sky | Quick utility, sharp focus |
 | Games | Playful Mastery | Indigo → Violet → Purple | Lighthearted skill-building, zero shame |
 
-High-saturation gradients. No flat, muted, or grey-dominant palettes. This table must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary.
+High-saturation gradients. No flat, muted, or grey-dominant palettes. Every row except Dashboard must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary. **Dashboard is the one module without a static entry in `THEME`** — its header/background instead derive from whichever of the 5 Sobriety Hero colors the user has picked (`src/lib/heroColors.ts`, `HERO_COLORS.<key>.dashboardHeader`/`.dashboardPage`), one shade darker than the hero card's own tones to keep the header's white title text legible, with the page background going pale (100-tier). Keep `heroColors.ts` in sync the same way.
 
 ## Persona Design Constraints
 

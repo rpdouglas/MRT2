@@ -1,12 +1,4 @@
 export const THEME = {
-  dashboard: {
-    page: 'bg-slate-200', // High contrast cool grey
-    header: {
-      from: 'from-sky-500',
-      via: 'via-blue-600',
-      to: 'to-indigo-600'
-    }
-  },
   journal: {
     page: 'bg-indigo-200', // Rich lavender
     header: {
