@@ -6,10 +6,18 @@
 // docs/projects/72_RECOVERY_GAMES.md Phase 3 — unlike every other
 // Recovery Game, this one is designed to be played by a group passing one
 // device around (e.g. a sponsor/sponsee session or a home-group activity).
+//
+// PROJ-86: the 'setup' round renders its own dark-immersive full-bleed
+// screen (same visual family as GoalLadder.tsx) instead of GameShell's
+// light chrome — the board/scoreboard/final rounds are untouched and keep
+// using GameHeader/GameFooter directly (imported instead of via GameShell,
+// since GameShell would add a second, conflicting GameSessionProvider).
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import GameShell from '../GameShell';
-import { useGameSession } from '../../../contexts/GameSessionContext';
+import { HomeIcon } from '@heroicons/react/24/outline';
+import { GameSessionProvider, useGameSession } from '../../../contexts/GameSessionContext';
+import GameHeader from '../GameHeader';
+import GameFooter from '../GameFooter';
 import { useGameProgress } from '../../../hooks/useGameProgress';
 import { jeopardyData } from '../../../lib/games/jeopardy/jeopardyData';
 import { calculateAnswerScoreChange, determineWinner } from '../../../lib/games/jeopardy/scoring';
@@ -33,7 +41,7 @@ function shuffle<T>(array: T[]): T[] {
 
 function RecoveryJeopardyGame() {
   const navigate = useNavigate();
-  const { startSession, setScore, completeSession } = useGameSession();
+  const { startSession, setScore, completeSession, resetSession } = useGameSession();
   const { recordProgress } = useGameProgress();
 
   const [players, setPlayers] = useState<JeopardyPlayer[]>([]);
@@ -127,57 +135,87 @@ function RecoveryJeopardyGame() {
 
   const currentCategories = round === 'jeopardy' ? jeopardyCategories : doubleJeopardyCategories;
 
+  if (round === 'setup') {
+    const handleExit = () => {
+      resetSession();
+      navigate('/games');
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col bg-[linear-gradient(160deg,#2E1A47_0%,#1B0F2E_100%)] text-white relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#C084FC]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-[#A855F7]/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col flex-1 w-full max-w-[420px] mx-auto px-4 py-4 gap-4">
+          <div className="flex items-center justify-between shrink-0">
+            <h1 className="text-xl font-bold tracking-tight text-white">Recovery Jeopardy</h1>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <PlayerSetup onStartGame={handleStartGame} />
+          </div>
+
+          <div className="flex items-center justify-between bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3 shrink-0">
+            <button
+              onClick={handleExit}
+              aria-label="Exit to Games"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/70 hover:bg-white/10 active:scale-95 transition-colors"
+            >
+              <HomeIcon className="h-5 w-5" />
+              <span className="text-sm font-semibold">Exit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      {round === 'setup' && <PlayerSetup onStartGame={handleStartGame} />}
+    <div className="flex flex-col gap-4 p-4 max-w-2xl mx-auto">
+      <GameHeader title="Recovery Jeopardy" />
 
-      {(round === 'jeopardy' || round === 'double') && (
-        <>
-          <Scoreboard players={players} currentPlayerIndex={currentPlayerIndex} />
-          <JeopardyBoard
-            categories={currentCategories}
-            round={round}
-            onSelectQuestion={handleSelectQuestion}
-            answeredQuestions={answeredQuestions}
+      <div className="flex-1 flex flex-col gap-4">
+        {(round === 'jeopardy' || round === 'double') && (
+          <>
+            <Scoreboard players={players} currentPlayerIndex={currentPlayerIndex} />
+            <JeopardyBoard
+              categories={currentCategories}
+              round={round}
+              onSelectQuestion={handleSelectQuestion}
+              answeredQuestions={answeredQuestions}
+            />
+          </>
+        )}
+
+        {round === 'final' && (
+          <FinalJeopardy
+            players={players}
+            onUpdateScore={handleUpdateScore}
+            onRestartGame={handleRestartGame}
+            onComplete={handleFinalComplete}
           />
-        </>
-      )}
+        )}
 
-      {round === 'final' && (
-        <FinalJeopardy
-          players={players}
-          onUpdateScore={handleUpdateScore}
-          onRestartGame={handleRestartGame}
-          onComplete={handleFinalComplete}
-        />
-      )}
+        {currentQuestion && (
+          <QuestionModal
+            category={currentQuestion.category}
+            question={currentQuestion.question}
+            round={round}
+            onAnswer={handleAnswerOutcome}
+            onClose={() => setCurrentQuestion(null)}
+          />
+        )}
+      </div>
 
-      {currentQuestion && (
-        <QuestionModal
-          category={currentQuestion.category}
-          question={currentQuestion.question}
-          round={round}
-          onAnswer={handleAnswerOutcome}
-          onClose={() => setCurrentQuestion(null)}
-        />
-      )}
-
-      {round === 'setup' && (
-        <button
-          onClick={() => navigate('/games')}
-          className="text-sm text-slate-500 hover:text-slate-700 font-semibold mt-2"
-        >
-          &larr; Back to Games
-        </button>
-      )}
+      <GameFooter />
     </div>
   );
 }
 
 export default function RecoveryJeopardy() {
   return (
-    <GameShell title="Recovery Jeopardy">
+    <GameSessionProvider>
       <RecoveryJeopardyGame />
-    </GameShell>
+    </GameSessionProvider>
   );
 }
