@@ -119,6 +119,15 @@ describe('🧩 ToolsHub page', () => {
         expect(card).toHaveAttribute('href', '/tools/urge-surfer');
     });
 
+    it('surfaces Thought Challenge (PROJ-80) as a simple card linking to its Recovery Games route', () => {
+        render(<ToolsHub />);
+        expandSection('After a Hard Moment');
+        const card = cardFor('Thought Challenge');
+        expect(within(card).queryByText('Start Fresh')).not.toBeInTheDocument();
+        expect(card.tagName).toBe('A');
+        expect(card).toHaveAttribute('href', '/games/thought-challenge');
+    });
+
     describe('moment-based grouping (PROJ-71)', () => {
         it('keeps all four sections collapsed by default', () => {
             render(<ToolsHub />);

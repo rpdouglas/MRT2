@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.8.33] - 2026-07-28
+### 🛠️ Update
+- Redesigned the Recovery Games list with a cleaner, unified layout. Thought Challenge has moved to My Tools (under "After a Hard Moment"); Craving Buster is still available anytime from the SOS button.
+
 ## [v1.8.32] - 2026-07-27
 ### ✨ New Feature
 - Added a new Daily Crossword game to Recovery Games — a short, no-pressure daily puzzle themed around a recovery concept. There's no score, timer, or penalty for wrong answers, and playing it doesn't affect your XP or level.

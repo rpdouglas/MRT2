@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-80` Games Hub Unified Hero Restyle (Restyled the Recovery Games hub into one unified dark card with a flat game list (replacing the tile grid), delisted Craving Buster/Thought Challenge from it without touching their routes or components, and surfaced Thought Challenge as a new Tools Hub entry so it isn't left unreachable.)
 * `PROJ-79` Daily Crossword (Added Daily Crossword, the 8th Recovery Games entry — a server-generated, non-personalized daily puzzle persisted like every other game but deliberately excluded from XP, matching its reward-free design.)
 * `Maintenance` Build-Process Tooling Gap Closure (Added dependency-audit, secrets-scanning, ingestion, debt-ledger, and release-scribe skills/hooks to close gaps between the documented Recursive Build Protocol and the actual `.claude/` tooling.)
 * `PROJ-78` VibrantHeader Right-Column Overflow (VibrantHeader Right-Column Overflow — fixed a layout bug where the header's shrink-0 center title/subtitle column never yielded width, pushing the SOS button up to 29px past the viewport edge on pages with a long subtitle (worst case: Workbooks at 412px/320px). Fix: center column now min-w-0 with a truncating subtitle; SOS's own column deliberately untouched so it can never shrink.)

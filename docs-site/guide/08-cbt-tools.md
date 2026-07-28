@@ -31,7 +31,7 @@ From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the
 Tools are grouped into four sections based on when you'd reach for them:
 * **Right Now** — Urge Surfer and The Resentment Burner, for cravings and crisis. Always open when you arrive, so these are never more than a tap away.
 * **Before It Happens** — D.E.N.T.S. Strategy, Cost Benefit Analysis, and Morning Intent, for planning ahead of a risky moment.
-* **After a Hard Moment** — ABC Coping, Personify & Disarm, Thought Record, and Five Questions, for processing what just happened.
+* **After a Hard Moment** — ABC Coping, Personify & Disarm, Thought Record, Thought Challenge, and Five Questions, for processing what just happened.
 * **Big Picture** — Lifestyle Balance and SMART Goal, for stepping back and planning.
 
 The other three sections start collapsed — tap a section's header to open it.
@@ -83,6 +83,13 @@ Instead of examining something that already happened, this tool looks forward: n
 **When to use it:** When you want to understand and reframe a difficult moment.
 
 The classic 7-column CBT thought record, guided one step at a time: what happened, the automatic thought it triggered, how strongly you felt it (rate 1-3 emotions 0-100%), the evidence for and against the thought, a more balanced thought, and — finally — a re-rating of those same emotions now that you've worked through it. The summary screen, "The Shift," shows exactly how much each emotion moved.
+
+---
+
+## 💭 Thought Challenge
+**When to use it:** For sponsors and service workers processing burnout.
+
+A short CBT-style matching game rather than a guided worksheet: read a short thought, pick which unhelpful thinking pattern it fits, and see it explained. When you finish, you can optionally write a brief reframe of your own — that note is saved to your encrypted history just like a journal entry. It doesn't have the Start Fresh / Resume / History entry points above since it's a self-contained session — see the [My Recovery Games](/guide/11-recovery-games) guide for the rest of that family.
 
 ---
 

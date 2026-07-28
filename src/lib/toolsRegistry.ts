@@ -9,6 +9,7 @@ import type { ComponentType, SVGProps } from 'react';
 import {
     ScaleIcon, ShieldExclamationIcon, ArrowPathIcon, BoltIcon, UserCircleIcon,
     ChartPieIcon, FireIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, FlagIcon, SunIcon,
+    LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import type { SmartToolType } from './types/smart';
 
@@ -235,6 +236,18 @@ export const TOOLS: ToolRegistryEntry[] = [
         status: 'active',
         toolType: 'THOUGHT_RECORD',
         hasGuidedFlow: true,
+        phase: 'after',
+    },
+    {
+        id: 'thought-challenge',
+        title: 'Thought Challenge',
+        description: 'A CBT-style reframing game for service burnout — read a short thought, spot the unhelpful thinking pattern, and see it explained.',
+        path: '/games/thought-challenge',
+        icon: LightBulbIcon,
+        color: 'text-fuchsia-600',
+        bg: 'bg-fuchsia-50',
+        border: 'border-l-fuchsia-500',
+        status: 'active',
         phase: 'after',
     },
     {
