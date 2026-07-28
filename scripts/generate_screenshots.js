@@ -150,6 +150,38 @@ async function captureScreenshots() {
         {
             name: 'ned-games-hub',
             url: `${BASE_URL}/games?mockUser=ned`,
+        },
+        {
+            name: 'david-craving-buster',
+            url: `${BASE_URL}/games/craving-buster?mockUser=david`,
+        },
+        {
+            name: 'lisa-recovery-jeopardy',
+            url: `${BASE_URL}/games/recovery-jeopardy?mockUser=lisa`,
+        },
+        {
+            name: 'walt-fast-lane',
+            url: `${BASE_URL}/games/fast-lane?mockUser=walt`,
+        },
+        {
+            name: 'ned-goal-ladder',
+            url: `${BASE_URL}/games/goal-ladder?mockUser=ned`,
+        },
+        {
+            name: 'lisa-thought-challenge',
+            url: `${BASE_URL}/games/thought-challenge?mockUser=lisa`,
+        },
+        {
+            name: 'walt-trigger-match',
+            url: `${BASE_URL}/games/trigger-match?mockUser=walt`,
+        },
+        {
+            name: 'maya-knowledge-quests',
+            url: `${BASE_URL}/games/knowledge-quests?mockUser=maya`,
+        },
+        {
+            name: 'ned-daily-crossword',
+            url: `${BASE_URL}/games/daily-crossword?mockUser=ned`,
         }
     ];
 
