@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.3] - 2026-07-28
+### 🛠️ Update
+- Recovery Jeopardy now has the same calmer dark look throughout the whole game — setup, both trivia rounds, and Final Jeopardy — instead of switching back to a plain light screen once you start playing.
+
 ## [v1.9.2] - 2026-07-28
 ### 🛠️ Update
 - Redesigned the Goal Ladder game with a real climbing ladder and a calmer dark look. The Dashboard's header and background now pick up whichever color you've chosen for your Sobriety Hero card, instead of always being blue.
