@@ -1,0 +1,73 @@
+/**
+ * src/lib/telemetry.ts
+ * PROJ-82: Centralized, ZK-guarded PostHog Telemetry Wrapper.
+ * Guarantees zero PII or user-generated disclosures leak to analytics.
+ */
+import posthog from 'posthog-js';
+
+/**
+ * Helper to safely capture events with error boundary protection.
+ */
+export function safeCapture(eventName: string, properties?: Record<string, unknown>): void {
+  try {
+    posthog.capture(eventName, properties);
+  } catch (error) {
+    console.warn(`[Telemetry] Failed to capture event '${eventName}':`, error);
+  }
+}
+
+/**
+ * Crisis Intervention: SOS Panic Button Triggered
+ */
+export function trackSosOpened(source: 'nav' | 'dashboard' | 'shortcut' = 'nav'): void {
+  safeCapture('sos_modal_opened', { source });
+}
+
+/**
+ * Urge Surfing Session Completed
+ */
+export function trackUrgeSurferCompleted(durationSeconds: number): void {
+  safeCapture('urge_surfer_completed', { duration_seconds: Math.round(durationSeconds) });
+}
+
+/**
+ * Recovery Game Started
+ */
+export function trackGameStarted(gameId: string, personaTarget?: string): void {
+  safeCapture('game_started', { game_id: gameId, persona_target: personaTarget || 'general' });
+}
+
+/**
+ * Recovery Game Completed / Progress Saved
+ */
+export function trackGameCompleted(gameId: string, score: number, personaTarget?: string): void {
+  safeCapture('game_completed', {
+    game_id: gameId,
+    score,
+    persona_target: personaTarget || 'general',
+  });
+}
+
+/**
+ * Somatic Breathwork Session Completed
+ */
+export function trackBreathworkCompleted(pattern: string, durationSeconds: number): void {
+  safeCapture('breathwork_completed', { pattern, duration_seconds: Math.round(durationSeconds) });
+}
+
+/**
+ * Somatic Vitality Logged (Move / Fuel / Breath)
+ */
+export function trackVitalityLogged(category: string): void {
+  safeCapture('vitality_entry_logged', { category });
+}
+
+/**
+ * Uncaught React Exception Captured in Error Boundary
+ */
+export function trackUncaughtError(errorName: string, componentStackSnippet?: string): void {
+  safeCapture('uncaught_error_captured', {
+    error_name: errorName,
+    component_stack: componentStackSnippet ? componentStackSnippet.slice(0, 200) : undefined,
+  });
+}

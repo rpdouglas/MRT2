@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { encrypt } from '../lib/crypto';
 import { triggerHaptic } from '../lib/haptics';
+import { trackVitalityLogged } from '../lib/telemetry';
 import { calculateBioBalance, inferMoodFromRecentEntries, type MoodCacheEntry } from '../lib/vitalityScoring';
 import { useJournalOperations } from './useJournalOperations';
 import { useTodaysVitalityLogs } from './useTodaysVitalityLogs';
@@ -39,6 +40,7 @@ export function useVitalityEntries() {
                 tags: ['Vitality', category, ...tags],
                 isEncrypted: true,
             });
+            trackVitalityLogged(category);
             triggerHaptic('hold'); // Celebration buzz
             toast.success('Vitality entry logged.');
         } catch (e) {

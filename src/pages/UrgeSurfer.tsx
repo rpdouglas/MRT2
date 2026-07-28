@@ -6,6 +6,7 @@ import { useEncryption } from '../contexts/EncryptionContext';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useQueryClient } from '@tanstack/react-query';
 import { inferMoodFromRecentEntries, type MoodCacheEntry } from '../lib/vitalityScoring';
+import { trackUrgeSurferCompleted } from '../lib/telemetry';
 import VibrantHeader from '../components/VibrantHeader';
 import { 
     PuzzlePieceIcon, 
@@ -63,6 +64,7 @@ export default function UrgeSurfer() {
                 if (prev <= 1) {
                     if (timerRef.current) clearInterval(timerRef.current);
                     setStatus('completed');
+                    trackUrgeSurferCompleted(SURF_DURATION_SECONDS);
                     releaseWakeLock();
                     return 0;
                 }

@@ -1,9 +1,10 @@
 import { MapPin, ExternalLink } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { trackSosOpened } from '../lib/telemetry';
 
 interface SOSModalProps { isOpen: boolean; onClose: () => void; }
 
@@ -13,6 +14,12 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   const navigate = useNavigate();
   const sponsorName = profile?.sponsorName || null;
   const sponsorPhone = profile?.sponsorPhone || null;
+
+  useEffect(() => {
+    if (isOpen) {
+      trackSosOpened('shortcut');
+    }
+  }, [isOpen]);
 
   const handleNavigation = (path: string) => { onClose(); navigate(path); };
 

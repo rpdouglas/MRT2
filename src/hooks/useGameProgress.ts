@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { db } from '../lib/firebase';
 import type { GamePersonaTarget, GameProgressRecord } from '../lib/db';
+import { trackGameCompleted } from '../lib/telemetry';
 
 export type DecryptedGameProgress = {
   id: string;
@@ -103,6 +104,7 @@ export function useGameProgress() {
       };
 
       await addDoc(collection(db, 'game_progress'), record);
+      trackGameCompleted(params.gameId, params.score, params.personaTarget);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

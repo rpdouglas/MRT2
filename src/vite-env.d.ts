@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_APP_VERSION: string; // NEW
   readonly VITE_USE_MOCK_AI?: string;
+  readonly VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
+  readonly VITE_PUBLIC_POSTHOG_HOST?: string;
 }
 
 interface ImportMeta {

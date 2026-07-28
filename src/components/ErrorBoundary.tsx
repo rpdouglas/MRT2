@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { auth, db } from "../lib/firebase";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { trackUncaughtError } from "../lib/telemetry";
 
 interface Props {
   children: ReactNode;
@@ -17,6 +18,7 @@ class ErrorBoundary extends Component<Props, State> { public state: State = { ha
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    trackUncaughtError(error.name || 'UncaughtError', errorInfo.componentStack || undefined);
     
     // Triage Bug Fix: Catch Vite PWA Chunk Loading Errors
     const msg = error.message.toLowerCase();

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useBreathEngine } from '../../hooks/useBreathEngine';
 import { BoltIcon, PlayIcon, PauseIcon, SparklesIcon, ArrowPathIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
+import { trackBreathworkCompleted } from '../../lib/telemetry';
 
 interface BreathTabProps {
     onLog: (category: string, title: string, contentDetails: string, note: string, tags: string[]) => Promise<void>;
@@ -17,6 +18,7 @@ export default function BreathTab({ onLog, saving }: BreathTabProps) {
         const techniqueName = engine.breathPattern === '4-7-8' ? 'Relax (4-7-8)' : engine.breathPattern === '4-4-4-4' ? 'Box Breathing (4-4-4-4)' : `Custom (${engine.customPattern.join('-')})`;
         const details = `*Session Duration:* ${mins}m ${secs}s\n*Technique:* ${techniqueName}`;
 
+        trackBreathworkCompleted(engine.breathPattern, engine.breathTime);
         engine.stopEngine();
         await onLog('Mindfulness', 'Breathwork Session 🌬️', details, breathNote, ['Somatic', 'Breathing', 'Regulation', 'Meditation']);
 
