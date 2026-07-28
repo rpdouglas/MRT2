@@ -11,7 +11,7 @@ import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
 import BentoCard, { type BentoTileConfig } from '../components/dashboard/BentoCard';
 import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, TrophyIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { THEME } from '../lib/theme';
+import { getHeroColorTheme } from '../lib/heroColors';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
 import { useBuildInfo } from '../lib/versioning';
@@ -52,6 +52,7 @@ export default function Dashboard() {
 
   const { profile: userProfile, isLoading: profileLoading, patchFields } = useUserProfile();
   const { mutate: patchProfileFields } = patchFields;
+  const heroTheme = getHeroColorTheme(userProfile?.heroColor);
 
   // Changelog Beacon Logic
   useEffect(() => {
@@ -107,7 +108,7 @@ export default function Dashboard() {
   if (loading || !stats) return <div className="p-8 text-center text-gray-500">Loading your recovery hub...</div>;
 
   return (
-    <div className={`h-[100dvh] flex flex-col ${THEME.dashboard.page} relative`}>
+    <div className={`h-[100dvh] flex flex-col ${heroTheme.dashboardPage} relative`}>
       
       {/* CONFETTI LAYER */}
       {showConfetti && (
@@ -122,9 +123,9 @@ export default function Dashboard() {
             title="My Dashboard" 
             subtitle={slogan}
             icon={HomeIcon}
-            fromColor={THEME.dashboard.header.from}
-            viaColor={THEME.dashboard.header.via}
-            toColor={THEME.dashboard.header.to}
+            fromColor={heroTheme.dashboardHeader.from}
+            viaColor={heroTheme.dashboardHeader.via}
+            toColor={heroTheme.dashboardHeader.to}
         />
       </div>
 
