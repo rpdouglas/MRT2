@@ -40,6 +40,14 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 | **[`walt-journal-insights.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-insights.webp)** | `/journal?mockUser=walt&tab=insights` | Walt | Journal Insights. Displays weekly and monthly mood trends, somatic balance charts, and check-in word cloud frequencies. |
 | **[`walt-journal-ai-wizard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-ai-wizard.webp)** | `/journal?mockUser=walt&tab=history` (Trigger AI) | Walt | AI Analysis Results. Displays the completed Comparative Analysis result showing trajectory, key themes, wins, blind spots, and actionable advice. |
 | **[`ned-games-hub.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-games-hub.webp)** | `/games?mockUser=ned` | Ned | Recovery Games hub (PROJ-72). Scrollable stack of gradient mini-game cards (Craving Buster, Recovery Jeopardy, Fast Lane, Goal Ladder, Thought Challenge, Trigger Match, Knowledge Quests), each tagged with its target persona. |
+| **[`david-craving-buster.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-craving-buster.webp)** | `/games/craving-buster?mockUser=david` | David | Craving Buster idle screen. Still on the original light `GameShell` chrome (untouched by the PROJ-85/86/87/88 dark-immersive restyle series) — indigo/violet header, white card, "Start" button. |
+| **[`lisa-recovery-jeopardy.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-recovery-jeopardy.webp)** | `/games/recovery-jeopardy?mockUser=lisa` | Lisa | Recovery Jeopardy's "Group Setup" screen (PROJ-86). Dark-immersive full-bleed shell — player-count selector, team-name input, purple "Start Game" button. |
+| **[`walt-fast-lane.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-fast-lane.webp)** | `/games/fast-lane?mockUser=walt` | Walt | Fast Lane's "Choose a Starting Point" screen. Still on the original light `GameShell` chrome (untouched by the restyle series) — three difficulty cards (Stabilization/Maintenance/Thriving) with starting cash/debt. |
+| **[`ned-goal-ladder.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-goal-ladder.webp)** | `/games/goal-ladder?mockUser=ned` | Ned | Goal Ladder idle screen (PROJ-85). Dark-immersive shell with the literal SVG rung-ladder visual and teal "Start Climbing" button. |
+| **[`lisa-thought-challenge.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-thought-challenge.webp)** | `/games/thought-challenge?mockUser=lisa` | Lisa | Thought Challenge idle screen. Still on the original light `GameShell` chrome — the one `ScenarioMatchQuiz` consumer deliberately left unchanged by PROJ-87's opt-in `theme` prop. Not listed on the Games Hub itself (reached via My Tools instead), so not pictured in `ned-games-hub.webp`. |
+| **[`walt-trigger-match.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-trigger-match.webp)** | `/games/trigger-match?mockUser=walt` | Walt | Trigger Match idle screen (PROJ-87). Dark-immersive shell, Walt's blue accent (`#60A5FA`) on the "Start" button. |
+| **[`maya-knowledge-quests.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-knowledge-quests.webp)** | `/games/knowledge-quests?mockUser=maya` | Maya | Knowledge Quests pack-picker screen (PROJ-87). Dark-immersive shell, three quiz-pack cards (Stress & The Body / Habit Loops / Sleep & Recovery). |
+| **[`ned-daily-crossword.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-daily-crossword.webp)** | `/games/daily-crossword?mockUser=ned` | Ned | Daily Crossword idle screen (PROJ-88). Dark-immersive shell with the theme banner, first clue, and grid — rendered from a static mock puzzle (`useDailyCrossword.ts`'s `.mock`-user fallback, since the real puzzle is generated server-side nightly with no local equivalent) rather than a real dated puzzle. |
 
 ---
 
@@ -143,3 +151,43 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 *   **Route**: `/games?mockUser=ned`
 *   **Visual Structure**: Purple header ("Recovery Games — Zero-knowledge, anti-shame mini-games") with a back chevron, followed by a vertically scrolling stack of full-width gradient cards, one per mini-game: Craving Buster ("FOR DAVID" — a calming breathing-rhythm game for the middle of an urge), Recovery Jeopardy ("FOR GROUPS" — pass-the-device trivia), Fast Lane ("FOR WALT" — a multi-week, auto-saved life-management simulation), Goal Ladder ("FOR NED" — momentum-building steps that never punish a broken streak), Thought Challenge ("FOR LISA" — a CBT-style reframing game for service burnout), with Trigger Match below the fold.
 *   **Semantic Meaning**: PROJ-72's gamification layer, shipped entirely after this index was last written. Each game is explicitly persona-targeted (breathing regulation for David's crisis state, streak-building for Ned's momentum phase, a long-form sim for Walt's analytical depth, etc.), reinforcing that engagement mechanics now live in their own module rather than on the Dashboard.
+
+### 20. David's Craving Buster (`david-craving-buster.webp`)
+*   **Route**: `/games/craving-buster?mockUser=david`
+*   **Visual Structure**: Original light `GameShell` chrome — indigo-to-violet gradient header banner, white page background, centered intro copy ("A short breathing rhythm — about 90 seconds. Tap the circle each time you breathe out."), a solid indigo "Start" button, and a light gray Exit bar.
+*   **Semantic Meaning**: One of three games (with Fast Lane and Thought Challenge) deliberately left on the original light shell by the PROJ-85/86/87/88 dark-immersive restyle series — Craving Buster is a quick in-the-moment tool reached from the SOS button, not part of that visual initiative.
+
+### 21. Lisa's Recovery Jeopardy Setup (`lisa-recovery-jeopardy.webp`)
+*   **Route**: `/games/recovery-jeopardy?mockUser=lisa`
+*   **Visual Structure**: Dark-immersive full-bleed shell (PROJ-86) — purple gradient background with ambient glow, a glass "Group Setup" card with a player-count selector (1/2/3, purple-highlighted), a "Team names" input, and a purple "Start Game" button.
+*   **Semantic Meaning**: The pass-the-device group trivia game's entry point, restyled to match Goal Ladder's dark treatment across every round (setup through Final Jeopardy) while leaving the actual Jeopardy board's light indigo/slate grid untouched.
+
+### 22. Walt's Fast Lane Selector (`walt-fast-lane.webp`)
+*   **Route**: `/games/fast-lane?mockUser=walt`
+*   **Visual Structure**: Original light `GameShell` chrome — indigo-to-purple header, "Choose a Starting Point" heading, and three white difficulty cards (Stabilization $1500 start cash, Maintenance $500, Thriving $100 with $500 starting debt).
+*   **Semantic Meaning**: Deliberately left on the light shell — Fast Lane's own multi-week resumable-save mechanic (PROJ-72 Phase 4) is out of scope for the dark-immersive restyle series, which only reached Goal Ladder, Recovery Jeopardy, Trigger Match, Knowledge Quests, and Daily Crossword.
+
+### 23. Ned's Goal Ladder (`ned-goal-ladder.webp`)
+*   **Route**: `/games/goal-ladder?mockUser=ned`
+*   **Visual Structure**: Dark-immersive shell (PROJ-85) with a literal SVG ladder (two rails, eight rungs, an idle teal marker at the base), intro copy ("Eight quick prompts — climb a rung with each one. No streak to keep, nothing to break."), and a teal "Start Climbing" button.
+*   **Semantic Meaning**: The original dark-immersive redesign this whole restyle series (PROJ-86/87/88) was modeled after — Ned's own persona-teal accent (`#2DD4BF`) drives both the ladder glow and the CTA.
+
+### 24. Lisa's Thought Challenge (`lisa-thought-challenge.webp`)
+*   **Route**: `/games/thought-challenge?mockUser=lisa`
+*   **Visual Structure**: Original light `GameShell` chrome — indigo-to-violet header, intro copy ("15 quick thoughts, sponsor-and-service flavored. Match each one to the thinking pattern it fits."), and a solid amber "Start" button.
+*   **Semantic Meaning**: The one other consumer of the shared `ScenarioMatchQuiz` component alongside Trigger Match and Knowledge Quests — deliberately left unchanged when PROJ-87 added an opt-in `theme` prop to that shared component, proving the dark restyle didn't leak into this still-light screen. Not listed on the Games Hub card stack itself (reached via My Tools → After a Hard Moment instead), so it doesn't appear in `ned-games-hub.webp`.
+
+### 25. Walt's Trigger Match (`walt-trigger-match.webp`)
+*   **Route**: `/games/trigger-match?mockUser=walt`
+*   **Visual Structure**: Dark-immersive shell (PROJ-87) with intro copy ("15 situations — match each one to the trigger category it fits best...") and a "Start" button in Walt's persona-blue accent (`#60A5FA`, the same color already used for his Games Hub tile).
+*   **Semantic Meaning**: Pattern-recognition practice for Walt's analytical/reflective persona, now visually consistent with the rest of the Recovery Games set.
+
+### 26. Maya's Knowledge Quests (`maya-knowledge-quests.webp`)
+*   **Route**: `/games/knowledge-quests?mockUser=maya`
+*   **Visual Structure**: Dark-immersive shell (PROJ-87) showing the pack-picker: three glass cards (Stress & The Body, Habit Loops, Sleep & Recovery), each with a description and question count, in the `'everyone'` persona accent (`#F0ABFC`).
+*   **Semantic Meaning**: Not persona-exclusive — captured here under Maya simply to vary which persona each new screenshot uses; the pack list and dark treatment are identical regardless of which mock user loads the page.
+
+### 27. Ned's Daily Crossword (`ned-daily-crossword.webp`)
+*   **Route**: `/games/daily-crossword?mockUser=ned`
+*   **Visual Structure**: Dark-immersive shell (PROJ-88) showing the theme banner ("TODAY'S THEME: EVERYDAY RECOVERY LANGUAGE"), the first clue, and the grid — cyan selected-cell/in-word highlighting preserved unchanged from the original spec-mandated somatic color pair.
+*   **Semantic Meaning**: Illustrates the grid-cell interaction colors that were deliberately *not* restyled (mirroring how Recovery Jeopardy's board was left alone) alongside the shell chrome that was. The puzzle content itself is a static mock fixture (`useDailyCrossword.ts`'s `.mock`-user fallback) rather than a real server-generated daily puzzle, since the nightly generator has no local/offline equivalent.
