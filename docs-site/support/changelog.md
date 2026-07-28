@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.1] - 2026-07-28
+### 🛠️ Update
+- Refreshed the look of the dashboard's six shortcut tiles (Journal, Tasks, Vitality, Workbooks, Games, Tools) with richer colors and smoother tap feedback, and darkened the Tasks section's color theme so text is easier to read.
+
 ## [v1.9.0] - 2026-07-28
 ### 🛠️ Update
 - The sobriety streak counter on your Dashboard now displays larger, bolder numbers.
