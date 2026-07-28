@@ -24,9 +24,9 @@ export const THEME = {
   tasks: {
     page: 'bg-cyan-200', // Electric mint
     header: {
-      from: 'from-cyan-500',
-      via: 'via-teal-500',
-      to: 'to-emerald-500'
+      from: 'from-cyan-600',
+      via: 'via-teal-600',
+      to: 'to-emerald-600'
     },
     ring: '#34d399', // Emerald-400
     tabBar: {
