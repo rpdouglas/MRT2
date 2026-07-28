@@ -5,7 +5,7 @@
 // in-word highlight) are kept on the grid itself, where the source spec's
 // interaction-feedback requirements actually apply.
 //
-// PROJ-87 follow-up: self-contained dark-immersive shell (like
+// PROJ-88 follow-up: self-contained dark-immersive shell (like
 // GoalLadder.tsx/RecoveryJeopardy.tsx/TriggerMatch.tsx/KnowledgeQuests.tsx)
 // instead of GameShell — this game never calls useGameSession (no
 // startSession/setScore, deliberately, per the anti-shame "no score" design
@@ -23,7 +23,17 @@
 // its `visualViewport` keyboard-open tracking (isKeyboardOpen) — both scoped
 // to this component's own content since the shared GameHeader/GameFooter no
 // longer wrap it.
-import { useState, useRef, useMemo, useEffect, useCallback, type KeyboardEvent } from 'react';
+//
+// Keyboard-capture fix: letter entry is driven by the hidden input's
+// `input` event, not `keydown` — many mobile on-screen keyboards (notably
+// Android IMEs) don't fire a usable `keydown` for letter keys (they report
+// `key: 'Unidentified'`), so a `keydown`-only handler silently drops typed
+// letters on those devices even though it works fine with a physical
+// keyboard. `input` fires reliably for both. `keydown` is kept only for
+// Backspace, which doesn't produce an `input` event when the field is
+// already empty (the common case here, since the input is reset after
+// every keystroke).
+import { useState, useRef, useMemo, useEffect, useCallback, type KeyboardEvent, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleIcon, LightBulbIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { useGameProgress } from '../../../hooks/useGameProgress';
@@ -138,30 +148,43 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
     focusHidden();
   };
 
-  const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (solved) return;
-    const key = e.key;
+    if (e.key !== 'Backspace') return;
 
-    if (/^[a-zA-Z]$/.test(key)) {
-      const next = grid.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
-      const cell = next[selected.row][selected.col];
-      if (cell) cell.value = key.toUpperCase();
+    const next = grid.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
+    const cell = next[selected.row][selected.col];
+    if (cell?.value) {
+      cell.value = '';
       setGrid(next);
-      handleSolved(next);
-
-      const nextPos = advanceCell(grid, selected.row, selected.col, direction, 1);
-      if (nextPos) setSelected(nextPos);
-    } else if (key === 'Backspace') {
-      const next = grid.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
-      const cell = next[selected.row][selected.col];
-      if (cell?.value) {
-        cell.value = '';
-        setGrid(next);
-      } else {
-        const prevPos = advanceCell(grid, selected.row, selected.col, direction, -1);
-        if (prevPos) setSelected(prevPos);
-      }
+    } else {
+      const prevPos = advanceCell(grid, selected.row, selected.col, direction, -1);
+      if (prevPos) setSelected(prevPos);
     }
+  };
+
+  // See the file header comment — this is the reliable cross-device path
+  // for letter entry. The input is always reset to '' immediately after
+  // reading it, so it stays a single-character buffer and never displays
+  // or accumulates text (it's visually hidden regardless).
+  const handleInput = (e: FormEvent<HTMLInputElement>) => {
+    const target = e.currentTarget;
+    const raw = target.value;
+    target.value = '';
+    if (solved) return;
+
+    const letters = raw.match(/[a-zA-Z]/g);
+    if (!letters) return;
+    const letter = letters[letters.length - 1].toUpperCase();
+
+    const next = grid.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
+    const cell = next[selected.row][selected.col];
+    if (cell) cell.value = letter;
+    setGrid(next);
+    handleSolved(next);
+
+    const nextPos = advanceCell(grid, selected.row, selected.col, direction, 1);
+    if (nextPos) setSelected(nextPos);
   };
 
   const revealLetter = () => {
@@ -298,7 +321,13 @@ function CrosswordGame({ words, rows, cols, theme, themeIntro, insightCard }: Cr
       <input
         ref={inputRef}
         className="opacity-0 absolute -z-10 w-1 h-1"
-        onKeyDown={handleKey}
+        onKeyDown={handleKeyDown}
+        onInput={handleInput}
+        autoCapitalize="characters"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        inputMode="text"
         aria-label="Crossword letter input"
         tabIndex={-1}
       />
