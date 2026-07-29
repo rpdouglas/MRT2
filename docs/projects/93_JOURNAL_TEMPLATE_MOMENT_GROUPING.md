@@ -1,6 +1,6 @@
 # 📁 Project 93: Journal Template Moment-Based Grouping
 
-**Status:** ⚪ Planned
+**Status:** ✅ Shipped
 **Primary Persona:** David (primary — crisis-moment templates surfaced first, mirroring PROJ-71's Tools Hub precedent), Ned/Walt (secondary — daily-ritual and reflection templates benefit from the same clarity).
 **Objective:** Regroup the Journal Editor's template picker from PROJ-57's 11 clinical-modality groups (Twelve-Step, CBT/SMART, DBT, ...) into moment-based sections (In the Moment / Daily Rituals / Reflection & Insight / Free Write), rendered as a collapsible accordion in the Journal's own indigo/purple/violet color identity — replacing the current native `<select>`/`<optgroup>` dropdown.
 
@@ -58,27 +58,29 @@ export const MOMENT_META: Record<JournalMoment, { label: string; subtitle: strin
 ---
 
 ## 4. Implementation Phases 🏗️
-*Phases intentionally left high-level — the `/planning` skill's 3-strategy proposal (next step after this spec) determines the concrete component approach (inline accordion vs. bottom-sheet picker vs. dedicated route) before any code is written.*
+Built per the approved `/planning` Strategy A (bottom-sheet accordion, reusing `QuickCaptureSheet.tsx`'s `Dialog`/`Transition` shell pattern) over the inline-accordion and dedicated-route alternatives.
 
 ### Phase 1: Data
-* Add `moment`/`MOMENT_META` to `src/data/journalTemplates.ts`; assign all 15 default templates per the table above (confirm/adjust during planning).
-* Existing `group`/`GROUP_ORDER` (PROJ-57 modality labels) are **kept, not removed** — surfaced as secondary metadata (e.g. a small tag) on each template row, so the clinical-modality information Walt/Maya value for traceability isn't lost, only demoted from primary grouping to a detail.
+* Added `JournalMoment`/`MOMENT_ORDER`/`MOMENT_META` to `src/data/journalTemplates.ts`, plus `FREE_WRITE_META`/`MY_TEMPLATES_META` for the two non-`JournalMoment` sections (Free Write isn't a template; My Templates is user-authored with no fixed moment) — a small addition beyond this spec's original type sketch, same single-source-of-truth pattern as `MOMENT_META`. Assigned all 15 default templates exactly per the draft table in §3 (confirmed as-is, no changes needed).
+* Existing `group`/`GROUP_ORDER` (PROJ-57 modality labels) **kept, not removed** — rendered as a small badge on each template row in the new picker, so the clinical-modality information Walt/Maya value for traceability isn't lost, only demoted from primary grouping to a detail.
 
 ### Phase 2: UI/UX
-* Replace the native `<select>`/`<optgroup>` template picker in `JournalEditor.tsx` with a collapsible-accordion picker grouped by `moment`, styled in `THEME.journal`'s indigo/purple/violet identity (not the reference prototype's own dark-purple background) — per-section colored dot indicators per `MOMENT_META.dotColor`, matching the reference screenshot's visual language.
+* New `src/components/journal/TemplatePickerSheet.tsx` — bottom-sheet accordion grouped by `moment` (+ Free Write, + My Templates when non-empty), styled in `THEME.journal`'s indigo/purple/violet identity (light `bg-indigo-200` panel, white/indigo-tinted section cards) rather than the reference prototype's own dark-purple background, per-section colored dot per `MOMENT_META.dotColor`/`FREE_WRITE_META`/`MY_TEMPLATES_META`. One section open at a time; "In the Moment" open by default, matching the reference screenshot.
+* `JournalEditor.tsx`'s old `<select>`/`<optgroup>` replaced with a "Choose Template" button that opens the sheet; `handleTemplateSelect(tId)` itself is completely unchanged, just now invoked from the sheet's row `onClick` instead of a native `onChange`.
 * **Somatic Check:** No red/urgency styling. "In the Moment" is about crisis *tools*, not failure — no alarm framing, consistent with PROJ-71's identical Somatic Check for "Right Now."
 * **Reward:** None — template selection is not a gamification surface (unchanged from PROJ-57).
 
 ### Phase 3: Edge Cases
-* [ ] 320px-wide screen (iPhone SE) — the current picker already handles this via responsive width classes; new picker must too.
-* [ ] `isVaultUnlocked`/offline — unchanged, no new dependency (static bundled data).
-* [ ] Custom "My Templates" section with zero custom templates (current behavior: whole optgroup omitted) — new picker must match.
-* [ ] `initialTemplateId` deep-link (journal entry opened with a template pre-selected, e.g. from `?template=mat_check_in`) — must still resolve correctly against the new grouped structure.
+* [x] 320px-wide screen (iPhone SE) — verified via Playwright screenshot, no clipping/overflow in the sheet.
+* [x] `isVaultUnlocked`/offline — unchanged, no new dependency (static bundled data).
+* [x] Custom "My Templates" section with zero custom templates — whole section omitted, matching the old optgroup's behavior (`customTemplates.length > 0` guard carried over verbatim).
+* [x] `initialTemplateId` deep-link (e.g. `?template=mat_check_in`) — unaffected by construction, since it calls `handleTemplateSelect` directly in an effect, bypassing the picker UI entirely.
+* [x] **Caught during real-browser QA (not TypeScript/lint/JSDOM):** the toolbar trigger button's label used two responsive `<span>`s (`sm:hidden` / `hidden sm:inline`) with no explicit `aria-label`. JSDOM doesn't apply real CSS, so unit tests passed even though a real browser's accessible-name computation correctly excludes `display:none` content — at mobile width the button's accessible name silently became just "Template" instead of matching "Choose Template", which a Playwright pass at 390px caught immediately (a locator timeout) where the unit test suite couldn't. Fixed with a stable `aria-label="Choose Template"` on the button and `aria-hidden="true"` on both decorative inner spans.
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests:** `src/components/journal/__tests__/JournalEditor.test.tsx`'s existing `selectTemplate()` test helper interacts with a native `<select>` — will need updating to the new picker's interaction model; the 3 existing PROJ-57 tests' *assertions* (content-shaped template drops into free-write, prompts-shaped renders a guided form, save interpolates prompts) should need zero logic changes, only how the template gets selected.
-* [ ] **The Subway Test:** N/A — static bundled data, no network dependency, same as PROJ-57.
-* [ ] **The "Lost PIN" Test:** N/A — no encrypted data involved.
-* [ ] **Persona/Manual Test:** Recommend a real browser pass (accordion expand/collapse, colored dots, template selection → guided form) before shipping — same recommendation PROJ-57 made and flagged as not-yet-done at the time.
+* [x] **Unit Tests:** `JournalEditor.test.tsx`'s `selectTemplate()` helper rewritten to open the sheet and click the target section header (if not the default-open one) then the template row, instead of firing a native `<select>` change event. All 3 existing PROJ-57 assertions pass unmodified. Full suite: 662/662.
+* [x] **The Subway Test:** N/A — static bundled data, no network dependency, same as PROJ-57.
+* [x] **The "Lost PIN" Test:** N/A — no encrypted data involved.
+* [x] **Persona/Manual Test:** Real Playwright/Chromium pass via the `?mockUser=` bypass (no Firebase credentials in this environment) — verified accordion expand/collapse, one-section-open-at-a-time behavior, colored dots, modality badges, template selection → guided form (Thought Check-In), and the Free Write flow (→ blank compose mode), at both 390px and 320px widths.

@@ -7,12 +7,13 @@ import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
-import { DEFAULT_TEMPLATES, GROUP_ORDER } from '../../data/journalTemplates';
+import { DEFAULT_TEMPLATES } from '../../data/journalTemplates';
 import { getCurrentWeather } from '../../lib/weather';
 import { useNavigate } from 'react-router-dom';
 import AudioRecorder from './AudioRecorder';
+import TemplatePickerSheet from './TemplatePickerSheet';
 import type { AudioAnalysisResult } from '../../lib/gemini';
 import type { SmartToolPayload } from '../../lib/smartToolPayload';
 
@@ -81,6 +82,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
 
   const fetchLocalWeather = useCallback(async () => {
     setWeatherLoading(true);
@@ -277,31 +279,19 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
              </div>
 
              <div className="flex items-center gap-2">
-                 <div className="relative">
-                     <select 
-                        onChange={(e) => handleTemplateSelect(e.target.value)}
-                        className="pl-3 pr-8 py-1.5 text-xs sm:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white w-[130px] sm:w-48 text-ellipsis overflow-hidden"
-                        defaultValue=""
-                        disabled={!!initialEntry} 
-                    >
-                        <option value="" disabled>Choose Template...</option>
-                        <option value="none">Free Write</option>
-                        {GROUP_ORDER.filter(group => DEFAULT_TEMPLATES.some(t => t.group === group)).map(group => (
-                            <optgroup key={group} label={group}>
-                                {DEFAULT_TEMPLATES.filter(t => t.group === group).map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                ))}
-                            </optgroup>
-                        ))}
-                        {customTemplates.length > 0 && (
-                            <optgroup label="My Templates">
-                                {customTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                            </optgroup>
-                        )}
-                    </select>
-                 </div>
+                 <button
+                    type="button"
+                    onClick={() => setIsTemplatePickerOpen(true)}
+                    disabled={!!initialEntry}
+                    aria-label="Choose Template"
+                    className="flex items-center gap-1.5 pl-3 pr-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-indigo-400 hover:text-indigo-700 transition-colors disabled:opacity-50 disabled:hover:border-gray-300 disabled:hover:text-gray-700"
+                 >
+                    <DocumentTextIcon className="h-4 w-4 shrink-0" />
+                    <span className="sm:hidden" aria-hidden="true">Template</span>
+                    <span className="hidden sm:inline" aria-hidden="true">Choose Template...</span>
+                 </button>
 
-                 <button 
+                 <button
                     onClick={() => userTier === 'premium' ? navigate('/templates') : navigate('/premium')}
                     className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition"
                     title={userTier === 'premium' ? "Manage Templates" : "Premium Feature: Custom Templates"}
@@ -310,6 +300,13 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                  </button>
              </div>
         </div>
+
+        <TemplatePickerSheet
+            isOpen={isTemplatePickerOpen}
+            onClose={() => setIsTemplatePickerOpen(false)}
+            onSelect={handleTemplateSelect}
+            customTemplates={customTemplates}
+        />
         
         <div className="flex-1 overflow-y-auto p-4">
             {isVoiceMode ? (

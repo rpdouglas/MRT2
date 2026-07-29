@@ -14,11 +14,32 @@
  * Journal Editor's template picker (see GROUP_ORDER below).
  */
 
+/** PROJ-93: which picker section a template appears under, replacing
+ * `group` as the picker's primary grouping axis. `group` (clinical modality)
+ * is kept unchanged below as secondary metadata shown on each template row —
+ * not discarded, just demoted from primary grouping to detail. */
+export type JournalMoment = 'in-the-moment' | 'daily-rituals' | 'reflection-insight';
+
+export const MOMENT_ORDER: JournalMoment[] = ['in-the-moment', 'daily-rituals', 'reflection-insight'];
+
+export const MOMENT_META: Record<JournalMoment, { label: string; subtitle: string; dotColor: string }> = {
+  'in-the-moment': { label: 'In the Moment', subtitle: 'When you need help right now', dotColor: '#F472B6' },
+  'daily-rituals': { label: 'Daily Rituals', subtitle: 'Morning and evening check-ins', dotColor: '#818CF8' },
+  'reflection-insight': { label: 'Reflection & Insight', subtitle: 'Deeper work, when you have time', dotColor: '#34D399' },
+};
+
+/** Free Write and My Templates aren't `JournalMoment`s (Free Write isn't a
+ * template at all; My Templates is user-authored with no fixed moment) but
+ * render as their own picker sections using the same visual language. */
+export const FREE_WRITE_META = { label: 'Free Write', subtitle: 'No template, just write', dotColor: '#9CA3AF' };
+export const MY_TEMPLATES_META = { label: 'My Templates', subtitle: 'Your own saved templates', dotColor: '#A78BFA' };
+
 export interface StaticJournalTemplate {
   id: string;
   name: string;
   tags: string[];
   group: string;
+  moment: JournalMoment;
   content?: string;
   prompts?: string[];
 }
@@ -44,6 +65,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'morning_intention',
         name: 'Morning Intention',
         group: 'Twelve-Step',
+        moment: 'daily-rituals',
         content: `### Morning Intention ☀️
 
 **Just for today, I will...**
@@ -60,6 +82,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'nightly_inventory',
         name: 'Nightly Inventory',
         group: 'Twelve-Step',
+        moment: 'daily-rituals',
         content: `### Nightly Inventory 🌙
 
 **Was I resentful, selfish, dishonest, or afraid?**
@@ -76,6 +99,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'urge_log',
         name: 'Urge Log (SOS)',
         group: 'Twelve-Step',
+        moment: 'in-the-moment',
         content: `### Urge Log 🚨
 
 **Trigger:**
@@ -98,6 +122,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'meeting_reflection',
         name: 'Meeting Reflection',
         group: 'Twelve-Step',
+        moment: 'reflection-insight',
         content: `### Meeting Reflection 🪑
 
 **Meeting Topic/Group:**
@@ -118,6 +143,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'thought_check_in',
         name: 'Thought Check-In',
         group: 'CBT / SMART',
+        moment: 'reflection-insight',
         prompts: [
             'Situation:',
             'Automatic thought:',
@@ -131,6 +157,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'cost_benefit_check',
         name: 'Cost-Benefit Check (ABC Model)',
         group: 'CBT / SMART',
+        moment: 'reflection-insight',
         prompts: [
             'Activating event (what happened):',
             'Belief (what I told myself about it):',
@@ -149,6 +176,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'distress_tolerance',
         name: 'Ride the Wave (TIPP)',
         group: 'DBT',
+        moment: 'in-the-moment',
         prompts: [
             "What's the distress, 0-10?",
             'TIPP tried (Temperature / Intense exercise / Paced breathing / Paired muscle relaxation):',
@@ -165,6 +193,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'urge_surfing',
         name: 'Urge Surfing',
         group: 'Mindfulness',
+        moment: 'in-the-moment',
         prompts: [
             'Where do I feel the urge in my body?',
             'Intensity right now (0-10):',
@@ -181,6 +210,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'safer_choices',
         name: 'Safer Choices Check-In',
         group: 'Harm Reduction',
+        moment: 'reflection-insight',
         prompts: [
             'My goal today (abstinence, reduction, or something else):',
             'If I do use, my safety plan:',
@@ -197,6 +227,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'after_a_slip',
         name: 'After a Slip',
         group: 'Reset',
+        moment: 'reflection-insight',
         prompts: [
             'What happened (just the facts):',
             'What need was I trying to meet?',
@@ -213,6 +244,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'body_check',
         name: 'Body Check',
         group: 'Trauma-Informed',
+        moment: 'in-the-moment',
         prompts: [
             'Right now my body feels:',
             'Am I in fight, flight, freeze, or settled?',
@@ -229,6 +261,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'values_compass',
         name: 'Values Compass',
         group: 'ACT',
+        moment: 'reflection-insight',
         prompts: [
             'A value that matters to me:',
             'Did today move me toward or away from it?',
@@ -244,6 +277,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'readiness_ruler',
         name: 'Readiness Ruler',
         group: 'Motivational',
+        moment: 'reflection-insight',
         prompts: [
             'How important is change to me right now (0-10)?',
             'How confident am I I can do it (0-10)?',
@@ -260,6 +294,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'mat_check_in',
         name: 'MAT Check-In',
         group: 'MAT',
+        moment: 'daily-rituals',
         prompts: [
             'Took my medication as prescribed today? (Yes / No)',
             'Any side effects or cravings to flag for my provider:',
@@ -275,6 +310,7 @@ export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
         id: 'daily_check_in',
         name: 'Daily Check-In (No Program)',
         group: 'General',
+        moment: 'daily-rituals',
         prompts: [
             "Sleep, food, movement — how'd I do?",
             'One win today:',
