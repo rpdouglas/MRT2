@@ -42,6 +42,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-90` Security, Dependency & Compliance Hardening (Ran npm audit fix (non-force) to clear the ws/postcss/react-router-dom vulnerabilities, removed 8 stray console.log statements and added an esbuild.pure guard against future ones, added a Play Store health-app medical disclaimer to Login and Welcome, and added a production-build e2e regression test proving the mockUser bypass stays fixed.)
 * `PROJ-89` Play Store Release Blockers (Fixed the mockUser client-side auth bypass (gated behind DEV-only builds) and split the 1.83MB monolithic vendor bundle into targeted chunks — the two hard blockers from the Production Readiness Audit before Play Store submission.)
 * `PROJ-87` Trigger Match & Knowledge Quests Immersive Shell Restyle (Restyled Trigger Match and Knowledge Quests to match the dark-immersive shell used by Goal Ladder/Jeopardy, via an opt-in theme prop on the shared quiz component so the still-light Thought Challenge is unaffected.)
 * `PROJ-88` Daily Crossword Immersive Shell Restyle (Restyled Daily Crossword to match the dark-immersive shell used by Goal Ladder/Jeopardy/Trigger Match/Knowledge Quests, and fixed a mobile on-screen-keyboard bug where typed letters weren't reaching the grid.)

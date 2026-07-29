@@ -103,8 +103,15 @@ export default defineConfig({
     // it up; Vitest must not also try to import these as unit tests.
     exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**'],
   },
+  esbuild: {
+    // CODE-01, Production Readiness Audit 2026-07-28: tree-shake any stray
+    // console.log out of production builds. Deliberately narrower than
+    // esbuild's `drop: ['console']`, which would also strip console.error/warn
+    // calls that carry real diagnostic value.
+    pure: ['console.log'],
+  },
   build: {
-    chunkSizeWarningLimit: 1000, 
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {

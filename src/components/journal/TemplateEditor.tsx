@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFirestoreQuery, useFirestoreMutation } from '../../hooks/useFirestoreCrud';
 import { getUserTemplates, saveUserTemplate, deleteUserTemplate, type JournalTemplate } from '../../lib/db';
@@ -31,8 +31,6 @@ export default function TemplateEditor() {
     const [tagInput, setTagInput] = useState('');
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => { console.log("Template Editor V2 Loaded"); }, []);
 
     // --- Toolbar Helpers ---
     const insertText = (before: string, after: string = '') => {

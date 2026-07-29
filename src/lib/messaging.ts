@@ -19,7 +19,7 @@ export async function requestNotificationPermission(uid: string): Promise<boolea
         }
 
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') { console.log("Notification permission not granted."); return false; }
+        if (permission !== 'granted') { return false; }
 
         const messaging = getMessaging(app);
         
@@ -39,9 +39,8 @@ export async function requestNotificationPermission(uid: string): Promise<boolea
                 fcmTokens: arrayUnion(currentToken),
                 timezone: userTimezone
             });
-            console.log("Device securely registered for notifications.");
             return true;
-        } else { console.log("No registration token available."); return false; }
+        } else { return false; }
     } catch (error) { console.error('An error occurred while retrieving token. ', error); return false; }
 }
 

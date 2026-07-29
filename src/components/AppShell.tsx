@@ -55,7 +55,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       if (success) {
         await patchProfileFields({ lastExportAt: serverTimestamp() });
-        console.log("Background Auto-Backup Successful");
       }
     } catch (e) { console.error("Auto-backup failed silently:", e); }
   }, [user, driveAccessToken, isVaultUnlocked, isOnline, profile, patchProfileFields]);

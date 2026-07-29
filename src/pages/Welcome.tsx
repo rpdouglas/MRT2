@@ -344,6 +344,15 @@ export default function Welcome() {
             </button>
           </div>
 
+          <div className="mt-8 text-center text-xs text-slate-400 space-x-4">
+            <a href="https://rpdouglas.github.io/MRT2/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-300">Privacy Policy</a>
+            <span>&middot;</span>
+            <a href="https://rpdouglas.github.io/MRT2/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-300">Terms of Service</a>
+          </div>
+          <p className="mt-4 text-center text-xs text-slate-500 max-w-sm mx-auto">
+            My Recovery Toolkit is a self-help peer support tool and is not a medical device, diagnostic tool, or replacement for professional clinical addiction treatment.
+          </p>
+
         </div>
       </section>
 
