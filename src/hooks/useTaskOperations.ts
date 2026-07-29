@@ -10,6 +10,7 @@ import posthog from "posthog-js";
 import { Timestamp } from "firebase/firestore";
 import { startOfDay, addDays, addWeeks, addMonths, isBefore } from "date-fns";
 import { calculateNextDueDate } from "../lib/dateUtils";
+import { trackMutationFailed } from "../lib/telemetry";
 
 const toDate = (val: unknown): Date | null => {
   if (!val) return null;
@@ -72,10 +73,11 @@ export function useTaskOperations() {
       }
       return { previousTasks };
     },
-    onError: (_err, _newVar, context) => {
+    onError: (err, _newVar, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
+      trackMutationFailed('task', err.name || 'Error');
     },
     onSuccess: (_data, variables) => {
       posthog.capture('task_created', {
@@ -152,10 +154,11 @@ export function useTaskOperations() {
       }
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
+      trackMutationFailed('task', err.name || 'Error');
     },
     onSuccess: (_data, variables) => {
       if (variables.isCompleting) {
@@ -188,10 +191,11 @@ export function useTaskOperations() {
       }
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
+      trackMutationFailed('task', err.name || 'Error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -203,6 +207,9 @@ export function useTaskOperations() {
     mutationFn: async (params: { id: string } & Partial<TaskLib.Task>) => {
       const { id, ...updates } = params;
       await TaskLib.updateTask(id, updates);
+    },
+    onError: (err) => {
+      trackMutationFailed('task', err.name || 'Error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

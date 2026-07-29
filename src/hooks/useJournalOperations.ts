@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import type { DocumentReference } from 'firebase/firestore';
+import { trackMutationFailed } from '../lib/telemetry';
 
 export function useJournalOperations() {
     const { user } = useAuth();
@@ -41,6 +42,7 @@ export function useJournalOperations() {
                 isEncrypted: params.isEncrypted
             });
         },
+        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
         }
@@ -64,6 +66,7 @@ export function useJournalOperations() {
                 isEncrypted: params.isEncrypted
             });
         },
+        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
         }
@@ -75,6 +78,7 @@ export function useJournalOperations() {
             if (!db) throw new Error("DB not initialized");
             await deleteDoc(doc(db, 'journals', id));
         },
+        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey });
         }

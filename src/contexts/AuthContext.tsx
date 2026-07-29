@@ -5,6 +5,7 @@ import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
 import { refreshFcmTokenIfStale, listenForForegroundMessages } from '../lib/messaging';
 import posthog from 'posthog-js';
+import { trackClientError } from '../lib/telemetry';
 
 interface AuthContextType {
   user: User | null;
@@ -91,9 +92,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentUser);
           setIsAdmin(isAdminUser);
           posthog.identify(currentUser.uid, { tier: profile.tier || 'free' });
-          refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch(console.error);
+          refreshFcmTokenIfStale(currentUser.uid, profile.fcmSwVersion).catch((error) => {
+            console.error(error);
+            trackClientError('fcm_token_refresh', error instanceof Error ? error.name : 'Error');
+          });
           if (!unsubscribeForegroundMessages) {
-            listenForForegroundMessages().then((unsub) => { unsubscribeForegroundMessages = unsub; }).catch(console.error);
+            listenForForegroundMessages().then((unsub) => { unsubscribeForegroundMessages = unsub; }).catch((error) => {
+              console.error(error);
+              trackClientError('fcm_foreground_listener', error instanceof Error ? error.name : 'Error');
+            });
           }
 
           // Phase 2: Listen directly to the Stripe extension's 'subscriptions' subcollection
@@ -108,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                      // Fallback to static profile tier just in case, but default free
                      setUserTier(profile.tier || 'free');
                  }
-             }, (error) => { console.error("Subscription listener error:", error); setUserTier('free'); });
+             }, (error) => { console.error("Subscription listener error:", error); trackClientError('subscription_listener', error.name || 'Error'); setUserTier('free'); });
           } else {
              setUserTier(profile.tier || 'free');
           }
@@ -126,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               unsubscribeForegroundMessages = undefined;
           }
         }
-      } catch (error) { console.error("Error fetching user profile:", error); setUser(currentUser); setUserTier('free'); } finally {
+      } catch (error) { console.error("Error fetching user profile:", error); trackClientError('user_profile_fetch', error instanceof Error ? error.name : 'Error'); setUser(currentUser); setUserTier('free'); } finally {
         setLoading(false);
       }
     });

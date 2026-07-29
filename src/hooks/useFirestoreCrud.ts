@@ -24,6 +24,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { trackMutationFailed } from '../lib/telemetry';
 
 interface MutationSpec<TArgs, TData> {
   mutationFn: (uid: string, args: TArgs) => Promise<TData>;
@@ -77,10 +78,11 @@ export function useFirestoreMutation<TArgs, TData = void>(
           return { previous };
         }
       : undefined,
-    onError: (_err, _args, context) => {
+    onError: (err, _args, context) => {
       if (context && 'previous' in context) {
         queryClient.setQueryData(queryKey, context.previous);
       }
+      trackMutationFailed(String(queryKey[0]), err.name || 'Error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
