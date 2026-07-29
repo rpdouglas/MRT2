@@ -86,6 +86,15 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
     useEffect(() => { if (activeMilestoneImage) { const img = new Image(); img.src = activeMilestoneImage; }
     }, [activeMilestoneImage]);
 
+    // Keyboard-only users have no way to reach the backdrop's onClick dismiss —
+    // Escape gives them a path to close the color-picker popover.
+    useEffect(() => {
+        if (!isColorPickerOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsColorPickerOpen(false); };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isColorPickerOpen]);
+
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {

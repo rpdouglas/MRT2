@@ -12,7 +12,6 @@ export function useWakeLock() {
         if ('wakeLock' in navigator) {
             try {
                 wakeLock.current = await navigator.wakeLock.request('screen');
-                console.log('💡 Wake Lock active');
             } catch (err) {
                 console.warn('Wake Lock request failed:', err);
             }
@@ -24,7 +23,6 @@ export function useWakeLock() {
             try {
                 await wakeLock.current.release();
                 wakeLock.current = null;
-                console.log('💡 Wake Lock released');
             } catch (err) {
                 console.warn('Wake Lock release failed:', err);
             }

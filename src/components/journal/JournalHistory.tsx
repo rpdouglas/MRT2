@@ -235,7 +235,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
     const textToShare = `${dateStr} - My Recovery Toolkit\n\n${body}\n\nmyrecoverytoolkit.ca`;
 
     if (navigator.share) {
-        try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch (err) { console.log('Share dismissed', err); }
+        try { await navigator.share({ title: 'Journal Entry', text: textToShare }); return; } catch { /* user dismissed the native share sheet — not a real error */ }
     }
     try { await navigator.clipboard.writeText(textToShare); setCopiedId(entry.id); setTimeout(() => setCopiedId(null), 2000); } catch (err) { console.error('Failed to copy', err); }
   };

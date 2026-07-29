@@ -182,8 +182,9 @@ export default function WorkbookDetail() {
                               <p className="text-xs text-gray-400 mt-1">{answeredCount} / {totalQuestions} completed</p>
                           </div>
 
-                          <button 
+                          <button
                              onClick={() => navigate(`/workbooks/${workbook.id}/session/${section.id}`)}
+                             aria-label={`${isComplete ? 'Redo' : 'Start'} ${section.title}`}
                              className={`p-3 rounded-full transition-all ${isComplete ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
                           >
                               {isComplete ? <ArrowPathIcon className="h-6 w-6" /> : <PlayCircleIcon className="h-6 w-6" />}
@@ -327,6 +328,7 @@ export default function WorkbookDetail() {
                                               <button
                                                   onClick={() => !isAdded && handleAddToHabits(action, idx)}
                                                   disabled={isAdded}
+                                                  aria-label={isAdded ? 'Added to tasks' : `Add "${action}" to tasks`}
                                                   className={`p-1.5 rounded-full transition-all ${isAdded ? 'text-green-500 bg-green-50' : 'text-purple-400 hover:text-purple-600 hover:bg-purple-50'}`}
                                               >
                                                   {isAdded ? <CheckCircleIcon className="h-6 w-6" /> : <PlusCircleIcon className="h-6 w-6" />}

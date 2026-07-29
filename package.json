@@ -19,6 +19,7 @@
     "docs:check-specs": "node scripts/check_spec_quality.mjs",
     "test:once": "vitest run",
     "test:e2e": "npm run build --prefix functions && firebase emulators:exec --project=mrt2-app-dev --only auth,firestore,functions \"playwright test\"",
+    "test:e2e:security": "playwright test --config=playwright.security.config.ts",
     "check": "npm run lint && npm run docs:check-specs && npm run test:once && npm run build",
     "export:llm": "node scripts/export-llm.mjs",
     "screenshots:generate": "node scripts/generate_screenshots.js",
@@ -35,7 +36,6 @@
     "html-to-image": "^1.11.13",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.2",
-    "lucide-react": "^0.561.0",
     "posthog-js": "^1.399.1",
     "react": "^19.2.0",
     "react-confetti": "^6.4.0",
@@ -46,6 +46,7 @@
     "sonner": "^2.0.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.39.1",
     "@google/generative-ai": "^0.24.1",
     "@playwright/test": "^1.61.1",

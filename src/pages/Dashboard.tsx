@@ -176,7 +176,7 @@ export default function Dashboard() {
                 <strong>Backup Needed:</strong> It's been a week since your last save.
               </div>
             </div>
-            <Link to="/profile" className="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700">Go</Link>
+            <Link to="/profile" className="text-xs font-bold bg-amber-700 text-white px-3 py-1.5 rounded-lg hover:bg-amber-800">Go</Link>
           </div>
         )}
 

@@ -1,5 +1,12 @@
 # 🚀 Changelog
 
+## [v1.9.6] - 2026-07-29
+### ♿ Accessibility Improvements
+- Pinch-to-zoom is now available on every page.
+- Added screen reader labels to several previously-unlabeled buttons, including a game's close button, workbook navigation controls, and the Dashboard's reading-source switcher.
+- Improved text contrast on the Dashboard's Backup Needed reminder.
+- Fixed a keyboard-accessibility gap where the sobriety card's color picker couldn't be closed with the Escape key.
+
 ## [v1.9.5] - 2026-07-28
 ### 🛠️ Update
 - Trigger Match and Knowledge Quests now have the same calmer dark look as the app's other games.
