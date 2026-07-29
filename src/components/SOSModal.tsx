@@ -1,4 +1,4 @@
-import { MapPin, ExternalLink } from 'lucide-react';
+import { MapPinIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon, TrophyIcon } from '@heroicons/react/24/outline';
@@ -214,7 +214,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-indigo-100 text-indigo-600">
-                <MapPin className="w-5 h-5" />
+                <MapPinIcon className="w-5 h-5" />
               </div>
               <span className="font-bold">Find a Meeting</span>
             </div>
@@ -238,7 +238,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                   className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all text-slate-600 group"
                 >
                   <span className="font-medium text-sm">{meeting.name}</span>
-                  <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                 </a>
               ))}
             </div>

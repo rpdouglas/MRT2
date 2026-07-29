@@ -2,17 +2,17 @@ import React, { useState, useEffect, useMemo, type ElementType } from 'react';
 import { collection, query, onSnapshot, doc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Disclosure, Transition } from '@headlessui/react';
-import { 
-    Clock, 
-    ExternalLink, 
-    Github, 
-    ClipboardList,
+import {
+    ClockIcon,
+    ArrowTopRightOnSquareIcon,
+    CodeBracketIcon,
+    ClipboardDocumentListIcon,
     ChevronUpIcon,
     InboxIcon,
-    Search,
-    Archive,
-    ListTodo // Added for Backlog icon
-} from 'lucide-react';
+    MagnifyingGlassIcon,
+    ArchiveBoxIcon,
+    QueueListIcon
+} from '@heroicons/react/24/outline';
 
 interface FeedbackReport {
   id: string;
@@ -179,7 +179,7 @@ ${report.message || 'No content provided.'}
                       {report.category}
                   </span>
                   <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                      <ClockIcon className="w-3 h-3" />
                       {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'N/A'}
                   </span>
               </div>
@@ -207,9 +207,9 @@ ${report.message || 'No content provided.'}
                   className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
                   title="Create GitHub Issue"
               >
-                  <Github className="w-3 h-3" />
+                  <CodeBracketIcon className="w-3 h-3" />
                   <span>Issue</span>
-                  <ExternalLink className="w-3 h-3 opacity-50" />
+                  <ArrowTopRightOnSquareIcon className="w-3 h-3 opacity-50" />
               </button>
           </div>
       </div>
@@ -231,7 +231,7 @@ ${report.message || 'No content provided.'}
           onClick={generateTriageReport}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-50 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-md"
         >
-          <ClipboardList className="w-4 h-4" />
+          <ClipboardDocumentListIcon className="w-4 h-4" />
           Triage Report
         </button>
       </div>
@@ -270,7 +270,7 @@ ${report.message || 'No content provided.'}
               {({ open }) => (
                   <div className={`rounded-2xl transition-all ${open ? 'bg-purple-50/50 p-2' : ''}`}>
                       <Disclosure.Button className="w-full focus:outline-none mb-2">
-                          <SectionHeader title="Backlog" count={groupedReports.backlog.length} color="purple" icon={ListTodo} isOpen={open} />
+                          <SectionHeader title="Backlog" count={groupedReports.backlog.length} color="purple" icon={QueueListIcon} isOpen={open} />
                       </Disclosure.Button>
                       <Transition
                           enter="transition duration-100 ease-out"
@@ -297,7 +297,7 @@ ${report.message || 'No content provided.'}
               {({ open }) => (
                   <div className={`rounded-2xl transition-all ${open ? 'bg-amber-50/50 p-2' : ''}`}>
                       <Disclosure.Button className="w-full focus:outline-none mb-2">
-                          <SectionHeader title="Investigating" count={groupedReports.investigating.length} color="amber" icon={Search} isOpen={open} />
+                          <SectionHeader title="Investigating" count={groupedReports.investigating.length} color="amber" icon={MagnifyingGlassIcon} isOpen={open} />
                       </Disclosure.Button>
                       <Transition
                           enter="transition duration-100 ease-out"
@@ -324,7 +324,7 @@ ${report.message || 'No content provided.'}
               {({ open }) => (
                   <div className={`rounded-2xl transition-all ${open ? 'bg-slate-100 p-2' : ''}`}>
                       <Disclosure.Button className="w-full focus:outline-none mb-2">
-                          <SectionHeader title="Resolved / Archive" count={groupedReports.resolved.length} color="slate" icon={Archive} isOpen={open} />
+                          <SectionHeader title="Resolved / Archive" count={groupedReports.resolved.length} color="slate" icon={ArchiveBoxIcon} isOpen={open} />
                       </Disclosure.Button>
                       <Transition
                           enter="transition duration-100 ease-out"

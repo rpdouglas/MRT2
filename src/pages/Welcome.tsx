@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
+import { ShieldCheckIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 import { ASSETS } from '../data/assets';
 
@@ -111,7 +111,7 @@ export default function Welcome() {
       
       {/* 1. THE TRUST BAR (Sticky) */}
       <div className="sticky top-0 w-full bg-slate-900 text-white py-3 px-4 flex items-center justify-center gap-3 text-xs sm:text-sm font-medium z-50 shadow-md">
-        <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+        <ShieldCheckIcon className="w-5 h-5 text-emerald-400 shrink-0" />
         <span className="text-center">
           Zero-Knowledge Encryption. <span className="hidden sm:inline">Even our developers can't read your journal.</span>
         </span>
@@ -152,7 +152,7 @@ export default function Welcome() {
         {/* Hero Text */}
         <div className="flex flex-col justify-center px-6 pt-36 pb-16 lg:p-20 lg:pt-44 z-20">
           <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-blue-100/50 text-blue-700 font-semibold text-sm mb-2 w-fit backdrop-blur-sm border border-blue-200/50">
-            <Lock className="w-4 h-4" />
+            <LockClosedIcon className="w-4 h-4" />
             <span>The safest place to do the hardest work.</span>
           </div>
           
@@ -171,7 +171,7 @@ export default function Welcome() {
               className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-slate-900/20"
             >
               Begin Journey
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>

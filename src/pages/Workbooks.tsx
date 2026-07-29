@@ -4,8 +4,7 @@ import { useWorkbookLibrary } from '../hooks/useWorkbookLibrary';
 import VibrantHeader from '../components/VibrantHeader';
 import TabBar from '../components/ui/TabBar';
 import { THEME } from '../lib/theme';
-import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon, BuildingStorefrontIcon, PlusIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { Globe, BookOpen, ExternalLink } from 'lucide-react';
+import { BookOpenIcon, StarIcon, HeartIcon, AcademicCapIcon, ChevronRightIcon, DocumentTextIcon, BuildingStorefrontIcon, PlusIcon, XMarkIcon, CheckCircleIcon, GlobeAltIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 const FELLOWSHIP_RESOURCES = [
   { name: 'Alcoholics Anonymous', desc: 'Traditional 12-step fellowship.', official: 'https://www.aa.org', lit: 'https://www.aa.org/the-big-book' },
@@ -185,17 +184,17 @@ export default function Workbooks() {
                   <div className="flex flex-col gap-2 mt-auto">
                     <a href={fellowship.official} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-emerald-50 transition-colors text-emerald-800 group border border-emerald-100">
                       <div className="flex items-center gap-3">
-                        <Globe className="w-4 h-4 text-emerald-500" />
+                        <GlobeAltIcon className="w-4 h-4 text-emerald-500" />
                         <span className="font-medium text-sm">Official Website</span>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
                     </a>
                     <a href={fellowship.lit} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl bg-white hover:bg-emerald-50 transition-colors text-emerald-800 group border border-emerald-100">
                       <div className="flex items-center gap-3">
-                        <BookOpen className="w-4 h-4 text-emerald-500" />
+                        <BookOpenIcon className="w-4 h-4 text-emerald-500" />
                         <span className="font-medium text-sm">Core Literature</span>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4 text-emerald-300 group-hover:text-emerald-600 transition-colors" />
                     </a>
                   </div>
                 </div>

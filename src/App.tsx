@@ -50,7 +50,7 @@ const KnowledgeQuests = lazy(() => import('./components/games/knowledgeQuests/Kn
 const DailyCrossword = lazy(() => import('./components/games/crossword/DailyCrossword')); // PROJ-79
 
 // --- QUERY CLIENT ---
-const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1, refetchOnWindowFocus: false }
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30, retry: 1, refetchOnWindowFocus: false }
     }
 });
 
