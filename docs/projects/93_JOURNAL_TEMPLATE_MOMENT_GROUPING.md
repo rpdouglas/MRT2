@@ -45,7 +45,7 @@ export const MOMENT_META: Record<JournalMoment, { label: string; subtitle: strin
 ```
 `Free Write` is not a `StaticJournalTemplate` — it's the existing `<option value="none">` today, and becomes its own 4th accordion section with a single selectable row, not a `moment` enum member.
 
-**Draft moment assignment** (needs confirmation during planning — unlike PROJ-71's `phase` table, there's no existing per-template field to derive this from mechanically):
+**Moment assignment** (confirmed and shipped exactly as drafted — unlike PROJ-71's `phase` table, there was no existing per-template field to derive this from mechanically, so this was a product judgment call, approved unchanged during planning):
 
 | moment | templates |
 |---|---|
