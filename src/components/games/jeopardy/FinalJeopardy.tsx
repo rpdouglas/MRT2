@@ -60,7 +60,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
                 max={Math.max(0, player.score)}
                 value={wagers[index]}
                 onChange={(e) => handleWagerChange(index, e.target.value)}
-                className="p-2 border border-slate-300 rounded-xl w-32 text-center"
+                className="p-2 border border-slate-300 rounded-xl w-32 text-center bg-white text-slate-900"
               />
             </div>
           ))}
@@ -93,7 +93,7 @@ export default function FinalJeopardy({ players, onUpdateScore, onRestartGame, o
                   updated[index] = e.target.value;
                   setAnswers(updated);
                 }}
-                className="p-2 border border-slate-300 rounded-xl w-64"
+                className="p-2 border border-slate-300 rounded-xl w-64 bg-white text-slate-900"
               />
             </div>
           ))}
