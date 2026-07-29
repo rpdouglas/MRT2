@@ -21,6 +21,7 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(() => ({})),
   orderBy: vi.fn(() => ({})),
   getDocs: (...args: unknown[]) => mockGetDocs(...args),
+  Timestamp: { fromDate: vi.fn((d: Date) => d) },
 }));
 
 function todaySnapDocs(tags: string[]) {

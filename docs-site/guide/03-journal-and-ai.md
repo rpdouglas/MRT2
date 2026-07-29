@@ -56,8 +56,8 @@ Navigate to the **History** tab to view past entries.
 </figure>
 
 * **Timeline View:** Your entries are grouped by **Year** and **Month**.
-* **Navigation:** By default, only the current month is open. Tap any Year or Month header to expand it and view older entries.
-* **Search:** Use the top search bar to filter by keyword or tag. Searching automatically expands all groups to show every matching result.
+* **Navigation:** By default, only the current year's entries load, with the current month open — this keeps History fast to open even with a long journaling history. Tap any Month header within the current year to expand it. To browse a prior year, tap **"Load earlier entries"** first — this loads your full history, after which every year and month becomes navigable.
+* **Search:** Use the top search bar to filter by keyword or tag. By default, search only covers the current year (fast); if you don't find what you're looking for, tap **"Search your full history instead"** to search everything you've ever written.
 * **Share:** Click the "Share" icon on any card to decrypt it and copy it to your clipboard for a sponsor or therapist.
 * **SMART Tool completions:** Finishing a tool from the [Tools Hub](/guide/08-cbt-tools) (like a Cost Benefit Analysis or Thought Record) also drops it into this timeline, tagged with a small colored badge and a one-line summary — tap the card to expand the full answers. These entries are view-only here (no pencil/edit icon, since editing structured answers as free text could corrupt them) but still support Share and Delete. An unfinished, in-progress tool session doesn't appear in this timeline — only completed ones — so check the tool's own **Resume** entry point in the Tools Hub for anything left mid-flow.
 

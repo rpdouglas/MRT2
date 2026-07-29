@@ -88,8 +88,10 @@ const renderHistory = (entries: unknown[]) => {
             },
         },
     });
-    // Set query data for the active cache key
-    queryClient.setQueryData(['journals', 'test-uid', true], entries);
+    // PROJ-94: default (non-full-history) mode fetches under a year-scoped key,
+    // not the old flat ['journals', uid, isVaultUnlocked] key.
+    const currentYear = new Date().getFullYear().toString();
+    queryClient.setQueryData(['journals', 'test-uid', true, 'year', currentYear], entries);
 
     return render(
         <QueryClientProvider client={queryClient}>

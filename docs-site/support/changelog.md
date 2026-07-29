@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.9.7] - 2026-07-29
+### ⚡ Performance
+- Journal History now loads faster by showing this year's entries by default.
+- Added a "Load earlier entries" option to browse further back, and a "search your full history" option when a search doesn't find what you're looking for.
+
 ## [v1.9.6] - 2026-07-29
 ### ♿ Accessibility Improvements
 - Pinch-to-zoom is now available on every page.

@@ -1,60 +1,72 @@
-# 📁 Project 94: Journal History Read Pagination
+# 📁 Project 94: Journal Read-Cost Reduction (Dashboard Anchor Status + Journal History)
 
-**Status:** ⚪ Planned
-**Primary Persona:** Walt (35+ years, most likely to have hundreds-to-thousands of journal entries)
-**Objective:** Close the real half of `OBSERVABILITY_AUDIT.md`'s GAP-02 — replace `JournalHistory.tsx`'s unbounded Firestore read with cursor-based pagination, without breaking existing search/filter/share functionality, and without touching `fetchAllUserData` (which correctly needs a full fetch).
+**Status:** ✅ Shipped
+**Primary Persona:** Ned/David (Dashboard — `useAnchorStatus`, hit on every app open), Walt (35+ years, `JournalHistory.tsx` — most likely to have hundreds-to-thousands of entries)
+**Objective:** Two independent read-cost fixes, found by tracing every consumer of the `journals` collection's unbounded query pattern — not just the one file the source audit named.
 
 ---
 
 ## 1. The Executive Summary
-**User Story:** As a long-term user with hundreds of journal entries, I want opening my Journal History to stay fast and cheap to run, not read my entire lifetime of entries every time.
+**User Story:** As any user, I want the Dashboard to load without re-reading my entire journal history every time; as a long-term user, I want Journal History to stay fast and cheap without losing search or AI pattern analysis over my older entries.
 **Source:** `OBSERVABILITY_AUDIT.md` (2026-07-29) Phase 3, GAP-02 (partial), Quick Win #2 (partial).
 
-**Scope correction — the source audit's fix target was half wrong:**
-- `OBSERVABILITY_AUDIT.md` proposed `limit(50)` on **both** `fetchAllUserData` (`src/lib/db.ts`) and `JournalHistory.tsx`. I traced `fetchAllUserData`'s callers: `AppShell.tsx`'s background auto-backup and `DataExportPanel.tsx`'s user-triggered data export. **Both need every document, by design** — a backup or data-portability export that silently truncates to 50 items is a data-loss bug, not a fix. **No change to `fetchAllUserData` in this ticket.**
-- `JournalHistory.tsx`'s query genuinely has no `limit()` and is hit on every routine page load — this is the real, valid part of the finding. Virtualization (already shipped in PROJ-92, `react-virtuoso`) only reduces DOM rendering cost; it does nothing for the underlying Firestore read volume, since every document is still fetched into memory before the virtualized list ever renders.
-- This is real engineering, not a "2 day" quick win as the audit estimated — `JournalHistory.tsx` has existing search and filter behavior that currently assumes the full entry set is in memory. Pagination has to either extend cleanly to search (e.g., "load more" fetches the next page, search operates over what's loaded plus a server-side query fallback) or be scoped carefully around what breaks and what doesn't. This needs its own design pass, not a bolt-on `limit(50)`.
+**Scope correction — the source audit named one file; tracing every consumer found a more severe, separate issue in a different one:**
+- The audit proposed `limit(50)` on **both** `fetchAllUserData` (`src/lib/db.ts`) and `JournalHistory.tsx`. `fetchAllUserData` is used by `AppShell.tsx`'s background auto-backup and `DataExportPanel.tsx`'s data export — **both need every document, by design**. A backup that silently truncates to 50 items is a data-loss bug, not a fix. **No change to `fetchAllUserData`.**
+- Tracing every reader of the `journals` collection (not just the file the audit named) found the `journals` query cache is split across **two entirely separate, non-shared fetches** under different TanStack Query keys:
+  - `['journals', uid, isVaultUnlocked]` — `JournalHistory.tsx`'s own fetch (decrypts content, used for the history view + AI Wizard).
+  - `['journals', uid]` — shared by `useAnchorStatus.ts` (Dashboard), `JournalInsights.tsx`, and `AchievementsTab.tsx` (no decryption, metadata only).
+- **`useAnchorStatus.ts` is the more severe, easier finding.** It's used on Dashboard — the single most-visited screen — and does the exact same unbounded `where(uid) + orderBy(createdAt)` full-history read as `JournalHistory.tsx`, but only ever checks `journals.some(entry => isToday(entry.createdAt) && ...)`. It fetches a user's **entire lifetime of journal entries just to check if any exist from today.** This is trivially fixable with a `where('createdAt', '>=', startOfToday)` range filter — no UI change, no cache-sharing complexity, low risk, high value.
+- **`JournalInsights.tsx` and `AchievementsTab.tsx`** (sharing `useAnchorStatus`'s cache key) were checked too — confirmed they genuinely need full history (trend charts, lifetime achievement counts). Correctly out of scope.
+- **`JournalHistory.tsx` itself needs a different fix than generic cursor pagination.** The UI is year→month collapsible accordions (only current year+month expanded by default), not a flat scrolling list — a `Virtuoso.endReached`-triggered infinite-scroll cursor doesn't match this shape at all. Worse: `allEntries` (the full fetch) is passed wholesale to `JournalAnalysisWizard` for AI pattern analysis, and is what the search bar filters over. A naive pagination would silently degrade AI analysis quality and make search miss older entries, with no obvious symptom to catch it.
 
 ---
 
 ## 2. Security & Zero-Knowledge Audit 🛡️
-* [ ] **Data Sensitivity:** Journal entries are ZK-encrypted content (`journals` collection, `IV:Ciphertext` per CLAUDE.md's boundary table). Pagination changes the query shape only — decryption still happens client-side at render time, unchanged.
-* [ ] **Encryption Strategy:** No change — still uses `src/lib/crypto.ts`'s existing decrypt path per entry.
+* [ ] **Data Sensitivity:** `useAnchorStatus`'s fix touches an unencrypted metadata read only (`createdAt`, `tags`) — no ZK boundary involved. `JournalHistory.tsx`'s fix still decrypts each fetched entry exactly as today; only fetch volume changes.
+* [ ] **Encryption Strategy:** No change to `src/lib/crypto.ts`'s decrypt path for either fix.
 * [ ] **Key Rotation:** N/A — no schema change.
 
 ---
 
 ## 3. Schema & Architecture 🗄️
-No Firestore schema changes. No new fields. No `src/lib/db.ts` interface changes (the document shape is unchanged — only the query's pagination behavior changes).
+No Firestore schema changes. No new fields. No `src/lib/db.ts` interface changes.
 
-**Firestore indexes:** The existing composite index on `journals` (`uid` equality + `createdAt` orderBy, already referenced in `firestore.indexes.json` per CLAUDE.md) already supports `startAfter` cursor pagination — no new index required.
+**Firestore indexes:** No new index needed for either fix — the existing `uid`(equality) + `createdAt`(orderBy) composite index on `journals` already covers a `uid`(equality) + `createdAt`(range) query shape.
 
 **Files impacted:**
-* `src/components/journal/JournalHistory.tsx` — replace the single unbounded `getDocs(query(...))` with a paginated fetch (initial page + "load more" or infinite-scroll trigger, integrated with the existing `Virtuoso` list's `endReached` callback).
-* Existing search/filter logic — needs explicit design: does search operate only over loaded pages (client-side, as now, but scoped to what's fetched), or does it need a server-side fallback query when the search term doesn't match anything in the currently-loaded set? **This is the one open design question for Phase 1 below, not assumed away.**
+* `src/hooks/useAnchorStatus.ts` — added `where('createdAt', '>=', Timestamp.fromDate(startOfDay(new Date())))` to the existing query. Gave it its own distinct cache key (`['journals', uid, 'today']`) rather than reusing the shared `['journals', uid]` key — **critical catch made before writing any code**: TanStack Query caches by key, not by `queryFn` body, so narrowing this hook's fetch while keeping the shared key would have let whichever hook (this one, `JournalInsights.tsx`, or `AchievementsTab.tsx`) mounted first silently populate the shared cache with the wrong shape of data for the other two.
+* `src/components/journal/JournalHistory.tsx` — restructured to two fetch modes instead of the originally-planned per-year incremental loading (see Phase 2 below for why the plan changed mid-implementation).
+* `src/components/journal/JournalAnalysisWizard.tsx` — **no source change**; `JournalHistory.tsx` now triggers its own full-history fetch and waits for it to resolve before opening the Wizard, so the Wizard still receives a complete `entries` array exactly as it always assumed.
+* `JournalHistory.tsx`'s search bar — added an explicit "search full history" affordance.
+* `src/components/journal/JournalInsights.tsx`, `src/components/profile/AchievementsTab.tsx` — **no change**, confirmed to genuinely need full history.
 
 ---
 
 ## 4. Implementation Phases 🏗️
 
-### Phase 1: Design decision on search interaction
-* Before writing code: decide whether search/filter stays scoped to loaded pages (simpler, matches most users' actual usage — searching recent entries) or needs a server-side fallback (more correct for Walt's use case of searching years back, more complex).
-* Recommendation to validate at implementation time: start with pages-loaded-so-far search (simpler, lower risk), with an explicit "search older entries" affordance if the user's query comes up empty — avoids a silent gap where a real match exists but isn't found.
+### Phase 1: `useAnchorStatus` date-range fix (low risk, shipped first)
+* Added the `startOfToday` range filter and the distinct cache key described above.
+* `hasCheckIn`'s logic (already filters by `isToday()` client-side) is unchanged — pure read-cost optimization, identical output.
 
-### Phase 2: Cursor pagination
-* Fetch an initial page (e.g., 50 entries) ordered by `createdAt desc`.
-* Wire `Virtuoso`'s `endReached` (already used for virtualization) to fetch the next page via `startAfter(lastVisibleDoc)`.
-* Confirm TanStack Query's cache key includes pagination state correctly (likely `useInfiniteQuery` rather than the current single `useQuery`).
+### Phase 2: `JournalHistory.tsx` — plan changed mid-implementation
+**The originally-planned "per-year incremental loading" design had a real flaw, found before writing the fetch code**: if a prior year isn't loaded yet, its year-header wouldn't be in `flatData` at all (headers are derived from `groupItemsByYearAndMonth(filteredEntries)`, which only contains loaded years). That means the user would have no way to *discover or expand into* a year that hasn't loaded — the exact mechanism meant to trigger loading it. Per-year incremental loading requires knowing which years have entries in advance, which isn't available without reading them (defeating the purpose).
+
+**Shipped design instead: two fetch modes.**
+* **Current-year mode (default):** fetches only the current calendar year via a `where(createdAt >= startOfYear) + where(createdAt <= endOfYear)` range query — matches what's expanded by default in the UI.
+* **Full-history mode (opt-in):** the original unbounded query, unchanged — triggered by clicking "Load earlier entries" (shown whenever not in full-history mode), "search your full history instead" (shown when searching), or opening the AI Wizard.
+* Extracted the per-entry decrypt/transform logic (previously inline in the single `queryFn`) into a shared `mapJournalSnapshot()` helper, used by both fetch modes to avoid duplicating it.
+* The Wizard's "Analyze" button triggers full-history mode and derives its own open/pending state from whether that fetch has resolved (`isWizardOpen = wizardOpenRequested && fullHistoryRequested && !fullHistoryQuery.isLoading`) — computed directly during render, not synced via a `useEffect`, after ESLint's `react-hooks/set-state-in-effect` rule flagged the first version of this (calling `setState` synchronously inside an effect) as an anti-pattern.
 
 ### Phase 3: Edge Cases
-* [ ] Confirm Share (existing feature) still works correctly against a paginated entry, not just the initially-loaded page.
-* [ ] Confirm the vault-lock/unlock flow (VaultGate) doesn't re-fetch from page 1 unnecessarily on every unlock.
-* [ ] Confirm offline behavior — Firestore's `persistentLocalCache` still needs to serve a sensible experience when paginating offline (may only have what was previously fetched).
+* [x] Share still works correctly regardless of mode — it operates on whatever's in `allEntries`, unchanged by which fetch populated it.
+* [x] Vault lock/unlock doesn't cause extra fetches — the query key includes `isVaultUnlocked` exactly as before, so re-locking/unlocking behaves identically to pre-change behavior.
+* [x] Offline: current-year mode is fully functional offline via Firestore's `persistentLocalCache`; full-history mode falls back the same way full-history *always* did before this ticket (unchanged code path).
+* [x] Year-badge counts are always the real count for whatever's actually loaded (current year alone, or everything in full-history mode) — never an ambiguous "not yet loaded" state, since two-mode design means every rendered year header reflects real fetched data.
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests:** pagination fetch logic, `endReached` trigger.
-* [ ] **Integration:** existing search/filter/share tests must still pass — extend them for the paginated case.
-* [ ] **Regression:** full `npm run check`, plus the `subway.spec.ts` golden-path e2e test (offline resilience) since this touches core Journal data-fetching.
-* [ ] **Manual:** verify with a seeded account of 100+ entries that scroll-triggered pagination feels smooth, not janky.
+* [x] **Unit Tests:** `useAnchorStatus.test.tsx` (8 tests, updated for the new `Timestamp.fromDate` mock and cache key) and `JournalHistory.test.tsx` (8 tests, updated to seed the new year-scoped cache key) — all passing.
+* [x] **Regression:** full `npm run check` clean (662/662 tests), plus the full golden-path e2e suite (11/11) against real Firebase emulators, including `vault.spec.ts` which exercises `JournalHistory.tsx` directly end-to-end (not just mocked).
+* [x] **Build:** `npm run build` clean.
+* [ ] **Manual:** not visually verified in a real browser with a multi-year seeded account — the emulator-backed `vault.spec.ts` test covers the real Firestore read path, but not a human eyeballing the "Load earlier entries"/"search full history" UI affordances.
