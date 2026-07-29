@@ -38,7 +38,7 @@ export default function QuestionModal({ category, question, round, onAnswer, onC
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
               placeholder="What is...?"
-              className="w-full p-3 border border-slate-300 rounded-xl shadow-sm text-center text-lg"
+              className="w-full p-3 border border-slate-300 rounded-xl shadow-sm text-center text-lg bg-white text-slate-900 placeholder:text-slate-400"
             />
             <button
               onClick={() => setIsRevealed(true)}
