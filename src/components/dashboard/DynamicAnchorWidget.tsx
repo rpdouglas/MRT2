@@ -140,7 +140,7 @@ export default function DynamicAnchorWidget() {
                   Daily Reading
                 </span>
               </button>
-              <MenuButton className="flex items-center justify-center px-2 border-l border-white/30 rounded-r-full active:bg-white/20 transition-colors">
+              <MenuButton aria-label="Choose fellowship reading" className="flex items-center justify-center px-2 border-l border-white/30 rounded-r-full active:bg-white/20 transition-colors">
                 <ChevronDownIcon className="h-3 w-3 text-white" />
               </MenuButton>
             </div>

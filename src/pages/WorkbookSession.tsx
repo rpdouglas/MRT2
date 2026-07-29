@@ -124,7 +124,7 @@ export default function WorkbookSession() {
             {/* TOP BAR */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-100 shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                    <button onClick={() => navigate(`/workbooks/${workbookId}`)} aria-label="Exit to workbook section list" className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
                         <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                     <div className="flex flex-col">
