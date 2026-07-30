@@ -43,6 +43,10 @@ We use a "Nuclear" strategy for environment variables to support Vite's build pr
 2. **Materialization:** The workflow writes a physical `.env` file to the runner's disk immediately before `npm run build`.
 3. **Destruction:** The runner is ephemeral; the file is destroyed post-build.
 
+**Dependency Vulnerability Gate (PROJ-96):** The `verify` job hard-fails on new high/critical production-dependency vulnerabilities via `npm audit --omit=dev`, scoped separately per npm workspace (root, `functions/`) since each has its own lockfile. Documented, non-forceable exceptions (dependencies where the only fix is a breaking major bump and the vulnerable code path doesn't apply to how this app uses the library) are tracked in `docs/RUNBOOK.md` rather than silently allowlisted.
+
+**Rollback:** See `docs/RUNBOOK.md` for the Firebase Hosting / Cloud Functions / Firestore rules rollback procedure — there is no atomic rollback for the latter two, only git revert + a full CI re-run.
+
 ## 4. Database Infrastructure
 **Platform:** Cloud Firestore (NoSQL)
 
