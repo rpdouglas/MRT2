@@ -35,3 +35,6 @@ We use a "Nuclear Fix" strategy for environment variables in CI/CD to prevent Vi
 npm run build
 firebase deploy --only hosting
 ```
+
+## 5. Something Broke — Rollback & Incident Response
+See [`docs/RUNBOOK.md`](./RUNBOOK.md) for the actual "it's down, what do I do" procedure — Firebase Hosting rollback, Cloud Functions/rules rollback (no atomic rollback exists for either), and the CI dependency vulnerability gate added in PROJ-96.
