@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { QuerySnapshot } from 'firebase/firestore';
 import JournalEditor from '../JournalEditor';
 import { getUserTemplates } from '../../../lib/db';
+import { DEFAULT_TEMPLATES, MOMENT_META } from '../../../data/journalTemplates';
 
 const mockAuthValue = { user: { uid: 'test-uid' }, userTier: 'free' };
 vi.mock('../../../contexts/AuthContext', () => ({
@@ -68,7 +69,23 @@ const renderEditor = async () => {
 };
 
 const selectTemplate = (templateId: string) => {
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: templateId } });
+    fireEvent.click(screen.getByRole('button', { name: /choose template/i }));
+
+    if (templateId === 'none') {
+        fireEvent.click(screen.getByText('Free Write'));
+        fireEvent.click(screen.getByText('Start with a blank page'));
+        return;
+    }
+
+    const template = DEFAULT_TEMPLATES.find(t => t.id === templateId);
+    if (!template) throw new Error(`Unknown default template id: ${templateId}`);
+
+    // 'in-the-moment' is open by default; any other section needs its
+    // header clicked first to expand it.
+    if (template.moment !== 'in-the-moment') {
+        fireEvent.click(screen.getByText(MOMENT_META[template.moment].label));
+    }
+    fireEvent.click(screen.getByText(template.name));
 };
 
 describe('JournalEditor default template selection (PROJ-57)', () => {

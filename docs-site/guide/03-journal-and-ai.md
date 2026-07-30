@@ -3,7 +3,7 @@
 The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**
 
 ## 1. Writing an Entry
-* **Text Mode:** Select a template or free-write. Templates are grouped by recovery modality — Twelve-Step (e.g. "Morning Intention", "Urge Log"), CBT/SMART, DBT, Mindfulness, Harm Reduction, Reset, Trauma-Informed, ACT, Motivational, MAT, and General — 15 templates in all. Twelve-Step templates drop straight into free-write text; the rest open a short guided form, one labeled box per prompt.
+* **Text Mode:** Tap "Choose Template..." to open a picker grouped by moment — **In the Moment** (crisis/urge templates like "Urge Log" and "Urge Surfing"), **Daily Rituals** (morning/evening check-ins), **Reflection & Insight** (deeper processing), **Free Write**, and **My Templates** (your own, Premium) — 15 built-in templates in all, each still tagged with its recovery modality (Twelve-Step, CBT/SMART, DBT, and others) for reference. Some templates drop straight into free-write text; the rest open a short guided form, one labeled box per prompt.
 * **Metadata:** Always slide the 1-10 Mood scale and add custom tags (e.g., `#Anxiety`, `#Meeting`) to help the AI track your patterns later.
 
 <div class="flex flex-col sm:flex-row gap-6 justify-center my-8">
