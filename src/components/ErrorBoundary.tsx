@@ -28,8 +28,10 @@ class ErrorBoundary extends Component<Props, State> { public state: State = { ha
         return;
     }
     
-    // Attempt to log to Firestore (Telemetry)
-    if (db) {
+    // Attempt to log to Firestore (Telemetry). Skipped when logged out — firestore.rules'
+    // isCreatingOwnedResource() requires request.auth != null, so this write would always
+    // fail in that case; trackUncaughtError() above already covers it via PostHog.
+    if (db && auth?.currentUser) {
         try {
             addDoc(collection(db, 'client_errors'), {
                 uid: auth?.currentUser?.uid,

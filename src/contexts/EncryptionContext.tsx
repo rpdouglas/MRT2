@@ -12,6 +12,7 @@ import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'f
 import { generateSalt, generateKey, computePinHash, encrypt, decrypt, clearKey, isVaultUnlocked as checkLibUnlocked, deriveLocalBits, deriveVaultKeyWithPepper } from '../lib/crypto';
 import { executeCryptoShredding, executePinRotation } from '../lib/rotation';
 import { fetchVaultPepper, VaultPinLockedError } from '../lib/vaultAuth';
+import { trackClientError } from '../lib/telemetry';
 
 const SESSION_PIN_KEY = 'mrt_vault_pin';
 const SESSION_PEPPER_KEY = 'mrt_vault_pepper';
@@ -125,6 +126,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         if (error instanceof VaultPinLockedError) throw error;
         console.error("Unlock logic failed", error);
+        trackClientError('vault_unlock', error instanceof Error ? error.name : 'Error');
         return false;
       }
   }, [user]);
@@ -181,6 +183,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         }
       } catch (error) {
         console.error("Error checking vault status:", error);
+        trackClientError('vault_status_check', error instanceof Error ? error.name : 'Error');
       } finally {
         setVaultLoading(false);
       }
@@ -229,7 +232,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setHasDeferredVault(false);
       sessionStorage.setItem(SESSION_PIN_KEY, pin);
 
-    } catch (error) { console.error("Vault setup failed:", error); throw error; } finally {
+    } catch (error) { console.error("Vault setup failed:", error); trackClientError('vault_setup', error instanceof Error ? error.name : 'Error'); throw error; } finally {
       setVaultLoading(false);
     }
   };
@@ -249,7 +252,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       setSalt(null);
       setVerifier(null);
       setUsesPepperV2(false);
-    } catch (error) { console.error("Vault reset failed:", error); throw error; } finally {
+    } catch (error) { console.error("Vault reset failed:", error); trackClientError('vault_reset', error instanceof Error ? error.name : 'Error'); throw error; } finally {
       setVaultLoading(false);
     }
   };

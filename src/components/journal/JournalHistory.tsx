@@ -5,20 +5,20 @@
  * FEAT: Implemented 2-Level Grouping (Year -> Month).
  * UX: Default state is Current Year + Current Month expanded; all others collapsed.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useJournalOperations } from '../../hooks/useJournalOperations';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, Timestamp, type Firestore, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { getMockJournals } from '../../lib/mockData';
 import { groupItemsByYearAndMonth } from '../../lib/grouping';
 import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
 import { Virtuoso } from 'react-virtuoso';
-import { format } from 'date-fns';
+import { format, startOfYear, endOfYear } from 'date-fns';
 import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import { parseSmartToolPayload } from '../../lib/smartToolPayload';
 import { HEADLINE_FIELD, getFieldLabel, formatFieldValueText } from '../../lib/toolHistorySummary';
@@ -27,6 +27,51 @@ import { TOOLS } from '../../lib/toolsRegistry';
 import { DRAFT_TAG } from '../../lib/types/smart';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
+
+// PROJ-95: shared by every fetch path below (per-year and full-history) so the
+// decrypt/transform logic isn't duplicated across them.
+async function mapJournalSnapshot(
+    snapshot: QuerySnapshot<DocumentData>,
+    decrypt: (ciphertext: string) => Promise<string>,
+): Promise<JournalEntryWithStatus[]> {
+    const results = await Promise.all(snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        let content = data.content;
+        let isError = false;
+
+        if (data.isEncrypted) {
+            try {
+                content = await decrypt(data.content);
+            } catch (err) {
+                console.error(`Failed to decrypt entry ${docSnap.id}:`, err);
+                content = "🔒 [Locked - Decryption Failed]";
+                isError = true;
+            }
+        }
+
+        const toolPayload = isError ? null : parseSmartToolPayload(content);
+        // Hide in-progress guided-flow drafts — they aren't a finished journal entry yet (matches useToolHistory.ts).
+        if (toolPayload && (data.tags as string[] | undefined)?.includes(DRAFT_TAG)) return null;
+
+        let createdDate = new Date();
+        if (data.createdAt?.toDate) {
+            createdDate = data.createdAt.toDate();
+        } else if (data.createdAt instanceof Timestamp) {
+            createdDate = data.createdAt.toDate();
+        }
+
+        return {
+            id: docSnap.id,
+            ...data,
+            content,
+            createdAt: createdDate,
+            isError,
+            toolPayload
+        } as unknown as JournalEntryWithStatus;
+    }));
+
+    return results.filter((entry): entry is JournalEntryWithStatus => entry !== null);
+}
 
 // Flattened Item Type for Virtuoso (Now has 3 types)
 type HistoryItem = 
@@ -57,14 +102,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [expandedToolId, setExpandedToolId] = useState<string | null>(null);
   
   // --- COLLAPSIBILITY STATE ---
+  const currentYear = useMemo(() => new Date().getFullYear().toString(), []);
   // Default: Current Year is expanded
-  const [expandedYears, setExpandedYears] = useState<Set<string>>(() => {
-      return new Set([new Date().getFullYear().toString()]);
-  });
+  const [expandedYears, setExpandedYears] = useState<Set<string>>(() => new Set([currentYear]));
 
   // Default: Current Month of Current Year is expanded (Format: "YYYY-M")
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => { const now = new Date(); return new Set([`${now.getFullYear()}-${now.getMonth()}`]); });
@@ -72,63 +115,89 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   // Search Param State
   const searchQuery = searchParams.get('search') || '';
 
-  // --- REACT QUERY FETCH ---
-  const { data: allEntries = [], isLoading } = useQuery({
-    queryKey: ['journals', user?.uid, isVaultUnlocked],
+  // --- PROJ-95: CURRENT-YEAR-SCOPED FETCH ---
+  // Default view only ever shows the current year expanded anyway — fetching a
+  // user's entire history on every load re-reads documents that usually aren't
+  // even rendered. Two modes: current-year-only (default) and full-history
+  // (opt-in — "Load Earlier Entries", opening the AI Wizard, or "search full
+  // history"). Deliberately NOT per-year incremental loading: since there's no
+  // cheap way to know which past years actually have entries without reading
+  // them, a collapsed header for an unloaded year could never be rendered in
+  // the first place, leaving the user with no way to discover or expand into
+  // it. Two modes sidesteps that entirely.
+  const [fullHistoryRequested, setFullHistoryRequested] = useState(false);
+  const isMock = user?.email?.endsWith('.mock');
+
+  const currentYearQuery = useQuery({
+    queryKey: ['journals', user?.uid, isVaultUnlocked, 'year', currentYear],
     queryFn: async () => {
         if (!user) return [];
-        if (user.email?.endsWith('.mock')) {
-            return getMockJournals(user.email) as unknown as (JournalEntry & { isError?: boolean })[];
+        if (isMock) {
+            const yearNum = Number(currentYear);
+            return (getMockJournals(user.email!) as unknown as JournalEntryWithStatus[]).filter((entry) => {
+                const created = entry.createdAt as unknown;
+                const date = created instanceof Timestamp ? created.toDate() : new Date(created as string);
+                return date.getFullYear() === yearNum;
+            });
+        }
+        if (!db) return [];
+        const database: Firestore = db;
+        const yearNum = Number(currentYear);
+        const q = query(
+            collection(database, 'journals'),
+            where('uid', '==', user.uid),
+            where('createdAt', '>=', Timestamp.fromDate(startOfYear(new Date(yearNum, 0, 1)))),
+            where('createdAt', '<=', Timestamp.fromDate(endOfYear(new Date(yearNum, 0, 1)))),
+            orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        return mapJournalSnapshot(snapshot, decrypt);
+    },
+    enabled: !!user && !fullHistoryRequested,
+  });
+
+  const fullHistoryQuery = useQuery({
+    queryKey: ['journals', user?.uid, isVaultUnlocked, 'full'],
+    queryFn: async () => {
+        if (!user) return [];
+        if (isMock) {
+            return getMockJournals(user.email!) as unknown as JournalEntryWithStatus[];
         }
         if (!db) return [];
         const database: Firestore = db;
         const q = query(
-            collection(database, 'journals'), 
+            collection(database, 'journals'),
             where('uid', '==', user.uid),
             orderBy('createdAt', 'desc')
         );
         const snapshot = await getDocs(q);
-
-        const results = await Promise.all(snapshot.docs.map(async (docSnap) => {
-            const data = docSnap.data();
-            let content = data.content;
-            let isError = false;
-
-            if (data.isEncrypted) {
-                try {
-                    content = await decrypt(data.content);
-                } catch (err) {
-                    console.error(`Failed to decrypt entry ${docSnap.id}:`, err);
-                    content = "🔒 [Locked - Decryption Failed]";
-                    isError = true;
-                }
-            }
-
-            const toolPayload = isError ? null : parseSmartToolPayload(content);
-            // Hide in-progress guided-flow drafts — they aren't a finished journal entry yet (matches useToolHistory.ts).
-            if (toolPayload && (data.tags as string[] | undefined)?.includes(DRAFT_TAG)) return null;
-
-            let createdDate = new Date();
-            if (data.createdAt?.toDate) {
-                createdDate = data.createdAt.toDate();
-            } else if (data.createdAt instanceof Timestamp) {
-                createdDate = data.createdAt.toDate();
-            }
-
-            return {
-                id: docSnap.id,
-                ...data,
-                content,
-                createdAt: createdDate,
-                isError,
-                toolPayload
-            } as unknown as JournalEntryWithStatus;
-        }));
-
-        return results.filter((entry): entry is JournalEntryWithStatus => entry !== null);
+        return mapJournalSnapshot(snapshot, decrypt);
     },
-    enabled: !!user,
+    enabled: !!user && fullHistoryRequested,
   });
+
+  const allEntries = useMemo(
+      () => (fullHistoryRequested ? (fullHistoryQuery.data ?? []) : (currentYearQuery.data ?? [])),
+      [fullHistoryRequested, fullHistoryQuery.data, currentYearQuery.data],
+  );
+  const isLoading = fullHistoryRequested ? fullHistoryQuery.isLoading : currentYearQuery.isLoading;
+  const isLoadingFullHistory = fullHistoryRequested && fullHistoryQuery.isLoading;
+
+  const requestFullHistory = useCallback(() => setFullHistoryRequested(true), []);
+
+  // The AI Wizard assumes `entries` is already the complete set the moment it opens
+  // (no internal loading state of its own), so "open" is derived from whether the
+  // full-history fetch has actually resolved yet — not synced via an effect, which
+  // would cause an extra cascading render for no benefit here.
+  const [wizardOpenRequested, setWizardOpenRequested] = useState(false);
+  const wizardDataReady = fullHistoryRequested && !fullHistoryQuery.isLoading;
+  const isWizardOpen = wizardOpenRequested && wizardDataReady;
+  const wizardPending = wizardOpenRequested && !wizardDataReady;
+
+  const handleAnalyzeClick = () => {
+      requestFullHistory();
+      setWizardOpenRequested(true);
+  };
 
   // --- FILTER ENGINE ---
   const filteredEntries = useMemo(() => {
@@ -262,7 +331,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                 className="w-full pl-11 pr-10 py-3 bg-white border border-indigo-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm text-slate-700 placeholder:text-slate-400"
             />
             {searchQuery && (
-                <button 
+                <button
                     onClick={() => setSearchParams(prev => { prev.delete('search'); return prev; }, { replace: true })}
                     className="absolute right-3 top-3 p-1 text-indigo-300 hover:text-indigo-600 bg-indigo-50 rounded-full transition-colors"
                 >
@@ -271,10 +340,32 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             )}
         </div>
 
+        {/* PROJ-95: current-year-only mode — search and browsing both only cover
+            what's loaded so far. Give an explicit path to the full history rather
+            than silently missing older matches. */}
+        {!fullHistoryRequested && (searchQuery || flatData.length > 0) && (
+            <button
+                onClick={requestFullHistory}
+                disabled={isLoadingFullHistory}
+                className="shrink-0 mb-3 text-xs font-bold text-indigo-500 hover:text-indigo-700 disabled:opacity-50 disabled:cursor-wait text-left"
+            >
+                {isLoadingFullHistory
+                    ? 'Loading your full history…'
+                    : searchQuery
+                        ? `Only searching ${currentYear} — search your full history instead`
+                        : `Only showing ${currentYear} — load earlier entries`}
+            </button>
+        )}
+
         {flatData.length === 0 ? (
              <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-dashed border-gray-300 shadow-sm p-6 text-center">
                  <p className="text-gray-500 font-medium">No entries found.</p>
-                 {searchQuery && <p className="text-gray-400 text-xs mt-2">Try adjusting your search terms.</p>}
+                 {searchQuery && !fullHistoryRequested && (
+                     <button onClick={requestFullHistory} className="text-indigo-500 hover:text-indigo-700 text-xs mt-2 font-bold">
+                         Search your full history instead
+                     </button>
+                 )}
+                 {searchQuery && fullHistoryRequested && <p className="text-gray-400 text-xs mt-2">Try adjusting your search terms.</p>}
              </div>
         ) : (
             <div className="flex-1 min-h-0 relative">
@@ -423,17 +514,18 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         )}
 
         {/* FLOATING ACTION BUTTON */}
-        <button 
-            onClick={() => setIsWizardOpen(true)}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group"
+        <button
+            onClick={handleAnalyzeClick}
+            disabled={wizardPending}
+            className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
         >
-            <SparklesIcon className="h-6 w-6 group-hover:animate-pulse" />
-            <span className="hidden group-hover:inline text-sm font-bold pr-1">Analyze</span>
+            <SparklesIcon className={`h-6 w-6 ${wizardPending ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
+            <span className="hidden group-hover:inline text-sm font-bold pr-1">{wizardPending ? 'Loading…' : 'Analyze'}</span>
         </button>
 
         <JournalAnalysisWizard 
-            isOpen={isWizardOpen} 
-            onClose={() => setIsWizardOpen(false)} 
+            isOpen={isWizardOpen}
+            onClose={() => setWizardOpenRequested(false)}
             entries={allEntries} 
         />
     </div>
