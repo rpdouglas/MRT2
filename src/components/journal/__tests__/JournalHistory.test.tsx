@@ -88,7 +88,7 @@ const renderHistory = (entries: unknown[]) => {
             },
         },
     });
-    // PROJ-94: default (non-full-history) mode fetches under a year-scoped key,
+    // PROJ-95: default (non-full-history) mode fetches under a year-scoped key,
     // not the old flat ['journals', uid, isVaultUnlocked] key.
     const currentYear = new Date().getFullYear().toString();
     queryClient.setQueryData(['journals', 'test-uid', true, 'year', currentYear], entries);

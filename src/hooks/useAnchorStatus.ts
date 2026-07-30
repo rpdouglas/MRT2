@@ -13,7 +13,7 @@ export function useAnchorStatus() {
   const timeOfDay = useTimeOfDay();
   const { profile } = useUserProfile();
 
-  // PROJ-94: distinct cache key from ['journals', uid] (shared by JournalInsights.tsx
+  // PROJ-95: distinct cache key from ['journals', uid] (shared by JournalInsights.tsx
   // and AchievementsTab.tsx, which need full history) — this query is intentionally
   // scoped to today only, and TanStack Query caches by key, not by queryFn body, so
   // reusing that key would let whichever hook mounts first silently serve the wrong

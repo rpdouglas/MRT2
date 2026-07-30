@@ -15,7 +15,7 @@ if (import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN) {
   })
 }
 
-// PROJ-93: Core Web Vitals, no PII — just the metric name/value/rating.
+// PROJ-94: Core Web Vitals, no PII — just the metric name/value/rating.
 function reportWebVital(metric: Metric) {
   safeCapture('web_vital', { name: metric.name, value: Math.round(metric.value), rating: metric.rating })
 }

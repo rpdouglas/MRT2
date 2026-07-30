@@ -1,8 +1,8 @@
-# 📁 Project 95: CI/Deploy Operational Safety Net
+# 📁 Project 96: CI/Deploy Operational Safety Net
 
 **Status:** ⚪ Planned
 **Primary Persona:** Internal (Dev/Ops governance per `docs/governance/INTERNAL_PERSONAS.md`) — no direct end-user-facing impact; this protects the team's ability to notice and respond to a bad deploy.
-**Objective:** Close `OBSERVABILITY_AUDIT.md`'s GAP-04 (no deploy-failure alerting) and GAP-08 (no documented rollback procedure), plus `DEPENDENCY_AUDIT.md`'s CI vulnerability-gate recommendation — kept as its own project because it touches the deployment pipeline itself, a different risk profile than application code changes (PROJ-93/94).
+**Objective:** Close `OBSERVABILITY_AUDIT.md`'s GAP-04 (no deploy-failure alerting) and GAP-08 (no documented rollback procedure), plus `DEPENDENCY_AUDIT.md`'s CI vulnerability-gate recommendation — kept as its own project because it touches the deployment pipeline itself, a different risk profile than application code changes (PROJ-94/95).
 
 ---
 

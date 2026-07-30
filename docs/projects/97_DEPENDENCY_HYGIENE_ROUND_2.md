@@ -1,4 +1,4 @@
-# 📁 Project 96: Dependency Hygiene Round 2
+# 📁 Project 97: Dependency Hygiene Round 2
 
 **Status:** ⚪ Planned
 **Primary Persona:** Ned (task list swipe interactions — `SwipeableTaskRow.tsx`), universal (Daily Crossword players — `crossword-layout-generator` replacement)

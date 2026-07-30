@@ -73,7 +73,7 @@ export function trackUncaughtError(errorName: string, componentStackSnippet?: st
 }
 
 /**
- * PROJ-93: A Firestore mutation's onError fired. Domain + error identity only —
+ * PROJ-94: A Firestore mutation's onError fired. Domain + error identity only —
  * never the mutation's input data, which may contain decrypted content.
  */
 export function trackMutationFailed(domain: string, errorName: string): void {
@@ -81,7 +81,7 @@ export function trackMutationFailed(domain: string, errorName: string): void {
 }
 
 /**
- * PROJ-93: A caught error outside the mutation-wrapper pattern (auth state,
+ * PROJ-94: A caught error outside the mutation-wrapper pattern (auth state,
  * vault unlock/setup/reset, subscription listeners). Domain + error identity
  * only — never the caught error's full message, which for auth/vault paths
  * could echo back sensitive input.

@@ -1,4 +1,4 @@
-# 📁 Project 94: Journal Read-Cost Reduction (Dashboard Anchor Status + Journal History)
+# 📁 Project 95: Journal Read-Cost Reduction (Dashboard Anchor Status + Journal History)
 
 **Status:** ✅ Shipped
 **Primary Persona:** Ned/David (Dashboard — `useAnchorStatus`, hit on every app open), Walt (35+ years, `JournalHistory.tsx` — most likely to have hundreds-to-thousands of entries)

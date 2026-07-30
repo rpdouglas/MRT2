@@ -28,7 +28,7 @@ import { DRAFT_TAG } from '../../lib/types/smart';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
-// PROJ-94: shared by every fetch path below (per-year and full-history) so the
+// PROJ-95: shared by every fetch path below (per-year and full-history) so the
 // decrypt/transform logic isn't duplicated across them.
 async function mapJournalSnapshot(
     snapshot: QuerySnapshot<DocumentData>,
@@ -115,7 +115,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
   // Search Param State
   const searchQuery = searchParams.get('search') || '';
 
-  // --- PROJ-94: CURRENT-YEAR-SCOPED FETCH ---
+  // --- PROJ-95: CURRENT-YEAR-SCOPED FETCH ---
   // Default view only ever shows the current year expanded anyway — fetching a
   // user's entire history on every load re-reads documents that usually aren't
   // even rendered. Two modes: current-year-only (default) and full-history
@@ -340,7 +340,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
             )}
         </div>
 
-        {/* PROJ-94: current-year-only mode — search and browsing both only cover
+        {/* PROJ-95: current-year-only mode — search and browsing both only cover
             what's loaded so far. Give an explicit path to the full history rather
             than silently missing older matches. */}
         {!fullHistoryRequested && (searchQuery || flatData.length > 0) && (
