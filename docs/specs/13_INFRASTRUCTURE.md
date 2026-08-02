@@ -51,12 +51,14 @@ We use a "Nuclear" strategy for environment variables to support Vite's build pr
 **Platform:** Cloud Firestore (NoSQL)
 
 ### A. Security Rules (`firestore.rules`)
-* **RBAC:** Admin access is verified via Custom Claims (`request.auth.token.admin == true`).
+* **RBAC:** Admin access is verified via Custom Claims (`request.auth.token.admin == true`) — `AuthContext.tsx` also currently OR's in a Firestore `role === 'admin'` fallback client-side, deliberately not yet converged (PROJ-99 Phase 5 added telemetry to make that convergence safe to do later, rather than removing the fallback on a guess).
 * **Tenancy:** Standard users can only read/write documents where `resource.data.uid == request.auth.uid`.
+* **Shape/size validation (PROJ-99):** `journals` and `game_saves` — the two highest-payload collections — additionally validate field types/required-fields on every write, and a byte-size ceiling on create only (50KB/200KB respectively). The remaining collections (`tasks`, `insights`, `service`, `game_progress`) are tenancy-only, same as before.
 
 ### B. Indexing (`firestore.indexes.json`)
 Composite indexes are required for complex queries:
 * **Journals:** `uid` (Asc) + `createdAt` (Desc) [For Timeline].
+* **Journals:** `uid` (Asc) + `tags` (Array-contains) + `createdAt` (Desc) [For Tool History — PROJ-99; also serves the tags-only prefix query `useSmartToolCompletions.ts` uses].
 * **Insights:** `uid` (Asc) + `createdAt` (Desc) [For Log].
 
 ## 5. Automation Systems
