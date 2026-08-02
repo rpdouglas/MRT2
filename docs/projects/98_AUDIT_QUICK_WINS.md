@@ -1,6 +1,6 @@
 # 📁 Project 98: Audit Quick-Win Remediation Sweep
 
-**Status:** 🟢 Done — all 4 phases shipped 2026-08-02 (commits `7277e42`, `63f602e`, `77c30e1`, `e79be91`)
+**Status:** ✅ Shipped
 **Primary Persona:** David (the PWA install-size/precache fix in Phase 1 is a direct Day-1, acute-crisis, mobile-connection win for him); Internal (Dev/Ops governance per `docs/governance/INTERNAL_PERSONAS.md`) for the remaining build-hygiene, accessibility, and governance-documentation items.
 **Objective:** Close the 10 "Quick Win" items (each independently estimated at hours, not days) from `docs/reports/2026-08_full_production_readiness_audit.md` §20, without touching any of that report's Medium-Effort or Large-Refactor items (tracked separately — see §6).
 
