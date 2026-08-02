@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser, type User } from 'firebase/auth';
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     if (!auth) throw new Error("Auth not initialized");
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/drive.file');
@@ -157,46 +157,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setDriveAccessToken(credential.accessToken);
     }
     posthog.capture('user_logged_in', { method: 'google' });
-  };
+  }, []);
 
-  const signupWithEmail = async (email: string, pass: string) => {
+  const signupWithEmail = useCallback(async (email: string, pass: string) => {
     if (!auth) throw new Error("Auth not initialized");
     const result = await createUserWithEmailAndPassword(auth, email, pass);
     await getOrCreateUserProfile(result.user);
     posthog.identify(result.user.uid);
     posthog.capture('user_signed_up', { method: 'email' });
-  };
+  }, []);
 
-  const loginWithEmail = async (email: string, pass: string) => {
+  const loginWithEmail = useCallback(async (email: string, pass: string) => {
     if (!auth) throw new Error("Auth not initialized");
     await signInWithEmailAndPassword(auth, email, pass);
     posthog.capture('user_logged_in', { method: 'email' });
-  };
+  }, []);
 
-  const reauthenticateWithEmail = async (password: string) => {
+  const reauthenticateWithEmail = useCallback(async (password: string) => {
       if (!auth || !user || !user.email) throw new Error("Not authenticated");
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
-  };
+  }, [user]);
 
-  const reauthenticateWithGoogle = async () => {
+  const reauthenticateWithGoogle = useCallback(async () => {
       if (!auth || !user) throw new Error("Not authenticated");
       const provider = new GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/drive.file');
       await reauthenticateWithPopup(user, provider);
-  };
+  }, [user]);
 
-  const deleteAccount = async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); };
+  const deleteAccount = useCallback(async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); }, [user]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     localStorage.removeItem('mrt_mock_user');
     if (!auth) return;
     posthog.capture('user_logged_out');
     posthog.reset();
     await signOut(auth);
-  };
+  }, []);
 
-  const value = {
+  // PROJ-98 Phase 4: memoized so consumers of useAuth() only re-render when
+  // a value they actually read changes, not on every AuthProvider render
+  // (e.g. LayoutContext's isOnline toggling, which sits above this in the
+  // tree via App.tsx's provider nesting).
+  const value = useMemo(() => ({
     user,
     loading,
     isAdmin,
@@ -209,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     reauthenticateWithGoogle,
     deleteAccount,
     logout
-  };
+  }), [user, loading, isAdmin, userTier, driveAccessToken, loginWithGoogle, signupWithEmail, loginWithEmail, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount, logout]);
 
   return (
     <AuthContext.Provider value={value}>

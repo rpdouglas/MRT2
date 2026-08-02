@@ -5,7 +5,7 @@
  * NEW: Added 'isOnline' state for Network Resilience.
  * FEATURES: Automatically detects offline/online status via window event listeners.
  */
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 
 interface LayoutContextType {
   sidebarOpen: boolean;
@@ -42,10 +42,15 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
       };
   }, []);
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
-  const toggleSOS = () => setIsSOSOpen(prev => !prev);
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const toggleSOS = useCallback(() => setIsSOSOpen(prev => !prev), []);
 
-  const value = { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSidebar, toggleSOS, isOnline };
+  // PROJ-98 Phase 4: memoized so every useLayout() consumer doesn't re-render
+  // whenever any one of sidebarOpen/isSOSOpen/isOnline changes independently.
+  const value = useMemo(
+    () => ({ sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSidebar, toggleSOS, isOnline }),
+    [sidebarOpen, isSOSOpen, toggleSidebar, toggleSOS, isOnline]
+  );
 
   return (
     <LayoutContext.Provider value={value}>

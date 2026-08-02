@@ -263,7 +263,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                       <span>{weather.condition}</span>
                       <span className="font-bold">{weather.temp}°C</span>
                       {!initialEntry && (
-                          <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600">
+                          <button type="button" onClick={fetchLocalWeather} disabled={weatherLoading} className="ml-1 text-blue-400 hover:text-blue-600" aria-label="Refresh weather">
                               <ArrowPathIcon className={`h-3 w-3 ${weatherLoading ? 'animate-spin' : ''}`} />
                           </button>
                       )}

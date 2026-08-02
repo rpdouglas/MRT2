@@ -90,7 +90,7 @@ describe('NotificationBanner', () => {
     render(<NotificationBanner />);
     await waitFor(() => expect(screen.getByText('Enable Daily Reminders')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole('button', { name: '' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }));
 
     await waitFor(() => expect(screen.queryByText('Enable Daily Reminders')).not.toBeInTheDocument());
     expect(localStorage.getItem('mrt_notif_dismissed_test-uid')).toBe('true');

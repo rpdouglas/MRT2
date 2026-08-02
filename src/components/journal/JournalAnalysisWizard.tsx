@@ -284,7 +284,7 @@ isOpen, onClose, entries }: WizardProps) {
                     <Dialog.Panel className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-4 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2 text-white"><SparklesIcon className="h-6 w-6" /><h3 className="font-bold text-lg">{scope === 'all-time' ? 'Deep Pattern Engine' : 'Analysis Wizard'}</h3></div>
-                            <button onClick={onClose} className="text-white/80 hover:text-white"><XMarkIcon className="h-6 w-6" /></button>
+                            <button onClick={onClose} className="text-white/80 hover:text-white" aria-label="Close analysis wizard"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
 
                         <div className="p-6 overflow-y-auto">

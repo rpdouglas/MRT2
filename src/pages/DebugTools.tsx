@@ -89,7 +89,7 @@ export default function DebugTools() {
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                         <h3 className="font-bold text-gray-700">Active Tasks</h3>
-                        <button onClick={loadTasks} className="p-2 hover:bg-gray-100 rounded-full"><ArrowPathIcon className="h-5 w-5" /></button>
+                        <button onClick={loadTasks} className="p-2 hover:bg-gray-100 rounded-full" aria-label="Refresh task list"><ArrowPathIcon className="h-5 w-5" /></button>
                     </div>
                     {tasks.map(task => (
                         <div key={task.id} className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

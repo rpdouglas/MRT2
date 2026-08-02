@@ -57,3 +57,7 @@ llm-export/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# rollup-plugin-visualizer output (PROJ-98) — regenerate locally via
+# `npm run build`, never a tracked artifact.
+stats.html

@@ -5,7 +5,7 @@
  * FEAT: Integrated executePinRotation and executeCryptoShredding for Ticket 2.5.
  * FEAT: PROJ-39 Deferred Vault Lock (Context Gatekeeper Bypass)
  */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
@@ -192,7 +192,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     checkVaultStatus();
   }, [user, performUnlock]);
 
-  const setupVault = async (pin: string) => {
+  const setupVault = useCallback(async (pin: string) => {
     if (!user || !db) return;
 
     try {
@@ -235,9 +235,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     } catch (error) { console.error("Vault setup failed:", error); trackClientError('vault_setup', error instanceof Error ? error.name : 'Error'); throw error; } finally {
       setVaultLoading(false);
     }
-  };
+  }, [user]);
 
-  const resetVault = async () => {
+  const resetVault = useCallback(async () => {
     if (!user || !db) return;
     try {
       setVaultLoading(true);
@@ -255,9 +255,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     } catch (error) { console.error("Vault reset failed:", error); trackClientError('vault_reset', error instanceof Error ? error.name : 'Error'); throw error; } finally {
       setVaultLoading(false);
     }
-  };
+  }, [user]);
 
-  const changePin = async (oldPin: string, newPin: string, onProgress: (p: number) => void) => {
+  const changePin = useCallback(async (oldPin: string, newPin: string, onProgress: (p: number) => void) => {
     if (!user || !salt) throw new Error("Missing auth state");
     const { newSalt, newVerifier, newPepper } = await executePinRotation(user.uid, oldPin, newPin, salt, verifier, usesPepperV2, onProgress);
 
@@ -267,12 +267,12 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     sessionStorage.setItem(SESSION_PEPPER_KEY, newPepper);
     setIsVaultUnlocked(true);
     sessionStorage.setItem(SESSION_PIN_KEY, newPin);
-  };
+  }, [user, salt, verifier, usesPepperV2]);
 
-  const unlockVault = async (pin: string): Promise<boolean> => {
+  const unlockVault = useCallback(async (pin: string): Promise<boolean> => {
     if (!salt || !user || !db) return false;
     return await performUnlock(pin, salt, verifier, usesPepperV2);
-  };
+  }, [salt, user, verifier, usesPepperV2, performUnlock]);
 
   const lockVault = useCallback(() => {
     clearKey();
@@ -292,7 +292,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     return await decrypt(text);
   }, [user]);
 
-  const value = {
+  // PROJ-98 Phase 4: memoized so every useEncryption() consumer only
+  // re-renders when a value it actually reads changes.
+  const value = useMemo(() => ({
     isVaultSet,
     isVaultUnlocked,
     vaultLoading,
@@ -304,7 +306,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     encrypt: handleEncrypt,
     decrypt: handleDecrypt,
     lockVault
-  };
+  }), [isVaultSet, isVaultUnlocked, vaultLoading, hasDeferredVault, unlockVault, setupVault, resetVault, changePin, handleEncrypt, handleDecrypt, lockVault]);
 
   return (
     <EncryptionContext.Provider value={value}>

@@ -35,7 +35,7 @@ export default function ManageWordCloudModal({ isOpen, onClose, blockedWords, on
                                     <EyeSlashIcon className="h-6 w-6 text-slate-500" />
                                     Manage Ignored Words
                                 </Dialog.Title>
-                                <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                                <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
                                     <XMarkIcon className="h-6 w-6" />
                                 </button>
                             </div>
@@ -53,10 +53,11 @@ export default function ManageWordCloudModal({ isOpen, onClose, blockedWords, on
                                     placeholder="e.g. 'work' or 'lunch'"
                                     className="flex-1 rounded-xl border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={!newWord.trim()}
                                     className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                    aria-label="Add word"
                                 >
                                     <PlusIcon className="h-5 w-5" />
                                 </button>
