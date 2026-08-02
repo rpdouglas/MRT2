@@ -1,6 +1,6 @@
 # 📁 Project 98: Audit Quick-Win Remediation Sweep
 
-**Status:** 🟡 Active — Phases 1-3 shipped 2026-08-02 (commits `7277e42`, `63f602e`, `77c30e1`)
+**Status:** 🟢 Done — all 4 phases shipped 2026-08-02 (commits `7277e42`, `63f602e`, `77c30e1`, `e79be91`)
 **Primary Persona:** David (the PWA install-size/precache fix in Phase 1 is a direct Day-1, acute-crisis, mobile-connection win for him); Internal (Dev/Ops governance per `docs/governance/INTERNAL_PERSONAS.md`) for the remaining build-hygiene, accessibility, and governance-documentation items.
 **Objective:** Close the 10 "Quick Win" items (each independently estimated at hours, not days) from `docs/reports/2026-08_full_production_readiness_audit.md` §20, without touching any of that report's Medium-Effort or Large-Refactor items (tracked separately — see §6).
 
@@ -62,8 +62,8 @@ Highest-ROI phase. Verified result: PWA precache dropped from **19.17MB/99 entri
 
 * [x] **`npm audit fix` inside `functions/`** — 27 vulnerabilities (2 critical, 8 high, 15 moderate, 2 low) → 11 moderate, non-force. The remaining 11 (`ts-deepmerge`, `uuid` transitive chains) only resolve via `--force`, which would downgrade `firebase-admin` from `^13.8.0` to `10.3.0` — a breaking-change downgrade of the Cloud Functions runtime's core SDK, well outside quick-win scope. Deferred, consistent with how `PROJ-90` handled the equivalent dev-only-vulnerability tail on the root package. `functions/` build and all 58 tests pass; `package.json` unchanged, lockfile-only.
 
-### Phase 4: React Context Hygiene
-* Wrap the `value` object at `AuthContext.tsx:199`, `EncryptionContext.tsx:295`, and `LayoutContext.tsx:48` in `useMemo` with correct dependency arrays. Low risk, no behavior change — closes the "every context consumer re-renders on every provider render" gap the audit flagged as currently latent (not yet causing a measured issue, worth closing proactively rather than after it does).
+### Phase 4: React Context Hygiene — ✅ Shipped 2026-08-02
+* [x] **Memoized `value` in all three contexts** — turned out to need more than the plan's literal "wrap `value` in `useMemo`": every handler function in `AuthContext` (7) and 4 of `EncryptionContext`'s 8 (`setupVault`/`resetVault`/`changePin`/`unlockVault` — the other 4 were already `useCallback`-wrapped) plus `LayoutContext`'s `toggleSidebar`/`toggleSOS` were plain closures recreated every render. Wrapping only `value` in `useMemo` against those unstable references would have recomputed on every render anyway — a no-op fix that merely looked done. Wrapped every plain handler in `useCallback` with its real dependencies first, *then* memoized `value` against the now-stable references. No behavior change, purely referential stability; `npm run check` clean with no `exhaustive-deps` warnings.
 
 ### Phase 5: Edge Cases
 * [ ] Confirm the `globIgnores`/directory-move for `Marketing/`+`raw_assets/` doesn't break `scripts/generate_screenshots.js` or any other tooling that reads from `public/` expecting those directories present at their current path.
