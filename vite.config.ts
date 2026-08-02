@@ -48,21 +48,14 @@ export default defineConfig({
             /^\/__\/firebase/
         ],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // PROJ-98 Phase 1: Marketing/ and raw_assets/ are Play Store listing
+        // screenshots, social-media graphics, and unoptimized source art —
+        // real files served normally over the network (Welcome.tsx references
+        // a few of them), but with no reason to be force-downloaded into the
+        // offline precache before a user's first launch. Cut ~16MB off the
+        // install payload without touching what's actually servable.
+        globIgnores: ['Marketing/**', 'raw_assets/**'],
         runtimeCaching: [
-            {
-                urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-                handler: 'CacheFirst',
-                options: {
-                    cacheName: 'google-fonts-cache',
-                    expiration: {
-                        maxEntries: 10,
-                        maxAgeSeconds: 60 * 60 * 24 * 365
-                    },
-                    cacheableResponse: {
-                        statuses: [0, 200]
-                    }
-                }
-            },
             {
                 urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
                 handler: 'StaleWhileRevalidate',
@@ -142,10 +135,20 @@ export default defineConfig({
             if (id.includes('@tanstack')) {
               return 'tanstack-query';
             }
-            if (id.includes('lucide-react') || id.includes('@heroicons')) {
+            if (id.includes('@heroicons')) {
               return 'icons';
             }
-            if (id.includes('jspdf')) {
+            // PROJ-98 Phase 1: jsPDF's optional .html() method reaches
+            // html2canvas via a dynamic import() — Rollup would normally
+            // code-split that as its own lazy chunk, but the catch-all
+            // 'vendor' bucket below was unconditionally absorbing it (and its
+            // own canvg/dompurify/pako deps) into the eager bundle instead,
+            // ~163KB gzip on every route for a code path exporter.ts (the only
+            // jsPDF consumer) never calls. Bucketing them alongside jspdf
+            // keeps the whole PDF-export feature — including the unused
+            // .html() path — in the one chunk that's already dynamically
+            // imported by exporter.ts, so none of it loads unless requested.
+            if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('canvg') || id.includes('dompurify') || id.includes('pako')) {
               return 'pdf-export';
             }
             if (id.includes('posthog')) {

@@ -5,19 +5,22 @@
 
 const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
 
+// PROJ-98 Phase 1: .webp, not .png — same images, ~12x smaller (~44KB vs
+// ~560KB each). The .png originals stayed in public/Chips/ under the old
+// path here for years; they're deleted now that this is the only consumer.
 export const MILESTONE_CHIPS: Record<number, string> = {
-    30: '/Chips/medallion_01.png',
-    60: '/Chips/medallion_02.png',
-    90: '/Chips/medallion_03.png',
-    120: '/Chips/medallion_04.png',
-    150: '/Chips/medallion_05.png',
-    180: '/Chips/medallion_06.png',
-    210: '/Chips/medallion_07.png',
-    240: '/Chips/medallion_08.png',
-    270: '/Chips/medallion_09.png',
-    300: '/Chips/medallion_10.png',
-    330: '/Chips/medallion_11.png',
-    365: '/Chips/medallion_12.png',
+    30: '/Chips/medallion_01.webp',
+    60: '/Chips/medallion_02.webp',
+    90: '/Chips/medallion_03.webp',
+    120: '/Chips/medallion_04.webp',
+    150: '/Chips/medallion_05.webp',
+    180: '/Chips/medallion_06.webp',
+    210: '/Chips/medallion_07.webp',
+    240: '/Chips/medallion_08.webp',
+    270: '/Chips/medallion_09.webp',
+    300: '/Chips/medallion_10.webp',
+    330: '/Chips/medallion_11.webp',
+    365: '/Chips/medallion_12.webp',
 };
 
 /**
