@@ -74,9 +74,10 @@ export default function PWAInstallBanner() {
 
     return (
         <div className="fixed bottom-4 left-4 right-4 z-40 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 animate-slideUp">
-            <button 
-                onClick={handleDismiss} 
+            <button
+                onClick={handleDismiss}
                 className="absolute top-2 right-2 p-1 text-slate-400 hover:text-white"
+                aria-label="Dismiss install prompt"
             >
                 <XMarkIcon className="h-5 w-5" />
             </button>

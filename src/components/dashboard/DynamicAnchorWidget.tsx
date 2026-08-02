@@ -187,6 +187,7 @@ export default function DynamicAnchorWidget() {
             <button
               onClick={handleCloseJournal}
               className="p-2 bg-white/40 hover:bg-white/60 text-indigo-900 rounded-full transition-colors"
+              aria-label="Close check-in"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>

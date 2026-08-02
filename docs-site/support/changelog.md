@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.9.9] - 2026-08-02
+### ♿ Accessibility Improvements
+- Added screen reader labels to more buttons throughout the app, including voice journal controls and several close buttons.
+- The Dashboard's milestone celebration animation now respects your device's reduced motion setting.
+
 ## [v1.9.8] - 2026-07-29
 ### ⚡ Performance
 - Journal History now loads faster by showing this year's entries by default.

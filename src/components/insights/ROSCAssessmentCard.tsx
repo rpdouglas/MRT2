@@ -148,7 +148,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                             )}
                         </div>
                         <div className="mt-4 pt-2 flex justify-center border-t border-white/5">
-                            <button onClick={handleExpand} className="p-2">
+                            <button onClick={handleExpand} className="p-2" aria-label="Collapse assessment details">
                                 <ChevronUpIcon className="h-4 w-4 text-white/40 flex-shrink-0" />
                             </button>
                         </div>

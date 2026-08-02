@@ -123,7 +123,7 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
                     <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
                       {initialTask ? 'Edit Task' : 'New Task'}
                     </Dialog.Title>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full text-gray-400" aria-label="Close task form">
                         <XMarkIcon className="h-6 w-6" />
                     </button>
                 </div>

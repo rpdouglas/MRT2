@@ -85,17 +85,20 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 | `crossword_puzzles/{date}` | ❌ No | PROJ-79 (Daily Crossword). Nightly-generated, server-write-only editorial content |
 
 **Before ANY Firestore write:** confirm user-generated content passes through `encryptData()` in `src/lib/crypto.ts`.  
-**Never:** log decrypted data, store plaintext sensitive content server-side, or send decrypted content to Gemini **outside the seven approved AI-analysis flows below**.
+**Never:** log decrypted data, store plaintext sensitive content server-side, or send decrypted content to Gemini **outside the ten approved AI-analysis flows below**.
 
 ### Approved Gemini Exceptions
-1. **Six client-side flows (decrypted journal/workbook content):**
+1. **Nine client-side flows (decrypted journal/workbook content):**
    - `useDeepPatternAnalysis.ts`
    - `useROSCAssessments.ts` (→ `generateROSCAnalysis`)
    - `JournalAnalysisWizard.tsx` (→ `generateComparativeAnalysis`)
    - `WorkbookDetail.tsx` (→ `analyzeWorkbookContent`)
    - `GuidedWorkflowEngine.tsx` (→ `generateCBTCoachingPrompt`, PROJ-50)
-   - `CBATool.tsx` (→ `generateCBAReflection`, PROJ-50 Phase 3)  
-   All routed through the `generateAIInsights` Cloud Functions proxy (PROJ-64).
+   - `CBATool.tsx` (→ `generateCBAReflection`, PROJ-50 Phase 3)
+   - `WorkbookSession.tsx` (→ `getGeminiCoaching`, PROJ-98 — live unsaved workbook-answer text, distinct from `WorkbookDetail.tsx`'s saved-content flow)
+   - `AudioRecorder.tsx` (→ `generateAudioAnalysis`, PROJ-98 — raw base64 voice-journal audio, not text)
+   - `ErrorLogViewer.tsx` (→ `analyzeSystemHealth`, PROJ-98 — admin-only; aggregated error logs, not recovery content)  
+   All routed through the `generateAIInsights` Cloud Functions proxy (PROJ-64). The last three shipped before being added to this list; retroactively reviewed and approved 2026-08-02 (`docs/projects/98_AUDIT_QUICK_WINS.md` Phase 3) — see CLAUDE.md's copy of this section for the full governance note.
 2. **Server-side-only flow (PROJ-79):**
    - `generateDailyCrossword` Cloud Function (`functions/src/index.ts`) for crossword theme/clue generation (zero user data sent).
 
