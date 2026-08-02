@@ -62,15 +62,20 @@ jobs:
       - name: Dependency Vulnerability Audit (functions, production deps)
         run: npm audit --prefix functions --omit=dev --audit-level=high
 
-      # GATE 7: E2E Golden Paths (PROJ-23) — runs last since it's the slowest
-      # gate; cheaper checks above fail fast first. Firebase emulators are
-      # started/torn down automatically by `firebase emulators:exec`, so
-      # this never touches a real Firebase project.
+      # GATE 7: E2E Golden Paths (PROJ-23) and Firestore Rules Tests (PROJ-99)
+      # both need the Firestore emulator — shared Java setup, run rules tests
+      # first since they're much faster and should fail fast before the
+      # slower Playwright suite. Firebase emulators are started/torn down
+      # automatically by `firebase emulators:exec`, so neither ever touches
+      # a real Firebase project.
       - name: Setup Java (required by the Firestore emulator)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
+
+      - name: Firestore Rules Tests (PROJ-99)
+        run: npm run test:rules
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
