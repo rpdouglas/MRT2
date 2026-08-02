@@ -24,6 +24,45 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
+    // --- SHAPE/SIZE VALIDATION (PROJ-99 Phase 1) ---
+    // Ownership rules alone don't stop an authenticated owner from writing an
+    // arbitrarily large or malformed document — these close that gap for the
+    // two highest-payload collections. Split into shape (types/required
+    // fields) vs. size (byte ceiling) because they carry different risk on
+    // the update path: shape is safe to enforce on every write, since any
+    // document that already exists was written by client code that always
+    // set these fields with these types (JournalEntry/GameSaveRecord in
+    // src/lib/db.ts) — enforcing it server-side changes nothing for existing
+    // data. Size is enforced on create only: a pre-existing document written
+    // before this rule shipped could already exceed today's chosen ceiling
+    // (no production byte-size telemetry exists to rule that out), and nothing
+    // — PIN rotation re-encrypting old entries, a user editing an old entry —
+    // should be able to retroactively lock out access to their own past data.
+    // Ceilings are deliberately generous, well under Firestore's 1MiB
+    // per-document hard limit; the goal is bounding "unbounded", not tuning
+    // a byte count. .size() on a string is UTF-8 byte length, matching how
+    // Firestore's own document-size limit is measured.
+    function isValidJournalShape() {
+      return request.resource.data.uid is string &&
+             request.resource.data.content is string &&
+             request.resource.data.createdAt is timestamp;
+    }
+
+    function isValidJournalSize() {
+      return request.resource.data.content.size() < 51200; // 50KB
+    }
+
+    function isValidGameSaveShape() {
+      return request.resource.data.uid is string &&
+             request.resource.data.gameId is string &&
+             request.resource.data.encryptedState is string &&
+             request.resource.data.updatedAt is timestamp;
+    }
+
+    function isValidGameSaveSize() {
+      return request.resource.data.encryptedState.size() < 204800; // 200KB
+    }
+
     // --- COLLECTION RULES ---
 
     // 1. User Profiles & Subcollections
@@ -86,8 +125,9 @@ service cloud.firestore {
 
     // 2. Journals (Root Collection)
     match /journals/{entryId} {
-      allow create: if isCreatingOwnedResource();
-      allow read, update, delete: if isResourceOwner();
+      allow create: if isCreatingOwnedResource() && isValidJournalShape() && isValidJournalSize();
+      allow read, delete: if isResourceOwner();
+      allow update: if isResourceOwner() && isValidJournalShape();
     }
 
     // 3. Tasks (Root Collection)
@@ -128,8 +168,9 @@ service cloud.firestore {
 
     // 7c. Recovery Games — encrypted, resumable game_saves (PROJ-72, Phase 4)
     match /game_saves/{saveId} {
-        allow create: if isCreatingOwnedResource();
-        allow read, update, delete: if isResourceOwner();
+        allow create: if isCreatingOwnedResource() && isValidGameSaveShape() && isValidGameSaveSize();
+        allow read, delete: if isResourceOwner();
+        allow update: if isResourceOwner() && isValidGameSaveShape();
     }
 
     // 8. Feedback & Bug Reports
