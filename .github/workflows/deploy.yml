@@ -21,26 +21,48 @@ jobs:
       - name: Install
         run: npm ci
 
-      # GATE 1: Linting (Code Style)
+      # GATE 1: Production Dependency Vulnerability Audit (PROJ-96)
+      # --omit=dev scopes this to deps that actually ship, not dev tooling
+      # (eslint/jest/etc. carry their own long tail of accepted-risk, non-forceable
+      # advisories tracked separately — see docs/projects/90_SECURITY_COMPLIANCE_HARDENING.md).
+      # Threshold is `critical` (not `high`) because of one known, documented,
+      # non-forceable exception: react-router's RSC-Mode CSRF advisory
+      # (GHSA-qwww-vcr4-c8h2) — this app never uses React Router's RSC/framework
+      # mode (no createBrowserRouter/RouterProvider, just component-based Routes),
+      # and the only real fix is an untested v7->v8 major bump, out of scope here.
+      # See docs/projects/96_CI_DEPLOY_SAFETY_NET.md for the full reasoning.
+      # `npm audit` still prints this (and anything else) to the CI log regardless
+      # of --audit-level, so it stays visible — it just won't block the build.
+      - name: Dependency Vulnerability Audit (root, production deps)
+        run: npm audit --omit=dev --audit-level=critical
+
+      # GATE 2: Linting (Code Style)
       - name: Lint Check
         run: npm run lint
-        
-      # GATE 2: Spec Quality (docs/projects/*.md must match the governance skill's Check F)
+
+      # GATE 3: Spec Quality (docs/projects/*.md must match the governance skill's Check F)
       - name: Spec Quality Check
         run: npm run docs:check-specs
 
-      # GATE 3: Unit Tests (Logic)
+      # GATE 4: Unit Tests (Logic)
       - name: Unit Tests
         run: npm run test:watch -- --run # Runs once and exits
 
-      # GATE 4: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
+      # GATE 5: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 
       - name: Functions Unit Tests
         run: npm test --prefix functions
 
-      # GATE 5: E2E Golden Paths (PROJ-23) — runs last since it's the slowest
+      # GATE 6: Production Dependency Vulnerability Audit (functions/, PROJ-96)
+      # functions/ is the actually-deployed Cloud Functions runtime, audited
+      # separately from root because it's a distinct npm workspace with its
+      # own lockfile.
+      - name: Dependency Vulnerability Audit (functions, production deps)
+        run: npm audit --prefix functions --omit=dev --audit-level=high
+
+      # GATE 7: E2E Golden Paths (PROJ-23) — runs last since it's the slowest
       # gate; cheaper checks above fail fast first. Firebase emulators are
       # started/torn down automatically by `firebase emulators:exec`, so
       # this never touches a real Firebase project.
