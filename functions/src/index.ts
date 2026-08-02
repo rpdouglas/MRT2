@@ -156,6 +156,31 @@ export async function processUserBatch(
 
 interface BeaconSendResponse { success: boolean; error?: { code?: string }; }
 
+// PROJ-99 Phase 4: sendEach() accepts at most 500 messages per call — this
+// was previously called once with every batch's accumulated messages
+// regardless of size, which throws (or silently drops the excess) past that
+// limit. `sendFn` is injected (rather than calling `messaging.sendEach`
+// directly) so this chunking/aggregation logic is unit-testable without
+// mocking the Admin SDK, matching this file's existing pattern for
+// processUserBatch's injected task-count callback.
+export async function sendBeaconMessagesChunked(
+    messagesToSend: TokenMessage[],
+    sendFn: (chunk: TokenMessage[]) => Promise<{ successCount: number; failureCount: number; responses: BeaconSendResponse[] }>,
+    chunkSize = 500
+): Promise<{ successCount: number; failureCount: number; responses: BeaconSendResponse[] }> {
+    let successCount = 0;
+    let failureCount = 0;
+    const responses: BeaconSendResponse[] = [];
+    for (let i = 0; i < messagesToSend.length; i += chunkSize) {
+        const chunk = messagesToSend.slice(i, i + chunkSize);
+        const chunkResponse = await sendFn(chunk);
+        successCount += chunkResponse.successCount;
+        failureCount += chunkResponse.failureCount;
+        responses.push(...chunkResponse.responses);
+    }
+    return { successCount, failureCount, responses };
+}
+
 // Maps each failed, permanently-invalid token back to its owning uid so dead tokens
 // can be pruned from Firestore without re-scanning every fetched user doc.
 export function identifyStaleTokensByUser(
@@ -386,6 +411,15 @@ export const dailyBeacon = onSchedule({
     timeoutSeconds: 300,
     memory: "512MiB",
     region: "northamerica-northeast1",
+    // PROJ-99 Phase 4: a scheduled function isn't exposed to the same
+    // per-request concurrency-cost risk generateAIInsights is — Cloud
+    // Scheduler fires it once per cron tick, not N times under traffic.
+    // maxInstances: 1 here is instead an idempotency guardrail: a retry or
+    // a manual re-trigger overlapping with an in-flight run could send
+    // duplicate notifications or race on the token-pruning batch write
+    // below. Capping at 1 makes that structurally impossible rather than
+    // relying on it just not happening to occur.
+    maxInstances: 1,
 }, async () => {
     logger.info("Starting Daily Beacon execution...", { time: new Date().toISOString() });
 
@@ -452,12 +486,13 @@ export const dailyBeacon = onSchedule({
         }
 
         logger.info(`Dispatching ${messagesToSend.length} notifications...`);
-        const batchResponse = await messaging.sendEach(messagesToSend);
-        logger.info(`Sent ${batchResponse.successCount}. Failed: ${batchResponse.failureCount}`);
+        const { successCount: sendSuccessCount, failureCount: sendFailureCount, responses: allResponses } =
+            await sendBeaconMessagesChunked(messagesToSend, (chunk) => messaging.sendEach(chunk));
+        logger.info(`Sent ${sendSuccessCount}. Failed: ${sendFailureCount}`);
 
-        if (batchResponse.failureCount > 0) {
+        if (sendFailureCount > 0) {
             const staleTokensMap = identifyStaleTokensByUser(
-                batchResponse.responses,
+                allResponses,
                 messagesToSend.map((m) => m.token),
                 tokenToUid
             );
@@ -1079,6 +1114,16 @@ export const generateAIInsights = onCall({
     timeoutSeconds: 300,
     memory: "512MiB",
     region: "northamerica-northeast1",
+    // PROJ-99 Phase 4: this is the one function in the codebase that scales
+    // per concurrent request AND pays a paid Gemini API call per invocation
+    // — the real cost-exposure surface the audit flagged, since per-user
+    // rate limits (below) cap abuse from one account but not aggregate spend
+    // under a traffic spike or a scripted loop across many accounts. 20 is a
+    // judgment call, not derived from real traffic data (none exists yet at
+    // this app's current scale) — generous enough for legitimate concurrent
+    // usage, low enough to bound worst-case Gemini spend to a known ceiling.
+    // Revisit with real usage data once there's enough traffic to have any.
+    maxInstances: 20,
 }, async (request) => {
     // 1. Authentication Check
     if (!request.auth) {

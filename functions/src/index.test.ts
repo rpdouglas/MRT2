@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import * as crypto from "node:crypto";
 import { Timestamp } from "firebase-admin/firestore";
 import {
@@ -8,6 +8,7 @@ import {
     computeHabitAlert,
     processUserBatch,
     identifyStaleTokensByUser,
+    sendBeaconMessagesChunked,
     buildBatchPrompt,
     computeLockoutSeconds,
     evaluateVaultPinAttempt,
@@ -207,6 +208,67 @@ describe("identifyStaleTokensByUser", () => {
         const responses = tokens.map(() => ({ success: true }));
         const result = identifyStaleTokensByUser(responses, tokens, tokenToUid);
         expect(result.size).toBe(0);
+    });
+});
+
+describe("sendBeaconMessagesChunked (PROJ-99 Phase 4: dailyBeacon sendEach 500-message limit)", () => {
+    const makeMessages = (count: number) =>
+        Array.from({ length: count }, (_, i) => ({ token: `tok-${i}` })) as Parameters<typeof sendBeaconMessagesChunked>[0];
+
+    it("makes a single call when under the chunk size", async () => {
+        const sendFn = vi.fn().mockResolvedValue({ successCount: 3, failureCount: 0, responses: [{ success: true }, { success: true }, { success: true }] });
+        const result = await sendBeaconMessagesChunked(makeMessages(3), sendFn, 500);
+        expect(sendFn).toHaveBeenCalledTimes(1);
+        expect(sendFn).toHaveBeenCalledWith(makeMessages(3));
+        expect(result).toEqual({ successCount: 3, failureCount: 0, responses: [{ success: true }, { success: true }, { success: true }] });
+    });
+
+    it("splits into multiple calls when over the chunk size, none exceeding it", async () => {
+        const sendFn = vi.fn().mockImplementation(async (chunk: unknown[]) => ({
+            successCount: chunk.length,
+            failureCount: 0,
+            responses: chunk.map(() => ({ success: true })),
+        }));
+        const messages = makeMessages(1200);
+        await sendBeaconMessagesChunked(messages, sendFn, 500);
+
+        expect(sendFn).toHaveBeenCalledTimes(3);
+        expect((sendFn.mock.calls[0][0] as unknown[]).length).toBe(500);
+        expect((sendFn.mock.calls[1][0] as unknown[]).length).toBe(500);
+        expect((sendFn.mock.calls[2][0] as unknown[]).length).toBe(200);
+    });
+
+    it("aggregates successCount/failureCount across chunks", async () => {
+        const sendFn = vi.fn()
+            .mockResolvedValueOnce({ successCount: 480, failureCount: 20, responses: [] })
+            .mockResolvedValueOnce({ successCount: 250, failureCount: 50, responses: [] });
+        const result = await sendBeaconMessagesChunked(makeMessages(800), sendFn, 500);
+        expect(result.successCount).toBe(730);
+        expect(result.failureCount).toBe(70);
+    });
+
+    it("preserves index correlation between concatenated responses and the original message order", async () => {
+        // Chunk 1 (tok-0..tok-1): tok-0 fails. Chunk 2 (tok-2..tok-3): tok-3 fails.
+        const sendFn = vi.fn()
+            .mockResolvedValueOnce({ successCount: 1, failureCount: 1, responses: [{ success: false, error: { code: "messaging/invalid-registration-token" } }, { success: true }] })
+            .mockResolvedValueOnce({ successCount: 1, failureCount: 1, responses: [{ success: true }, { success: false, error: { code: "messaging/invalid-registration-token" } }] });
+        const messages = makeMessages(4);
+        const result = await sendBeaconMessagesChunked(messages, sendFn, 2);
+
+        const tokens = messages.map((m) => m.token);
+        const tokenToUid = new Map(tokens.map((t, i) => [t, `uid-${i}`]));
+        const stale = identifyStaleTokensByUser(result.responses, tokens, tokenToUid);
+        expect(stale.get("uid-0")).toEqual(["tok-0"]);
+        expect(stale.get("uid-3")).toEqual(["tok-3"]);
+        expect(stale.has("uid-1")).toBe(false);
+        expect(stale.has("uid-2")).toBe(false);
+    });
+
+    it("makes zero calls for an empty message list", async () => {
+        const sendFn = vi.fn();
+        const result = await sendBeaconMessagesChunked([], sendFn, 500);
+        expect(sendFn).not.toHaveBeenCalled();
+        expect(result).toEqual({ successCount: 0, failureCount: 0, responses: [] });
     });
 });
 
