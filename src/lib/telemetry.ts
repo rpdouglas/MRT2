@@ -89,3 +89,15 @@ export function trackMutationFailed(domain: string, errorName: string): void {
 export function trackClientError(domain: string, errorName: string): void {
   safeCapture('client_error_captured', { domain, error_name: errorName });
 }
+
+/**
+ * PROJ-99 Phase 5: fires only when the `profile.role === 'admin'` Firestore
+ * fallback is the SOLE reason isAdmin resolved true for this session — i.e.
+ * the custom claim was absent. Exists to make it safe to converge onto the
+ * custom claim alone later: once this stops firing for a reasonable period,
+ * every real admin account already has the claim and the fallback can be
+ * removed with confidence instead of a guess. No PII — no uid, no email.
+ */
+export function trackAdminRoleFallbackUsed(): void {
+  safeCapture('admin_role_fallback_used');
+}

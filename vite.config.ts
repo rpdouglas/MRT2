@@ -94,7 +94,11 @@ export default defineConfig({
     // functions/node_modules for this job, so firebase-functions can't resolve).
     // e2e/ is Playwright's suite (PROJ-23) — its own runner (`test:e2e`) picks
     // it up; Vitest must not also try to import these as unit tests.
-    exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**'],
+    // firestore.rules.test.ts (PROJ-99) needs a live Firestore emulator, not
+    // mocks — its own runner (`test:rules`) starts/stops the emulator around
+    // it; the default mocked-only unit suite must not try to run it without
+    // one running and hang/fail.
+    exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**', 'src/__tests__/firestore.rules.test.ts'],
   },
   esbuild: {
     // CODE-01, Production Readiness Audit 2026-07-28: tree-shake any stray

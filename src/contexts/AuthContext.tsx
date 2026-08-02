@@ -5,7 +5,7 @@ import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
 import { refreshFcmTokenIfStale, listenForForegroundMessages } from '../lib/messaging';
 import posthog from 'posthog-js';
-import { trackClientError } from '../lib/telemetry';
+import { trackClientError, trackAdminRoleFallbackUsed } from '../lib/telemetry';
 
 interface AuthContextType {
   user: User | null;
@@ -87,7 +87,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentUser) {
           const profile = await getOrCreateUserProfile(currentUser);
           const idTokenResult = await currentUser.getIdTokenResult();
-          const isAdminUser = !!idTokenResult.claims.admin || profile.role === 'admin';
+          const hasAdminClaim = !!idTokenResult.claims.admin;
+          const isAdminUser = hasAdminClaim || profile.role === 'admin';
+          // PROJ-99 Phase 5: the role field is a deliberately-kept fallback
+          // for now (see docs/projects/99_FIRESTORE_BACKEND_HARDENING.md
+          // Phase 5) — this signal is how we'll know it's safe to remove.
+          if (isAdminUser && !hasAdminClaim) {
+            trackAdminRoleFallbackUsed();
+          }
 
           setUser(currentUser);
           setIsAdmin(isAdminUser);

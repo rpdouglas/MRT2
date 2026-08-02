@@ -46,7 +46,7 @@ graph TD
 * **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.
 * **Fields:**
     * `uid` (String): Owner ID.
-    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`).
+    * `content` (String): **ENCRYPTED BLOB** (format: `iv:ciphertext`). `firestore.rules` (PROJ-99) enforces this is a string on every write, and caps it at 50KB on **create only** — not on update, so a pre-existing document already over that ceiling (written before this rule shipped) can still be edited/re-encrypted.
         * *Note for Virtual Modules:* For SMART CBT Tools, the decrypted plain text is actually a **Stringified JSON Object** containing `{ metadata: {...}, data: {...} }`. The UI parses this JSON after decryption.
     * `isEncrypted` (Boolean): Flag for legacy plain text data handling.
     * `moodScore` (Int): **UNENCRYPTED** (Allows fast dashboard stats).
@@ -127,7 +127,7 @@ graph TD
 * **Fields:**
     * `uid` (String): Owner ID.
     * `gameId` (String): **UNENCRYPTED** — e.g. `'fast-lane'`.
-    * `encryptedState` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's full save state.
+    * `encryptedState` (String): **ENCRYPTED BLOB** (`iv:ciphertext`) — `JSON.stringify` of the game's full save state. `firestore.rules` (PROJ-99) enforces this is a string on every write, and caps it at 200KB on create only (same update-time exemption as `journals.content`, same reasoning).
     * `updatedAt` (Timestamp).
     * `isEncrypted` (Boolean): Always `true` — included in `executePinRotation`, `executeCryptoShredding`, and `executeTotalAccountAnnihilation` (Phase 7).
 
