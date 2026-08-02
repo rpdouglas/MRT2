@@ -61,9 +61,10 @@ export default function NotificationBanner() {
 
     return (
         <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-start gap-4 shadow-sm animate-slideDown mb-6 relative">
-            <button 
-                onClick={handleDismiss} 
+            <button
+                onClick={handleDismiss}
                 className="absolute top-2 right-2 p-1 text-indigo-400 hover:text-indigo-600"
+                aria-label="Dismiss notification"
             >
                 <XMarkIcon className="h-5 w-5" />
             </button>

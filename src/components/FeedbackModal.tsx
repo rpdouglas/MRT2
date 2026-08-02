@@ -59,7 +59,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                         <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-slate-50 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                             
                             <div className="absolute right-0 top-0 pr-4 pt-4">
-                                <button onClick={onClose} className="rounded-md text-slate-400 hover:text-slate-500">
+                                <button onClick={onClose} className="rounded-md text-slate-400 hover:text-slate-500" aria-label="Close feedback form">
                                     <XMarkIcon className="h-6 w-6" />
                                 </button>
                             </div>

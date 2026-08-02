@@ -68,7 +68,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ persona, onUpdate, onDelete }
                     />
                 </div>
                 <div className="flex justify-end gap-2 mt-2 pt-4 border-t border-gray-100">
-                    <button onClick={handleCancel} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Cancel">
+                    <button onClick={handleCancel} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Cancel" aria-label="Cancel edit">
                         <XMarkIcon className="h-5 w-5" />
                     </button>
                     <button onClick={handleSave} disabled={!editName.trim()} className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm">

@@ -93,11 +93,19 @@ export default function Dashboard() {
           if (milestone) {
               const playedKey = `mrt_milestone_${stats.daysClean}_played`;
               if (!sessionStorage.getItem(playedKey)) {
-                  // FIX: Wrap in setTimeout to avoid synchronous setState inside useEffect
-                  setTimeout(() => setShowConfetti(true), 0);
                   sessionStorage.setItem(playedKey, 'true');
-                  setTimeout(() => setRecycleConfetti(false), 5000);
-                  setTimeout(() => setShowConfetti(false), 10000);
+                  // PROJ-98 Phase 2: skip the animation entirely for users who
+                  // prefer reduced motion — SobrietyHero's medallion + "Milestone!"
+                  // banner is the actual reward signal, confetti is decoration
+                  // on top of it, so nothing is lost by not firing it.
+                  const prefersReducedMotion = typeof window !== 'undefined'
+                      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+                  if (!prefersReducedMotion) {
+                      // FIX: Wrap in setTimeout to avoid synchronous setState inside useEffect
+                      setTimeout(() => setShowConfetti(true), 0);
+                      setTimeout(() => setRecycleConfetti(false), 5000);
+                      setTimeout(() => setShowConfetti(false), 10000);
+                  }
               }
           }
       }

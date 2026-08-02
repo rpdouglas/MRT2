@@ -96,7 +96,7 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
             
             <div className="flex justify-between w-full items-center">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Voice Journal</h3>
-                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600">
+                <button onClick={onCancel} className="text-slate-400 hover:text-slate-600" aria-label="Cancel voice journal">
                     <XMarkIcon className="h-5 w-5" />
                 </button>
             </div>
@@ -131,6 +131,7 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
                         <button
                             onClick={startRecording}
                             className="h-16 w-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg shadow-red-200 transition-all active:scale-95 group"
+                            aria-label="Start recording"
                         >
                             <MicrophoneIcon className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
                         </button>
@@ -138,6 +139,7 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
                         <button
                             onClick={stopRecording}
                             className="h-16 w-16 bg-slate-800 hover:bg-black rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95"
+                            aria-label="Stop recording"
                         >
                             <StopIcon className="h-8 w-8 text-white animate-pulse" />
                         </button>
