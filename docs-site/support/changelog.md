@@ -1,5 +1,10 @@
 # 🚀 Changelog
 
+## [v1.9.10] - 2026-08-03
+### ✨ New Feature
+- Recovery Capital now has its own full screen, with a new Trends view showing how your Health, Home, Purpose, and Community scores have moved over time.
+- Premium members can now check in weekly instead of once a month.
+
 ## [v1.9.9] - 2026-08-02
 ### ♿ Accessibility Improvements
 - Added screen reader labels to more buttons throughout the app, including voice journal controls and several close buttons.

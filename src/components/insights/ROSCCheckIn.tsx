@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import type { ROSCCheckInAnswers } from '../../lib/types/rosc';
 
 const QUESTIONS: {
@@ -12,7 +12,7 @@ const QUESTIONS: {
     {
         domain: 'health',
         label: 'Health',
-        question: 'This month, how well did you take care of your physical and emotional health?',
+        question: 'Recently, how well have you taken care of your physical and emotional health?',
         low: 'Struggling',
         high: 'Thriving',
     },
@@ -40,7 +40,7 @@ const QUESTIONS: {
     {
         domain: 'resilience',
         label: 'Resilience',
-        question: 'When this month got hard, how well did you bounce back?',
+        question: 'When things got hard recently, how well did you bounce back?',
         low: 'It knocked me down',
         high: 'I found my footing',
     },
@@ -77,9 +77,17 @@ export default function ROSCCheckIn({ onComplete, onDismiss, onStart, initialAns
     }, [started, answers, current.domain, step, onComplete, onStart]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="w-full max-w-sm bg-gradient-to-br from-amber-50 to-rose-50 rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
+        <div className="min-h-[70dvh] flex items-center justify-center px-4 py-10">
+            <div className="w-full max-w-md sm:max-w-lg bg-gradient-to-br from-amber-50 to-rose-50 rounded-2xl shadow-2xl border border-rose-200 overflow-hidden">
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                    <button
+                        onClick={() => step > 0 && setStep(s => s - 1)}
+                        disabled={step === 0}
+                        className={`p-1 rounded-full transition-colors ${step === 0 ? 'text-rose-200 cursor-not-allowed' : 'text-rose-400 hover:text-rose-600 hover:bg-rose-100'}`}
+                        aria-label="Previous question"
+                    >
+                        <ChevronLeftIcon className="h-5 w-5" />
+                    </button>
                     <div className="flex gap-1.5">
                         {QUESTIONS.map((_, i) => (
                             <div
@@ -99,22 +107,22 @@ export default function ROSCCheckIn({ onComplete, onDismiss, onStart, initialAns
                     </button>
                 </div>
 
-                <div className="px-6 pb-8">
+                <div className="px-6 sm:px-10 pb-10">
                     <div className="mb-2">
                         <span className="text-xs font-bold uppercase tracking-widest text-rose-400">
                             {current.label} · Question {step + 1} of {QUESTIONS.length}
                         </span>
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900 leading-snug mb-8">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug mb-8">
                         {current.question}
                     </h2>
 
-                    <div className="flex justify-center gap-3 mb-4">
+                    <div className="flex justify-center gap-4 mb-4">
                         {[1, 2, 3, 4, 5].map((val) => (
                             <button
                                 key={val}
                                 onClick={() => handleSelect(val)}
-                                className={`w-12 h-12 rounded-full text-sm font-bold border-2 transition-all duration-150 ${
+                                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full text-sm sm:text-base font-bold border-2 transition-all duration-150 ${
                                     currentValue === val
                                         ? 'bg-rose-500 border-rose-500 text-white scale-110 shadow-lg shadow-rose-200'
                                         : 'bg-white border-rose-200 text-rose-600 hover:border-rose-400 hover:bg-rose-50'

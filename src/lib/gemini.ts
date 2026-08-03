@@ -231,7 +231,8 @@ export const analyzeWorkbookContent = analyzeFullWorkbook;
 export async function generateROSCAnalysis(
   selfReport: { health: number; home: number; purpose: number; community: number; resilience: number },
   journalSummary: string,
-  entryCount: number
+  entryCount: number,
+  periodLabel: string = 'the past 30 days'
 ): Promise<ROSCAnalysisResult> {
   const answers = `Self-reported check-in:
 - Health: ${selfReport.health}/5
@@ -240,7 +241,7 @@ export async function generateROSCAnalysis(
 - Community: ${selfReport.community}/5
 - Resilience: ${selfReport.resilience}/5
 
-Journal history has ${entryCount} entries. Summary:
+Journal history for ${periodLabel} has ${entryCount} entries. Summary:
 ${journalSummary}`;
 
   const text = await callAIProxy('rosc_assessment', { answers });
