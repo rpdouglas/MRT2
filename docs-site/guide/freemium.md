@@ -36,7 +36,7 @@ Designed for users in the maintenance phase looking for deep insights, and spons
   </figcaption>
 </figure>
 * **Unlimited AI Compass:** Unlimited, on-demand Gemini pattern recognition and deep-dive journal analysis.
-* **Recovery Capital Matrix (ROSC):** Full AI-powered monthly assessment — Gemini reads your last 30 journal entries alongside your check-in answers and produces blended domain scores (1–10), a personalised narrative, identified strengths, and compassionate growth suggestions. All AI output is encrypted before storage.
+* **Recovery Capital Matrix (ROSC):** Full AI-powered assessment, available weekly instead of monthly — Gemini reads your recent journal entries alongside your check-in answers and produces blended domain scores (1–10), a personalised narrative, identified strengths, compassionate growth suggestions, and a suggested next action per domain. All AI output is encrypted before storage.
 * **Custom Templates:** Build and save your own Markdown-powered journal structures.
 * **The Digital Rolodex (Service Module):** A securely encrypted system to track sponsee step work, contact info, and meeting times *(Coming Soon)*.
 * **Cloud Auto-Sync:** Automated, invisible JSON backups to your personal Google Drive.
