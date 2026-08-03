@@ -1,42 +1,49 @@
 /**
  * src/hooks/useTaskOperations.ts
- * PURPOSE: Centralized hook for Task CRUD with Optimistic UI updates.
+ * PURPOSE: Centralized hook for Task CRUD.
  * STACK: React Query v5 + Firebase
+ * PROJ-101: migrated onto useFirestoreCrud's useFirestoreMutation primitive
+ * (PROJ-59 built this hook's shape from this exact file but never migrated
+ * it). useFirestoreMutation gained an optional onSuccess hook (see
+ * useFirestoreCrud.ts) specifically so this hook's 'task_created'/
+ * 'task_completed' PostHog telemetry survives the migration unchanged.
+ *
+ * Optimistic-update machinery removed in the same pass (PROJ-101 Phase 3),
+ * not preserved: it targeted the ['tasks', uid] TanStack cache key, but
+ * Tasks.tsx — the actual page a user watches while completing a task — never
+ * reads that key. It renders from useTasksList.ts's own onSnapshot
+ * subscription + local useState instead, by deliberate design (live
+ * cross-tab/cross-device updates, see that file's own comment) — and
+ * Firestore's client SDK already echoes a pending local write into that
+ * onSnapshot listener before the server round-trip completes, so the Tasks
+ * page was never actually waiting on this hook's now-removed optimistic
+ * cache patch for its perceived responsiveness. Migrating useTasksList onto
+ * TanStack Query instead (the spec's alternative option) would have touched
+ * that live, already-verified real-time path for the same end-user outcome;
+ * deleting the dead optimistic layer here was the lower-risk fix for a
+ * ticket whose whole premise is "no end-user-facing behavior change."
  */
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import * as TaskLib from "../lib/tasks";
 import posthog from "posthog-js";
-import { Timestamp } from "firebase/firestore";
-import { startOfDay, addDays, addWeeks, addMonths, isBefore } from "date-fns";
-import { calculateNextDueDate } from "../lib/dateUtils";
-import { trackMutationFailed } from "../lib/telemetry";
-
-const toDate = (val: unknown): Date | null => {
-  if (!val) return null;
-  if (val instanceof Timestamp) return val.toDate();
-  if (val instanceof Date) return val;
-  return new Date(val as string | number);
-};
+import { useFirestoreMutation } from "./useFirestoreCrud";
 
 export function useTaskOperations() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const queryKey = ["tasks", user?.uid];
 
   // --- 1. ADD TASK ---
-  const addTaskMutation = useMutation({
-    mutationFn: async (params: {
-      title: string;
-      recurrence: TaskLib.RecurrenceConfig;
-      priority: TaskLib.Priority;
-      dueDate: Date;
-      source?: 'manual' | 'ai';
-      aiMeta?: { sourceContext?: string; sourceRef?: string };
-    }) => {
-      if (!user) throw new Error("No user");
+  const addTaskMutation = useFirestoreMutation<{
+    title: string;
+    recurrence: TaskLib.RecurrenceConfig;
+    priority: TaskLib.Priority;
+    dueDate: Date;
+    source?: 'manual' | 'ai';
+    aiMeta?: { sourceContext?: string; sourceRef?: string };
+  }>(queryKey, {
+    mutationFn: async (uid, params) => {
       await TaskLib.addTask(
-        user.uid,
+        uid,
         params.title,
         params.recurrence,
         params.priority,
@@ -45,40 +52,6 @@ export function useTaskOperations() {
         params.aiMeta,
       );
     },
-    onMutate: async (newVar) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
-
-      if (previousTasks && user) {
-        const optimisticTask: TaskLib.Task = {
-          id: "temp-" + Date.now(),
-          uid: user.uid,
-          title: newVar.title,
-          frequency: newVar.recurrence.type as unknown as TaskLib.Frequency,
-          recurrence: newVar.recurrence,
-          priority: newVar.priority,
-          dueDate: Timestamp.fromDate(newVar.dueDate),
-          createdAt: Timestamp.now(),
-          completed: false,
-          status: "pending",
-          isRecurring: newVar.recurrence.type !== "once",
-          currentStreak: 0,
-          lastCompletedAt: null,
-          source: newVar.source || "manual",
-          category: "Recovery",
-          ...(newVar.aiMeta?.sourceContext && { sourceContext: newVar.aiMeta.sourceContext }),
-          ...(newVar.aiMeta?.sourceRef && { sourceRef: newVar.aiMeta.sourceRef }),
-        };
-        queryClient.setQueryData(queryKey, [optimisticTask, ...previousTasks]);
-      }
-      return { previousTasks };
-    },
-    onError: (err, _newVar, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(queryKey, context.previousTasks);
-      }
-      trackMutationFailed('task', err.name || 'Error');
-    },
     onSuccess: (_data, variables) => {
       posthog.capture('task_created', {
         recurrence: variables.recurrence.type,
@@ -86,79 +59,15 @@ export function useTaskOperations() {
         source: variables.source || 'manual',
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
   });
 
   // --- 2. TOGGLE TASK ---
-  const toggleTaskMutation = useMutation({
-    mutationFn: async (params: {
-      task: TaskLib.Task;
-      isCompleting: boolean;
-    }) => {
+  const toggleTaskMutation = useFirestoreMutation<{
+    task: TaskLib.Task;
+    isCompleting: boolean;
+  }>(queryKey, {
+    mutationFn: async (_uid, params) => {
       await TaskLib.toggleTask(params.task, params.isCompleting);
-    },
-    onMutate: async ({ task: targetTask, isCompleting }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
-
-      if (previousTasks) {
-        const today = startOfDay(new Date());
-
-        queryClient.setQueryData(
-          queryKey,
-          previousTasks.map((t) => {
-            if (t.id === targetTask.id) {
-              let newStreak = t.currentStreak;
-              if (isCompleting) {
-                newStreak = newStreak < 0 ? 1 : newStreak + 1;
-
-                let nextDue = t.dueDate ? toDate(t.dueDate) : today;
-                if (t.isRecurring && t.recurrence) {
-                  const baseDate = (nextDue && isBefore(nextDue, today)) ? today : (nextDue || today);
-                  const calcDue = calculateNextDueDate(
-                    baseDate,
-                    t.recurrence,
-                  );
-                  if (calcDue) nextDue = calcDue;
-                } else if (t.frequency && t.frequency !== "once") {
-                  if (t.frequency === "daily") nextDue = addDays(today, 1);
-                  else if (t.frequency === "weekly")
-                    nextDue = addWeeks(today, 1);
-                  else if (t.frequency === "monthly")
-                    nextDue = addMonths(today, 1);
-                }
-
-                return {
-                  ...t,
-                  status: t.isRecurring ? "pending" : "completed",
-                  currentStreak: newStreak,
-                  lastCompletedAt: Timestamp.fromDate(new Date()),
-                  ...(t.isRecurring &&
-                    nextDue && { dueDate: Timestamp.fromDate(nextDue) }),
-                };
-              } else {
-                newStreak = Math.max(0, newStreak - 1);
-                return {
-                  ...t,
-                  status: "pending",
-                  currentStreak: newStreak,
-                  lastCompletedAt: null,
-                };
-              }
-            }
-            return t;
-          }),
-        );
-      }
-      return { previousTasks };
-    },
-    onError: (err, _vars, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(queryKey, context.previousTasks);
-      }
-      trackMutationFailed('task', err.name || 'Error');
     },
     onSuccess: (_data, variables) => {
       if (variables.isCompleting) {
@@ -169,50 +78,20 @@ export function useTaskOperations() {
         });
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
   });
 
   // --- 3. DELETE TASK ---
-  const deleteTaskMutation = useMutation({
-    mutationFn: async (taskId: string) => {
+  const deleteTaskMutation = useFirestoreMutation<string>(queryKey, {
+    mutationFn: async (_uid, taskId) => {
       await TaskLib.deleteTask(taskId);
-    },
-    onMutate: async (taskId) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousTasks = queryClient.getQueryData<TaskLib.Task[]>(queryKey);
-
-      if (previousTasks) {
-        queryClient.setQueryData(
-          queryKey,
-          previousTasks.filter((t) => t.id !== taskId),
-        );
-      }
-      return { previousTasks };
-    },
-    onError: (err, _vars, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(queryKey, context.previousTasks);
-      }
-      trackMutationFailed('task', err.name || 'Error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
   // --- 4. UPDATE TASK ---
-  const updateTaskMutation = useMutation({
-    mutationFn: async (params: { id: string } & Partial<TaskLib.Task>) => {
+  const updateTaskMutation = useFirestoreMutation<{ id: string } & Partial<TaskLib.Task>>(queryKey, {
+    mutationFn: async (_uid, params) => {
       const { id, ...updates } = params;
       await TaskLib.updateTask(id, updates);
-    },
-    onError: (err) => {
-      trackMutationFailed('task', err.name || 'Error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 

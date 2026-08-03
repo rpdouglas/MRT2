@@ -3,36 +3,44 @@
  * GITHUB COMMENT:
  * [useJournalOperations.ts]
  * FEAT: Centralized Journal CRUD operations with automatic React Query cache invalidation (Ticket 3.1).
+ * PROJ-101: migrated onto useFirestoreCrud's useFirestoreMutation primitive
+ * (PROJ-59 built this hook's shape from this exact file but never migrated
+ * it). No optimistic update here — this hook was already invalidate-only, so
+ * there's no optimisticUpdate spec to pass. One deliberate side effect of the
+ * migration: onError's trackMutationFailed domain tag changes from the
+ * hand-picked 'journal' to the shared wrapper's `queryKey[0]` ('journals') —
+ * cosmetic telemetry-label drift, not a behavior change, and the same
+ * convention every other hook migrated under this ticket now uses.
  */
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import type { DocumentReference } from 'firebase/firestore';
-import { trackMutationFailed } from '../lib/telemetry';
+import { useFirestoreMutation } from './useFirestoreCrud';
 
 export function useJournalOperations() {
     const { user } = useAuth();
-    const queryClient = useQueryClient();
-    
+
     // Must match every reader's key (Dashboard.tsx, useAnchorStatus.ts, JournalHistory.tsx)
     // or invalidation silently no-ops against a cache entry nothing reads from.
     const queryKey = ['journals', user?.uid];
 
-    const addJournalMutation = useMutation({
-        mutationFn: async (params: {
+    const addJournalMutation = useFirestoreMutation<
+        {
             content: string;
             moodScore: number;
             sentiment: string;
             weather: { temp: number; condition: string } | null;
             tags: string[];
             isEncrypted: boolean;
-        }) => {
-            if (!user) throw new Error("Not authenticated");
-            if (user.email?.endsWith('.mock')) return {} as unknown as DocumentReference;
+        },
+        DocumentReference
+    >(queryKey, {
+        mutationFn: async (uid, params) => {
+            if (user?.email?.endsWith('.mock')) return {} as unknown as DocumentReference;
             if (!db) throw new Error("Not authenticated");
             return await addDoc(collection(db, 'journals'), {
-                uid: user.uid,
+                uid,
                 content: params.content,
                 moodScore: params.moodScore,
                 sentiment: params.sentiment,
@@ -42,20 +50,16 @@ export function useJournalOperations() {
                 isEncrypted: params.isEncrypted
             });
         },
-        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey });
-        }
     });
 
-    const updateJournalMutation = useMutation({
-        mutationFn: async (params: {
-            id: string;
-            content: string;
-            moodScore: number;
-            tags: string[];
-            isEncrypted: boolean;
-        }) => {
+    const updateJournalMutation = useFirestoreMutation<{
+        id: string;
+        content: string;
+        moodScore: number;
+        tags: string[];
+        isEncrypted: boolean;
+    }>(queryKey, {
+        mutationFn: async (_uid, params) => {
             if (user?.email?.endsWith('.mock')) return;
             if (!db) throw new Error("DB not initialized");
             const docRef = doc(db, 'journals', params.id);
@@ -66,22 +70,14 @@ export function useJournalOperations() {
                 isEncrypted: params.isEncrypted
             });
         },
-        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey });
-        }
     });
 
-    const deleteJournalMutation = useMutation({
-        mutationFn: async (id: string) => {
+    const deleteJournalMutation = useFirestoreMutation<string>(queryKey, {
+        mutationFn: async (_uid, id) => {
             if (user?.email?.endsWith('.mock')) return;
             if (!db) throw new Error("DB not initialized");
             await deleteDoc(doc(db, 'journals', id));
         },
-        onError: (err) => { trackMutationFailed('journal', err.name || 'Error'); },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey });
-        }
     });
 
     return {
