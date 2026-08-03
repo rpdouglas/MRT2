@@ -1,7 +1,7 @@
 // src/lib/versioning.ts
 import buildInfoRaw from '../build-info.json';
 
-export interface BuildMeta { env: 'DEV' | 'UAT' | 'PRODUCTION'; branch: string; globalHash: string; coreHash: string; buildTime: string; }
+export interface BuildMeta { env: 'DEV' | 'UAT' | 'PRODUCTION'; branch: string; globalHash: string; coreHash: string; buildTime: string; appVersion: string; }
 
 export interface PageVersion { hash: string; lastModified: string; }
 

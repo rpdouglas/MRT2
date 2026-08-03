@@ -11,6 +11,33 @@ const __dirname = path.dirname(__filename);
 
 const SRC_DIR = path.join(__dirname, '../src');
 const OUTPUT_FILE = path.join(SRC_DIR, 'build-info.json');
+const CHANGELOG_FILE = path.join(__dirname, '../docs-site/support/changelog.md');
+const PACKAGE_JSON_FILE = path.join(__dirname, '../package.json');
+
+// The changelog (docs-site/support/changelog.md) is the one hand-curated,
+// user-facing source of truth for the app's version — read it here instead
+// of maintaining a separate counter (the old GitHub Actions variable-based
+// scheme in scripts/increment-version.cjs silently defaulted to 0.0.0-ish
+// values every run because GITHUB_TOKEN has no permission to read/write
+// repo variables).
+function getChangelogVersion() {
+    const content = fs.readFileSync(CHANGELOG_FILE, 'utf-8');
+    const match = content.match(/^## \[v(\d+\.\d+\.\d+)\]/m);
+    if (!match) {
+        throw new Error(`Could not find a "## [vX.Y.Z]" heading in ${CHANGELOG_FILE}`);
+    }
+    return match[1];
+}
+
+// Keep package.json's version in lockstep so npm tooling and the changelog
+// never drift apart again.
+function syncPackageVersion(version) {
+    const content = fs.readFileSync(PACKAGE_JSON_FILE, 'utf-8');
+    const updated = content.replace(/^(\s*"version":\s*")[^"]*(")/m, `$1${version}$2`);
+    if (updated !== content) {
+        fs.writeFileSync(PACKAGE_JSON_FILE, updated);
+    }
+}
 
 // Helper: Get Git Info
 function getGitInfo() {
@@ -52,6 +79,8 @@ function generate() {
     console.log('🏗️  Generating Build Manifest...');
 
     // 1. Environment Info
+    const appVersion = getChangelogVersion();
+    syncPackageVersion(appVersion);
     const git = getGitInfo();
     const timestamp = new Date().toISOString();
     // Rudimentary environment detection based on branch or args
@@ -88,7 +117,8 @@ function generate() {
             branch: git.branch,
             globalHash: git.hash,
             coreHash,
-            buildTime: timestamp
+            buildTime: timestamp,
+            appVersion
         },
         pages
     };
@@ -96,6 +126,7 @@ function generate() {
     // 5. Write to File
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(buildInfo, null, 2));
     console.log(`✅ Build Manifest generated at ${OUTPUT_FILE}`);
+    console.log(`   App Version: ${appVersion} (from changelog.md)`);
     console.log(`   Global Hash: ${git.hash} [${env}]`);
 }
 

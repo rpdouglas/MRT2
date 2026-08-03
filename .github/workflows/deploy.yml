@@ -117,8 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
-    
+
     # Initialize empty vars to satisfy linter
     env:
       FIREBASE_PROJECT_ID: ""
@@ -131,7 +130,6 @@ jobs:
       VITE_FIREBASE_APP_ID: ""
       VITE_FIREBASE_MEASUREMENT_ID: ""
       VITE_GEMINI_API_KEY: ""
-      VITE_APP_VERSION: ""
       VITE_STRIPE_PREMIUM_PRICE_ID: ""
       VITE_FIREBASE_VAPID_KEY: "" # <-- ADDED FOR PUSH NOTIFICATIONS
 
@@ -144,15 +142,6 @@ jobs:
 
       - name: Install
         run: npm ci
-
-      # VERSIONING
-      - name: Increment Version
-        id: versioning
-        run: node scripts/increment-version.cjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ github.ref_name }}
 
       # --- ENVIRONMENT SELECTION ---
       
@@ -241,7 +230,6 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ env.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ env.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_GEMINI_API_KEY: ${{ env.VITE_GEMINI_API_KEY }}
-          VITE_APP_VERSION: ${{ env.VITE_APP_VERSION }}
           VITE_STRIPE_PREMIUM_PRICE_ID: ${{ env.VITE_STRIPE_PREMIUM_PRICE_ID }}
           VITE_FIREBASE_VAPID_KEY: ${{ env.VITE_FIREBASE_VAPID_KEY }}
 
