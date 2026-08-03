@@ -61,6 +61,7 @@ graph TD
 ### Phase 3: Execution (The Build)
 * **Trigger:** The plan is agreed upon and the developer authorizes the build.
 * **Goal:** Generate clean, type-safe code that passes formatting, building, and testing checks.
+* **Session Task Tracking:** The AI's in-session todo list (e.g. Claude Code's task tool) is a scratch view for this Phase only — not a governance artifact. Its items should map 1:1 onto the current project spec's Phase 3/Phase checklist entries (`docs/projects/XX_FEATURE.md` §4/§5, per `00_TEMPLATE.md`) rather than inventing a parallel breakdown. The spec stays the single source of truth; the todo list just tracks live progress through it for the session and is discarded once the Phase is done.
 * **Prompt Template (Approval & Validation):**
   ```text
   I formally approve the recommended approach. Please proceed with implementing the approved changes.
