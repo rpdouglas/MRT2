@@ -466,4 +466,23 @@ expect(data?.encryptedAIContext).not.toContain('evidence');
 
 ---
 
+## 9. Addendum (2026-08-03): Monthly Action Items
+
+**Status:** Shipped. Adds one AI-suggested action per domain to the existing analysis, with a one-tap "Add to Tasks" affordance — the same pattern already shipped for `JournalAnalysisWizard.tsx`'s "Suggested Actions"/"Recommended Strategy" panels (`actionable_advice`/`long_term_advice` + `action_contexts`). This addendum documents the extension in place rather than opening a new spec file, since it changes no architecture from §2/§3 — see the ZK note below.
+
+**What changed:**
+- `ROSCAnalysisResult` (`src/lib/gemini.ts`) — each of `scores.health/home/purpose/community` gains an `action: string`: one concrete, achievable step the user could take on that domain in the coming month.
+- The `rosc_assessment` prompt (`functions/src/index.ts`) instructs Gemini to return that `action` alongside each domain's existing `score`/`evidence`.
+- `useROSCAssessments.ts` folds the four `action` strings into the same `aiContextBlob` that already holds `narrative`/`strengths`/`growth_areas`/`evidence`, so they're encrypted together into `encryptedAIContext` before the Firestore write.
+- `ROSCAssessmentCard.tsx` renders a new "Actions for This Month" section (visible only when the vault is unlocked, same gating as narrative/strengths/growth_areas) with a per-domain "Add to Tasks" button that calls `useTaskOperations().addTask()` — title = the action text, `recurrence: { type: 'once' }`, `priority: 'Medium'`, due in 7 days, `source: 'ai'`, `aiMeta.sourceContext` set to a one-line domain/month note. Matches the Journal Analysis Wizard's `handleAddToTasks` shape exactly.
+
+**ZK boundary — unchanged:** the new `action` text is never written to a plaintext Firestore field. It only ever exists (a) in memory during the client-side AI call, (b) inside the JSON blob that gets AES-GCM encrypted into `encryptedAIContext`, and (c) briefly in memory again after the user decrypts the card and before it's copied — as plaintext, same as any other AI-suggested title — into a `tasks/{id}` doc, which is documented as intentionally unencrypted (needed for streak evaluation, see CLAUDE.md's collection table). This mirrors exactly how the Journal Analysis Wizard's `actionable_advice` strings already flow into plaintext task titles today.
+
+**Free tier / vault-locked:** no change — that path never calls the AI and never populates `encryptedAIContext`, so no actions section renders (same as narrative/strengths/growth_areas today).
+
+**Out of scope for this addendum:** persisting "already added" state server-side (mirrors the Wizard's session-only `Set` — reopening the card lets you re-add), and any change to `ROSCDomainScore`/`ROSCScore`/`ROSCAssessment` (`src/lib/types/rosc.ts`) — those stay exactly as shipped in §3.
+
+---
+
 *MRT · PROJ-49 Recovery Capital (ROSC) Matrix · v1.0 · May 2026 · Status: ✅ Shipped*
+*Addendum §9 added 2026-08-03 — Monthly Action Items*

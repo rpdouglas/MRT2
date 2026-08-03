@@ -128,6 +128,12 @@ export function useROSCAssessments() {
                         purpose: aiResult.scores.purpose.evidence,
                         community: aiResult.scores.community.evidence,
                     },
+                    actions: {
+                        health: aiResult.scores.health.action,
+                        home: aiResult.scores.home.action,
+                        purpose: aiResult.scores.purpose.action,
+                        community: aiResult.scores.community.action,
+                    },
                 });
                 encryptedAIContext = await encrypt(aiContextBlob);
             } else {

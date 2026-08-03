@@ -134,12 +134,13 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         } as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
 
         const plaintextNarrative = 'The user showed strong progress this month, mentioning meetings often.';
+        const plaintextAction = 'Reach out to one peer you haven\'t connected with in a while.';
         vi.mocked(GeminiLib.generateROSCAnalysis).mockResolvedValue({
             scores: {
-                health: { score: 8, evidence: ['exercised', 'slept well'] },
-                home: { score: 6, evidence: ['stable routine'] },
-                purpose: { score: 7, evidence: ['finished a project'] },
-                community: { score: 9, evidence: ['went to 3 meetings'] },
+                health: { score: 8, evidence: ['exercised', 'slept well'], action: 'Walk 10 minutes daily.' },
+                home: { score: 6, evidence: ['stable routine'], action: 'Tidy one shared space this week.' },
+                purpose: { score: 7, evidence: ['finished a project'], action: 'Start one new step-work milestone.' },
+                community: { score: 9, evidence: ['went to 3 meetings'], action: plaintextAction },
             },
             trajectory: 'Improving',
             narrative: plaintextNarrative,
@@ -161,16 +162,18 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
             1
         );
 
-        // The AI narrative must be encrypted before write...
+        // The AI narrative and per-domain actions must be encrypted before write...
         expect(encryptMock).toHaveBeenCalledWith(expect.stringContaining(plaintextNarrative));
+        expect(encryptMock).toHaveBeenCalledWith(expect.stringContaining(plaintextAction));
 
         // ...and the Firestore write payload must carry only the ciphertext —
         // this is the security/raw-doc-check contract: assert the plaintext
-        // narrative never appears anywhere in what actually gets written.
+        // narrative/action text never appears anywhere in what actually gets written.
         const writeCall = vi.mocked(RoscLib.createROSCAssessment).mock.calls[0];
         const payload = writeCall[1];
         expect(payload.encryptedAIContext).toBe('AICTX_CIPHERTEXT_BLOB');
         expect(JSON.stringify(payload)).not.toContain(plaintextNarrative);
+        expect(JSON.stringify(payload)).not.toContain(plaintextAction);
 
         // Plaintext-per-CLAUDE.md fields are still asserted directly.
         expect(payload.totalScore).toBe(8 + 6 + 7 + 9);

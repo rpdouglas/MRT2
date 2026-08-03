@@ -82,10 +82,10 @@ export interface SystemHealthAnalysis {
 
 export interface ROSCAnalysisResult {
   scores: {
-    health: { score: number; evidence: string[] };
-    home: { score: number; evidence: string[] };
-    purpose: { score: number; evidence: string[] };
-    community: { score: number; evidence: string[] };
+    health: { score: number; evidence: string[]; action: string };
+    home: { score: number; evidence: string[]; action: string };
+    purpose: { score: number; evidence: string[]; action: string };
+    community: { score: number; evidence: string[]; action: string };
   };
   trajectory: 'Improving' | 'Stable' | 'Declining' | 'Insufficient Data';
   narrative: string;
@@ -131,10 +131,10 @@ function getMockAIResponse(analysisType: string): string {
         case 'rosc_assessment':
             return JSON.stringify({
                 scores: {
-                    health: { score: 8, evidence: ['Consistent sleep logs', 'Breathwork completed daily'] },
-                    home: { score: 7, evidence: ['Stable environment established'] },
-                    purpose: { score: 9, evidence: ['Deeply engaged in step-work and service commitments'] },
-                    community: { score: 8, evidence: ['Regular weekly connection with sponsor and peers'] }
+                    health: { score: 8, evidence: ['Consistent sleep logs', 'Breathwork completed daily'], action: 'Add one 10-minute walk on your three lowest-mood days this week.' },
+                    home: { score: 7, evidence: ['Stable environment established'], action: 'Set one small boundary around your recovery time at home this month.' },
+                    purpose: { score: 9, evidence: ['Deeply engaged in step-work and service commitments'], action: 'Take on one new service commitment or step-work milestone.' },
+                    community: { score: 8, evidence: ['Regular weekly connection with sponsor and peers'], action: 'Reach out to one peer you haven\'t connected with in a while.' }
                 },
                 trajectory: 'Improving',
                 narrative: 'Your recovery capital shows strong improvement, especially in your sense of purpose and commitment to service. Somatic baselines show stability.',

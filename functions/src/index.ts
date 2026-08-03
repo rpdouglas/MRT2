@@ -1251,13 +1251,14 @@ Return a JSON object with this EXACT structure:
 ${delimitUserContent(payload.answers)}`,
                 systemPrompt: `Analyze the user's answers across the 4 SAMHSA domains (Health, Home, Purpose, Community) and rate them.
 ${PROMPT_INJECTION_GUARD}
+Each domain's "action" must be a single, concrete, achievable step the user could complete this month in that domain.
 Return a JSON object with this EXACT structure:
 {
   "scores": {
-    "health": { "score": number, "evidence": ["evidence"] },
-    "home": { "score": number, "evidence": ["evidence"] },
-    "purpose": { "score": number, "evidence": ["evidence"] },
-    "community": { "score": number, "evidence": ["evidence"] }
+    "health": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Health this month." },
+    "home": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Home this month." },
+    "purpose": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Purpose this month." },
+    "community": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Community this month." }
   },
   "trajectory": "Improving" | "Stable" | "Declining" | "Insufficient Data",
   "narrative": "Compassionate overview...",
