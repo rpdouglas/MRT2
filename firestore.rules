@@ -198,5 +198,13 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
+
+    // 12. Buffer Status (PROJ-42) — Cloud-Function/Admin-SDK-only tracker of
+    // reading-buffer generation state (checkBufferHealth/generateReadingBatch).
+    // Never read or written from the client; explicit default-deny per
+    // docs/SCHEMA_ARCHITECTURE.md's buffer_status/{modality} entry.
+    match /buffer_status/{modality} {
+      allow read, write: if false;
+    }
   }
 }
