@@ -20,6 +20,7 @@ import { useHeroColor } from '../hooks/useHeroColor';
 import { useUserProfile } from '../hooks/useUserProfile';
 import AutosaveStatus, { type AutosaveState } from '../components/profile/AutosaveStatus';
 import type { HeroColorKey } from '../lib/db';
+import { useBuildInfo } from '../lib/versioning';
 
 type TabType = 'general' | 'security' | 'data' | 'achievements';
 
@@ -33,7 +34,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { tab } = useParams<{ tab?: string }>();
 
-  const appVersion = import.meta.env.VITE_APP_VERSION || 'Dev-Local';
+  const { appVersion } = useBuildInfo();
 
   // Client-side bounds only (no schema change) — a sobriety date can't be in the
   // future, and 100 years back is a generous floor for a implausibly-old date.
