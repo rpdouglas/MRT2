@@ -7,11 +7,20 @@ import { useEncryption } from '../contexts/EncryptionContext';
 import { createROSCAssessment, getROSCAssessments } from '../lib/rosc';
 import { generateROSCAnalysis } from '../lib/gemini';
 import { processInChunks } from '../lib/utils';
-import { format, subDays, isSameMonth } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import type { ROSCAssessment, ROSCCheckInAnswers, ROSCScore, ROSCTrajectory } from '../lib/types/rosc';
+import {
+    getROSCCadence,
+    canCreateForCadence,
+    nextEligibleAt,
+    daysUntilEligible as computeDaysUntilEligible,
+    roscPeriodKey,
+    toDateSafe,
+    ROSC_LOOKBACK_DAYS,
+} from '../lib/roscCadence';
 
-const CHECKIN_KEY = () => `roscCheckIn_${format(new Date(), 'yyyy-MM')}`;
-const CHECKIN_STARTED_KEY = () => `roscCheckInStarted_${format(new Date(), 'yyyy-MM')}`;
+const SPARSE_ENTRY_THRESHOLD = 3;
+const FALLBACK_LOOKBACK_DAYS = ROSC_LOOKBACK_DAYS.monthly;
 
 export function useROSCAssessments() {
     const { user, userTier } = useAuth();
@@ -29,34 +38,35 @@ export function useROSCAssessments() {
         gcTime: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const canCreateThisMonth = (() => {
-        if (!assessments.length) return true;
-        const latest = assessments[0];
-        if (!latest.createdAt) return true;
-        const latestDate = latest.createdAt.toDate ? latest.createdAt.toDate() : new Date(latest.createdAt as unknown as string);
-        return !isSameMonth(latestDate, new Date());
-    })();
+    const cadence = getROSCCadence(userTier);
+    const latestDate = assessments[0]?.createdAt ? toDateSafe(assessments[0].createdAt) : null;
+    const canCreateAssessment = canCreateForCadence(cadence, latestDate, new Date());
+    const nextEligibleDate = latestDate ? nextEligibleAt(cadence, latestDate) : null;
+    const daysUntilEligible = latestDate ? computeDaysUntilEligible(cadence, latestDate, new Date()) : 0;
+
+    const checkInKey = `roscCheckIn_${roscPeriodKey(cadence, new Date())}`;
+    const checkInStartedKey = `roscCheckInStarted_${roscPeriodKey(cadence, new Date())}`;
 
     const savedCheckIn = (() => {
         try {
-            const raw = sessionStorage.getItem(CHECKIN_KEY());
+            const raw = sessionStorage.getItem(checkInKey);
             return raw ? (JSON.parse(raw) as ROSCCheckInAnswers) : null;
         } catch {
             return null;
         }
     })();
 
-    const hasStartedCheckIn = !!localStorage.getItem(CHECKIN_STARTED_KEY());
+    const hasStartedCheckIn = !!localStorage.getItem(checkInStartedKey);
 
     // Called before the AI mutation so answers survive a failure and can be retried
     const saveCheckInProgress = useCallback((answers: ROSCCheckInAnswers) => {
-        sessionStorage.setItem(CHECKIN_KEY(), JSON.stringify(answers));
-    }, []);
+        sessionStorage.setItem(checkInKey, JSON.stringify(answers));
+    }, [checkInKey]);
 
     const clearCheckInProgress = useCallback(() => {
-        sessionStorage.removeItem(CHECKIN_KEY());
-        localStorage.removeItem(CHECKIN_STARTED_KEY());
-    }, []);
+        sessionStorage.removeItem(checkInKey);
+        localStorage.removeItem(checkInStartedKey);
+    }, [checkInKey, checkInStartedKey]);
 
     const mutation = useMutation({
         mutationFn: async (checkIn: ROSCCheckInAnswers) => {
@@ -66,8 +76,7 @@ export function useROSCAssessments() {
 
             const isPremium = userTier === 'premium';
             const now = new Date();
-            const periodStart = Timestamp.fromDate(subDays(now, 30));
-            const periodEnd = Timestamp.fromDate(now);
+            let lookbackDays = ROSC_LOOKBACK_DAYS[cadence];
 
             let scores: ROSCScore;
             let trajectory: ROSCTrajectory = 'Insufficient Data';
@@ -77,13 +86,22 @@ export function useROSCAssessments() {
             if (isPremium && isVaultUnlocked) {
                 // --- PREMIUM: AI-powered analysis ---
                 const database = db as Firestore;
-                const q = query(
+                const fetchJournals = (days: number) => getDocs(query(
                     collection(database, 'journals'),
                     where('uid', '==', user.uid),
+                    where('createdAt', '>=', Timestamp.fromDate(subDays(now, days))),
                     orderBy('createdAt', 'desc'),
                     limit(30)
-                );
-                const snapshot = await getDocs(q);
+                ));
+
+                let snapshot = await fetchJournals(lookbackDays);
+                // A short weekly window can legitimately return too few entries to
+                // analyse meaningfully — widen to the monthly window rather than
+                // send Gemini a near-empty corpus every week.
+                if (cadence === 'weekly' && snapshot.docs.length < SPARSE_ENTRY_THRESHOLD) {
+                    lookbackDays = FALLBACK_LOOKBACK_DAYS;
+                    snapshot = await fetchJournals(lookbackDays);
+                }
                 setCreateProgress(20);
 
                 const rawDocs = snapshot.docs.map(d => d.data());
@@ -107,7 +125,8 @@ export function useROSCAssessments() {
                 const journalSummary = decryptedEntries.join('\n\n---\n\n');
                 setCreateProgress(75);
 
-                const aiResult = await generateROSCAnalysis(checkIn, journalSummary, journalEntriesAnalysed);
+                const periodLabel = lookbackDays === 7 ? 'the past 7 days' : 'the past 30 days';
+                const aiResult = await generateROSCAnalysis(checkIn, journalSummary, journalEntriesAnalysed, periodLabel);
                 setCreateProgress(85);
 
                 scores = {
@@ -151,6 +170,11 @@ export function useROSCAssessments() {
 
             const totalScore = scores.health.score + scores.home.score + scores.purpose.score + scores.community.score;
 
+            // Reflects the actual window analysed — including a widened window
+            // if the sparse-entry fallback above fired.
+            const periodStart = Timestamp.fromDate(subDays(now, lookbackDays));
+            const periodEnd = Timestamp.fromDate(now);
+
             await createROSCAssessment(user.uid, {
                 periodStart,
                 periodEnd,
@@ -182,7 +206,11 @@ export function useROSCAssessments() {
     return {
         assessments,
         isLoading,
-        canCreateThisMonth,
+        cadence,
+        canCreateAssessment,
+        nextEligibleDate,
+        daysUntilEligible,
+        checkInStartedKey,
         hasStartedCheckIn,
         savedCheckIn,
         saveCheckInProgress,

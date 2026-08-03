@@ -25,6 +25,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // --- LAZY LOADED ROUTES ---
 const Vitality = lazy(() => import('./pages/Vitality'));
 const InsightsLog = lazy(() => import('./pages/InsightsLog'));
+const RecoveryCapital = lazy(() => import('./pages/RecoveryCapital')); // PROJ-49
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const PremiumUpgrade = lazy(() => import('./pages/PremiumUpgrade')); 
 const ToolsHub = lazy(() => import('./pages/ToolsHub'));
@@ -230,6 +231,12 @@ export default function App() {
                         <Route path="/insights" element={<PrivateRoute>
                                 <VaultGate>
                                 <InsightsLog />
+                                </VaultGate>
+                            </PrivateRoute>} />
+
+                        <Route path="/insights/rosc" element={<PrivateRoute>
+                                <VaultGate>
+                                <RecoveryCapital />
                                 </VaultGate>
                             </PrivateRoute>} />
 

@@ -119,6 +119,8 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         const decryptMock = vi.fn().mockImplementation(async (c: string) => `plain:${c}`);
         mockEncryption({ encrypt: encryptMock, decrypt: decryptMock, isVaultUnlocked: true });
 
+        // 3+ entries so the sparse-window (< 3 entries) fallback to a 30-day
+        // lookback does not fire — this test is exercising the normal weekly path.
         vi.mocked(firestore.getDocs).mockResolvedValue({
             docs: [
                 {
@@ -128,6 +130,24 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
                         moodScore: 7,
                         tags: ['gratitude'],
                         createdAt: { toDate: () => new Date('2026-07-01') },
+                    }),
+                },
+                {
+                    data: () => ({
+                        content: 'cipher-def',
+                        isEncrypted: true,
+                        moodScore: 6,
+                        tags: ['meeting'],
+                        createdAt: { toDate: () => new Date('2026-07-02') },
+                    }),
+                },
+                {
+                    data: () => ({
+                        content: 'cipher-ghi',
+                        isEncrypted: true,
+                        moodScore: 8,
+                        tags: ['gratitude'],
+                        createdAt: { toDate: () => new Date('2026-07-03') },
                     }),
                 },
             ],
@@ -159,7 +179,8 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         expect(GeminiLib.generateROSCAnalysis).toHaveBeenCalledWith(
             checkIn,
             expect.stringContaining('plain:cipher-abc'),
-            1
+            3,
+            'the past 7 days'
         );
 
         // The AI narrative and per-domain actions must be encrypted before write...
@@ -178,7 +199,62 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         // Plaintext-per-CLAUDE.md fields are still asserted directly.
         expect(payload.totalScore).toBe(8 + 6 + 7 + 9);
         expect(payload.trajectory).toBe('Improving');
-        expect(payload.journalEntriesAnalysed).toBe(1);
+        expect(payload.journalEntriesAnalysed).toBe(3);
+    });
+
+    it('premium sparse-window fallback: a weekly window with < 3 journal entries widens to a 30-day lookback', async () => {
+        mockAuth('premium');
+        mockEncryption();
+
+        // First (7-day) query returns only 2 entries; the fallback re-query
+        // (30-day) returns the same docs plus older ones the widened window reaches.
+        vi.mocked(firestore.getDocs)
+            .mockResolvedValueOnce({
+                docs: [
+                    { data: () => ({ content: 'a', isEncrypted: false, moodScore: 5, tags: [], createdAt: { toDate: () => new Date() } }) },
+                    { data: () => ({ content: 'b', isEncrypted: false, moodScore: 6, tags: [], createdAt: { toDate: () => new Date() } }) },
+                ],
+            } as unknown as Awaited<ReturnType<typeof firestore.getDocs>>)
+            .mockResolvedValueOnce({
+                docs: [
+                    { data: () => ({ content: 'a', isEncrypted: false, moodScore: 5, tags: [], createdAt: { toDate: () => new Date() } }) },
+                    { data: () => ({ content: 'b', isEncrypted: false, moodScore: 6, tags: [], createdAt: { toDate: () => new Date() } }) },
+                    { data: () => ({ content: 'c', isEncrypted: false, moodScore: 7, tags: [], createdAt: { toDate: () => new Date() } }) },
+                ],
+            } as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+
+        vi.mocked(GeminiLib.generateROSCAnalysis).mockResolvedValue({
+            scores: {
+                health: { score: 5, evidence: [], action: 'a' },
+                home: { score: 5, evidence: [], action: 'b' },
+                purpose: { score: 5, evidence: [], action: 'c' },
+                community: { score: 5, evidence: [], action: 'd' },
+            },
+            trajectory: 'Stable',
+            narrative: 'n',
+            strengths: [],
+            growth_areas: [],
+        });
+
+        const { result } = renderHook(() => useROSCAssessments(), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        await result.current.createAssessment(checkIn);
+
+        expect(firestore.getDocs).toHaveBeenCalledTimes(2);
+        expect(GeminiLib.generateROSCAnalysis).toHaveBeenCalledWith(
+            checkIn,
+            expect.any(String),
+            3,
+            'the past 30 days'
+        );
+
+        const writeCall = vi.mocked(RoscLib.createROSCAssessment).mock.calls[0];
+        const payload = writeCall[1];
+        expect(payload.journalEntriesAnalysed).toBe(3);
+        const windowDays = (payload.periodEnd.toMillis() - payload.periodStart.toMillis()) / (1000 * 60 * 60 * 24);
+        expect(windowDays).toBeGreaterThan(29);
+        expect(windowDays).toBeLessThan(31);
     });
 
     it('premium tier with a locked vault falls back to the free-tier self-report path', async () => {
@@ -229,7 +305,7 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         });
     });
 
-    it('canCreateThisMonth: false when the latest assessment.createdAt is a Timestamp in the current month', async () => {
+    it('canCreateAssessment: false (free/monthly) when the latest assessment.createdAt is a Timestamp in the current month', async () => {
         mockAuth('free');
         mockEncryption();
         vi.mocked(RoscLib.getROSCAssessments).mockResolvedValue([
@@ -239,10 +315,11 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
         const { result } = renderHook(() => useROSCAssessments(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        expect(result.current.canCreateThisMonth).toBe(false);
+        expect(result.current.cadence).toBe('monthly');
+        expect(result.current.canCreateAssessment).toBe(false);
     });
 
-    it('canCreateThisMonth: handles a legacy non-Timestamp createdAt string via the Date fallback branch', async () => {
+    it('canCreateAssessment: handles a legacy non-Timestamp createdAt string via the Date fallback branch', async () => {
         mockAuth('free');
         mockEncryption();
         const legacyDateString = new Date().toISOString();
@@ -255,6 +332,51 @@ describe('🧭 useROSCAssessments (Firestore-write hook)', () => {
 
         // Same month as "now" (the string is `new Date().toISOString()`), so
         // the legacy fallback branch must still correctly block re-creation.
-        expect(result.current.canCreateThisMonth).toBe(false);
+        expect(result.current.canCreateAssessment).toBe(false);
+    });
+
+    it('cross-tier cadence: same latest date (8 days ago, same calendar month) is eligible for premium/weekly but not free/monthly', async () => {
+        // Fixed "now" mid-month so "8 days ago" is guaranteed to land in the
+        // same calendar month regardless of which day the suite actually runs.
+        // Only Date is faked — setTimeout/setInterval stay real so RTL's
+        // waitFor (and TanStack Query's internals) keep working normally.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-08-15T12:00:00Z'));
+        const eightDaysAgo = Timestamp.fromDate(new Date('2026-08-07T12:00:00Z'));
+
+        try {
+            mockAuth('premium');
+            mockEncryption();
+            vi.mocked(RoscLib.getROSCAssessments).mockResolvedValue([
+                { id: 'a1', uid: 'user_1', createdAt: eightDaysAgo } as unknown as Awaited<ReturnType<typeof RoscLib.getROSCAssessments>>[number],
+            ]);
+            const premiumRender = renderHook(() => useROSCAssessments(), { wrapper });
+            await waitFor(() => expect(premiumRender.result.current.isLoading).toBe(false));
+            expect(premiumRender.result.current.cadence).toBe('weekly');
+            expect(premiumRender.result.current.canCreateAssessment).toBe(true);
+
+            queryClient.clear();
+            mockAuth('free');
+            const freeRender = renderHook(() => useROSCAssessments(), { wrapper });
+            await waitFor(() => expect(freeRender.result.current.isLoading).toBe(false));
+            expect(freeRender.result.current.cadence).toBe('monthly');
+            expect(freeRender.result.current.canCreateAssessment).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('premium tier: latest assessment 3 days ago is not yet eligible for the weekly cadence', async () => {
+        mockAuth('premium');
+        mockEncryption();
+        vi.mocked(RoscLib.getROSCAssessments).mockResolvedValue([
+            { id: 'a1', uid: 'user_1', createdAt: Timestamp.fromDate(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)) } as unknown as Awaited<ReturnType<typeof RoscLib.getROSCAssessments>>[number],
+        ]);
+
+        const { result } = renderHook(() => useROSCAssessments(), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.canCreateAssessment).toBe(false);
+        expect(result.current.daysUntilEligible).toBeGreaterThan(0);
     });
 });

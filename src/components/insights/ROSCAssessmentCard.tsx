@@ -8,6 +8,7 @@ import { useEncryption } from '../../contexts/EncryptionContext';
 import { useTaskOperations } from '../../hooks/useTaskOperations';
 import ROSCPillCapsules from './ROSCPillCapsules';
 import type { ROSCAssessment } from '../../lib/types/rosc';
+import { cadenceCurrentLabel, cadenceDateFormat, cadenceSinceLabel, type ROSCCadence } from '../../lib/roscCadence';
 
 type ROSCDomain = 'health' | 'home' | 'purpose' | 'community';
 
@@ -30,6 +31,7 @@ interface Props {
     assessment: ROSCAssessment;
     previous?: ROSCAssessment;
     compact?: boolean;
+    cadence?: ROSCCadence;
 }
 
 function trajectoryPill(t: ROSCAssessment['trajectory']) {
@@ -42,7 +44,7 @@ function trajectoryPill(t: ROSCAssessment['trajectory']) {
     return map[t] ?? 'bg-gray-100 text-gray-500';
 }
 
-export default function ROSCAssessmentCard({ assessment, previous, compact = false }: Props) {
+export default function ROSCAssessmentCard({ assessment, previous, compact = false, cadence = 'monthly' }: Props) {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { addTask } = useTaskOperations();
@@ -65,7 +67,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                 priority: 'Medium',
                 dueDate: addDays(new Date(), 7),
                 source: 'ai',
-                aiMeta: { sourceContext: `${DOMAIN_LABELS[domain]} · ${format(createdDate, 'MMMM yyyy')} Recovery Capital check-in` },
+                aiMeta: { sourceContext: `${DOMAIN_LABELS[domain]} · ${format(createdDate, cadenceDateFormat(cadence))} Recovery Capital check-in` },
             });
             setAddedActions(prev => new Set(prev).add(domain));
             toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
@@ -104,7 +106,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                         <button onClick={handleExpand} className="w-full flex justify-between items-start mb-6 text-left cursor-pointer">
                             <div>
                                 <div className="text-[10px] tracking-widest text-white/45 uppercase mb-1">
-                                    {format(createdDate, 'MMM yyyy')}
+                                    {format(createdDate, cadenceDateFormat(cadence))}
                                 </div>
                                 <div className="text-[13px] text-white/65">Recovery Capital</div>
                             </div>
@@ -115,7 +117,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                                 </div>
                                 {previous && (
                                     <div className="text-[11px] text-[#34D399] font-bold mt-1">
-                                        {gain >= 0 ? '▲ +' : '▼ '}{gain} this month
+                                        {gain >= 0 ? '▲ +' : '▼ '}{gain} {cadenceSinceLabel(cadence)}
                                     </div>
                                 )}
                             </div>
@@ -123,7 +125,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
 
                         <div className="space-y-5">
                             {!compact && (
-                                <ROSCPillCapsules current={assessment} previous={previous} />
+                                <ROSCPillCapsules current={assessment} previous={previous} cadence={cadence} />
                             )}
 
                             {assessment.journalEntriesAnalysed > 0 && (
@@ -141,7 +143,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                                             <div className="bg-white/5 border border-white/10 rounded-xl p-3">
                                                 <div className="flex items-center gap-1.5 mb-1.5">
                                                     <SparklesIcon className="h-3.5 w-3.5 text-fuchsia-400" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-300">This Month</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-300">{cadenceCurrentLabel(cadence)}</span>
                                                 </div>
                                                 <p className="text-xs text-white/80 leading-relaxed">{context.narrative}</p>
                                             </div>
@@ -170,7 +172,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
 
                                             {context.actions && (
                                                 <div className="bg-fuchsia-950/30 border border-fuchsia-500/20 rounded-xl p-3">
-                                                    <div className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-400 mb-1.5">Actions for This Month</div>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-400 mb-1.5">Your Next Actions</div>
                                                     <div className="space-y-1.5">
                                                         {(Object.keys(DOMAIN_LABELS) as ROSCDomain[]).map((domain) => {
                                                             const actionText = context.actions?.[domain];
@@ -230,12 +232,12 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
             >
                 <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-fuchsia-500 to-rose-500 text-white rounded-xl w-10 h-10 flex flex-col items-center justify-center leading-none">
-                        <span className="text-[11px] font-bold">{format(createdDate, 'MMM').toUpperCase()}</span>
+                        <span className="text-[11px] font-bold">{format(createdDate, cadence === 'weekly' ? 'MMM d' : 'MMM').toUpperCase()}</span>
                         <span className="text-[10px] opacity-80">{format(createdDate, 'yyyy')}</span>
                     </div>
                     <div>
                         <div className="text-sm font-bold text-gray-900">
-                            Recovery Capital · {format(createdDate, 'MMMM yyyy')}
+                            Recovery Capital · {format(createdDate, cadenceDateFormat(cadence))}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs font-black text-fuchsia-700">{assessment.totalScore}/40</span>

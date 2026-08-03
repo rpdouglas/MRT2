@@ -17,7 +17,7 @@ The **Insights** page (sidebar icon) is your analytical home — it combines the
 
 ## 1. Recovery Capital Matrix (ROSC)
 
-Recovery Capital is the breadth of internal and external resources you can draw upon to sustain recovery. MRT measures it once per calendar month across four domains defined by SAMHSA's recovery framework:
+Recovery Capital is the breadth of internal and external resources you can draw upon to sustain recovery. MRT measures it across four domains defined by SAMHSA's recovery framework:
 
 | Domain | What it reflects |
 | :--- | :--- |
@@ -26,50 +26,59 @@ Recovery Capital is the breadth of internal and external resources you can draw 
 | **Purpose** | Meaningful activity — work, service, creativity, family |
 | **Community** | Connections with people who support your recovery |
 
-### The Monthly Check-In
+The Insights page shows a compact Recovery Capital summary card — your latest snapshot plus a **"View trends & history"** link that opens the full **Recovery Capital** page (its own full screen, reached from Insights), with three tabs: **Snapshot**, **Trends**, and **History**.
 
-Once per calendar month, a **"Start this month's check-in"** button appears at the top of the Insights page. The check-in is rate-limited to one per calendar month — consistent with clinical ROSC methodology and designed to prevent compulsive reassessment.
+### The Check-In
 
-Tapping it opens a 5-question guided flow (approximately 60–90 seconds):
+A **"Start this month's check-in"** (free tier) or **"Start this week's check-in"** (Premium) button appears whenever you're eligible. Free tier is rate-limited to once per calendar month — consistent with clinical ROSC methodology and designed to prevent compulsive reassessment. Premium can check in once every 7 days instead: because the Premium assessment is anchored to your actual journal entries rather than self-report alone, reassessing against an unchanged journal history simply produces an unchanged score, so the tighter cadence doesn't carry the same compulsive-reassessment risk.
+
+Tapping the button opens a 5-question guided flow (approximately 60–90 seconds):
 
 1. Answer each question on a 1–5 scale using strength-based language — *"Thriving"* at the top, neutral language at the bottom. There is no failure state.
-2. All five questions advance automatically — no back button, no form to submit. The last answer triggers the analysis.
-3. If the AI analysis fails mid-way (e.g., lost connectivity), your answers are temporarily saved so you don't have to repeat the check-in on retry.
+2. Answering advances to the next question automatically. A back arrow lets you revisit and change a previous answer before you finish.
+3. The last answer triggers the analysis. If it fails mid-way (e.g., lost connectivity), your answers are temporarily saved so you don't have to repeat the check-in on retry.
 
-> **David:** The check-in is designed to take under two minutes. Each screen shows only one question. If you dismiss mid-flow, you'll see "Continue your check-in" next time you open Insights.
+> **David:** The check-in is designed to take under two minutes. Each screen shows only one question. If you dismiss mid-flow, you'll see "Continue your check-in" next time you return.
 
-### Your Pill Capsules
+### Snapshot Tab
 
-After the check-in, an animated set of segmented pill capsules fills in, showing your four domain scores (each 1–10). The segments light up sequentially with premium glassmorphic gradients.
+Shows your current pill capsules — an animated set of segments for your four domain scores (each 1–10), lit up sequentially with premium glassmorphic gradients.
 
-* **Score numbers** alongside each domain pill display your exact score, with dynamic trend indicators (e.g., `▲ +2`) showing month-over-month growth.
+* **Score numbers** alongside each domain pill display your exact score, with dynamic trend indicators (e.g., `▲ +2`) showing growth since your last check-in.
 * **Total score** is shown prominently at the top: e.g., *"31 / 40."*
-* **Longitudinal comparison:** Once you have two or more monthly snapshots, the pill segments from your previous month are subtly "ghosted" in the background behind your current score. This lets you instantly visualize your momentum and growth over time.
+* If your AI narrative is available (Premium, Vault unlocked), tapping through reveals it along with identified strengths, growth areas, and — for each domain — **one suggested action for your next check-in**, with a one-tap **Add to Tasks** button.
 
-### History
+### Trends Tab
 
-Past assessments are listed below the current chart as expandable cards. Tap any card to see that month's full pill capsules. If your Vault is unlocked, tapping also decrypts the AI-generated narrative, identified strengths, and compassionate growth suggestions for that month.
+A longitudinal view across every check-in you've completed, not just an adjacent comparison: a total-score area chart plus a four-line chart (one line per domain), with a 6/12/All range toggle. Because domain scores and totals are stored unencrypted, this chart renders even when your Vault is locked — only the narrative text underneath a card requires unlocking.
+
+> **Walt:** With enough history, the Trends tab is the closest thing MRT has to a longitudinal Recovery Capital report — track a domain's trajectory across months (or weeks, on Premium) without opening every past card individually.
+
+### History Tab
+
+Past assessments are listed as expandable cards. Tap any card to see that period's full pill capsules. If your Vault is unlocked, tapping also decrypts the AI-generated narrative, identified strengths, growth suggestions, and per-domain next actions for that period.
 
 ### Vault-Locked Behaviour
 
-Domain scores (the numbers) are stored unencrypted and are always visible. The AI narrative and suggestions are encrypted — this table shows exactly what requires the Vault:
+Domain scores (the numbers) are stored unencrypted and are always visible, including on the Trends chart. The AI narrative, strengths, growth areas, and suggested actions are encrypted — this table shows exactly what requires the Vault:
 
 | Content | Encrypted? | Visible when Vault locked? |
 | :--- | :--- | :--- |
-| Domain scores (1–10 per domain) | No | Always visible |
+| Domain scores (1–10 per domain) | No | Always visible, including Trends charts |
 | Total score | No | Always visible |
-| AI narrative, strengths, growth areas | Yes (AES-GCM) | Blurred — *"Unlock vault to read your recovery story."* |
+| AI narrative, strengths, growth areas, suggested actions | Yes (AES-GCM) | Blurred — *"Unlock vault to read your recovery story."* |
 | Check-in CTA button | — | Hidden — analysis requires decrypting your journals before sending to Gemini |
 
 ### Free vs. Premium
 
 | | Free | Premium |
 | :--- | :--- | :--- |
-| Monthly check-in | ✅ | ✅ |
+| Check-in cadence | Once per calendar month | Once every 7 days |
 | Domain scores from self-report | ✅ | ✅ |
-| Gemini reads your last 30 journal entries | ❌ | ✅ |
+| Gemini reads your recent journal entries | ❌ | ✅ (last 7 days, widening to 30 if that's too few entries) |
 | Blended AI score + narrative | ❌ | ✅ |
 | Identified strengths + growth suggestions | ❌ | ✅ |
+| Per-domain suggested next action + Add to Tasks | ❌ | ✅ |
 | AI output encrypted before storage | — | ✅ |
 
 ---

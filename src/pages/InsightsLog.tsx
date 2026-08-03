@@ -8,7 +8,7 @@ import { useTaskOperations } from '../hooks/useTaskOperations';
 import { groupItemsByYearAndMonth } from '../lib/grouping';
 import { addDays, format } from 'date-fns';
 import { Disclosure, Transition } from '@headlessui/react';
-import ROSCHistoryPanel from '../components/insights/ROSCHistoryPanel';
+import ROSCSummaryCard from '../components/insights/ROSCSummaryCard';
 import { LightBulbIcon, SparklesIcon, CheckCircleIcon, PlusCircleIcon, ShieldExclamationIcon, TrophyIcon, CalendarDaysIcon, BookOpenIcon, AcademicCapIcon, LinkIcon, HashtagIcon, BoltIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface InsightWithActions {
@@ -178,7 +178,7 @@ export default function InsightsLog() {
             />
 
             <div className="max-w-4xl mx-auto px-4 mt-6 mb-6">
-                <ROSCHistoryPanel />
+                <ROSCSummaryCard />
             </div>
 
             <div className="px-4 relative z-30">

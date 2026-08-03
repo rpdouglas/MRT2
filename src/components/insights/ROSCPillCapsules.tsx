@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ROSCAssessment } from '../../lib/types/rosc';
+import { cadenceCurrentLabel, cadencePreviousLabel, type ROSCCadence } from '../../lib/roscCadence';
 
 interface Props {
     current: ROSCAssessment;
     previous?: ROSCAssessment;
+    cadence?: ROSCCadence;
 }
 
-const PILLARS = [
+export const PILLARS = [
     { key: 'health',    label: 'Health',    icon: '🫀', gradA: '#F472B6', gradB: '#EC4899', glow: '#F472B6' },
     { key: 'home',      label: 'Home',      icon: '🏠', gradA: '#FB923C', gradB: '#F59E0B', glow: '#FB923C' },
     { key: 'purpose',   label: 'Purpose',   icon: '⭐', gradA: '#A78BFA', gradB: '#7C3AED', glow: '#A78BFA' },
@@ -42,7 +44,7 @@ function useSegReveal(run: boolean, scoresKey: string, delay = 60) {
     return revealed;
 }
 
-export default function ROSCPillCapsules({ current, previous }: Props) {
+export default function ROSCPillCapsules({ current, previous, cadence = 'monthly' }: Props) {
     const SEG = 10;
     const counts = [
         current.scores.health.score,
@@ -112,8 +114,8 @@ export default function ROSCPillCapsules({ current, previous }: Props) {
             {previous && (
                 <div className="mt-5 pt-3.5 border-t border-white/5 flex gap-4">
                     {[
-                        { bg: "rgba(255,255,255,0.13)", label: "Last month" },
-                        { bg: "linear-gradient(90deg,#C026D3,#EC4899)", label: "This month" }
+                        { bg: "rgba(255,255,255,0.13)", label: cadencePreviousLabel(cadence) },
+                        { bg: "linear-gradient(90deg,#C026D3,#EC4899)", label: cadenceCurrentLabel(cadence) }
                     ].map(({ bg, label }) => (
                         <div key={label} className="flex items-center gap-2">
                             <div className="w-[22px] h-[3px] rounded-sm" style={{ background: bg }} />

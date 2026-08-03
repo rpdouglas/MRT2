@@ -37,7 +37,7 @@ graph TD
 ### `users/{uid}`
 * **Purpose:** Profile, Auth, & Settings.
 * **Fields:** `hasDeferredVault` (Boolean), `encryptionSalt`, `pinVerifier`, `sobrietyDate`, `role`, `fcmTokens` (Array), `fcmSwVersion` (Number — SW version stamp for one-time token migration on login), `timezone`, `anchorSettings` (Object), `heroColor` (String, optional — one of `amber`/`sky`/`emerald`/`violet`/`rose`; PROJ-56, **UNENCRYPTED** cosmetic preference, defaults to `amber` when absent), `installedWorkbookIds` (Array\<String\>, optional; PROJ-75, **UNENCRYPTED** — which official workbook ids appear in the user's "My Workbooks" library; `undefined` means legacy/new user, treated as all official workbooks installed), etc.
-* **`usage_limits` (Map, optional):** Rate-limit timestamps for AI features. Fields: `lastWeeklyInsight`, `lastMonthlyInsight`, `lastDeepDive`, `lastROSCAssessment` (all Timestamps, all optional). Premium users bypass all limits.
+* **`usage_limits` (Map, optional):** Rate-limit timestamps for AI features. Fields: `lastWeeklyInsight`, `lastMonthlyInsight`, `lastDeepDive`, `lastROSCAssessment` (all Timestamps, all optional). Premium users bypass all limits **except** `lastROSCAssessment`, which carries a 24-hour all-tier floor (PROJ-49 §10 addendum) as a defense-in-depth cap independent of the free tier's stricter 30-day check — stamped server-side for both tiers specifically for `rosc_assessment` (every other analysis type stamps free-tier only).
 * **`pendingRotation` (Map, optional):** `{ salt, verifier }` — marks an in-flight PIN rotation (`src/lib/rotation.ts`) so an interrupted rotation can resume instead of orphaning already-migrated documents. Present only between the start and successful completion of `executePinRotation`.
 * **`pinAttempts` (Map, optional; PROJ-65, server-write-only):** `{ count, lockedUntil?, lastAttemptAt? }` (Timestamps). Rate-limit state for the `verifyVaultPin` Cloud Function — `firestore.rules` denies any client write to this field so the vault-PIN lockout can't be reset or forged client-side.
 * **`usesPepperV2` (Boolean, optional; PROJ-65):** True once this account's vault key derivation has moved from direct PBKDF2 to the peppered scheme (PBKDF2 output combined via HMAC with a rate-limited server-held pepper). Set on new vault creation and on every `executePinRotation` completion — see `docs/projects/65_VAULT_KEY_HARDENING.md`.
@@ -75,10 +75,10 @@ graph TD
     * `missedCountHistory` (Array\<Int\>, optional): **PROJ-47.** Appended (via `arrayUnion`) during the lazy evaluation pass in `getUserTasks()` each time a recurring task is found overdue. Each element is the number of days missed in that fetch cycle. Never overwritten — append-only. Used for long-term compliance pattern analysis.
 
 ### `users/{uid}/rosc_assessments/{assessmentId}`
-* **Purpose:** Monthly Recovery Capital snapshot across SAMHSA's four domains. Scores are plaintext metadata readable without vault unlock; AI reasoning is encrypted.
+* **Purpose:** Recovery Capital snapshot across SAMHSA's four domains — monthly cadence for free tier, weekly for premium (PROJ-49 §10 addendum). Scores are plaintext metadata readable without vault unlock; AI reasoning is encrypted.
 * **Fields:**
     * `uid` (String): Owner ID.
-    * `createdAt`, `periodStart`, `periodEnd` (Timestamp): Assessment creation time and the 30-day window analysed.
+    * `createdAt`, `periodStart`, `periodEnd` (Timestamp): Assessment creation time and the journal window actually analysed — 7 days for premium (30-day fallback if that window yields fewer than 3 journal entries) or 30 days for free tier. `periodStart`/`periodEnd` always reflect the real window used, not the nominal cadence.
     * `scores` (Map): Four domain objects — `health`, `home`, `purpose`, `community`. Each contains:
         * `score` (Int 1–10): **UNENCRYPTED** — blended AI + self-report score.
         * `selfReportedScore` (Int 1–5): **UNENCRYPTED** — user's own check-in answer.

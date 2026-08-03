@@ -452,11 +452,11 @@ expect(data?.encryptedAIContext).not.toContain('evidence');
 - [ ] `generateROSCAnalysis()` in `gemini.ts` — proxies to `generateAIInsights`, server-side model `gemini-2.5-flash`, AI usage logged, sanitisation constraints enforced
 - [ ] ZK boundary confirmed: `scores.*score` readable in raw Firestore doc; `encryptedAIContext` is ciphertext
 - [ ] `ROSCCheckIn.tsx` — 5 questions, strength-based language, no shame framing, 60-90 second flow
-- [ ] `ROSCRadarChart.tsx` — Recharts radar, animated on mount, dual-overlay for longitudinal comparison
+- [ ] ~~`ROSCRadarChart.tsx` — Recharts radar, animated on mount, dual-overlay for longitudinal comparison~~ — superseded by `ROSCPillCapsules.tsx` (§Addendum 53) and `ROSCTrendChart.tsx` (§10)
 - [ ] Past assessments panel with expandable cards and on-tap decryption of `encryptedAIContext`
 - [ ] Vault-locked state: scores visible, AI narrative blurred, check-in CTA hidden
 - [ ] Offline state: cached assessments render, check-in CTA disabled with message
-- [ ] Rate limit: one assessment per calendar month, CTA hidden after completion
+- [ ] Rate limit: one assessment per calendar month for free tier; premium moves to a 7-day cadence (§10), CTA hidden between eligible windows
 - [ ] 0 journal entries handled gracefully: chart renders from self-report, notice displayed
 - [ ] 25 XP awarded on check-in completion
 - [ ] Walt longitudinal overlay renders when ≥2 assessments exist
@@ -484,5 +484,54 @@ expect(data?.encryptedAIContext).not.toContain('evidence');
 
 ---
 
+## 10. Addendum (2026-08-03): Full-Screen Matrix, Trend Charts & Premium Weekly Cadence
+
+**Status:** Shipped.
+
+### 10.1 Full-screen route
+
+The check-in previously ran as a small hand-rolled overlay (`ROSCCheckIn.tsx`'s own `fixed inset-0`, `max-w-sm` card) triggered from a panel embedded in `/insights`. It now lives at its own route, `/insights/rosc` (`src/pages/RecoveryCapital.tsx`), wrapped the same as `/insights` (`PrivateRoute` + `VaultGate`, lazy-loaded). A route was chosen over a bigger overlay because the check-in, a trend view, and full history are three genuinely distinct reading modes that don't fit in one modal-sized surface, and a route is deep-linkable and back-button-correct. `ROSCCheckIn.tsx` itself dropped its overlay wrapper for an in-flow full-height container (the page's `VibrantHeader` supplies the chrome) and gained a Back button it previously lacked. The old `ROSCHistoryPanel.tsx` is now a lightweight teaser, `ROSCSummaryCard.tsx`, mounted on `/insights` — it shows only the latest snapshot (via the shared `ROSCLatestCard.tsx`) plus links into the full page.
+
+### 10.2 Trend charts
+
+Supersedes the never-actually-built `ROSCRadarChart.tsx` (§Phase 3, superseded once already by the shipped `ROSCPillCapsules.tsx` per the PROJ-53 addendum) with a genuinely longitudinal view: `ROSCTrendChart.tsx` plots every past assessment, not just a single-assessment shape or an adjacent-pair comparison. Two stacked charts, not one — `totalScore` (0-40) and the four domain scores (0-10) are different scales, and a dual-Y-axis single chart would misrepresent them. An `AreaChart` for the total, a `LineChart` with one line per domain (colors read from `ROSCPillCapsules.tsx`'s `PILLARS` const so the chart and the pill capsules always agree), a 6/12/All range toggle, and explicit empty/single-point states (a lone check-in renders a dot and a caption, never a crash or a blank box). All charted fields (`totalScore`, `scores.*.score`, `createdAt`) are plaintext per §2/§3's ZK boundary, so the chart works even with the vault locked — no new decrypt, no new Firestore read (it reuses the same `assessments` list `useROSCAssessments()` already fetches).
+
+### 10.3 Weekly cadence for premium — a documented reversal
+
+This section reverses a decision this spec made on purpose. For the record, what's being reversed:
+- §Phase 1: *"'Start this month's check-in' CTA is shown once per calendar month — not on demand"*
+- §Phase 2 (Rate Limiting): *"Enforce: one assessment per calendar month maximum"*
+- §6 (Open Questions): the chosen cadence option, citing that it *"aligns with ROSC research methodology and prevents compulsive reassessment"*
+
+**The revised position: free tier's calendar-month rule is unchanged. Only premium moves to a rolling 7-day cadence.** The original rationale isn't wrong — it's tier-scoped. It was written to guard against compulsive *self-report* reassessment, where re-answering five sliders costs nothing and reassessing more often can't reveal anything new. Premium's assessment isn't that instrument: it's anchored to journal entries the user actually wrote, so re-running it against an unchanged journal corpus produces an unchanged score — it's self-limiting in a way the free self-report-only path isn't. The free tier keeps the exact rule this spec originally chose, for the exact reason it chose it.
+
+**Cascading technical changes this forced:**
+- `useROSCAssessments.ts`: `canCreateThisMonth` → `canCreateAssessment`, now tier-aware (`src/lib/roscCadence.ts`'s `canCreateForCadence` — premium: ≥7 days since the last assessment; free: `!isSameMonth`, unchanged).
+- The journal query gained a `where('createdAt', '>=', ...)` range filter (7-day window for premium, 30-day for free) — previously it fetched "the last 30 entries by count," so a premium user reassessing weekly would have re-analyzed a near-identical journal corpus every time, defeating the point of a tighter cadence. Confirmed no new Firestore composite index is needed: `firestore.indexes.json` already has `journals: uid ASC + createdAt DESC`, which covers a range filter on the same field the results are already ordered by.
+- **Sparse-window guard:** a quiet week can legitimately return fewer than 3 journal entries. Rather than send Gemini a near-empty corpus every week, the hook re-queries with a 30-day fallback window when that happens, and records the *actual* window analyzed in `periodStart`/`periodEnd` and the AI prompt's period label — the stored metadata always reflects reality, never the nominal cadence.
+- Check-in draft keys (`sessionStorage`/`localStorage`, previously `roscCheckIn_{yyyy-MM}`) became cadence-scoped via `roscPeriodKey()` (ISO week-year/week for the weekly case, `format(now, "RRRR-'W'II")` — deliberately not `yyyy-ww`, which would collide two different years' same-numbered week). Under the old month-scoped keys, two check-ins in the same calendar month would have collided on the same draft slot.
+- Cadence-neutral copy sweep: the two check-in questions worded "this month" became "recently"/"when things got hard recently" (they now serve both cadences); "Last month"/"This month" labels across `ROSCPillCapsules.tsx`, `ROSCAssessmentCard.tsx`, `ROSCLatestCard.tsx`, and the server prompt became cadence-aware via shared helpers in `roscCadence.ts`, so a premium user on a weekly cadence never sees stale monthly language and vice versa.
+- Premium's weekly eligibility follows **tier**, not the vault's lock state that particular week — a locked vault's self-report-only fallback still counts toward the 7-day cadence rather than reverting to the monthly rule. Simpler, and a locked vault is expected to be a rare/brief state.
+- **Server-side floor:** premium's 7-day cadence is otherwise enforced client-side only, matching how every other AI analysis type already trusts premium (`useRateLimits.ts`'s unconditional premium bypass). `rosc_assessment` gets one exception: a 24-hour, all-tier floor in `functions/src/index.ts`, independent of the free tier's stricter 30-day check — generous enough that no legitimate weekly user gets within 6 days of it, but it caps a scripted/devtools bypass. This required also stamping `usage_limits.lastROSCAssessment` server-side for premium (previously stamped for free tier only) so the floor has something to check against. The client's own unconditional stamp (`useROSCAssessments.ts`, both tiers, every successful assessment) is unchanged and still fires — the two stamps are redundant by design, not a bug to "clean up."
+
+### 10.4 Additional metrics — proposal only, not implemented this pass
+
+A survey of what other in-app signals could plausibly feed the ROSC AI prompt, prioritized. Nothing below is wired into `generateROSCAnalysis()` yet — this is a roadmap.
+
+| # | Signal | Source | Maps to | ZK cost | Verdict |
+|---|---|---|---|---|---|
+| 1 | **Vitality `bioBalance`** | `calculateBioBalance()` — `src/lib/vitalityScoring.ts` | **Health** | None (plaintext journal tags) | **Do first.** Already computed, zero new cost, highest signal-to-effort ratio here. |
+| 2 | **Task completion rate / streak health** | `calculateTaskStats()` → `{completionRate, habitFire}` — `src/lib/gamification.ts` | **Home**, secondary Purpose | None (fully plaintext) | **Do second.** Directly answers this spec's own documented Home data gap with real behavioral evidence instead of self-report alone. |
+| 3 | **SMART-tool-type frequency** | `parseSmartToolPayload()` — `src/lib/smartToolPayload.ts` | Purpose (deliberate practice), Health (urge tools) | None new — already decrypted inside the approved ROSC flow, just currently flattened into prose instead of labeled | **Pure structuring win.** Extract tool type + count and label them explicitly rather than letting the model infer structure from text. |
+| 4 | **Workbook completion %** | `calculateWorkbookStats().masterCompletion` — `src/lib/gamification.ts` | Purpose (engagement) | None (count only) | Real but slow-moving — fits the free tier's monthly cadence better than premium's weekly one. |
+| 5 | **Gamification XP buckets** | `xpBreakdown` (wisdom/action/vitality/reflection) | Derivative of #1/#2/#4 | None | Ship only after the above, as a summary — feeding it alongside its own inputs double-counts the same behavior. No bucket maps to Community. Walt's persona wants zero gamification language in his flows even if XP quietly informs scoring. |
+| 6 | **`game_progress` thematic mapping** | plaintext `gameId`/`score`/count | The only signal here touching **Community** (e.g. `recovery-jeopardy`) | None for count/score; per-game `encryptedStats` excluded | Weak/inferential — a trivia game about fellowship isn't fellowship. Corroborating evidence at most, never primary. |
+| — | **`service/{id}` (sponsor/sponsee)** | — | Community | — | **Out of scope.** Firestore rules exist; zero application code. This is the signal that would actually fix the Community gap — blocked on the Service module shipping. |
+
+Honest state after all six: Health and Purpose are well-covered, Home is meaningfully improvable (#2), and **Community stays self-report-dominant until the Service module ships** — this spec should stop implying otherwise.
+
+---
+
 *MRT · PROJ-49 Recovery Capital (ROSC) Matrix · v1.0 · May 2026 · Status: ✅ Shipped*
 *Addendum §9 added 2026-08-03 — Monthly Action Items*
+*Addendum §10 added 2026-08-03 — Full-Screen Matrix, Trend Charts & Premium Weekly Cadence*

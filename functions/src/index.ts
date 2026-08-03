@@ -1247,18 +1247,18 @@ Return a JSON object with this EXACT structure:
         case "rosc_assessment": {
             const payload = dataPayload as ROSCPayload;
             return {
-                prompt: `Perform a Recovery Capital (ROSC) Assessment based on this month's check-in:
+                prompt: `Perform a Recovery Capital (ROSC) Assessment based on this recovery check-in:
 ${delimitUserContent(payload.answers)}`,
                 systemPrompt: `Analyze the user's answers across the 4 SAMHSA domains (Health, Home, Purpose, Community) and rate them.
 ${PROMPT_INJECTION_GUARD}
-Each domain's "action" must be a single, concrete, achievable step the user could complete this month in that domain.
+Each domain's "action" must be a single, concrete, achievable step the user could complete before their next check-in in that domain.
 Return a JSON object with this EXACT structure:
 {
   "scores": {
-    "health": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Health this month." },
-    "home": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Home this month." },
-    "purpose": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Purpose this month." },
-    "community": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Community this month." }
+    "health": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Health before the next check-in." },
+    "home": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Home before the next check-in." },
+    "purpose": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Purpose before the next check-in." },
+    "community": { "score": number, "evidence": ["evidence"], "action": "One concrete, achievable step for Community before the next check-in." }
   },
   "trajectory": "Improving" | "Stable" | "Declining" | "Insufficient Data",
   "narrative": "Compassionate overview...",
@@ -1402,6 +1402,21 @@ export const generateAIInsights = onCall({
         }
     }
 
+    // Defense-in-depth: rosc_assessment gets an all-tier 24h floor, independent
+    // of the free-tier's stricter 30-day check above. Premium's 7-day cadence
+    // is otherwise enforced client-side only (PROJ-49 addendum); this just
+    // caps a scripted/devtools bypass — no legitimate weekly user gets close.
+    if (analysisType === "rosc_assessment") {
+        const allTierLimits = userData.usage_limits || {};
+        const lastROSCAssessment = allTierLimits.lastROSCAssessment ? (allTierLimits.lastROSCAssessment as Timestamp).toDate() : null;
+        if (lastROSCAssessment) {
+            const hoursSince = (Date.now() - lastROSCAssessment.getTime()) / (1000 * 60 * 60);
+            if (hoursSince < 24) {
+                throw new HttpsError("resource-exhausted", `Available in ${Math.ceil(24 - hoursSince)} hours.`);
+            }
+        }
+    }
+
     // 3. Prepare AI Prompts and Model Selection
     const { prompt, systemPrompt } = getPromptForType(analysisType, dataPayload);
     const modelName = getModelForType(analysisType);
@@ -1443,7 +1458,13 @@ export const generateAIInsights = onCall({
         }
 
         // 4. Update Server-Side Usage Timestamp
-        if (userTier === "free") {
+        if (analysisType === "rosc_assessment") {
+            // Stamped for every tier — both the free-tier 30-day check and the
+            // all-tier 24h floor above read this field.
+            await db.collection("users").doc(uid).update({
+                "usage_limits.lastROSCAssessment": FieldValue.serverTimestamp(),
+            });
+        } else if (userTier === "free") {
             const stampField =
                 analysisType === "deep_pattern_analysis" || (analysisType === "comparative_analysis" && (dataPayload as ComparativePayload).scope === "all-time")
                     ? "lastDeepDive"
@@ -1451,8 +1472,6 @@ export const generateAIInsights = onCall({
                     ? "lastMonthlyInsight"
                     : (analysisType === "comparative_analysis" && (dataPayload as ComparativePayload).scope === "weekly")
                     ? "lastWeeklyInsight"
-                    : analysisType === "rosc_assessment"
-                    ? "lastROSCAssessment"
                     : null;
 
             if (stampField) {
