@@ -1,7 +1,11 @@
 /**
  * src/hooks/__tests__/useTaskOperations.test.ts
- * PURPOSE: Validates optimistic UI updates and error rollbacks for Tasks.
+ * PURPOSE: Validates Task CRUD mutations and cache invalidation.
  * STACK: Vitest + React Testing Library + React Query
+ * PROJ-101 Phase 3: the optimistic-update/rollback tests this file used to
+ * have were deleted along with the optimistic-update machinery itself — see
+ * useTaskOperations.ts's header comment for why (it targeted a cache key
+ * the real Tasks page never read).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -53,37 +57,35 @@ describe('📋 useTaskOperations (Optimistic UI)', () => {
         queryClient.setQueryData(['tasks', mockUser.uid], [mockTask]);
     });
 
-    it('1. should perform optimistic update when toggling task', async () => {
+    it('1. should call TaskLib.toggleTask and invalidate the tasks cache key', async () => {
         const { result } = renderHook(() => useTaskOperations(), { wrapper });
 
-        // Trigger Mutation with new signature
         result.current.toggleTask({ task: mockTask, isCompleting: true });
 
-        // IMMEDIATE: Cache should be updated before API returns
         await waitFor(() => {
-            const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]);
-            expect(cached?.[0].status).toBe('completed');
+            expect(TaskLib.toggleTask).toHaveBeenCalledWith(mockTask, true);
         });
-        
-        // EVENTUAL: API called
+
         await waitFor(() => {
-            expect(TaskLib.toggleTask).toHaveBeenCalled();
+            const state = queryClient.getQueryState(['tasks', mockUser.uid]);
+            expect(state?.isInvalidated).toBe(true);
         });
     });
 
-    it('2. should rollback optimistic update if API fails', async () => {
-        // Mock API failure
+    it('2. should not throw synchronously when the API rejects (error surfaces via mutation state, not a thrown exception on the UI thread)', async () => {
         vi.mocked(TaskLib.toggleTask).mockRejectedValue(new Error("Network Error"));
 
         const { result } = renderHook(() => useTaskOperations(), { wrapper });
 
-        try {
-            await result.current.toggleTask({ task: mockTask, isCompleting: true });
-        } catch {
-            // Expected error
-        }
+        expect(() => result.current.toggleTask({ task: mockTask, isCompleting: true })).not.toThrow();
 
-        // ROLLBACK: Status should be 'pending' again
-        await waitFor(() => { const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]); expect(cached?.[0].status).toBe('pending'); });
+        await waitFor(() => {
+            expect(TaskLib.toggleTask).toHaveBeenCalled();
+        });
+
+        // No optimistic cache patch exists to roll back — the cache should
+        // simply remain whatever it was before the mutation (untouched).
+        const cached = queryClient.getQueryData<TaskLib.Task[]>(['tasks', mockUser.uid]);
+        expect(cached?.[0].status).toBe('pending');
     });
 });

@@ -30,6 +30,13 @@ interface MutationSpec<TArgs, TData> {
   mutationFn: (uid: string, args: TArgs) => Promise<TData>;
   /** Return the next cache value given the previous value and mutation args. Omit for non-optimistic mutations. */
   optimisticUpdate?: (previous: unknown, args: TArgs) => unknown;
+  /**
+   * PROJ-101: added for useTaskOperations' 'task_created'/'task_completed'
+   * PostHog telemetry, which fired from onSuccess before that hook's
+   * migration onto this primitive. Runs after the mutation resolves, before
+   * onSettled's invalidation.
+   */
+  onSuccess?: (data: TData, args: TArgs) => void;
 }
 
 /**
@@ -84,6 +91,7 @@ export function useFirestoreMutation<TArgs, TData = void>(
       }
       trackMutationFailed(String(queryKey[0]), err.name || 'Error');
     },
+    onSuccess: spec.onSuccess,
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
