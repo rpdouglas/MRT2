@@ -1,15 +1,29 @@
 import { useState, useCallback } from 'react';
-import { format } from 'date-fns';
-import { LockClosedIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { format, addDays } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { LockClosedIcon, ChevronDownIcon, ChevronUpIcon, SparklesIcon, PlusCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
+import { useTaskOperations } from '../../hooks/useTaskOperations';
 import ROSCPillCapsules from './ROSCPillCapsules';
 import type { ROSCAssessment } from '../../lib/types/rosc';
+
+type ROSCDomain = 'health' | 'home' | 'purpose' | 'community';
+
+const DOMAIN_LABELS: Record<ROSCDomain, string> = {
+    health: 'Health',
+    home: 'Home',
+    purpose: 'Purpose',
+    community: 'Community',
+};
 
 interface DecryptedContext {
     narrative: string;
     strengths: string[];
     growth_areas: string[];
     evidence: Record<string, string[]>;
+    actions?: Record<ROSCDomain, string>;
 }
 
 interface Props {
@@ -29,14 +43,36 @@ function trajectoryPill(t: ROSCAssessment['trajectory']) {
 }
 
 export default function ROSCAssessmentCard({ assessment, previous, compact = false }: Props) {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { addTask } = useTaskOperations();
     const [expanded, setExpanded] = useState(false);
     const [context, setContext] = useState<DecryptedContext | null>(null);
     const [decrypting, setDecrypting] = useState(false);
+    const [addedActions, setAddedActions] = useState<Set<ROSCDomain>>(new Set());
     const { decrypt, isVaultUnlocked } = useEncryption();
 
     const createdDate = assessment.createdAt?.toDate
         ? assessment.createdAt.toDate()
         : new Date(assessment.createdAt as unknown as string);
+
+    const handleAddToTasks = async (domain: ROSCDomain, actionText: string) => {
+        if (!user) return;
+        try {
+            await addTask({
+                title: actionText,
+                recurrence: { type: 'once' },
+                priority: 'Medium',
+                dueDate: addDays(new Date(), 7),
+                source: 'ai',
+                aiMeta: { sourceContext: `${DOMAIN_LABELS[domain]} · ${format(createdDate, 'MMMM yyyy')} Recovery Capital check-in` },
+            });
+            setAddedActions(prev => new Set(prev).add(domain));
+            toast.success('Task added to your ledger.', { action: { label: 'View Tasks', onClick: () => navigate('/tasks') } });
+        } catch (e) {
+            console.error('Failed to add task', e);
+        }
+    };
 
     const handleExpand = useCallback(async () => {
         const next = !expanded;
@@ -129,6 +165,34 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                                                             <li key={i} className="text-xs text-amber-100/80">· {g}</li>
                                                         ))}
                                                     </ul>
+                                                </div>
+                                            )}
+
+                                            {context.actions && (
+                                                <div className="bg-fuchsia-950/30 border border-fuchsia-500/20 rounded-xl p-3">
+                                                    <div className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-400 mb-1.5">Actions for This Month</div>
+                                                    <div className="space-y-1.5">
+                                                        {(Object.keys(DOMAIN_LABELS) as ROSCDomain[]).map((domain) => {
+                                                            const actionText = context.actions?.[domain];
+                                                            if (!actionText) return null;
+                                                            const added = addedActions.has(domain);
+                                                            return (
+                                                                <div key={domain} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg p-2">
+                                                                    <span className="text-xs text-fuchsia-100/80">
+                                                                        <span className="font-bold text-fuchsia-300">{DOMAIN_LABELS[domain]}:</span> {actionText}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => !added && handleAddToTasks(domain, actionText)}
+                                                                        disabled={added}
+                                                                        aria-label={added ? `${DOMAIN_LABELS[domain]} action added to tasks` : `Add ${DOMAIN_LABELS[domain]} action to tasks`}
+                                                                        className={`p-1 rounded-full transition-all flex-shrink-0 ${added ? 'text-emerald-400 bg-emerald-500/10' : 'text-fuchsia-300 hover:text-fuchsia-100 hover:bg-fuchsia-500/20'}`}
+                                                                    >
+                                                                        {added ? <CheckCircleIcon className="h-5 w-5" /> : <PlusCircleIcon className="h-5 w-5" />}
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
