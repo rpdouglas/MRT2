@@ -78,7 +78,7 @@ None of these can be completed by an agent in a sandboxed environment. Do them w
 | Real TWA referrer check | PROJ-68 | Confirm `document.referrer` actually resolves to `android-app://` inside a real built TWA shell — can't be tested in a normal browser tab |
 | 320px (iPhone SE) viewport passes | PROJ-90, 96, 98 | Visual check of the medical disclaimer, PWA precache size, and 15 new accessibility labels at a real narrow viewport |
 | First real CI run | PROJ-96 | Confirm the new `npm audit` gate steps actually behave as expected on a real GitHub Actions run, not just reproduced locally |
-| Prod Firestore index reconciliation | PROJ-99 | Diff the actually-deployed composite indexes on `mrt2-app-prod` against `firestore.indexes.json` — needs Firebase CLI auth against prod |
+| ~~Prod Firestore index reconciliation~~ **Done 2026-08-03** | PROJ-99 | A later sandbox had live Firebase CLI auth against prod. Found and fixed 2 real gaps (`tasks: uid+createdAt DESC`, `journals: uid+createdAt ASC` — both actively used, neither in the file) plus 1 orphaned index left alone. See `docs/projects/99_FIRESTORE_BACKEND_HARDENING.md` Phase 3. |
 | GCP budget alert | PROJ-99 | Set a monthly budget alert in the GCP console — console-only action |
 | Live Gemini safety-threshold check | PROJ-100 | Confirm `BLOCK_ONLY_HIGH` safety settings don't over-block a real, sensitive-but-legitimate recovery journal entry — needs a live Gemini API key and a real call |
 | Live Subway Test re-runs | PROJ-95, PROJ-101 | Re-run the offline-resilience "Subway Test" in a real browser session against live data, not just the automated/unit-level equivalent |
