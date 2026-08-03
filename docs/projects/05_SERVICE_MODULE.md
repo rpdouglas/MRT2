@@ -16,7 +16,7 @@
 * [ ] **Boundary Check:** Ensure deleting a sponsee deletes their encrypted notes (crypto-shredding).
 
 ## 🎨 Phase 3: UI Implementation
-* [ ] **Dashboard:** Create `ServiceWidget` for the main dashboard.
+* [ ] **Dashboard:** ~~Create `ServiceWidget` for the main dashboard.~~ **Prerequisite (2026-08-03):** the Dashboard's "Coming Soon" placeholder slot this item originally targeted was reassigned to `PROJ-72` Recovery Games (see the 2026-07-21 note above) and is no longer available. Before this phase can start, design a new entry point for `ServiceWidget` — a sidebar/nav item is the leading candidate — rather than assuming the old dashboard slot still exists.
 * [ ] **List View:** Create `pages/Service.tsx` with "Active" and "Alumni" tabs.
 * [ ] **Detail View:** A secure card showing encrypted notes + unencrypted Next Meeting time.
 
