@@ -42,6 +42,10 @@ graph TD
 * **`pinAttempts` (Map, optional; PROJ-65, server-write-only):** `{ count, lockedUntil?, lastAttemptAt? }` (Timestamps). Rate-limit state for the `verifyVaultPin` Cloud Function — `firestore.rules` denies any client write to this field so the vault-PIN lockout can't be reset or forged client-side.
 * **`usesPepperV2` (Boolean, optional; PROJ-65):** True once this account's vault key derivation has moved from direct PBKDF2 to the peppered scheme (PBKDF2 output combined via HMAC with a rate-limited server-held pepper). Set on new vault creation and on every `executePinRotation` completion — see `docs/projects/65_VAULT_KEY_HARDENING.md`.
 
+### `users/{uid}/checkout_sessions/{id}`, `users/{uid}/subscriptions/{id}`, `users/{uid}/payments/{id}`
+* **Purpose:** Stripe Firebase Extension subcollections (backend-managed, PROJ-68/premium billing). Users create the checkout-session request; the extension's backend fills in the Stripe-hosted URL and later writes subscription/payment status. **UNENCRYPTED** — Stripe metadata, not recovery content.
+* **Access:** `checkout_sessions` — user can `create`/`read`, never `update`/`delete`. `subscriptions` and `payments` — user can `read` only; all writes are `false` (extension-only, via Admin SDK) so a client can never fake a subscription or payment record. See `firestore.rules` lines 111-123.
+
 ### `journals/{entryId}`
 * **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.
 * **Fields:**
@@ -110,6 +114,9 @@ graph TD
     * `createdAt` (Timestamp).
     * Journal-type only (all optional): `key_themes`, `strengths`, `risks`, `trajectory`, `core_triggers`, `hidden_correlations`, `emotional_velocity`, `relapse_risk_level`.
 
+### `service/{serviceId}`
+* **Purpose:** PROJ-05 (The Service Network / Lisa Module) — sponsor/sponsee service notes. Placeholder collection with real `firestore.rules` coverage already in place (owner-scoped CRUD) ahead of the feature itself, which is `⏸️ Paused`. **ENCRYPTED** per the ZK boundary table in `CLAUDE.md` (sponsee notes).
+
 ### `game_progress/{id}`
 * **Purpose:** PROJ-72 (Recovery Games). Per-play completion records for mini-games (e.g. Craving Buster). Partial encryption — same precedent as `rosc_assessments`, so streak/XP math never needs a decrypt.
 * **Fields:**
@@ -164,7 +171,7 @@ graph TD
     * `readingHistory` (Array\<String\>): Doc IDs of previously-read entries.
 
 ### `buffer_status/{modality}`
-* **Purpose:** PROJ-42. Cloud-Function-internal tracker of how far ahead each modality's reading buffer is generated (`checkBufferHealth`/`generateReadingBatch`). No client-facing `firestore.rules` entry — default-deny is correct here, this collection is never read or written from the client, only from Admin-SDK Cloud Functions.
+* **Purpose:** PROJ-42. Cloud-Function-internal tracker of how far ahead each modality's reading buffer is generated (`checkBufferHealth`/`generateReadingBatch`). Has an explicit `firestore.rules` deny-all entry (added 2026-08-04 governance remediation) — this collection is never read or written from the client, only from Admin-SDK Cloud Functions, so the rule denies all client access rather than relying on default-deny alone.
 * **Fields:**
     * `lastGeneratedDate` (String): `"YYYY-MM-DD"` — last date this modality has a generated reading for.
     * `totalBuffered` (Number): Count of readings generated in the run that last updated this doc.

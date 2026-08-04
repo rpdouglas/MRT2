@@ -66,6 +66,8 @@ No Firestore schema changes. No new fields. No `src/lib/db.ts` interface changes
 ---
 
 ## 5. QA & Verification 🧪
+
+**2026-08-04 governance note:** this spec's Status above reflects code-level verification (routes/hooks/components/tests confirmed present, and passing where automated) performed during the 2026-08-04 governance audit. The unchecked items below are manual/device/browser/visual checks that have not been performed by a human — tracked here as a known gap, not a blocker to the Shipped status. Check them off once actually performed.
 * [x] **Unit Tests:** `useAnchorStatus.test.tsx` (8 tests, updated for the new `Timestamp.fromDate` mock and cache key) and `JournalHistory.test.tsx` (8 tests, updated to seed the new year-scoped cache key) — all passing.
 * [x] **Regression:** full `npm run check` clean (662/662 tests), plus the full golden-path e2e suite (11/11) against real Firebase emulators, including `vault.spec.ts` which exercises `JournalHistory.tsx` directly end-to-end (not just mocked).
 * [x] **Build:** `npm run build` clean.

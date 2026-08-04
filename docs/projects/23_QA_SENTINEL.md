@@ -94,5 +94,7 @@ Three resilient E2E tests, each running against a freshly-seeded Firebase Emulat
 ## 6. Out of Scope
 
 * Expanding beyond the three original golden paths (e.g. AI analysis flows, Service Module, export) — this project is scoped to exactly the three paths in the original spec. Additional E2E coverage is a future ticket.
+
+**2026-08-04 governance note:** the `e2e/golden-paths/` and `e2e/security/` suites have since grown beyond these three specs via later, separately-spec'd tickets (`a11y.spec.ts`, `subway.spec.ts`, `viewport-320.spec.ts`, `security/mockuser-prod.spec.ts`) — the Out of Scope statement above describes PROJ-23's own original contribution only, not the suite's current full contents.
 * Cross-browser testing (Firefox/Safari via Playwright) — Chromium-only for this pass, matching PROJ-63's existing screenshot-generator convention.
 * Visual regression testing — this is behavioral E2E only, not pixel-diffing.

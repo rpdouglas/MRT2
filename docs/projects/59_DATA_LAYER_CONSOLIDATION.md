@@ -4,7 +4,7 @@
 **Primary Persona:** All (internal/architecture) — cross-cutting, no direct end-user-facing behavior change
 **Objective:** Eliminate every remaining raw Firestore call in user-facing code by routing it through TanStack Query, and extract a shared CRUD-hook factory so the correct pattern is easier to write than a bypass.
 
-**Source:** `docs/reports/2026-07_codebase_deep_review.md` §1 (single highest-value finding in that review — the exact smell PROJ-58 fixed in `Profile.tsx` recurs in ~10 other files).
+**Source:** `docs/reports/archive/2026-07_codebase_deep_review.md` §1 (single highest-value finding in that review — the exact smell PROJ-58 fixed in `Profile.tsx` recurs in ~10 other files).
 
 ---
 

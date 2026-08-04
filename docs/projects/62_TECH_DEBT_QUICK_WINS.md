@@ -4,7 +4,7 @@
 **Primary Persona:** All (internal/architecture — no primary end-user persona)
 **Objective:** Clear the five small, already-scoped chores sitting in `ACTIVE_CYCLE.md`'s Chores & Tech Debt list — no new user-facing behavior, no schema changes.
 
-**Source:** `docs/reports/2026-07_codebase_deep_review.md` "Quick wins" table (§1, §3, §4). Precedent: `PROJ-61` (Test Coverage Backfill) — same template, same "no new user-facing behavior" scope.
+**Source:** `docs/reports/archive/2026-07_codebase_deep_review.md` "Quick wins" table (§1, §3, §4). Precedent: `PROJ-61` (Test Coverage Backfill) — same template, same "no new user-facing behavior" scope.
 
 ---
 

@@ -50,6 +50,8 @@ N/A — no state or query changes.
 ---
 
 ## 5. QA & Verification 🧪
+
+**2026-08-04 governance note:** this spec's Status above reflects code-level verification (routes/hooks/components/tests confirmed present, and passing where automated) performed during the 2026-08-04 governance audit. The unchecked items below are manual/device/browser/visual checks that have not been performed by a human — tracked here as a known gap, not a blocker to the Shipped status. Check them off once actually performed.
 * [ ] **Visual/manual check:** Dashboard hero at mobile (375px) and desktop widths, both milestone and non-milestone states.
 * [ ] **The Subway Test:** N/A (no network/data dependency).
 * [ ] **The "Lost PIN" Test:** N/A (no encrypted data involved).

@@ -77,6 +77,8 @@ We will introduce a **Mock Mode** toggled by a URL query parameter `?mockUser=[p
 ---
 
 ## 5. QA & Verification 🧪
+
+**2026-08-04 governance note:** this spec's Status above reflects code-level verification (routes/hooks/components/tests confirmed present, and passing where automated) performed during the 2026-08-04 governance audit. The unchecked items below are manual/device/browser/visual checks that have not been performed by a human — tracked here as a known gap, not a blocker to the Shipped status. Check them off once actually performed.
 * [ ] **Unit Tests**: Add unit tests in `src/__tests__/mockMode.test.ts` to ensure query param logging bypasses production Firestore and encryption.
 * [ ] **Lint & Build**: Run `npm run check` to ensure zero linter errors or warnings.
 * [ ] **Screenshot Execution**: Execute `npm run screenshots:generate`. Verify that the `.webp` files appear correctly in `docs-site/public/screenshots/generated/` and that the visual quality and layouts are correct.

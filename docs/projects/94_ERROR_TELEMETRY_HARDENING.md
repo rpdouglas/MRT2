@@ -71,6 +71,8 @@ No Firestore schema changes. No `src/lib/db.ts` changes.
 ---
 
 ## 5. QA & Verification 🧪
+
+**2026-08-04 governance note:** this spec's Status above reflects code-level verification (routes/hooks/components/tests confirmed present, and passing where automated) performed during the 2026-08-04 governance audit. The unchecked items below are manual/device/browser/visual checks that have not been performed by a human — tracked here as a known gap, not a blocker to the Shipped status. Check them off once actually performed.
 * [x] **Unit Tests:** `npm run test:once` — 662/662 passing, confirming the additive `onError` callbacks don't change any mutation's success-path behavior.
 * [x] **Security:** grepped all 16 new call sites — confirmed each passes only `domain` + `error.name`, never `.message` or mutation input data.
 * [x] **Build:** `npm run build` clean; `vendor` chunk grew 867KB → 876KB (+8.4KB raw for `web-vitals`, in line with the ~1-2KB gzipped estimate).
