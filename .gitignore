@@ -57,6 +57,7 @@ llm-export/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/e2e/_screens/
 
 # rollup-plugin-visualizer output (PROJ-98) — regenerate locally via
 # `npm run build`, never a tracked artifact.
