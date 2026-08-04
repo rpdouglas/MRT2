@@ -74,6 +74,8 @@ Highest-ROI phase. Verified result: PWA precache dropped from **19.17MB/99 entri
 ---
 
 ## 5. QA & Verification 🧪
+
+**2026-08-04 governance note:** this spec's Status above reflects code-level verification (routes/hooks/components/tests confirmed present, and passing where automated) performed during the 2026-08-04 governance audit. The unchecked items below are manual/device/browser/visual checks that have not been performed by a human — tracked here as a known gap, not a blocker to the Shipped status. Check them off once actually performed.
 * [ ] **Build check:** `npm run check` clean (lint + spec-quality + tests + build) after every phase — these five phases are independent enough to land as separate commits or PRs if preferred, rather than one large one.
 * [ ] **Precache verification:** `npm run build` and inspect the generated precache manifest (the build's own "precache N entries (X KiB)" log line, or `dist/sw.js`) — confirm total precache size drops from ~19.17MB to roughly 3-4MB after Phase 1.
 * [ ] **Visual/manual:** confirm milestone medallions still render correctly everywhere `MILESTONE_CHIPS`/`ASSETS.Chips` are consumed, after the `.webp` swap; confirm PDF export (the Data Export panel, `exporter.ts`'s consumer flow) still produces a valid, correctly-tabled PDF after any `html2canvas` aliasing.

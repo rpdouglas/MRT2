@@ -192,13 +192,13 @@ src/components/tools/
     CognitiveDistortionPicker.tsx ← Multi-select chip grid, 12 distortion types (new)
 
     // Existing tools — replace current open-form with guided flow:
-    tools/ABCTool.tsx             ← Guided ABCDE 5-step flow (replace)
-    tools/CBATool.tsx             ← Guided CBA with quadrant-by-quadrant reveal (replace)
-    tools/DENTSTool.tsx           ← Guided DENTS with scenario pre-planning mode (replace)
-    tools/FiveQuestionsTool.tsx   ← Guided self-enquiry flow (replace)
+    smart_tools/ABCTool.tsx             ← Guided ABCDE 5-step flow (replace)
+    smart_tools/CBATool.tsx             ← Guided CBA with quadrant-by-quadrant reveal (replace)
+    smart_tools/DentsTool.tsx           ← Guided DENTS with scenario pre-planning mode (replace)
+    smart_tools/FiveQuestionsTool.tsx   ← Guided self-enquiry flow (replace)
 
     // New tools:
-    tools/ThoughtRecordTool.tsx   ← New 7-column guided thought record (new)
+    smart_tools/ThoughtRecordTool.tsx   ← New 7-column guided thought record (new)
 ```
 
 ### 3.5 Gemini Integration — AI Coaching Prompts
@@ -270,7 +270,7 @@ The step-by-step structure gives Ned and Maya the clear progression they both ne
 
 ### Phase 2: Guided ABCDE Flow — The Priority Tool
 
-**Files:** `src/components/tools/tools/ABCTool.tsx`
+**Files:** `src/components/smart_tools/ABCTool.tsx`
 
 The ABCDE tool is the highest clinical priority. It is the tool users most need to complete correctly and most likely to abandon at Step D (Disputation).
 
@@ -314,7 +314,7 @@ Each step has a one-paragraph psychoeducation explanation written in recovery-ap
 
 ### Phase 3: Guided CBA Flow
 
-**Files:** `src/components/tools/tools/CBATool.tsx`
+**Files:** `src/components/smart_tools/CBATool.tsx`
 
 **The Clinical Innovation — Quadrant Reveal:**
 
@@ -339,7 +339,7 @@ Each quadrant uses a dynamic list input (tap "+" to add an item, swipe to delete
 
 ### Phase 4: Thought Record — New Tool
 
-**Files:** `src/components/tools/tools/ThoughtRecordTool.tsx`, `src/components/tools/EmotionIntensitySelector.tsx`
+**Files:** `src/components/smart_tools/ThoughtRecordTool.tsx`, `src/components/tools/EmotionIntensitySelector.tsx`
 
 **The Thought Record is MRT's most significant CBT gap.** It is the most commonly used CBT self-monitoring tool in clinical practice and is absent from the current PROJ-27 suite.
 
@@ -380,7 +380,7 @@ Each chip expands on tap to show a one-sentence recovery-relevant definition.
 
 ### Phase 5: DENTS Pre-Planning Mode & Five Questions Guided Flow
 
-**Files:** `src/components/tools/tools/DENTSTool.tsx`, `src/components/tools/tools/FiveQuestionsTool.tsx`
+**Files:** `src/components/smart_tools/DentsTool.tsx`, `src/components/smart_tools/FiveQuestionsTool.tsx`
 
 **DENTS — Pre-Planning Mode:**
 

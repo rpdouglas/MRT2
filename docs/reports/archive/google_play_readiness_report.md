@@ -177,7 +177,7 @@ Accidental double-taps on navigation items or action buttons (such as check-in t
     ```
 
 ### Gap C: Touch Target Sizes
-As documented in the [profile-gap-analysis.md](file:///workspaces/MRT2/docs/reports/profile-gap-analysis.md#L69-L71), the hero-color swatches render at `36px` which is below the design system's own `44px` target floor and the Google Accessibility standard of `48px`.
+As documented in the [profile-gap-analysis.md](file:///workspaces/MRT2/docs/reports/archive/profile-gap-analysis.md#L69-L71), the hero-color swatches render at `36px` which is below the design system's own `44px` target floor and the Google Accessibility standard of `48px`.
 *   **Remediation:** Adjust swatch containers in `src/pages/Profile.tsx` (or custom color-picker lists) to utilize a minimum spacing size of `44px` or `48px` to prevent misclicks on touch devices.
 
 ---

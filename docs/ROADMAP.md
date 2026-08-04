@@ -2,7 +2,7 @@
 
 **Methodology:** Strategic Waves (Prioritizing User Acquisition & Retention)
 
-> **Spec-file note:** IDs referenced here without a `docs/projects/XX_FEATURE.md` file (PROJ-18, 19, 24, 32, 33, 34, 35, 37, 39, 48, and `[BILLING]`) predate CLAUDE.md's spec-file requirement and are exempt from backfill — flagged and resolved during the 2026-07-18 governance audit. Any of these picked up for new work should get a proper spec at that time.
+> **Spec-file note:** IDs referenced here without a `docs/projects/XX_FEATURE.md` file (PROJ-18, 19, 32, 33, 34, 35, 37, and `[BILLING]`) predate CLAUDE.md's spec-file requirement and are exempt from backfill — flagged and resolved during the 2026-07-18 governance audit. PROJ-24, 39, and 48 were removed from this list on 2026-08-04: all three now have real spec files in `docs/projects/`, restored from `docs/projects/archive/` per `ACTIVE_CYCLE.md`'s Docs Archive Cleanup entry. Any of these picked up for new work should get a proper spec at that time.
 
 ## 🌊 Wave 1: Acquisition & Friction (Weeks 1–6)
 *The immediate goal: Stop users from abandoning the app on Day 1 by removing the "Security Tax."*

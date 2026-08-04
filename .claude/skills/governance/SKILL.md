@@ -110,7 +110,7 @@ Flag every project where these three sources disagree.
 - Every project in `ROADMAP.md` is tagged with a Persona column.
 - Every project spec has a `**Primary Persona:**` or `**Personas Involved:**` field.
 - Does the persona in the ROADMAP row match the persona in the spec?
-- Validate persona names against `docs/PERSONAS.md` — only `David`, `Ned`, `Lisa`, `Walt`, `Maya`, and `All` are valid. Flag any persona name that is not in this set.
+- Validate persona names against `docs/PERSONAS.md` — only `David`, `Ned`, `Lisa`, `Walt`, `Maya`, `Jordan`, and `All` are valid. Flag any persona name that is not in this set.
 
 ### Check D — Completed Projects Not Archived
 - Any project with status `🟢 Done` or `[x] COMPLETED` should appear in the `✅ RECENTLY SHIPPED` section of `ROADMAP.md`.

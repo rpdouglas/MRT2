@@ -4,7 +4,7 @@
 **Primary Persona:** David (Vitality — crisis-adjacent breathwork tool) / Walt (Data Management — exports, deletion)
 **Objective:** Split `Vitality.tsx` and `DataManagement.tsx` along their genuinely independent concerns, isolating the single highest-risk operation in the app (account deletion) from lower-risk export/import code so future changes to one can't accidentally touch the other.
 
-**Source:** `docs/reports/2026-07_codebase_deep_review.md` §2 (both files flagged as the clearest wins among the top-10 largest files).
+**Source:** `docs/reports/archive/2026-07_codebase_deep_review.md` §2 (both files flagged as the clearest wins among the top-10 largest files).
 
 ---
 
