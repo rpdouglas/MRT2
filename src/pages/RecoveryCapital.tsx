@@ -53,6 +53,15 @@ export default function RecoveryCapital() {
             next.delete('start');
             setSearchParams(next, { replace: true });
         }
+        // Run once on mount only: consumes a one-time deep-link signal
+        // (?start=1, e.g. from a push notification) and strips it from the
+        // URL. searchParams/canCreateAssessment/ctaDisabled are read fresh
+        // via closure but deliberately excluded from deps — this route is
+        // wrapped in <VaultGate> (see App.tsx), so the vault-locked branch
+        // of ctaDisabled can't actually be reached at mount, and re-running
+        // on every later state change (e.g. isCreating toggling during an
+        // in-flight check-in) would risk re-opening the modal after the
+        // user has already dismissed or completed it.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

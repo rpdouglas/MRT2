@@ -108,6 +108,11 @@ export function GuidedWorkflowEngine<T>({
             setPendingDraft(draft);
             setShowResumePrompt(true);
         }
+        // Run once on mount only: forceFresh/getDraft/clearDraft are stable
+        // for the lifetime of a mounted instance (a different toolType
+        // mounts a fresh instance of this generic engine, not a prop change
+        // on this one) — re-running on every render would re-show the
+        // "resume?" prompt after the user has already answered it.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -145,6 +150,13 @@ export function GuidedWorkflowEngine<T>({
         if (Array.isArray(source) && source.length > 0 && typeof source[0] !== 'string') {
             setStepData(prev => ({ ...prev, [step.id]: (source as EmotionEntry[]).map(e => ({ ...e })) }));
         }
+        // step.id is a sufficient trigger on its own: step.inputType and
+        // step.emotionSourceStepId change in lockstep with it (same
+        // steps[currentStep] object). stepData is deliberately excluded —
+        // this effect should only ever consider copying in the source
+        // emotions once per step visit, not on every keystroke of stepData
+        // elsewhere; the in-body "already answered/resumed" guard already
+        // protects the actual clobber risk without needing it as a dep.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [step.id]);
 
@@ -163,6 +175,15 @@ export function GuidedWorkflowEngine<T>({
         }, AI_PROMPT_DEBOUNCE_MS);
 
         return () => { if (aiTimerRef.current) clearTimeout(aiTimerRef.current); };
+        // getAiContext/toolType/aiPrompts/step.minLength deliberately
+        // excluded: getAiContext is an unmemoized inline prop in every
+        // current caller, so including it would reset this 5s debounce
+        // timer on every parent re-render and the prompt would never fire.
+        // aiPrompts and step.minLength change in lockstep with the listed
+        // deps whenever they'd actually matter — a fresh currentValue/
+        // step.id/aiEnabled always comes from a render that already re-read
+        // the latest aiPrompts via closure before this effect runs, so
+        // listing them would only cause redundant re-schedules.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentValue, step.id, aiEnabled]);
 
