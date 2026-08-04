@@ -60,8 +60,9 @@ export default function BreathTab({ onLog, saving }: BreathTabProps) {
 
                         {engine.showSettings && (
                              <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 w-full max-w-sm animate-fadeIn text-left mt-2">
-                                  <label className="block text-[10px] font-bold text-sky-800 uppercase tracking-widest mb-2">Select Rhythm</label>
+                                  <label htmlFor="breath-rhythm" className="block text-[10px] font-bold text-sky-800 uppercase tracking-widest mb-2">Select Rhythm</label>
                                   <select
+                                      id="breath-rhythm"
                                       value={engine.breathPattern}
                                       onChange={(e) => engine.setBreathPattern(e.target.value as typeof engine.breathPattern)}
                                       className="w-full text-sm rounded-lg border-sky-200 bg-white mb-4 focus:ring-sky-500 text-sky-900 font-medium"
@@ -74,20 +75,20 @@ export default function BreathTab({ onLog, saving }: BreathTabProps) {
                                   {engine.breathPattern === 'custom' && (
                                       <div className="grid grid-cols-4 gap-2 text-center">
                                           <div>
-                                              <label className="block text-[10px] font-bold text-sky-700 mb-1">In</label>
-                                              <input type="number" min="0" value={engine.customPattern[0]} onChange={(e) => engine.handleCustomChange(0, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
+                                              <label htmlFor="breath-custom-in" className="block text-[10px] font-bold text-sky-700 mb-1">In</label>
+                                              <input id="breath-custom-in" type="number" min="0" value={engine.customPattern[0]} onChange={(e) => engine.handleCustomChange(0, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-bold text-sky-700 mb-1">Hold</label>
-                                              <input type="number" min="0" value={engine.customPattern[1]} onChange={(e) => engine.handleCustomChange(1, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
+                                              <label htmlFor="breath-custom-hold-1" className="block text-[10px] font-bold text-sky-700 mb-1">Hold</label>
+                                              <input id="breath-custom-hold-1" type="number" min="0" value={engine.customPattern[1]} onChange={(e) => engine.handleCustomChange(1, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-bold text-sky-700 mb-1">Out</label>
-                                              <input type="number" min="0" value={engine.customPattern[2]} onChange={(e) => engine.handleCustomChange(2, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
+                                              <label htmlFor="breath-custom-out" className="block text-[10px] font-bold text-sky-700 mb-1">Out</label>
+                                              <input id="breath-custom-out" type="number" min="0" value={engine.customPattern[2]} onChange={(e) => engine.handleCustomChange(2, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
                                           </div>
                                           <div>
-                                              <label className="block text-[10px] font-bold text-sky-700 mb-1">Hold</label>
-                                              <input type="number" min="0" value={engine.customPattern[3]} onChange={(e) => engine.handleCustomChange(3, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
+                                              <label htmlFor="breath-custom-hold-2" className="block text-[10px] font-bold text-sky-700 mb-1">Hold</label>
+                                              <input id="breath-custom-hold-2" type="number" min="0" value={engine.customPattern[3]} onChange={(e) => engine.handleCustomChange(3, parseInt(e.target.value) || 0)} className="w-full text-center text-xs rounded border-sky-200 p-1" />
                                           </div>
                                       </div>
                                   )}

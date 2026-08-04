@@ -75,10 +75,11 @@ function ThoughtChallengeGame() {
           {result.correct} of {result.total} matched.
         </p>
         <div className="w-full max-w-sm">
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="thought-challenge-reflection" className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
             Anything you want to reframe from today? (optional)
           </label>
           <textarea
+            id="thought-challenge-reflection"
             value={reflection}
             onChange={(e) => setReflection(e.target.value)}
             disabled={reflectionSaved}

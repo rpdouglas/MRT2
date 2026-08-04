@@ -109,8 +109,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   </button>
                 </div>
                 <nav className="flex flex-1 flex-col px-6 pb-4 mt-8">
+                  {/* role="list" is intentional, not redundant: Tailwind's preflight
+                      resets list-style to none on every ul/ol, and Safari/VoiceOver
+                      historically drops the implicit list semantics once list-style
+                      is none — role="list" restores it. jsx-a11y's static check can't
+                      see the CSS, so it flags this as redundant; it isn't. */}
+                  {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
+                      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- see reasoning above */}
                       <ul role="list" className="-mx-2 space-y-1">
                         {navigation.map((item) => (
                           <li key={item.name}>

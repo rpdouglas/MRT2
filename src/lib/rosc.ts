@@ -25,10 +25,3 @@ export async function getROSCAssessments(uid: string): Promise<ROSCAssessment[]>
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as ROSCAssessment));
 }
-
-export async function getROSCAssessmentCount(uid: string): Promise<number> {
-  if (!db) throw new Error('Database not initialized');
-  const database = db as Firestore;
-  const snap = await getDocs(collection(database, 'users', uid, 'rosc_assessments'));
-  return snap.size;
-}

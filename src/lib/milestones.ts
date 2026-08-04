@@ -8,7 +8,7 @@ const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300
 // PROJ-98 Phase 1: .webp, not .png — same images, ~12x smaller (~44KB vs
 // ~560KB each). The .png originals stayed in public/Chips/ under the old
 // path here for years; they're deleted now that this is the only consumer.
-export const MILESTONE_CHIPS: Record<number, string> = {
+const MILESTONE_CHIPS: Record<number, string> = {
     30: '/Chips/medallion_01.webp',
     60: '/Chips/medallion_02.webp',
     90: '/Chips/medallion_03.webp',

@@ -226,6 +226,7 @@ export default function WorkbookSession() {
                                 onChange={(e) => handleAnswerChange(e.target.value)}
                                 placeholder="Reflect here..."
                                 className="w-full flex-1 min-h-[150px] p-4 sm:p-6 rounded-b-xl border-2 border-gray-100 bg-white text-lg sm:text-xl leading-relaxed text-gray-700 focus:border-blue-500 focus:ring-0 shadow-sm resize-none transition-all placeholder:text-gray-300"
+                                // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: the primary (only) input of this guided, one-question-at-a-time writing flow, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
                                 autoFocus
                             />
                             

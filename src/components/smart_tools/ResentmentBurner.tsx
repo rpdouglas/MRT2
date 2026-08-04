@@ -136,6 +136,7 @@ export default function ResentmentBurner() {
                                 }}
                                 className={`relative z-10 w-full flex-1 rounded-b-3xl rounded-tr-3xl resize-none text-lg sm:text-xl focus:outline-none placeholder:text-slate-400 text-slate-800 notebook-paper font-serif
                                     ${!isBurning ? 'shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-slate-200' : 'shadow-none border-transparent'}`}
+                                // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: the sole input of this tool's screen, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
                                 autoFocus
                             />
 

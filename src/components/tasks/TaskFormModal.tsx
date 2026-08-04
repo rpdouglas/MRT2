@@ -132,13 +132,15 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
                     
                     {/* TITLE */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Task Name</label>
+                        <label htmlFor="task-title" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Task Name</label>
                         <input
+                            id="task-title"
                             type="text"
                             placeholder="e.g. Morning Routine..."
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="w-full rounded-xl border-gray-300 focus:ring-slate-500 focus:border-slate-500 p-3 text-sm"
+                            // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate, and already conditional: only autofocuses for a brand-new task (!initialTask), not when editing an existing one.
                             autoFocus={!initialTask}
                         />
                     </div>
@@ -146,8 +148,9 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
                     {/* CATEGORY & PRIORITY */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Category</label>
-                            <select 
+                            <label htmlFor="task-category" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Category</label>
+                            <select
+                                id="task-category"
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value as CategoryType)}
                                 className="w-full rounded-xl border-gray-300 text-sm py-2.5"
@@ -159,8 +162,9 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Priority</label>
-                            <select 
+                            <label htmlFor="task-priority" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Priority</label>
+                            <select
+                                id="task-priority"
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value as PriorityType)}
                                 className="w-full rounded-xl border-gray-300 text-sm py-2.5"
@@ -224,11 +228,12 @@ export default function TaskFormModal({ isOpen, initialTask, onClose, onSave }: 
 
                     {/* DUE DATE */}
                     <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Due Date</label>
+                          <label htmlFor="task-due-date" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Due Date</label>
                           <div className="relative">
                             <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                            <input 
-                                type="date" 
+                            <input
+                                id="task-due-date"
+                                type="date"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                                 className="w-full pl-10 rounded-xl border-gray-300 text-sm py-2.5" 

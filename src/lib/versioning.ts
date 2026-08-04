@@ -16,26 +16,3 @@ const buildInfo = buildInfoRaw as unknown as BuildManifest;
 export function useBuildInfo(): BuildMeta {
     return buildInfo.meta;
 }
-
-/**
- * Returns the version hash for a specific page.
- * Useful for debugging if a specific page code is stale.
- * @param pageName - The filename of the page (e.g., 'Dashboard', 'Login')
- */
-export function usePageVersion(pageName: string): string {
-    const page = buildInfo.pages[pageName];
-    if (!page) return 'unknown';
-    // Return a composite of Global-Page hash
-    return `${buildInfo.meta.globalHash}-${page.hash}`;
-}
-
-/**
- * Returns a color code based on the environment.
- */
-export function getEnvColor(env: string): string {
-    switch (env) {
-        case 'PRODUCTION': return 'bg-red-600'; // High alert
-        case 'UAT': return 'bg-orange-500';
-        default: return 'bg-blue-600'; // Dev
-    }
-}

@@ -31,7 +31,10 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
       <h2 className="text-2xl font-bold text-white mb-6">Group Setup</h2>
 
       <div className="mb-6">
-        <label className="text-base font-semibold mb-2 block text-white/70">How many players or teams?</label>
+        {/* A group caption, not a form label for one control — jsx-a11y's
+            label-has-associated-control rightly rejected <label> here since
+            it captions the whole button group below, not a single control. */}
+        <p className="text-base font-semibold mb-2 block text-white/70">How many players or teams?</p>
         <div className="flex justify-center gap-3">
           {[1, 2, 3].map((num) => (
             <button
@@ -48,7 +51,11 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
       </div>
 
       <div className="mb-6">
-        <label className="text-base font-semibold mb-2 block text-white/70">Team names</label>
+        {/* Same as above — captions a dynamic list of per-player inputs, not
+            one control, so it can't be a real <label htmlFor>. Each input
+            gets its own aria-label below instead of relying on placeholder
+            text (which isn't a reliable accessible name). */}
+        <p className="text-base font-semibold mb-2 block text-white/70">Team names</p>
         <div className="flex flex-col items-center gap-3">
           {Array.from({ length: playerCount }).map((_, index) => (
             <input
@@ -58,6 +65,7 @@ export default function PlayerSetup({ onStartGame }: PlayerSetupProps) {
               onChange={(e) => handleNameChange(index, e.target.value)}
               className="p-2.5 bg-white/10 border border-white/20 rounded-xl w-64 text-center text-white placeholder:text-white/40"
               placeholder={`Team ${index + 1} name`}
+              aria-label={`Team ${index + 1} name`}
             />
           ))}
         </div>
