@@ -38,16 +38,17 @@ export default function MoveTab({ onLog, saving }: MoveTabProps) {
                 <form onSubmit={handleLogMovement} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Activity</label>
-                            <input type="text" placeholder="e.g. Walk" value={moveActivity} onChange={(e) => setMoveActivity(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
+                            <label htmlFor="move-activity" className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Activity</label>
+                            <input id="move-activity" type="text" placeholder="e.g. Walk" value={moveActivity} onChange={(e) => setMoveActivity(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Mins</label>
-                            <input type="number" placeholder="30" value={moveDuration} onChange={(e) => setMoveDuration(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
+                            <label htmlFor="move-duration" className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Mins</label>
+                            <input id="move-duration" type="number" placeholder="30" value={moveDuration} onChange={(e) => setMoveDuration(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50" required />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Intensity</label>
+                        {/* Group caption over 3 buttons, not a single control — not a real <label> target. */}
+                        <p className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Intensity</p>
                         <div className="flex gap-2">
                             {['Low', 'Moderate', 'High'].map(lvl => (
                                 <button key={lvl} type="button" onClick={() => setMoveIntensity(lvl)} className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${moveIntensity === lvl ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-white border-gray-200 text-gray-500'}`}>{lvl}</button>

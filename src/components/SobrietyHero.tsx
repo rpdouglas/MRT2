@@ -136,7 +136,11 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
 
                     {isColorPickerOpen && (
                         <>
-                            {/* Backdrop to catch outside taps and close the popover */}
+                            {/* Backdrop to catch outside taps and close the popover — mouse/touch
+                                convenience only, not the sole way to close: the toggle button above
+                                is a real <button>, already keyboard-focusable and operable, so a
+                                keyboard user can already open/close this popover without the backdrop. */}
+                            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
                             <div className="fixed inset-0 z-10" onClick={() => setIsColorPickerOpen(false)} />
                             <div className="absolute top-11 left-0 z-20 flex gap-2 p-2.5 rounded-2xl bg-white shadow-xl border border-gray-200">
                                 {(Object.keys(HERO_COLORS) as HeroColorKey[]).map((key) => (

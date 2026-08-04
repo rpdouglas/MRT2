@@ -179,10 +179,11 @@ function DentsToolInner({ data, updateData, save, isSaving, forceFresh }: DentsT
                             <p className="text-sm leading-relaxed font-medium">{EXPLANATION}</p>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+                            <label htmlFor="dents-scenario" className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
                                 What's the high-risk situation you're planning for?
                             </label>
                             <input
+                                id="dents-scenario"
                                 type="text"
                                 value={scenario}
                                 onChange={(e) => setScenario(e.target.value)}

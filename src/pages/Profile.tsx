@@ -465,8 +465,9 @@ export default function Profile() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Currency</label>
+                                <label htmlFor="profile-currency-symbol" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Currency</label>
                                 <input
+                                    id="profile-currency-symbol"
                                     type="text"
                                     value={currencySymbol}
                                     onChange={e => setCurrencySymbol(e.target.value)}
@@ -477,8 +478,9 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Usage Cost</label>
+                                <label htmlFor="profile-usage-cost" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Usage Cost</label>
                                 <input
+                                    id="profile-usage-cost"
                                     type="number"
                                     step="0.01"
                                     min="0"
@@ -490,8 +492,9 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Frequency</label>
+                                <label htmlFor="profile-cost-frequency" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Frequency</label>
                                 <select
+                                    id="profile-cost-frequency"
                                     value={costFrequency}
                                     onChange={e => {
                                         const next = e.target.value as 'daily' | 'weekly' | 'monthly';
@@ -519,8 +522,9 @@ export default function Profile() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Name</label>
+                                <label htmlFor="profile-sponsor-name" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Name</label>
                                 <input
+                                    id="profile-sponsor-name"
                                     type="text"
                                     placeholder="Sponsor, Therapist, etc."
                                     value={sponsorName}
@@ -530,8 +534,9 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
+                                <label htmlFor="profile-sponsor-phone" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
                                 <input
+                                    id="profile-sponsor-phone"
                                     type="tel"
                                     placeholder="+1 555-0199"
                                     value={sponsorPhone}
@@ -712,8 +717,9 @@ export default function Profile() {
 
                     <form onSubmit={handleRotation} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Current PIN</label>
+                            <label htmlFor="profile-pin-current" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Current PIN</label>
                             <input
+                                id="profile-pin-current"
                                 type="password"
                                 inputMode="numeric"
                                 value={oldPin}
@@ -725,8 +731,9 @@ export default function Profile() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">New PIN</label>
+                                <label htmlFor="profile-pin-new" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">New PIN</label>
                                 <input
+                                    id="profile-pin-new"
                                     type="password"
                                     inputMode="numeric"
                                     value={newPin}
@@ -737,8 +744,9 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Confirm New</label>
+                                <label htmlFor="profile-pin-confirm" className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Confirm New</label>
                                 <input
+                                    id="profile-pin-confirm"
                                     type="password"
                                     inputMode="numeric"
                                     value={confirmPin}
@@ -877,6 +885,7 @@ export default function Profile() {
                                         </p>
                                         <input
                                             type="text"
+                                            // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: this field only renders after the user clicks into the dangerous "reset vault" confirmation step, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
                                             autoFocus
                                             value={resetConfirmText}
                                             onChange={(e) => setResetConfirmText(e.target.value)}

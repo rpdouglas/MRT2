@@ -34,7 +34,7 @@ export function checkWinCondition(state: FastLaneParticipantState, goals: FastLa
   );
 }
 
-export function updateStockValue(currentValue: number): number {
+function updateStockValue(currentValue: number): number {
   const change = Math.random() * 0.10 - 0.05;
   return Math.max(1.00, currentValue * (1 + change));
 }

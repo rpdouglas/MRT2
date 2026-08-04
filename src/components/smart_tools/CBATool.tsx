@@ -137,10 +137,11 @@ function CBAToolInner({ data, updateData, save, isSaving, forceFresh }: CBAToolI
                             <p className="text-sm leading-relaxed font-medium">{EXPLANATION}</p>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+                            <label htmlFor="cba-behavior" className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
                                 What behavior are we analyzing?
                             </label>
                             <input
+                                id="cba-behavior"
                                 type="text"
                                 value={behavior}
                                 onChange={(e) => setBehavior(e.target.value)}

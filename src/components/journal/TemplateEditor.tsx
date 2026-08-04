@@ -145,9 +145,10 @@ export default function TemplateEditor() {
                     
                     {/* Name Input */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
-                        <input 
-                            type="text" 
+                        <label htmlFor="template-name" className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                        <input
+                            id="template-name"
+                            type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. Daily Gratitude List"
@@ -158,7 +159,7 @@ export default function TemplateEditor() {
                     {/* Content Editor */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="block text-sm font-medium text-gray-700">Template Structure</label>
+                            <label htmlFor="template-content" className="block text-sm font-medium text-gray-700">Template Structure</label>
                             <span className="text-xs text-gray-400">Markdown Supported</span>
                         </div>
                         
@@ -179,7 +180,8 @@ export default function TemplateEditor() {
                             </button>
                         </div>
 
-                        <textarea 
+                        <textarea
+                            id="template-content"
                             ref={textareaRef}
                             rows={12}
                             value={content}
@@ -191,7 +193,7 @@ export default function TemplateEditor() {
 
                     {/* Default Tags */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
+                        <label htmlFor="template-tag-input" className="block text-sm font-medium text-gray-700 mb-2">Auto-Tags</label>
                         <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
                             {tags.map(tag => (
                                 <span key={tag} className="flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full border border-blue-100">
@@ -201,8 +203,9 @@ export default function TemplateEditor() {
                                     </button>
                                 </span>
                             ))}
-                            <input 
-                                type="text" 
+                            <input
+                                id="template-tag-input"
+                                type="text"
                                 value={tagInput}
                                 onChange={(e) => setTagInput(e.target.value)}
                                 onKeyDown={handleAddTag}

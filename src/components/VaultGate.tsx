@@ -182,6 +182,7 @@ export default function VaultGate({ children }: VaultGateProps) {
                 <input
                     type="password"
                     inputMode="numeric"
+                    // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: the sole field of this full-screen gate, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
                     autoFocus
                     placeholder="Enter PIN"
                     value={pin}

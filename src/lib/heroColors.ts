@@ -23,7 +23,7 @@ export interface HeroColorTheme {
   dashboardPage: string;
 }
 
-export const DEFAULT_HERO_COLOR: HeroColorKey = 'amber';
+const DEFAULT_HERO_COLOR: HeroColorKey = 'amber';
 
 export const HERO_COLORS: Record<HeroColorKey, HeroColorTheme> = {
   amber: {

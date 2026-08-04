@@ -8,7 +8,7 @@
 // Matches PERSONA_COLORS.ned in src/pages/GamesHub.tsx (Goal Ladder's
 // target persona) — duplicated here intentionally rather than exporting
 // that (module-local, non-exported) constant out of GamesHub.tsx for one value.
-export const NED_TEAL = '#2DD4BF';
+const NED_TEAL = '#2DD4BF';
 
 interface LadderProgressProps {
   rung: number;

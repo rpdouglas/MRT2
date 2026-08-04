@@ -145,10 +145,11 @@ function FiveQuestionsToolInner({ data, updateData, save, isSaving, forceFresh }
                             <p className="text-sm leading-relaxed font-medium">{EXPLANATION}</p>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+                            <label htmlFor="five-questions-thought" className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
                                 What's the thought or belief you want to examine?
                             </label>
                             <input
+                                id="five-questions-thought"
                                 type="text"
                                 value={thought}
                                 onChange={(e) => setThought(e.target.value)}

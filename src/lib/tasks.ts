@@ -4,7 +4,7 @@
  */
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, Timestamp, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase";
-import { startOfDay, isBefore, addDays, addWeeks, addMonths, isSameDay, subHours, isAfter, differenceInDays } from "date-fns";
+import { startOfDay, isBefore, addDays, addWeeks, addMonths, subHours, isAfter, differenceInDays } from "date-fns";
 import type { Task as TaskInterface } from "./db";
 import { type RecurrenceConfig, calculateNextDueDate } from "./dateUtils";
 
@@ -177,15 +177,3 @@ export async function deleteTask(id: string) { if (!db) throw new Error("Databas
 
 // 5. UPDATE
 export async function updateTask(id: string, updates: Partial<Task>) { if (!db) throw new Error("Database not initialized"); await updateDoc(doc(db, COLLECTION, id), updates); }
-
-// 6. GET COMPLETED TODAY
-export async function getCompletedTasksForToday(uid: string) {
-    if (!db) throw new Error("Database not initialized");
-    const today = startOfDay(new Date());
-    const allTasks = await getUserTasks(uid);
-    
-    return allTasks.filter(t => {
-        const d = toDate(t.lastCompletedAt);
-        return d && isSameDay(d, today);
-    });
-}

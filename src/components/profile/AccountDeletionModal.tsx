@@ -174,6 +174,7 @@ export default function AccountDeletionModal() {
                                                     <input
                                                         type="password"
                                                         required
+                                                        // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: this field only renders at the re-auth step of the account-deletion modal, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
                                                         autoFocus
                                                         placeholder="Enter your account password"
                                                         value={deletePassword}

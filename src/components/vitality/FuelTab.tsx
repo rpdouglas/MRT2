@@ -39,12 +39,12 @@ export default function FuelTab({ onLog, saving }: FuelTabProps) {
                 <form onSubmit={handleLogNutrition} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Meal</label>
-                            <select value={mealType} onChange={(e) => setMealType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+                            <label htmlFor="fuel-meal-type" className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Meal</label>
+                            <select id="fuel-meal-type" value={mealType} onChange={(e) => setMealType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Hunger</label>
-                            <select value={hungerType} onChange={(e) => setHungerType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Physical</option><option>Emotional</option><option>Boredom</option><option>Habit</option></select>
+                            <label htmlFor="fuel-hunger-type" className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Hunger</label>
+                            <select id="fuel-hunger-type" value={hungerType} onChange={(e) => setHungerType(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50"><option>Physical</option><option>Emotional</option><option>Boredom</option><option>Habit</option></select>
                         </div>
                     </div>
                     <textarea rows={2} placeholder="Mindful eating check..." value={nutriNote} onChange={(e) => setNutriNote(e.target.value)} className="w-full text-sm rounded-xl border-gray-200 bg-gray-50 resize-none" />
