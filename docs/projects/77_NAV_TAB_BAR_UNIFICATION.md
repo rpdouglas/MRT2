@@ -1,7 +1,7 @@
 # 📁 Project 77: Nav Tab-Bar Unification
 
 **Status:** ✅ Shipped
-**Primary Persona:** Cross-cutting (no single primary — this is an infrastructure/design-consistency pass affecting the tab navigation on My Journal, My Vitality, My Workbooks, My Tasks, and My Profile). Constrained by David's and Walt's navigation rules (see §4).
+**Primary Persona:** All (no single primary — this is an infrastructure/design-consistency pass affecting the tab navigation on My Journal, My Vitality, My Workbooks, My Tasks, and My Profile). Constrained by David's and Walt's navigation rules (see §4).
 **Objective:** Give every feature page the same tab-bar visual pattern already used by My Journal — a white pill bar that overlaps the header via negative margin, with an active-tab state contrasted against that feature's own color from `src/lib/theme.ts` — replacing today's four inconsistent, hand-rolled implementations.
 
 ---

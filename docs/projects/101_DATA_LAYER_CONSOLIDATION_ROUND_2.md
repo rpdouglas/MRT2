@@ -1,7 +1,7 @@
 # 📁 Project 101: Data Access Layer Consolidation — Round 2
 
 **Status:** ✅ Shipped
-**Primary Persona:** Internal (Dev/Ops governance per `docs/governance/INTERNAL_PERSONAS.md`) — no end-user-facing behavior change; closes a gap `PROJ-59` left open and fixes a latent cache bug.
+**Primary Persona:** Dev / AI Partner (data-layer consolidation, cache-bug correctness; see `docs/governance/INTERNAL_PERSONAS.md`) — no end-user-facing behavior change; closes a gap `PROJ-59` left open and fixes a latent cache bug.
 **Objective:** Close the TanStack Query / React findings from `docs/reports/2026-08_full_production_readiness_audit.md`'s Medium-Effort bucket (§20): finish the `useFirestoreCrud` migration `PROJ-59` started, fix the `useTasksList`/`useTaskOperations` cache-key mismatch, and add the missing `AuthContext` unit test coverage.
 
 ---

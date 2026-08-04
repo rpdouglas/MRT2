@@ -10,7 +10,7 @@
 **User Story:** As the System Architect, I want the Android app-signing credential to live outside version control so that a repo leak (a collaborator's compromised laptop, a misconfigured fork, a CI log) can never hand an attacker the ability to publish updates impersonating MRT.
 **Competitive Gap:** N/A — internal security hygiene, not a competitive differentiator. The cost of getting this wrong is catastrophic (a malicious update pushed under MRT's identity to a vulnerable, trust-dependent userbase), not competitive.
 
-**Source:** `docs/reports/2026-07_app_readiness_review.md` §1, Critical Finding #1 — found during the July 2026 Play Store submission-readiness audit. `git ls-files` confirms `mrt-release.keystore` is tracked; a `.gitignore` entry exists but was added after the file was already tracked, so it has zero effect.
+**Source:** `docs/reports/archive/2026-07_app_readiness_review.md` §1, Critical Finding #1 — found during the July 2026 Play Store submission-readiness audit. `git ls-files` confirms `mrt-release.keystore` is tracked; a `.gitignore` entry exists but was added after the file was already tracked, so it has zero effect.
 
 ---
 
@@ -79,7 +79,7 @@ No Firestore schema changes. No application code changes. This project is entire
 
 ## 6. Related
 * Blocks: `docs/projects/07_PLAY_STORE_TWA.md` Sprint 9.2 (Bubblewrap build cannot proceed on a compromised keystore).
-* Source audit: `docs/reports/2026-07_app_readiness_review.md` §1.
+* Source audit: `docs/reports/archive/2026-07_app_readiness_review.md` §1.
 
 ---
 

@@ -12,7 +12,7 @@
 
 **Competitive Gap:** N/A — compliance/legal risk mitigation, not a competitive feature.
 
-**Source:** Decision made 2026-07-19 in place of implementing full Google Play Billing (the other option surfaced by `docs/reports/2026-07_app_readiness_review.md` §1's Stripe/TWA billing finding). Chosen because it fully avoids the policy question — a purchase flow gated out of the Android build entirely carries no Play Billing requirement — for a fraction of the engineering cost of standing up Play Billing's receipt verification, real-time developer notifications, and dual entitlement reconciliation with the existing Stripe/`tier` pipeline. This is the cheaper, durable choice; Play Billing remains the fallback if in-app purchase from inside the installed app ever becomes a hard requirement.
+**Source:** Decision made 2026-07-19 in place of implementing full Google Play Billing (the other option surfaced by `docs/reports/archive/2026-07_app_readiness_review.md` §1's Stripe/TWA billing finding). Chosen because it fully avoids the policy question — a purchase flow gated out of the Android build entirely carries no Play Billing requirement — for a fraction of the engineering cost of standing up Play Billing's receipt verification, real-time developer notifications, and dual entitlement reconciliation with the existing Stripe/`tier` pipeline. This is the cheaper, durable choice; Play Billing remains the fallback if in-app purchase from inside the installed app ever becomes a hard requirement.
 
 **Blocks:** `docs/projects/07_PLAY_STORE_TWA.md` Sprint 9.2 (Play Store submission) — this was the last open item in `docs/ACTIVE_CYCLE.md`'s Triage & Hotfixes blocking it, alongside the now-closed PROJ-67.
 

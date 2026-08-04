@@ -22,9 +22,9 @@
 ---
 
 ## 2. Security & Zero-Knowledge Audit 🛡️
-* [ ] **Data Sensitivity:** `useAnchorStatus`'s fix touches an unencrypted metadata read only (`createdAt`, `tags`) — no ZK boundary involved. `JournalHistory.tsx`'s fix still decrypts each fetched entry exactly as today; only fetch volume changes.
-* [ ] **Encryption Strategy:** No change to `src/lib/crypto.ts`'s decrypt path for either fix.
-* [ ] **Key Rotation:** N/A — no schema change.
+* [x] **Data Sensitivity:** `useAnchorStatus`'s fix touches an unencrypted metadata read only (`createdAt`, `tags`) — no ZK boundary involved. `JournalHistory.tsx`'s fix still decrypts each fetched entry exactly as today; only fetch volume changes.
+* [x] **Encryption Strategy:** No change to `src/lib/crypto.ts`'s decrypt path for either fix.
+* [x] **Key Rotation:** N/A — no schema change.
 
 ---
 

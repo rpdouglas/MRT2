@@ -1,7 +1,7 @@
 # 📁 Project 99: Firestore & Backend Hardening
 
 **Status:** ✅ Shipped
-**Primary Persona:** Internal (Dev/Ops governance per `docs/governance/INTERNAL_PERSONAS.md`) — no direct end-user-facing UI change; this protects data integrity, cost, and correctness as the user base grows.
+**Primary Persona:** Alex (Firestore/Cloud-Functions cost guardrails), Dev / AI Partner (rules unit tests, data integrity, correctness) — see `docs/governance/INTERNAL_PERSONAS.md`; no direct end-user-facing UI change.
 **Objective:** Close the Firestore/Cloud-Functions-layer findings from `docs/reports/2026-08_full_production_readiness_audit.md`'s Medium-Effort bucket (§20) — document-shape validation, rules test coverage, index-file drift, Cloud Functions cost guardrails, and the three-way admin-definition split — none of which are urgent today, all of which get materially more expensive to retrofit after real user growth.
 
 ---

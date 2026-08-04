@@ -24,7 +24,7 @@
 **Libraries Introduced:**
 * `jspdf` & `jspdf-autotable` (For client-side PDF generation)
 
-**Types (`src/lib/export.ts`):**
+**Types (`src/lib/exporter.ts`):**
 ```typescript
 export interface ExportPayload {
     user: UserProfile;

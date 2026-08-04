@@ -1,7 +1,7 @@
 # 📁 Project 97: Dependency Hygiene Round 2
 
 **Status:** ✅ Shipped (Phase 2 descoped — see §6 Addendum)
-**Primary Persona:** Ned (task list swipe interactions — `SwipeableTaskRow.tsx`), universal (Daily Crossword players — `crossword-layout-generator`, descoped)
+**Primary Persona:** Ned (task list swipe interactions — `SwipeableTaskRow.tsx`), All (Daily Crossword players — `crossword-layout-generator`, descoped)
 **Objective:** Close the remaining `DEPENDENCY_AUDIT.md` findings explicitly deferred from PROJ-92 — replace two unmaintained dependencies (`@use-gesture/react`, `crossword-layout-generator`), clean up `knip`-surfaced dead code, and add `eslint-plugin-jsx-a11y` as a static-analysis complement to PROJ-91's runtime axe-core CI gate.
 
 ---

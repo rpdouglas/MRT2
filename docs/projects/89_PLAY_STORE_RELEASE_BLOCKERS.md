@@ -8,7 +8,7 @@
 
 ## 1. The Executive Summary
 **User Story:** As any user, I want the production build to never expose a client-side admin bypass and to load quickly on mobile networks, so that the app is safe to submit to Google Play.
-**Source:** `docs/reports/PRODUCTION_READINESS_AUDIT.md` §3.1 (SEC-01), §2.1/§2.3 (PERF-01), §6.1 Risk Register, §6.4 Final Verdict.
+**Source:** `docs/reports/archive/PRODUCTION_READINESS_AUDIT.md` §3.1 (SEC-01), §2.1/§2.3 (PERF-01), §6.1 Risk Register, §6.4 Final Verdict.
 
 ---
 

@@ -8,7 +8,7 @@
 
 ## 1. The Executive Summary
 **User Story:** As any user, I want the production build free of debug noise and dependency risk, and to see a clear peer-support disclaimer before I sign up, so the app meets Google Play's health-app policy and ships a clean console.
-**Source:** `docs/reports/PRODUCTION_READINESS_AUDIT.md` §3.1 (SEC-02), §4.1 (PL-01), §2.2/§2.3 (CODE-01), §6.3 Top 25 Action #10.
+**Source:** `docs/reports/archive/PRODUCTION_READINESS_AUDIT.md` §3.1 (SEC-02), §4.1 (PL-01), §2.2/§2.3 (CODE-01), §6.3 Top 25 Action #10.
 
 **Scope correction vs. the audit:** SEC-02 was estimated at "1 hr, run `npm audit fix`." Investigation found this incomplete — see §3 below. CSP headers (audit Action #23) and an ESLint 9→10 major bump (needed to clear the last direct-dependency "high") are **explicitly out of scope** for this ticket; both carry a blast radius (silent production auth/Firestore breakage for CSP; repo-wide lint churn for ESLint) that doesn't belong in a "hardening" sprint. Tracked as separate future tickets instead of being rushed in here.
 
