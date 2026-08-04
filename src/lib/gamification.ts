@@ -53,7 +53,7 @@ const TOTAL_WORKBOOK_QUESTIONS = WORKBOOKS.reduce(
 
 export interface VitalityStats { bioStreak: number; totalLogs: number; }
 
-export interface LevelData { level: number; title: string; currentXP: number; nextLevelXP: number; progressPercent: number; }
+interface LevelData { level: number; title: string; currentXP: number; nextLevelXP: number; progressPercent: number; }
 
 export interface UserStats {
     totalXP: number;

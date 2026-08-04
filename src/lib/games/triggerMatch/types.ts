@@ -7,8 +7,3 @@ export interface TriggerMatchScenario {
   category: TriggerCategory;
   explanation: string;
 }
-
-export interface TriggerMatchStats {
-  correct: number;
-  total: number;
-}

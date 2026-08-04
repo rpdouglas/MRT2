@@ -8,9 +8,3 @@ export interface KnowledgeQuestPack {
   description: string;
   items: ScenarioMatchItem[];
 }
-
-export interface KnowledgeQuestStats {
-  packId: string;
-  correct: number;
-  total: number;
-}

@@ -3,7 +3,7 @@
 // CrosswordPuzzleRecord (src/lib/db.ts) — that's the stored/fetched shape,
 // this is the mutable in-session solving state built from it.
 
-export interface GridCell {
+interface GridCell {
   letter: string;
   number: number | null;
   value: string;

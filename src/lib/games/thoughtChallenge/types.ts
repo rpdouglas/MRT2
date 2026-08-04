@@ -6,8 +6,3 @@ export interface ThoughtChallengeScenario {
   distractors: [string, string, string]; // 3 other distortion labels
   explanation: string;
 }
-
-export interface ThoughtChallengeStats {
-  correct: number;
-  total: number;
-}

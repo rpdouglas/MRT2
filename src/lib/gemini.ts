@@ -26,9 +26,6 @@ function getFunctionsInstance() {
 
 // --- Interfaces ---
 
-export interface AIAnalysisResult { sentiment: 'Positive' | 'Neutral' | 'Negative'; moodScore: number; summary: string; actionableSteps: string[]; risks: string[]; }
-export type AnalysisResult = AIAnalysisResult;
-
 export interface AudioAnalysisResult {
     transcription: string;
     sentiment_label: 'Positive' | 'Neutral' | 'Negative';

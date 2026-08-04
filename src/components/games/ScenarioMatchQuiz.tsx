@@ -21,7 +21,7 @@ export interface ScenarioMatchItem {
 // dark-immersive shell (Trigger Match, Knowledge Quests). Omitting `theme`
 // (Thought Challenge's call site) preserves the original light styling
 // exactly — this prop is additive, not a breaking change to the default path.
-export interface ScenarioMatchQuizTheme {
+interface ScenarioMatchQuizTheme {
   mode: 'dark';
   accent: string;
 }

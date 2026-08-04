@@ -29,7 +29,7 @@ const createMockTimestamp = (date: Date): Timestamp => {
 // ----------------------------------------------------
 // 1. NED: Momentum (Day 45, Premium, Amber Theme)
 // ----------------------------------------------------
-export const NED_PROFILE: UserProfile = {
+const NED_PROFILE: UserProfile = {
     uid: 'mock-uid-ned',
     email: 'ned@mrt.mock',
     displayName: 'Ned',
@@ -50,7 +50,7 @@ export const NED_PROFILE: UserProfile = {
     }
 };
 
-export const NED_TASKS: Task[] = [
+const NED_TASKS: Task[] = [
     {
         id: 'ned-task-1',
         uid: 'mock-uid-ned',
@@ -111,7 +111,7 @@ export const NED_TASKS: Task[] = [
     }
 ];
 
-export const NED_JOURNALS: JournalEntry[] = [
+const NED_JOURNALS: JournalEntry[] = [
     {
         id: 'ned-journal-1',
         uid: 'mock-uid-ned',
@@ -135,7 +135,7 @@ export const NED_JOURNALS: JournalEntry[] = [
 // ----------------------------------------------------
 // 2. MAYA: Workbook (Day 120, Premium, Violet Theme)
 // ----------------------------------------------------
-export const MAYA_PROFILE: UserProfile = {
+const MAYA_PROFILE: UserProfile = {
     uid: 'mock-uid-maya',
     email: 'maya@mrt.mock',
     displayName: 'Maya',
@@ -155,7 +155,7 @@ export const MAYA_PROFILE: UserProfile = {
     }
 };
 
-export const MAYA_TASKS: Task[] = [
+const MAYA_TASKS: Task[] = [
     {
         id: 'maya-task-1',
         uid: 'mock-uid-maya',
@@ -173,7 +173,7 @@ export const MAYA_TASKS: Task[] = [
     }
 ];
 
-export const MAYA_JOURNALS: JournalEntry[] = [
+const MAYA_JOURNALS: JournalEntry[] = [
     {
         id: 'maya-journal-1',
         uid: 'mock-uid-maya',
@@ -185,7 +185,7 @@ export const MAYA_JOURNALS: JournalEntry[] = [
     }
 ];
 
-export const MAYA_WORKBOOK_ANSWERS: WorkbookAnswer[] = [
+const MAYA_WORKBOOK_ANSWERS: WorkbookAnswer[] = [
     // Guided CBT - Section 1, Question 1
     {
         uid: 'mock-uid-maya',
@@ -221,7 +221,7 @@ export const MAYA_WORKBOOK_ANSWERS: WorkbookAnswer[] = [
 // ----------------------------------------------------
 // 3. DAVID: Survival (Day 5, Free, Rose Theme)
 // ----------------------------------------------------
-export const DAVID_PROFILE: UserProfile = {
+const DAVID_PROFILE: UserProfile = {
     uid: 'mock-uid-david',
     email: 'david@mrt.mock',
     displayName: 'David',
@@ -240,7 +240,7 @@ export const DAVID_PROFILE: UserProfile = {
     }
 };
 
-export const DAVID_TASKS: Task[] = [
+const DAVID_TASKS: Task[] = [
     {
         id: 'david-task-1',
         uid: 'mock-uid-david',
@@ -272,7 +272,7 @@ export const DAVID_TASKS: Task[] = [
     }
 ];
 
-export const DAVID_JOURNALS: JournalEntry[] = [
+const DAVID_JOURNALS: JournalEntry[] = [
     {
         id: 'david-journal-1',
         uid: 'mock-uid-david',
@@ -287,7 +287,7 @@ export const DAVID_JOURNALS: JournalEntry[] = [
 // ----------------------------------------------------
 // 4. WALT: Insights (Year 2, Premium, Emerald Theme)
 // ----------------------------------------------------
-export const WALT_PROFILE: UserProfile = {
+const WALT_PROFILE: UserProfile = {
     uid: 'mock-uid-walt',
     email: 'walt@mrt.mock',
     displayName: 'Walt',
@@ -307,7 +307,7 @@ export const WALT_PROFILE: UserProfile = {
     }
 };
 
-export const WALT_TASKS: Task[] = [
+const WALT_TASKS: Task[] = [
     {
         id: 'walt-task-1',
         uid: 'mock-uid-walt',
@@ -325,7 +325,7 @@ export const WALT_TASKS: Task[] = [
     }
 ];
 
-export const WALT_JOURNALS: JournalEntry[] = [
+const WALT_JOURNALS: JournalEntry[] = [
     {
         id: 'walt-journal-1',
         uid: 'mock-uid-walt',
@@ -337,7 +337,7 @@ export const WALT_JOURNALS: JournalEntry[] = [
     }
 ];
 
-export const WALT_INSIGHTS: SavedInsight[] = [
+const WALT_INSIGHTS: SavedInsight[] = [
     {
         id: 'insight-1',
         uid: 'mock-uid-walt',
@@ -417,7 +417,7 @@ export function getMockInsights(email: string): SavedInsight[] {
     return [];
 }
 
-export const DAVID_VITALITY_LOGS = [
+const DAVID_VITALITY_LOGS = [
     {
         id: 'david-vitality-1',
         tags: ['Vitality', 'Breathwork'],

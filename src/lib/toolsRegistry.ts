@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { SmartToolType } from './types/smart';
 
-export type IconType = ComponentType<SVGProps<SVGSVGElement>>;
+type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 /** Which recovery moment a tool belongs to — drives the Tools Hub's grouped sections (PROJ-71). */
 export type ToolPhase = 'right-now' | 'before' | 'after' | 'big-picture';
