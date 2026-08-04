@@ -1,7 +1,7 @@
 # 📁 Project 24: The Asset Engine
 
 **Status:** 🟢 Done
-**Primary Persona:** The Architect (Admin)
+**Primary Persona:** Dev / AI Partner (internal-tooling concern — a strict-typed asset dictionary is a code-architecture/maintainability need; see `docs/governance/INTERNAL_PERSONAS.md`)
 **Objective:** Consolidate, type-check, and compress all static media assets into a single TypeScript dictionary to eliminate 404 errors, reduce bundle size, and accelerate UI scaling.
 
 ---

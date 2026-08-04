@@ -1,14 +1,14 @@
 # 📁 Project 91: WCAG 2.2 AA Accessibility Remediation
 
 **Status:** ✅ Shipped
-**Primary Persona:** David (contrast/sunlight legibility, crisis-flow reliability), universal (screen-reader/keyboard users)
+**Primary Persona:** David (contrast/sunlight legibility, crisis-flow reliability), All (screen-reader/keyboard users)
 **Objective:** Fix the accessibility violations actually confirmed in the current codebase (verified by direct code reading, not the audit's file references), and add an automated axe-core CI gate so regressions are caught going forward instead of relying on another manual sweep.
 
 ---
 
 ## 1. The Executive Summary
 **User Story:** As a screen-reader or keyboard-only user, I want every interactive control to have an accessible name and a keyboard path, and every header's text to be legible, so the app is usable regardless of how I navigate it.
-**Source:** `docs/reports/PRODUCTION_READINESS_AUDIT.md` §4.2 (UX-01, div-as-button, contrast), §6.3 Action #12 (CI a11y gate).
+**Source:** `docs/reports/archive/PRODUCTION_READINESS_AUDIT.md` §4.2 (UX-01, div-as-button, contrast), §6.3 Action #12 (CI a11y gate).
 
 **Scope correction vs. the audit — read before assigning work from the audit text directly:**
 - The audit named `CravingBuster.tsx` and `FastLane.tsx` as having icon-only controls without `aria-label`. **Verified false** — every icon-bearing button across all 24 files under `src/components/games/` already has `aria-label` and/or visible text. No change needed there.

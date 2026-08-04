@@ -26,7 +26,7 @@
 **Firestore Collections Impacted:** None.
 
 **File Architecture Changes:**
-* `src/components/insights/ROSCRadarChart.tsx`: Deprecated/Deleted.
+* `src/components/insights/ROSCRadarChart.tsx`: Deprecated — **2026-08-04 governance note:** the file still exists on disk with zero remaining importers (confirmed via governance audit), not actually deleted as this line originally claimed. Flagged for a future dead-code cleanup pass.
 * `src/components/insights/ROSCPillCapsules.tsx`: NEW. Contains the segmented logic and `useSegReveal` hook.
 * `src/components/insights/ROSCAssessmentCard.tsx`: Modified to wrap the new glassmorphic shell.
 

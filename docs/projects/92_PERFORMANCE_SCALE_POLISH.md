@@ -8,7 +8,7 @@
 
 ## 1. The Executive Summary
 **User Story:** As a long-term user with hundreds of entries, I want the app to stay responsive when I navigate away and back, without unnecessary refetch flicker.
-**Source:** `docs/reports/PRODUCTION_READINESS_AUDIT.md` §2.3 (Action #7 virtualization, #8 gcTime, #11 PWA precache, #13/#19 Firestore reads/indexes, #21 asset optimization), and `DEPENDENCY_AUDIT.md` (2026-07-29, untracked root-level file — a separate architecture/dependency review, not part of the original Play Store audit).
+**Source:** `docs/reports/archive/PRODUCTION_READINESS_AUDIT.md` §2.3 (Action #7 virtualization, #8 gcTime, #11 PWA precache, #13/#19 Firestore reads/indexes, #21 asset optimization), and `DEPENDENCY_AUDIT.md` (2026-07-29, untracked root-level file — a separate architecture/dependency review, not part of the original Play Store audit).
 
 **Scope correction — most of the original PROJ-92 scope no longer exists, verified against real code:**
 - **Virtualization (#7):** Already implemented. `Tasks.tsx:337` and `JournalHistory.tsx:281` both already use `react-virtuoso`'s `<Virtuoso>`. No change needed.

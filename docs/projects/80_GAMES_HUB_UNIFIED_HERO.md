@@ -2,7 +2,7 @@
 
 **Status:** ✅ Shipped
 **Primary Persona:** All (persona shows up only as a per-row icon tint — the whole point of this restyle is dropping persona grouping in favor of one flat list)
-**Objective:** Restyle `GamesHub.tsx` from a grid of separately-colored gradient tiles into one unified dark card containing a flat list of game rows (per `docs/reports/RecoveryGamesUnifiedHero.jsx`), and hide the Craving Buster / Thought Challenge entries from that list without deleting their routes, components, or any other code. Thought Challenge is re-surfaced as a Tools Hub entry (see Phase 2 addendum) rather than left fully unreachable, since — unlike Craving Buster, which keeps its SOS-button entry point — it had no other access route left in the app.
+**Objective:** Restyle `GamesHub.tsx` from a grid of separately-colored gradient tiles into one unified dark card containing a flat list of game rows (per a design-reference mockup, `docs/reports/RecoveryGamesUnifiedHero.jsx` — since deleted as a misfile during the 2026-08-04 governance sweep; its layout is fully realized in the shipped `GamesHub.tsx`, so nothing was lost), and hide the Craving Buster / Thought Challenge entries from that list without deleting their routes, components, or any other code. Thought Challenge is re-surfaced as a Tools Hub entry (see Phase 2 addendum) rather than left fully unreachable, since — unlike Craving Buster, which keeps its SOS-button entry point — it had no other access route left in the app.
 
 ---
 
@@ -36,7 +36,7 @@ No Firestore schema changes. No new collections or fields. `useGameSave` is reus
 * No new hooks. Reuse `useGameSave('fast-lane')` to derive the Fast Lane row's progress chip from real save data (`state.week`) instead of the design mockup's hardcoded `"Continue · Week 4"` string. No chip renders if no save exists.
 
 ### Phase 2: UI/UX & Gamification
-* Replace the existing tile-grid `GamesHub.tsx` body with one dark unified card (`linear-gradient(160deg, #2E1A47 0%, #1B0F2E 100%)`, blurred radial accent blooms), containing a flat list of `GameRow` buttons — ported from `docs/reports/RecoveryGamesUnifiedHero.jsx`.
+* Replace the existing tile-grid `GamesHub.tsx` body with one dark unified card (`linear-gradient(160deg, #2E1A47 0%, #1B0F2E 100%)`, blurred radial accent blooms), containing a flat list of `GameRow` buttons — ported from `docs/reports/RecoveryGamesUnifiedHero.jsx` (design-reference mockup, since deleted — its content is fully realized in the shipped `GamesHub.tsx`).
 * `GAMES` array ports the mockup's entries **except** `"Anchor Words"`, which does not exist anywhere in this codebase (no route, no component) and is excluded rather than invented.
 * Craving Buster and Thought Challenge are kept in the `GAMES` array with `active: false` — exactly as the mockup's own comment block prescribes — so their metadata isn't lost and re-enabling either is a one-line flip. Their routes (`/games/craving-buster`, `/games/thought-challenge`) and components are untouched; they simply don't render as rows (`ACTIVE_GAMES = GAMES.filter(g => g.active)`).
 * Icons ported from the mockup's `lucide-react` set to already-installed `@heroicons/react/24/outline` equivalents (verified to exist in `node_modules`): `UserGroupIcon` (Recovery Jeopardy), `RocketLaunchIcon` (Fast Lane), `ArrowTrendingUpIcon` (Goal Ladder), `ViewfinderCircleIcon` (Trigger Match), `BookOpenIcon` (Knowledge Quests), `Squares2X2Icon` (Daily Crossword), `CloudIcon` (Craving Buster, kept inactive), `LightBulbIcon` (Thought Challenge, kept inactive).

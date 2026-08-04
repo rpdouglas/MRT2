@@ -1,7 +1,7 @@
 # 📁 Project 94: Production Error Telemetry Hardening
 
 **Status:** ✅ Shipped
-**Primary Persona:** Walt (traceability of what actually happened matters most to him), universal (any user who hits an error deserves it to be visible to engineering)
+**Primary Persona:** Walt (traceability of what actually happened matters most to him), Dev / AI Partner (error visibility for engineering; see `docs/governance/INTERNAL_PERSONAS.md`)
 **Objective:** Close the real parts of `OBSERVABILITY_AUDIT.md`'s GAP-01 and GAP-03 — wire priority `console.error` call sites to the already-existing `safeCapture()` telemetry primitive, and fix `ErrorBoundary.tsx`'s guaranteed-to-fail Firestore write when a crash happens while unauthenticated — plus add lightweight Web Vitals telemetry (GAP-05).
 
 ---
@@ -23,9 +23,9 @@
 ---
 
 ## 2. Security & Zero-Knowledge Audit 🛡️
-* [ ] **Data Sensitivity:** `trackMutationFailed(domain, errorName)` must pass only a domain string (`'task'`/`'journal'`/`'template'`) and the error's `.name`/`.message` — never the mutation's input data (which, for journal/template mutations, could contain decrypted content). Verify each `onError`'s `_err` parameter is inspected only for error metadata, never logged wholesale.
-* [ ] **Encryption Strategy:** N/A — no new encrypted fields.
-* [ ] **Key Rotation:** N/A.
+* [x] **Data Sensitivity:** `trackMutationFailed(domain, errorName)` must pass only a domain string (`'task'`/`'journal'`/`'template'`) and the error's `.name`/`.message` — never the mutation's input data (which, for journal/template mutations, could contain decrypted content). Verify each `onError`'s `_err` parameter is inspected only for error metadata, never logged wholesale.
+* [x] **Encryption Strategy:** N/A — no new encrypted fields.
+* [x] **Key Rotation:** N/A.
 
 ---
 

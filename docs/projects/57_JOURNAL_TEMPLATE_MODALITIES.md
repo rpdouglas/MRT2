@@ -57,6 +57,8 @@ A template has either `content` (dropped into free-write textarea, as today) or 
 
 ### Phase 2: UI/UX
 - `src/components/journal/JournalEditor.tsx`: import `GROUP_ORDER`; extend `handleTemplateSelect` to branch on `content` vs `prompts` for default templates (mirroring the existing branch already used for custom templates); replace the single `"Standard"` `<optgroup>` with one `<optgroup>` per `GROUP_ORDER` group.
+
+**2026-08-04 governance note:** this `GROUP_ORDER`/`<optgroup>` mechanism was later superseded by PROJ-93's moment-based regrouping (`TemplatePickerSheet.tsx`, reading `t.group` directly in a bottom-sheet accordion instead of a native `<select>`). `GROUP_ORDER` itself was deleted as confirmed-dead code during a knip sweep. This section is left as the original as-built record; see `docs/projects/93_JOURNAL_TEMPLATE_MOMENT_GROUPING.md` for the current picker implementation.
 - **Somatic Check:** No red/urgency styling introduced. Twelve-Step stays first in the list (unchanged position) to preserve muscle memory for existing users.
 - **Reward:** No XP/gamification hook — templates are a content/UX feature, not a streak/achievement trigger.
 
