@@ -35,7 +35,7 @@ export interface FastLaneShopItem {
   descRecovery: string;
 }
 
-export type FastLaneEventType = 'positive' | 'negative' | 'neutral';
+type FastLaneEventType = 'positive' | 'negative' | 'neutral';
 
 export interface FastLaneRandomEvent {
   type: FastLaneEventType;

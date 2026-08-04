@@ -1,7 +1,7 @@
 import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
-export interface NewJournalEntry {
+interface NewJournalEntry {
   uid: string;
   content: string;
   moodScore: number;

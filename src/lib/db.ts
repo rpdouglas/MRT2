@@ -103,7 +103,7 @@ export interface JournalEntry {
   } | null;
 }
 
-export type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
+type TaskCategory = 'Recovery' | 'Health' | 'Life' | 'Work';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 
 export interface Task {
@@ -176,8 +176,8 @@ export interface GameSaveRecord {
 // No user data anywhere in this document, so no encrypted fields (unlike
 // every other Recovery Games collection) — see
 // docs/projects/79_DAILY_CROSSWORD.md §2/§3.
-export type CrosswordClueStyle = 'dictionary' | 'recovery' | 'reflective' | 'metaphor';
-export type CrosswordDifficulty = 'easy' | 'mid' | 'advanced';
+type CrosswordClueStyle = 'dictionary' | 'recovery' | 'reflective' | 'metaphor';
+type CrosswordDifficulty = 'easy' | 'mid' | 'advanced';
 
 export interface CrosswordWordEntry {
   answer: string;

@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 
-export interface TabBarItem {
+interface TabBarItem {
   id: string;
   label: string;
   icon?: ElementType;

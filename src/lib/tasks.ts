@@ -9,7 +9,6 @@ import type { Task as TaskInterface } from "./db";
 import { type RecurrenceConfig, calculateNextDueDate } from "./dateUtils";
 
 export type Task = TaskInterface;
-export type Frequency = 'once' | 'daily' | 'weekly' | 'monthly';
 export type Priority = 'High' | 'Medium' | 'Low';
 export type { RecurrenceConfig };
 

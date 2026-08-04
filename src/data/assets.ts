@@ -117,5 +117,3 @@ export const ASSETS = {
     }
   }
 } as const;
-
-export type AssetPath = typeof ASSETS;

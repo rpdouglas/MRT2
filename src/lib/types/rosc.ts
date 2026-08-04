@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export interface ROSCDomainScore {
+interface ROSCDomainScore {
   score: number;
   selfReportedScore: number;
   evidenceCount: number;

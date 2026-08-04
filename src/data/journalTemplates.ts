@@ -10,8 +10,9 @@
  *    with user-created custom templates in `src/lib/db.ts`). Selecting these
  *    renders one labeled textarea per prompt in the guided form view.
  *
- * `group` drives the modality section a template appears under in the
- * Journal Editor's template picker (see GROUP_ORDER below).
+ * `group` (clinical modality) is secondary metadata shown on each template
+ * row — PROJ-93 replaced it as the picker's primary grouping axis with
+ * `moment`/`MOMENT_ORDER` below (see `TemplatePickerSheet.tsx`).
  */
 
 /** PROJ-93: which picker section a template appears under, replacing
@@ -43,22 +44,6 @@ export interface StaticJournalTemplate {
   content?: string;
   prompts?: string[];
 }
-
-/** Display order for template picker optgroups. Any group not listed here
- * falls back to the end, sorted alphabetically. */
-export const GROUP_ORDER = [
-  'Twelve-Step',
-  'CBT / SMART',
-  'DBT',
-  'Mindfulness',
-  'Harm Reduction',
-  'Reset',
-  'Trauma-Informed',
-  'ACT',
-  'Motivational',
-  'MAT',
-  'General',
-];
 
 export const DEFAULT_TEMPLATES: StaticJournalTemplate[] = [
     {

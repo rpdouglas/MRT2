@@ -12,8 +12,6 @@ const COLLECTION = 'insights';
 
 // --- DEFINITIONS ---
 
-export type InsightType = 'journal' | 'workbook';
-
 // Combined type for what we save to Firestore. The 'journal' variant mirrors
 // the same scope_context/summary/pillars/suggested_actions base shape used by
 // the 'workbook' variant (JournalAnalysisWizard's comparative and deep-pattern
