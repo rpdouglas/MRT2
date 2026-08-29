@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
 import type { UserProfile } from '../../lib/db';
-import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
+import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
+import { toast } from 'sonner';
 
 export default function FriendsDirectory() {
     const [users, setUsers] = useState<UserProfile[]>([]);
@@ -90,6 +91,21 @@ export default function FriendsDirectory() {
         a.href = url; a.download = 'mrt_users.csv'; a.click();
     };
 
+    const handleCopyEmails = async () => {
+        const emails = users.map(u => u.email).filter((e): e is string => !!e);
+        if (emails.length === 0) {
+            toast.error('No email addresses to copy.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(emails.join(', '));
+            toast.success(`Copied ${emails.length} email address${emails.length === 1 ? '' : 'es'} to clipboard`);
+        } catch (err: unknown) {
+            console.error("Failed to copy emails", err);
+            toast.error('Failed to copy emails.');
+        }
+    };
+
     const renderTierBadge = (user: UserProfile) => {
         if (user.tier === 'premium') {
             if (user.tierSource === 'manual') {
@@ -154,9 +170,14 @@ export default function FriendsDirectory() {
                         <h2 className="text-lg font-bold text-gray-900">Friends Directory</h2>
                         <p className="text-sm text-gray-500">Manage account access, roles, and monetization.</p>
                     </div>
-                    <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
-                        <ArrowDownTrayIcon className="h-4 w-4" /> Export CSV
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleCopyEmails} className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
+                            <ClipboardDocumentIcon className="h-4 w-4" /> Copy Emails
+                        </button>
+                        <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
+                            <ArrowDownTrayIcon className="h-4 w-4" /> Export CSV
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
