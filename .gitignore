@@ -62,3 +62,6 @@ llm-export/
 # rollup-plugin-visualizer output (PROJ-98) — regenerate locally via
 # `npm run build`, never a tracked artifact.
 stats.html
+
+# Claude Code agent worktree scratch state — transient, never a tracked artifact.
+.claude/worktrees/
