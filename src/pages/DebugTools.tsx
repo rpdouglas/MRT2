@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { Navigate } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
 import { WrenchScrewdriverIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { subDays, startOfDay } from 'date-fns';
@@ -9,14 +10,14 @@ import { THEME } from '../lib/theme';
 import type { Task } from '../lib/tasks';
 
 export default function DebugTools() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
 
     // FIX: Wrapped in useCallback to stabilize the function reference
     const loadTasks = useCallback(async () => {
-        if (!user || !db) return;
+        if (!user || !db || !isAdmin) return;
         setLoading(true);
         try {
             const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
@@ -27,10 +28,14 @@ export default function DebugTools() {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, isAdmin]);
 
     // FIX: Added dependency array
     useEffect(() => { loadTasks(); }, [loadTasks]);
+
+    if (!isAdmin) {
+        return <Navigate to="/dashboard" />;
+    }
 
     const simulateCompletedYesterday = async (taskId: string) => {
         if (!db) return;

@@ -83,5 +83,8 @@
     "vite-plugin-pwa": "^1.2.0",
     "vitepress": "^1.6.4",
     "vitest": "^4.0.16"
+  },
+  "overrides": {
+    "dompurify": "^3.4.14"
   }
 }
