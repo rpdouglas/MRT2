@@ -11,20 +11,20 @@ quadrantChart
     title Risk Matrix — Likelihood vs Impact
     x-axis Low Likelihood --> High Likelihood
     y-axis Low Impact --> High Impact
-    quadrant-1 Monitor Closely
-    quadrant-2 Critical — Act Now
+    quadrant-1 Critical - Act Now
+    quadrant-2 Monitor Closely
     quadrant-3 Accept / Low Priority
     quadrant-4 Mitigate Opportunistically
     Legacy vault-key gap: [0.55, 0.85]
     No App Check + no cost alerting: [0.5, 0.75]
     No APM/crash reporting: [0.6, 0.55]
-    Service Module absence (growth risk): [0.7, 0.7]
+    Service Module absence, growth risk: [0.7, 0.7]
     Android IAP revenue leak: [0.85, 0.4]
     react-router-dom CVE: [0.15, 0.2]
     Debug route exposure: [0.2, 0.25]
     No DR/BC runbook: [0.25, 0.55]
     Encrypt-before-write convention gap: [0.2, 0.6]
-    Firestore validation gaps (4 collections): [0.3, 0.35]
+    Firestore validation gaps, 4 collections: [0.3, 0.35]
     No pentest performed: [0.35, 0.5]
     Node version drift: [0.3, 0.1]
     Compliance docs unverified: [0.3, 0.4]
