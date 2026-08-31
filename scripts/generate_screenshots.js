@@ -124,7 +124,11 @@ async function captureScreenshots() {
             }
         },
         {
-            name: 'lisa-sponsees',
+            // NOT a Service Module / sponsee-directory shot — that feature doesn't exist yet
+            // (PROJ-05 is paused, no UI built). This captures the internal Admin Dashboard's
+            // Users tab. Previously mislabeled 'lisa-sponsees' with a fabricated description
+            // in docs/SCREENSHOTS_INDEX.md — never use this for public-facing marketing.
+            name: 'admin-users-directory',
             url: `${BASE_URL}/admin?mockUser=admin`,
             action: async (page) => {
                 await page.click('button:has-text("Users")');

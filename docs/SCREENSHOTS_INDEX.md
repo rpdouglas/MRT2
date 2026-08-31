@@ -35,7 +35,7 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 | **[`david-premium.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-premium.webp)** | `/premium?mockUser=david` | David | Premium Upgrade page. Displays subscription benefits, pricing tiers, and the "Unlock Toolkit" call to action seen by free users. |
 | **[`maya-thought-record.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-thought-record.webp)** | `/tools/thought-record?mockUser=maya` | Maya | CBT Thought Record. Step 1 of 7 ("Situation") of a guided wizard: prompt, collapsible "What does this mean?" helper, and an empty response field. |
 | **[`david-sos-modal.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/david-sos-modal.webp)** | `/dashboard?mockUser=david` (Click SOS) | David | Emergency SOS Modal. Bypasses lock screens to show crisis hotlines, sponsor dialer, and grounding breath pacers. |
-| **[`lisa-sponsees.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-sponsees.webp)** | `/admin?mockUser=admin` (Tab Users) | Lisa | Sponsor Sponsee Directory. Shows the anonymous directory of sponsees, step progress tracking, and secure, encrypted private notes. |
+| **[`admin-users-directory.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/admin-users-directory.webp)** | `/admin?mockUser=admin` (Tab Users) | N/A (internal) | Admin Dashboard, Users tab. Internal operational tooling — **not** a sponsee/Service Module feature (that doesn't exist yet); do not use in marketing. See §15 for the 2026-08-31 correction. |
 | **[`jordan-mat-log.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/jordan-mat-log.webp)** | `/journal?mockUser=jordan&tab=write&template=mat_check_in` | Jordan | MAT Check-In Form. Form prompts for logging daily medication adherence, side-effects, cravings, and treatment plan reflections. |
 | **[`walt-journal-insights.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-insights.webp)** | `/journal?mockUser=walt&tab=insights` | Walt | Journal Insights. Displays weekly and monthly mood trends, somatic balance charts, and check-in word cloud frequencies. |
 | **[`walt-journal-ai-wizard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-journal-ai-wizard.webp)** | `/journal?mockUser=walt&tab=history` (Trigger AI) | Walt | AI Analysis Results. Displays the completed Comparative Analysis result showing trajectory, key themes, wins, blind spots, and actionable advice. |
@@ -127,10 +127,10 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 *   **Visual Structure**: High-visibility rose/red color scheme. Overlays the entire screen (bypassing vault limits) to display three large-target sections: Call Sponsor (primary), Call 988/911 (emergency), and Start Somatic Breathwork (grounding pacer).
 *   **Semantic Meaning**: Bypasses the Zero-Knowledge PIN requirement to guarantee instant, single-tap safety routing for users in acute distress or relapse crisis.
 
-### 15. Lisa's Sponsor Directory (`lisa-sponsees.webp`)
+### 15. Admin Dashboard — Users Tab (`admin-users-directory.webp`)
 *   **Route**: `/admin?mockUser=admin` (Active on Users Tab)
-*   **Visual Structure**: Slate/zinc theme. Displays a clean directory list of active sponsees identified anonymously (e.g. "Sponsee #1", "Sponsee #2"). Expanding a sponsee reveals their 12-step status dropdown, quick communication buttons, and a text block showing encrypted sponsor meeting notes.
-*   **Semantic Meaning**: The Service network sponsee rolodex, allowing sponsors to track progress securely with Zero-Knowledge encryption protecting sponsee confidentiality.
+*   **Visual Structure**: Dark admin theme. Shows the internal Admin Dashboard's Users tab — total/active/new-user counters and the Friends Directory tool (account access, roles, monetization, Copy Emails/Export CSV).
+*   **Semantic Meaning**: Internal operational tooling for the maintainer, not a user-facing feature. **Corrected 2026-08-31** — this entry was previously mislabeled "Lisa's Sponsor Directory" with a fully fabricated description of a sponsee rolodex UI that does not exist (`PROJ-05` Service Module is paused with no UI built beyond a Firestore rules stub, per `docs/ROADMAP.md`). Never use this image in public-facing marketing — it's internal admin tooling.
 
 ### 16. Jordan's MAT Medication Log (`jordan-mat-log.webp`)
 *   **Route**: `/journal?mockUser=jordan&tab=write&template=mat_check_in`
