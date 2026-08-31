@@ -74,6 +74,7 @@ gantt
 ### 🚧 Sprint 9.2: TWA Compilation & Release (BLOCKED ON GOOGLE PLAY CONSOLE VERIFICATION)
 
 #### Epic 4: Bubblewrap Wrapper and Submission
+*   **Full step-by-step guide:** [`docs/PLAY_STORE_BUBBLEWRAP_GUIDE.md`](../PLAY_STORE_BUBBLEWRAP_GUIDE.md) — the complete Phase 0-9 walkthrough (install, init, signing, `assetlinks.json`, Play Console upload, store listing, submission). This section stays a summary; that doc is the one to follow when actually running the build.
 *   **Local Build:** Initialize the Android project using Bubblewrap:
     ```bash
     bubblewrap init --manifest=https://www.myrecoverytoolkit.ca/manifest.webmanifest

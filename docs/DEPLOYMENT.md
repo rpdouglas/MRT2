@@ -38,3 +38,6 @@ firebase deploy --only hosting
 
 ## 5. Something Broke — Rollback & Incident Response
 See [`docs/RUNBOOK.md`](./RUNBOOK.md) for the actual "it's down, what do I do" procedure — Firebase Hosting rollback, Cloud Functions/rules rollback (no atomic rollback exists for either), and the CI dependency vulnerability gate added in PROJ-96.
+
+## 6. Android (Google Play Store)
+The production PWA is also packaged as a Trusted Web Activity for Play Store distribution — see [`docs/PLAY_STORE_BUBBLEWRAP_GUIDE.md`](./PLAY_STORE_BUBBLEWRAP_GUIDE.md) for the full Bubblewrap build/signing/submission walkthrough, and [`docs/projects/07_PLAY_STORE_TWA.md`](./projects/07_PLAY_STORE_TWA.md) for project status.
