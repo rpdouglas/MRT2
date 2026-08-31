@@ -1,92 +1,96 @@
 {
   "meta": {
     "env": "DEV",
-    "branch": "claude/tool-versions-changelog-pqwr9q",
-    "globalHash": "2d94c63",
-    "coreHash": "e881645f",
-    "buildTime": "2026-08-03T03:21:05.432Z",
-    "appVersion": "1.9.9"
+    "branch": "claude/bubble-wrap-play-store-build-t1ef6p",
+    "globalHash": "9adef1c",
+    "coreHash": "c4b69d8e",
+    "buildTime": "2026-08-31T21:23:56.840Z",
+    "appVersion": "1.9.10"
   },
   "pages": {
     "AdminDashboard": {
-      "hash": "85a7f693",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "4e5fd847",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Dashboard": {
-      "hash": "8f1c0379",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "e09e843e",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "DebugTools": {
-      "hash": "255a49f7",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "a6c26f60",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "DeleteAccount": {
-      "hash": "53b437b8",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "9a05e7c3",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "GamesHub": {
-      "hash": "32ddee2d",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "4d337577",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "InsightsLog": {
-      "hash": "bfd34a89",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "93050099",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Journal": {
-      "hash": "d857754c",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "debabe7c",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Links": {
-      "hash": "db394af3",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "04047c0e",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Login": {
-      "hash": "37cd9b68",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "ef71664c",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "PremiumUpgrade": {
-      "hash": "461f35ae",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "1ba71ff5",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Profile": {
-      "hash": "887f19bd",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "9ef78774",
+      "lastModified": "2026-08-31T21:23:56.840Z"
+    },
+    "RecoveryCapital": {
+      "hash": "57267319",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Tasks": {
-      "hash": "46a730c3",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "7ae1e904",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "ToolHistory": {
-      "hash": "be886dfc",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "b4155b22",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "ToolsHub": {
-      "hash": "f23dd723",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "f1361d17",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "UrgeSurfer": {
-      "hash": "a5025e7f",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "237a46b3",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Vitality": {
-      "hash": "39530bae",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "f0fb7d95",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Welcome": {
-      "hash": "4fe158e8",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "958b0273",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "WorkbookDetail": {
-      "hash": "30e777dd",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "7e6a9deb",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "WorkbookSession": {
-      "hash": "4e44ad56",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "79bce017",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     },
     "Workbooks": {
-      "hash": "629bd597",
-      "lastModified": "2026-08-03T03:21:05.432Z"
+      "hash": "bdd82e1c",
+      "lastModified": "2026-08-31T21:23:56.840Z"
     }
   }
 }
