@@ -1,6 +1,6 @@
 # 🔒 Privacy Policy for My Recovery Toolkit (MRT)
 
-**Last Updated:** March 2026
+**Last Updated:** August 2026
 
 **My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured.
 
@@ -36,6 +36,9 @@ MRT uses Artificial Intelligence (Google Gemini) to provide coaching and analysi
 We use trusted third-party infrastructure to host the app:
 * **Google Firebase:** Hosts the database, authentication, push notifications, and static files.
 * **Google Generative AI:** Provides the intelligence for analysis features.
+* **PostHog:** Provides product analytics (feature usage, performance, error monitoring). PostHog never receives your journal, workbook, or other encrypted content — only event names and non-sensitive metadata.
+* **Stripe:** Processes payments for premium subscriptions, via Stripe's own secure checkout. Your card details are entered directly into Stripe's payment page and never pass through our servers.
+* **Google Drive (optional):** If you choose to back up your data to Google Drive, a decrypted copy of your export is uploaded directly from your device to your own Google Drive using your own Google account permissions. We do not access or store this backup — it is entirely under your control, and you can revoke access at any time from your Google Account settings.
 
 ## 5. Data Sovereignty
 You own your data.

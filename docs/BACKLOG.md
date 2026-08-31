@@ -72,6 +72,7 @@
 * Refactor the 13 files that bypass the hooks-only Firestore-access convention into `src/hooks/` (`TD-04`) — incrementally, as each file is touched anyway.
 * Add dynamic/latest-model routing with a fallback chain for Gemini model selection.
 * Formalize the prompt-injection delimiting pattern (already shipped across all 9 flows under `PROJ-100`) as a reusable, tested utility for any future AI call site.
+* **Reconcile `docs/legal/PRIVACY_POLICY.md` and `docs-site/privacy.md`.** Discovered 2026-08-31 while drafting the sub-processor list: these are two independently-maintained copies of the same policy that have drifted from each other (different wording throughout, `docs-site/privacy.md` is missing the "Service Data" mention `docs/legal/PRIVACY_POLICY.md` has, etc.) — `docs-site/privacy.md` is the one actually linked from the app (`Login.tsx`/`Profile.tsx`) and therefore the operative one. Both were patched with the same missing third-party disclosures (PostHog/Stripe/Google Drive) today, but the deeper drift between them wasn't otherwise touched. Pick one as the source of truth (`docs-site/privacy.md`, since it's the one users actually see) and either delete or clearly mark the other as non-authoritative.
 
 ## 🔭 Contingent / Strategic (No Action Unless a Specific Signal Appears)
 *Deliberately not spec'd or scheduled — each of these is a "decide later, informed by data we don't have yet" item per the finalreview audit's own framing, not a default extension of the roadmap.*

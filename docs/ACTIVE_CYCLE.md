@@ -18,7 +18,7 @@
 - **Firebase App Check** (Wave 0, Tier 1) — all Cloud Functions + Firestore. Audit P0 #2.
 - **Legacy Vault-Key Migration** (Wave 1, Tier 2) — force/nudge pre-`PROJ-65` accounts onto the peppered scheme. Audit P0 #3.
 - **Firestore Validation Extension** (Wave 1, Tier 2) — `workbook_answers`/`service`/`rosc_assessments`/`game_progress` shape/size validation.
-- **Sub-Processor / DPA Disclosure List** (Wave 0, Tier 1) — legal doc, not code, but still needs scoping before writing; feeds the Data Safety questionnaire directly.
+- ~~**Sub-Processor / DPA Disclosure List** (Wave 0, Tier 1)~~ **Done 2026-08-31** — see `docs/ROADMAP.md` Wave 0 for detail; also fixed a real privacy-policy gap found along the way (both `docs-site/privacy.md` and `docs/legal/PRIVACY_POLICY.md` were missing PostHog/Stripe/Google Drive from their third-party disclosures).
 
 ## ⏸️ Paused (Not in this cycle)
 - **PROJ-05:** The Service Network -> Build encrypted Sponsee Rolodex to unblock organic viral growth. Paused per ROADMAP.md (Wave 3) to focus on Wave 1 Onboarding — no code exists yet beyond a Firestore rules stub; `Dashboard.tsx` still shows a "Coming Soon" placeholder. Was previously listed here as an active Priority-2 item, which didn't match its Wave-3/Paused status elsewhere — moved here to keep this file honest about what's actually being worked on.

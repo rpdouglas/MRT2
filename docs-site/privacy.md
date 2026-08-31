@@ -2,7 +2,7 @@
 
 **My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured at `www.myrecoverytoolkit.ca`.
 
-**Last Updated:** March 2026
+**Last Updated:** August 2026
 
 ## 1. Our Core Philosophy: Zero-Knowledge Encryption
 MRT is built on a **Zero-Knowledge Architecture**.
@@ -31,11 +31,19 @@ MRT uses **Google Gemini 2.5 (Flash and Pro models)** to provide coaching, patte
 * **Process:** Your device temporarily decrypts the specific text in-memory, sends it to the AI provider via a secure connection, and displays the result.
 * **Stateless Privacy:** We utilize "Stateless" API calls. Your journal entries are **NOT** stored by Google and are **NOT** used to train public AI models. 
 
-## 4. Data Sovereignty
+## 4. Data Storage & Third Parties
+We use trusted third-party services to run the app:
+* **Google Firebase:** Hosts the database, authentication, push notifications, and static files.
+* **Google Generative AI:** Provides the intelligence for analysis features.
+* **PostHog:** Provides product analytics (feature usage, performance, error monitoring). PostHog never receives your journal, workbook, or other encrypted content — only event names and non-sensitive metadata.
+* **Stripe:** Processes payments for premium subscriptions, via Stripe's own secure checkout. Your card details are entered directly into Stripe's payment page and never pass through our servers.
+* **Google Drive (optional):** If you choose to back up your data to Google Drive, a decrypted copy of your export is uploaded directly from your device to your own Google Drive using your own Google account permissions. We do not access or store this backup — it is entirely under your control, and you can revoke access at any time from your Google Account settings.
+
+## 5. Data Sovereignty
 You own your data.
 * **Export:** You may download a decrypted JSON or PDF copy of your data at any time.
-* **Deletion:** You may delete your account at any time via the Profile page, permanently wiping all data from our servers.
+* **Deletion:** You may delete your account at any time via the Profile page, or via a public web link if you can't sign in, permanently wiping all data from our servers.
 
-## 5. Contact Us
+## 6. Contact Us
 For technical support or privacy questions, please contact:
 **Email:** rpdouglas@gmail.com
