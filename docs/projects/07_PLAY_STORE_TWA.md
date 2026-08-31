@@ -1,6 +1,6 @@
 # 📁 Project PROJ-07: Play Store TWA
 
-**Status:** 🟡 In Progress — Sprint 9.1 implemented and code-verified 2026-07-19 (Epics 1-3; see §4/§5). Sprint 9.2 still blocked on Google Play Console verification steps (DUNS received).
+**Status:** 🟡 In Progress — Sprint 9.1 implemented and code-verified 2026-07-19 (Epics 1-3; see §4/§5). Google Play Console verification (website + identity/phone) confirmed complete 2026-08-31 — Sprint 9.2 (Epic 4: Bubblewrap build/sign/upload) is now unblocked and is the next concrete step. All of Epic 4 is manual, account-holder-only work (CLI + keystore + Play Console UI), not executable from an agent sandbox.
 **Primary Persona:** All (David, Ned, Maya, Walt, Lisa)
 **Objective:** Package the My Recovery Toolkit (MRT) Progressive Web App into an Android package (AAB/APK) using Google Bubblewrap (TWA) and resolve all Google Play Store compliance and mobile UX requirements.
 
@@ -71,7 +71,7 @@ gantt
 
 ---
 
-### 🚧 Sprint 9.2: TWA Compilation & Release (BLOCKED ON GOOGLE PLAY CONSOLE VERIFICATION)
+### 🚧 Sprint 9.2: TWA Compilation & Release (unblocked 2026-08-31 — Google Play Console verification complete)
 
 #### Epic 4: Bubblewrap Wrapper and Submission
 *   **Local Build:** Initialize the Android project using Bubblewrap:

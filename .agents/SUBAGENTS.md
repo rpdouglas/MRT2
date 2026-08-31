@@ -20,7 +20,7 @@ When tackling complex tasks, AGY agents can invoke or define these specialized s
   1. Are all user-generated content writes (journals, workbook answers, service notes) encrypted via src/lib/crypto.ts before Firestore calls?
   2. Is decryption scoped exclusively to UI render components/hooks?
   3. Are decrypted contents kept out of global state, React Query cache, and console logs?
-  4. Are any Gemini AI API calls restricted to the 7 approved exceptions in GEMINI.md?
+  4. Are any Gemini AI API calls restricted to the approved flows listed in GEMINI.md's "Approved Gemini Exceptions" section (do not hardcode a count here — it has changed before and will again; always re-read the current list)?
   Report any violation as CRITICAL SECURITY DEFECT.
   ```
 

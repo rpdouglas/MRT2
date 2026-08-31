@@ -1,9 +1,8 @@
 # Play Console Data Safety Questionnaire — Draft Answers
 
-**Status:** Draft, not submitted. Prepared 2026-08-31 while Google Play Console account identity verification is still pending (`docs/BACKLOG.md`), so this is ready to transcribe the moment the account unblocks — it is not a substitute for actually filling out the live form.
+**Status:** Draft, ready to transcribe. Google Play Console account verification (website + identity/phone) completed 2026-08-31 (`docs/BACKLOG.md`) — this document is now the final answer key for the live form, not a placeholder. All open items resolved 2026-08-31 (see history below); this is not a substitute for actually filling out and submitting the live form.
 **Source data:** `docs/legal/SUB_PROCESSORS.md` (code-verified 2026-08-31). Cross-check against that doc if anything here looks stale.
-
-> **This draft makes engineering-verifiable claims (what data goes where) but does NOT make the legal/product judgment calls Play's form requires — specifically whether recovery/journaling content should be declared under "Health and fitness" or "Sensitive info" categories. That determination should get a deliberate answer from whoever owns compliance for this app, not an inferred default. Flagged inline below, not decided.**
+**Health & fitness categorization:** Decided 2026-08-31 by the account/compliance owner — declare under **"Health info."** See §Health and fitness below for the full answer and reasoning.
 
 ---
 
@@ -36,12 +35,14 @@
 
 Card details are entered directly into Stripe's hosted Checkout — MRT's own servers and client never receive or store them.
 
-### Health and fitness — ⚠️ needs an explicit decision, not filled in here
-MRT is a recovery/mental-health-adjacent app (journaling, CBT/REBT tools, mood tracking, sobriety tracking). Play's taxonomy has a "Health and fitness" data category and a separate, stricter "Sensitive info" framing for apps handling this kind of content. **Whoever owns this submission needs to decide, deliberately:**
-- Does mood score / sobriety-tracking / journal-topic data get declared under "Health and fitness"?
-- Does the existing Play Store health-app medical disclaimer (`PROJ-90`, shown on Login/Welcome) already satisfy the policy intent here, or does the Data Safety form need its own explicit acknowledgment?
+### Health and fitness
+**Decided 2026-08-31:** declare under **"Health info."** Google's own definition covers user-entered content about a physical or mental health condition, disability, or other health issue — addiction recovery tracking fits squarely. Zero-knowledge client-side encryption is a *protection* detail for the form (supports "encrypted in transit," "encrypted at rest"), not grounds to skip the category — the plaintext still leaves the device (to Firestore as ciphertext, and transiently to Gemini in the 9 approved flows), which is what triggers the collection declaration regardless of who can read it server-side.
 
-Not answering this here on purpose — it's a compliance judgment call, not something to default silently.
+| Data type | Collected? | Shared? | Purpose | Required/Optional | Deletable? |
+|---|---|---|---|---|---|
+| Health info (mood scores, sobriety/streak tracking, journal entries, workbook answers, CBT/REBT tool content, ROSC assessment scores) | Yes | No — encrypted client-side (AES-GCM) before transit; server (Firestore) only ever holds ciphertext. Decrypted only transiently, client-side or via the `generateAIInsights` proxy, in the 9 approved AI-analysis flows (`CLAUDE.md` Zero-Knowledge Encryption Boundary) — never persisted server-side in plaintext | Core app functionality (recovery tracking); AI-assisted analysis only when the user explicitly requests it | Required for core features | Yes, via account deletion (crypto-shredding, `executeTotalAccountAnnihilation()`) |
+
+The existing Play Store health-app medical disclaimer (`PROJ-90`, shown on Login/Welcome) is a separate in-app UX/legal requirement and doesn't substitute for this form declaration — both apply.
 
 ### Messages / App activity
 | Data type | Collected? | Shared? | Purpose | Required/Optional | Deletable? |
@@ -61,11 +62,16 @@ Not answering this here on purpose — it's a compliance judgment call, not some
 |---|---|---|---|---|---|
 | Device ID (FCM push token) | Yes, only if push notifications are enabled | No | App functionality (push delivery) | Optional | Yes — auto-deleted on opt-out per `PRIVACY_POLICY.md` §2 |
 
+### Location
+| Data type | Collected? | Shared? | Purpose | Required/Optional | Deletable? |
+|---|---|---|---|---|---|
+| Approximate location | Yes — confirmed 2026-08-31 via `src/main.tsx:12-15`. PostHog is initialized with `defaults: '2026-01-30'` and no `ip`/geoip overrides, which is PostHog's IP-capture-on default; PostHog derives approximate (city/country-level) location server-side from the captured IP, not precise/GPS location | No | Analytics | Required (tied to the same analytics purpose as other App activity/App info rows; not user-facing-optional the way push tokens are) | N/A — governed by PostHog's own data retention, not an MRT-side per-user delete path today |
+
 ---
 
 ## Before submitting, for real
 
-1. Resolve the "Health and fitness" categorization decision above — don't let this draft's silence become a default.
-2. Confirm the PostHog `defaults: '2026-01-30'` preset's actual session-recording/autocapture/IP-capture behavior (open item in `docs/legal/SUB_PROCESSORS.md` §3) — it affects whether "Device or other IDs" / "Approximate location" need additional declarations.
-3. Confirm each processor's DPA/terms actually support the "collected, not shared" framing used throughout this draft (Section 2 header note) — this draft assumes standard service-provider terms for Firebase/Gemini/PostHog/Stripe but that assumption hasn't been checked against their actual current contracts.
+1. ~~Resolve the "Health and fitness" categorization decision~~ **Done 2026-08-31** — declared under "Health info," see above.
+2. ~~Confirm the PostHog `defaults: '2026-01-30'` preset's IP-capture behavior~~ **Done 2026-08-31** — confirmed via `src/main.tsx:12-15`: no override, so IP-derived approximate location is collected. Added as its own "Location" row above. **Still open:** whether autocapture/session-recording is *enabled at the PostHog project level* wasn't checked (client init doesn't disable it, but actual recording depends on the project dashboard toggle, which isn't visible from this codebase) — worth a quick look at the PostHog project settings before submitting, in case session recordings need their own declaration.
+3. Each processor's DPA/terms are assumed to support the "collected, not shared" framing (Section 2 header note) based on Firebase/GCP, PostHog, and Stripe's *published* standard DPAs positioning them as processors/service providers — **not verified against your actual signed/accepted agreements**. Low risk (these are all standard, boilerplate-accepted terms for apps this size) but flagging since it wasn't independently confirmed.
 4. Re-verify against `docs/legal/SUB_PROCESSORS.md` for drift if significant time has passed since 2026-08-31 before actually submitting.

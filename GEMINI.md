@@ -102,6 +102,10 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 2. **Server-side-only flow (PROJ-79):**
    - `generateDailyCrossword` Cloud Function (`functions/src/index.ts`) for crossword theme/clue generation (zero user data sent).
 
+**Sanitize before every AI call — treat Gemini as an untrusted boundary.** Never send raw content to Gemini from a call site not on the approved list above; never persist decrypted content server-side (`ai_logs` stays metadata-only).
+
+**Approved vault-PIN exception (PROJ-65) — not a Gemini exception, a separate carve-out:** `computePinHash(pin, salt)` — a SHA-256 hash, **never the raw PIN** — transits to the `verifyVaultPin` Cloud Function over HTTPS to obtain a rate-limited server pepper used in vault-key derivation. Not logged, never persisted to Firestore (only a per-uid attempt counter/lockout timestamp is stored). The only carve-out to "the server never sees unencrypted content" for the PIN itself — see `docs/projects/65_VAULT_KEY_HARDENING.md` §2.
+
 ---
 
 ## Coding Standards & Code Quality
@@ -121,6 +125,7 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
   - Reuse existing hooks, utilities, and context providers — don't reinvent.
   - Targeted patching only — never rewrite an entire file from memory. Use surgical edits.
   - No `console.log` of decrypted or sensitive data.
+- **Icons:** `@heroicons/react/24/outline` for outline variants, `@heroicons/react/24/solid` for solid variants. Verify an icon name exists before using it — don't guess.
 
 ---
 
