@@ -4,7 +4,7 @@
  */
 import { Fragment, type ReactNode, useEffect, useCallback, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon, HomeIcon, BookOpenIcon, UserCircleIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentListIcon, AcademicCapIcon, HeartIcon, LightBulbIcon, CommandLineIcon, WifiIcon, LockClosedIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, HomeIcon, BookOpenIcon, UserCircleIcon, ArrowLeftOnRectangleIcon, ClipboardDocumentListIcon, AcademicCapIcon, HeartIcon, LightBulbIcon, CommandLineIcon, WifiIcon, LockClosedIcon, ChatBubbleLeftRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon as WarningIcon } from '@heroicons/react/24/solid';
@@ -21,7 +21,7 @@ import FeedbackModal from './FeedbackModal';
 import { PWAUpdateBeacon } from './PWAUpdateBeacon'; 
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, isOnline } = useLayout();
+  const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSOS, isOnline } = useLayout();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, driveAccessToken, isAdmin } = useAuth();
@@ -81,6 +81,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen relative">
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+      {/* PROJ-104 Phase 1: rendered here (outside VaultGate/{children}) rather than
+          only inside per-page VibrantHeader, so SOS stays reachable even when the
+          current route's vault is locked and its page content — including that
+          page's own header — never mounts. z-[65] keeps it clickable above
+          VaultGate's z-[60] lock screen. */}
+      <button
+        onClick={toggleSOS}
+        aria-label="Emergency SOS"
+        className="fixed bottom-5 right-5 z-[65] p-3 rounded-full bg-red-500/90 hover:bg-red-500 text-white border border-red-400/50 shadow-lg backdrop-blur-md transition-all active:scale-95"
+      >
+        <ExclamationTriangleIcon className="h-6 w-6" />
+      </button>
       {!isOnline && (
           <div className="bg-red-600 text-white text-xs font-bold text-center py-2 px-4 fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 shadow-md animate-slideDown">
               <WifiIcon className="h-4 w-4" />

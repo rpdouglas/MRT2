@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { PhoneIcon, XMarkIcon, ExclamationTriangleIcon, HeartIcon, PencilSquareIcon, UserGroupIcon, ChatBubbleOvalLeftIcon, PuzzlePieceIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useEncryption } from '../contexts/EncryptionContext';
 import { trackSosOpened } from '../lib/telemetry';
 
 interface SOSModalProps { isOpen: boolean; onClose: () => void; }
@@ -12,6 +13,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   const [showMeetings, setShowMeetings] = useState(false);
   const { profile } = useUserProfile();
   const navigate = useNavigate();
+  const { isVaultUnlocked } = useEncryption();
   const sponsorName = profile?.sponsorName || null;
   const sponsorPhone = profile?.sponsorPhone || null;
 
@@ -25,7 +27,9 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      {/* PROJ-104 Phase 1: z-[70] (above VaultGate's z-[60] lock screen) so this
+          still renders on top when opened from a route whose vault is locked. */}
+      <Dialog as="div" className="relative z-[70]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -169,6 +173,9 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                         <p className="text-sm text-blue-700">
                             De-escalate your nervous system with 4-7-8 breathing. This feeling will pass.
                         </p>
+                        {!isVaultUnlocked && (
+                            <p className="text-xs text-blue-500 mt-1 font-medium">Requires unlocking your vault first</p>
+                        )}
                     </button>
 
                     {/* OPTION 4: JOURNAL (Urge Log) */}
@@ -183,6 +190,9 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
                         <p className="text-sm text-purple-700">
                             Process this craving using the "Urge Log" template. Get it out of your head.
                         </p>
+                        {!isVaultUnlocked && (
+                            <p className="text-xs text-purple-500 mt-1 font-medium">Requires unlocking your vault first</p>
+                        )}
                     </button>
 
                 </div>

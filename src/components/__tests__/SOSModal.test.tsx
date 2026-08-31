@@ -9,9 +9,14 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SOSModal from '../SOSModal';
+import { useEncryption } from '../../contexts/EncryptionContext';
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'test-user-123' } }),
+}));
+
+vi.mock('../../contexts/EncryptionContext', () => ({
+  useEncryption: vi.fn(() => ({ isVaultUnlocked: true })),
 }));
 
 const mockGetProfile = vi.fn();
@@ -63,5 +68,17 @@ describe('SOSModal', () => {
 
     expect(screen.getByText('Call 988 (Lifeline)')).toBeInTheDocument();
     expect(screen.getByText('Call 911')).toBeInTheDocument();
+  });
+
+  it('flags the vault-gated options as requiring an unlock when the vault is locked (PROJ-104)', async () => {
+    vi.mocked(useEncryption).mockReturnValue({ isVaultUnlocked: false } as unknown as ReturnType<typeof useEncryption>);
+    mockGetProfile.mockResolvedValue(null);
+
+    renderSOSModal();
+
+    expect(await screen.findAllByText('Requires unlocking your vault first')).toHaveLength(2);
+    // Non-gated crisis options never show the hint, locked or not.
+    expect(screen.getByText('Call 988 (Lifeline)')).toBeInTheDocument();
+    expect(screen.getByText('Urge Surfer')).toBeInTheDocument();
   });
 });
