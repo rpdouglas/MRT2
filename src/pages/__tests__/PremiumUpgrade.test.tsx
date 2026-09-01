@@ -55,16 +55,18 @@ describe('PremiumUpgrade — Android TWA gating', () => {
     expect(mockAddDoc).toHaveBeenCalled();
   });
 
-  it('replaces the purchase button with a web-upgrade link inside the TWA, and never creates a Stripe session', () => {
+  it('replaces the purchase button with non-clickable web-upgrade text inside the TWA, and never creates a Stripe session', () => {
     mockIsAndroidTWA.mockReturnValue(true);
     renderPage();
 
     expect(screen.queryByRole('button', { name: /become a supporter/i })).not.toBeInTheDocument();
 
-    const link = screen.getByRole('link', { name: /upgrade on the web/i });
-    expect(link).toHaveAttribute('href', 'https://www.myrecoverytoolkit.ca/premium');
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    // Deliberately not a real link — Google Play's External Content Links Program now
+    // formally regulates in-app links to external purchase pages (declaration, API
+    // integration, enrollment, review, fees). Plain text stays outside that scope.
+    expect(screen.queryByRole('link', { name: /upgrade on the web/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/upgrade on the web/i)).toBeInTheDocument();
+    expect(screen.getByText(/visit myrecoverytoolkit\.ca to become a supporter/i)).toBeInTheDocument();
 
     expect(mockAddDoc).not.toHaveBeenCalled();
   });

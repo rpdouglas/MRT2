@@ -145,16 +145,18 @@ export default function PremiumUpgrade() {
                                 {isManaging ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Manage Subscription'}
                             </button>
                         ) : isTWA ? (
+                            // Deliberately not a clickable link (Google Play's "External Content
+                            // Links Program" now formally regulates in-app links to external
+                            // purchase pages — declaration, API integration, Play Console
+                            // enrollment, review, and a 10-20% fee starting 2026-10-01). Plain
+                            // informational text keeps this outside that program's scope entirely.
                             <div className="w-full text-center">
-                                <a
-                                    href="https://www.myrecoverytoolkit.ca/premium"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full min-h-[44px] py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                <div
+                                    className="w-full min-h-[44px] py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 opacity-90"
                                 >
                                     <SparklesIcon className="h-5 w-5" />
                                     Upgrade on the Web
-                                </a>
+                                </div>
                                 <p className="text-slate-400 text-xs mt-3">
                                     Visit myrecoverytoolkit.ca to become a Supporter
                                 </p>

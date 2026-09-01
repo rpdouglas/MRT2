@@ -1,6 +1,6 @@
 # 📁 Project 68: Gate Stripe Checkout Out of the Android TWA
 
-**Status:** ✅ Shipped (2026-07-19) — Phases 1-2 implemented and tested; Phase 3's manual TWA verification (real referrer check inside a built TWA shell) not yet performed, see §5.
+**Status:** ✅ Shipped (2026-07-19); **amended 2026-09-01** — see §8. Phase 3's manual TWA verification (real referrer check inside a built TWA shell) not yet performed, see §5.
 **Primary Persona:** All (monetization/compliance infrastructure — no persona-specific UX beyond the gating itself)
 **Objective:** Detect when MRT is running as the Google Play–installed Trusted Web Activity and hide the in-app Stripe purchase flow in that context, so the app doesn't offer a non-Play purchase path for digital goods from inside an app distributed through the Play Store.
 
@@ -90,3 +90,17 @@ This is deliberately narrower than the existing `display-mode: standalone` check
 ## 7. Related
 * Unblocks: `docs/projects/07_PLAY_STORE_TWA.md` Sprint 9.2.
 * Alternative considered and rejected in favor of this: full Google Play Billing integration (Digital Goods API + Payment Request API) — rejected for cost/complexity, not for any inferiority; may be revisited later.
+
+---
+
+## 8. 2026-09-01 Amendment — the Epic v. Google landscape moved, and the "Upgrade on the Web" link was real, not text
+
+Re-checked against live Google Play Console policy pages during PROJ-07 Sprint 9.2 submission prep (this project's original research was 6 weeks stale by then, and the underlying antitrust litigation is genuinely dynamic). Two things changed:
+
+**The legal landscape solidified into a real program, not a temporary gray area.** As of 2026-09-01: Google's October 2025 injunction compliance stopped prohibiting developers from linking to external purchases in the US; December 2025 saw Google launch a formal **External Content Links Program** and **Alternative Billing Program** for US developers; a March 2026 Google/Epic settlement and a July 2026 joint withdrawal of a further-modification motion suggest this is stabilizing, not reverting. But "developers may link out" is no longer a blanket allowance this project could ride for free — it's now a real opt-in program: declaration form, external-links API integration, Play Console enrollment (Settings > External content links), up to a 7-day review, geographic scoping to US-only, and **10-20% fees on external-link purchases starting 2026-10-01**. Sources: [support.google.com/googleplay/android-developer/answer/15582165](https://support.google.com/googleplay/android-developer/answer/15582165), [answer/16470497](https://support.google.com/googleplay/android-developer/answer/16470497).
+
+**§4's implementation shipped as a real `<a href>` link, not the "informational card" the spec called for.** `PremiumUpgrade.tsx` had a genuine clickable `target="_blank"` link to `myrecoverytoolkit.ca/premium` — exactly the structured, trackable pattern the External Content Links Program regulates. This project never enrolled in that program (it didn't exist in July), so shipping into Play Store review with a live, unenrolled external link was a real gap, not a theoretical one.
+
+**Fix (2026-09-01):** `PremiumUpgrade.tsx`'s TWA branch changed from a clickable `<a>` to a plain non-interactive `<div>` with the same visual styling and message — same UX intent (calm, informational, no dead-end feeling), but no `href`, so it's not a "link" in Play's regulatory sense at all. This is deliberately the cheap, durable fix: it keeps MRT outside the External Content Links Program's scope entirely (no enrollment, no API integration, no fee reporting) at the cost of the user having to type the URL themselves instead of tapping it. `PremiumUpgrade.test.tsx` updated to assert the text renders without an accessible `link` role.
+
+**Explicitly not done as part of this amendment, tracked instead:** formally enrolling in the External Content Links Program to restore one-tap external upgrade — real engineering/compliance work (API integration, Play Console setup, ongoing fee remittance), evaluate only if Android-channel premium conversion becomes a proven, material business problem. See `docs/BACKLOG.md`'s updated entry.

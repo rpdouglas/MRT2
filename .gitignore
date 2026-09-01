@@ -18,6 +18,9 @@ service-account*.json
 *firebase-adminsdk*.json
 *-key.json
 
+# Firebase CLI local deploy cache
+.firebase/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
