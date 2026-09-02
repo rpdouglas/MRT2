@@ -7,7 +7,7 @@ import { db } from '../lib/firebase';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { isAndroidTWA } from '../lib/platform';
-import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, UserGroupIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export default function PremiumUpgrade() {
     const { user, userTier } = useAuth();
@@ -132,7 +132,6 @@ export default function PremiumUpgrade() {
                         <ul className="space-y-4 mb-8 flex-1 relative z-10 text-sm text-slate-200">
                             <li className="flex items-start gap-3"><SparklesIcon className="h-5 w-5 text-amber-500 shrink-0" /><span><strong>Unlimited AI Deep Dives</strong></span></li>
                             <li className="flex items-start gap-3"><DocumentChartBarIcon className="h-5 w-5 text-amber-500 shrink-0" /><span><strong>PDF Report Generation</strong></span></li>
-                            <li className="flex items-start gap-3"><UserGroupIcon className="h-5 w-5 text-amber-500 shrink-0" /><span><strong>Service Network Access</strong></span></li>
                             <li className="flex items-start gap-3"><ShieldCheckIcon className="h-5 w-5 text-amber-500 shrink-0" /><span><strong>Keep MRT Free for Others</strong></span></li>
                         </ul>
                         
