@@ -127,9 +127,9 @@ export default function Welcome() {
           
           {/* Centered Brand Lockup */}
           <div className="flex flex-col items-center gap-0 pointer-events-auto absolute left-1/2 -translate-x-1/2 top-3">
-            <img 
-              src={ASSETS.raw_assets.mRT_Logo_Transparent} 
-              alt="MRT Logo" 
+            <img
+              src={ASSETS.pwa_512x512}
+              alt="MRT Logo"
               className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-xl -mb-1 sm:-mb-2" 
               onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
             />
