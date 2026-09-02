@@ -3,10 +3,12 @@
  * PROJ-26: The Beacon — daily milestone & habit push notifications
  * PROJ-42: Daily Readings buffer health & auto-generation
  * PROJ-BILLING: Stripe subscription sync
+ * PROJ-105: Google Play Billing subscription sync (Digital Goods API, TWA-only)
  */
 
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import * as crypto from "node:crypto";
@@ -15,6 +17,7 @@ import { getFirestore, FieldValue, Timestamp, type QueryDocumentSnapshot, type D
 import { getMessaging, TokenMessage } from "firebase-admin/messaging";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { GoogleAuth } from "google-auth-library";
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, type SafetySetting } from "@google/generative-ai";
 import {
     MODALITY_CONFIGS,
@@ -878,6 +881,208 @@ export const syncStripeSubscription = onDocumentWritten(
             logger.error(`Failed to provision access for ${userId}`, error);
         }
     }
+);
+
+// ─── PROJ-105: Google Play Billing (Digital Goods API, TWA-only) ─────────────
+//
+// The TWA's client-side billing bridge (Digital Goods API + Payment Request
+// API — there's no native Android code in a TWA, so this is not the Android
+// Billing Library) hands the client a raw purchaseToken after a purchase.
+// These two functions are the only things that ever turn that token into
+// `tier: 'premium'`: verifyPlayPurchase (client calls immediately after a
+// purchase) and handlePlayRTDN (Google calls asynchronously on renewal/
+// cancellation/refund via Real-time Developer Notifications). Both re-verify
+// against the Play Developer API rather than trusting their own inputs — a
+// purchaseToken or Pub/Sub message is a pointer to check, never proof on its
+// own of an active subscription.
+//
+// AUTH: uses Application Default Credentials (the Cloud Functions runtime
+// service account), not a stored secret — the one-time external setup step
+// is granting that service account "View financial data" + subscription
+// management access under Play Console > Users and permissions > API access,
+// the same category of one-way external action as the RTDN topic below.
+
+const PLAY_PACKAGE_NAME = "ca.myrecoverytoolkit.app";
+const PLAY_ANDROID_PUBLISHER_SCOPE = "https://www.googleapis.com/auth/androidpublisher";
+
+let playAuthClient: GoogleAuth | null = null;
+function getPlayAuth(): GoogleAuth {
+    if (!playAuthClient) {
+        playAuthClient = new GoogleAuth({ scopes: [PLAY_ANDROID_PUBLISHER_SCOPE] });
+    }
+    return playAuthClient;
+}
+
+interface PlaySubscriptionStatus {
+    active: boolean;
+    expiryTime?: Date;
+    orderId?: string;
+}
+
+interface PlayHttpClient {
+    request(opts: { url: string }): Promise<{ data: Record<string, unknown> }>;
+}
+
+// Pure-ish and exported for unit testing: takes an already-authenticated
+// client so tests can supply a mock instead of hitting the real Play
+// Developer API or mocking GoogleAuth's internals (same "extract the
+// testable core" shape as checkCooldown/checkFloor, PROJ-106).
+export async function fetchPlaySubscriptionStatus(
+    client: PlayHttpClient,
+    productId: string,
+    purchaseToken: string,
+): Promise<PlaySubscriptionStatus> {
+    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PLAY_PACKAGE_NAME}/purchases/subscriptions/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+    const res = await client.request({ url });
+    const expiryMillis = res.data.expiryTimeMillis as string | undefined;
+    const expiryTime = expiryMillis ? new Date(Number(expiryMillis)) : undefined;
+    return {
+        active: !!expiryTime && expiryTime.getTime() > Date.now(),
+        expiryTime,
+        orderId: res.data.orderId as string | undefined,
+    };
+}
+
+async function verifyPlaySubscriptionToken(productId: string, purchaseToken: string): Promise<PlaySubscriptionStatus> {
+    const auth = getPlayAuth();
+    const client = (await auth.getClient()) as unknown as PlayHttpClient;
+    return fetchPlaySubscriptionStatus(client, productId, purchaseToken);
+}
+
+/**
+ * Client calls this immediately after a Digital Goods API purchase resolves.
+ * Verifies the token against the Play Developer API, then — same dual-source
+ * guard on both sides of this feature — refuses to touch tier at all if the
+ * account already has an active subscription from a different source, so a
+ * confused tap-through on Android never silently overrides a Stripe/web
+ * subscription (PROJ-105 spec §4, Strategy B).
+ */
+export const verifyPlayPurchase = onCall({
+    region: "northamerica-northeast1",
+}, async (request) => {
+    try {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Authentication required.");
+        }
+        const uid = request.auth.uid;
+
+        const { productId, purchaseToken } = request.data as { productId?: string; purchaseToken?: string };
+        if (!productId || typeof productId !== "string" || !purchaseToken || typeof purchaseToken !== "string") {
+            throw new HttpsError("invalid-argument", "Missing productId or purchaseToken.");
+        }
+
+        const userRef = db.collection("users").doc(uid);
+        const userSnap = await userRef.get();
+        const profile = userSnap.data() || {};
+
+        if (profile.tier === "premium" && profile.tierSource && profile.tierSource !== "play-billing") {
+            throw new HttpsError("already-exists", "An active subscription already exists through another payment method.");
+        }
+
+        const status = await verifyPlaySubscriptionToken(productId, purchaseToken);
+        const purchaseRef = userRef.collection("playPurchases").doc(purchaseToken);
+
+        if (!status.active) {
+            await purchaseRef.set({ verified: false, status: "expired" }, { merge: true });
+            throw new HttpsError("failed-precondition", "This purchase could not be verified as active.");
+        }
+
+        await purchaseRef.set({
+            verified: true,
+            status: "active",
+            orderId: status.orderId ?? null,
+            expiryTime: status.expiryTime ? Timestamp.fromDate(status.expiryTime) : null,
+        }, { merge: true });
+
+        await userRef.update({ tier: "premium", tierSource: "play-billing" });
+        await getAuth().setCustomUserClaims(uid, { premium: true });
+
+        logger.info(`Provisioned premium access for ${uid} via Play Billing.`);
+        return { success: true };
+    } catch (err) {
+        if (err instanceof HttpsError) throw err;
+        logger.error("verifyPlayPurchase failed unexpectedly:", err);
+        throw new HttpsError("internal", "Purchase verification failed.");
+    }
+});
+
+interface PlayRTDNSubscriptionNotification {
+    version: string;
+    notificationType: number;
+    purchaseToken: string;
+    subscriptionId: string;
+}
+
+interface PlayRTDNMessage {
+    version: string;
+    packageName: string;
+    eventTimeMillis: string;
+    subscriptionNotification?: PlayRTDNSubscriptionNotification;
+    // testNotification / oneTimeProductNotification can also arrive here —
+    // MRT only sells a subscription product, so anything without
+    // subscriptionNotification is a deliberate no-op below.
+}
+
+/**
+ * Google calls this via Pub/Sub on subscription renewal/cancellation/
+ * refund/grace-period events — the Play-side equivalent of the Stripe
+ * extension's webhook. The topic name here must match whatever real-time
+ * developer notifications topic is configured in Play Console > Monetize >
+ * Monetization setup (a one-time external step, not something this code can
+ * provision). The notification itself only carries a purchaseToken, not a
+ * uid, so this looks the owning user up via playPurchaseIndex before
+ * re-verifying and syncing tier — the notification is a signal to go check
+ * real state, not itself trusted as that state.
+ */
+export const handlePlayRTDN = onMessagePublished<PlayRTDNMessage>(
+    {
+        topic: "play-billing-rtdn",
+        region: "northamerica-northeast1",
+    },
+    async (event) => {
+        const payload = event.data.message.json;
+        const notification = payload?.subscriptionNotification;
+        if (!notification) {
+            logger.info("handlePlayRTDN: non-subscription notification, ignoring.", payload);
+            return;
+        }
+
+        const { purchaseToken, subscriptionId: productId } = notification;
+
+        const indexSnap = await db.collection("playPurchaseIndex").doc(purchaseToken).get();
+        const uid = indexSnap.data()?.uid as string | undefined;
+        if (!uid) {
+            logger.warn(`handlePlayRTDN: no playPurchaseIndex entry for token ${purchaseToken}.`);
+            return;
+        }
+
+        const userRef = db.collection("users").doc(uid);
+        const userSnap = await userRef.get();
+        const profile = userSnap.data() || {};
+
+        if (profile.tierSource && profile.tierSource !== "play-billing") {
+            logger.info(`handlePlayRTDN: ${uid}'s tierSource is now '${profile.tierSource}', ignoring stale Play notification.`);
+            return;
+        }
+
+        const status = await verifyPlaySubscriptionToken(productId, purchaseToken);
+        const purchaseRef = userRef.collection("playPurchases").doc(purchaseToken);
+
+        await purchaseRef.set({
+            verified: status.active,
+            status: status.active ? "active" : "expired",
+            orderId: status.orderId ?? null,
+            expiryTime: status.expiryTime ? Timestamp.fromDate(status.expiryTime) : null,
+        }, { merge: true });
+
+        await userRef.update({
+            tier: status.active ? "premium" : "free",
+            tierSource: "play-billing",
+        });
+        await getAuth().setCustomUserClaims(uid, { premium: status.active });
+
+        logger.info(`handlePlayRTDN: synced ${uid} to tier=${status.active ? "premium" : "free"} via Play Billing.`);
+    },
 );
 
 // ─── AI Proxy: Secure Server-Side Gemini Execution ───────────────────────────

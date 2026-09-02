@@ -124,6 +124,32 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow write: if false;
       }
+
+      // PROJ-105: Google Play Billing purchase records (TWA-only path,
+      // parallel to the Stripe subcollections above). The client creates the
+      // doc right after a Digital Goods API purchase completes, so the
+      // purchaseToken survives an app close before verification finishes —
+      // but it can never mark itself verified or set its own status/tier;
+      // only verifyPlayPurchase (Cloud Function, admin SDK) and the RTDN
+      // handler can do that, matching checkout_sessions' create-then-backend-
+      // completes shape rather than subscriptions' fully-locked one.
+      match /playPurchases/{token} {
+        allow create, read: if isOwner(userId);
+        allow update, delete: if false;
+      }
+    }
+
+    // 1b. Play Billing purchase-token → uid lookup (Root Collection, PROJ-105)
+    // The RTDN Pub/Sub handler (functions/src/index.ts) receives renewal/
+    // cancellation notifications from Google containing only a purchaseToken
+    // — no uid — so it needs a way to find the owning user without a
+    // collection-group index. The client writes this single-field pointer
+    // doc at purchase time (same moment it writes users/{uid}/playPurchases/
+    // {token} above); nothing ever reads it back client-side, and nothing
+    // but the doc's own owner can even create it.
+    match /playPurchaseIndex/{token} {
+      allow create: if isCreatingOwnedResource();
+      allow read, update, delete: if false;
     }
 
     // 2. Journals (Root Collection)

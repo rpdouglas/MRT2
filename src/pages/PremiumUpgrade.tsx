@@ -4,18 +4,24 @@ import { useAuth } from '../contexts/AuthContext';
 import posthog from 'posthog-js';
 import VibrantHeader from '../components/VibrantHeader';
 import { db } from '../lib/firebase';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { isAndroidTWA } from '../lib/platform';
+import { isPlayBillingSupported, purchasePlaySubscription } from '../lib/playBilling';
 import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
+const PLAY_PACKAGE_NAME = 'ca.myrecoverytoolkit.app';
+
 export default function PremiumUpgrade() {
-    const { user, userTier } = useAuth();
+    const { user, userTier, userTierSource } = useAuth();
     const navigate = useNavigate();
 
     const [isSubscribing, setIsSubscribing] = useState(false);
     const [isManaging, setIsManaging] = useState(false);
+    const [isPlayPurchasing, setIsPlayPurchasing] = useState(false);
+    const [playError, setPlayError] = useState<string | null>(null);
     const isTWA = isAndroidTWA();
+    const canUsePlayBilling = isTWA && isPlayBillingSupported();
 
     const handleSubscribe = async () => {
         if (!user || !db) return;
@@ -64,11 +70,23 @@ export default function PremiumUpgrade() {
     };
 
     const handleManageSubscription = async () => {
+        // PROJ-105 dual-source guard: a Play-Billing-sourced subscription has
+        // no Stripe customer record at all, so routing it through the Stripe
+        // portal would just fail. Play subscriptions are managed natively in
+        // the Play Store app, not in-app.
+        if (userTierSource === 'play-billing') {
+            const productId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+            window.location.assign(
+                `https://play.google.com/store/account/subscriptions?sku=${encodeURIComponent(productId || '')}&package=${PLAY_PACKAGE_NAME}`
+            );
+            return;
+        }
+
         setIsManaging(true);
         try {
             const functions = getFunctions(undefined, 'northamerica-northeast1');
             const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
-            
+
             const { data } = await createPortalLink({
                 returnUrl: window.location.origin + '/profile'
             });
@@ -83,6 +101,50 @@ export default function PremiumUpgrade() {
             setIsManaging(false);
             console.error("Portal Error Detail:", err);
             alert("Billing Portal Error: If you haven't subscribed yet, please use 'Become a Supporter' first to create your Stripe customer record.");
+        }
+    };
+
+    const handlePlayPurchase = async () => {
+        if (!user || !db) return;
+        const productId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+        if (!productId) {
+            setPlayError('Play Billing is not configured for this build.');
+            return;
+        }
+
+        posthog.capture('premium_upgrade_clicked', { platform: 'play-billing' });
+        setIsPlayPurchasing(true);
+        setPlayError(null);
+        try {
+            const { purchaseToken } = await purchasePlaySubscription(productId);
+
+            // Persist the raw token immediately, before verification, so it
+            // survives an app close mid-flow (see PlayPurchaseRecord's doc
+            // comment in src/lib/db.ts). playPurchaseIndex is a second,
+            // separate doc purely so the RTDN handler can look up the owning
+            // uid later from a purchaseToken alone (see firestore.rules).
+            await setDoc(doc(db, 'users', user.uid, 'playPurchases', purchaseToken), {
+                purchaseToken,
+                productId,
+                createdAt: Timestamp.now(),
+                verified: false,
+            });
+            await setDoc(doc(db, 'playPurchaseIndex', purchaseToken), { uid: user.uid });
+
+            const functions = getFunctions(undefined, 'northamerica-northeast1');
+            const verifyPlayPurchase = httpsCallable(functions, 'verifyPlayPurchase');
+            await verifyPlayPurchase({ productId, purchaseToken });
+
+            // Full navigation, not an SPA route change — AuthContext only
+            // re-derives userTier/userTierSource from a fresh profile fetch
+            // on auth-state re-entry (there's no live listener on the user
+            // doc's tier field itself, only on Stripe's subscriptions
+            // subcollection), same as the Stripe checkout redirect above.
+            window.location.assign('/dashboard');
+        } catch (err: unknown) {
+            setIsPlayPurchasing(false);
+            const message = err instanceof Error ? err.message : 'Purchase failed. Please try again.';
+            setPlayError(message);
         }
     };
 
@@ -143,12 +205,31 @@ export default function PremiumUpgrade() {
                             >
                                 {isManaging ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Manage Subscription'}
                             </button>
+                        ) : canUsePlayBilling ? (
+                            // PROJ-105: real native purchase via the Digital Goods API +
+                            // Payment Request API — not a link to an external purchase page,
+                            // so Google Play's "External Content Links Program" doesn't apply
+                            // here at all (that program only governs links out of the app).
+                            <div className="w-full text-center">
+                                <button
+                                    onClick={handlePlayPurchase}
+                                    disabled={isPlayPurchasing}
+                                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-75"
+                                >
+                                    {isPlayPurchasing ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Become a Supporter'}
+                                </button>
+                                {playError && (
+                                    <p className="text-red-400 text-xs mt-3">{playError}</p>
+                                )}
+                            </div>
                         ) : isTWA ? (
-                            // Deliberately not a clickable link (Google Play's "External Content
-                            // Links Program" now formally regulates in-app links to external
-                            // purchase pages — declaration, API integration, Play Console
-                            // enrollment, review, and a 10-20% fee starting 2026-10-01). Plain
-                            // informational text keeps this outside that program's scope entirely.
+                            // Fallback for a TWA session where the Digital Goods API isn't
+                            // available (old WebView, non-Play sideload, etc.) — deliberately
+                            // not a clickable link (Google Play's "External Content Links
+                            // Program" formally regulates in-app links to external purchase
+                            // pages — declaration, API integration, Play Console enrollment,
+                            // review, and a 10-20% fee starting 2026-10-01). Plain informational
+                            // text keeps this outside that program's scope entirely.
                             <div className="w-full text-center">
                                 <div
                                     className="w-full min-h-[44px] py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 opacity-90"

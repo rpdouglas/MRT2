@@ -34,7 +34,13 @@ export interface UserProfile {
    * applies to premium accounts too. */
   lastWorkbookCoachCall?: Timestamp;
   tier?: 'free' | 'premium';
-  tierSource?: 'stripe' | 'manual';
+  // PROJ-105: 'Stripe-Managed' is the literal string syncStripeSubscription
+  // writes (functions/src/index.ts) — kept as-is rather than renamed to
+  // 'stripe', since a rename would require a Cloud Function redeploy plus a
+  // one-time backfill of every existing premium user's doc for zero
+  // behavioral benefit (nothing compares against the old 'stripe' value —
+  // see PROJ-105 spec §3). 'play-billing' is the new PROJ-105 source.
+  tierSource?: 'Stripe-Managed' | 'play-billing' | 'manual';
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled';
   subscriptionPeriodEnd?: Timestamp;
@@ -82,6 +88,25 @@ export interface UserProfile {
   // executeVaultRekey). Unset/false means the legacy derivation is still
   // used and a transparent rekey should run on next unlock.
   usesPepperV2?: boolean;
+}
+
+/**
+ * users/{uid}/playPurchases/{purchaseToken} — PROJ-105. Raw Google Play
+ * Billing purchase record, mirroring the role users/{uid}/subscriptions/{id}
+ * plays for Stripe. Client creates the doc immediately after a Digital Goods
+ * API purchase (so the purchaseToken is never lost if the app is closed
+ * before verification completes); only the verifyPlayPurchase Cloud Function
+ * and the RTDN Pub/Sub handler ever write `verified`/`status`/`expiryTime` —
+ * see firestore.rules (create: owner, update/delete: false).
+ */
+export interface PlayPurchaseRecord {
+  purchaseToken: string;
+  productId: string;
+  createdAt: Timestamp;
+  verified: boolean;
+  status?: 'active' | 'canceled' | 'expired' | 'on_hold' | 'paused' | 'pending';
+  expiryTime?: Timestamp;
+  orderId?: string;
 }
 
 export interface JournalTemplate {

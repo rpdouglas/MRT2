@@ -19,6 +19,7 @@ import {
     hasDuplicateClues,
     validateAIProxyPayload,
     getPromptForType,
+    fetchPlaySubscriptionStatus,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
@@ -724,5 +725,46 @@ describe("getPromptForType (PROJ-100 Phase 2: prompt-injection delimiting)", () 
 
     it("still throws for an unknown analysisType (unchanged behavior)", () => {
         expect(() => getPromptForType("not_a_real_type", {})).toThrow("Unknown analysisType");
+    });
+});
+
+describe("fetchPlaySubscriptionStatus (PROJ-105: Play Developer API verification)", () => {
+    it("reports active with expiry/orderId when the subscription has not yet expired", async () => {
+        const futureMillis = Date.now() + 1000 * 60 * 60 * 24 * 30;
+        const client = { request: vi.fn().mockResolvedValue({ data: { expiryTimeMillis: String(futureMillis), orderId: "GPA.1234-5678" } }) };
+
+        const result = await fetchPlaySubscriptionStatus(client, "premium.monthly", "token-abc");
+
+        expect(result.active).toBe(true);
+        expect(result.orderId).toBe("GPA.1234-5678");
+        expect(result.expiryTime?.getTime()).toBe(futureMillis);
+    });
+
+    it("reports inactive when expiryTimeMillis is in the past", async () => {
+        const pastMillis = Date.now() - 1000 * 60 * 60 * 24;
+        const client = { request: vi.fn().mockResolvedValue({ data: { expiryTimeMillis: String(pastMillis) } }) };
+
+        const result = await fetchPlaySubscriptionStatus(client, "premium.monthly", "token-abc");
+
+        expect(result.active).toBe(false);
+    });
+
+    it("reports inactive when the API response has no expiryTimeMillis at all", async () => {
+        const client = { request: vi.fn().mockResolvedValue({ data: {} }) };
+
+        const result = await fetchPlaySubscriptionStatus(client, "premium.monthly", "token-abc");
+
+        expect(result.active).toBe(false);
+        expect(result.expiryTime).toBeUndefined();
+    });
+
+    it("requests the exact v3 subscriptions endpoint with the package name, product id, and token URL-encoded", async () => {
+        const client = { request: vi.fn().mockResolvedValue({ data: {} }) };
+
+        await fetchPlaySubscriptionStatus(client, "premium monthly", "token/with special+chars");
+
+        expect(client.request).toHaveBeenCalledWith({
+            url: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/ca.myrecoverytoolkit.app/purchases/subscriptions/premium%20monthly/tokens/token%2Fwith%20special%2Bchars",
+        });
     });
 });

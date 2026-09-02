@@ -17,7 +17,9 @@ graph TD
     userDoc --> checkout_sessions[💳 checkout_sessions]
     userDoc --> subscriptions[💳 subscriptions]
     userDoc --> payments[💳 payments]
+    userDoc --> playPurchases[💳 playPurchases]
 
+    root --> playPurchaseIndex[📂 playPurchaseIndex]
     root --> journals[📂 journals]
     root --> tasks[📂 tasks]
     root --> insights[📂 insights]
@@ -45,6 +47,15 @@ graph TD
 ### `users/{uid}/checkout_sessions/{id}`, `users/{uid}/subscriptions/{id}`, `users/{uid}/payments/{id}`
 * **Purpose:** Stripe Firebase Extension subcollections (backend-managed, PROJ-68/premium billing). Users create the checkout-session request; the extension's backend fills in the Stripe-hosted URL and later writes subscription/payment status. **UNENCRYPTED** — Stripe metadata, not recovery content.
 * **Access:** `checkout_sessions` — user can `create`/`read`, never `update`/`delete`. `subscriptions` and `payments` — user can `read` only; all writes are `false` (extension-only, via Admin SDK) so a client can never fake a subscription or payment record. See `firestore.rules` lines 111-123.
+
+### `users/{uid}/playPurchases/{purchaseToken}` (PROJ-105)
+* **Purpose:** Google Play Billing purchase records — the TWA-only parallel to the Stripe subcollections above, populated via the Digital Goods API + Payment Request API (not the native Android Billing Library; a TWA has no native Android code to run it in). **UNENCRYPTED** — billing metadata, not recovery content.
+* **Fields:** `purchaseToken`, `productId` (String), `createdAt` (Timestamp, client-set at purchase time), `verified` (Boolean), `status` (`'active' | 'canceled' | 'expired' | 'on_hold' | 'paused' | 'pending'`, optional), `expiryTime` (Timestamp, optional), `orderId` (String, optional).
+* **Access:** Client `create`/`read` only (writes the raw token immediately after purchase, before verification, so it survives an app close mid-flow) — `update`/`delete` are `false`. Only `verifyPlayPurchase` and the `handlePlayRTDN` Pub/Sub handler (both Cloud Functions, admin SDK) ever set `verified`/`status`/`expiryTime`/`orderId`, and only they write `tier`/`tierSource` onto the user doc. See `firestore.rules`.
+
+### `playPurchaseIndex/{purchaseToken}` (Root Collection, PROJ-105)
+* **Purpose:** A single-field `{ uid }` pointer, written by the client alongside `playPurchases` at purchase time. Real-time Developer Notifications (RTDN) from Google arrive with only a `purchaseToken`, no `uid` — this lets `handlePlayRTDN` find the owning user with a plain doc `get()` instead of requiring a collection-group index on `playPurchases`.
+* **Access:** Client can `create` only its own pointer (`uid` must match `request.auth.uid`, same `isCreatingOwnedResource()` pattern as `journals`/`tasks`); `read`/`update`/`delete` are all `false` — nothing client-side ever reads this collection back, only the RTDN handler (admin SDK, bypasses rules).
 
 ### `journals/{entryId}`
 * **Purpose:** Daily logs, Vitality logs, and SMART Recovery CBT Tools.

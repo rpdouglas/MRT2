@@ -12,6 +12,11 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   userTier: 'free' | 'premium';
+  // PROJ-105: which billing platform actually owns the active subscription,
+  // if any — lets PremiumUpgrade.tsx route "Manage Subscription" to the
+  // right place (Stripe portal vs. Play Store subscription management)
+  // instead of assuming Stripe for every premium user.
+  userTierSource?: 'Stripe-Managed' | 'play-billing' | 'manual';
   driveAccessToken: string | null;
   loginWithGoogle: () => Promise<void>;
   signupWithEmail: (email: string, pass: string) => Promise<void>;
@@ -32,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userTier, setUserTier] = useState<'free' | 'premium'>('free');
+  const [userTierSource, setUserTierSource] = useState<'Stripe-Managed' | 'play-billing' | 'manual' | undefined>(undefined);
   const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,19 +124,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
              unsubscribeSubscriptions = onSnapshot(q, (snapshot) => {
                  if (!snapshot.empty) {
                      setUserTier('premium');
+                     setUserTierSource('Stripe-Managed');
                  } else {
                      // Fallback to static profile tier just in case, but default free
                      setUserTier(profile.tier || 'free');
+                     setUserTierSource(profile.tierSource);
                  }
-             }, (error) => { console.error("Subscription listener error:", error); trackClientError('subscription_listener', error.name || 'Error'); setUserTier('free'); });
+             }, (error) => { console.error("Subscription listener error:", error); trackClientError('subscription_listener', error.name || 'Error'); setUserTier('free'); setUserTierSource(undefined); });
           } else {
              setUserTier(profile.tier || 'free');
+             setUserTierSource(profile.tierSource);
           }
 
         } else {
           setUser(null);
           setIsAdmin(false);
           setUserTier('free');
+          setUserTierSource(undefined);
           setDriveAccessToken(null);
           if (unsubscribeSubscriptions) {
               unsubscribeSubscriptions();
@@ -193,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await reauthenticateWithPopup(user, provider);
   }, [user]);
 
-  const deleteAccount = useCallback(async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); }, [user]);
+  const deleteAccount = useCallback(async () => { if (!auth || !user) throw new Error("Not authenticated"); await deleteUser(user); setUser(null); setUserTier('free'); setUserTierSource(undefined); }, [user]);
 
   const logout = useCallback(async () => {
     localStorage.removeItem('mrt_mock_user');
@@ -212,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isAdmin,
     userTier,
+    userTierSource,
     driveAccessToken,
     loginWithGoogle,
     signupWithEmail,
@@ -220,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     reauthenticateWithGoogle,
     deleteAccount,
     logout
-  }), [user, loading, isAdmin, userTier, driveAccessToken, loginWithGoogle, signupWithEmail, loginWithEmail, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount, logout]);
+  }), [user, loading, isAdmin, userTier, userTierSource, driveAccessToken, loginWithGoogle, signupWithEmail, loginWithEmail, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount, logout]);
 
   return (
     <AuthContext.Provider value={value}>

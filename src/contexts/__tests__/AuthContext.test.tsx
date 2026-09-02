@@ -155,6 +155,33 @@ describe('AuthContext', () => {
             expect(result.current.isAdmin).toBe(false);
             expect(telemetry.trackClientError).toHaveBeenCalledWith('user_profile_fetch', 'Error');
         });
+
+        it("exposes the profile's tierSource (PROJ-105) via the null-db fallback branch", async () => {
+            vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({ role: 'user', tier: 'premium', tierSource: 'play-billing' } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
+
+            const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+            await waitFor(() => expect(authStateCallback).not.toBeNull());
+
+            await act(async () => { authStateCallback!(mockAuthUser({})); });
+            await waitFor(() => expect(result.current.userTier).toBe('premium'));
+
+            expect(result.current.userTierSource).toBe('play-billing');
+        });
+
+        it('clears userTierSource on logout', async () => {
+            vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({ role: 'user', tier: 'premium', tierSource: 'play-billing' } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
+
+            const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+            await waitFor(() => expect(authStateCallback).not.toBeNull());
+
+            await act(async () => { authStateCallback!(mockAuthUser({})); });
+            await waitFor(() => expect(result.current.userTierSource).toBe('play-billing'));
+
+            await act(async () => { authStateCallback!(null); });
+            await waitFor(() => expect(result.current.user).toBeNull());
+
+            expect(result.current.userTierSource).toBeUndefined();
+        });
     });
 
     describe('mockUser DEV-only bypass (SEC-01)', () => {

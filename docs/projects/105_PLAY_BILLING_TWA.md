@@ -1,6 +1,6 @@
 # 📁 Project 105: Google Play Billing for the Android TWA
 
-**Status:** ⚪ Planned — strategy proposal below, awaiting approval before any code
+**Status:** 🟡 Code complete 2026-09-02 — blocked on external Play Console setup + real-device testing before this can go live (see §6)
 **Primary Persona:** All (monetization infrastructure — no persona-specific UX beyond the purchase flow itself)
 **Objective:** Let users subscribe to Premium ($3.99/mo) with a native, one-tap purchase from inside the Android TWA, instead of the current zero-purchase-path state (`PROJ-68` amendment, 2026-09-01).
 
@@ -91,4 +91,28 @@
 ---
 
 ## Stop Gate
-**STOP.** This is the strategy proposal — no code has been written. Per `.claude/skills/planning/SKILL.md`, waiting for explicit approval (or a chosen strategy / requested changes) before any implementation begins.
+**PASSED 2026-09-02.** Strategy B approved by the account owner. Implementation began and completed (code-side) the same day.
+
+---
+
+## 6. What Was Built vs. What's Still Needed
+
+**Built (this session, all verified — lint/build/`test:once`/`test:rules`/functions build+test/`docs:check-specs` all clean):**
+- `src/lib/db.ts` — `tierSource` union now includes `'play-billing'`; the `'stripe'`/`"Stripe-Managed"` type drift fixed by making the type match the runtime value (not the reverse — see inline comment; CLAUDE.md explicitly warns against assuming the union was the authoritative side). New `PlayPurchaseRecord` interface.
+- `firestore.rules` — new `users/{uid}/playPurchases/{token}` subcollection (create/read: owner, update/delete: false) and a new root `playPurchaseIndex/{token}` collection (a purchaseToken→uid pointer so the RTDN handler can find the owning user without a collection-group index; create: owner-tagged only, read/update/delete: false). 7 new rules tests, all passing.
+- `src/lib/playBilling.ts` (new) — the Digital Goods API + Payment Request API client wrapper: `isPlayBillingSupported()`, `getPlayProductPrice()`, `purchasePlaySubscription()`. 11 unit tests.
+- `functions/src/index.ts` — two new Cloud Functions: `verifyPlayPurchase` (onCall, client invokes right after a purchase) and `handlePlayRTDN` (onMessagePublished, Google invokes on renewal/cancellation/refund). Both re-verify against the real Play Developer API rather than trusting their inputs, and both carry the Strategy B dual-source guard (never let a Play event silently override an active Stripe/manual subscription, or vice versa). Auth is via Application Default Credentials (the Cloud Functions runtime service account), not a stored secret. 4 new unit tests for the extracted `fetchPlaySubscriptionStatus` helper.
+- `google-auth-library` promoted from a transitive `firebase-admin` dependency to an explicit one (`functions/package.json`) — same version already resolved in the tree, so this only changed `package-lock.json`, not actual installed code.
+- `src/contexts/AuthContext.tsx` — new `userTierSource` exposed alongside `userTier`, so `PremiumUpgrade.tsx` can tell which platform actually owns an active subscription. 2 new tests.
+- `src/pages/PremiumUpgrade.tsx` — the TWA branch now attempts a real purchase via `playBilling.ts` when the Digital Goods API is available, falling back to the existing plain-text "Upgrade on the Web" only when it isn't (old WebView, non-Play sideload). `handleManageSubscription` now routes a Play-Billing subscriber to the native Play Store subscription-management page instead of the Stripe portal (the actual correctness gap Strategy A would have left open). 6 new/updated tests.
+- `.env.example` — documents the new `VITE_PLAY_BILLING_PRODUCT_ID`.
+- `docs/SCHEMA_ARCHITECTURE.md`, `docs/BACKLOG.md` — synced per governance's Protocol A.
+
+**NOT built — external, one-time setup only the account owner can do (no code, can't be automated from here):**
+1. **Play Console: create the subscription product.** Play Console → Monetize → Products → Subscriptions → create `premium.monthly` (or chosen ID) priced at $3.99/mo — must match `VITE_PLAY_BILLING_PRODUCT_ID`.
+2. **Play Console: grant API access.** Users and permissions → grant the Cloud Functions runtime service account (`<project-id>@appspot.gserviceaccount.com`, or a dedicated one) "View financial data" + subscription management access under the Play Android Developer API — this is what lets `verifyPlayPurchase`/`handlePlayRTDN` call the Play Developer API via Application Default Credentials with no stored secret.
+3. **Play Console: configure Real-time Developer Notifications.** Monetize → Monetization setup → set the Pub/Sub topic to `projects/<project-id>/topics/play-billing-rtdn` (must match the `topic` in `handlePlayRTDN`'s `onMessagePublished` config) — and create that Pub/Sub topic itself if it doesn't already exist (`gcloud pubsub topics create play-billing-rtdn` or via Console).
+4. **`VITE_PLAY_BILLING_PRODUCT_ID`** needs a real value in the deploy pipeline's GitHub Secrets (currently only `.env.example` documents the placeholder).
+5. **Deploy the two new functions** (`firebase deploy --only functions:verifyPlayPurchase,functions:handlePlayRTDN`) and the updated `firestore.rules`.
+6. **Real-device testing** — this can only be exercised on an actual Android device running the Play-installed TWA with a real (or Play Console license-test) Google account; the Digital Goods API has no meaningful browser/emulator fallback. Recommend Play Console's built-in license-testing accounts (free test purchases) before going live with real billing.
+7. **`docs/legal/PLAY_STORE_DATA_SAFETY_DRAFT.md`** — flagged as uncertain in the Dependency Impact Table above; worth a real look once step 6 confirms what data actually flows (likely just: Play-processed payment data, same category Stripe already covers for web).

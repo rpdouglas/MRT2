@@ -20,7 +20,7 @@ import {
   type RulesTestEnvironment,
   type RulesTestContext,
 } from '@firebase/rules-unit-testing';
-import { doc, setDoc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 // Vite's ?raw import (typed via vite/client, no Node fs/types needed here —
 // this file lives under src/, governed by tsconfig.app.json's browser-only
 // type scope, not the Node-typed tsconfig used for e2e/functions).
@@ -365,5 +365,88 @@ describe('users/{userId} — tier/role self-escalation blocks', () => {
 
     const asAdmin = testEnv.authenticatedContext(BOB, { admin: true }).firestore();
     await assertSucceeds(updateDoc(doc(asAdmin, 'users', ALICE), { role: 'admin' }));
+  });
+});
+
+describe('users/{userId}/playPurchases — PROJ-105 Play Billing', () => {
+  it('lets a user create their own play purchase record', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'users', ALICE, 'playPurchases', 'token-123'), {
+        purchaseToken: 'token-123',
+        productId: 'premium.monthly',
+        createdAt: Timestamp.now(),
+        verified: false,
+      }),
+    );
+  });
+
+  it("blocks a user from reading another user's play purchase record", async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', ALICE, 'playPurchases', 'token-123'), {
+        purchaseToken: 'token-123',
+        productId: 'premium.monthly',
+        createdAt: Timestamp.now(),
+        verified: false,
+      });
+    });
+
+    const bobDb = testEnv.authenticatedContext(BOB).firestore();
+    await assertFails(getDoc(doc(bobDb, 'users', ALICE, 'playPurchases', 'token-123')));
+  });
+
+  it('blocks a user from self-verifying their own play purchase record', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', ALICE, 'playPurchases', 'token-123'), {
+        purchaseToken: 'token-123',
+        productId: 'premium.monthly',
+        createdAt: Timestamp.now(),
+        verified: false,
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      updateDoc(doc(aliceDb, 'users', ALICE, 'playPurchases', 'token-123'), { verified: true, status: 'active' }),
+    );
+  });
+
+  it('blocks a user from deleting their own play purchase record', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', ALICE, 'playPurchases', 'token-123'), {
+        purchaseToken: 'token-123',
+        productId: 'premium.monthly',
+        createdAt: Timestamp.now(),
+        verified: false,
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(deleteDoc(doc(aliceDb, 'users', ALICE, 'playPurchases', 'token-123')));
+  });
+});
+
+describe('playPurchaseIndex — PROJ-105 RTDN lookup pointer', () => {
+  it('lets a user create their own token->uid pointer doc', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'playPurchaseIndex', 'token-123'), { uid: ALICE }),
+    );
+  });
+
+  it("blocks a user from creating a pointer doc tagged with someone else's uid", async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'playPurchaseIndex', 'token-123'), { uid: BOB }),
+    );
+  });
+
+  it('blocks a user from reading any pointer doc, including their own', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'playPurchaseIndex', 'token-123'), { uid: ALICE });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(getDoc(doc(aliceDb, 'playPurchaseIndex', 'token-123')));
   });
 });
