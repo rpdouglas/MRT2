@@ -15,8 +15,9 @@ My Recovery Toolkit (MRT) is a high-performance, mobile-first **Zero-Knowledge**
 *   **Offline-First Resilience:** In acute crises, connectivity is often flaky. The app must function fully offline, syncing data safely when connections return.
 
 ### Freemium Tiers
-*   **Free Tier:** Core tools (Sobriety Counter, My Dashboard, My Tasks, My Journal (encrypted journaling), My Vitality (somatic logs/breathwork), Urge Surfer/SOS crisis intervention).
-*   **Premium Tier:** Advanced insights (Unlimited AI Compass deep pattern scans, Service Module sponsee rolodex, customized templates, export to PDF/JSON).
+*   **Free Tier:** Core tools (Sobriety Counter, My Dashboard, My Tasks, My Journal (encrypted journaling), My Vitality (somatic logs/breathwork), Urge Surfer/SOS crisis intervention), plus JSON data export (`DataExportPanel.tsx`) and unlimited AI Compass scans on a cooldown (weekly/monthly/deep-dive, `usage_limits` on the user doc).
+*   **Premium Tier ($3.99/mo):** Immediate AI Compass scans (bypasses the free-tier cooldown), PDF report export, AI-generated insight narratives on ROSC/Recovery Capital assessments, in-workbook AI coaching prompts, CBA tool AI reflection.
+*   **Verified 2026-09-01** (`docs/reports/2026-09_premium_gating_audit.md`) against the actual code — corrects two stale claims this section previously carried: "Service Module sponsee rolodex" does not exist anywhere in the codebase (the closest thing, `PROJ-05` The Service Network, is paused with no UI built — see `docs/ROADMAP.md`); and "export to PDF/JSON" overstated the gate — only PDF is Premium, JSON export is free by design (Walt persona's data-sovereignty story). "Customized templates" is also removed from this list: the entry-button UI is tier-gated but the underlying `/templates` route isn't, so it isn't actually enforced today — tracked as a real gap, not a documented feature, in `docs/reports/2026-09_premium_gating_audit.md`.
 
 ---
 

@@ -891,6 +891,30 @@ function getDaysDiff(d1: Date, d2: Date): number {
     return Math.floor((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// PROJ-106: pure, testable rate-limit checks. Extracted (unlike the older
+// inline cooldown checks elsewhere in this file) so new call sites don't
+// keep duplicating untested inline date math.
+export function checkCooldown(now: Date, lastRun: Date | null, cooldownDays: number): { allowed: boolean; daysRemaining?: number } {
+    if (!lastRun) return { allowed: true };
+    const diff = getDaysDiff(now, lastRun);
+    if (diff < cooldownDays) {
+        return { allowed: false, daysRemaining: cooldownDays - diff };
+    }
+    return { allowed: true };
+}
+
+// Second-granularity anti-abuse floor (vs. checkCooldown's day granularity) —
+// for flows called many times per normal session, where a day-scale cooldown
+// would break legitimate use. Applies to every tier; not a monetization lever.
+export function checkFloor(now: Date, lastRun: Date | null, floorSeconds: number): { allowed: boolean; secondsRemaining?: number } {
+    if (!lastRun) return { allowed: true };
+    const secondsSince = (now.getTime() - lastRun.getTime()) / 1000;
+    if (secondsSince < floorSeconds) {
+        return { allowed: false, secondsRemaining: Math.ceil(floorSeconds - secondsSince) };
+    }
+    return { allowed: true };
+}
+
 function getModelForType(analysisType: string): string {
     switch (analysisType) {
         case "journal_analysis":
@@ -1379,6 +1403,23 @@ export const generateAIInsights = onCall({
                     throw new HttpsError("resource-exhausted", `Available in ${30 - diff} days. Upgrade to unlock.`);
                 }
             }
+        } else if (analysisType === "workbook_analysis") {
+            // PROJ-106: was completely uncapped for free tier. 7-day cooldown,
+            // matching deep_pattern_analysis in spirit (a deliberate, occasional
+            // "analyze this" action, not a per-question interactive call).
+            const lastWorkbookAnalysis = limits.lastWorkbookAnalysis ? (limits.lastWorkbookAnalysis as Timestamp).toDate() : null;
+            const result = checkCooldown(now, lastWorkbookAnalysis, 7);
+            if (!result.allowed) {
+                throw new HttpsError("resource-exhausted", `Available in ${result.daysRemaining} days. Upgrade to unlock.`);
+            }
+        } else if (analysisType === "audio_analysis") {
+            // PROJ-106: was completely uncapped for free tier. 24h cooldown —
+            // roughly journal-entry frequency, one free AI-analyzed voice note/day.
+            const lastAudioAnalysis = limits.lastAudioAnalysis ? (limits.lastAudioAnalysis as Timestamp).toDate() : null;
+            const result = checkCooldown(now, lastAudioAnalysis, 1);
+            if (!result.allowed) {
+                throw new HttpsError("resource-exhausted", "Available again in 24 hours. Upgrade to unlock.");
+            }
         } else if (analysisType === "comparative_analysis") {
             const compPayload = dataPayload as ComparativePayload;
             if (compPayload.scope === "weekly") {
@@ -1414,6 +1455,22 @@ export const generateAIInsights = onCall({
             if (hoursSince < 24) {
                 throw new HttpsError("resource-exhausted", `Available in ${Math.ceil(24 - hoursSince)} hours.`);
             }
+        }
+    }
+
+    // PROJ-106: workbook_coach was completely uncapped, for any tier. It's a
+    // fine-grained, interactive, called-many-times-per-session flow, so a
+    // day-scale cooldown would break normal free-tier use — this is a short,
+    // all-tier anti-abuse floor instead (a scripted loop maxes out around
+    // 4 calls/minute; no real user reading a question and writing an answer
+    // gets anywhere near 15 seconds between calls). Stored outside
+    // usage_limits (which is free-tier-only bookkeeping) since this applies
+    // to premium too.
+    if (analysisType === "workbook_coach") {
+        const lastWorkbookCoachCall = userData.lastWorkbookCoachCall ? (userData.lastWorkbookCoachCall as Timestamp).toDate() : null;
+        const result = checkFloor(new Date(), lastWorkbookCoachCall, 15);
+        if (!result.allowed) {
+            throw new HttpsError("resource-exhausted", `Please wait ${result.secondsRemaining}s before requesting coaching again.`);
         }
     }
 
@@ -1464,6 +1521,12 @@ export const generateAIInsights = onCall({
             await db.collection("users").doc(uid).update({
                 "usage_limits.lastROSCAssessment": FieldValue.serverTimestamp(),
             });
+        } else if (analysisType === "workbook_coach") {
+            // PROJ-106: stamped for every tier — the 15s floor above applies
+            // regardless of tier, so this lives outside usage_limits.
+            await db.collection("users").doc(uid).update({
+                lastWorkbookCoachCall: FieldValue.serverTimestamp(),
+            });
         } else if (userTier === "free") {
             const stampField =
                 analysisType === "deep_pattern_analysis" || (analysisType === "comparative_analysis" && (dataPayload as ComparativePayload).scope === "all-time")
@@ -1472,6 +1535,10 @@ export const generateAIInsights = onCall({
                     ? "lastMonthlyInsight"
                     : (analysisType === "comparative_analysis" && (dataPayload as ComparativePayload).scope === "weekly")
                     ? "lastWeeklyInsight"
+                    : analysisType === "workbook_analysis"
+                    ? "lastWorkbookAnalysis"
+                    : analysisType === "audio_analysis"
+                    ? "lastAudioAnalysis"
                     : null;
 
             if (stampField) {

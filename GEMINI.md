@@ -108,6 +108,20 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 
 ---
 
+## Premium Tier & Billing
+
+Freemium: `users/{uid}.tier: 'free' | 'premium'` ($3.99/mo). Client can never write `tier`/`tierSource`/`role` after account creation — `firestore.rules` blocks it for non-admins; only `syncStripeSubscription` (Cloud Function) or an admin can set them. Reuse `<PremiumGate>` (`src/components/PremiumGate.tsx`) rather than hand-rolling a tier check. `usage_limits` on the user doc is a real, server-enforced cooldown store for free-tier AI usage — several gates are "immediate for premium, cooldown-limited for free," not binary hide/show.
+
+**Gate the feature itself, not just the UI entry point** — `JournalEditor.tsx`'s templates button is gated, but `/templates`/`TemplateEditor.tsx` aren't, so any free user can bypass it by URL. Don't repeat this.
+
+**Live gap, flag if touched:** `WorkbookDetail.tsx`, `WorkbookSession.tsx`, and `AudioRecorder.tsx`'s Gemini calls have zero tier check or rate limit — uncapped API cost exposure.
+
+**Never gate crisis/safety features** (SOS, Urge Surfer, Craving Buster, sponsor/hotline, sobriety counter, core journaling/tasks) — David's crisis-first floor, not a style choice.
+
+Android TWA billing is in progress via Google Play Billing (Digital Goods API + Payment Request API — the TWA-specific bridge, not the native Android Billing Library) — see `docs/projects/105_PLAY_BILLING_TWA.md`.
+
+---
+
 ## Coding Standards & Code Quality
 
 - **Type Safety (CI-failing if violated):**

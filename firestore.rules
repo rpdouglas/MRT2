@@ -87,10 +87,13 @@ service cloud.firestore {
       // or to the admin UI (AuthContext.tsx trusts profile.role === 'admin').
       // pinAttempts is likewise server-write-only (verifyVaultPin, PROJ-65) —
       // a client that could reset/forge its own lockout state would defeat
-      // the vault-PIN brute-force rate limiter entirely.
+      // the vault-PIN brute-force rate limiter entirely. lastWorkbookCoachCall
+      // (PROJ-106) is the same story for the all-tier workbook_coach floor —
+      // unlike usage_limits.*, nothing client-side legitimately writes this
+      // field, so it can be fully server-write-only without breaking anything.
       allow update: if isAdmin() || (
         isOwner(userId) &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'tierSource', 'role', 'pinAttempts'])
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tier', 'tierSource', 'role', 'pinAttempts', 'lastWorkbookCoachCall'])
       );
 
       allow delete: if isOwner(userId) || isAdmin();

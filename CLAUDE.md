@@ -85,6 +85,26 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 
 ---
 
+## Premium Tier & Billing
+
+MRT is a freemium product — a $3.99/mo "Supporter" subscription (`users/{uid}.tier: 'free' | 'premium'`) gates a subset of features. **Any new feature, especially one that calls Gemini, should ask whether it needs a tier check or a rate limit — this is not automatic and has been missed before (see below).**
+
+**Mechanism:**
+- `tier`/`tierSource` (`src/lib/db.ts`) are the source of truth. Client-writable only at account creation (forced to `'free'`); after that, `firestore.rules` blocks any client write to `tier`/`tierSource`/`role` for non-admins — **only** `syncStripeSubscription` (Cloud Function, `functions/src/index.ts`, admin SDK) or an admin (`FriendsDirectory.tsx`'s manual VIP grant, `tierSource: 'manual'`) can set them. Never add a client-side path that writes these fields.
+- `tierSource` values in practice: the Stripe-sync Cloud Function writes the literal string `"Stripe-Managed"` (not `'stripe'`, despite the TS union in `db.ts` saying `'stripe'` — a known, minor drift, not a bug to silently "fix" by assuming the union is authoritative).
+- `usage_limits` (`users/{uid}`) is a real, server-enforced (defense-in-depth: client `useRateLimits.ts` + authoritative check in the `generateAIInsights` proxy, `functions/src/index.ts`) cooldown store for free-tier AI usage (weekly/monthly/deep-dive scans, ROSC assessments) — not every gate is binary hide/show; several are "immediate for premium, cooldown-limited for free."
+- `<PremiumGate>` (`src/components/PremiumGate.tsx`) is the shared UI wrapper (`hide` / `button_swap` / `lock_overlay` modes) — reuse it rather than hand-rolling a new tier-check pattern.
+
+**A gate must be enforced where the data/action actually happens, not just in the UI entry point.** `JournalEditor.tsx`'s custom-templates button is tier-gated, but the `/templates` route and `TemplateEditor.tsx` itself have no tier check at all — any authenticated free user can reach it directly by URL. Don't repeat this pattern: gating the button that links to a feature is not the same as gating the feature.
+
+**Known live gap, not yet fixed (flag if you touch these files):** `WorkbookDetail.tsx` (`analyzeWorkbookContent`), `WorkbookSession.tsx` (`getGeminiCoaching`), and `AudioRecorder.tsx` (`generateAudioAnalysis`) — three of the nine approved Gemini flows above — have **no tier check and no rate limit at all**. This is a live, uncapped Gemini API cost exposure (any free user can call these without limit), independent of whether they should also be premium-gated as a product decision. Don't extend these call sites without also considering this gap; don't assume "it's been like this a while" means it's intentional.
+
+**Platform-specific billing:** Web/iOS-PWA purchases go through Stripe (`src/pages/PremiumUpgrade.tsx`, `handleSubscribe` → `checkout_sessions` → the Stripe Firebase Extension). The Android TWA cannot use this flow (Play Payments policy) — see `docs/projects/68_STRIPE_TWA_GATING.md` and `docs/projects/105_PLAY_BILLING_TWA.md` for the in-progress Google Play Billing integration (Digital Goods API + Payment Request API, the TWA-specific bridge — not the native Android Billing Library, since there is no native Android code in a TWA).
+
+**Never gate crisis/safety features.** SOS, Urge Surfer, Craving Buster, sponsor/hotline contact, the sobriety counter, and core journaling/task tracking must stay free and frictionless — this isn't a style preference, it's David's crisis-first design floor (see Personas below). Don't propose or implement premium-gating for anything crisis-adjacent.
+
+---
+
 ## Critical Rules
 
 ### Type Safety (CI-failing if violated)

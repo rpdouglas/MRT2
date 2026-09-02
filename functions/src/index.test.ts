@@ -11,6 +11,8 @@ import {
     sendBeaconMessagesChunked,
     buildBatchPrompt,
     computeLockoutSeconds,
+    checkCooldown,
+    checkFloor,
     evaluateVaultPinAttempt,
     deriveVaultPepper,
     validateCrosswordCandidates,
@@ -354,6 +356,54 @@ describe("computeLockoutSeconds (PROJ-65 vault-PIN rate limiting)", () => {
 
     it("never de-escalates as attempts keep climbing", () => {
         expect(computeLockoutSeconds(50)).toBe(24 * 60 * 60);
+    });
+});
+
+describe("checkCooldown (PROJ-106: day-granularity free-tier AI rate limiting)", () => {
+    it("allows a call when there's no prior timestamp at all", () => {
+        expect(checkCooldown(new Date("2026-09-01"), null, 7)).toEqual({ allowed: true });
+    });
+
+    it("blocks a call still inside the cooldown window, reporting days remaining", () => {
+        const now = new Date("2026-09-08T00:00:00Z");
+        const lastRun = new Date("2026-09-03T00:00:00Z"); // 5 days ago
+        expect(checkCooldown(now, lastRun, 7)).toEqual({ allowed: false, daysRemaining: 2 });
+    });
+
+    it("allows exactly at the boundary (diff === cooldownDays)", () => {
+        const now = new Date("2026-09-08T00:00:00Z");
+        const lastRun = new Date("2026-09-01T00:00:00Z"); // exactly 7 days ago
+        expect(checkCooldown(now, lastRun, 7)).toEqual({ allowed: true });
+    });
+
+    it("still blocks one day short of the boundary", () => {
+        const now = new Date("2026-09-07T00:00:00Z");
+        const lastRun = new Date("2026-09-01T00:00:00Z"); // 6 days ago
+        expect(checkCooldown(now, lastRun, 7)).toEqual({ allowed: false, daysRemaining: 1 });
+    });
+
+    it("allows once the cooldown has fully elapsed", () => {
+        const now = new Date("2026-09-09T00:00:00Z");
+        const lastRun = new Date("2026-09-01T00:00:00Z"); // 8 days ago
+        expect(checkCooldown(now, lastRun, 7)).toEqual({ allowed: true });
+    });
+});
+
+describe("checkFloor (PROJ-106: second-granularity all-tier anti-abuse floor)", () => {
+    it("allows a call when there's no prior timestamp at all", () => {
+        expect(checkFloor(new Date(), null, 15)).toEqual({ allowed: true });
+    });
+
+    it("blocks a call inside the floor window, reporting seconds remaining", () => {
+        const now = new Date("2026-09-01T00:00:20Z");
+        const lastRun = new Date("2026-09-01T00:00:10Z"); // 10s ago
+        expect(checkFloor(now, lastRun, 15)).toEqual({ allowed: false, secondsRemaining: 5 });
+    });
+
+    it("allows once the floor has fully elapsed", () => {
+        const now = new Date("2026-09-01T00:00:30Z");
+        const lastRun = new Date("2026-09-01T00:00:10Z"); // 20s ago
+        expect(checkFloor(now, lastRun, 15)).toEqual({ allowed: true });
     });
 });
 

@@ -331,6 +331,22 @@ describe('users/{userId} — tier/role self-escalation blocks', () => {
     );
   });
 
+  it('blocks a user from resetting their own lastWorkbookCoachCall field (PROJ-106 anti-abuse floor)', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', ALICE), {
+        tier: 'free',
+        role: 'user',
+        email: 'a@b.com',
+        lastWorkbookCoachCall: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      updateDoc(doc(aliceDb, 'users', ALICE), { lastWorkbookCoachCall: null }),
+    );
+  });
+
   it('lets a user update unrelated profile fields freely', async () => {
     await seedAsAdmin(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'users', ALICE), { tier: 'free', role: 'user', email: 'a@b.com' });

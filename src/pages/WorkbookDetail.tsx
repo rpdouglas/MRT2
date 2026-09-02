@@ -86,7 +86,14 @@ export default function WorkbookDetail() {
             alert("Analysis failed. Please try again.");
         }
 
-    } catch (error) { console.error(error); alert("An error occurred during analysis."); } finally {
+    } catch (error) {
+        console.error(error);
+        // PROJ-106: a free-tier cooldown rejection is expected, not a failure —
+        // the server's HttpsError message is already the "Available in N days"
+        // copy, so surface it directly instead of the generic error alert.
+        const code = (error as { code?: string })?.code;
+        alert(code === 'functions/resource-exhausted' ? (error as Error).message : "An error occurred during analysis.");
+    } finally {
         setAnalyzing(false);
     }
   };

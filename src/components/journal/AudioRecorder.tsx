@@ -83,7 +83,10 @@ export default function AudioRecorder({ onAnalysisComplete, onCancel }: AudioRec
             onAnalysisComplete(analysis);
         } catch (err) {
             console.error("Processing failed", err);
-            setError("Failed to process audio. Please try again.");
+            // PROJ-106: the free-tier 24h cooldown rejection is expected, not a
+            // failure — surface the server's "Available again in 24 hours" copy.
+            const code = (err as { code?: string })?.code;
+            setError(code === 'functions/resource-exhausted' ? (err as Error).message : "Failed to process audio. Please try again.");
             setIsProcessing(false);
         }
     };

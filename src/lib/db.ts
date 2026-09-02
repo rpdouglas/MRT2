@@ -25,7 +25,14 @@ export interface UserProfile {
     lastMonthlyInsight?: Timestamp;
     lastDeepDive?: Timestamp;
     lastROSCAssessment?: Timestamp;
+    /** PROJ-106: free-tier-only cooldown stamps, same shape as the above. */
+    lastWorkbookAnalysis?: Timestamp;
+    lastAudioAnalysis?: Timestamp;
   };
+  /** PROJ-106: all-tier anti-abuse floor for workbook_coach — lives outside
+   * usage_limits (which is free-tier-only bookkeeping) since this floor
+   * applies to premium accounts too. */
+  lastWorkbookCoachCall?: Timestamp;
   tier?: 'free' | 'premium';
   tierSource?: 'stripe' | 'manual';
   stripeCustomerId?: string;

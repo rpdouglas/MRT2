@@ -106,8 +106,11 @@ export default function WorkbookSession() {
             const context = currentQuestion.context || currentQuestion.text; 
             const feedback = await getGeminiCoaching(context, currentAnswer);
             setAiFeedback(feedback);
-        } catch {
-            alert("Coach unavailable.");
+        } catch (error) {
+            // PROJ-106: the 15s anti-abuse floor rejection is expected, not a
+            // failure — surface the server's "please wait Ns" message directly.
+            const code = (error as { code?: string })?.code;
+            alert(code === 'functions/resource-exhausted' ? (error as Error).message : "Coach unavailable.");
         } finally {
             setAiCoachLoading(false);
         }
