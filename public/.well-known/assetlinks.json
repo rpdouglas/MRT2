@@ -4,7 +4,8 @@
     "namespace": "android_app",
     "package_name": "ca.myrecoverytoolkit.app",
     "sha256_cert_fingerprints": [
-      "0F:5A:27:1D:BF:75:5A:74:63:7B:E3:B1:CC:6C:56:68:B0:D5:6B:A3:5D:BE:7E:CF:15:71:4C:BC:9E:03:1B:C4"
+      "0F:5A:27:1D:BF:75:5A:74:63:7B:E3:B1:CC:6C:56:68:B0:D5:6B:A3:5D:BE:7E:CF:15:71:4C:BC:9E:03:1B:C4",
+      "72:31:4A:B3:66:B4:94:17:E5:F2:C3:9A:F6:44:6B:F2:14:FC:98:52:83:35:E8:99:22:94:3F:C0:F0:DC:05:9D"
     ]
   }
 }]
