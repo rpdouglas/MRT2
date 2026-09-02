@@ -1,6 +1,6 @@
 # 📁 Project 105: Google Play Billing for the Android TWA
 
-**Status:** 🟡 Code complete 2026-09-02 — blocked on external Play Console setup + real-device testing before this can go live (see §6)
+**Status:** 🟡 Code complete 2026-09-02 (deployed to prod same day) — blocked on the Play Store submission (`PROJ-07`) reaching a release track, since the subscription product can't be created until the app exists there; resume this spec's §6 checklist once that's true. Pub/Sub topic (`play-billing-rtdn`) already created.
 **Primary Persona:** All (monetization infrastructure — no persona-specific UX beyond the purchase flow itself)
 **Objective:** Let users subscribe to Premium ($3.99/mo) with a native, one-tap purchase from inside the Android TWA, instead of the current zero-purchase-path state (`PROJ-68` amendment, 2026-09-01).
 
@@ -108,11 +108,12 @@
 - `.env.example` — documents the new `VITE_PLAY_BILLING_PRODUCT_ID`.
 - `docs/SCHEMA_ARCHITECTURE.md`, `docs/BACKLOG.md` — synced per governance's Protocol A.
 
-**NOT built — external, one-time setup only the account owner can do (no code, can't be automated from here):**
-1. **Play Console: create the subscription product.** Play Console → Monetize → Products → Subscriptions → create `premium.monthly` (or chosen ID) priced at $3.99/mo — must match `VITE_PLAY_BILLING_PRODUCT_ID`.
-2. **Play Console: grant API access.** Users and permissions → grant the Cloud Functions runtime service account (`<project-id>@appspot.gserviceaccount.com`, or a dedicated one) "View financial data" + subscription management access under the Play Android Developer API — this is what lets `verifyPlayPurchase`/`handlePlayRTDN` call the Play Developer API via Application Default Credentials with no stored secret.
-3. **Play Console: configure Real-time Developer Notifications.** Monetize → Monetization setup → set the Pub/Sub topic to `projects/<project-id>/topics/play-billing-rtdn` (must match the `topic` in `handlePlayRTDN`'s `onMessagePublished` config) — and create that Pub/Sub topic itself if it doesn't already exist (`gcloud pubsub topics create play-billing-rtdn` or via Console).
-4. **`VITE_PLAY_BILLING_PRODUCT_ID`** needs a real value in the deploy pipeline's GitHub Secrets (currently only `.env.example` documents the placeholder).
-5. **Deploy the two new functions** (`firebase deploy --only functions:verifyPlayPurchase,functions:handlePlayRTDN`) and the updated `firestore.rules`.
-6. **Real-device testing** — this can only be exercised on an actual Android device running the Play-installed TWA with a real (or Play Console license-test) Google account; the Digital Goods API has no meaningful browser/emulator fallback. Recommend Play Console's built-in license-testing accounts (free test purchases) before going live with real billing.
-7. **`docs/legal/PLAY_STORE_DATA_SAFETY_DRAFT.md`** — flagged as uncertain in the Dependency Impact Table above; worth a real look once step 6 confirms what data actually flows (likely just: Play-processed payment data, same category Stripe already covers for web).
+**NOT built — external, one-time setup only the account owner can do (no code, can't be automated from here). Blocked on `PROJ-07` (Play Store submission) reaching a release track first — the subscription product and RTDN config both need the app to already exist in Play Console:**
+1. ✅ **Pub/Sub topic created** (`projects/mrt2-app-prod/topics/play-billing-rtdn`, 2026-09-02).
+2. ✅ **`verifyPlayPurchase`/`handlePlayRTDN` deployed to prod** alongside the updated `firestore.rules` (2026-09-02 CI run, commit `f68a3c5`).
+3. ⬜ **BLOCKED on PROJ-07 — Play Console: create the subscription product.** Play Console → Monetize → Products → Subscriptions → create `premium.monthly` (or chosen ID) priced at $3.99/mo — must match `VITE_PLAY_BILLING_PRODUCT_ID`. Needs the app to exist in Play Console with at least one release track.
+4. ⬜ **Play Console: grant API access.** Setup → API access → grant the Cloud Functions runtime service account (`mrt2-app-prod@appspot.gserviceaccount.com`) "View financial data" + subscription management access under the Play Android Developer API — this is what lets `verifyPlayPurchase`/`handlePlayRTDN` call the Play Developer API via Application Default Credentials with no stored secret. Can likely be done as soon as the Play Console app entry exists, doesn't strictly need a release track.
+5. ⬜ **BLOCKED on PROJ-07 — Play Console: point RTDN at the topic.** Monetize → Monetization setup → Real-time developer notifications → `projects/mrt2-app-prod/topics/play-billing-rtdn`.
+6. ⬜ **`VITE_PLAY_BILLING_PRODUCT_ID`** needs a real value in the deploy pipeline's GitHub Secrets (currently only `.env.example` documents the placeholder). Can be set any time before going live.
+7. ⬜ **Real-device testing** — only exercisable on an actual Android device running the Play-installed TWA with a real (or Play Console license-test) Google account; the Digital Goods API has no meaningful browser/emulator fallback. Recommend Play Console's built-in license-testing accounts (free test purchases) before going live with real billing.
+8. ⬜ **`docs/legal/PLAY_STORE_DATA_SAFETY_DRAFT.md`** — flagged as uncertain in the Dependency Impact Table above; worth a real look once step 7 confirms what data actually flows (likely just: Play-processed payment data, same category Stripe already covers for web).
