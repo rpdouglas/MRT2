@@ -10,7 +10,7 @@ import VibrantHeader from '../components/VibrantHeader';
 import TabBar from '../components/ui/TabBar';
 import DataManagement from '../components/profile/DataManagement';
 import AchievementsTab from '../components/profile/AchievementsTab';
-import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline } from '@heroicons/react/24/outline';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline, SparklesIcon, StarIcon } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import ModalitySelector from '../components/readings/ModalitySelector';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -29,7 +29,7 @@ function isTabType(value: string | undefined): value is TabType {
 }
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, userTier, userTierSource } = useAuth();
   const { changePin, resetVault } = useEncryption();
   const navigate = useNavigate();
   const { tab } = useParams<{ tab?: string }>();
@@ -416,6 +416,49 @@ export default function Profile() {
         {/* TAB 1: GENERAL */}
         {activeTab === 'general' && (
             <div className="space-y-6 animate-fadeIn">
+                {/* Account Tier — PROJ-107. Only entry point in general navigation to
+                    /premium; every other route there is a reactive paywall trigger
+                    (PremiumGate, JournalEditor's templates button, JournalAnalysisWizard's
+                    scope selector). Source-aware per Strategy B: a manual/VIP grant has no
+                    Stripe customer or Play purchase token to manage, so it gets no button. */}
+                {!isOnboarding && (
+                    <div className={userTier === 'premium'
+                        ? 'bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700'
+                        : 'bg-white p-6 rounded-xl shadow-sm border border-gray-200'
+                    }>
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                                {userTier === 'premium' ? (
+                                    userTierSource === 'manual' ? (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 mb-2">
+                                            <StarIcon className="h-3 w-3" /> VIP &middot; Manual Grant
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 mb-2">
+                                            <SparklesIcon className="h-3 w-3" /> {`Supporter · via ${userTierSource === 'play-billing' ? 'Google Play' : 'Stripe'}`}
+                                        </span>
+                                    )
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800 border border-gray-200 mb-2">
+                                        Free
+                                    </span>
+                                )}
+                                <h3 className={`text-lg font-bold ${userTier === 'premium' ? 'text-white' : 'text-gray-900'}`}>
+                                    {userTier === 'premium' ? 'You are a Supporter' : 'Free Plan'}
+                                </h3>
+                            </div>
+                            {!(userTier === 'premium' && userTierSource === 'manual') && (
+                                <button
+                                    onClick={() => navigate('/premium')}
+                                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg active:scale-95 transition-all text-sm whitespace-nowrap"
+                                >
+                                    {userTier === 'premium' ? 'Manage Subscription' : 'Become a Supporter'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <form onSubmit={handleCompleteSetup} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-6">
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                         <h3 className="text-lg font-bold text-gray-900">

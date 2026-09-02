@@ -16,6 +16,8 @@ const mockUpdateProfileMutateAsync = vi.fn().mockResolvedValue(undefined);
 const mockPatchFieldsMutateAsync = vi.fn().mockResolvedValue(undefined);
 const mockResetVault = vi.fn();
 let mockProfile: Record<string, unknown> | null;
+let mockUserTier: 'free' | 'premium' = 'free';
+let mockUserTierSource: 'Stripe-Managed' | 'play-billing' | 'manual' | undefined;
 
 vi.mock('firebase/auth', () => ({ updateProfile: vi.fn() }));
 
@@ -23,6 +25,8 @@ vi.mock('../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({
         user: { uid: 'test-user-123', email: 'walt@example.com', displayName: 'Walt' },
         logout: vi.fn(),
+        userTier: mockUserTier,
+        userTierSource: mockUserTierSource,
     })),
 }));
 
@@ -59,6 +63,7 @@ function renderProfile(initialPath = '/profile') {
             <Routes>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:tab" element={<Profile />} />
+                <Route path="/premium" element={<div>Premium Page Mock</div>} />
             </Routes>
         </MemoryRouter>
     );
@@ -67,6 +72,8 @@ function renderProfile(initialPath = '/profile') {
 describe('👤 Profile — Autosave Consistency (Project 58 Phase 2)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUserTier = 'free';
+        mockUserTierSource = undefined;
         mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
         mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
         mockResetVault.mockResolvedValue(undefined);
@@ -170,6 +177,8 @@ describe('👤 Profile — Autosave Consistency (Project 58 Phase 2)', () => {
 describe('👤 Profile — Deep-Linkable Tabs (Project 58 Phase 4)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUserTier = 'free';
+        mockUserTierSource = undefined;
         mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
         mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
         mockProfile = {
@@ -224,6 +233,8 @@ describe('👤 Profile — Deep-Linkable Tabs (Project 58 Phase 4)', () => {
 describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUserTier = 'free';
+        mockUserTierSource = undefined;
         mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
         mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
         mockResetVault.mockResolvedValue(undefined);
@@ -294,6 +305,8 @@ describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)',
 describe('👤 Profile — Polish (Project 58 Phase 5)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUserTier = 'free';
+        mockUserTierSource = undefined;
         mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
         mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
         mockProfile = {
@@ -320,5 +333,69 @@ describe('👤 Profile — Polish (Project 58 Phase 5)', () => {
         const swatch = screen.getByRole('button', { name: /use amber theme/i });
         expect(swatch.className).toContain('h-11 w-11');
         expect(swatch.className).not.toContain('h-9 w-9');
+    });
+});
+
+describe('👤 Profile — Account Tier Card (Project 107)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockUserTier = 'free';
+        mockUserTierSource = undefined;
+        mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
+        mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
+        mockProfile = {
+            uid: 'test-user-123',
+            displayName: 'Walt',
+            sobrietyDate: { toDate: () => new Date('2024-01-01T00:00:00Z') },
+            hasCompletedOnboarding: true,
+        };
+    });
+
+    it('free tier: shows the Free badge and a "Become a Supporter" button that navigates to /premium', () => {
+        renderProfile();
+
+        expect(screen.getByText('Free Plan')).toBeInTheDocument();
+        expect(screen.getByText('Free')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /become a supporter/i }));
+        expect(screen.getByText('Premium Page Mock')).toBeInTheDocument();
+    });
+
+    it('Stripe-sourced premium: shows a source-labeled badge and a "Manage Subscription" button', () => {
+        mockUserTier = 'premium';
+        mockUserTierSource = 'Stripe-Managed';
+        renderProfile();
+
+        expect(screen.getByText('You are a Supporter')).toBeInTheDocument();
+        expect(screen.getByText(/supporter.*via stripe/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /manage subscription/i }));
+        expect(screen.getByText('Premium Page Mock')).toBeInTheDocument();
+    });
+
+    it('Play-Billing-sourced premium: shows "via Google Play" instead of Stripe', () => {
+        mockUserTier = 'premium';
+        mockUserTierSource = 'play-billing';
+        renderProfile();
+
+        expect(screen.getByText(/supporter.*via google play/i)).toBeInTheDocument();
+    });
+
+    it('manual/VIP grant: shows the VIP badge with no management button at all', () => {
+        mockUserTier = 'premium';
+        mockUserTierSource = 'manual';
+        renderProfile();
+
+        expect(screen.getByText(/vip.*manual grant/i)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /manage subscription/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /become a supporter/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render the tier card during onboarding', () => {
+        mockProfile = null; // no profile document yet -> isOnboarding
+        renderProfile();
+
+        expect(screen.queryByText('Free Plan')).not.toBeInTheDocument();
+        expect(screen.queryByText('You are a Supporter')).not.toBeInTheDocument();
     });
 });
