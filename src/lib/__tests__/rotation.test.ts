@@ -159,6 +159,32 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         expect(g1Update![1].encryptedReflection).not.toBe(staleReflection);
     });
 
+    // TD-25/ledger "Lost PIN Test" for PROJ-79 (Daily Crossword): the
+    // game_progress rotation/shredding sweep above is already gameId-
+    // agnostic — it re-encrypts/deletes by collection, never branching on
+    // gameId — so a crossword completion was already covered by the generic
+    // test above with zero code changes needed. This test exists purely to
+    // make that coverage explicit for this specific game rather than
+    // leaving it implicit, closing the letter of the still-open ledger item.
+    it('re-encrypts a daily-crossword game_progress document the same as any other game (PROJ-79)', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+        const staleStats = await encrypt('{"solveDurationSeconds":180,"hintCount":1,"revealCount":0,"theme":"Hope"}');
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocsForStages({
+            gameProgress: [pageSnapshot([
+                { id: 'xword1', ref: { __id: 'xword1' }, data: () => ({ gameId: 'daily-crossword', score: 0, encryptedStats: staleStats }) },
+            ])],
+        });
+
+        await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
+
+        const update = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'xword1');
+        expect(update).toBeDefined();
+        expect(update![1].encryptedStats).not.toBe(staleStats);
+    });
+
     it('re-encrypts game_saves documents (PROJ-72 Phase 4)', async () => {
         const oldSalt = generateSalt();
         await generateKey(OLD_PIN, oldSalt);
@@ -315,5 +341,26 @@ describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
         await executeCryptoShredding('user_1');
 
         expect(deleteCalls).toContainEqual({ __id: 'g1' });
+    });
+
+    // TD-25/ledger "Lost PIN Test" for PROJ-79 (Daily Crossword) — see the
+    // rotation describe block's matching comment above: the shredding sweep
+    // is already gameId-agnostic, this makes that coverage explicit.
+    it('deletes a daily-crossword game_progress document the same as any other game (PROJ-79)', async () => {
+        const pages = [
+            emptySnapshot(), // journals
+            emptySnapshot(), // workbooks
+            emptySnapshot(), // rosc
+            pageSnapshot([{ id: 'xword1', ref: { __id: 'xword1' }, data: () => ({ gameId: 'daily-crossword', score: 0, encryptedStats: 'x' }) }]), // game_progress page 1
+            emptySnapshot(), // game_progress terminator
+            emptySnapshot(), // game_saves terminator
+        ];
+        for (const page of pages) {
+            vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+        }
+
+        await executeCryptoShredding('user_1');
+
+        expect(deleteCalls).toContainEqual({ __id: 'xword1' });
     });
 });

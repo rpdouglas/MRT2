@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/emulator';
+import { seedTodaysCrossword, CROSSWORD_FIXTURE_CELLS, getUidByEmail, findGameProgress } from '../fixtures/seedCrossword';
 
 /**
  * Golden Path 4 — The Subway Test (PROJ-72 §5). Flagged since #114 as
@@ -133,4 +134,87 @@ test('Fast Lane plays offline from cache, resumes on re-entry, and syncs once ba
   await expect(verifyPage.getByText('Choose a Starting Point')).not.toBeVisible();
 
   await verifyContext.close();
+});
+
+/**
+ * PROJ-79 ledger gap — Daily Crossword was never covered by the Subway
+ * Test. Unlike Fast Lane, this game has no genuine multi-session save state
+ * to resume (it's solved in one sitting, per docs/screens/games/daily-
+ * crossword.md); what actually needs proving here is different: (1) the
+ * puzzle content itself (crossword_puzzles/{date}, read-only/admin-written)
+ * renders from Firestore's local cache while offline, (2) solving it is
+ * fully playable offline with no error, and (3) the resulting game_progress
+ * completion write is queued locally and reaches the server once back
+ * online — as real ciphertext, not plaintext (the "Lost PIN"-adjacent
+ * concern this ledger item also named). The puzzle itself is seeded via the
+ * Firestore Admin SDK (see ../fixtures/seedCrossword.ts) rather than the
+ * real Gemini-backed generator, for a deterministic, network-free fixture.
+ */
+test('Daily Crossword renders and solves offline, and syncs the completion (as real ciphertext) once back online', async ({
+  page,
+  context,
+  onboardedUser,
+}) => {
+  const pin = '4321';
+  await seedTodaysCrossword();
+
+  await page.goto('/games/daily-crossword');
+
+  // VaultGate wraps this route (per docs/screens/games/daily-crossword.md —
+  // no crisis-tool exception here).
+  await page.getByPlaceholder('New Security PIN').fill(pin);
+  await page.getByPlaceholder('Confirm PIN').fill(pin);
+  await page.getByRole('button', { name: 'Secure My Journal' }).click();
+  await expect(page.getByText('Everyday Recovery Language')).toBeVisible({ timeout: 20_000 });
+
+  // Round-trip through GamesHub once while online — warms both lazy route
+  // chunks (same rationale as the Fast Lane test above) so the offline
+  // exit/re-entry below needs zero network for the app shell itself.
+  await page.getByRole('button', { name: 'Exit to Games' }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole('link', { name: /Daily Crossword/ }).click();
+  await expect(page.getByText('Everyday Recovery Language')).toBeVisible({ timeout: 10_000 });
+
+  // Go offline. Exit and re-enter — the puzzle doc must render from
+  // Firestore's local persistent cache alone, with zero network involved.
+  await context.setOffline(true);
+
+  await page.getByRole('button', { name: 'Exit to Games' }).click();
+  await expect(page).toHaveURL(/\/games$/);
+  await page.getByRole('link', { name: /Daily Crossword/ }).click();
+  await expect(page.getByText('Everyday Recovery Language')).toBeVisible({ timeout: 10_000 });
+
+  // Solve the whole grid offline, cell by cell. Clicking each cell directly
+  // (rather than relying on auto-advance across a whole word) sidesteps any
+  // ambiguity about which of across/down is currently selected.
+  for (const { row, col, letter } of CROSSWORD_FIXTURE_CELLS) {
+    await page.getByRole('button', { name: new RegExp(`^Row ${row + 1} column ${col + 1}`) }).click();
+    await page.keyboard.type(letter);
+  }
+
+  // Solved state renders immediately, fully offline — recordProgress's
+  // write is queued locally (persistentLocalCache), not blocking the UI.
+  await expect(page.getByText('A few minutes spent strengthening recovery vocabulary.')).toBeVisible();
+
+  // Back online -> the offline-queued game_progress write should flush.
+  await context.setOffline(false);
+  await page.waitForResponse(
+    (resp) => resp.url().includes(':8080') && resp.request().method() === 'POST',
+    { timeout: 15_000 },
+  );
+
+  // Prove it actually reached the server as real ciphertext, not just the
+  // local cache and not plaintext. Daily Crossword has no "already solved
+  // today" resume UI to check from a second browser context the way Fast
+  // Lane's game_saves does, so a direct Admin SDK read is the equivalent
+  // proof for this game's shape — and doubles as the "Lost PIN"-adjacent
+  // check this ledger item also named (encryptedStats must be real
+  // ciphertext, not the raw stats object with a label slapped on).
+  const uid = await getUidByEmail(onboardedUser.email);
+  await expect(async () => {
+    const record = await findGameProgress(uid, 'daily-crossword');
+    expect(record).toBeTruthy();
+    expect(typeof record?.encryptedStats).toBe('string');
+    expect(record?.encryptedStats as string).not.toContain('solveDurationSeconds');
+  }).toPass({ timeout: 15_000 });
 });
