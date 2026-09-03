@@ -68,3 +68,8 @@ stats.html
 
 # Claude Code agent worktree scratch state — transient, never a tracked artifact.
 .claude/worktrees/
+
+# AI-generated image drafts (media-pipeline plugin, IMAGE_OUTPUT_DIR) — raw/iterative
+# generation output, not curated assets. Promote a chosen image into public/raw_assets/
+# (and run scripts/optimize_assets.py) before it ships; never commit this dir directly.
+/generated-images/

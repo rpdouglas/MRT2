@@ -1,4 +1,8 @@
 {
+  "env": {
+    "IMAGE_OUTPUT_DIR": "./generated-images",
+    "GEMINI_DEFAULT_MODEL": "gemini-3-pro-image-preview"
+  },
   "permissions": {
     "allow": [
       "Read",

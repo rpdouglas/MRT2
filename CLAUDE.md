@@ -137,6 +137,18 @@ MRT is a freemium product — a $3.99/mo "Supporter" subscription (`users/{uid}.
 
 ---
 
+## AI Image Generation (Dev Tooling)
+
+Claude Code has the `media-pipeline` plugin (`guinacio/claude-image-gen`) installed for generating placeholder/concept/marketing imagery via natural-language requests during a session (e.g. "generate a hero image for X"). **This is a developer-authoring tool, not a runtime feature of the app** — it has nothing to do with `src/lib/gemini.ts` or the nine approved AI-analysis flows in the Zero-Knowledge Encryption Boundary section above. Don't conflate the two, and don't treat this plugin's existence as license to add a new client-side Gemini call site — that approval list is unchanged.
+
+- **Output dir:** `./generated-images/` (repo root, gitignored — draft/iterative output, never committed directly). Curate a chosen image, then promote it into `public/raw_assets/` and run `scripts/optimize_assets.py` (or an equivalent crop/compress pass) before it ships as a real asset — same staging pattern the existing externally-sourced marketing images already follow.
+- **Trigger:** natural-language image requests. The skill also self-triggers on placeholder-image/empty-hero-section patterns it detects in code — treat that as a suggestion, not an auto-execute; confirm before spending API credit.
+- **Model:** Gemini, `gemini-3-pro-image-preview` by default (`GEMINI_DEFAULT_MODEL` in `.claude/settings.json`). Requires `GEMINI_API_KEY` in the shell environment — never hardcode it in a file or commit it.
+- **Do NOT use for:** final production-polish art shipped to users without a human/design review pass. MRT's persona and marketing imagery sets tone for a recovery product — David's crisis-safety floor applies to imagery too (no shame-coded, punitive, or clinically-alarming visuals). Treat AI-generated output as a draft or reference sheet, not a direct-to-`public/` asset. Never use it to depict a real, identifiable person, or to fabricate app-screenshot-style UI imagery (Play Store listing screenshots must be real captures).
+- **MCP server:** the plugin also registers an MCP server (`media-pipeline` / `create_asset`); the skill uses its own bundled CLI and doesn't need it. This Claude Code build has no per-component disable for a plugin's MCP server — only whole-plugin enable/disable, which would remove the skill too — so it's left enabled. It costs a local Node subprocess per session, not context tokens.
+
+---
+
 ## React Patterns
 
 - `VaultGate.tsx` — PIN entry & encryption gate; wraps the entire app
