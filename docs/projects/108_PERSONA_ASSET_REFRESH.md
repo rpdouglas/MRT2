@@ -83,7 +83,7 @@ Restructuring from flat (`david_headshot.webp`) to nested (`david/headshot.webp`
 
 ## 6. Planning Protocol Output (2026-09-03) — AWAITING APPROVAL
 
-Ran through `/planning`. Full detail below; paused at the Stop Gate before the user typed APPROVED because a new AI image-generation capability is being set up for the project (see PROJ-109) that may change what's feasible here — e.g. generating genuinely new pop-art-style art (bio panels, missing angles) instead of only cropping/compressing the 18 reference PNGs already in `public/personas/Persona Headshots and Angles/`. **Re-open this section and re-evaluate Strategy B vs. C before resuming** — image-gen may make Strategy C (or a new Strategy D built around generation rather than cropping) cost-competitive with B.
+Ran through `/planning`. Full detail below; paused at the Stop Gate before the user typed APPROVED because a new AI image-generation capability (the `media-pipeline` Claude Code plugin — dev tooling, no separate project spec filed) was being set up for the project that may change what's feasible here — e.g. generating genuinely new pop-art-style art (bio panels, missing angles) instead of only cropping/compressing the 18 reference PNGs already in `public/personas/Persona Headshots and Angles/`. **Re-open this section and re-evaluate Strategy B vs. C before resuming** — image-gen may make Strategy C (or a new Strategy D built around generation rather than cropping) cost-competitive with B.
 
 ### Phase 1: Dependency Impact Table
 | File/Module | Type | Impact | Confidence |

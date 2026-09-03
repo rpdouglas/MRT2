@@ -6,6 +6,10 @@ on:
       - main
       - 'release/*'
       - 'feature/*'
+      - 'claude/*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   # --- JOB 1: QUALITY GATES ---
@@ -111,8 +115,15 @@ jobs:
           VITE_FIREBASE_APP_ID: "1:1040431613138:web:e0e613ab8551f74d48590b"
 
   # --- JOB 2: BUILD & DEPLOY (Only if Verify passes) ---
+  # Guarded to push events only — a pull_request run has github.ref pointing at the
+  # PR's synthetic merge ref (refs/pull/N/merge), which matches none of the three
+  # Set Env conditions below, so every FIREBASE_PROJECT_ID/secret would resolve to an
+  # empty string and this job would attempt a real `firebase deploy` with no target.
+  # PRs only need the verify job as a required check; deploys stay tied to actual
+  # branch pushes (feature/*, claude/*, release/*, main).
   deploy:
     needs: verify
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -143,9 +154,9 @@ jobs:
 
       # --- ENVIRONMENT SELECTION ---
       
-      # DEV (Feature Branches)
+      # DEV (Feature Branches + Claude Code session branches)
       - name: Set Env (DEV)
-        if: startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/claude/')
         run: |
           echo "FIREBASE_PROJECT_ID=mrt2-app-dev" >> $GITHUB_ENV
           echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY_DEV }}" >> $GITHUB_ENV
