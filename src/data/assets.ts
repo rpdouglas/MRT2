@@ -15,20 +15,36 @@ export const ASSETS = {
   "apple_touch_icon": "/apple-touch-icon.png",
   "maskable_icon_512x512": "/maskable-icon-512x512.png",
   "personas": {
-    "ned": "/personas/ned.jpg",
-    "walt_headshot": "/personas/walt_headshot.webp",
-    "david_bio": "/personas/david_bio.webp",
-    "ned_bio": "/personas/ned_bio.webp",
-    "jordan_headshot": "/personas/jordan_headshot.webp",
-    "walt": "/personas/walt.jpg",
-    "lisa_headshot": "/personas/lisa_headshot.webp",
-    "david_headshot": "/personas/david_headshot.webp",
-    "lisa": "/personas/lisa.jpg",
-    "maya_headshot": "/personas/maya_headshot.webp",
-    "lisa_bio": "/personas/lisa_bio.webp",
-    "walt_bio": "/personas/walt_bio.webp",
-    "david": "/personas/david.jpg",
-    "ned_headshot": "/personas/ned_headshot.webp"
+    "jordan": {
+      "headshot": "/personas/jordan/headshot.webp",
+      "full_body": "/personas/jordan/full_body.webp",
+      "looking_left": "/personas/jordan/looking_left.webp"
+    },
+    "walt": {
+      "headshot": "/personas/walt/headshot.webp",
+      "full_body": "/personas/walt/full_body.webp",
+      "looking_left": "/personas/walt/looking_left.webp"
+    },
+    "ned": {
+      "headshot": "/personas/ned/headshot.webp",
+      "full_body": "/personas/ned/full_body.webp",
+      "looking_left": "/personas/ned/looking_left.webp"
+    },
+    "lisa": {
+      "headshot": "/personas/lisa/headshot.webp",
+      "full_body": "/personas/lisa/full_body.webp",
+      "looking_left": "/personas/lisa/looking_left.webp"
+    },
+    "maya": {
+      "headshot": "/personas/maya/headshot.webp",
+      "full_body": "/personas/maya/full_body.webp",
+      "looking_left": "/personas/maya/looking_left.webp"
+    },
+    "david": {
+      "headshot": "/personas/david/headshot.webp",
+      "full_body": "/personas/david/full_body.webp",
+      "looking_left": "/personas/david/looking_left.webp"
+    }
   },
   "chips": {
     "medallion_07": "/Chips/medallion_07.webp",
@@ -51,6 +67,7 @@ export const ASSETS = {
     "ned_bio": "/raw_assets/ned_bio.jpg"
   },
   "marketing": {
+    "feature_graphic": "/Marketing/feature_graphic.png",
     "ned_The_Pink_Cloud": "/Marketing/Ned_The_Pink_Cloud.webp",
     "lisa_The_Service_Pro": "/Marketing/Lisa_The_Service_Pro.webp",
     "snc_tools_personalities": "/Marketing/snc_tools_personalities.webp",
@@ -75,6 +92,7 @@ export const ASSETS = {
       "scn_profile_security": "/Marketing/Screenshots/scn_profile_security.webp",
       "scn_journal_voice_record_03": "/Marketing/Screenshots/scn_journal_voice_record_03.webp",
       "scn_tools_urge_surfer": "/Marketing/Screenshots/scn_tools_urge_surfer.webp",
+      "scn_sos_crisis_support": "/Marketing/Screenshots/scn_sos_crisis_support.webp",
       "scn_vitality_movement": "/Marketing/Screenshots/scn_vitality_movement.webp",
       "scn_daily_crossword": "/Marketing/Screenshots/scn_daily_crossword.webp",
       "scn_journal_templates": "/Marketing/Screenshots/scn_journal_templates.webp",
@@ -83,6 +101,7 @@ export const ASSETS = {
       "scn_wison_rd": "/Marketing/Screenshots/scn_wison_rd.webp",
       "scn_journal_history": "/Marketing/Screenshots/scn_journal_history.webp",
       "scn_wisdom_main": "/Marketing/Screenshots/scn_wisdom_main.webp",
+      "scn_games_hub": "/Marketing/Screenshots/scn_games_hub.webp",
       "scn_profile_04_data": "/Marketing/Screenshots/scn_profile_04_data.webp",
       "scn_dashboard_02_clean_time": "/Marketing/Screenshots/scn_dashboard_02_clean_time.webp",
       "scn_goal_ladder": "/Marketing/Screenshots/scn_goal_ladder.webp",
@@ -90,17 +109,16 @@ export const ASSETS = {
       "scn_dashboard": "/Marketing/Screenshots/scn_dashboard.webp",
       "scn_journal_insights": "/Marketing/Screenshots/scn_journal_insights.webp",
       "scn_profile_01_main": "/Marketing/Screenshots/scn_profile_01_main.webp",
-      "scn_workbooks_compass": "/Marketing/Screenshots/scn_workbooks_compass.webp",
+      "scn_workbooks_compass": "/Marketing/Screenshots/scn_workbooks_compass.png",
       "scn_journal_ai_wizard": "/Marketing/Screenshots/scn_journal_ai_wizard.webp",
-      "scn_tools_resentment_burner_02": "/Marketing/Screenshots/scn_tools_resentment_burner_02.webp",
-      "scn_tools_life_balance": "/Marketing/Screenshots/scn_tools_life_balance.webp",
       "scn_vitality_breath": "/Marketing/Screenshots/scn_vitality_breath.webp",
-      "scn_dashboard_01_main": "/Marketing/Screenshots/scn_dashboard_01_main.webp",
-      "scn_games_hub": "/Marketing/Screenshots/scn_games_hub.webp",
-      "scn_sos_crisis_support": "/Marketing/Screenshots/scn_sos_crisis_support.webp",
+      "scn_tools_resentment_burner_02": "/Marketing/Screenshots/scn_tools_resentment_burner_02.webp",
+      "scn_tools_main": "/Marketing/Screenshots/scn_tools_main.webp",
+      "scn_tools_life_balance": "/Marketing/Screenshots/scn_tools_life_balance.webp",
+      "scn_insights": "/Marketing/Screenshots/scn_insights.webp",
+      "scn_dashboard_01_main": "/Marketing/Screenshots/scn_dashboard_01_main.png",
       "scn_feedback": "/Marketing/Screenshots/scn_feedback.webp",
       "scn_profile_data": "/Marketing/Screenshots/scn_profile_data.webp",
-      "scn_insights": "/Marketing/Screenshots/scn_insights.webp",
       "scn_dashboard_03_sos": "/Marketing/Screenshots/scn_dashboard_03_sos.webp",
       "scn_tools_abc_coping_tools": "/Marketing/Screenshots/scn_tools_abc_coping_tools.webp",
       "scn_urge_surfer": "/Marketing/Screenshots/scn_urge_surfer.webp",
@@ -112,14 +130,13 @@ export const ASSETS = {
       "scn_tools_resentment_burner_01": "/Marketing/Screenshots/scn_tools_resentment_burner_01.webp",
       "scn_journal_voice_record_02": "/Marketing/Screenshots/scn_journal_voice_record_02.webp",
       "scn_tasks_this_week": "/Marketing/Screenshots/scn_tasks_this_week.webp",
-      "scn_journal_write": "/Marketing/Screenshots/scn_journal_write.webp",
+      "scn_journal_write": "/Marketing/Screenshots/scn_journal_write.png",
       "scn_tools_cost_benefit_analysis": "/Marketing/Screenshots/scn_tools_cost_benefit_analysis.webp",
       "scn_workbooks": "/Marketing/Screenshots/scn_workbooks.webp",
       "scns_tools_dents": "/Marketing/Screenshots/scns_tools_dents.png",
       "scn_vitality_fuel": "/Marketing/Screenshots/scn_vitality_fuel.webp",
       "snc_tools_personalities": "/Marketing/Screenshots/snc_tools_personalities.png",
-      "scn_profile_02_main": "/Marketing/Screenshots/scn_profile_02_main.webp",
-      "scn_tools_main": "/Marketing/Screenshots/scn_tools_main.webp"
+      "scn_profile_02_main": "/Marketing/Screenshots/scn_profile_02_main.webp"
     }
   }
 } as const;

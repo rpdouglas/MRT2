@@ -11,15 +11,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { ShieldCheckIcon, EnvelopeIcon, LockClosedIcon, KeyIcon, ExclamationTriangleIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ASSETS } from '../data/assets';
 
 // --- Interfaces & Data ---
 interface Persona { id: string; name: string; title: string; stage: string; image: string; color: string; }
 
 const PERSONAS: Persona[] = [
-  { id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', image: '/personas/david.jpg', color: 'bg-blue-500' },
-  { id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', image: '/personas/ned.jpg', color: 'bg-emerald-500' },
-  { id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', image: '/personas/lisa.jpg', color: 'bg-purple-500' },
-  { id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', image: '/personas/walt.jpg', color: 'bg-amber-500' }
+  { id: 'david', name: 'David', title: 'The Fresh Start', stage: 'Day 1', image: ASSETS.personas.david.headshot, color: 'bg-blue-500' },
+  { id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', image: ASSETS.personas.ned.headshot, color: 'bg-cyan-500' },
+  { id: 'jordan', name: 'Jordan', title: 'The Stabiliser', stage: 'MAT', image: ASSETS.personas.jordan.headshot, color: 'bg-teal-500' },
+  { id: 'maya', name: 'Maya', title: 'The Systematiser', stage: '8 Months', image: ASSETS.personas.maya.headshot, color: 'bg-emerald-500' },
+  { id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', image: ASSETS.personas.walt.headshot, color: 'bg-amber-500' },
+  { id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', image: ASSETS.personas.lisa.headshot, color: 'bg-purple-500' },
 ];
 
 export default function Login() {
@@ -147,7 +150,7 @@ export default function Login() {
         {/* The Personas Grid */}
         <div className="relative z-10 mt-8 lg:mt-0 max-w-2xl hidden md:block">
             <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-4">Meeting you where you are</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {PERSONAS.map(p => (
                     <div key={p.id} className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-white/10 group">
                         <div className={`absolute inset-0 ${p.color} mix-blend-multiply opacity-40 group-hover:opacity-20 transition-opacity z-10`}></div>

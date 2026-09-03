@@ -1,12 +1,13 @@
 # 👥 Persona-Based Development Model
 
-**Version:** 2.2 · **Last Updated:** July 2026 · **Next Review:** November 2026
+**Version:** 2.3 · **Last Updated:** September 2026 · **Next Review:** November 2026
 
 **Change Log:**
 - v1.0 — Original four personas (David, Ned, Lisa, Walt)
 - v2.0 — Added Maya (The Systematiser)
 - v2.1 — Full audit pass: added §0 Usage Guide, §1 Persona Hierarchy, Journey Arc per persona, emotional state spectrums, fellowship-specific notes, anti-personas, Walt bio correction, Maya archetype differentiation, version control
 - v2.2 — Added Jordan (The Stabiliser), MAT/harm-reduction persona (Day 1-365+, MARA/SMART); updated Persona Hierarchy, Journey Arc, and Overlap Register accordingly
+- v2.3 — PROJ-108 persona asset refresh: unified all six personas on one pop-art illustration style (Maya/Jordan previously mismatched every other persona's style). Corrected every Asset Metadata section — `full_body`/`looking_left` were documented since v2.1 but never actually existed in `src/data/assets.ts` until now; removed the never-real `.bio_feature` key and replaced it with a pointer to `PersonaBioCard`, which now renders bio content as code instead of the old pre-baked, unused `_bio.webp` images
 
 ---
 
@@ -130,9 +131,9 @@ At Day 30, David's crisis intensity typically reduces. MRT should respond by:
 #### 🖼️ Asset Metadata
 > All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
 * `ASSETS.personas.david.headshot`
-* `ASSETS.personas.david.bio_feature`
 * `ASSETS.personas.david.full_body`
 * `ASSETS.personas.david.looking_left`
+* Bio content (backstory/current stage/sponsor status/key challenge) is rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 
@@ -201,9 +202,9 @@ At Day 90, Ned is at his highest post-early-recovery relapse risk. MRT should re
 #### 🖼️ Asset Metadata
 > All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
 * `ASSETS.personas.ned.headshot`
-* `ASSETS.personas.ned.bio_feature`
 * `ASSETS.personas.ned.full_body`
 * `ASSETS.personas.ned.looking_left`
+* Bio content rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 
@@ -270,9 +271,9 @@ Lisa is at the maintenance stage. Her journey arc is not forward progression but
 #### 🖼️ Asset Metadata
 > All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
 * `ASSETS.personas.lisa.headshot`
-* `ASSETS.personas.lisa.bio_feature`
 * `ASSETS.personas.lisa.full_body`
 * `ASSETS.personas.lisa.looking_left`
+* Bio content rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 
@@ -339,9 +340,9 @@ Walt has no further stage to transition to — he is at the apex of the recovery
 #### 🖼️ Asset Metadata
 > All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
 * `ASSETS.personas.walt.headshot`
-* `ASSETS.personas.walt.bio_feature`
 * `ASSETS.personas.walt.full_body`
 * `ASSETS.personas.walt.looking_left`
+* Bio content rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 
@@ -414,7 +415,12 @@ At Month 18, Maya faces a transition: she has completed the available curricula 
 * **Insight Frequency:** How often she triggers the Deep Pattern Recognition engine and marks insights as "useful."
 * **Export Engagement:** Regular generation of workbook-inclusive PDF exports.
 
+#### 🖼️ Asset Metadata
+> All paths reference entries in `src/data/assets.ts` ASSETS dictionary. Do not hardcode paths in components.
+* `ASSETS.personas.maya.headshot`
+* `ASSETS.personas.maya.full_body`
 * `ASSETS.personas.maya.looking_left`
+* Bio content rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 
@@ -479,9 +485,9 @@ At Month 12, Jordan may begin tapering off medication under clinical supervision
 
 #### 🖼️ Asset Metadata
 * `ASSETS.personas.jordan.headshot`
-* `ASSETS.personas.jordan.bio_feature`
 * `ASSETS.personas.jordan.full_body`
 * `ASSETS.personas.jordan.looking_left`
+* Bio content rendered by `PersonaBioCard` (`src/components/PersonaBioCard.tsx`), not a separate image asset — PROJ-108.
 
 ---
 

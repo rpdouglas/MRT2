@@ -4,51 +4,108 @@ import { useAuth } from '../contexts/AuthContext';
 import { ShieldCheckIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 import { ASSETS } from '../data/assets';
+import PersonaBioCard from '../components/PersonaBioCard';
 
 // ----------------------------------------------------------------------
 // PAGE CONTENT: Human-readable text, descriptions, and metadata
 // ----------------------------------------------------------------------
 const PERSONA_CONTENT = [
-  { 
-    id: 'david', 
-    name: 'David', 
+  {
+    id: 'david',
+    name: 'David',
     title: 'The Fresh Start',
     quote: '"A completely private space to start over."',
-    headshot: ASSETS.personas.david_headshot, 
+    headshot: ASSETS.personas.david.headshot,
     screen: ASSETS.marketing.screenshots.scn_journal_write,
     color: 'bg-blue-50 text-blue-600',
-    altDesc: 'David, representing early recovery users seeking privacy.'
+    altDesc: 'David, representing early recovery users seeking privacy.',
+    bio: {
+      backstory: 'Had 2 years sober, got complacent, disastrous relapse. Lost everything.',
+      currentStage: 'Day 1 (Again). Acute crisis, overwhelmed by shame & guilt.',
+      sponsorStatus: 'None currently. Too ashamed to ask.',
+      keyChallenge: 'Overcoming shame just to walk back into a meeting.',
+    },
   },
-  { 
-    id: 'ned', 
-    name: 'Ned', 
+  {
+    id: 'ned',
+    name: 'Ned',
     title: 'The Pink Cloud',
     quote: '"Turning manic energy into grounded momentum."',
-    headshot: ASSETS.personas.ned_headshot, 
+    headshot: ASSETS.personas.ned.headshot,
     screen: ASSETS.marketing.screenshots.scn_tasks_this_week,
     color: 'bg-cyan-50 text-cyan-600',
-    altDesc: 'Ned, representing users building daily habits and structure.'
+    altDesc: 'Ned, representing users building daily habits and structure.',
+    bio: {
+      backstory: 'Chaotic partying, hit a wall in a holding cell. Tired of the chaos.',
+      currentStage: 'Early Recovery (90 Days). High on energy & gratitude. Raw emotions.',
+      sponsorStatus: 'Yes, active. Calls daily.',
+      keyChallenge: 'Impatience. Risk of crashing when reality hits.',
+    },
   },
-  { 
-    id: 'lisa', 
-    name: 'Lisa', 
-    title: 'The Service Superstar',
-    quote: '"Self-care tools to prevent burnout."',
-    headshot: ASSETS.personas.lisa_headshot, 
-    screen: ASSETS.marketing.screenshots.scn_vitality_breath,
-    color: 'bg-amber-50 text-amber-600',
-    altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.'
+  {
+    id: 'jordan',
+    name: 'Jordan',
+    title: 'The Stabiliser',
+    quote: '"Tools that support my recovery without judging my medication."',
+    headshot: ASSETS.personas.jordan.headshot,
+    screen: ASSETS.marketing.screenshots.scn_dashboard_02_clean_time,
+    color: 'bg-teal-50 text-teal-600',
+    altDesc: 'Jordan, representing users on medication-assisted recovery seeking non-judgmental tools.',
+    bio: {
+      backstory: 'Severe opioid use disorder; repeated abstinence-only relapses. Stabilised on Buprenorphine (Suboxone) MAT.',
+      currentStage: 'Early-to-Mid, active MAT. Stable, employed, rebuilding family relationships.',
+      sponsorStatus: 'MARA meetings online — no traditional 12-Step sponsor.',
+      keyChallenge: 'Finding tools that treat medication as recovery, not "cheating."',
+    },
   },
-  { 
-    id: 'walt', 
-    name: 'Walt', 
+  {
+    id: 'maya',
+    name: 'Maya',
+    title: 'The Systematiser',
+    quote: '"I want to master the mechanics of my own recovery."',
+    headshot: ASSETS.personas.maya.headshot,
+    screen: ASSETS.marketing.screenshots.scn_workbooks_compass,
+    color: 'bg-emerald-50 text-emerald-600',
+    altDesc: 'Maya, representing systematic, completion-driven users of the workbook tools.',
+    bio: {
+      backstory: 'Data-driven professional; 12-Step’s spiritual framework didn’t fit. Moved to SMART Recovery & Recovery Dharma instead.',
+      currentStage: 'Early-to-Mid (8 months). Treats recovery like a curriculum to master.',
+      sponsorStatus: 'No formal sponsor — 1:1 wise-friend accountability.',
+      keyChallenge: 'Staying engaged once the curriculum runs out.',
+    },
+  },
+  {
+    id: 'walt',
+    name: 'Walt',
     title: 'The Zen Master',
     quote: '"Finding hidden patterns with AI analysis."',
-    headshot: ASSETS.personas.walt_headshot, 
+    headshot: ASSETS.personas.walt.headshot,
     screen: ASSETS.marketing.screenshots.scn_journal_ai_wizard,
     color: 'bg-fuchsia-50 text-fuchsia-600',
-    altDesc: 'Walt, representing long-term users seeking AI insight.'
-  }
+    altDesc: 'Walt, representing long-term users seeking AI insight.',
+    bio: {
+      backstory: 'Vietnam veteran, decades of hard use. Recovery is a deep spiritual practice.',
+      currentStage: 'Spiritual Maintenance (35+ Years). Meditates daily, calming presence.',
+      sponsorStatus: '"Grand-Sponsor" / spiritual advisor.',
+      keyChallenge: 'Patience with change in the program.',
+    },
+  },
+  {
+    id: 'lisa',
+    name: 'Lisa',
+    title: 'The Service Superstar',
+    quote: '"Self-care tools to prevent burnout."',
+    headshot: ASSETS.personas.lisa.headshot,
+    screen: ASSETS.marketing.screenshots.scn_vitality_breath,
+    color: 'bg-amber-50 text-amber-600',
+    altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.',
+    bio: {
+      backstory: 'Functional user, high-stress life. Shame of neglecting her kids drove her into recovery.',
+      currentStage: 'Maintenance (7 Years). Focus on Step 12 & helping others.',
+      sponsorStatus: 'Yes, and sponsors 5 others.',
+      keyChallenge: 'Burnout & boundaries. Neglects her own self-care.',
+    },
+  },
 ];
 
 // Maps common Firebase Auth error codes to David-safe, non-technical copy.
@@ -221,9 +278,9 @@ export default function Welcome() {
               className="snap-center shrink-0 w-[85vw] sm:w-[400px] bg-slate-50 rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col"
             >
               <div className="flex items-center gap-4 mb-6">
-                <img 
-                  src={persona.headshot} 
-                  alt={persona.name} 
+                <img
+                  src={persona.headshot}
+                  alt={persona.altDesc}
                   loading="lazy"
                   className="w-16 h-16 rounded-full object-cover shadow-sm bg-white"
                   onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
@@ -235,9 +292,10 @@ export default function Welcome() {
                   </span>
                 </div>
               </div>
-              <p className="text-slate-600 italic mb-8 font-medium">
+              <p className="text-slate-600 italic mb-4 font-medium">
                 {persona.quote}
               </p>
+              <PersonaBioCard {...persona.bio} className="mb-6" />
               <div className="mt-auto relative rounded-2xl overflow-hidden shadow-lg border border-slate-200/50 bg-white">
                 <img 
                   src={persona.screen} 
