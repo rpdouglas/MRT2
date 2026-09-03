@@ -101,7 +101,7 @@ describe('📥 importBackup (PROJ-110 — full restore + ZK boundary fix)', () =
         expect(setCalls).toHaveLength(4);
     });
 
-    it('passes workbook-answer ciphertext through verbatim — never re-encrypts it (finding #3: export never decrypted it)', async () => {
+    it('passes an already-ciphertext workbook answer through verbatim — a pre-TD-26 export, isEncrypted:true', async () => {
         const originalCiphertext = await encrypt('an already-encrypted workbook answer');
         await importBackup(makeUid(), fileFor({
             journals: [],
@@ -111,8 +111,29 @@ describe('📥 importBackup (PROJ-110 — full restore + ZK boundary fix)', () =
         const wbCall = setCalls.find(c => c.path.includes('workbook_answers'));
         expect(wbCall).toBeDefined();
         expect(wbCall!.data.answer).toBe(originalCiphertext);
+        expect(wbCall!.data.isEncrypted).toBe(true);
         expect(wbCall!.path).toBe(`users/${makeUid()}/workbook_answers/wb1_q1`);
         expect(wbCall!.options).toEqual({ merge: true });
+    });
+
+    // TD-26: after exporter.ts's decrypt bug fix, a real export now carries
+    // a genuinely plaintext `answer` with isEncrypted:false (matching
+    // journals' convention) — this must be re-encrypted with the current
+    // vault key on import, not passed through (which would write real
+    // plaintext into the encrypted workbook_answers collection).
+    it('re-encrypts a plaintext workbook answer from a post-TD-26 export, isEncrypted:false', async () => {
+        const plaintext = 'My biggest trigger is stress at work.';
+        await importBackup(makeUid(), fileFor({
+            journals: [],
+            workbookAnswers: [{ workbookId: 'wb1', sectionId: 's1', questionId: 'q1', answer: plaintext, isEncrypted: false }],
+        }), encrypt);
+
+        const wbCall = setCalls.find(c => c.path.includes('workbook_answers'));
+        expect(wbCall).toBeDefined();
+        expect(wbCall!.data.isEncrypted).toBe(true);
+        expect(wbCall!.data.answer).not.toBe(plaintext);
+        expect(String(wbCall!.data.answer)).toMatch(/^[0-9a-f]{24}:[0-9a-f]+$/i);
+        await expect(decrypt(wbCall!.data.answer as string)).resolves.toBe(plaintext);
     });
 
     it('rejects a claimed-encrypted workbook answer whose value does not actually look like ciphertext (zk-audit hardening)', async () => {

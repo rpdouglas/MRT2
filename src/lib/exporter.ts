@@ -38,35 +38,29 @@ export async function prepareDataForExport(
   );
 
   // Decrypt Workbook Answers
+  // TD-26: this previously checked for a nested `entry.answers` map
+  // ({[questionId]: {isEncrypted, text}}) that never matched the real
+  // users/{uid}/workbook_answers doc shape — one flat doc per question
+  // ({workbookId, sectionId, questionId, answer, isEncrypted}), confirmed
+  // via src/lib/workbookAnswers.ts and fetchAllUserData in db.ts. The branch
+  // never fired, so a real export's workbook `answer` field shipped as raw
+  // ciphertext — silently, unlike journals/game-progress above, which do
+  // decrypt correctly. Mirrors the journal decrypt pattern exactly now.
   const decryptedWorkbooks = await processInChunks(
     data.workbookAnswers,
     20,
     async (ans) => {
-      // Check if this answer record matches our encryption pattern
       const anyAns = ans as Record<string, unknown>;
-      const newAns = { ...anyAns };
-
-      // Handle specific schema structure from WorkbookSession
-      if (newAns.answers && typeof newAns.answers === 'object') {
-         const ansMap = newAns.answers as Record<string, unknown>;
-         const decryptedMap: Record<string, unknown> = {};
-
-         for (const [key, val] of Object.entries(ansMap)) {
-             if (val && typeof val === 'object' && 'isEncrypted' in val && (val as {isEncrypted: boolean}).isEncrypted) {
-                 try {
-                     // Access 'text' property safely via unknown cast
-                     const text = await decrypt((val as unknown as {text: string}).text);
-                     decryptedMap[key] = text;
-                 } catch {
-                     decryptedMap[key] = "[LOCKED]";
-                 }
-             } else {
-                 decryptedMap[key] = val;
-             }
-         }
-         newAns.answers = decryptedMap;
+      if (anyAns.isEncrypted && typeof anyAns.answer === 'string') {
+        try {
+          const plainText = await decrypt(anyAns.answer);
+          return { ...anyAns, answer: plainText, isEncrypted: false };
+        } catch (e) {
+          console.error(`Failed to decrypt workbook answer ${String(anyAns.id)}`, e);
+          return { ...anyAns, answer: "[DECRYPTION FAILED]", isEncrypted: true };
+        }
       }
-      return newAns;
+      return anyAns;
     },
     (p) => onProgress(60 + Math.floor(p * 0.2)) // Map to 60-80% range
   );

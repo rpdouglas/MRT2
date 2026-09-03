@@ -67,16 +67,25 @@ describe('🔓 prepareDataForExport (decryption-adjacent)', () => {
         expect(result.journals[0].content).toBe('Never encrypted (legacy entry)');
     });
 
-    it('decrypts nested workbook answers keyed by prompt id', async () => {
+    // TD-26: the real users/{uid}/workbook_answers doc is a flat one-doc-
+    // per-question record ({workbookId, sectionId, questionId, answer,
+    // isEncrypted}), not the nested {answers: {[questionId]: {isEncrypted,
+    // text}}} shape these tests previously (incorrectly) assumed — the
+    // mismatch was the bug itself (PROJ-110 finding #3): the old branch
+    // never matched a real doc, so a real export's `answer` shipped as raw
+    // ciphertext, silently. Confirmed via src/lib/workbookAnswers.ts and
+    // fetchAllUserData in db.ts.
+    it('decrypts a workbook answer and marks it as no longer encrypted, matching the real flat doc shape', async () => {
         const plaintext = 'My biggest fear is losing my family again.';
         const cipher = await encrypt(plaintext);
 
         const workbookAnswer = {
             id: 'w1',
-            answers: {
-                q1: { isEncrypted: true, text: cipher },
-                q2: 'Plain scalar answer (not an encrypted-shaped value)',
-            },
+            workbookId: 'wb1',
+            sectionId: 's1',
+            questionId: 'q1',
+            answer: cipher,
+            isEncrypted: true,
         };
 
         const result = await prepareDataForExport(
@@ -84,9 +93,27 @@ describe('🔓 prepareDataForExport (decryption-adjacent)', () => {
             () => {}
         );
 
-        const decryptedAnswers = result.workbookAnswers[0].answers as Record<string, unknown>;
-        expect(decryptedAnswers.q1).toBe(plaintext);
-        expect(decryptedAnswers.q2).toBe('Plain scalar answer (not an encrypted-shaped value)');
+        expect(result.workbookAnswers[0].answer).toBe(plaintext);
+        expect(result.workbookAnswers[0].isEncrypted).toBe(false);
+    });
+
+    it('leaves an already-plaintext workbook answer untouched', async () => {
+        const workbookAnswer = {
+            id: 'w1b',
+            workbookId: 'wb1',
+            sectionId: 's1',
+            questionId: 'q2',
+            answer: 'Plain scalar answer (not encrypted)',
+            isEncrypted: false,
+        };
+
+        const result = await prepareDataForExport(
+            baseData({ workbookAnswers: [workbookAnswer] }),
+            () => {}
+        );
+
+        expect(result.workbookAnswers[0].answer).toBe('Plain scalar answer (not encrypted)');
+        expect(result.workbookAnswers[0].isEncrypted).toBe(false);
     });
 
     it('surfaces a clear per-entry failure marker instead of silently producing a partial/corrupt export', async () => {
@@ -129,30 +156,28 @@ describe('🔓 prepareDataForExport (decryption-adjacent)', () => {
         errorSpy.mockRestore();
     });
 
-    it('surfaces a "[LOCKED]" marker for a workbook answer whose decrypt call fails, without aborting the batch', async () => {
+    it('surfaces a "[DECRYPTION FAILED]" marker for a workbook answer whose decrypt call fails, without aborting the batch', async () => {
         // Same locked-vault trigger as the journal failure case above — one
         // entry (encrypted under a key that's since been cleared) fails while
-        // a second, already-plaintext-shaped entry in the same batch is
-        // untouched, proving one bad record doesn't corrupt the whole export.
+        // a second, already-plaintext entry in the same batch is untouched,
+        // proving one bad record doesn't corrupt the whole export.
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const brokenCipher = await encrypt('Encrypted before lock');
         clearKey();
 
-        const workbookAnswer = {
-            id: 'w2',
-            answers: {
-                broken: { isEncrypted: true, text: brokenCipher },
-                fine: 'Plain scalar answer',
-            },
-        };
+        const broken = { id: 'w2', workbookId: 'wb1', sectionId: 's1', questionId: 'broken', answer: brokenCipher, isEncrypted: true };
+        const fine = { id: 'w3', workbookId: 'wb1', sectionId: 's1', questionId: 'fine', answer: 'Plain scalar answer', isEncrypted: false };
 
         const result = await prepareDataForExport(
-            baseData({ workbookAnswers: [workbookAnswer] }),
+            baseData({ workbookAnswers: [broken, fine] }),
             () => {}
         );
 
-        const decryptedAnswers = result.workbookAnswers[0].answers as Record<string, unknown>;
-        expect(decryptedAnswers.broken).toBe('[LOCKED]');
-        expect(decryptedAnswers.fine).toBe('Plain scalar answer');
+        expect(result.workbookAnswers[0].answer).toBe('[DECRYPTION FAILED]');
+        expect(result.workbookAnswers[0].isEncrypted).toBe(true);
+        expect(result.workbookAnswers[1].answer).toBe('Plain scalar answer');
+
+        errorSpy.mockRestore();
     });
 
     it('reports progress across the 0-60% (journals), 60-80% (workbooks), and 80-100% (game history) ranges', async () => {

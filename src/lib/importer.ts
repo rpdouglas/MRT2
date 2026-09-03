@@ -154,30 +154,47 @@ function mapTask(uid: string, raw: IncomingTask): Record<string, unknown> | null
   return mapped;
 }
 
-// PROJ-110 finding #3: a real export's workbook_answers.answer is already
-// ciphertext — exporter.ts's decrypt logic doesn't match this collection's
-// real flat doc shape, so it never actually decrypts it (a separate,
-// still-open bug, deliberately out of this project's scope). Re-encrypting
-// it here would double-encrypt genuine ciphertext, so this is a pass-through,
-// not a re-encrypt — unlike journals/game-progress below. Uses the same
-// derived doc ID convention saveWorkbookAnswer() does (`${workbookId}_
-// ${questionId}`), so restoring is a natural upsert onto the canonical slot
-// for that question, not a new/duplicate doc — this isn't the exported
-// document's own opaque Firestore ID, so it carries none of the
+// TD-26: exporter.ts's workbook-answer decrypt bug (PROJ-110 finding #3) is
+// now fixed — a post-fix export decrypts `answer` and writes `isEncrypted:
+// false`, same convention as journals. This means two genuinely different
+// shapes can arrive here depending on the export file's vintage:
+//   - isEncrypted === false -> real plaintext (a post-fix export, or any
+//     export where decrypt succeeded) -> re-encrypt with the current vault
+//     key, same treatment journals/game-progress already get.
+//   - isEncrypted !== false -> expected to already be real ciphertext (a
+//     pre-fix export, where the bug meant this field was never decrypted;
+//     or a live write, which is always isEncrypted:true) -> pass through
+//     verbatim, never re-encrypt (would double-encrypt genuine ciphertext).
+// zk-audit finding (unchanged from the original PROJ-110 pass): trusting an
+// incoming isEncrypted:true label without verifying the value actually
+// looks like ciphertext would let a hand-edited or malformed backup file
+// get written as "encrypted" while holding real plaintext. Real ciphertext
+// is always `${ivHex(24 hex chars)}:${contentHex}` — see crypto.ts's
+// encrypt(). A claimed-encrypted answer that doesn't match this shape is
+// rejected as malformed (also covers a `[DECRYPTION FAILED]` placeholder
+// from a failed export-time decrypt — nothing recoverable to import there).
+//
+// Uses the same derived doc ID convention saveWorkbookAnswer() does
+// (`${workbookId}_${questionId}`), so restoring is a natural upsert onto the
+// canonical slot for that question, not a new/duplicate doc — this isn't the
+// exported document's own opaque Firestore ID, so it carries none of the
 // clobber-an-unrelated-live-doc risk that ID would.
-// zk-audit finding: trusting an incoming isEncrypted:true label without
-// verifying the value actually looks like ciphertext would let a
-// hand-edited or malformed backup file get written as "encrypted" while
-// holding real plaintext. Real ciphertext is always `${ivHex(24 hex
-// chars)}:${contentHex}` — see crypto.ts's encrypt(). A claimed-encrypted
-// answer that doesn't match this shape is rejected as malformed, not
-// trusted and passed through.
 const CIPHERTEXT_SHAPE = /^[0-9a-f]{24}:[0-9a-f]+$/i;
 
-function mapWorkbookAnswer(uid: string, raw: IncomingWorkbookAnswer): { docId: string; data: Record<string, unknown> } | null {
+async function mapWorkbookAnswer(uid: string, raw: IncomingWorkbookAnswer, encrypt: EncryptFn): Promise<{ docId: string; data: Record<string, unknown> } | null> {
   if (!raw.workbookId || !raw.sectionId || !raw.questionId || typeof raw.answer !== 'string') return null;
-  const isEncrypted = raw.isEncrypted !== false;
-  if (isEncrypted && !CIPHERTEXT_SHAPE.test(raw.answer)) return null;
+
+  let finalAnswer: string;
+  if (raw.isEncrypted === false) {
+    try {
+      finalAnswer = await encrypt(raw.answer);
+    } catch {
+      return null;
+    }
+  } else {
+    if (!CIPHERTEXT_SHAPE.test(raw.answer)) return null;
+    finalAnswer = raw.answer;
+  }
 
   return {
     docId: `${raw.workbookId}_${raw.questionId}`,
@@ -186,8 +203,8 @@ function mapWorkbookAnswer(uid: string, raw: IncomingWorkbookAnswer): { docId: s
       workbookId: raw.workbookId,
       sectionId: raw.sectionId,
       questionId: raw.questionId,
-      answer: raw.answer,
-      isEncrypted,
+      answer: finalAnswer,
+      isEncrypted: true,
       updatedAt: toTimestamp(raw.updatedAt) ?? Timestamp.now(),
     },
   };
@@ -279,12 +296,12 @@ export async function importBackup(uid: string, file: File, encrypt: EncryptFn):
         }
         if (ops > 0) await batch.commit();
 
-        // --- Workbook answers: pass-through (see mapWorkbookAnswer comment) ---
+        // --- Workbook answers: re-encrypt or pass-through (see mapWorkbookAnswer comment) ---
         batch = writeBatch(db);
         ops = 0;
         for (const raw of rawWorkbookAnswers) {
           try {
-            const mapped = mapWorkbookAnswer(uid, raw);
+            const mapped = await mapWorkbookAnswer(uid, raw, encrypt);
             if (!mapped) { result.workbookAnswers.errors++; continue; }
             batch.set(doc(db, 'users', uid, 'workbook_answers', mapped.docId), mapped.data, { merge: true });
             ops++; result.workbookAnswers.success++;
