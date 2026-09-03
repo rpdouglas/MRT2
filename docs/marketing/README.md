@@ -12,7 +12,7 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 | Tasks | `tasks.md` | ✅ Drafted (technical docs corrected — found a real live bug, see below) |
 | Vitality | `vitality.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
 | Workbooks | `workbooks.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
-| Recovery Games | — | Pending |
+| Recovery Games | `games.md` | ✅ Drafted (all 8 games + hub spot-verified, held up clean) |
 | Insights / Recovery Capital | — | Pending |
 
 Each brief draws on the corresponding `docs/screens/` files for accuracy plus `docs/PERSONAS.md` for persona detail, so they stay grounded in the real product. Before drafting a new one, it's worth re-verifying the underlying `docs/screens/` file(s) against live source first — the Dashboard brief above only came out accurate after that pass caught a factual error and two under-documented components in the technical doc it was built from.
