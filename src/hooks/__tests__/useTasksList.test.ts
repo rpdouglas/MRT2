@@ -21,6 +21,8 @@ type SnapshotCallback = (snap: { docs: Array<{ id: string; data: () => Record<st
 let snapshotCallback: SnapshotCallback | null = null;
 const mockUnsubscribe = vi.fn();
 
+const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('firebase/firestore', async (importOriginal) => {
     const actual = await importOriginal<typeof import('firebase/firestore')>();
     return {
@@ -33,6 +35,9 @@ vi.mock('firebase/firestore', async (importOriginal) => {
             snapshotCallback = callback;
             return mockUnsubscribe;
         }),
+        doc: vi.fn(() => ({})),
+        updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+        arrayUnion: vi.fn((v: unknown) => ({ __arrayUnion: v })),
     };
 });
 
@@ -90,5 +95,68 @@ describe('📋 useTasksList — Tasks.tsx read-path extraction', () => {
         vi.mocked(AuthContext.useAuth).mockReturnValue({ user: null } as unknown as AuthContextValue);
         renderHook(() => useTasksList());
         expect(snapshotCallback).toBeNull();
+    });
+
+    describe('TD-25: reconciliation wiring (previously dead code — getUserTasks was never called)', () => {
+        it('reconciles an overdue recurring task via the same snapshot this hook reads', async () => {
+            const { result } = renderHook(() => useTasksList());
+
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dueTimestamp = Timestamp.fromDate(yesterday);
+
+            act(() => {
+                snapshotCallback?.({
+                    docs: [{
+                        id: 'overdue-task',
+                        data: () => ({
+                            uid: 'test-uid',
+                            title: 'Morning Meditation',
+                            isRecurring: true,
+                            frequency: 'daily',
+                            currentStreak: 5,
+                            dueDate: dueTimestamp,
+                            lastCompletedAt: null,
+                        }),
+                    }],
+                });
+            });
+
+            await waitFor(() => expect(result.current.loading).toBe(false));
+            // This is the actual regression check: before TD-25, nothing ever
+            // called reconcileOverdueTask from this hook, so an overdue
+            // recurring task just sat overdue indefinitely.
+            await waitFor(() => expect(mockUpdateDoc).toHaveBeenCalledWith(
+                {},
+                expect.objectContaining({ currentStreak: 0 })
+            ));
+        });
+
+        it('does not reconcile a non-recurring or not-yet-overdue task', async () => {
+            const { result } = renderHook(() => useTasksList());
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            act(() => {
+                snapshotCallback?.({
+                    docs: [{
+                        id: 'future-task',
+                        data: () => ({
+                            uid: 'test-uid',
+                            title: 'Call sponsor',
+                            isRecurring: true,
+                            frequency: 'daily',
+                            currentStreak: 3,
+                            dueDate: Timestamp.fromDate(tomorrow),
+                            lastCompletedAt: null,
+                        }),
+                    }],
+                });
+            });
+
+            await waitFor(() => expect(result.current.loading).toBe(false));
+            expect(mockUpdateDoc).not.toHaveBeenCalled();
+        });
     });
 });

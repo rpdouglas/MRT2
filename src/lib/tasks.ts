@@ -58,7 +58,51 @@ export async function addTask(
   });
 }
 
-// 2. READ & LAZY EVALUATE
+// TD-25: extracted so both getUserTasks (below) and useTasksList's onSnapshot
+// handler (the hook the live app actually reads tasks from — getUserTasks
+// itself has zero call sites) can share this tested reconciliation instead of
+// each reimplementing it. Grace window: completions within 2 hours before
+// midnight count for "today" — protects David's late-night sessions from a
+// silent streak reset. Mutates Firestore in place when a recurring task is
+// overdue outside the window; returns the task with the change applied
+// locally so a caller doesn't have to wait for a re-read to see it.
+export async function reconcileOverdueTask(task: Task, today: Date = startOfDay(new Date())): Promise<Task> {
+  if (!db || !task.id || !task.isRecurring || !task.dueDate || !isBefore(task.dueDate as Date, today)) {
+    return task;
+  }
+
+  const GRACE_WINDOW_HOURS = 2;
+  const graceWindowStart = subHours(today, GRACE_WINDOW_HOURS);
+  const completedInWindow = task.lastCompletedAt &&
+    isAfter(task.lastCompletedAt as Date, graceWindowStart);
+  if (completedInWindow) return task;
+
+  let newStreak = task.currentStreak;
+  if (newStreak > 0) {
+      newStreak = 0;
+  } else {
+      newStreak -= 1;
+  }
+
+  const daysMissed = differenceInDays(today, startOfDay(task.dueDate as Date));
+  const taskRef = doc(db, COLLECTION, task.id);
+  await updateDoc(taskRef, {
+    currentStreak: newStreak,
+    dueDate: Timestamp.fromDate(today),
+    missedCountHistory: arrayUnion(daysMissed),
+  });
+
+  return {
+    ...task,
+    currentStreak: newStreak,
+    dueDate: today,
+    missedCountHistory: [...(task.missedCountHistory ?? []), daysMissed],
+  };
+}
+
+// 2. READ & LAZY EVALUATE — no live call sites (see reconcileOverdueTask's
+// comment); kept for its existing test coverage and as a one-shot equivalent
+// to the live onSnapshot-driven reconciliation.
 export async function getUserTasks(uid: string) {
   if (!db) throw new Error("Database not initialized");
 
@@ -70,17 +114,15 @@ export async function getUserTasks(uid: string) {
   const snapshot = await getDocs(q);
   const tasks: Task[] = [];
   const today = startOfDay(new Date());
-  const GRACE_WINDOW_HOURS = 2;
-  const graceWindowStart = subHours(today, GRACE_WINDOW_HOURS);
 
   for (const docSnap of snapshot.docs) {
     const data = docSnap.data();
-    
-    const task: Task = { 
-      id: docSnap.id, 
+
+    const task: Task = {
+      id: docSnap.id,
       uid: data.uid,
       title: data.title,
-      completed: data.completed || false, 
+      completed: data.completed || false,
       status: data.status || 'pending',
       isRecurring: data.isRecurring || false,
       frequency: data.frequency || 'once',
@@ -94,36 +136,7 @@ export async function getUserTasks(uid: string) {
       missedCountHistory: data.missedCountHistory ?? undefined,
     };
 
-    if (task.isRecurring && task.dueDate && isBefore(task.dueDate as Date, today)) {
-        // Grace window: completions within 2 hours before midnight count for "today"
-        // Protects David's late-night sessions from silent streak resets
-        const completedInWindow = task.lastCompletedAt &&
-          isAfter(task.lastCompletedAt as Date, graceWindowStart);
-
-        if (!completedInWindow) {
-            let newStreak = task.currentStreak;
-
-            if (newStreak > 0) {
-                newStreak = 0;
-            } else {
-                newStreak -= 1;
-            }
-
-            const daysMissed = differenceInDays(today, startOfDay(task.dueDate as Date));
-            const taskRef = doc(db, COLLECTION, task.id!);
-            await updateDoc(taskRef, {
-              currentStreak: newStreak,
-              dueDate: Timestamp.fromDate(today),
-              missedCountHistory: arrayUnion(daysMissed),
-            });
-
-            task.currentStreak = newStreak;
-            task.dueDate = today;
-            task.missedCountHistory = [...(task.missedCountHistory ?? []), daysMissed];
-        }
-    }
-
-    tasks.push(task);
+    tasks.push(await reconcileOverdueTask(task, today));
   }
 
   return tasks;

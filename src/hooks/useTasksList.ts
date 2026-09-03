@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, type Firestore } from 'firebase/firestore';
 import type { Task } from '../lib/tasks';
+import { reconcileOverdueTask } from '../lib/tasks';
 import { getMockTasks } from '../lib/mockData';
 
 // Real-time listener for the full task list (Today/Later/Log tabs all read
@@ -13,6 +14,11 @@ export function useTasksList(): { tasks: Task[]; loading: boolean } {
     const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
+    // TD-25: tracks task IDs with an in-flight reconciliation write so rapid
+    // successive snapshots (e.g. the write this very reconciliation makes)
+    // don't fire a duplicate reconcile for the same still-overdue task before
+    // the first write round-trips back.
+    const reconcilingRef = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         if (!user) return;
@@ -48,6 +54,21 @@ export function useTasksList(): { tasks: Task[]; loading: boolean } {
             });
             setTasks(taskData);
             setLoading(false);
+
+            // TD-25: getUserTasks' tested lazy-eval reconciliation (overdue
+            // recurring tasks silently rolled forward with a streak penalty)
+            // was never wired into the listener this hook actually uses —
+            // fired here instead, fire-and-forget. Any write it makes lands
+            // via the next onSnapshot event and is self-terminating: a
+            // reconciled task's dueDate becomes today, so it no longer
+            // matches the overdue condition on the next pass.
+            for (const task of taskData) {
+                if (!task.id || reconcilingRef.current.has(task.id)) continue;
+                reconcilingRef.current.add(task.id);
+                reconcileOverdueTask(task)
+                    .catch((e) => console.error('Task reconciliation failed:', e))
+                    .finally(() => { if (task.id) reconcilingRef.current.delete(task.id); });
+            }
         });
 
         return () => unsubscribe();
