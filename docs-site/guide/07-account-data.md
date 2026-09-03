@@ -25,8 +25,8 @@ You can manually export your data at any time from the **Profile -> Data** tab.
 * **JSON Backup:** A raw data file containing your entire history, including your Recovery Games activity.
 * **PDF Document:** A beautifully formatted, readable document containing your Journals, Tasks, and Recovery Games history. Perfect for printing and bringing to a therapy session.
 
-## 3. Import Legacy Data
-If you have a JSON backup file, you can upload it in the **Data** tab to merge old entries into your current timeline.
+## 3. Import Backup
+If you have a JSON backup file (from Manual Export or Google Drive Auto-Sync above), you can upload it in the **Data** tab to restore it. Journals, tasks, workbook answers, and Recovery Games history are all restored — this adds entries to your history rather than replacing it. Workbook answers restore cleanly onto the matching question if you import the same file twice, but journals, tasks, and game history don't check for duplicates, so re-importing the same backup a second time will add a second copy of each.
 
 ## 4. Account Deletion (The Right to be Forgotten)
 If you wish to permanently destroy your account and wipe all data from our servers, you can do so directly from the app.
