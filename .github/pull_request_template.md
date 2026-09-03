@@ -55,5 +55,12 @@ $ npm run check
 
 ---
 
+## User Guide Review
+*Mirrors the `ticket-close` skill's Check 3 — blocking, not advisory, when this PR adds new user-facing UI or behaviour.*
+- [ ] Reviewed `docs-site/guide/*.md` for this change's feature entry point, rate limits, vault-locked/offline states, free-vs-Premium distinction, and gamification impact — updated where needed, or confirmed no update needed
+- [ ] If this is significant enough to warrant its own guide page (a new module or major workflow), that page has been added — not deferred silently
+
+---
+
 ## Persona Check
 *Skip only for pure backend/infra changes with no UI surface.* How does this feel for David, using the app in an acute-crisis state? Max 3 taps, zero cognitive load, no red/alarming states for things that aren't emergencies.

@@ -126,6 +126,7 @@ Automate "shadow processes" to prevent code rot, documentation drift, and techni
   ### ✨ [Features / Improvements / Fixes]
   - **Component Name [PROJ-ID]:** User-friendly description of change translating technical work into user benefits.
   ```
+* **Enforcement (PROJ-109):** `main` is PR-only — `.github/pull_request_template.md`'s checklist requires confirming this protocol (changelog) and `ticket-close`'s Check 3 (user guide, `docs-site/guide/*.md`) were run before every merge, not left to memory. Run the `/release-scribe` skill to audit for anything missed across recent work.
 
 ---
 
