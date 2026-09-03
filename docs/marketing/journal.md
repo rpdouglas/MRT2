@@ -43,7 +43,18 @@ Every past entry, organized by year and month, instantly searchable. Not a scatt
 Mood trends over time, a day-of-week rhythm comparison, and a word cloud of what actually shows up most in someone's own writing. No AI required for this tab — it's the person's own data, reflected back.
 
 ### AI Pattern Analysis — an on-demand recovery coach
-On request, the app reads someone's own journal history and surfaces what a human might take months to notice: recurring themes, emotional trajectory, early warning signs, and concrete suggested next steps — which can be pushed straight into their task list. Available as a weekly check-in, a monthly review, or a 90-day deep dive for spotting long-arc patterns.
+Launched from the History tab (the whole point is that it's reading someone's *actual written record*, not a fresh prompt), this is the feature that turns a private diary into an active recovery tool. On request, the AI reads the user's own decrypted journal entries — never anyone else's, never used to train anything — and comes back with something a lot more specific and useful than "here are some patterns":
+
+- **A trajectory call** — is this period trending *Improving* or not, stated plainly, not left for the user to guess from mood numbers alone.
+- **Named core triggers** — the actual recurring situations, people, or feelings behind the hard days, pulled from the user's own words rather than a generic checklist.
+- **Hidden correlations** — connections between entries the person likely wouldn't have spotted themselves (a mood dip that always follows a specific kind of day, a trigger that shows up two days before a slip, and similar patterns).
+- **Wins, separated from blind spots** — the analysis explicitly calls out what's working, not just what's at risk, so it never reads as a list of problems.
+- **A relapse risk level** (Low / Moderate / High) on the 90-day Deep Dive — an honest, non-alarming signal rather than false reassurance.
+- **Concrete next actions** — each suggestion has a one-tap "add to my tasks" button, so an insight doesn't just sit in a report; it becomes something the person actually does that week.
+
+Three depths, matched to how far back the user wants to look: a **Weekly Check-in** (this week vs. last), a **Monthly Review** (this month vs. last), or a **90-Day Deep Dive** for the kind of long-arc pattern that's invisible week to week but obvious across three months. Free-tier users get a limited number of these per period (a cost-shield, not a punishment — plenty for someone journaling regularly); Premium removes the limit entirely, which is a natural, honest upgrade hook: *"see the pattern the moment you're ready to, not on a schedule."*
+
+Because it's reading the same encrypted entries the person already trusted the app with, this feature only works *because* the zero-knowledge privacy promise is real — it's the payoff of the trust, not a separate feature competing with it.
 
 ### The privacy promise (this is the headline differentiator)
 Every journal entry is encrypted on the person's own device before it ever reaches a server, using a key **derived from their own PIN — nobody else has it, including MRT.** Even in the worst-case scenario of a server breach, journal content is unreadable. This isn't a privacy *policy* — it's math. The plain-language version for copy: **"Not even we can read what you write."**
