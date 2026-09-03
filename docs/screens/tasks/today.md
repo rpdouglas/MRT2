@@ -36,7 +36,8 @@ None.
 
 ## Known gaps / debt
 
-Write-contract for `aiMeta` on AI-sourced tasks is inconsistently populated by its three callers (Journal Analysis Wizard passes `sourceContext` only, Insights Log passes `sourceRef` only, Workbook Detail passes both) — not a bug, but relevant if you're adding a fourth caller.
+- **Smart Reset doesn't run.** This tab's own doc (an earlier pass) implied overdue recurring tasks get silently rolled forward via a grace-window mechanic. Verified false — see `docs/screens/tasks/README.md`'s correction note. In practice, an overdue recurring task just stays overdue here, indefinitely, until the user manually completes or edits it. Real bug, not a docs issue.
+- Write-contract for `aiMeta` on AI-sourced tasks is inconsistently populated by its three callers (Journal Analysis Wizard passes `sourceContext` only, Insights Log passes `sourceRef` only, Workbook Detail passes both) — not a bug, but relevant if you're adding a fourth caller.
 
 ## Related docs
 
