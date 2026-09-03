@@ -34,7 +34,7 @@ The Journal is where all of that actually happens. Voice-to-text and mood tracki
 - **Guided templates** — built-in or custom (see below) for someone who doesn't know where to start.
 - **Voice-to-Vault** — speak it instead of typing it. The app transcribes it, scores the mood, and tags it automatically. This exists specifically for the moment when someone is too overwhelmed, too tired, or too shaky to type — the barrier to "get it out of your head" drops to almost nothing.
 
-Every entry also carries a 1–10 mood slider and free-form tags, so emotional data accumulates automatically, without extra effort, just by journaling normally.
+Every entry also carries a 1–10 mood slider and free-form tags, so emotional data accumulates automatically, without extra effort, just by journaling normally. Two small touches that add up: the mood slider starts pre-set to the average of someone's last 7 entries, rather than a neutral default — it feels like the app already knows them a little. And local weather is captured automatically with each entry, which is what lets the Insights mood chart later show mood alongside weather, without anyone having to log it by hand.
 
 ### Guided templates — start from a prompt, or build your own program
 Not everyone opens a blank page well, especially early on. Templates turn "write about how you feel" into a specific set of questions someone can just answer.
@@ -46,11 +46,29 @@ Not everyone opens a blank page well, especially early on. Templates turn "write
 
 **Persona fit:** Walt is the clearest case — decades into recovery, he already has his own inventory format; a custom template is how MRT gets out of his way and just holds it. Maya is a close second — she wants her journal structured exactly like the CBT framework she's using elsewhere, not a generic prompt set. Don't stretch this to every persona; David and Ned in particular aren't template-builders — David needs voice-to-text at 2 AM, and Ned's tasks/streaks flow doesn't run through custom templates at all.
 
-### History — the whole story, searchable
-Every past entry, organized by year and month, instantly searchable. Not a scattered pile of notes app entries — a continuous, private record of the recovery journey, from day one forward.
+### History — the whole story, tagged and searchable
+Not a scattered pile of notes-app entries — a continuous, private record of the recovery journey, from day one forward, organized so it stays usable after years of daily writing.
+
+**Tags build themselves.** As someone writes, MRT suggests tags they've already used before — type a couple letters and their own past tags show up as options, so a personal vocabulary of recurring topics (a trigger, a person, a feeling, a meeting) builds itself over time instead of being invented from scratch on entry #200. Voice notes tag themselves automatically ("Voice Note"); a guided template can carry its own default tags. The result, months in: a private index that reflects a person's *own* recurring themes, in their own words — not a fixed list of categories the app decided for them.
+
+**Search is real search — and it's private by construction.** Type a word, and every past entry containing it appears instantly. What makes this worth saying out loud in copy: because every entry is encrypted, there is no server-side index of anyone's journal content to search in the first place — the server never has the plaintext to index. Search happens entirely on the user's own device, over their own already-decrypted entries. No query, and no record that a search even happened, ever leaves the phone.
+
+**Organized to actually stay navigable.** Entries are grouped by year and month, most recent first, with the current period open and everything older tucked away collapsed — so the app is just as fast to browse on day 1,000 as it was on day 10. From here, any past entry can be reopened to edit, deleted, or shared out.
+
+**Marketing angle:** "search your own recovery history without anyone else ever being able to." This is a rare case where a genuine technical constraint (the server literally can't index encrypted content) becomes a real product benefit worth stating plainly, not just a privacy disclaimer.
+
+**Persona fit:** this is the tab that makes Walt's "35 years of data, and it's all still mine" story concrete — a decade-spanning, instantly searchable personal record, not something he has to trust exists. Maya benefits the same way from a different angle: tags become her own lightweight trigger/theme taxonomy, built from actual entries rather than a category list she has to maintain by hand.
 
 ### Insights — patterns you can't see day to day
-Mood trends over time, a day-of-week rhythm comparison, and a word cloud of what actually shows up most in someone's own writing. No AI required for this tab — it's the person's own data, reflected back.
+Three visualizations, built entirely from someone's own entries, with **no AI involved** — this tab is pure reflection, not analysis. That distinction matters for copy: Insights shows the raw picture; the separate AI Pattern Analysis (below) is what interprets it.
+
+1. **Mood trend** — mood score plotted over time, alongside local weather on the same days the person logged. It's the simplest, most immediate visual: does the line trend up, down, or hold steady, and does anything in the weather line up with the dips.
+2. **Weekly rhythm** — this week compared to a prior stretch, broken out by day of the week. This is where a pattern like "Sundays are consistently the hardest day" becomes visible at a glance instead of being a vague feeling.
+3. **Word cloud** — the words that actually show up most across someone's own writing, sized by frequency. It's the one visual built from the *content* of entries, not just the mood number attached to them — literally a picture of what's been on someone's mind. A private, on-device word blocklist lets a person hide anything they don't want surfacing (a name, a recurring word that isn't meaningful) — a small detail, but one worth using in copy: even the visualization is under the user's control.
+
+**Marketing angle:** "see your own recovery, reflected back to you" — no AI interpretation layer, no black box, just the person's own data made visible. This is the natural bridge into the AI Pattern Analysis section below: Insights shows *what's there*; the AI Wizard explains *what it means*.
+
+**Persona fit:** squarely Walt and Maya's tab. It's explicitly a zero-gamification surface — no streaks, no badges, just charts — which is exactly Walt's requirement, and exactly the kind of traceable, self-evident data Maya trusts (nothing here is a claim she has to take on faith; it's her own words and numbers, visualized).
 
 ### AI Pattern Analysis — an on-demand recovery coach
 Launched from the History tab (the whole point is that it's reading someone's *actual written record*, not a fresh prompt), this is the feature that turns a private diary into an active recovery tool. On request, the AI reads the user's own decrypted journal entries — never anyone else's, never used to train anything — and comes back with something a lot more specific and useful than "here are some patterns":
@@ -64,7 +82,7 @@ Launched from the History tab (the whole point is that it's reading someone's *a
 
 Three depths, matched to how far back the user wants to look: a **Weekly Check-in** (this week vs. last), a **Monthly Review** (this month vs. last), or a **90-Day Deep Dive** for the kind of long-arc pattern that's invisible week to week but obvious across three months. Free-tier users get a limited number of these per period (a cost-shield, not a punishment — plenty for someone journaling regularly); Premium removes the limit entirely, which is a natural, honest upgrade hook: *"see the pattern the moment you're ready to, not on a schedule."*
 
-Because it's reading the same encrypted entries the person already trusted the app with, this feature only works *because* the zero-knowledge privacy promise is real — it's the payoff of the trust, not a separate feature competing with it.
+Because it's reading the same encrypted entries the person already trusted the app with, this feature only works *because* the zero-knowledge privacy promise is real — it's the payoff of the trust, not a separate feature competing with it. Two details worth stating explicitly in copy, both real and verifiable: analysis only ever runs when the user taps the button — nothing automatic, nothing running in the background — and the API calls are stateless, meaning entries are never stored by the AI provider and never used to train any public AI model.
 
 ### The privacy promise (this is the headline differentiator)
 Every journal entry is encrypted on the person's own device before it ever reaches a server, using a key **derived from their own PIN — nobody else has it, including MRT.** Even in the worst-case scenario of a server breach, journal content is unreadable. This isn't a privacy *policy* — it's math. The plain-language version for copy: **"Not even we can read what you write."**

@@ -59,8 +59,9 @@ Every doc was verified against the current source, not just transcribed from the
 | Delete Account | `delete-account.md` | Single screen, `/delete-account` |
 | Premium Upgrade | `premium-upgrade.md` | Single screen, `/premium` |
 | Debug Tools | `debug-tools.md` | Single screen, `/debug` |
+| SOS / Crisis Support | `sos-modal.md` | Global modal, no dedicated route — reachable from every screen |
 
-62 files total. Every route in `src/App.tsx` is covered.
+63 files total. Every route in `src/App.tsx` is covered, plus the one major app-wide feature (SOS) that isn't tied to a route at all — surfaced 2026-09-03 during a full-app review checking the `docs/marketing/` series for gaps.
 
 ## Notable findings surfaced while writing these docs
 
