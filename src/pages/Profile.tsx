@@ -29,7 +29,7 @@ function isTabType(value: string | undefined): value is TabType {
 }
 
 export default function Profile() {
-  const { user, logout, userTier, userTierSource } = useAuth();
+  const { user, logout, userTier, userTierSource, reauthenticateWithEmail, reauthenticateWithGoogle } = useAuth();
   const { changePin, resetVault } = useEncryption();
   const navigate = useNavigate();
   const { tab } = useParams<{ tab?: string }>();
@@ -97,10 +97,18 @@ export default function Profile() {
   // Danger Zone: Reset Vault modal — replaces the old window.prompt()/alert() pair
   // with the same styled Headless UI Dialog pattern DataManagement's account-deletion
   // flow already uses, so the app's two most destructive actions look consistent.
+  // TD-22: a 'reauth' step (mirroring AccountDeletionModal's) sits between 'confirm'
+  // and 'typing' — an unattended, already-unlocked session can no longer wipe the
+  // vault without re-proving Firebase Auth credentials. Deliberately Auth re-auth,
+  // not vault-PIN re-entry: this modal's own copy advertises Reset Vault as the
+  // recovery path for someone who *forgot* their PIN, so gating it behind the PIN
+  // would defeat that legitimate use case.
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [resetStep, setResetStep] = useState<'confirm' | 'typing' | 'resetting'>('confirm');
+  const [resetStep, setResetStep] = useState<'confirm' | 'reauth' | 'typing' | 'resetting'>('confirm');
+  const [resetPassword, setResetPassword] = useState('');
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [resetError, setResetError] = useState<string | null>(null);
+  const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com');
 
   // Populates local form state from the profile query exactly once per mount —
   // deliberately not re-synced on every `profile` change, since useQuery may
@@ -345,9 +353,38 @@ export default function Profile() {
 
   const handleInitiateReset = () => {
       setResetStep('confirm');
+      setResetPassword('');
       setResetConfirmText('');
       setResetError(null);
       setIsResetModalOpen(true);
+  };
+
+  const handleReAuthForReset = async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      setResetError(null);
+      try {
+          if (isGoogleUser) {
+              await reauthenticateWithGoogle();
+          } else {
+              if (!resetPassword) {
+                  setResetError("Password is required.");
+                  return;
+              }
+              await reauthenticateWithEmail(resetPassword);
+          }
+          setResetStep('typing');
+      } catch (err: unknown) {
+          const error = err as { code?: string; message?: string };
+          if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+              setResetError('Incorrect password. Please try again.');
+          } else if (error.code === 'auth/requires-recent-login') {
+              setResetError('Session expired. Please close this modal, log out, and log back in to try again.');
+          } else if (error.code === 'auth/popup-closed-by-user') {
+              setResetError('Google verification cancelled.');
+          } else {
+              setResetError(error.message || 'An error occurred verifying your identity.');
+          }
+      }
   };
 
   const handleConfirmReset = async () => {
@@ -909,12 +946,50 @@ export default function Profile() {
                                                 Cancel
                                             </button>
                                             <button
-                                                onClick={() => setResetStep('typing')}
+                                                onClick={() => setResetStep('reauth')}
                                                 className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
                                             >
                                                 Yes, Proceed
                                             </button>
                                         </div>
+                                    </div>
+                                )}
+
+                                {resetStep === 'reauth' && (
+                                    <div className="animate-fadeIn">
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                            To prevent an unattended device from wiping your vault, please verify your identity to proceed.
+                                        </p>
+
+                                        {isGoogleUser ? (
+                                            <button
+                                                onClick={() => handleReAuthForReset()}
+                                                className="w-full flex items-center justify-center px-4 py-4 border border-gray-300 shadow-sm text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all"
+                                            >
+                                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5 mr-3" />
+                                                Re-verify with Google
+                                            </button>
+                                        ) : (
+                                            <form onSubmit={handleReAuthForReset} className="space-y-4">
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    // eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: this field only renders at the re-auth step of the reset-vault modal, matching WCAG's modal-focus-management guidance (not autofocus on ordinary page load).
+                                                    autoFocus
+                                                    placeholder="Enter your account password"
+                                                    value={resetPassword}
+                                                    onChange={(e) => setResetPassword(e.target.value)}
+                                                    className="w-full text-sm rounded-xl border-gray-300 focus:border-red-500 focus:ring-red-500 p-3"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={!resetPassword}
+                                                    className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors"
+                                                >
+                                                    Verify & Continue
+                                                </button>
+                                            </form>
+                                        )}
                                     </div>
                                 )}
 

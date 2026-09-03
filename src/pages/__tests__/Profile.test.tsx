@@ -15,6 +15,8 @@ import Profile from '../Profile';
 const mockUpdateProfileMutateAsync = vi.fn().mockResolvedValue(undefined);
 const mockPatchFieldsMutateAsync = vi.fn().mockResolvedValue(undefined);
 const mockResetVault = vi.fn();
+const mockReauthenticateWithEmail = vi.fn();
+const mockReauthenticateWithGoogle = vi.fn();
 let mockProfile: Record<string, unknown> | null;
 let mockUserTier: 'free' | 'premium' = 'free';
 let mockUserTierSource: 'Stripe-Managed' | 'play-billing' | 'manual' | undefined;
@@ -23,10 +25,12 @@ vi.mock('firebase/auth', () => ({ updateProfile: vi.fn() }));
 
 vi.mock('../../contexts/AuthContext', () => ({
     useAuth: vi.fn(() => ({
-        user: { uid: 'test-user-123', email: 'walt@example.com', displayName: 'Walt' },
+        user: { uid: 'test-user-123', email: 'walt@example.com', displayName: 'Walt', providerData: [] },
         logout: vi.fn(),
         userTier: mockUserTier,
         userTierSource: mockUserTierSource,
+        reauthenticateWithEmail: mockReauthenticateWithEmail,
+        reauthenticateWithGoogle: mockReauthenticateWithGoogle,
     })),
 }));
 
@@ -238,6 +242,7 @@ describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)',
         mockUpdateProfileMutateAsync.mockResolvedValue(undefined);
         mockPatchFieldsMutateAsync.mockResolvedValue(undefined);
         mockResetVault.mockResolvedValue(undefined);
+        mockReauthenticateWithEmail.mockResolvedValue(undefined);
         vi.mocked(mockUpdateAuthProfile).mockResolvedValue(undefined);
         Object.defineProperty(window, 'location', {
             configurable: true,
@@ -251,7 +256,7 @@ describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)',
         };
     });
 
-    it('7. requires typing RESET inside a styled dialog before destroying the vault — no native prompt/alert', async () => {
+    it('7. requires re-authentication, then typing RESET, inside a styled dialog before destroying the vault — no native prompt/alert', async () => {
         renderProfile();
         fireEvent.click(screen.getByRole('button', { name: /security/i }));
 
@@ -262,7 +267,16 @@ describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)',
 
         fireEvent.click(within(dialog).getByRole('button', { name: /yes, proceed/i }));
 
-        const confirmInput = within(dialog).getByPlaceholderText('Type RESET to confirm');
+        // TD-22: an unattended, already-unlocked session can't skip straight to
+        // typing RESET — Firebase Auth re-authentication is required first.
+        const passwordInput = await within(dialog).findByPlaceholderText('Enter your account password');
+        expect(mockResetVault).not.toHaveBeenCalled();
+        fireEvent.change(passwordInput, { target: { value: 'correct-horse-battery-staple' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: /verify & continue/i }));
+
+        await waitFor(() => expect(mockReauthenticateWithEmail).toHaveBeenCalledWith('correct-horse-battery-staple'));
+
+        const confirmInput = await within(dialog).findByPlaceholderText('Type RESET to confirm');
         const destroyButton = within(dialog).getByRole('button', { name: /destroy & reset vault/i });
         expect(destroyButton).toBeDisabled();
         expect(mockResetVault).not.toHaveBeenCalled();
@@ -273,6 +287,24 @@ describe('👤 Profile — Danger Zone Dialog Consistency (Project 58 Phase 3)',
         fireEvent.click(destroyButton);
 
         await waitFor(() => expect(mockResetVault).toHaveBeenCalled());
+    });
+
+    it('7b. an incorrect password blocks reaching the RESET-typing step and keeps resetVault uncalled', async () => {
+        mockReauthenticateWithEmail.mockRejectedValueOnce({ code: 'auth/wrong-password' });
+        renderProfile();
+        fireEvent.click(screen.getByRole('button', { name: /security/i }));
+        fireEvent.click(screen.getByRole('button', { name: /destroy & reset vault/i }));
+
+        const dialog = await screen.findByRole('dialog');
+        fireEvent.click(within(dialog).getByRole('button', { name: /yes, proceed/i }));
+
+        const passwordInput = await within(dialog).findByPlaceholderText('Enter your account password');
+        fireEvent.change(passwordInput, { target: { value: 'wrong-guess' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: /verify & continue/i }));
+
+        expect(await within(dialog).findByText(/incorrect password/i)).toBeInTheDocument();
+        expect(within(dialog).queryByPlaceholderText('Type RESET to confirm')).not.toBeInTheDocument();
+        expect(mockResetVault).not.toHaveBeenCalled();
     });
 
     it('8. Cancel closes the dialog without calling resetVault', async () => {
