@@ -14,7 +14,11 @@ export interface UserProfile {
   sobrietyDate: Timestamp | null;
   createdAt: Timestamp;
   lastLogin?: Timestamp;
-  lastExportAt?: Timestamp; 
+  lastExportAt?: Timestamp;
+  // TD-24: set when performAutoBackup's Drive upload fails (thrown error or a
+  // non-ok response), cleared on the next successful run — lets the UI
+  // surface a failure that was previously silent (console.error only).
+  lastAutoBackupFailedAt?: Timestamp | null;
   role?: 'admin' | 'user';
   sponsorName?: string;
   sponsorPhone?: string;

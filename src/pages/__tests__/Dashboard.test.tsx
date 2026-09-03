@@ -10,8 +10,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../Dashboard';
 
+let mockDriveAccessToken: string | null = null;
 vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { uid: 'test-user-123' }, driveAccessToken: null }),
+  useAuth: () => ({ user: { uid: 'test-user-123' }, driveAccessToken: mockDriveAccessToken }),
 }));
 
 vi.mock('../../lib/versioning', () => ({
@@ -21,9 +22,10 @@ vi.mock('../../lib/versioning', () => ({
 vi.mock('../../lib/firebase', () => ({ db: { type: 'mock-db' } }));
 
 const mockPatchFieldsMutate = vi.fn();
+let mockProfile: Record<string, unknown> = { sobrietyDate: null, lastSeenBuildHash: 'hash-v1' };
 vi.mock('../../hooks/useUserProfile', () => ({
   useUserProfile: () => ({
-    profile: { sobrietyDate: null, lastSeenBuildHash: 'hash-v1' },
+    profile: mockProfile,
     isLoading: false,
     patchFields: { mutate: mockPatchFieldsMutate },
   }),
@@ -49,6 +51,8 @@ function renderDashboard() {
 describe('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDriveAccessToken = null;
+    mockProfile = { sobrietyDate: null, lastSeenBuildHash: 'hash-v1' };
   });
 
   it('renders the dashboard once data loads', async () => {
@@ -74,5 +78,32 @@ describe('Dashboard', () => {
     expect(screen.getByText('My Workbooks')).toBeInTheDocument();
     expect(screen.getByText('My Games')).toBeInTheDocument();
     expect(screen.getByText('My Tools')).toBeInTheDocument();
+  });
+
+  describe('Backup Alert (TD-24: surfacing a silently-failing Drive auto-backup)', () => {
+    it('shows the "no Drive connected" nudge when Drive is not connected and no recent export exists', async () => {
+      mockDriveAccessToken = null;
+      mockProfile = { sobrietyDate: null, lastSeenBuildHash: 'hash-v2' };
+      renderDashboard();
+
+      expect(await screen.findByText(/It's been a week since your last save/i)).toBeInTheDocument();
+    });
+
+    it('stays silent when Drive is connected and no failure has been recorded, even with no lastExportAt yet', async () => {
+      mockDriveAccessToken = 'a-real-drive-token';
+      mockProfile = { sobrietyDate: null, lastSeenBuildHash: 'hash-v2' };
+      renderDashboard();
+
+      await screen.findByText('My Dashboard');
+      expect(screen.queryByText(/Backup Needed/i)).not.toBeInTheDocument();
+    });
+
+    it('surfaces a distinct message when a Drive-connected auto-backup has failed — regression: this case was previously never shown at all', async () => {
+      mockDriveAccessToken = 'a-real-drive-token';
+      mockProfile = { sobrietyDate: null, lastSeenBuildHash: 'hash-v2', lastAutoBackupFailedAt: { toMillis: () => Date.now() } };
+      renderDashboard();
+
+      expect(await screen.findByText(/Your last Google Drive backup didn't go through/i)).toBeInTheDocument();
+    });
   });
 });

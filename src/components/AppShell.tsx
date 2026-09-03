@@ -54,9 +54,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
       const success = await uploadBackupToDrive(driveAccessToken, textData, existingFileId || undefined);
 
       if (success) {
-        await patchProfileFields({ lastExportAt: serverTimestamp() });
+        await patchProfileFields({ lastExportAt: serverTimestamp(), lastAutoBackupFailedAt: null });
+      } else {
+        // TD-24: uploadBackupToDrive() returns false (not a thrown error) on an
+        // HTTP failure — e.g. a revoked Drive permission or hitting quota —
+        // so this branch previously did nothing at all, not even the
+        // console.error below. lastAutoBackupFailedAt lets the Dashboard
+        // banner surface this even for a Drive-connected user, who the
+        // existing banner's !driveAccessToken condition otherwise excludes
+        // entirely regardless of how stale their backup gets.
+        console.error("Auto-backup failed: Drive upload rejected");
+        await patchProfileFields({ lastAutoBackupFailedAt: serverTimestamp() }).catch(() => {});
       }
-    } catch (e) { console.error("Auto-backup failed silently:", e); }
+    } catch (e) {
+      console.error("Auto-backup failed silently:", e);
+      await patchProfileFields({ lastAutoBackupFailedAt: serverTimestamp() }).catch(() => {});
+    }
   }, [user, driveAccessToken, isVaultUnlocked, isOnline, profile, patchProfileFields]);
 
   useEffect(() => { 

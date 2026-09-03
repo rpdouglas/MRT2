@@ -78,10 +78,18 @@ export default function Dashboard() {
     }
 
     const lastExport = userProfile?.lastExportAt as Timestamp | undefined;
-    const showBackup = !driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000));
+    // TD-24: driveAccessToken users were previously excluded from this banner
+    // entirely (the old condition required !driveAccessToken), so a Drive
+    // auto-backup that keeps silently failing could go unnoticed forever —
+    // not just "eventually reappear." lastAutoBackupFailedAt (set by
+    // AppShell's performAutoBackup) now surfaces that case too, with its own
+    // copy, while the no-Drive-connected nudge below is unchanged.
+    const autoBackupFailed = !!driveAccessToken && !!userProfile?.lastAutoBackupFailedAt;
+    const showBackup = autoBackupFailed || (!driveAccessToken && (!lastExport || lastExport.toMillis() < nowMs - (7 * 24 * 60 * 60 * 1000)));
 
     return {
         showBackup,
+        autoBackupFailed,
         daysClean
     };
   }, [userProfile, profileLoading, driveAccessToken, nowMs]);
@@ -181,7 +189,11 @@ export default function Dashboard() {
                 <ArrowDownTrayIcon className="h-5 w-5" />
               </div>
               <div className="text-xs text-amber-900">
-                <strong>Backup Needed:</strong> It's been a week since your last save.
+                {stats.autoBackupFailed ? (
+                  <><strong>Backup Needed:</strong> Your last Google Drive backup didn't go through.</>
+                ) : (
+                  <><strong>Backup Needed:</strong> It's been a week since your last save.</>
+                )}
               </div>
             </div>
             <Link to="/profile" className="text-xs font-bold bg-amber-700 text-white px-3 py-1.5 rounded-lg hover:bg-amber-800">Go</Link>
