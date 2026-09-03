@@ -31,10 +31,20 @@ The Journal is where all of that actually happens. Voice-to-text and mood tracki
 
 ### Write — three ways in, on purpose
 - **Free text** — a distraction-free page, no character limit.
-- **Guided templates** — structured prompts (morning intention, evening inventory, gratitude, trigger log) for someone who doesn't know where to start, or a custom prompt set they built for their own program.
+- **Guided templates** — built-in or custom (see below) for someone who doesn't know where to start.
 - **Voice-to-Vault** — speak it instead of typing it. The app transcribes it, scores the mood, and tags it automatically. This exists specifically for the moment when someone is too overwhelmed, too tired, or too shaky to type — the barrier to "get it out of your head" drops to almost nothing.
 
 Every entry also carries a 1–10 mood slider and free-form tags, so emotional data accumulates automatically, without extra effort, just by journaling normally.
+
+### Guided templates — start from a prompt, or build your own program
+Not everyone opens a blank page well, especially early on. Templates turn "write about how you feel" into a specific set of questions someone can just answer.
+
+- **Built-in templates** — ready to use immediately, free on every tier: morning intention, evening inventory, gratitude, trigger log, and more. Pick one, and the blank page becomes a short list of specific prompts instead.
+- **Custom templates (Premium)** — build your own reusable set of prompts once, and it shows up in the same picker as the built-in ones from then on. This is where the Journal stops being *the app's* format and becomes *the user's own* program: their sponsor's specific Step 10 questions, their own CBT thought-record structure, a personal end-of-week review they've refined for years. Once built, using it is exactly as fast as picking a built-in template — write the questions once, answer them for as long as the practice is useful.
+
+**Marketing angle:** this is the difference between "here's a journaling app" and "bring the practice you already trust, and make it this easy to keep doing." It's a natural, honest Premium hook — free tier gets a strong set of built-in templates; Premium lets someone stop adapting their own long-standing practice to the app's defaults.
+
+**Persona fit:** Walt is the clearest case — decades into recovery, he already has his own inventory format; a custom template is how MRT gets out of his way and just holds it. Maya is a close second — she wants her journal structured exactly like the CBT framework she's using elsewhere, not a generic prompt set. Don't stretch this to every persona; David and Ned in particular aren't template-builders — David needs voice-to-text at 2 AM, and Ned's tasks/streaks flow doesn't run through custom templates at all.
 
 ### History — the whole story, searchable
 Every past entry, organized by year and month, instantly searchable. Not a scattered pile of notes app entries — a continuous, private record of the recovery journey, from day one forward.
