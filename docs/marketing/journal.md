@@ -50,7 +50,15 @@ Not everyone opens a blank page well, especially early on. Templates turn "write
 Every past entry, organized by year and month, instantly searchable. Not a scattered pile of notes app entries — a continuous, private record of the recovery journey, from day one forward.
 
 ### Insights — patterns you can't see day to day
-Mood trends over time, a day-of-week rhythm comparison, and a word cloud of what actually shows up most in someone's own writing. No AI required for this tab — it's the person's own data, reflected back.
+Three visualizations, built entirely from someone's own entries, with **no AI involved** — this tab is pure reflection, not analysis. That distinction matters for copy: Insights shows the raw picture; the separate AI Pattern Analysis (below) is what interprets it.
+
+1. **Mood trend** — mood score plotted over time, alongside local weather on the same days the person logged. It's the simplest, most immediate visual: does the line trend up, down, or hold steady, and does anything in the weather line up with the dips.
+2. **Weekly rhythm** — this week compared to a prior stretch, broken out by day of the week. This is where a pattern like "Sundays are consistently the hardest day" becomes visible at a glance instead of being a vague feeling.
+3. **Word cloud** — the words that actually show up most across someone's own writing, sized by frequency. It's the one visual built from the *content* of entries, not just the mood number attached to them — literally a picture of what's been on someone's mind. A private, on-device word blocklist lets a person hide anything they don't want surfacing (a name, a recurring word that isn't meaningful) — a small detail, but one worth using in copy: even the visualization is under the user's control.
+
+**Marketing angle:** "see your own recovery, reflected back to you" — no AI interpretation layer, no black box, just the person's own data made visible. This is the natural bridge into the AI Pattern Analysis section below: Insights shows *what's there*; the AI Wizard explains *what it means*.
+
+**Persona fit:** squarely Walt and Maya's tab. It's explicitly a zero-gamification surface — no streaks, no badges, just charts — which is exactly Walt's requirement, and exactly the kind of traceable, self-evident data Maya trusts (nothing here is a claim she has to take on faith; it's her own words and numbers, visualized).
 
 ### AI Pattern Analysis — an on-demand recovery coach
 Launched from the History tab (the whole point is that it's reading someone's *actual written record*, not a fresh prompt), this is the feature that turns a private diary into an active recovery tool. On request, the AI reads the user's own decrypted journal entries — never anyone else's, never used to train anything — and comes back with something a lot more specific and useful than "here are some patterns":
