@@ -1,6 +1,6 @@
 # 📁 Project 108: Persona Asset Refresh (Pop-Art Style Adoption)
 
-**Status:** ⚪ Planned — paused before implementation (2026-09-03) pending an in-progress AI image-generation capability being added to the project; resume planning review once that lands, since it may change Strategy B/C's feasibility (e.g. generating true pop-art-style bio art instead of only cropping/compressing the provided reference PNGs).
+**Status:** 🟢 Done (2026-09-03) — Strategy C implemented and approved.
 **Primary Persona:** N/A — Marketing/brand asset surface (`Welcome.tsx`, `Login.tsx`). No single end-user persona owns this; it's how MRT presents all six personas to prospective users before signup.
 **Objective:** Replace the persona headshot/bio imagery across the app with the new pop-art/comic-style reference set delivered in `public/personas/Persona Headshots and Angles/`, resolving two pre-existing style inconsistencies (David/Ned/Lisa/Walt's flat-cartoon style vs. Maya/Jordan's mismatched corporate-avatar style) and the long-standing Maya/Jordan bio-content gap, in a single coherent pass.
 
@@ -119,4 +119,20 @@ Ran through `/planning`. Full detail below; paused at the Stop Gate before the u
 7. **Bundle check:** Zero — images served by URL from `public/`, never imported into JS bundle. No new deps/routes/Gemini calls (for Strategy A/B; an image-gen-based approach would need this reassessed).
 8. **Rollback:** Fully `git revert`-able — no server-side state, no deploy, no migration.
 
-**Stop Gate: PAUSED, not approved.** Resume by re-reading this section once PROJ-109 (image-gen setup) lands, then either type APPROVED for Strategy B as-is or ask to re-run `/planning` with image-gen in scope.
+**Stop Gate: APPROVED** (2026-09-03) — user approved Strategy C as recommended.
+
+---
+
+## 7. Implementation Summary (2026-09-03)
+
+Strategy C shipped as planned, with image-gen used only as originally scoped (none of it was actually needed — the deterministic crop approach turned out sufficient; see note below):
+
+- **Source processing:** `scripts/process_persona_assets.py` (new, reusable) trims the ~20px white-margin+black-keyline frame common to all 18 source PNGs and produces `public/personas/<name>/{headshot,full_body,looking_left}.webp` for all 6 personas. `looking_left` is the left-third crop of the `360_view` turnaround sheet (a full-body left-profile), not an AI-regenerated solo pose — the crop came out clean on visual inspection (no border artifacts, no panel-seam bleed) for all 6, so the reference-guided-regeneration fallback discussed in Phase 2 wasn't needed. `GEMINI_API_KEY` was still unset at implementation time, which would have blocked that path anyway.
+- **Nested `ASSETS.personas.<name>.{headshot,full_body,looking_left}` structure** now real, matching what `docs/PERSONAS.md` has documented since v2.1. Regenerated via `scripts/generate_asset_index.py`.
+- **Old flat assets deleted:** all 14 files (`*_headshot.webp`, `*_bio.webp`, `*.jpg`) removed via `git rm`.
+- **Raw source PNGs relocated** from `public/personas/Persona Headshots and Angles/` (would have shipped in the build, and collided with the new nested directory names during generation) to `reference/persona-source/` at repo root — tracked in git as the canonical likeness reference, not served to users. ~45MB; flagged to the user as a meaningful one-time repo-size addition before committing.
+- **`Welcome.tsx`:** carousel expanded from 4 to all 6 personas (order follows the `PERSONAS.md` §2 journey arc: David, Ned, Jordan, Maya, Walt, Lisa). Fixed a dead-code bug in passing — `alt={persona.name}` was replaced with the already-defined-but-unused `persona.altDesc` on the headshot `<img>`.
+- **`Login.tsx`:** fixed the pre-existing bug where `PERSONAS` hardcoded `/personas/<name>.jpg` — which were actually the old bio-card composites, not headshots — bypassing `ASSETS` entirely. Now routes through `ASSETS.personas.<name>.headshot` and includes all 6 personas (grid changed `sm:grid-cols-4` → `sm:grid-cols-3` for a clean 2-row layout).
+- **`PersonaBioCard` (`src/components/PersonaBioCard.tsx`, new):** replaces the dead `_bio.webp`/`.jpg` composite-image concept with a code-rendered `<details>` disclosure (44px+ touch target on the summary per the design skill's touch-target rule) showing Backstory/Current Stage/Sponsor Status/Key Challenge. Copy for David/Ned/Lisa/Walt is reused verbatim from the old bio-card images (read via image inspection, not re-invented). Maya/Jordan copy is newly authored, condensed from their existing `docs/PERSONAS.md` narratives — closing the bio-content gap flagged at the start of this project. Wired into `Welcome.tsx`'s carousel only (Login.tsx's persona grid stays headshot-only, unchanged in scope).
+- **`docs/PERSONAS.md`:** all 6 Asset Metadata sections corrected (dropped the never-real `.bio_feature` key, confirmed `.full_body`/`.looking_left` are now real, pointed to `PersonaBioCard` for bio content). Maya's section also got a missing header fixed (previously a single dangling bullet). Bumped to v2.3 with a changelog entry.
+- **QA:** `npm run lint` clean, `npm run build` clean (TS + Vite, all 18 new webp files present in `dist/personas/`), `npm run test:once` — 723/723 tests passing across 103 files. Manual Playwright-driven screenshot check of `/` (carousel + bio disclosure open state) and `/login` — no console or network errors, all 6 personas render correctly in the unified pop-art style.
