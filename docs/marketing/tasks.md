@@ -6,11 +6,11 @@ Fourth in the per-feature series (`docs/marketing/journal.md`, `dashboard.md`, `
 
 ---
 
-## Important: what changed in this pass
+## Important: what changed in this pass (and since)
 
-The technical docs previously described a "Smart Reset" mechanic — an overdue recurring task getting silently and gracefully rolled forward overnight, protecting a streak from a missed day. Tracing that claim to the actual code found it's **not live** — the function that does this (`getUserTasks()`) exists and is well-built, but nothing in the running app calls it. The screen actually renders from a different, simpler data path that has no such logic. Real product gap, not a documentation error — flagged for engineering separately.
+The technical docs previously described a "Smart Reset" mechanic — an overdue recurring task getting silently and gracefully rolled forward overnight, protecting a streak from a missed day. Tracing that claim to the actual code at the time found it wasn't live — the function that does this (`getUserTasks()`) existed and was well-built, but nothing in the running app called it. That gap was tracked as `TD-25` and **fixed on 2026-09-03**: the reconciliation logic is now wired into the live data path (`useTasksList()`), so Smart Reset is real and running today.
 
-**What this means for copy:** don't write anything implying the app automatically or silently protects a streak overnight, "notices" a missed day on its own, or resets anything in the background. Every anti-punishment story in this brief is instead built on what's **verified live**: the Forgiveness Tap (an explicit swipe-triggered choice) and the Rhythm Score's forgiving math. Both are real and confirmed in source.
+**What this means for copy now:** it's safe to write that the app quietly protects a streak overnight for a missed recurring task — that claim is verified live again, alongside the Forgiveness Tap (an explicit swipe-triggered choice) and the Rhythm Score's forgiving math. All three are real and confirmed in source as of this update.
 
 ---
 
@@ -103,7 +103,7 @@ Maya uses Tasks as the execution layer for what her journaling and AI analysis s
 
 Everything from `docs/marketing/journal.md`'s guardrails applies here too. Tasks-specific additions:
 
-- **Never claim automatic/silent streak protection.** The only verified anti-punishment mechanics are the Forgiveness Tap (an explicit user choice) and the Rhythm Score's forgiving math. Don't write "the app looks out for you overnight" or anything implying background magic — it would be describing a feature that doesn't currently run.
+- **Automatic/silent streak protection (Smart Reset) is now safe to claim** — fixed and live as of 2026-09-03 (`TD-25`). It joins the Forgiveness Tap (an explicit user choice) and the Rhythm Score's forgiving math as verified anti-punishment mechanics. "The app looks out for you overnight" is now an accurate claim, not background-magic overclaiming.
 - **Don't market Tasks as a private, encrypted space.** Unlike Journal, task content is stored unencrypted (a deliberate tradeoff so streak/habit logic can run). Copy shouldn't imply the same "not even we can read it" promise applies here.
 - **Don't promise medication/dose-tracking for Jordan.** That's a documented persona need, not a shipped Tasks feature — see Jordan's section above.
 - **Streak language is fine; failure language is not.** "Momentum," "rhythm," "consistency" are all accurate. "Don't break your streak," "you failed today," or any framing of a missed day as a loss is off-brand and inaccurate to how the feature actually behaves.
