@@ -16,6 +16,11 @@ vi.mock('../../../contexts/AuthContext', () => ({
 
 vi.mock('../../../lib/firebase', () => ({ db: { type: 'mock-db' } }));
 
+const mockDecrypt = vi.fn(async (cipher: string) => cipher);
+vi.mock('../../../contexts/EncryptionContext', () => ({
+    useEncryption: () => ({ decrypt: mockDecrypt }),
+}));
+
 const mockGetDocs = vi.fn();
 vi.mock('firebase/firestore', async (importOriginal) => {
     const actual = await importOriginal<typeof import('firebase/firestore')>();
@@ -54,6 +59,7 @@ describe('🏆 AchievementsTab', () => {
         mockGameHistory = [];
         mockProfile = { uid: 'test-user-123', sobrietyDate: null };
         mockGetDocs.mockResolvedValue({ docs: [], size: 0 });
+        mockDecrypt.mockImplementation(async (cipher: string) => cipher);
     });
 
     it('renders the Rank & Level card with a Seeker/Level 1 baseline for a brand-new user', async () => {
@@ -101,5 +107,41 @@ describe('🏆 AchievementsTab', () => {
 
         // GAME_COMPLETION XP (20) from the one non-crossword entry only.
         expect(await screen.findByText(/^20 \/ /)).toBeInTheDocument();
+    });
+
+    // TD-21: the journal query previously never decrypted `content`, so the
+    // depth-bonus word count always ran against ciphertext (always length 1
+    // when split on whitespace) — the bonus silently never fired for any
+    // real account. These two tests are the actual regression check: without
+    // the fix, decrypt() is never called and the entry would only ever score
+    // the flat 25 XP base, never the +10 depth bonus, regardless of length.
+    it('TD-21: awards the journal depth bonus for a real long entry once content is decrypted', async () => {
+        const longPlaintext = Array(60).fill('word').join(' ');
+        mockGetDocs
+            .mockResolvedValueOnce({ docs: [{ data: () => ({ content: 'ciphertext-blob', isEncrypted: true, tags: [], createdAt: { toDate: () => new Date() } }) }], size: 1 }) // journals
+            .mockResolvedValueOnce({ docs: [], size: 0 }) // tasks
+            .mockResolvedValueOnce({ docs: [], size: 0 }) // workbook_answers count
+            .mockResolvedValueOnce({ docs: [], size: 0 }); // rosc_assessments count
+        mockDecrypt.mockResolvedValueOnce(longPlaintext);
+
+        renderAchievementsTab();
+
+        // JOURNAL_ENTRY (25) + JOURNAL_LONG_ENTRY depth bonus (10) = 35.
+        expect(await screen.findByText(/^35 \/ /)).toBeInTheDocument();
+        expect(mockDecrypt).toHaveBeenCalledWith('ciphertext-blob');
+    });
+
+    it('TD-21: a decrypt failure fails closed to no depth bonus instead of crashing the tab', async () => {
+        mockGetDocs
+            .mockResolvedValueOnce({ docs: [{ data: () => ({ content: 'ciphertext-blob', isEncrypted: true, tags: [], createdAt: { toDate: () => new Date() } }) }], size: 1 })
+            .mockResolvedValueOnce({ docs: [], size: 0 })
+            .mockResolvedValueOnce({ docs: [], size: 0 })
+            .mockResolvedValueOnce({ docs: [], size: 0 });
+        mockDecrypt.mockRejectedValueOnce(new Error('vault locked'));
+
+        renderAchievementsTab();
+
+        // Base 25 XP only — no bonus, no thrown error reaching the UI.
+        expect(await screen.findByText(/^25 \/ /)).toBeInTheDocument();
     });
 });
