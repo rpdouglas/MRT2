@@ -1,6 +1,6 @@
 # 📁 Project 106: Close the Uncapped AI Cost Gap (3 Ungated Gemini Flows)
 
-**Status:** 🟡 In Progress
+**Status:** 🟢 Done
 **Primary Persona:** All (cost-control infrastructure — no persona-specific UX beyond error messaging)
 **Objective:** Close a live, uncapped Gemini API cost exposure on 3 of the 9 approved AI flows, found during `docs/reports/2026-09_premium_gating_audit.md` while scoping `PROJ-105` (Play Billing).
 

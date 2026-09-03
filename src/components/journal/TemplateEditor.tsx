@@ -5,8 +5,20 @@ import { getUserTemplates, saveUserTemplate, deleteUserTemplate, type JournalTem
 import { Timestamp } from 'firebase/firestore';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PencilSquareIcon, XMarkIcon, ListBulletIcon, HashtagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import PremiumGate from '../PremiumGate';
 
+// PROJ-108: the /templates route had no tier check at all — JournalEditor's
+// entry-point button was gated but the route itself was reachable directly by
+// URL for any free user. Gate the component itself, not just its entry point.
 export default function TemplateEditor() {
+    return (
+        <PremiumGate fallbackMode="lock_overlay" customMessage="Unlock custom journal templates.">
+            <TemplateEditorContent />
+        </PremiumGate>
+    );
+}
+
+function TemplateEditorContent() {
     const { user } = useAuth();
     const navigate = useNavigate();
 

@@ -10,8 +10,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TemplateEditor from '../TemplateEditor';
 
+const mockUseAuth = vi.fn(() => ({ user: { uid: 'test-user-123' }, userTier: 'premium' }));
 vi.mock('../../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { uid: 'test-user-123' } }),
+  useAuth: () => mockUseAuth(),
 }));
 
 const mockGetUserTemplates = vi.fn();
@@ -43,7 +44,29 @@ function renderTemplateEditor() {
 describe('TemplateEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { uid: 'test-user-123' }, userTier: 'premium' });
     window.confirm = vi.fn(() => true);
+  });
+
+  // PROJ-108: /templates is reachable directly by URL, so the component
+  // itself — not just JournalEditor's entry-point button — must tier-gate.
+  it('shows the premium lock overlay instead of the editor for a free-tier user', async () => {
+    mockUseAuth.mockReturnValue({ user: { uid: 'test-user-123' }, userTier: 'free' });
+    mockGetUserTemplates.mockResolvedValue([]);
+
+    renderTemplateEditor();
+
+    expect(await screen.findByText('Premium Access Required')).toBeInTheDocument();
+    expect(screen.queryByText('Create New')).not.toBeInTheDocument();
+  });
+
+  it('renders the real editor for a premium-tier user', async () => {
+    mockGetUserTemplates.mockResolvedValue([]);
+
+    renderTemplateEditor();
+
+    expect(await screen.findByText('Create New')).toBeInTheDocument();
+    expect(screen.queryByText('Premium Access Required')).not.toBeInTheDocument();
   });
 
   it('lists templates fetched via getUserTemplates', async () => {
