@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { CheckCircleIcon, ArrowPathIcon, SparklesIcon, WifiIcon, ArrowUturnLeftIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { THEME } from '../../lib/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useGuidedDraft } from '../../hooks/useGuidedDraft';
@@ -250,9 +251,9 @@ export function GuidedWorkflowEngine<T>({
                 title={toolLabel}
                 subtitle={`Step ${currentStep + 1} of ${steps.length} — ${step.label}`}
                 icon={LightBulbIcon}
-                fromColor="from-blue-600"
-                viaColor="via-indigo-600"
-                toColor="to-violet-600"
+                fromColor={THEME.tools.header.from}
+                viaColor={THEME.tools.header.via}
+                toColor={THEME.tools.header.to}
                 percentage={((currentStep + 1) / steps.length) * 100}
             />
 

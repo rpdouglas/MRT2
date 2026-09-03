@@ -18,6 +18,7 @@ import { StarRating } from '../tools/StarRating';
 import VibrantHeader from '../VibrantHeader';
 import { DRAFT_TAG, type FiveQuestionsPayload } from '../../lib/types/smart';
 import { ChatBubbleLeftRightIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { THEME } from '../../lib/theme';
 
 const EXPLANATION = "The Five Questions are Byron Katie's method of self-enquiry, adapted for recovery. Rather than arguing with a difficult thought, you question it — gently, honestly — and see what's still true once you do.";
 
@@ -136,7 +137,7 @@ function FiveQuestionsToolInner({ data, updateData, save, isSaving, forceFresh }
                     title="Five Questions"
                     subtitle="Let's name the thought first"
                     icon={ChatBubbleLeftRightIcon}
-                    fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                    fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
                 />
                 <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-5">
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-sm p-5 space-y-4">
@@ -197,7 +198,7 @@ function FiveQuestionsToolInner({ data, updateData, save, isSaving, forceFresh }
                 title="Five Questions"
                 subtitle={`Examining: "${data.thought}"`}
                 icon={ChatBubbleLeftRightIcon}
-                fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
             />
             <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-4">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-sm p-5 space-y-2">

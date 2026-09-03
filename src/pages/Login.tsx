@@ -110,7 +110,7 @@ export default function Login() {
         <div className="relative z-10">
             <div className="flex items-center gap-4 mb-12">
                 <div className="bg-white p-2 rounded-2xl shadow-lg">
-                    <img src="/pwa-192x192.png" alt="MRT Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
+                    <img src={ASSETS.pwa_192x192} alt="MRT Logo" className="h-10 w-10 sm:h-12 sm:w-12 object-contain" />
                 </div>
                 <div>
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none sm:whitespace-nowrap">

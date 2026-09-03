@@ -25,6 +25,7 @@ import { HEADLINE_FIELD, getFieldLabel, formatFieldValueText } from '../../lib/t
 import { PayloadSummaryList } from '../tools/PayloadSummaryList';
 import { TOOLS } from '../../lib/toolsRegistry';
 import { DRAFT_TAG } from '../../lib/types/smart';
+import { THEME } from '../../lib/theme';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
@@ -517,7 +518,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         <button
             onClick={handleAnalyzeClick}
             disabled={wizardPending}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
+            className={`fixed bottom-24 right-4 bg-gradient-to-r ${THEME.journal.header.from} ${THEME.journal.header.to} text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group disabled:opacity-70 disabled:hover:scale-100`}
         >
             <SparklesIcon className={`h-6 w-6 ${wizardPending ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
             <span className="hidden group-hover:inline text-sm font-bold pr-1">{wizardPending ? 'Loading…' : 'Analyze'}</span>

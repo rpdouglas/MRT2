@@ -16,6 +16,7 @@ import { CognitiveDistortionPicker } from '../tools/CognitiveDistortionPicker';
 import VibrantHeader from '../VibrantHeader';
 import { DRAFT_TAG, type ThoughtRecordPayload } from '../../lib/types/smart';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
+import { THEME } from '../../lib/theme';
 
 type Phase = 'guided' | 'summary';
 
@@ -129,7 +130,7 @@ function ThoughtRecordToolInner({ data, save, isSaving, forceFresh }: ThoughtRec
                 title="Thought Record"
                 subtitle="Reviewing your reframed thought"
                 icon={ClipboardDocumentListIcon}
-                fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
             />
             <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-6">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-sm p-5 space-y-3">

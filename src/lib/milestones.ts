@@ -2,6 +2,7 @@
  * src/lib/milestones.ts
  * Pure functions for calculating standard recovery milestones.
  */
+import { ASSETS } from '../data/assets';
 
 const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 365];
 
@@ -9,18 +10,18 @@ const STANDARD_MILESTONES = [1, 7, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300
 // ~560KB each). The .png originals stayed in public/Chips/ under the old
 // path here for years; they're deleted now that this is the only consumer.
 const MILESTONE_CHIPS: Record<number, string> = {
-    30: '/Chips/medallion_01.webp',
-    60: '/Chips/medallion_02.webp',
-    90: '/Chips/medallion_03.webp',
-    120: '/Chips/medallion_04.webp',
-    150: '/Chips/medallion_05.webp',
-    180: '/Chips/medallion_06.webp',
-    210: '/Chips/medallion_07.webp',
-    240: '/Chips/medallion_08.webp',
-    270: '/Chips/medallion_09.webp',
-    300: '/Chips/medallion_10.webp',
-    330: '/Chips/medallion_11.webp',
-    365: '/Chips/medallion_12.webp',
+    30: ASSETS.chips.medallion_01,
+    60: ASSETS.chips.medallion_02,
+    90: ASSETS.chips.medallion_03,
+    120: ASSETS.chips.medallion_04,
+    150: ASSETS.chips.medallion_05,
+    180: ASSETS.chips.medallion_06,
+    210: ASSETS.chips.medallion_07,
+    240: ASSETS.chips.medallion_08,
+    270: ASSETS.chips.medallion_09,
+    300: ASSETS.chips.medallion_10,
+    330: ASSETS.chips.medallion_11,
+    365: ASSETS.chips.medallion_12,
 };
 
 /**
