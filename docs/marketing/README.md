@@ -7,11 +7,11 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 | Feature | File | Status |
 |---|---|---|
 | Journal | `journal.md` | ✅ Drafted, reviewed |
-| Dashboard | `dashboard.md` | ✅ Drafted |
+| Dashboard | `dashboard.md` | ✅ Drafted (built on a corrected `docs/screens/dashboard.md`) |
+| Tools (CBT/SMART worksheets) | `tools.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
 | Tasks | — | Pending |
 | Vitality | — | Pending |
 | Workbooks | — | Pending |
-| CBT/DBT Tools | — | Pending |
 | Recovery Games | — | Pending |
 | Insights / Recovery Capital | — | Pending |
 
