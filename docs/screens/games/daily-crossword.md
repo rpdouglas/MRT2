@@ -40,7 +40,6 @@ None client-side — free tier, `VaultGate`-protected (per `docs/projects/79_DAI
 ## Known gaps / debt
 
 - No puzzle-archive/backlog UI — only "today" is accessible; a missed day's puzzle isn't retrievable (deferred, per the source spec's open questions, not a rejected idea).
-- Not yet covered by the automated Subway Test or a "Lost PIN" test run, per `docs/projects/79_DAILY_CROSSWORD.md` §5 — flagged there as an outstanding gap, not a launch blocker.
 - 320px-viewport (iPhone SE) rendering not manually verified, per the same spec's §4 Phase 3.
 
 ## Related docs
