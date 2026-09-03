@@ -1,6 +1,6 @@
 # 📁 Project 109: CI/CD Branch Strategy & Environment Promotion
 
-**Status:** ⚪ Planned
+**Status:** 🟢 Done (2026-09-03) — Strategy B implemented, merged (#179), and fully verified live end-to-end.
 **Primary Persona:** Dev / AI Partner (CI/CD workflow and deploy-safety concern; see `docs/governance/INTERNAL_PERSONAS.md`) — no direct end-user-facing impact, but everything that reaches users passes through this pipeline.
 **Objective:** Close the gap where `claude/*` session branches (the actual branch pattern nearly all work happens on) never trigger the DEV deploy pipeline, so work instead lands directly on `main` — deployed to production before CI has gated it. Make `main` PR-only with required CI, keep UAT (`release/*`) wired but documented as dormant-by-default, and formalize (not just leave to memory) that user-facing merges to `main` update the changelog and get checked against the user guide.
 
@@ -54,15 +54,21 @@ No Firestore schema changes. No `src/lib/db.ts` changes.
 * Delete already-merged stale `claude/*` branches (verify each is actually merged into `main` before deleting — never force-delete unmerged work).
 
 ### Phase 6: Edge Cases
-* [ ] What happens if a `claude/*` branch push races another `claude/*` branch's DEV deploy? Document the known last-write-wins limitation in `docs/DEPLOYMENT.md` rather than solving it (per-branch preview channels are a real but heavier fix, out of scope here).
-* [ ] Does the new required PR check block *this session's own* future merges if the check name doesn't match exactly what the ruleset expects? Verify the exact job name GitHub reports before setting it as required — a mismatched required-check name locks out all merges.
-* [ ] Confirm `release/*` (UAT) trigger logic is untouched by this change — dormant by disuse, not by removal.
+* [x] What happens if a `claude/*` branch push races another `claude/*` branch's DEV deploy? Documented as a known last-write-wins limitation in `docs/DEPLOYMENT.md` §2 rather than solved (per-branch preview channels are a real but heavier fix, out of scope here).
+* [x] Does the new required PR check block *this session's own* future merges if the check name doesn't match exactly what the ruleset expects? Verified live: the `pull_request`-triggered run on PR #179 reported the job as `verify`, confirmed via `gh pr checks 179` before the ruleset was created with `required_status_checks: [{"context":"verify"}]` — no mismatch.
+* [x] Confirm `release/*` (UAT) trigger logic is untouched by this change — dormant by disuse, not by removal. Confirmed via diff review: `release/*` push trigger and its `Set Env (UAT)` condition in `deploy.yml` are unchanged.
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Dry run:** push a throwaway `claude/*` test branch, confirm `verify` + DEV `deploy` both fire and succeed against `mrt2-app-dev`.
-* [ ] **PR gate test:** open a PR from that branch to `main`, confirm the `verify` job appears as a required check and the merge button is blocked until it passes.
-* [ ] **Direct-push block:** confirm `git push origin main` is now rejected (this is the exact gap this session hit — must be verified fixed, not assumed).
-* [ ] **UAT untouched:** confirm the `release/*` trigger condition in `deploy.yml` is unchanged (no live UAT push needed to verify this — code review of the diff is sufficient).
-* [ ] **PR template renders:** open a real PR and confirm the checklist appears and is legible.
+All items below were run against the real repo (not simulated) during implementation on 2026-09-03.
+
+* [x] **Dry run:** pushed `claude/proj-109-cicd-branch-strategy` (commit `ab52f8c`) — `gh run watch 33709303704` confirmed both `verify` (16 steps, all passed) and `deploy` fired, correctly selected `Set Env (DEV)`, and deployed hosting + Firestore rules/indexes/functions to `mrt2-app-dev` successfully.
+* [x] **PR gate test:** opened PR #179 to `main` — confirmed via `gh pr checks 179` that opening the PR triggered a second, distinct `verify` run (job ID `100670896473`, run `33762164248`) via the new `pull_request` trigger, which passed; the paired `deploy` job correctly reported `skipping` (push-only guard working as designed).
+* [x] **Direct-push block:** after creating the GitHub ruleset (`Require PR + CI on main`, id `22197833`) requiring PR + the `verify` check, attempted a real direct push of a harmless empty commit straight to `main` (`git push origin HEAD:main` from a detached throwaway commit, not through a PR). Rejected by the server: `GH013: Repository rule violations found for refs/heads/main` — `Changes must be made through a pull request` / `Required status check "verify" is expected`. Nothing landed on `main`; the exact gap this ticket exists to close is now confirmed fixed, not assumed.
+* [x] **UAT untouched:** confirmed via code review of the `deploy.yml` diff — the `release/*` trigger and `Set Env (UAT)` condition are byte-for-byte unchanged.
+* [x] **PR template renders:** PR #179 rendered the full template (Summary/Spec, AI Involvement, Evidence, Scope check, ZK boundary, Public Changelog Classification, the new User Guide Review section, Persona Check) legibly — see the PR body on GitHub.
+* [x] **Merge → PROD deploy:** squash-merged PR #179 (merge commit `0b8a5f0`, `gh pr merge 179 --squash --delete-branch`). `gh run watch 33763229861` confirmed the resulting push-triggered run on `main` passed `verify` and `deploy` correctly selected `Set Env (PROD)` (DEV/UAT steps skipped) and deployed hosting + Firestore rules/indexes/functions to `mrt2-app-prod`.
+* [x] **Branch hygiene:** enabled `delete_branch_on_merge` on the repo (`gh api repos/rpdouglas/MRT2 -X PATCH -f delete_branch_on_merge=true`); swept 28 already-merged stale branches after confirming each with `git branch -r --merged origin/main` before deleting (`git push origin --delete <branch>` per branch — no unmerged work at risk).
+
+**Known follow-up, not a blocker:** creating the GitHub ruleset (and the `delete_branch_on_merge` repo-settings change) required a personal access token with repo `Administration` scope — the Codespaces-injected `GITHUB_TOKEN` used for all other `gh` operations in this session returned `403 Resource not accessible by integration` for both, the same class of gap noted for the legacy branch-protection API. This is a one-time setup action, not a recurring workflow dependency, so no process change is proposed — flagged here only so a future admin-level repo-settings change isn't surprised by the same 403.
