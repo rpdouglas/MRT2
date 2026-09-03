@@ -34,7 +34,7 @@ The Journal is where all of that actually happens. Voice-to-text and mood tracki
 - **Guided templates** — built-in or custom (see below) for someone who doesn't know where to start.
 - **Voice-to-Vault** — speak it instead of typing it. The app transcribes it, scores the mood, and tags it automatically. This exists specifically for the moment when someone is too overwhelmed, too tired, or too shaky to type — the barrier to "get it out of your head" drops to almost nothing.
 
-Every entry also carries a 1–10 mood slider and free-form tags, so emotional data accumulates automatically, without extra effort, just by journaling normally.
+Every entry also carries a 1–10 mood slider and free-form tags, so emotional data accumulates automatically, without extra effort, just by journaling normally. Two small touches that add up: the mood slider starts pre-set to the average of someone's last 7 entries, rather than a neutral default — it feels like the app already knows them a little. And local weather is captured automatically with each entry, which is what lets the Insights mood chart later show mood alongside weather, without anyone having to log it by hand.
 
 ### Guided templates — start from a prompt, or build your own program
 Not everyone opens a blank page well, especially early on. Templates turn "write about how you feel" into a specific set of questions someone can just answer.
@@ -82,7 +82,7 @@ Launched from the History tab (the whole point is that it's reading someone's *a
 
 Three depths, matched to how far back the user wants to look: a **Weekly Check-in** (this week vs. last), a **Monthly Review** (this month vs. last), or a **90-Day Deep Dive** for the kind of long-arc pattern that's invisible week to week but obvious across three months. Free-tier users get a limited number of these per period (a cost-shield, not a punishment — plenty for someone journaling regularly); Premium removes the limit entirely, which is a natural, honest upgrade hook: *"see the pattern the moment you're ready to, not on a schedule."*
 
-Because it's reading the same encrypted entries the person already trusted the app with, this feature only works *because* the zero-knowledge privacy promise is real — it's the payoff of the trust, not a separate feature competing with it.
+Because it's reading the same encrypted entries the person already trusted the app with, this feature only works *because* the zero-knowledge privacy promise is real — it's the payoff of the trust, not a separate feature competing with it. Two details worth stating explicitly in copy, both real and verifiable: analysis only ever runs when the user taps the button — nothing automatic, nothing running in the background — and the API calls are stateless, meaning entries are never stored by the AI provider and never used to train any public AI model.
 
 ### The privacy promise (this is the headline differentiator)
 Every journal entry is encrypted on the person's own device before it ever reaches a server, using a key **derived from their own PIN — nobody else has it, including MRT.** Even in the worst-case scenario of a server breach, journal content is unreadable. This isn't a privacy *policy* — it's math. The plain-language version for copy: **"Not even we can read what you write."**
