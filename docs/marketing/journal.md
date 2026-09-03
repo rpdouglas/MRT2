@@ -46,8 +46,18 @@ Not everyone opens a blank page well, especially early on. Templates turn "write
 
 **Persona fit:** Walt is the clearest case — decades into recovery, he already has his own inventory format; a custom template is how MRT gets out of his way and just holds it. Maya is a close second — she wants her journal structured exactly like the CBT framework she's using elsewhere, not a generic prompt set. Don't stretch this to every persona; David and Ned in particular aren't template-builders — David needs voice-to-text at 2 AM, and Ned's tasks/streaks flow doesn't run through custom templates at all.
 
-### History — the whole story, searchable
-Every past entry, organized by year and month, instantly searchable. Not a scattered pile of notes app entries — a continuous, private record of the recovery journey, from day one forward.
+### History — the whole story, tagged and searchable
+Not a scattered pile of notes-app entries — a continuous, private record of the recovery journey, from day one forward, organized so it stays usable after years of daily writing.
+
+**Tags build themselves.** As someone writes, MRT suggests tags they've already used before — type a couple letters and their own past tags show up as options, so a personal vocabulary of recurring topics (a trigger, a person, a feeling, a meeting) builds itself over time instead of being invented from scratch on entry #200. Voice notes tag themselves automatically ("Voice Note"); a guided template can carry its own default tags. The result, months in: a private index that reflects a person's *own* recurring themes, in their own words — not a fixed list of categories the app decided for them.
+
+**Search is real search — and it's private by construction.** Type a word, and every past entry containing it appears instantly. What makes this worth saying out loud in copy: because every entry is encrypted, there is no server-side index of anyone's journal content to search in the first place — the server never has the plaintext to index. Search happens entirely on the user's own device, over their own already-decrypted entries. No query, and no record that a search even happened, ever leaves the phone.
+
+**Organized to actually stay navigable.** Entries are grouped by year and month, most recent first, with the current period open and everything older tucked away collapsed — so the app is just as fast to browse on day 1,000 as it was on day 10. From here, any past entry can be reopened to edit, deleted, or shared out.
+
+**Marketing angle:** "search your own recovery history without anyone else ever being able to." This is a rare case where a genuine technical constraint (the server literally can't index encrypted content) becomes a real product benefit worth stating plainly, not just a privacy disclaimer.
+
+**Persona fit:** this is the tab that makes Walt's "35 years of data, and it's all still mine" story concrete — a decade-spanning, instantly searchable personal record, not something he has to trust exists. Maya benefits the same way from a different angle: tags become her own lightweight trigger/theme taxonomy, built from actual entries rather than a category list she has to maintain by hand.
 
 ### Insights — patterns you can't see day to day
 Three visualizations, built entirely from someone's own entries, with **no AI involved** — this tab is pure reflection, not analysis. That distinction matters for copy: Insights shows the raw picture; the separate AI Pattern Analysis (below) is what interprets it.
