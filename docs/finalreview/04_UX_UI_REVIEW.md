@@ -6,9 +6,15 @@
 
 ## 1. Design System
 
-The app has a named design system, **"Vibrant Momentum"** (per `README.md` and `docs/design/mrt_design_system.md`), with a single documented primary brand color scale (`blue`, `700: #1d4ed8`) extended in `tailwind.config.js`. Design reference files exist as `.jsx` samples in `docs/design/` and `docs/reports/`, suggesting a deliberate visual-language documentation practice rather than ad hoc styling.
+**Correction (2026-09 design-system audit):** this section originally conflated two separate, unreconciled documents as if they were one. They are not:
+- **"Vibrant Momentum"** (`.claude/skills/design/SKILL.md`, also named in `README.md`) is the actual, currently-enforced system — a per-module Tailwind gradient scheme backed by real source-of-truth files (`src/lib/theme.ts`, `src/lib/heroColors.ts`).
+- **"Momentum Kinetic v3.0"** (`docs/design/mrt_design_system.md`) is a *different*, unimplemented document — semantic CSS tokens, custom fonts, and an adaptive rendering engine (PROJ-45, PARKED) that don't exist in code. It's now banner-flagged in place as a future-vision artifact, not a current reference.
 
-**Rating: 7/10.** A named, documented system with a real reference implementation is above-average for a project this size. Docked because the full palette/typography/spacing scale was not independently re-verified in this pass beyond what the codebase-assessment agents sampled (Tailwind config extension is minimal — one color scale — so most visual decisions live in component-level utility classes rather than a centralized token system, which caps consistency at scale).
+Both, independently, were missing personas as of that audit: Momentum Kinetic covered only David/Ned/Walt/Maya (no Lisa, no Jordan); Vibrant Momentum covered only David/Ned/Lisa/Walt (no Maya, no Jordan). Vibrant Momentum has since been updated to cover all 6.
+
+The single documented primary brand color scale (`blue`, `700: #1d4ed8`) extended in `tailwind.config.js` is itself a third, orphaned artifact — its own comment cites a "Master Tech Doc" that doesn't exist in the repo, and it isn't used by either design doc's color system. Design reference `.jsx` files in `docs/design/` and `docs/reports/` are one-off concept sketches (their signature components, e.g. `mrt_design_samples.jsx`'s "PillBar," have zero matches in real `src/` code) — evidence of visual exploration, not a built component library.
+
+**Rating: 5/10**, down from the original 7/10 now that the two-conflicting-documents problem and the unbuilt token/font/ARRE claims are known. What *is* real and consistently applied — the per-module Tailwind gradient scheme in `theme.ts`/`heroColors.ts`, enforced via the `design` skill's checklist — is solid for a project this size; the rating is capped by how much of what was being credited here turned out not to exist in code.
 
 ## 2. Navigation & Information Architecture
 
