@@ -18,6 +18,26 @@ import { isAndroidTWA } from './platform';
 
 const PLAY_BILLING_PAYMENT_METHOD = 'https://play.google.com/billing';
 
+/**
+ * Dev-only escape hatch so the full purchase flow (this module ->
+ * verifyPlayPurchase -> Firestore tier write) can be exercised against the
+ * Firebase emulator (see verifyPlaySubscriptionToken's FUNCTIONS_EMULATOR
+ * branch in functions/src/index.ts) without a real TWA, real Digital Goods
+ * API, or a Play Console subscription product to exist yet — PROJ-105 was
+ * blocked on Play Console payment-method verification when this was added.
+ * `import.meta.env.DEV` compiles to a literal `false` in production builds
+ * (same dead-code-elimination guarantee PROJ-89/SEC-01 relies on for the
+ * mockUser bypass), so this can never activate outside `npm run dev`, and
+ * even there it requires the explicit `?mockPlayBilling=1` query param.
+ */
+function isDevMockEnabled(): boolean {
+  return (
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('mockPlayBilling') === '1'
+  );
+}
+
 interface DigitalGoodsPurchaseDetails {
   itemId: string;
   purchaseToken: string;
@@ -50,6 +70,7 @@ declare global {
  * desktop Chrome exposes PaymentRequest but not a working Play connection).
  */
 export function isPlayBillingSupported(): boolean {
+  if (isDevMockEnabled()) return true;
   return (
     isAndroidTWA() &&
     typeof window !== 'undefined' &&
@@ -82,6 +103,7 @@ export interface PlayProductPrice {
 
 /** Returns the live Play Console price for productId, or null if unavailable. */
 export async function getPlayProductPrice(productId: string): Promise<PlayProductPrice | null> {
+  if (isDevMockEnabled()) return { currency: 'USD', value: '3.99' };
   const service = await getService();
   if (!service) return null;
   try {
@@ -106,6 +128,9 @@ export interface PlayPurchaseResult {
  * (set server-side in the Play Console, not here).
  */
 export async function purchasePlaySubscription(productId: string): Promise<PlayPurchaseResult> {
+  if (isDevMockEnabled()) {
+    return { purchaseToken: `MOCK-${crypto.randomUUID()}` };
+  }
   if (!isPlayBillingSupported()) {
     throw new Error('Play Billing is not available in this context.');
   }

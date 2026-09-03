@@ -143,7 +143,20 @@ Still to do directly in Play Console:
 
 ## Phase 9 — Promote to production
 
-Internal testing → (optional) Closed/Open testing → **Production**. Each promotion is a manual review gate in Play Console; production submission triggers Google's policy review (can take several days).
+**2026 policy deep-dive (researched 2026-09-03) — read before promoting:**
+
+Google requires a **closed test with ≥12 testers opted in continuously for 14 days** before granting production access — but **only for personal developer accounts created after 2023-11-13.** Organization accounts are exempt from this gate entirely and can go straight from Internal Testing to Production. MRT's Play Console account is an **Organization account** (confirmed live in-console, "Organization account · Account ID: 9145955240165965525," matching the DUNS/business verification this project already completed) — so **this project should be exempt** and does not need to run a mandatory closed test. This is corroborated by several independent secondary sources (not confirmed word-for-word against Google's own help page, which wouldn't render for automated fetch) — worth a sanity check against whatever Play Console's own dashboard says once you're actually on the "Publish to production" screen, but don't go build a 12-tester closed test unless the Console itself demands one.
+
+**Actual promotion path:** Internal testing → **Production** directly (Closed/Open testing remain available as optional beta stages, not mandatory ones, for this account type).
+
+**Review timing:** first-ever production submissions typically take 7-14 days; apps in "regulated" categories (health, finance, kids, government) can take longer due to extra declaration review — MRT's Health info declaration puts it in that slower lane, so budget for the higher end.
+
+**Gates that must be complete before submitting for production review (separate from the testing-track question above):**
+- ✅ Health apps declaration form — this is the exact "Health features in your app" checklist item completed 2026-09-03 (Stress management/relaxation + Mental and behavioral health) — Google requires *every* published app to complete this, even ones declaring no health features.
+- ⬜ Content rating questionnaire (IARC) — not yet started as of 2026-09-03.
+- ⬜ Data safety questionnaire — top-level questions and Health/App-activity categories entered live 2026-09-03 per `docs/legal/PLAY_STORE_DATA_SAFETY_DRAFT.md`; confirm every remaining category (Personal info, Financial info, Device/other IDs, Location) is actually saved in the live form before submitting, not just drafted.
+- ⬜ Full Store Listing (description, icon, feature graphic, screenshots, category, contact details) — content drafted/selected 2026-09-03, confirm saved in Play Console.
+- ⬜ The Subway Test (offline/airplane-mode check) and full TWA device verification — not yet performed on the record, though device testing this session confirmed the icon/no-URL-bar fix works.
 
 ---
 

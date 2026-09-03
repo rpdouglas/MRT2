@@ -3,14 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import posthog from 'posthog-js';
 import VibrantHeader from '../components/VibrantHeader';
-import { db } from '../lib/firebase';
+import { db, default as app } from '../lib/firebase';
 import { collection, addDoc, doc, setDoc, onSnapshot, Timestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { isAndroidTWA } from '../lib/platform';
 import { isPlayBillingSupported, purchasePlaySubscription } from '../lib/playBilling';
 import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 const PLAY_PACKAGE_NAME = 'ca.myrecoverytoolkit.app';
+
+// Same emulator-connection idiom as src/lib/gemini.ts / src/lib/vaultAuth.ts —
+// this file previously called getFunctions() directly with no emulator
+// wiring at all, so both callable functions below always hit real prod
+// regardless of VITE_USE_EMULATORS. Needed for the PROJ-105 dev/emulator
+// mock-purchase path (see src/lib/playBilling.ts's isDevMockEnabled) to
+// actually reach a local verifyPlayPurchase instead of the deployed one.
+const USE_EMULATORS = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true';
+let functionsInstance: ReturnType<typeof getFunctions> | null = null;
+function getFunctionsInstance() {
+    if (!functionsInstance) {
+        if (!app) throw new Error('Firebase app is not initialized');
+        functionsInstance = getFunctions(app, 'northamerica-northeast1');
+        if (USE_EMULATORS) {
+            connectFunctionsEmulator(functionsInstance, '127.0.0.1', 5001);
+        }
+    }
+    return functionsInstance;
+}
 
 export default function PremiumUpgrade() {
     const { user, userTier, userTierSource } = useAuth();
@@ -21,7 +40,12 @@ export default function PremiumUpgrade() {
     const [isPlayPurchasing, setIsPlayPurchasing] = useState(false);
     const [playError, setPlayError] = useState<string | null>(null);
     const isTWA = isAndroidTWA();
-    const canUsePlayBilling = isTWA && isPlayBillingSupported();
+    // isPlayBillingSupported() folds in isAndroidTWA() itself for the real
+    // path — the PROJ-105 dev-mock path (?mockPlayBilling=1) short-circuits
+    // it to true without a real TWA, so isTWA is deliberately not ANDed in
+    // here (it's still used unmodified below for the TWA-only "Upgrade on
+    // the Web" fallback branch, which the mock should not affect).
+    const canUsePlayBilling = isPlayBillingSupported();
 
     const handleSubscribe = async () => {
         if (!user || !db) return;
@@ -84,8 +108,7 @@ export default function PremiumUpgrade() {
 
         setIsManaging(true);
         try {
-            const functions = getFunctions(undefined, 'northamerica-northeast1');
-            const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+            const createPortalLink = httpsCallable(getFunctionsInstance(), 'ext-firestore-stripe-payments-createPortalLink');
 
             const { data } = await createPortalLink({
                 returnUrl: window.location.origin + '/profile'
@@ -131,8 +154,7 @@ export default function PremiumUpgrade() {
             });
             await setDoc(doc(db, 'playPurchaseIndex', purchaseToken), { uid: user.uid });
 
-            const functions = getFunctions(undefined, 'northamerica-northeast1');
-            const verifyPlayPurchase = httpsCallable(functions, 'verifyPlayPurchase');
+            const verifyPlayPurchase = httpsCallable(getFunctionsInstance(), 'verifyPlayPurchase');
             await verifyPlayPurchase({ productId, purchaseToken });
 
             // Full navigation, not an SPA route change — AuthContext only

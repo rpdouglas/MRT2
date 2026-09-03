@@ -33,11 +33,12 @@ vi.mock('firebase/firestore', () => ({
 
 const mockHttpsCallable = vi.fn();
 vi.mock('firebase/functions', () => ({
-  getFunctions: vi.fn(),
+  getFunctions: vi.fn().mockReturnValue({}),
   httpsCallable: (...args: unknown[]) => mockHttpsCallable(...args),
+  connectFunctionsEmulator: vi.fn(),
 }));
 
-vi.mock('../../lib/firebase', () => ({ db: {} }));
+vi.mock('../../lib/firebase', () => ({ default: { name: 'test-app' }, db: {} }));
 
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }));
 

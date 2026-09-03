@@ -943,7 +943,32 @@ export async function fetchPlaySubscriptionStatus(
     };
 }
 
+// PROJ-105 dev-testing path: lets the full purchase flow (client mock in
+// src/lib/playBilling.ts's isDevMockEnabled -> this function -> Firestore
+// tier write) be exercised against `firebase emulators:start` without a
+// real Play Console subscription product or device — added while product
+// creation was blocked on Play Console payment-method verification.
+// FUNCTIONS_EMULATOR is set by the Firebase Functions emulator runtime
+// itself, never by a client request or the deployed Cloud Run environment,
+// so this can't be triggered against real prod by any external input.
+function createMockPlayHttpClient(): PlayHttpClient {
+    return {
+        async request() {
+            return {
+                data: {
+                    expiryTimeMillis: String(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    orderId: "MOCK-ORDER-EMULATOR",
+                },
+            };
+        },
+    };
+}
+
 async function verifyPlaySubscriptionToken(productId: string, purchaseToken: string): Promise<PlaySubscriptionStatus> {
+    if (process.env.FUNCTIONS_EMULATOR === "true") {
+        logger.info("verifyPlaySubscriptionToken: FUNCTIONS_EMULATOR active, returning mock active subscription (PROJ-105 dev-testing path).");
+        return fetchPlaySubscriptionStatus(createMockPlayHttpClient(), productId, purchaseToken);
+    }
     const auth = getPlayAuth();
     const client = (await auth.getClient()) as unknown as PlayHttpClient;
     return fetchPlaySubscriptionStatus(client, productId, purchaseToken);
