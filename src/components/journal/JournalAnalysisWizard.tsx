@@ -314,6 +314,7 @@ isOpen, onClose, entries }: WizardProps) {
 
                             {step === 'results' && !deepError && (
                                 <div className="space-y-6 animate-fadeIn">
+                                    <p className="text-xs text-gray-400 italic -mb-2">✦ AI-generated from your journal entries — patterns worth considering, not conclusions.</p>
                                     {scope === 'all-time' && deepResult ? (
                                         <>
                                             <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200">

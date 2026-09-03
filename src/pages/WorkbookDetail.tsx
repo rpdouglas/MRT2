@@ -303,6 +303,7 @@ export default function WorkbookDetail() {
                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                               <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Summary</h5>
                               <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
+                              <p className="text-[11px] text-gray-400 mt-2 italic">An AI-generated read on what you wrote — worth a second look, not the final word.</p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
