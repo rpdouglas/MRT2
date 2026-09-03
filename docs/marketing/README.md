@@ -6,7 +6,8 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 
 | Feature | File | Status |
 |---|---|---|
-| Journal | `journal.md` | ✅ Drafted |
+| Journal | `journal.md` | ✅ Drafted, reviewed |
+| Dashboard | `dashboard.md` | ✅ Drafted |
 | Tasks | — | Pending |
 | Vitality | — | Pending |
 | Workbooks | — | Pending |
@@ -14,4 +15,4 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 | Recovery Games | — | Pending |
 | Insights / Recovery Capital | — | Pending |
 
-Ask for the next one when you're ready to review Journal — each brief draws on the corresponding `docs/screens/` files for accuracy plus `docs/PERSONAS.md` for persona detail, so they stay grounded in the real product.
+Each brief draws on the corresponding `docs/screens/` files for accuracy plus `docs/PERSONAS.md` for persona detail, so they stay grounded in the real product. Before drafting a new one, it's worth re-verifying the underlying `docs/screens/` file(s) against live source first — the Dashboard brief above only came out accurate after that pass caught a factual error and two under-documented components in the technical doc it was built from.
