@@ -45,9 +45,9 @@ Each doc is verified against the current source, not just transcribed from the e
 | 2 | Journal | `journal.md` | `/journal` | ✅ Drafted |
 | 3 | Tasks | `tasks.md` | `/tasks` | ✅ Drafted |
 | 4 | Vitality | `vitality.md` | `/vitality` | ⬜ Pending |
-| 5 | Workbooks (list) | `workbooks.md` | `/workbooks` | ⬜ Pending |
-| 6 | Workbook Detail | `workbook-detail.md` | `/workbooks/:id` | ⬜ Pending |
-| 7 | Workbook Session | `workbook-session.md` | `/workbooks/:id/session/:sectionId` | ⬜ Pending |
+| 5 | Workbooks (list) | `workbooks/list.md` | `/workbooks` | ✅ Drafted |
+| 6 | Workbook Detail | `workbooks/detail.md` | `/workbooks/:id` | ✅ Drafted |
+| 7 | Workbook Session | `workbooks/session.md` | `/workbooks/:id/session/:sectionId` | ✅ Drafted |
 | 8 | Tools Hub | `tools-hub.md` | `/tools` + 9 tool routes | ⬜ Pending |
 | 9 | Urge Surfer | `urge-surfer.md` | `/tools/urge-surfer` | ⬜ Pending |
 | 10 | Tool History | `tool-history.md` | `/tools/:toolType/history` | ⬜ Pending |
