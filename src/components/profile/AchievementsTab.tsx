@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, query, where, orderBy, getDocs, type Firestore } from 'firebase/firestore';
 import { TrophyIcon, FireIcon, ChartBarIcon, HeartIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEncryption } from '../../contexts/EncryptionContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useGameProgress } from '../../hooks/useGameProgress';
 import { db } from '../../lib/firebase';
@@ -25,6 +26,7 @@ import {
 
 export default function AchievementsTab() {
     const { user } = useAuth();
+    const { decrypt } = useEncryption();
     const { profile: userProfile, isLoading: profileLoading } = useUserProfile();
     const { history: gameHistory, isLoading: gameLoading } = useGameProgress();
 
@@ -46,9 +48,25 @@ export default function AchievementsTab() {
                 orderBy('createdAt', 'desc')
             );
             const snap = await getDocs(q);
-            return snap.docs.map(d => ({
-                ...d.data(),
-                createdAt: d.data().createdAt
+            // TD-21: this content feeds calculateUserLevel's word-count "depth
+            // bonus" and calculateJournalStats' totalWords — both need real
+            // plaintext to count words correctly, not ciphertext (which always
+            // splits to length 1, so the bonus silently never fired outside
+            // .mock demo accounts). Decrypt failure falls back to an empty
+            // string rather than surfacing '[Error Decrypting]' as scoreable
+            // "content" — under-counting a bonus is harmless; the reverse
+            // (an undecryptable blob accidentally scoring as a long entry)
+            // isn't a risk either way, but staying empty is the safer default.
+            return Promise.all(snap.docs.map(async (d): Promise<ScorableJournal> => {
+                const raw = d.data();
+                if (raw.isEncrypted && typeof raw.content === 'string') {
+                    try {
+                        return { ...raw, content: await decrypt(raw.content), createdAt: raw.createdAt };
+                    } catch {
+                        return { ...raw, content: '', createdAt: raw.createdAt };
+                    }
+                }
+                return { ...raw, createdAt: raw.createdAt };
             }));
         },
         enabled: !!user,
