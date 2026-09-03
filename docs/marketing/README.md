@@ -9,7 +9,7 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 | Journal | `journal.md` | ✅ Drafted, reviewed |
 | Dashboard | `dashboard.md` | ✅ Drafted (built on a corrected `docs/screens/dashboard.md`) |
 | Tools (CBT/SMART worksheets) | `tools.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
-| Tasks | — | Pending |
+| Tasks | `tasks.md` | ✅ Drafted (technical docs corrected — found a real live bug, see below) |
 | Vitality | — | Pending |
 | Workbooks | — | Pending |
 | Recovery Games | — | Pending |
