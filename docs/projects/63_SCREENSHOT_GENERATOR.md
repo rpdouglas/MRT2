@@ -1,6 +1,6 @@
 # 📁 Project 63: Mobile Screenshot Generator
 
-**Status:** ✅ Shipped
+**Status:** ✅ Shipped — coverage completion (§6) done 2026-09-04
 **Primary Persona:** All (internal/developer experience)
 **Objective:** Provide an automated, single-command pipeline to run the Vite dev server, render the app using persona-driven mock states in a simulated mobile device viewport, capture screenshots via Playwright, and optimize the output images to WebP format for docs and app store usage.
 
@@ -82,3 +82,42 @@ We will introduce a **Mock Mode** toggled by a URL query parameter `?mockUser=[p
 * [ ] **Unit Tests**: Add unit tests in `src/__tests__/mockMode.test.ts` to ensure query param logging bypasses production Firestore and encryption.
 * [ ] **Lint & Build**: Run `npm run check` to ensure zero linter errors or warnings.
 * [ ] **Screenshot Execution**: Execute `npm run screenshots:generate`. Verify that the `.webp` files appear correctly in `docs-site/public/screenshots/generated/` and that the visual quality and layouts are correct.
+
+---
+
+## 6. Coverage Completion (2026-09-04 audit)
+
+**Trigger:** the user asked to cross-check every screenshot against the full `docs/screens/` reference set (built in a prior session, 55 files) — one screenshot per documented screen, refreshed for screens that have since changed, with realistic (not empty) data everywhere.
+
+### 6.1 Audit findings
+
+- **Coverage gap:** `scripts/generate_screenshots.js`'s `targets` array covers **27 of 55** documented screens. No target exists for: 3 of 4 Admin sub-tabs (Analytics, Health, Maintenance — only Users is captured), 8 of 9 individual CBT tool screens (only Thought Record is captured), Tools History, Profile → Achievements, the 3 Recovery Capital/ROSC sub-screens split out of Insights this session, Workbook Detail/Session, Tasks → Later, Welcome/Login/Links, Delete Account, and Debug Tools.
+- **Legacy/current split:** `docs-site/public/screenshots/` holds 45 files across two conventions — 27 in the current `<persona>-<screen>.webp` naming (this pipeline) and **18 orphaned `scn_*.webp` files** predating PROJ-63's mock-data approach. Several of those 18 are the *only* existing coverage for a screen (`scn_workbook_question.webp`, `scn_workbook_section_intro.webp`, `scn_profile_data.webp`, `scn_tasks_log.webp`) and were never ported into the current pipeline or indexed consistently in `docs/SCREENSHOTS_INDEX.md` alongside the newer set.
+- **Root cause of "empty" screenshots, confirmed in code:** `src/lib/mockData.ts`'s `getMockProfile()`/`getMockTasks()`/`getMockJournals()`/etc. only branch on `ned`/`maya`/`david`/`walt` — every other case falls through to `null`/`[]`. `AuthContext.tsx`'s mock-login bypass, by contrast, accepts *any* `?mockUser=<name>` and logs the user in regardless. So **Jordan, Lisa, and Admin can reach any route in mock mode but get no profile/task/journal data** — the 3 existing Jordan/Lisa screenshots happen to be self-contained game screens that don't need that data, which is why the gap hasn't surfaced yet. Any new non-game screenshot for those three personas would render blank without first extending `mockData.ts`.
+
+### 6.2 Approach considered and rejected
+
+Generating screenshot-style images directly with an AI image model was considered and rejected — `CLAUDE.md`'s Asset Protocol section explicitly prohibits this ("Never use it to... fabricate app-screenshot-style UI imagery — Play Store listing screenshots must be real captures"), and it would defeat the purpose: `docs/screens/` is code-verified against live source, and an AI-drawn image stops being accurate the moment a real component changes.
+
+### 6.3 Chosen approach
+
+Extend the existing mock-data + Playwright pipeline (this project) rather than build a new mechanism:
+
+1. Fill the `mockData.ts` gaps — add Jordan/Lisa/Admin profile+task+journal fixtures, plus new fixtures needed for previously-uncovered screens (tool-history entries per CBT tool, ROSC trend/snapshot data, achievements data, admin sub-tab data, workbook detail/session answers). This is where AI-authored *content* (realistic-sounding journal snippets, tool reflections, ROSC narrative text) is the right use of "AI generation" here — populating real data structures the real app renders, not drawing fake pixels.
+2. Add the ~28 missing routes to `generate_screenshots.js`'s `targets` array (including any `action` callbacks needed to reach sub-states, per the existing `david-sos-modal`/`walt-journal-ai-wizard` pattern).
+3. Run the real pipeline (`npm run screenshots:generate`) — genuine Playwright captures of the real running app, zero fabrication.
+4. Retire the 18 orphaned `scn_*.webp` files once their screens are re-captured under the current naming convention; delete rather than leave both sets live.
+5. Update `docs/SCREENSHOTS_INDEX.md` so every `docs/screens/*.md` file maps to exactly one current screenshot, and add a cross-reference from each `docs/screens/*.md` file back to its screenshot (mirroring how `docs/marketing/` briefs already cross-reference `docs/screens/`).
+
+Tracked as `TD-31` in `docs/ACTIVE_CYCLE.md`.
+
+### 6.4 Completion (2026-09-04)
+
+Executed the plan above. Final state: **52 screenshots**, one per documented screen (Admin's 3 remaining sub-tabs excepted per §6.3), all 18 legacy `scn_*.webp` files retired, `docs/SCREENSHOTS_INDEX.md` updated with all 25 new entries plus Jordan/Lisa/Admin added to the persona-context section.
+
+Three real bugs were found and fixed along the way — the point of actually running the pipeline against every screen rather than assuming the plan would just work:
+- `WorkbookAnswer` fixtures in `mockData.ts` used a fictional `workbookId`/`sectionId`/`questionId` (`'guided-cbt'`/`'identifying-triggers'`/etc.) that matched no real workbook in `src/data/workbooks.ts` — `WorkbookDetail` rendered "Workbook not found." the moment a screenshot target actually exercised it. Remapped to the real `general_recovery` workbook's `main` section and its actual `gen_*` question ids.
+- `useToolHistory.ts`'s `enabled` clause required `db` truthy even for `.mock` users — in a dev environment with no Firebase config (`db` is falsy), this silently disabled the query for everyone, mock or not, independent of the mock-branch fix itself. `useSmartToolCompletions.ts` has the identical pattern and the identical latent bug (ToolsHub's per-tool completion-count badges) — not fixed here (it doesn't block any screenshot target from showing real content, `ned-tools.webp`'s main content is the 4 category accordions, not the badges), logged as a new, smaller finding rather than silently left undiscovered.
+- `AuthContext.tsx` persists the mock login to `localStorage` (`mrt_mock_user`), not just the URL's `?mockUser=` param. Since the pipeline reuses one browser context across all 52 captures, a public/logged-out target (Welcome, Login, Links) placed after any persona target inherited that persona's session. Fixed by clearing the key before navigating to those three.
+
+`npm run lint` / `build` / `test:once` (747 tests) / `docs:check-specs` (80 specs) all clean.

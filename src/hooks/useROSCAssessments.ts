@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { createROSCAssessment, getROSCAssessments } from '../lib/rosc';
 import { generateROSCAnalysis } from '../lib/gemini';
+import { getMockROSCAssessments } from '../lib/mockData';
 import { processInChunks } from '../lib/utils';
 import { format, subDays } from 'date-fns';
 import type { ROSCAssessment, ROSCCheckInAnswers, ROSCScore, ROSCTrajectory } from '../lib/types/rosc';
@@ -32,7 +33,10 @@ export function useROSCAssessments() {
 
     const { data: assessments = [], isLoading } = useQuery<ROSCAssessment[]>({
         queryKey: ['rosc_assessments', user?.uid],
-        queryFn: () => getROSCAssessments(user!.uid),
+        // TD-31: mock mode has no Firestore doc at `users/{mock-uid}/rosc_assessments` —
+        // getROSCAssessments would silently return [], so Recovery Capital screens
+        // always rendered empty for screenshots. Branch to fixture data instead.
+        queryFn: () => user!.email?.endsWith('.mock') ? getMockROSCAssessments(user!.email) : getROSCAssessments(user!.uid),
         enabled: !!user,
         staleTime: 24 * 60 * 60 * 1000,
         gcTime: 7 * 24 * 60 * 60 * 1000,
