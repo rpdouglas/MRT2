@@ -37,8 +37,19 @@ jobs:
       # See docs/projects/96_CI_DEPLOY_SAFETY_NET.md for the full reasoning.
       # `npm audit` still prints this (and anything else) to the CI log regardless
       # of --audit-level, so it stays visible — it just won't block the build.
+      #
+      # `npm audit`'s advisories-bulk call to registry.npmjs.org has a track record
+      # of transient 503s that fail this step before any other gate even runs,
+      # independent of the PR's actual diff — retry with backoff rather than let a
+      # registry outage block every PR until someone notices and re-runs manually.
       - name: Dependency Vulnerability Audit (root, production deps)
-        run: npm audit --omit=dev --audit-level=critical
+        run: |
+          for attempt in 1 2 3; do
+            npm audit --omit=dev --audit-level=critical && exit 0
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            echo "npm audit attempt $attempt/3 failed — retrying in $((attempt * 15))s (registry.npmjs.org's advisories endpoint is known to 503 transiently)" >&2
+            sleep $((attempt * 15))
+          done
 
       # GATE 2: Linting (Code Style)
       - name: Lint Check
@@ -63,8 +74,16 @@ jobs:
       # functions/ is the actually-deployed Cloud Functions runtime, audited
       # separately from root because it's a distinct npm workspace with its
       # own lockfile.
+      # Same registry-flake retry as the root audit above — this hits the same
+      # registry.npmjs.org advisories-bulk endpoint from a separate npm workspace.
       - name: Dependency Vulnerability Audit (functions, production deps)
-        run: npm audit --prefix functions --omit=dev --audit-level=high
+        run: |
+          for attempt in 1 2 3; do
+            npm audit --prefix functions --omit=dev --audit-level=high && exit 0
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            echo "npm audit attempt $attempt/3 failed — retrying in $((attempt * 15))s (registry.npmjs.org's advisories endpoint is known to 503 transiently)" >&2
+            sleep $((attempt * 15))
+          done
 
       # GATE 7: E2E Golden Paths (PROJ-23) and Firestore Rules Tests (PROJ-99)
       # both need the Firestore emulator — shared Java setup, run rules tests
