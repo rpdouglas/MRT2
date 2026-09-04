@@ -1,5 +1,15 @@
 import { defineConfig } from 'vitepress'
 
+// PROJ-102 (SEO/AEO) Phase 3: matches the URL scheme scripts/generate-docs-sitemap.mjs
+// already uses (extensionless, index stripped) so canonical/og:url stay
+// consistent with what's actually listed in sitemap.xml.
+const SITE_ORIGIN = 'https://rpdouglas.github.io/MRT2';
+function relativePathToUrl(relativePath: string): string {
+  const withoutExt = relativePath.replace(/\.md$/, '');
+  const clean = withoutExt.replace(/(^|\/)index$/, '$1');
+  return clean === '' ? `${SITE_ORIGIN}/` : `${SITE_ORIGIN}/${clean}`;
+}
+
 export default defineConfig({
   title: "My Recovery Toolkit",
   description: "Privacy-first 12-step recovery toolkit and secure journaling guide.",
@@ -9,6 +19,27 @@ export default defineConfig({
   // wrong origin in production. Discovered during PROJ-102 Phase 1 while
   // validating the new sitemap generator against a real build.
   base: '/MRT2/',
+  // Site-wide defaults; per-page canonical/og:title/og:description/og:url
+  // are added below in transformHead using each page's own resolved title
+  // and frontmatter `description`.
+  head: [
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'My Recovery Toolkit' }],
+    ['meta', { property: 'og:image', content: `${SITE_ORIGIN}/og-image.png` }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:image', content: `${SITE_ORIGIN}/og-image.png` }],
+  ],
+  transformHead: ({ pageData, title, description }) => {
+    const url = relativePathToUrl(pageData.relativePath);
+    return [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: description }],
+    ];
+  },
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },

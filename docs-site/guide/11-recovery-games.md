@@ -1,3 +1,7 @@
+---
+description: A guide to Recovery Games — zero-knowledge, anti-shame mini-games and psychoeducation quizzes.
+---
+
 # 🎮 My Recovery Games
 
 Recovery Games is a set of short, zero-knowledge, anti-shame mini-games and psychoeducation quizzes. Nothing here punishes a missed day or a broken streak — every game is a self-contained session you can pick up any time.

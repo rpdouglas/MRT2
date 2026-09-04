@@ -1,3 +1,7 @@
+---
+description: What's new in My Recovery Toolkit — a plain-language, version-by-version history of every feature and fix.
+---
+
 # 🚀 Changelog
 
 ## [v1.9.11] - 2026-09-04

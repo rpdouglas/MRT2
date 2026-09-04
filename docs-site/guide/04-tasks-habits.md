@@ -1,3 +1,7 @@
+---
+description: How to build recovery routines and track daily habits with My Tasks.
+---
+
 # 📋 My Tasks (Tasks & Habits)
 
 The Tasks module helps you build consistent routines and track actionable recovery steps.

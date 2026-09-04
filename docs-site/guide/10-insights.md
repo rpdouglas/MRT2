@@ -1,3 +1,7 @@
+---
+description: A guide to My Insights and the Recovery Capital Matrix — My Recovery Toolkit's AI-powered pattern analysis.
+---
+
 # 📊 My Insights & Recovery Capital
 
 The **Insights** page (sidebar icon) is your analytical home — it combines the Recovery Capital Matrix (a monthly holistic check-in) with your full AI Insights log (a history of every Compass analysis you've ever generated).

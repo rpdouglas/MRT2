@@ -1,3 +1,7 @@
+---
+description: How to install My Recovery Toolkit as a Progressive Web App on iOS, Android, and desktop.
+---
+
 # 📱 Installing the App
 
 My Recovery Toolkit is a **Progressive Web App (PWA)**. This means it runs securely on your device, works offline, and takes up a fraction of the storage space of a normal app, without needing an App Store.

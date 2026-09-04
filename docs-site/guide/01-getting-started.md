@@ -1,3 +1,7 @@
+---
+description: How to create your My Recovery Toolkit account, set your vault PIN, and complete initial setup.
+---
+
 # 🚀 Getting Started: Account & Vault Setup
 
 Welcome to My Recovery Toolkit (MRT). We believe that the hardest work you do should be done in the safest place possible. 
