@@ -1,3 +1,7 @@
+---
+description: How to write zero-knowledge encrypted journal entries in My Recovery Toolkit and use AI-powered pattern analysis.
+---
+
 # 📖 My Journal (Journal & AI)
 
 The Journal is your secure space to process emotions, log triggers, and track your daily mood. **All entries here are Zero-Knowledge Encrypted.**

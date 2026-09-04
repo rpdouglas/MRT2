@@ -1,3 +1,7 @@
+---
+description: A guide to My Workbooks — structured CBT, 12-Step, and Recovery Dharma curricula inside My Recovery Toolkit.
+---
+
 # 📚 My Workbooks
 
 Workbooks are interactive, structured guides for working through clinical curricula like CBT, 12-Step recovery, and secular/Buddhist Recovery Dharma steps.

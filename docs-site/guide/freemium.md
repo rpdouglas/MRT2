@@ -1,3 +1,7 @@
+---
+description: What's free vs. Premium in My Recovery Toolkit, and why crisis de-escalation tools are always free.
+---
+
 # 💎 Free vs. Premium Tiers
 
 My Recovery Toolkit operates on a "Freemium" model. Our core belief is that tools for acute crisis de-escalation should **always be free**. We only charge for features that cost us money to run (like advanced AI processing) or power-user tools for established sponsors.

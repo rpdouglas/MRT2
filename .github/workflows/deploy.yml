@@ -243,6 +243,14 @@ jobs:
           cat ./service-account.json >> "$GITHUB_OUTPUT"
           echo "$EOF_DELIM" >> "$GITHUB_OUTPUT"
 
+      # PROJ-102: `npm run build` now runs scripts/prerender-public-routes.mjs
+      # as its final step, which launches headless Chromium via Playwright to
+      # snapshot the 4 public routes — unlike the verify job above (which
+      # installs this for E2E Golden Paths), this job never had a reason to
+      # need a browser until the build step itself started depending on one.
+      - name: Install Playwright Chromium (for build-time prerendering)
+        run: npx playwright install --with-deps chromium
+
       - name: Build
         run: npm run build
         env:

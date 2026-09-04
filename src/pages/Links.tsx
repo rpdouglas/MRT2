@@ -2,6 +2,7 @@ import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import { DevicePhoneMobileIcon, BookOpenIcon, PlayCircleIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { ASSETS } from '../data/assets';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 interface LinkItem { id: string; title: string; subtitle?: string; url: string; isExternal: boolean; icon: ElementType; colorClass: string; }
 
@@ -45,6 +46,12 @@ const LINKS: LinkItem[] = [
 ];
 
 export default function Links() {
+  usePageMeta({
+    title: 'Quick Links',
+    description: 'Open the My Recovery Toolkit web app, get the install guide, watch a demo, or contact support.',
+    path: '/links',
+  });
+
   return (
     <div className="min-h-[100dvh] bg-slate-900 flex flex-col items-center py-12 px-4 sm:px-6 relative overflow-x-hidden font-sans">
       

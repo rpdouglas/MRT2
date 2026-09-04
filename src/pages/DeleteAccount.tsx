@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { executeTotalAccountAnnihilation } from '../lib/deletion';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { ExclamationTriangleIcon, TrashIcon, ArrowPathIcon, EnvelopeIcon, LockClosedIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 type Step = 'login' | 'confirm' | 'deleting' | 'done';
@@ -14,6 +15,12 @@ type Step = 'login' | 'confirm' | 'deleting' | 'done';
  * a visitor here may have no session on this browser/device at all.
  */
 export default function DeleteAccount() {
+    usePageMeta({
+        title: 'Delete Your Account',
+        description: 'Permanently delete your My Recovery Toolkit account and all associated encrypted data.',
+        path: '/delete-account',
+    });
+
     const { user, loginWithEmail, loginWithGoogle, deleteAccount } = useAuth();
 
     const [step, setStep] = useState<Step>('login');

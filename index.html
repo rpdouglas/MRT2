@@ -6,6 +6,10 @@
     <title>My Recovery Toolkit</title>
     <meta name="description" content="Your digital companion for recovery.">
     <meta name="theme-color" content="#2A9D8F">
+    <!-- Default posture for the public shell (Welcome/Login/Links/DeleteAccount).
+         PrivateRoute (src/App.tsx) overrides this to "noindex, nofollow" at
+         runtime for every authenticated route — see docs/projects/102_SEO_AEO_OPTIMIZATION.md. -->
+    <meta name="robots" content="index, follow">
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">

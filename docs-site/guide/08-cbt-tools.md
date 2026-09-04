@@ -1,3 +1,7 @@
+---
+description: A guide to the CBT Toolbox — interactive Cognitive Behavioral Therapy exercises based on SMART Recovery and REBT.
+---
+
 # 🧩 The Toolbox (SMART CBT)
 
 Recovery is about interrupting automatic reactions with intentional logic. The **Tools Hub** contains interactive Cognitive Behavioral Therapy (CBT) exercises, adapted from evidence-based models like SMART Recovery and REBT.

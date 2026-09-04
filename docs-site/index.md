@@ -1,5 +1,6 @@
 ---
 layout: home
+description: User guides, FAQ, privacy policy, and terms of service for My Recovery Toolkit — a zero-knowledge encrypted companion for 12-Step and Buddhist-inspired recovery.
 
 hero:
   name: "My Recovery Toolkit"

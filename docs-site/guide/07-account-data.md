@@ -1,3 +1,7 @@
+---
+description: How to export your data, sync to Google Drive, and manage or delete your My Recovery Toolkit account.
+---
+
 # ☁️ Data Export & Cloud Sync
 
 You own your recovery data. MRT provides multiple ways to ensure you never lose it, even if you lose your phone, or completely remove it if you wish to leave.

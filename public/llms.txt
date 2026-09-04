@@ -1,0 +1,19 @@
+# My Recovery Toolkit
+
+> A zero-knowledge, offline-first Progressive Web App for 12-Step and Buddhist-inspired recovery. Sensitive user data (journals, workbook answers, sponsee notes) is encrypted client-side with AES-GCM before being stored — the server never has access to unencrypted content.
+
+My Recovery Toolkit (MRT) combines encrypted journaling, CBT/SMART tools, habit tracking, AI-powered pattern insights, and gamified recovery exercises, built for people in 12-Step (AA/NA) and Buddhist-inspired (Recovery Dharma, SMART) recovery programs.
+
+## Key pages
+
+- [Home](https://www.myrecoverytoolkit.ca/): Product overview and sign-up.
+- [User Guide](https://rpdouglas.github.io/MRT2/guide/01-getting-started): Full documentation of every feature.
+- [FAQ](https://rpdouglas.github.io/MRT2/support/faq): Answers on zero-knowledge encryption, offline support, AI data handling, and account deletion.
+- [Privacy Policy](https://rpdouglas.github.io/MRT2/privacy): How data is collected, encrypted, and protected.
+- [Terms of Service](https://rpdouglas.github.io/MRT2/tos): Terms of use, including the medical disclaimer.
+- [Changelog](https://rpdouglas.github.io/MRT2/support/changelog): Version-by-version history.
+
+## Notes
+
+- MRT is a self-help peer support tool. It is not a medical device, diagnostic tool, or a replacement for professional clinical addiction treatment.
+- Most of the app requires an authenticated account and is intentionally not publicly crawlable — the pages listed above are the complete public surface.
