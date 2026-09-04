@@ -9,6 +9,8 @@ import {
   ChevronDownIcon,
   ExclamationCircleIcon,
   LockClosedIcon,
+  HeartIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import JournalEditor from "../journal/JournalEditor";
@@ -19,6 +21,8 @@ import { FELLOWSHIPS } from "../../data/fellowships";
 import { useAllDailyReadings } from "../../hooks/useDailyReading";
 import { useReadingPreferences, ALL_MODALITIES } from "../../hooks/useReadingPreferences";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { useMatDoseLog } from "../../hooks/useMatDoseLog";
+import { triggerHaptic } from "../../lib/haptics";
 import { format } from "date-fns";
 import type { DailyReading } from "../../lib/db";
 
@@ -47,6 +51,14 @@ export default function DynamicAnchorWidget() {
   );
 
   const { profile: userProfile, patchFields } = useUserProfile();
+  const { todaysDose, logDose, isLogging } = useMatDoseLog();
+  const matModeEnabled = !!userProfile?.matModeEnabled;
+
+  const handleLogDose = async () => {
+    if (todaysDose || isLogging) return;
+    triggerHaptic('hold');
+    await logDose();
+  };
 
   const recoveryPath =
     userProfile?.anchorSettings?.defaultFellowship ||
@@ -100,11 +112,11 @@ export default function DynamicAnchorWidget() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className={`grid gap-4 mb-4 ${matModeEnabled ? 'grid-cols-3 gap-2' : 'grid-cols-2'}`}>
         {/* Card 1 — Check-In */}
         <button
           onClick={() => setIsJournalModalOpen(true)}
-          className={`relative flex flex-row items-center justify-start gap-2 rounded-full shadow-md py-2 px-4 min-w-0 hover:brightness-110 transition active:scale-95 ${btnGradient}`}
+          className={`relative flex flex-row items-center justify-start rounded-full shadow-md min-w-0 hover:brightness-110 transition active:scale-95 ${btnGradient} ${matModeEnabled ? 'gap-1 py-2 px-2' : 'gap-2 py-2 px-4'}`}
         >
           {needsCheckIn && (
             <div className="absolute top-0 right-0 -mt-1 -mr-1 pointer-events-none">
@@ -116,8 +128,8 @@ export default function DynamicAnchorWidget() {
               <LockClosedIcon className="h-3 w-3 text-white/70 bg-white/20 rounded-full" />
             </div>
           )}
-          <TimeIcon className="h-5 w-5 shrink-0 text-white" />
-          <span className="text-xs font-bold text-white truncate">
+          <TimeIcon className={`shrink-0 text-white ${matModeEnabled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+          <span className={`font-bold text-white min-w-0 ${matModeEnabled ? 'text-[10px] leading-tight' : 'text-xs truncate'}`}>
             {timeText} Check-In
           </span>
         </button>
@@ -133,10 +145,10 @@ export default function DynamicAnchorWidget() {
               )}
               <button
                 onClick={handleInAppReadingClick}
-                className="flex flex-row items-center justify-start gap-2 py-2 px-4 flex-1 rounded-l-full active:scale-95 origin-left min-w-0"
+                className={`flex flex-row items-center justify-start flex-1 rounded-l-full active:scale-95 origin-left min-w-0 ${matModeEnabled ? 'gap-1 py-2 px-2' : 'gap-2 py-2 px-4'}`}
               >
-                <BookOpenIcon className="h-5 w-5 shrink-0 text-white" />
-                <span className="text-xs font-bold text-white truncate">
+                <BookOpenIcon className={`shrink-0 text-white ${matModeEnabled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                <span className={`font-bold text-white min-w-0 ${matModeEnabled ? 'text-[10px] leading-tight' : 'text-xs truncate'}`}>
                   Daily Reading
                 </span>
               </button>
@@ -165,6 +177,28 @@ export default function DynamicAnchorWidget() {
             </MenuItems>
           </Menu>
         </div>
+
+        {/* Card 3 — Log Dose (MAT mode only, PROJ-111) */}
+        {matModeEnabled && (
+          <button
+            onClick={handleLogDose}
+            disabled={!!todaysDose || isLogging}
+            className={`relative flex flex-row items-center justify-start gap-1 rounded-full shadow-md py-2 px-2 min-w-0 transition active:scale-95 ${
+              todaysDose
+                ? 'bg-emerald-100 text-emerald-700'
+                : `hover:brightness-110 ${btnGradient}`
+            }`}
+          >
+            {todaysDose ? (
+              <CheckIcon className="h-4 w-4 shrink-0" />
+            ) : (
+              <HeartIcon className="h-4 w-4 shrink-0 text-white" />
+            )}
+            <span className={`text-[10px] leading-tight font-bold min-w-0 ${todaysDose ? '' : 'text-white'}`}>
+              {todaysDose ? 'Logged' : 'Log Dose'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Reading Modal */}

@@ -10,7 +10,7 @@ import VibrantHeader from '../components/VibrantHeader';
 import TabBar from '../components/ui/TabBar';
 import DataManagement from '../components/profile/DataManagement';
 import AchievementsTab from '../components/profile/AchievementsTab';
-import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline, SparklesIcon, StarIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, UserGroupIcon, IdentificationIcon, ShieldCheckIcon, CircleStackIcon, KeyIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, BanknotesIcon, ArrowLeftOnRectangleIcon, SwatchIcon, ArrowPathIcon, XMarkIcon, TrophyIcon, BookOpenIcon as BookOpenIconOutline, SparklesIcon, StarIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { BookOpenIcon } from '@heroicons/react/24/solid';
 import ModalitySelector from '../components/readings/ModalitySelector';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -52,6 +52,10 @@ export default function Profile() {
   const [sobrietyDate, setSobrietyDate] = useState('');
   const [sponsorName, setSponsorName] = useState('');
   const [sponsorPhone, setSponsorPhone] = useState('');
+
+  // Form State (MAT Mode — PROJ-111)
+  const [matModeEnabled, setMatModeEnabled] = useState(false);
+  const [customCounterLabel, setCustomCounterLabel] = useState('');
   
   // Form State (Financial)
   const [substanceCost, setSubstanceCost] = useState('');
@@ -80,6 +84,7 @@ export default function Profile() {
   const [financialStatus, setFinancialStatus] = useState<AutosaveState>('idle');
   const [sponsorStatus, setSponsorStatus] = useState<AutosaveState>('idle');
   const [badgesStatus, setBadgesStatus] = useState<AutosaveState>('idle');
+  const [matStatus, setMatStatus] = useState<AutosaveState>('idle');
 
   const [completingSetup, setCompletingSetup] = useState(false);
   const [isOnboarding, setIsOnboarding] = useState(false);
@@ -124,6 +129,9 @@ export default function Profile() {
       }
       setSponsorName(profile.sponsorName || '');
       setSponsorPhone(profile.sponsorPhone || '');
+
+      setMatModeEnabled(profile.matModeEnabled ?? false);
+      setCustomCounterLabel(profile.customCounterLabel || '');
 
       setSubstanceCost(profile.substanceCost ? profile.substanceCost.toString() : '');
       setCostFrequency(profile.costFrequency || 'daily');
@@ -256,6 +264,21 @@ export default function Profile() {
     } catch (err) {
       console.error(err);
       flashStatus(setSponsorStatus, false);
+    }
+  };
+
+  const commitMat = async (next?: { matModeEnabled?: boolean; customCounterLabel?: string }) => {
+    if (!user) return;
+    setMatStatus('saving');
+    try {
+      await updateProfile.mutateAsync({
+        matModeEnabled: next?.matModeEnabled ?? matModeEnabled,
+        customCounterLabel: next?.customCounterLabel ?? customCounterLabel,
+      });
+      flashStatus(setMatStatus, true);
+    } catch (err) {
+      console.error(err);
+      flashStatus(setMatStatus, false);
     }
   };
 
@@ -627,6 +650,44 @@ export default function Profile() {
                                 <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* MAT / Stability Track (PROJ-111) — opt-in, never forced onto a non-MAT user */}
+                    <div className="pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <HeartIcon className="h-4 w-4 text-rose-600" /> Stability Track
+                            </h4>
+                            <AutosaveStatus state={matStatus} />
+                        </div>
+                        <label className="flex items-center gap-3 mb-3">
+                            <input
+                                type="checkbox"
+                                checked={matModeEnabled}
+                                onChange={e => {
+                                    const next = e.target.checked;
+                                    setMatModeEnabled(next);
+                                    commitMat({ matModeEnabled: next });
+                                }}
+                                className="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Enable dose tracking &amp; a custom counter label</span>
+                        </label>
+                        {matModeEnabled && (
+                            <div>
+                                <label htmlFor="profile-counter-label" className="block text-xs font-medium text-gray-500 uppercase tracking-wide">Counter Label</label>
+                                <input
+                                    id="profile-counter-label"
+                                    type="text"
+                                    placeholder="Days of Stability"
+                                    value={customCounterLabel}
+                                    onChange={(e) => setCustomCounterLabel(e.target.value)}
+                                    onBlur={() => commitMat()}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2 border"
+                                />
+                                <p className="mt-1 text-[10px] text-gray-400">Replaces the "Days" label on your Dashboard counter. Leave blank to keep the default.</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Dashboard Badges (formerly "Anchor Notifications") — in-app only, does not affect push */}

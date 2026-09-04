@@ -100,6 +100,18 @@ export function computeHabitAlert(pendingTaskCount: number): BeaconAlert | null 
     };
 }
 
+// PROJ-111: fixed, generic copy — never interpolates a drug name, dose
+// amount, or the user's own customCounterLabel (that label could itself be
+// identifying). This is the one hard security invariant this function must
+// never regress; see the notification-content test guarding it.
+export function computeMatReminderAlert(matModeEnabled: boolean | undefined, doseLoggedToday: boolean): BeaconAlert | null {
+    if (!matModeEnabled || doseLoggedToday) return null;
+    return {
+        title: "Daily Check-In",
+        body: "Time for your morning routine check-in.",
+    };
+}
+
 export interface BeaconUserDoc { id: string; data: () => DocumentData; }
 
 export interface BeaconBatchResult {
@@ -114,7 +126,10 @@ export interface BeaconBatchResult {
 export async function processUserBatch(
     userDocs: BeaconUserDoc[],
     startOfTodayUTC: Date,
-    getPendingTaskCount: (uid: string) => Promise<number>
+    getPendingTaskCount: (uid: string) => Promise<number>,
+    // PROJ-111: optional so existing call sites/tests aren't forced to pass
+    // it — a user with no matModeEnabled never reaches this callback anyway.
+    getMatDoseLoggedToday?: (uid: string) => Promise<boolean>
 ): Promise<BeaconBatchResult> {
     const messages: TokenMessage[] = [];
     const tokenToUid = new Map<string, string>();
@@ -135,6 +150,10 @@ export async function processUserBatch(
             if (!alert) {
                 const pendingCount = await getPendingTaskCount(uid);
                 alert = computeHabitAlert(pendingCount);
+            }
+            if (!alert && userData.matModeEnabled && getMatDoseLoggedToday) {
+                const doseLoggedToday = await getMatDoseLoggedToday(uid);
+                alert = computeMatReminderAlert(userData.matModeEnabled as boolean, doseLoggedToday);
             }
 
             if (alert) {
@@ -469,6 +488,19 @@ export const dailyBeacon = onSchedule({
                         .where("dueDate", "<=", Timestamp.fromDate(endOfTodayUTC))
                         .get();
                     return tasksSnap.size;
+                },
+                async (uid) => {
+                    // Deterministic doc ID matches the client's useMatDoseLog.ts
+                    // upsert scheme (${uid}_${date}) — a single doc read, not a
+                    // query. Date is UTC here (matching this function's other
+                    // date math) vs. the client's local-tz date string, so a
+                    // user far from UTC can occasionally get an extra or a
+                    // missed reminder near midnight — a minor pacing nuisance,
+                    // not a security concern, and not worth server-side tz
+                    // tracking this function doesn't otherwise do.
+                    const todayStr = utcDateString(startOfTodayUTC);
+                    const doseDoc = await db.collection("mat_doses").doc(`${uid}_${todayStr}`).get();
+                    return doseDoc.exists;
                 }
             );
             messagesToSend.push(...batchResult.messages);

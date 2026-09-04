@@ -263,6 +263,83 @@ describe('game_saves — ownership + shape/size validation', () => {
   });
 });
 
+describe('mat_doses — ownership + shape/size validation (PROJ-111)', () => {
+  it('lets a user create their own bare dose log (no note)', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'mat_doses', `${ALICE}_2026-09-04`), {
+        uid: ALICE,
+        loggedAt: Timestamp.now(),
+        date: '2026-09-04',
+        isEncrypted: false,
+      }),
+    );
+  });
+
+  it('lets a user create a dose log with an encrypted note', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'mat_doses', `${ALICE}_2026-09-04`), {
+        uid: ALICE,
+        loggedAt: Timestamp.now(),
+        date: '2026-09-04',
+        isEncrypted: true,
+        encryptedNote: 'IV:cipher',
+      }),
+    );
+  });
+
+  it("blocks a user from reading another user's dose log", async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'mat_doses', `${BOB}_2026-09-04`), {
+        uid: BOB,
+        loggedAt: Timestamp.now(),
+        date: '2026-09-04',
+        isEncrypted: false,
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(getDoc(doc(aliceDb, 'mat_doses', `${BOB}_2026-09-04`)));
+  });
+
+  it('rejects a create whose encryptedNote exceeds the 10KB ceiling', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'mat_doses', `${ALICE}_2026-09-04`), {
+        uid: ALICE,
+        loggedAt: Timestamp.now(),
+        date: '2026-09-04',
+        isEncrypted: true,
+        encryptedNote: 'x'.repeat(10240),
+      }),
+    );
+  });
+
+  it('rejects a create missing date', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'mat_doses', `${ALICE}_2026-09-04`), {
+        uid: ALICE,
+        loggedAt: Timestamp.now(),
+        isEncrypted: false,
+      }),
+    );
+  });
+
+  it("blocks a create where uid doesn't match the authenticated caller", async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'mat_doses', `${ALICE}_2026-09-04`), {
+        uid: BOB,
+        loggedAt: Timestamp.now(),
+        date: '2026-09-04',
+        isEncrypted: false,
+      }),
+    );
+  });
+});
+
 describe('users/{userId} — tier/role self-escalation blocks', () => {
   it('lets a user create their own profile at the safe defaults', async () => {
     const aliceDb = testEnv.authenticatedContext(ALICE).firestore();

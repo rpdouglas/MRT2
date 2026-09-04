@@ -6,6 +6,7 @@ import {
     getMilestoneLabel,
     computeMilestoneAlert,
     computeHabitAlert,
+    computeMatReminderAlert,
     processUserBatch,
     identifyStaleTokensByUser,
     sendBeaconMessagesChunked,
@@ -103,6 +104,31 @@ describe("computeHabitAlert", () => {
     });
 });
 
+describe("computeMatReminderAlert", () => {
+    it("returns null when MAT mode is not enabled", () => {
+        expect(computeMatReminderAlert(false, false)).toBeNull();
+        expect(computeMatReminderAlert(undefined, false)).toBeNull();
+    });
+
+    it("returns null when today's dose is already logged", () => {
+        expect(computeMatReminderAlert(true, true)).toBeNull();
+    });
+
+    it("returns a generic, drug-name-free reminder when MAT mode is on and no dose is logged", () => {
+        const alert = computeMatReminderAlert(true, false);
+        expect(alert).not.toBeNull();
+        expect(alert?.body).toBe("Time for your morning routine check-in.");
+    });
+
+    it("never mentions a medication name or dose amount in its copy", () => {
+        const alert = computeMatReminderAlert(true, false);
+        const text = `${alert?.title} ${alert?.body}`.toLowerCase();
+        for (const term of ["suboxone", "buprenorphine", "naltrexone", "opioid", "methadone", "dose", "medication"]) {
+            expect(text).not.toContain(term);
+        }
+    });
+});
+
 function fakeUserDoc(id: string, data: Record<string, unknown>): BeaconUserDoc {
     return { id, data: () => data };
 }
@@ -172,6 +198,48 @@ describe("processUserBatch", () => {
             async () => 0
         );
         expect(result.messages).toHaveLength(0);
+    });
+
+    it("falls back to a MAT reminder when no milestone/habit alert fired and the user is in MAT mode", async () => {
+        const result = await processUserBatch(
+            [fakeUserDoc("u1", { fcmTokens: ["tok-a"], matModeEnabled: true })],
+            startOfTodayUTC,
+            async () => 0,
+            async () => false
+        );
+        expect(result.messages).toHaveLength(1);
+        expect(result.messages[0].notification?.title).toBe("Daily Check-In");
+    });
+
+    it("does not send a MAT reminder once today's dose is already logged", async () => {
+        const result = await processUserBatch(
+            [fakeUserDoc("u1", { fcmTokens: ["tok-a"], matModeEnabled: true })],
+            startOfTodayUTC,
+            async () => 0,
+            async () => true
+        );
+        expect(result.messages).toHaveLength(0);
+    });
+
+    it("does not call the MAT-dose callback for a non-MAT user", async () => {
+        const calls: string[] = [];
+        await processUserBatch(
+            [fakeUserDoc("u1", { fcmTokens: ["tok-a"] })],
+            startOfTodayUTC,
+            async () => 0,
+            async (uid) => { calls.push(uid); return false; }
+        );
+        expect(calls).toHaveLength(0);
+    });
+
+    it("prefers a habit alert over a MAT reminder when both are eligible", async () => {
+        const result = await processUserBatch(
+            [fakeUserDoc("u1", { fcmTokens: ["tok-a"], matModeEnabled: true })],
+            startOfTodayUTC,
+            async () => 2,
+            async () => false
+        );
+        expect(result.messages[0].notification?.title).toContain("Fire");
     });
 });
 

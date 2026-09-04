@@ -1,5 +1,9 @@
 # 🚀 Changelog
 
+## [v1.9.11] - 2026-09-04
+### ✨ New Feature
+- Added a Stability Track for anyone on a medication-assisted recovery path: a one-tap "Log Dose" button on your Dashboard, a renameable sobriety counter (e.g. "Days of Stability" instead of "Days"), and discreet reminder notifications that never mention medication by name. Turn it on in Profile → General.
+
 ## [v1.9.10] - 2026-08-03
 ### ✨ New Feature
 - Recovery Capital now has its own full screen, with a new Trends view showing how your Health, Home, Purpose, and Community scores have moved over time.

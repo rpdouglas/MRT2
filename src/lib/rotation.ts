@@ -147,6 +147,26 @@ export async function executeCryptoShredding(uid: string) {
         }
     }
 
+    // 5b. Delete MAT Dose Logs (PROJ-111)
+    let lastMatDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+    let hasMoreMatDoses = true;
+    while (hasMoreMatDoses) {
+        let mQ = query(collection(database, 'mat_doses'), where('uid', '==', uid), limit(500));
+        if (lastMatDoc) mQ = query(collection(database, 'mat_doses'), where('uid', '==', uid), startAfter(lastMatDoc), limit(500));
+
+        const mSnap = await getDocs(mQ);
+        if (mSnap.empty) {
+            hasMoreMatDoses = false;
+        } else {
+            mSnap.docs.forEach(d => {
+                currentBatch.delete(d.ref);
+                opCount++;
+                if (opCount >= 450) commitBatch();
+            });
+            lastMatDoc = mSnap.docs[mSnap.docs.length - 1];
+        }
+    }
+
     // 6. Clear Profile Fields
     const pRef = doc(database, 'users', uid);
     currentBatch.update(pRef, {
@@ -459,6 +479,50 @@ export async function executePinRotation(
 
             await currentBatch.commit();
             lastSaveDoc = sSnap.docs[sSnap.docs.length - 1];
+        }
+
+        // --- PROCESS MAT DOSE LOGS (PROJ-111) ---
+        // Same single-optional-field shape as game_saves above — most docs
+        // have no encryptedNote at all (a bare one-tap log), so `continue`
+        // skips them without touching the plaintext loggedAt/date fields,
+        // which aren't vault-key-derived and don't need re-encryption.
+        let lastMatDoc: QueryDocumentSnapshot<DocumentData> | null = null;
+        let hasMoreMatDoses = true;
+
+        while (hasMoreMatDoses) {
+            let mQ = query(collection(database, 'mat_doses'), where('uid', '==', uid), limit(BATCH_SIZE));
+            if (lastMatDoc) mQ = query(collection(database, 'mat_doses'), where('uid', '==', uid), startAfter(lastMatDoc), limit(BATCH_SIZE));
+
+            const mSnap = await getDocs(mQ);
+            if (mSnap.empty) {
+                hasMoreMatDoses = false;
+                continue;
+            }
+
+            const currentBatch = writeBatch(database);
+
+            for (const document of mSnap.docs) {
+                const data = document.data();
+                if (!data.encryptedNote) continue;
+
+                await deriveKeyForScheme(oldPin, currentSalt, currentUsesPepperV2, oldPepper);
+                const plain = await decrypt(data.encryptedNote);
+                if (plain.includes("Locked Content") || plain === "[Error: Data Corrupted]") {
+                    await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                    const alreadyMigrated = await decrypt(data.encryptedNote);
+                    if (alreadyMigrated.includes("Locked Content") || alreadyMigrated === "[Error: Data Corrupted]") {
+                        throw new Error("DECRYPTION_FAILED");
+                    }
+                    continue; // already migrated in a previous attempt
+                }
+
+                await deriveKeyForScheme(newPin, newSalt, true, newPepper);
+                const cipher = await encrypt(plain);
+                currentBatch.update(document.ref, { encryptedNote: cipher });
+            }
+
+            await currentBatch.commit();
+            lastMatDoc = mSnap.docs[mSnap.docs.length - 1];
         }
 
         // 4. Finalize Profile Updates — clears the pendingRotation marker now
