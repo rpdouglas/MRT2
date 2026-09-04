@@ -8,7 +8,7 @@
 
 > ## ⚠️ Status: Future-Vision Document — Not the Current Design System
 >
-> **This is not what MRT looks like today, and nothing below should be treated as implemented.** The app's actual, currently-enforced design system is **"Vibrant Momentum"** (`.claude/skills/design/SKILL.md`) — a different name, a different color architecture (per-module Tailwind gradients driven by `src/lib/theme.ts`/`src/lib/heroColors.ts`), and different persona coverage. When in doubt about what to build, use that document, not this one.
+> **This is not what MRT looks like today, and nothing below should be treated as implemented.** The app's actual, currently-enforced design system is **"Vibrant Momentum"** — documented in full at `docs/design/vibrant_momentum.md` (or as a terse checklist at `.claude/skills/design/SKILL.md`) — a different name, a different color architecture (per-module Tailwind gradients driven by `src/lib/theme.ts`/`src/lib/heroColors.ts`), and different persona coverage. When in doubt about what to build, use that document, not this one.
 >
 > A 2026-09 audit (prompted by this doc missing 2 of the app's 6 current personas — Lisa and Jordan) confirmed none of this document's headline architecture exists in code:
 > - No `somatic-action-*`/`analytical-insight-*` CSS tokens anywhere in `src/` — `tailwind.config.js` extends one unrelated `blue` scale only.

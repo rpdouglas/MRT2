@@ -2,10 +2,13 @@
 
 Feature-by-feature briefing docs for handing to an LLM (or a copywriter) writing marketing copy about MRT — landing pages, store listings, ads, email, social. Distinct from `docs/screens/`, which is engineering-grade technical reference; these are benefit- and persona-oriented, meant to ground marketing copy in what the product actually does and why it matters for substance-use recovery specifically, not generic wellness-app language.
 
+**Start with `OVERVIEW.md`** if you're writing anything about MRT as a whole (landing page, app store listing, pitch deck, press description) rather than about one specific feature — it's the synthesis layer tying every brief below, the personas, the design system, and the roadmap into one cohesive picture. The per-feature briefs below remain the source of detail once you're writing about a specific module.
+
 Each brief covers one feature and follows the same shape: the one-sentence pitch, why it matters clinically/in recovery practice, what it actually does in plain language, how each of MRT's six personas (`docs/PERSONAS.md`) uses it with a suggested marketing angle per persona, how it connects to the rest of the app, and a brand-voice/guardrails section every piece of generated copy must follow.
 
 | Feature | File | Status |
 |---|---|---|
+| **Whole-app overview** | `OVERVIEW.md` | ✅ Drafted — synthesis layer over every brief below, plus personas/design system/roadmap |
 | Journal | `journal.md` | ✅ Drafted, reviewed |
 | Dashboard | `dashboard.md` | ✅ Drafted (built on a corrected `docs/screens/dashboard.md`) |
 | Tools (CBT/SMART worksheets) | `tools.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
