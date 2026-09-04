@@ -76,8 +76,16 @@ Findings from a direct audit of the current build (`index.html`, `vite.config.ts
 
 ## 4. Implementation Phases
 
-### Phase 0: Product decision (blocks Phase 2 only)
-* [ ] **AI-crawler posture (G9):** product owner decides whether `GPTBot`/`ClaudeBot`/`Google-Extended`/`PerplexityBot`/`CCBot` are allowed or disallowed in `robots.txt`. Recommendation: **allow** them on the public marketing/docs surface only (the zero-knowledge pitch is a differentiator worth having cited by answer engines) — but this is the product owner's call, not an implementation default.
+### Phase 0: Product decision (blocks Phase 2 only) — ✅ DECIDED 2026-08-30
+* [x] **AI-crawler posture (G9):** **Allow retrieval/answer-engine crawling; block training-data crawling.** The product owner chose a split posture rather than a blanket allow/deny — MRT's zero-knowledge pitch and FAQ content should be *citable* by live answer engines, but the underlying page content shouldn't be scraped into third-party model *training* corpora. This distinction is real and already encoded in most major crawlers' separate user-agent tokens (a "training" bot and a "live retrieval" bot from the same company are different UAs, not a flag on one bot):
+
+  | Bucket | User-agents | `robots.txt` posture |
+  |---|---|---|
+  | Retrieval / answer-engine (live lookups, user-triggered fetches, search indexes) | `OAI-SearchBot`, `ChatGPT-User`, `Claude-User`, `Claude-SearchBot`, `PerplexityBot`, `Perplexity-User` | **Allow** |
+  | Training-data collection | `GPTBot`, `ClaudeBot`, `Google-Extended`, `CCBot`, `Bytespider`, `Applebot-Extended`, `Meta-ExternalAgent` | **Disallow** all paths |
+  | Everything else (`Googlebot`, `Bingbot`, standard `Applebot`, generic `*`) | — | **Allow** (unaffected — these are conventional search indexers, not AI-training crawlers, and were never in scope for G9) |
+
+  This mapping is the concrete input Phase 1's `robots.txt` implementation works from. It should be treated as a snapshot, not a permanent list — crawler names and their stated purpose (training vs. retrieval) do shift over time, so revisit this table if a bot's documented behavior changes or a new major one appears.
 
 ### Phase 1: Crawl & index infrastructure (G1, G2, G7, G11, G12)
 * Add `public/robots.txt` (main app) and `docs-site/public/robots.txt` (docs site) — allow all public routes, disallow nothing that isn't already auth-gated (per §2.1 point 1, don't list gated paths — they're already inaccessible without auth), reference each property's `sitemap.xml`.
