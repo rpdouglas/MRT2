@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// PROJ-113 (Daily Inspirational Image) — first use of Firebase Storage in
+// this app. No prior storage.rules precedent to copy from; authored
+// explicitly against firestore.rules's isAdmin() custom-claim pattern rather
+// than assuming a permissive default. Every uploaded file is shared
+// editorial content (never user-generated), same posture as the
+// image_library/daily_images Firestore collections it backs — see
+// docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md §2/§3.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Admin-uploaded inspirational images. Any authenticated user may read
+    // (the app fetches these to render/share the daily image); only an
+    // admin may write, matching image_library/daily_images's Firestore
+    // rules exactly.
+    match /daily-images/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Default deny — no other path is provisioned yet.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
