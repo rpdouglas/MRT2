@@ -1,6 +1,7 @@
 import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import { DevicePhoneMobileIcon, BookOpenIcon, PlayCircleIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { ASSETS } from '../data/assets';
 
 interface LinkItem { id: string; title: string; subtitle?: string; url: string; isExternal: boolean; icon: ElementType; colorClass: string; }
 
@@ -55,7 +56,7 @@ export default function Links() {
       <div className="relative z-10 flex flex-col items-center mb-10 w-full max-w-md animate-fadeIn pt-4">
         <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-400 to-fuchsia-500 shadow-2xl mb-5 border-2 border-slate-900">
           <img
-            src="/pwa-192x192.png"
+            src={ASSETS.pwa_192x192}
             alt="MRT Logo"
             className="w-full h-full rounded-full bg-slate-900 object-contain p-2"
           />

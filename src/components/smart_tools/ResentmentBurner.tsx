@@ -95,9 +95,13 @@ export default function ResentmentBurner() {
             </svg>
 
             <div className="flex-shrink-0 z-10">
-                <VibrantHeader 
-                    title="Resentment Burner" 
-                    subtitle="Release the toxic energy. Leave no trace." 
+                {/* Deliberate exception to Vibrant Momentum's "no red" rule (design-system
+                    audit 2026-09-03, TD-30): this red/rose/slate header is the tool's own
+                    literal fire metaphor (burn something in effigy), not a failure/overdue
+                    state — the thing the "no red" rule exists to prevent. Not module drift. */}
+                <VibrantHeader
+                    title="Resentment Burner"
+                    subtitle="Release the toxic energy. Leave no trace."
                     icon={FireIcon}
                     fromColor="from-red-900"
                     viaColor="via-rose-900"

@@ -19,12 +19,13 @@ import type { JournalEntry } from './JournalEditor';
 import JournalAnalysisWizard from './JournalAnalysisWizard';
 import { Virtuoso } from 'react-virtuoso';
 import { format, startOfYear, endOfYear } from 'date-fns';
-import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PencilSquareIcon, ShieldExclamationIcon, ShareIcon, CheckIcon, SparklesIcon, SunIcon, CloudIcon, BoltIcon, MagnifyingGlassIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, CalendarDaysIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { parseSmartToolPayload } from '../../lib/smartToolPayload';
 import { HEADLINE_FIELD, getFieldLabel, formatFieldValueText } from '../../lib/toolHistorySummary';
 import { PayloadSummaryList } from '../tools/PayloadSummaryList';
 import { TOOLS } from '../../lib/toolsRegistry';
 import { DRAFT_TAG } from '../../lib/types/smart';
+import { THEME } from '../../lib/theme';
 
 type JournalEntryWithStatus = JournalEntry & { isError?: boolean };
 
@@ -436,7 +437,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                         const isToolExpanded = expandedToolId === entry.id;
                         const ToolIcon = tool?.icon;
                         return (
-                            <div className={`bg-white rounded-xl p-4 mb-3 ml-4 shadow-sm border relative group max-w-[96%] ${entry.isError ? 'border-red-300 bg-red-50' : 'border-indigo-50'}`}>
+                            <div className={`bg-white rounded-xl p-4 mb-3 ml-4 shadow-sm border relative group max-w-[96%] ${entry.isError ? 'border-slate-300 border-dashed bg-slate-50' : 'border-indigo-50'}`}>
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-xs font-mono text-gray-400 font-bold">
@@ -467,7 +468,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                             </span>
                                         )}
 
-                                        {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-red-500' : 'text-emerald-500'}`} />}
+                                        {entry.isEncrypted && <ShieldExclamationIcon className={`h-3 w-3 ${entry.isError ? 'text-slate-400' : 'text-emerald-500'}`} />}
                                     </div>
 
                                     <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -501,8 +502,15 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
                                             </div>
                                         )}
                                     </div>
+                                ) : entry.isError ? (
+                                    <div className="flex items-center gap-2 py-3 rounded-lg border border-dashed border-slate-300 bg-white/60 px-3">
+                                        <LockClosedIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                                        <p className="text-xs text-slate-500">
+                                            This entry couldn't be decrypted. Try unlocking your vault again.
+                                        </p>
+                                    </div>
                                 ) : (
-                                    <p className={`text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer ${entry.isError ? 'text-red-600 font-mono text-xs' : 'text-gray-800'}`}>
+                                    <p className="text-sm whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all cursor-pointer text-gray-800">
                                         {entry.content}
                                     </p>
                                 )}
@@ -517,7 +525,7 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         <button
             onClick={handleAnalyzeClick}
             disabled={wizardPending}
-            className="fixed bottom-24 right-4 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white p-4 rounded-full shadow-lg shadow-fuchsia-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group disabled:opacity-70 disabled:hover:scale-100"
+            className={`fixed bottom-24 right-4 bg-gradient-to-r ${THEME.journal.header.from} ${THEME.journal.header.to} text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all z-30 flex items-center gap-2 group disabled:opacity-70 disabled:hover:scale-100`}
         >
             <SparklesIcon className={`h-6 w-6 ${wizardPending ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
             <span className="hidden group-hover:inline text-sm font-bold pr-1">{wizardPending ? 'Loading…' : 'Analyze'}</span>

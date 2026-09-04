@@ -146,6 +146,7 @@ export default function ROSCAssessmentCard({ assessment, previous, compact = fal
                                                     <span className="text-[10px] font-bold uppercase tracking-wide text-fuchsia-300">{cadenceCurrentLabel(cadence)}</span>
                                                 </div>
                                                 <p className="text-xs text-white/80 leading-relaxed">{context.narrative}</p>
+                                                <p className="text-[10px] text-white/40 mt-1.5 italic">AI-generated reflection based on your data — a pattern to consider, not a diagnosis.</p>
                                             </div>
 
                                             {context.strengths?.length > 0 && (

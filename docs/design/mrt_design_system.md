@@ -6,10 +6,25 @@
 
 ---
 
-**Document Status:** Living Document
+> ## ⚠️ Status: Future-Vision Document — Not the Current Design System
+>
+> **This is not what MRT looks like today, and nothing below should be treated as implemented.** The app's actual, currently-enforced design system is **"Vibrant Momentum"** (`.claude/skills/design/SKILL.md`) — a different name, a different color architecture (per-module Tailwind gradients driven by `src/lib/theme.ts`/`src/lib/heroColors.ts`), and different persona coverage. When in doubt about what to build, use that document, not this one.
+>
+> A 2026-09 audit (prompted by this doc missing 2 of the app's 6 current personas — Lisa and Jordan) confirmed none of this document's headline architecture exists in code:
+> - No `somatic-action-*`/`analytical-insight-*` CSS tokens anywhere in `src/` — `tailwind.config.js` extends one unrelated `blue` scale only.
+> - None of the three documented fonts (DM Sans, JetBrains Mono, Playfair Display) are loaded anywhere.
+> - The "Recovery State Rendering Engine" (Section VI) — this doc's own headline differentiator — is `docs/projects/45_ADAPTIVE_PERSONA_UI.md` (PROJ-45), which is explicitly **PARKED**, gated behind a feature flag that defaults `false`, with no code written and its own companion prototype files (`mrt_adaptive_ui.jsx`, `mrt_brand_review.jsx`) absent from the repo.
+> - This doc's own companion sample file, `mrt_design_samples.jsx`, doesn't even use the tokens specified below — it hardcodes a different, incompatible five-module palette.
+> - The Persona Architecture (Section I) and every persona-scoped table below (Recovery State Rendering Engine, AI Verbosity Limits) cover only David, Ned, Walt, and Maya — **Lisa and Jordan are entirely absent**, and would need real design work (not a mechanical table edit) before this doc could be treated as current.
+>
+> **Treat this as a north-star/pitch artifact** — useful for the conceptual framing (persona-as-state, empty-state psychology, AI confidence visualization, trust ritual design) if MRT ever revives PROJ-45 — not as a working reference for what to build this week. See `.claude/skills/design/SKILL.md` for that.
+
+---
+
+**Document Status:** Future-Vision — Not Implemented (see banner above)
 **Classification:** Internal Design & Engineering Reference
 **Replaces:** Momentum Kinetic v2.0
-**Review Cadence:** Quarterly
+**Review Cadence:** Quarterly, or upon PROJ-45 reactivation
 
 ---
 

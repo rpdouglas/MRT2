@@ -14,6 +14,7 @@ import { SmartToolContainer } from './SmartToolContainer';
 import { GuidedWorkflowEngine, type Step } from '../tools/GuidedWorkflowEngine';
 import VibrantHeader from '../VibrantHeader';
 import { DRAFT_TAG, type DENTSPayload } from '../../lib/types/smart';
+import { THEME } from '../../lib/theme';
 import {
     HandRaisedIcon, ArrowRightOnRectangleIcon, ShieldExclamationIcon, ClipboardDocumentCheckIcon,
     ArrowPathIcon, InformationCircleIcon, BoltIcon,
@@ -170,7 +171,7 @@ function DentsToolInner({ data, updateData, save, isSaving, forceFresh }: DentsT
                     title="D.E.N.T.S. Strategy"
                     subtitle="Let's name the situation first"
                     icon={BoltIcon}
-                    fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                    fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
                 />
                 <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-5">
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-sm p-5 space-y-4">
@@ -231,7 +232,7 @@ function DentsToolInner({ data, updateData, save, isSaving, forceFresh }: DentsT
                 title="D.E.N.T.S. Strategy"
                 subtitle={data.scenario ? `Reviewing: ${data.scenario}` : 'Reviewing your plan'}
                 icon={BoltIcon}
-                fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
             />
             <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-4">
                 {STRATEGY_META.map(m => (

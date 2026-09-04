@@ -5,6 +5,8 @@ description: MRT design system guidelines. Invoke before implementing any UI com
 
 # MRT Design System — Vibrant Momentum
 
+> This is the canonical, currently-enforced design system — what's actually built and what new UI work must match. `docs/design/mrt_design_system.md` ("Momentum Kinetic v3.0") is a separate, unimplemented future-vision document (semantic CSS tokens, custom fonts, an adaptive per-persona rendering engine) — none of that exists in code today. Don't treat the two as interchangeable or as different versions of the same system.
+
 ## Core Philosophy
 Recovery is a return to life — not a punishment. Reject gloomy health app aesthetics.
 - **Alive & Forward-Moving:** colour, space, and motion signal hope
@@ -26,14 +28,14 @@ Recovery is a return to life — not a punishment. Reject gloomy health app aest
 | Journal | Reflective & Rich | Indigo → Purple → Violet | Quiet introspection, safe disclosure |
 | Tasks | Energy & Action | Cyan → Teal → Emerald | Momentum and dopamine feedback |
 | Workbooks | Structured Growth | Emerald → Green → Lime | Guided progress, herbal groundedness |
-| Service | Warmth & Connection | Rose → Amber | Human-to-human empathy |
+| Service | Warmth & Connection | Rose → Amber | Human-to-human empathy — **⏸️ Paused (PROJ-05), no UI built yet.** No live route/component uses this gradient; `src/lib/theme.ts` has no `service` entry. Documented here for whenever `05_SERVICE_MODULE.md` is unpaused — do not treat this row as evidence the module exists. |
 | Insights | Mystical & AI | Fuchsia → Pink → Rose | Deep pattern finding, introspection |
 | Vitality | Somatic Health | Rose → Orange → Amber | Calm, grounding, vital energy |
 | Profile | Grounded & Secure | Slate → Gray → Zinc | Settled, trustworthy, in control |
 | Tools | Bright Clarity | Blue → Sky | Quick utility, sharp focus |
 | Games | Playful Mastery | Indigo → Violet → Purple | Lighthearted skill-building, zero shame |
 
-High-saturation gradients. No flat, muted, or grey-dominant palettes. Every row except Dashboard must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary. **Dashboard is the one module without a static entry in `THEME`** — its header/background instead derive from whichever of the 5 Sobriety Hero colors the user has picked (`src/lib/heroColors.ts`, `HERO_COLORS.<key>.dashboardHeader`/`.dashboardPage`), one shade darker than the hero card's own tones to keep the header's white title text legible, with the page background going pale (100-tier). Keep `heroColors.ts` in sync the same way.
+High-saturation gradients. No flat, muted, or grey-dominant palettes. Every *built* row except Dashboard must stay in sync with the per-module gradient stops in `src/lib/theme.ts` (`THEME.<module>.header.{from,via,to}`) — that file is the source of truth consumed by code; this table is the human-readable summary. **Service has no `THEME` entry because it has no code yet** (see row above) — its gradient here is a design placeholder, not a sync target. **Dashboard is the one *built* module without a static entry in `THEME`** — its header/background instead derive from whichever of the 5 Sobriety Hero colors the user has picked (`src/lib/heroColors.ts`, `HERO_COLORS.<key>.dashboardHeader`/`.dashboardPage`), one shade darker than the hero card's own tones to keep the header's white title text legible, with the page background going pale (100-tier). Keep `heroColors.ts` in sync the same way.
 
 ## Persona Design Constraints
 
@@ -57,6 +59,18 @@ High-saturation gradients. No flat, muted, or grey-dominant palettes. Every row 
 - Data sovereignty. High-legibility text — never sacrifice readability for style.
 - Deep-dive pattern charts, structured export views.
 - Density is acceptable; clutter is not.
+
+**Maya (6–18 Months — Systematiser)**
+- Structured progression. Linear navigation, completion % always visible — never hide progress behind a tap.
+- Data density is welcome here — unlike Walt, don't soften charts or numbers for her.
+- Progress framing shows what's *complete*, not what's *remaining* — deficit framing reads as failure to her too, just via a different mechanism than Ned's streaks.
+- Every AI insight must show its source data inline (which entries, which date range) — an untraceable insight is a broken one for Maya, not just a nice-to-have.
+
+**Jordan (Day 1–365+, MAT — Stabiliser)**
+- Non-judgmental stability. No language implying prescribed recovery medication is "cheating" or "not really clean."
+- Custom counter labels — never force "Days Sober" if the user has renamed it (e.g. "Days of Stability").
+- Notifications and lock-screen previews must be generic — no drug names, no clinical terms visible without unlocking.
+- Dose logging and check-ins are single-tap from the dashboard widget — same zero-friction bar as David, different reason (medical compliance, not crisis).
 
 ## The "No-Guilt" Engine
 - NEVER use red "Overdue" text or failure language.

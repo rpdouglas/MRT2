@@ -7,6 +7,7 @@ import { db } from '../lib/firebase';
 import { calculateSobrietyDuration } from '../lib/dateUtils';
 import { calculateSavings } from '../lib/financial';
 import { getMilestone, getMilestoneLabel, getMilestoneImage } from '../lib/milestones';
+import { ASSETS } from '../data/assets';
 import type { UserProfile, HeroColorKey } from '../lib/db';
 import { HERO_COLORS, getHeroColorTheme } from '../lib/heroColors';
 import { useHeroColor } from '../hooks/useHeroColor';
@@ -198,8 +199,8 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                             <>
                                 <div className="bg-white p-2.5 rounded-2xl shadow-xl mb-3">
                                     <img 
-                                        src="/pwa-192x192.png" 
-                                        alt="MRT Logo" 
+                                        src={ASSETS.pwa_192x192}
+                                        alt="MRT Logo"
                                         className="h-10 w-10 object-contain" 
                                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                     />

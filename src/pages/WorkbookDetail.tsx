@@ -290,15 +290,20 @@ export default function WorkbookDetail() {
                   {insight && (
                       <div className="space-y-6">
                           <div className="flex justify-between items-start border-b border-gray-100 pb-4">
-                              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                  <SparklesIcon className="h-6 w-6 text-purple-600" />
-                                  {insight.scope_context}
-                              </h2>
+                              <div>
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 uppercase tracking-wide mb-1">
+                                      <SparklesIcon className="h-3.5 w-3.5" /> AI Suggestion
+                                  </span>
+                                  <h2 className="text-2xl font-bold text-gray-900">
+                                      {insight.scope_context}
+                                  </h2>
+                              </div>
                           </div>
 
                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                               <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Summary</h5>
                               <p className="text-sm text-gray-700 leading-relaxed">{insight.summary}</p>
+                              <p className="text-[11px] text-gray-400 mt-2 italic">An AI-generated read on what you wrote — worth a second look, not the final word.</p>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -217,9 +217,10 @@ export default function WorkbookSession() {
                             {aiFeedback && (
                                 <div className="mb-2 bg-purple-50 p-4 sm:p-6 rounded-xl border border-purple-100 animate-fadeIn shrink-0">
                                     <h4 className="flex items-center gap-2 text-purple-900 font-bold mb-2 text-xs sm:text-sm">
-                                        <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5" /> Insight
+                                        <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5" /> AI Insight
                                     </h4>
                                     <p className="text-purple-800 leading-relaxed text-xs sm:text-sm">{aiFeedback}</p>
+                                    <p className="text-[10px] text-purple-400 mt-2 italic">A suggestion to consider, not the only way to see it.</p>
                                 </div>
                             )}
 

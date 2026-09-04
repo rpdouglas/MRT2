@@ -16,21 +16,18 @@
 
 ## Shared mechanics (apply across all three tabs)
 
-- **Smart Reset & grace window — ⚠️ NOT CURRENTLY LIVE, see correction below.**
-- **Forgiveness Tap** — swiping left on a task (any pending-tab row) opens "Let today go" instead of a silent reset, with streak-aware copy. This one **is** live — verified in `ForgivenessTapSheet.tsx`/`SwipeableTaskRow.tsx`, independent of the dead code below.
+- **Smart Reset & grace window** — live as of 2026-09-03 (`TD-25`). See correction below for history.
+- **Forgiveness Tap** — swiping left on a task (any pending-tab row) opens "Let today go" instead of a silent reset, with streak-aware copy. Live — verified in `ForgivenessTapSheet.tsx`/`SwipeableTaskRow.tsx`, independent of Smart Reset.
 - **Future-task confirmation** — completing a task due strictly in the future (tap or swipe, from Today or Later) is intercepted by a shared confirmation dialog.
 - **Rhythm Score** — a 14-day, non-punishing consistency metric shown above the list on Today/Later (hidden on Log). Computed client-side only, never stored.
 
 Each of these is described in the tab doc where a reader would most naturally encounter it, with a cross-reference back here.
 
-### ⚠️ Correction (this pass): Smart Reset is dead code, not a live feature
+### Correction history: Smart Reset was dead code, now fixed (TD-25)
 
-An earlier version of this doc — following `docs/specs/05_TASKS.md` — described Smart Reset as running "on every background load (`useTasksList` → `getUserTasks()`)." That's wrong, and worth stating plainly: it doesn't run in the live app at all.
+An earlier pass of this doc found Smart Reset was spec'd (`docs/specs/05_TASKS.md`) and fully implemented in `getUserTasks()` (`src/lib/tasks.ts` — 2-hour trailing-midnight grace window, silent streak reset, `missedCountHistory` append via `arrayUnion`, its own passing unit tests) but **never called by the live app** — `Tasks.tsx` rendered from `useTasksList()`'s plain `onSnapshot` listener instead, with zero reset logic. That was tracked as `TD-25` and **fixed the same day**: the reconciliation logic was extracted into a shared `reconcileOverdueTask()` and wired into `useTasksList()`'s snapshot handler (fire-and-forget, with an in-flight-task-ID guard against double-firing across rapid snapshots), alongside its original `getUserTasks()` caller. 2 new tests in `useTasksList.test.ts` cover the reconciliation firing/not-firing correctly.
 
-- `getUserTasks()` (`src/lib/tasks.ts`) contains exactly the described logic — a 2-hour trailing-midnight grace window, silent streak reset, `missedCountHistory` append via `arrayUnion` — and it's real, correct-looking code with its own passing unit tests (`src/lib/__tests__/tasks.test.ts`).
-- But **nothing in the live app calls it.** The actual screen renders from `useTasksList()` (`src/hooks/useTasksList.ts`), a plain `onSnapshot` listener with zero reset logic — confirmed by that hook's own code and, independently, by `useTaskOperations.ts`'s header comment, which states outright that `Tasks.tsx` "renders from `useTasksList.ts`'s own `onSnapshot` subscription... by deliberate design." Grepping `functions/src` for the same logic (in case it moved server-side) turned up nothing either.
-- **Practical effect:** an overdue recurring task is never silently rolled forward. It just sits overdue in the Today tab indefinitely — `dueDate` and `currentStreak` are never touched unless the user actively completes or edits it. `missedCountHistory` never gets a new entry from this path (a user editing the task manually is the only other write path, and that doesn't touch this field either).
-- **This is a real product bug, not just a stale doc** — worth a ticket independent of anything documentation-related. The intended behavior (silent reset with a grace window, protecting late-night completions) is exactly the kind of anti-punishing design the Ned/Pink-Cloud persona work calls for; right now it simply doesn't fire.
+**Current (live) behavior:** an overdue recurring task is silently rolled forward within the 2-hour trailing-midnight grace window, exactly as originally spec'd. `reconcileOverdueTask()` does apply a real streak penalty on a miss (resets `currentStreak` to 0, or decrements further if already 0) and appends to `missedCountHistory` — but neither of those is surfaced anywhere in user-facing UI (only visible via the admin-only `DebugTools.tsx`), so a user never sees "Streak: 0" or a negative streak rendered — the no-guilt design intent holds even though the underlying data does track misses.
 
 ## Related docs
 

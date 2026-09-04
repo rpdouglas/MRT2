@@ -17,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { generateCBAReflection } from '../../lib/gemini';
 import { DRAFT_TAG, type CBAPayload } from '../../lib/types/smart';
 import { InformationCircleIcon, ScaleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { THEME } from '../../lib/theme';
 
 const EXPLANATION = "The Cost Benefit Analysis (CBA) helps you see the 'big picture' of your addictive behavior. By weighing short and long-term pros and cons, you move from 'feeling' you should quit to 'knowing' why you must.";
 
@@ -128,7 +129,7 @@ function CBAToolInner({ data, updateData, save, isSaving, forceFresh }: CBAToolI
                     title="Cost Benefit Analysis"
                     subtitle="Let's name the behavior first"
                     icon={ScaleIcon}
-                    fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                    fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
                 />
                 <div className="-mt-8 relative z-10 max-w-2xl mx-auto px-4 pb-24 space-y-5">
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-blue-100 shadow-sm p-5 space-y-4">
@@ -188,7 +189,7 @@ function CBAToolInner({ data, updateData, save, isSaving, forceFresh }: CBAToolI
                 title="Cost Benefit Analysis"
                 subtitle={`Reviewing: ${data.behavior}`}
                 icon={ScaleIcon}
-                fromColor="from-blue-600" viaColor="via-indigo-600" toColor="to-violet-600"
+                fromColor={THEME.tools.header.from} viaColor={THEME.tools.header.via} toColor={THEME.tools.header.to}
             />
             <div className="-mt-8 relative z-10 max-w-4xl mx-auto px-4 pb-24 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -215,7 +216,12 @@ function CBAToolInner({ data, updateData, save, isSaving, forceFresh }: CBAToolI
                                 <SparklesIcon className="w-4 h-4 text-fuchsia-500" />
                                 {reflectionLoading ? 'Reflecting…' : 'What does this tell you?'}
                             </button>
-                            {reflection && <p className="text-sm text-fuchsia-900/90">{reflection}</p>}
+                            {reflection && (
+                                <div className="flex items-start gap-2">
+                                    <SparklesIcon className="w-4 h-4 text-fuchsia-500 shrink-0 mt-0.5" />
+                                    <p className="text-sm text-fuchsia-900/90"><span className="font-bold">✦ AI Reflection:</span> {reflection}</p>
+                                </div>
+                            )}
                         </>
                     ) : (
                         <p className="text-xs text-fuchsia-900/70">Upgrade to Premium for an AI reflection on your completed analysis.</p>

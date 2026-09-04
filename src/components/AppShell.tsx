@@ -18,7 +18,8 @@ import { findBackupFile, uploadBackupToDrive } from '../lib/googleDrive';
 import SOSModal from './SOSModal';
 import PWAInstallBanner from './PWAInstallBanner';
 import FeedbackModal from './FeedbackModal';
-import { PWAUpdateBeacon } from './PWAUpdateBeacon'; 
+import { PWAUpdateBeacon } from './PWAUpdateBeacon';
+import { ASSETS } from '../data/assets';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSOS, isOnline } = useLayout();
@@ -124,7 +125,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <div className="flex h-16 shrink-0 items-center justify-between px-6 pt-6">
                    <div className="flex items-center gap-3 text-white font-bold text-[17px] tracking-tight whitespace-nowrap">
                       <div className="bg-white shadow-sm p-1.5 rounded-lg shrink-0">
-                        <img src="/pwa-192x192.png" alt="MRT Logo" className="h-8 w-8 object-contain" />
+                        <img src={ASSETS.pwa_192x192} alt="MRT Logo" className="h-8 w-8 object-contain" />
                       </div>
                       My Recovery Toolkit
                    </div>

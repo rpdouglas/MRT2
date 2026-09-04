@@ -7,7 +7,7 @@ import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { db } from '../../lib/firebase';
 import { collection, Timestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, Cog6ToothIcon, MapPinIcon, ArrowPathIcon, TagIcon, XMarkIcon, MicrophoneIcon, FaceSmileIcon, LockClosedIcon, DocumentTextIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { getUserTemplates, type JournalTemplate } from '../../lib/db';
 import { DEFAULT_TEMPLATES } from '../../data/journalTemplates';
 import { getCurrentWeather } from '../../lib/weather';
@@ -82,6 +82,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
   const [activeTemplate, setActiveTemplate] = useState<JournalTemplate | null>(null);
   const [formAnswers, setFormAnswers] = useState<string[]>([]);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [showTranscriptionNotice, setShowTranscriptionNotice] = useState(false);
   const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
 
   const fetchLocalWeather = useCallback(async () => {
@@ -198,6 +199,13 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
       setMood(result.mood_score);
       setTags(prev => [...new Set([...prev, ...result.tags, "Voice Note"])]);
       setIsVoiceMode(false);
+      // Vibrant Momentum's AI Integration UI rule: AI output must never be merged in
+      // silently/authoritatively. The transcription becomes plain editable text (there's
+      // no way to mark it inline within a free-text field), so this one-time notice at
+      // the moment of insertion is the mechanism — it tells the user what just happened
+      // and invites review/edit before it's indistinguishable from what they typed.
+      setShowTranscriptionNotice(true);
+      setTimeout(() => setShowTranscriptionNotice(false), 6000);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -337,13 +345,21 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
                     ))}
                 </div>
             ) : (
-                <textarea
-                    ref={textareaRef}
-                    value={newEntry}
-                    onChange={(e) => setNewEntry(e.target.value)}
-                    placeholder="How are you feeling today?"
-                    className="w-full h-full rounded-2xl notebook-paper font-serif text-base resize-none text-slate-800 placeholder:text-slate-400 focus:outline-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] border border-slate-200"
-                />
+                <div className="h-full flex flex-col gap-2">
+                    {showTranscriptionNotice && (
+                        <div className="flex items-center gap-2 rounded-xl bg-fuchsia-50 border border-fuchsia-100 px-3 py-2 text-xs font-bold text-fuchsia-900 shrink-0">
+                            <SparklesIcon className="h-4 w-4 text-fuchsia-500 shrink-0" />
+                            ✦ Transcribed by AI — review and edit below before saving.
+                        </div>
+                    )}
+                    <textarea
+                        ref={textareaRef}
+                        value={newEntry}
+                        onChange={(e) => setNewEntry(e.target.value)}
+                        placeholder="How are you feeling today?"
+                        className="w-full flex-1 rounded-2xl notebook-paper font-serif text-base resize-none text-slate-800 placeholder:text-slate-400 focus:outline-none shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] border border-slate-200"
+                    />
+                </div>
             )}
         </div>
 
