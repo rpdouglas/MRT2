@@ -15,7 +15,7 @@ Your Dashboard is the central command center for your recovery journey. It aggre
 
 ## 1. The Identity & Momentum Card
 At the very top of your dashboard is your unified Identity Card.
-* **Clean Time:** Tracks your exact sobriety time in Years, Months, and Days.
+* **Clean Time:** Tracks your exact sobriety time in Years, Months, and Days. If you're on the Stability Track (see below), you can rename "Days" to something like "Days of Stability" in **Profile → General**.
 * **Gamification Rank:** Right below your time, you will see your current Level, Archetype (e.g., Scholar, Doer, Monk), and your XP Progress Bar.
 * **Financial Freedom:** If configured, the bottom right will show exactly how much money you have saved since your sobriety date.
   > **💡 Pro Tip:** You can configure your daily, weekly, or monthly substance cost in **Profile → General** to activate the Financial Freedom tracker.
@@ -62,10 +62,14 @@ The right button opens today's reading in-app (see the [Daily Readings guide](/g
 
 A red dot badge appears on the button if you haven't read today.
 
+### Log Dose (Stability Track)
+If you're on a medication-assisted recovery path, you can turn on the **Stability Track** in **Profile → General** to add a third button here: **Log Dose**. One tap marks today's dose as taken — no notes, no extra steps required. Once logged, the button shows **Logged** for the rest of the day. This is completely optional and stays hidden unless you turn it on.
+
 ## 4. Push Notifications (The Beacon)
 Staying on track is easier with gentle nudges. At the top of your Dashboard, you may see a banner asking you to **"Enable Daily Reminders"**.
 * **Milestone Celebrations:** Get notified the moment you hit a new recovery milestone.
 * **Habit Nudges:** Receive a quiet reminder if you have pending habits or tasks left to complete for the day.
+* **Stability Track Reminders:** If you've enabled the Stability Track, you'll get a discreet nudge on days you haven't logged a dose yet. The notification just says "Time for your morning routine check-in" — it never mentions medication, dosage, or anything else that could show up on a lock screen.
 * *Note for iOS (iPhone) users:* Apple requires you to install the app to your Home Screen before it allows push notifications. Follow the installation guide if you don't see the banner.
 
 ### Managing Dashboard Badges
