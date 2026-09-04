@@ -25,16 +25,6 @@ Designed for immediate relief, habit building, and finding stability.
 ## 🌟 MRT Premium (Supporter)
 Designed for users in the maintenance phase looking for deep insights, and sponsors managing commitments.
 
-<figure class="my-8 text-center">
-  <img 
-    src="/screenshots/lisa-sponsees.webp" 
-    alt="Sponsor Sponsee Directory" 
-    class="rounded-3xl border-4 border-slate-900 shadow-xl max-w-[280px] sm:max-w-[320px] mx-auto block mb-3"
-  />
-  <figcaption class="text-xs text-slate-500 font-medium max-w-sm mx-auto">
-    <strong>Sponsor Rolodex:</strong> Lisa's profile showing the secure sponsee tracking directory, step statuses, and private notes.
-  </figcaption>
-</figure>
 * **Unlimited AI Compass:** Unlimited, on-demand Gemini pattern recognition and deep-dive journal analysis.
 * **Recovery Capital Matrix (ROSC):** Full AI-powered assessment, available weekly instead of monthly — Gemini reads your recent journal entries alongside your check-in answers and produces blended domain scores (1–10), a personalised narrative, identified strengths, compassionate growth suggestions, and a suggested next action per domain. All AI output is encrypted before storage.
 * **Custom Templates:** Build and save your own Markdown-powered journal structures.
