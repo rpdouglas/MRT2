@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { ShieldCheckIcon, EnvelopeIcon, LockClosedIcon, KeyIcon, ExclamationTriangleIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { ASSETS } from '../data/assets';
 
@@ -29,6 +30,12 @@ export default function Login() {
   const { loginWithGoogle, loginWithEmail, signupWithEmail, user, loading } = useAuth();
   const { profile, isLoading: profileLoading, isError: profileError } = useUserProfile();
   const navigate = useNavigate();
+
+  usePageMeta({
+    title: 'Sign In',
+    description: 'Sign in or create your encrypted My Recovery Toolkit vault — a zero-knowledge companion for 12-Step and Buddhist-inspired recovery.',
+    path: '/login',
+  });
 
   // State
   const [isLogin, setIsLogin] = useState(true);

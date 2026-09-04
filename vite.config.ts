@@ -54,7 +54,11 @@ export default defineConfig({
         // a few of them), but with no reason to be force-downloaded into the
         // offline precache before a user's first launch. Cut ~16MB off the
         // install payload without touching what's actually servable.
-        globIgnores: ['Marketing/**', 'raw_assets/**'],
+        // og-image.png (PROJ-102 Phase 2) is a social-share preview image —
+        // fetched live by link-preview bots and crawlers, never by the app
+        // itself, so it has no reason to be force-downloaded into the
+        // offline precache either.
+        globIgnores: ['Marketing/**', 'raw_assets/**', 'og-image.png'],
         runtimeCaching: [
             {
                 urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
