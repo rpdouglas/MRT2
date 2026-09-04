@@ -15,7 +15,7 @@
     "test:watch": "vitest --watch",
     "preview": "vite preview",
     "docs:dev": "vitepress dev docs-site",
-    "docs:build": "vitepress build docs-site",
+    "docs:build": "vitepress build docs-site && node scripts/generate-docs-sitemap.mjs",
     "docs:check-specs": "node scripts/check_spec_quality.mjs",
     "test:once": "vitest run",
     "test:e2e": "npm run build --prefix functions && firebase emulators:exec --project=mrt2-app-dev --only auth,firestore,functions \"playwright test\"",

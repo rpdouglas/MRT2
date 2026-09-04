@@ -3,7 +3,12 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "My Recovery Toolkit",
   description: "Privacy-first 12-step recovery toolkit and secure journaling guide.",
-  base: '/',
+  // Deployed to GitHub Pages as a project page at rpdouglas.github.io/MRT2/
+  // (see .github/workflows/deploy-docs.yaml) — base must match that path or
+  // every asset request (/assets/*.css, /assets/*.js) resolves against the
+  // wrong origin in production. Discovered during PROJ-102 Phase 1 while
+  // validating the new sitemap generator against a real build.
+  base: '/MRT2/',
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
