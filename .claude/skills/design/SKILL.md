@@ -5,7 +5,7 @@ description: MRT design system guidelines. Invoke before implementing any UI com
 
 # MRT Design System — Vibrant Momentum
 
-> This is the canonical, currently-enforced design system — what's actually built and what new UI work must match. `docs/design/mrt_design_system.md` ("Momentum Kinetic v3.0") is a separate, unimplemented future-vision document (semantic CSS tokens, custom fonts, an adaptive per-persona rendering engine) — none of that exists in code today. Don't treat the two as interchangeable or as different versions of the same system.
+> This is the canonical, currently-enforced design system — what's actually built and what new UI work must match. This file is the terse, checklist-format version for quick reference before implementing UI work — see `docs/design/vibrant_momentum.md` for the fuller reference with rationale and real code citations. `docs/design/mrt_design_system.md` ("Momentum Kinetic v3.0") is a different, separate, unimplemented future-vision document (semantic CSS tokens, custom fonts, an adaptive per-persona rendering engine) — none of that exists in code today. Don't treat it as interchangeable with, or a different version of, this system.
 
 ## Core Philosophy
 Recovery is a return to life — not a punishment. Reject gloomy health app aesthetics.
