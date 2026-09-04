@@ -225,7 +225,7 @@ export default function SobrietyHero({ date, levelData, archetype, userProfile }
                         </div>
                         <div className="px-1">
                             <div className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-md leading-none">{stats.days}</div>
-                            <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">Days</div>
+                            <div className="text-xs sm:text-sm font-bold uppercase opacity-90 mt-0.5 drop-shadow-sm">{userProfile?.customCounterLabel || 'Days'}</div>
                         </div>
                     </div>
 

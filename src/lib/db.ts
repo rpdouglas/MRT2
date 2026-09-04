@@ -92,6 +92,15 @@ export interface UserProfile {
   // executeVaultRekey). Unset/false means the legacy derivation is still
   // used and a transparent rekey should run on next unlock.
   usesPepperV2?: boolean;
+  // --- NEW: PROJ-111 (MAT Dose-Tracking & Discreet Notifications) ---
+  // Opt-in — undefined/false means the user isn't on a MAT track. Gates the
+  // Dashboard dose-log widget and the customCounterLabel override below.
+  matModeEnabled?: boolean;
+  // User-chosen override for SobrietyHero's "Days" unit label (e.g. "Days of
+  // Stability"). Plaintext — UI copy the user chose, not recovery content,
+  // same category as anchorSettings. Never interpolated into a push
+  // notification body (see functions/src/index.ts's MAT reminder builder).
+  customCounterLabel?: string;
 }
 
 /**
@@ -111,6 +120,23 @@ export interface PlayPurchaseRecord {
   status?: 'active' | 'canceled' | 'expired' | 'on_hold' | 'paused' | 'pending';
   expiryTime?: Timestamp;
   orderId?: string;
+}
+
+/**
+ * mat_doses/{id} — PROJ-111. One-tap daily MAT (medication-assisted
+ * treatment) dose log. Split-encryption, mirroring the tasks/journals
+ * precedent in CLAUDE.md's ZK boundary table: uid/loggedAt/date stay
+ * plaintext (needed for compliance-rate queries, comparable in sensitivity
+ * to a completed task), encryptedNote is AES-GCM via src/lib/crypto.ts for
+ * any free-text side-effect/feeling note the user adds.
+ */
+export interface MatDoseLog {
+  id?: string;
+  uid: string;
+  loggedAt: Timestamp;
+  date: string; // 'yyyy-MM-dd', user's local tz — compliance-rate grouping key
+  isEncrypted: boolean;
+  encryptedNote?: string; // AES-GCM 'IV:Ciphertext'
 }
 
 export interface JournalTemplate {

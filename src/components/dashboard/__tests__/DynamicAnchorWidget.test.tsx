@@ -38,11 +38,17 @@ vi.mock('../../../hooks/useReadingPreferences', () => ({
 }));
 
 const mockPatchFieldsMutateAsync = vi.fn().mockResolvedValue(undefined);
+const mockUseUserProfile = vi.fn(() => ({
+  profile: { anchorSettings: { defaultFellowship: 'DEFAULT' } } as Record<string, unknown>,
+  patchFields: { mutateAsync: mockPatchFieldsMutateAsync },
+}));
 vi.mock('../../../hooks/useUserProfile', () => ({
-  useUserProfile: () => ({
-    profile: { anchorSettings: { defaultFellowship: 'DEFAULT' } },
-    patchFields: { mutateAsync: mockPatchFieldsMutateAsync },
-  }),
+  useUserProfile: () => mockUseUserProfile(),
+}));
+
+const mockLogDose = vi.fn().mockResolvedValue(undefined);
+vi.mock('../../../hooks/useMatDoseLog', () => ({
+  useMatDoseLog: () => ({ todaysDose: null, logDose: mockLogDose, isLogging: false }),
 }));
 
 vi.mock('../../journal/JournalEditor', () => ({ default: () => <div>Journal Editor</div> }));
@@ -61,6 +67,10 @@ function renderWidget() {
 describe('DynamicAnchorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseUserProfile.mockReturnValue({
+      profile: { anchorSettings: { defaultFellowship: 'DEFAULT' } },
+      patchFields: { mutateAsync: mockPatchFieldsMutateAsync },
+    });
   });
 
   it('renders the Check-In and Daily Reading cards', () => {
@@ -68,6 +78,26 @@ describe('DynamicAnchorWidget', () => {
 
     expect(screen.getByText('Morning Check-In')).toBeInTheDocument();
     expect(screen.getByText('Daily Reading')).toBeInTheDocument();
+  });
+
+  it('does not render the Log Dose card when matModeEnabled is unset (PROJ-111)', () => {
+    renderWidget();
+
+    expect(screen.queryByText('Log Dose')).not.toBeInTheDocument();
+  });
+
+  it('renders and can tap the Log Dose card when matModeEnabled is true (PROJ-111)', async () => {
+    mockUseUserProfile.mockReturnValue({
+      profile: { anchorSettings: { defaultFellowship: 'DEFAULT' }, matModeEnabled: true },
+      patchFields: { mutateAsync: mockPatchFieldsMutateAsync },
+    });
+    renderWidget();
+
+    const logDoseButton = screen.getByText('Log Dose');
+    expect(logDoseButton).toBeInTheDocument();
+
+    fireEvent.click(logDoseButton);
+    await waitFor(() => expect(mockLogDose).toHaveBeenCalledWith());
   });
 
   it('opens the journal overlay when the Check-In card is clicked', () => {

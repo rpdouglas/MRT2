@@ -1,6 +1,6 @@
 # 💊 Project 111: MAT Dose-Tracking & Discreet Notifications (Jordan)
 
-**Status:** ⚪ Planned — not yet through `/planning`
+**Status:** 🟢 Implemented — Phases 1-3 (dose log, custom counter label, discreet notifications) shipped 2026-09-04; AI correlation (Jordan's "Side-Effect Correlation Matrix") remains explicit future scope per §1's Scope note.
 **Primary Persona:** Jordan (The Stabiliser)
 **Objective:** Give Jordan a single-tap daily dose log, a renameable sobriety/stability counter, and discreet push notifications — closing the three concrete gaps a 2026-09-03 code audit confirmed are entirely absent today (`customCounterLabel`-type field, dose-logging UI/schema, and drug-name-free notification copy all return zero matches in `src/`).
 
@@ -23,13 +23,13 @@
 
 *This section MUST be completed before any code is written.*
 
-- [ ] **Data Sensitivity:** Yes — "did I take a specific medication today" is sensitive medical data, arguably more sensitive than most journal content because it's structured and unambiguous (unlike free-text prose, it can't be misread). Treat with the same seriousness as journal/workbook content.
-- [ ] **Encryption Strategy:** Split, following the existing `tasks`/`rosc_assessments`/`game_progress` partial-encryption precedent in `CLAUDE.md`'s ZK boundary table (not a new pattern):
+- [x] **Data Sensitivity:** Yes — "did I take a specific medication today" is sensitive medical data, arguably more sensitive than most journal content because it's structured and unambiguous (unlike free-text prose, it can't be misread). Treated with the same seriousness as journal/workbook content.
+- [x] **Encryption Strategy:** Split, following the existing `tasks`/`rosc_assessments`/`game_progress` partial-encryption precedent in `CLAUDE.md`'s ZK boundary table (not a new pattern):
   - `mat_doses/{id}`: `uid`, `loggedAt` (Timestamp), `date` (string, `YYYY-MM-DD`, for compliance-rate queries) — **plaintext**, matching `tasks/{id}`'s existing precedent ("needed for streak evaluation"). The fact that a dose was logged on a given day, with no note attached, is comparable in sensitivity to a completed task.
   - `mat_doses/{id}.encryptedNote` — **optional, AES-GCM encrypted** via `src/lib/crypto.ts`, for any free-text the user adds (side effects, how they're feeling). This is the sensitive part and follows the exact `journals/{id}.content` pattern.
   - `users/{uid}.customCounterLabel` — **plaintext**, added to the existing unencrypted `users/{uid}` profile-metadata doc. This is UI copy the user chose ("Days of Stability"), not recovery content — same category as `anchorSettings` in the current ZK table, not a new exception.
-- [ ] **Key Rotation:** `mat_doses/{id}.encryptedNote` must be included in `executePinRotation` (re-encrypt) and `executeCryptoShredding` (delete), same as `game_progress`'s encrypted fields. `customCounterLabel` needs neither (plaintext metadata, like `sponsorName`).
-- [ ] **Notification content boundary:** push notification bodies are generated server-side (`functions/src/index.ts`, The Beacon). MAT reminder copy must be a fixed, generic string (e.g. "Time for your morning routine check-in") with **zero interpolation of drug name, dose amount, or `customCounterLabel`** — the label itself could be revealing (e.g. a user might name it something identifying), so it must never appear in a push payload, only inside the authenticated app.
+- [x] **Key Rotation:** `mat_doses/{id}.encryptedNote` is included in `executePinRotation` (re-encrypt) and `executeCryptoShredding` (delete), same as `game_progress`'s encrypted fields — see `src/lib/rotation.ts` and its test coverage in `rotation.test.ts`. `customCounterLabel` needs neither (plaintext metadata, like `sponsorName`).
+- [x] **Notification content boundary:** `functions/src/index.ts`'s `computeMatReminderAlert` uses fixed, generic copy ("Time for your morning routine check-in") with **zero interpolation** of drug name, dose amount, or `customCounterLabel` — guarded by a dedicated keyword test in `functions/src/index.test.ts`.
 
 ---
 
@@ -101,13 +101,13 @@
 
 ## 6. Open Questions
 
-*These should be resolved during `/planning`, not silently assumed.*
+Resolved during `/planning` (2026-09-04), not silently assumed:
 
-| # | Question | Options |
+| # | Question | Resolution |
 |---|---|---|
-| 1 | Does `matModeEnabled` gate anything beyond the Dashboard widget and counter label — e.g. does it change onboarding copy, or Welcome page framing? | (a) UI-only gate, no onboarding change (simplest, matches this spec's bounded scope) · (b) Also offers MAT-specific onboarding path |
-| 2 | Should missed-dose days affect the compliance-rate number the same way Tasks' Rhythm Score treats missed days (forgiving, 14-day rolling), or does medical compliance need a stricter/different metric? | (a) Reuse Rhythm Score's exact forgiving formula · (b) A distinct, possibly stricter formula — needs a product call, since under-representing a real compliance gap could matter clinically in a way a missed journaling day doesn't |
-| 3 | Is one `mat_doses` log per day sufficient, or do some MAT regimens need multiple doses/day (e.g. split-dose Suboxone)? | (a) One log/day (simplest, matches the "Days of Stability" framing) · (b) Multiple timestamped logs/day — bigger schema and UI implication |
+| 1 | Does `matModeEnabled` gate anything beyond the Dashboard widget and counter label? | **(a) UI-only gate.** No onboarding change — Welcome.tsx's marketing carousel already covers Jordan without a code change. |
+| 2 | Should missed-dose days use Rhythm Score's exact forgiving formula, or something stricter? | **Reuse the forgiving *pattern*, not the function.** `rhythmScore.ts` takes `Task[]`, which `mat_doses` docs don't fit — `src/lib/matCompliance.ts` implements the same day-Set-dedup algorithm over `MatDoseLog[]`. Kept forgiving, not stricter, per CLAUDE.md's crisis-first "no punishing streak-breaks" principle — MRT isn't a clinical adherence monitor. |
+| 3 | One `mat_doses` log per day, or multiple for split-dose regimens? | **One per day for v1** — `useMatDoseLog.ts`'s `logDose()` is idempotent (deterministic `${uid}_${date}` doc ID, upserted via `setDoc`/merge), so re-logging the same day updates rather than errors. Multi-dose/day remains explicit future scope. |
 
 ---
 

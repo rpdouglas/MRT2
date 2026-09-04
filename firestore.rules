@@ -63,6 +63,19 @@ service cloud.firestore {
       return request.resource.data.encryptedState.size() < 204800; // 200KB
     }
 
+    // PROJ-111 (MAT Dose-Tracking) — mirrors isValidJournalShape/Size above,
+    // but encryptedNote is optional (a bare dose log with no note is valid).
+    function isValidMatDoseShape() {
+      return request.resource.data.uid is string &&
+             request.resource.data.loggedAt is timestamp &&
+             request.resource.data.date is string;
+    }
+
+    function isValidMatDoseSize() {
+      return !('encryptedNote' in request.resource.data) ||
+             request.resource.data.encryptedNote.size() < 10240; // 10KB — short note, not a journal entry
+    }
+
     // --- COLLECTION RULES ---
 
     // 1. User Profiles & Subcollections
@@ -163,6 +176,13 @@ service cloud.firestore {
     match /tasks/{taskId} {
       allow create: if isCreatingOwnedResource();
       allow read, update, delete: if isResourceOwner();
+    }
+
+    // 3b. MAT Dose Logs (Root Collection, PROJ-111)
+    match /mat_doses/{doseId} {
+      allow create: if isCreatingOwnedResource() && isValidMatDoseShape() && isValidMatDoseSize();
+      allow read, delete: if isResourceOwner();
+      allow update: if isResourceOwner() && isValidMatDoseShape() && isValidMatDoseSize();
     }
 
     // 4. Insights / Wisdom Log (Root Collection)

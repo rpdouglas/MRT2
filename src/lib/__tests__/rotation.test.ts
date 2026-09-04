@@ -79,14 +79,14 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
 
     // Journals is always processed first, then workbook_answers, then
     // rosc_assessments, then game_progress (PROJ-72), then game_saves
-    // (PROJ-72 Phase 4) — each collection's paginated while-loop issues a
-    // getDocs call per page and needs a final EMPTY page to terminate. This
-    // test suite only exercises the journals collection, so: N journal pages
-    // with docs, then one empty journal page to end that loop, then one
-    // empty page each for workbook_answers, rosc_assessments, game_progress,
-    // and game_saves.
+    // (PROJ-72 Phase 4), then mat_doses (PROJ-111) — each collection's
+    // paginated while-loop issues a getDocs call per page and needs a final
+    // EMPTY page to terminate. This test suite only exercises the journals
+    // collection, so: N journal pages with docs, then one empty journal page
+    // to end that loop, then one empty page each for workbook_answers,
+    // rosc_assessments, game_progress, game_saves, and mat_doses.
     function queueGetDocs(journalPages: FakeSnapshot[]) {
-        const calls = [...journalPages, emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot()];
+        const calls = [...journalPages, emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot(), emptySnapshot()];
         for (const page of calls) {
             vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
         }
@@ -95,13 +95,14 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
     // Same shape as queueGetDocs, but lets a test supply explicit pages for
     // every stage instead of only journals — used by the game_progress test
     // below, which needs non-empty pages past the journals stage.
-    function queueGetDocsForStages(stages: { journals?: FakeSnapshot[]; workbooks?: FakeSnapshot[]; rosc?: FakeSnapshot[]; gameProgress?: FakeSnapshot[]; gameSaves?: FakeSnapshot[] }) {
+    function queueGetDocsForStages(stages: { journals?: FakeSnapshot[]; workbooks?: FakeSnapshot[]; rosc?: FakeSnapshot[]; gameProgress?: FakeSnapshot[]; gameSaves?: FakeSnapshot[]; matDoses?: FakeSnapshot[] }) {
         const calls = [
             ...(stages.journals ?? []), emptySnapshot(),
             ...(stages.workbooks ?? []), emptySnapshot(),
             ...(stages.rosc ?? []), emptySnapshot(),
             ...(stages.gameProgress ?? []), emptySnapshot(),
             ...(stages.gameSaves ?? []), emptySnapshot(),
+            ...(stages.matDoses ?? []), emptySnapshot(),
         ];
         for (const page of calls) {
             vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
@@ -202,6 +203,41 @@ describe('🔐 PIN Rotation Safety (Crypto-Shredding & Resume)', () => {
         const s1Update = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 's1');
         expect(s1Update).toBeDefined();
         expect(s1Update![1].encryptedState).not.toBe(staleState);
+    });
+
+    it('re-encrypts a mat_doses document\'s optional encryptedNote (PROJ-111)', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+        const staleNote = await encrypt('Felt a little nauseous this morning.');
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocsForStages({
+            matDoses: [pageSnapshot([
+                { id: 'm1', ref: { __id: 'm1' }, data: () => ({ uid: 'user_1', date: '2026-09-04', encryptedNote: staleNote }) },
+            ])],
+        });
+
+        await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
+
+        const m1Update = updateCalls.find(([ref]) => (ref as { __id: string }).__id === 'm1');
+        expect(m1Update).toBeDefined();
+        expect(m1Update![1].encryptedNote).not.toBe(staleNote);
+    });
+
+    it('leaves a bare mat_doses document (no encryptedNote) untouched — plaintext loggedAt/date need no rotation (PROJ-111)', async () => {
+        const oldSalt = generateSalt();
+        await generateKey(OLD_PIN, oldSalt);
+
+        vi.mocked(firestore.getDoc).mockResolvedValue(mockProfileSnapshot({}));
+        queueGetDocsForStages({
+            matDoses: [pageSnapshot([
+                { id: 'm2', ref: { __id: 'm2' }, data: () => ({ uid: 'user_1', date: '2026-09-04' }) },
+            ])],
+        });
+
+        await executePinRotation('user_1', OLD_PIN, NEW_PIN, oldSalt, null, false, () => {});
+
+        expect(updateCalls.some(([ref]) => (ref as { __id: string }).__id === 'm2')).toBe(false);
     });
 
     it('resumes an interrupted rotation: skips documents already migrated under a pending key instead of failing', async () => {
@@ -324,8 +360,8 @@ describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
 
     it('deletes game_progress documents alongside journals/workbooks/rosc', async () => {
         // Order matches executeCryptoShredding: journals, workbooks, rosc,
-        // game_progress, then game_saves — each loop needs a terminating
-        // empty page.
+        // game_progress, game_saves, then mat_doses — each loop needs a
+        // terminating empty page.
         const pages = [
             emptySnapshot(), // journals
             emptySnapshot(), // workbooks
@@ -333,6 +369,7 @@ describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
             pageSnapshot([{ id: 'g1', ref: { __id: 'g1' }, data: () => ({ encryptedStats: 'x' }) }]), // game_progress page 1
             emptySnapshot(), // game_progress terminator
             emptySnapshot(), // game_saves terminator
+            emptySnapshot(), // mat_doses terminator
         ];
         for (const page of pages) {
             vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
@@ -354,6 +391,7 @@ describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
             pageSnapshot([{ id: 'xword1', ref: { __id: 'xword1' }, data: () => ({ gameId: 'daily-crossword', score: 0, encryptedStats: 'x' }) }]), // game_progress page 1
             emptySnapshot(), // game_progress terminator
             emptySnapshot(), // game_saves terminator
+            emptySnapshot(), // mat_doses terminator
         ];
         for (const page of pages) {
             vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
@@ -362,5 +400,24 @@ describe('🔥 Crypto-Shredding includes game_progress (PROJ-72)', () => {
         await executeCryptoShredding('user_1');
 
         expect(deleteCalls).toContainEqual({ __id: 'xword1' });
+    });
+
+    it('deletes mat_doses documents alongside journals/workbooks/rosc/game_progress/game_saves (PROJ-111)', async () => {
+        const pages = [
+            emptySnapshot(), // journals
+            emptySnapshot(), // workbooks
+            emptySnapshot(), // rosc
+            emptySnapshot(), // game_progress terminator
+            emptySnapshot(), // game_saves terminator
+            pageSnapshot([{ id: 'm1', ref: { __id: 'm1' }, data: () => ({ uid: 'user_1', date: '2026-09-04' }) }]), // mat_doses page 1
+            emptySnapshot(), // mat_doses terminator
+        ];
+        for (const page of pages) {
+            vi.mocked(firestore.getDocs).mockResolvedValueOnce(page as unknown as Awaited<ReturnType<typeof firestore.getDocs>>);
+        }
+
+        await executeCryptoShredding('user_1');
+
+        expect(deleteCalls).toContainEqual({ __id: 'm1' });
     });
 });
