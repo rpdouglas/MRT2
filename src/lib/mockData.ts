@@ -1,6 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { UserProfile, JournalEntry, Task, WorkbookAnswer } from './db';
 import type { SavedInsight } from './insights';
+import type { ROSCAssessment } from './types/rosc';
 
 // Helper to get relative dates
 const daysAgo = (days: number): Date => {
@@ -108,6 +109,36 @@ const NED_TASKS: Task[] = [
         category: 'Recovery',
         createdAt: daysAgo(1),
         dueDate: daysAgo(0)
+    },
+    // Screenshot pipeline (TD-31): a future-dated task so /tasks?mockUser=ned's "Later"
+    // tab has real content instead of an empty state.
+    {
+        id: 'ned-task-5',
+        uid: 'mock-uid-ned',
+        title: 'Prepare a share for Friday\'s meeting',
+        completed: false,
+        status: 'pending',
+        isRecurring: false,
+        frequency: 'once',
+        currentStreak: 0,
+        priority: 'Low',
+        category: 'Recovery',
+        createdAt: daysAgo(0),
+        dueDate: daysAgo(-3)
+    },
+    {
+        id: 'ned-task-6',
+        uid: 'mock-uid-ned',
+        title: '60-Day Milestone Check-in with Sponsor',
+        completed: false,
+        status: 'pending',
+        isRecurring: false,
+        frequency: 'once',
+        currentStreak: 0,
+        priority: 'Medium',
+        category: 'Recovery',
+        createdAt: daysAgo(0),
+        dueDate: daysAgo(-15)
     }
 ];
 
@@ -182,37 +213,83 @@ const MAYA_JOURNALS: JournalEntry[] = [
         tags: ['cbt', 'reflection', 'peace'],
         createdAt: createMockTimestamp(hoursAgo(4)),
         isEncrypted: false
-    }
+    },
+    // Screenshot pipeline (TD-31): SMART Tool completions save into `journals` as a
+    // stringified { metadata: { type }, data } envelope (see smartToolPayload.ts) —
+    // these give /tools/:toolType/history?mockUser=maya real content instead of an
+    // empty state, via useToolHistory's array-contains-tag query.
+    {
+        id: 'maya-journal-cba-1',
+        uid: 'mock-uid-maya',
+        content: JSON.stringify({
+            metadata: { type: 'CBA', version: '1', lastSaved: daysAgo(6).toISOString() },
+            data: {
+                behavior: 'Skipping my evening walk when I feel overwhelmed',
+                advantagesDoing: ['More time to decompress alone', 'Avoids small talk with neighbors'],
+                disadvantagesDoing: ['Loses my main stress outlet', 'Sleep gets worse within a day or two'],
+                advantagesStopping: ['Better sleep', 'Keeps my mood more stable through the week'],
+                disadvantagesStopping: ['Requires motivation I don’t always have after a long day'],
+            },
+        }),
+        moodScore: 7,
+        tags: ['CBA', 'cbt'],
+        createdAt: createMockTimestamp(daysAgo(6)),
+        isEncrypted: false,
+    },
+    {
+        id: 'maya-journal-abc-1',
+        uid: 'mock-uid-maya',
+        content: JSON.stringify({
+            metadata: { type: 'ABC', version: '1', lastSaved: daysAgo(9).toISOString() },
+            data: {
+                activatingEvent: 'A coworker cancelled our 1:1 at the last minute for the second week running.',
+                beliefs: 'She must be avoiding me because of something I did.',
+                consequences: 'Spent the afternoon anxious and distracted, replayed our last conversation twice.',
+                dispute: 'She rescheduled, not cancelled outright, and mentioned a packed sprint deadline in her message.',
+                effectiveBelief: 'Her calendar is genuinely full right now — this isn’t about me.',
+            },
+        }),
+        moodScore: 6,
+        tags: ['ABC', 'cbt'],
+        createdAt: createMockTimestamp(daysAgo(9)),
+        isEncrypted: false,
+    },
 ];
 
+// Screenshot pipeline (TD-31): 'guided-cbt'/'identifying-triggers'/etc. below were never
+// real workbook/section/question ids (src/data/workbooks.ts's WORKBOOKS only has
+// general_recovery/12_steps/recovery_dharma/womens_recovery) — WorkbookDetail rendered
+// "Workbook not found" for Maya the moment a screenshot target actually exercised this
+// fixture. Remapped to the real General Recovery Workbook's 'main' section and its
+// actual gen_* question ids, content adjusted to genuinely answer those prompts.
 const MAYA_WORKBOOK_ANSWERS: WorkbookAnswer[] = [
-    // Guided CBT - Section 1, Question 1
+    // General Recovery Workbook — "What emotions trigger your desire to use?"
     {
         uid: 'mock-uid-maya',
-        workbookId: 'guided-cbt',
-        sectionId: 'identifying-triggers',
-        questionId: 'trigger-list',
-        answer: 'Heavy stress at work, feeling isolated on weekends, and fatigue.',
+        workbookId: 'general_recovery',
+        sectionId: 'main',
+        questionId: 'gen_4',
+        answer: 'Heavy stress at work, feeling isolated on weekends, and fatigue late in the day.',
         isEncrypted: false,
         updatedAt: daysAgo(10)
     },
-    // Guided CBT - Section 1, Question 2
+    // General Recovery Workbook — "How has your addiction affected your relationships..."
     {
         uid: 'mock-uid-maya',
-        workbookId: 'guided-cbt',
-        sectionId: 'identifying-triggers',
-        questionId: 'automatic-thoughts',
-        answer: '"I need an escape right now" and "I can\'t handle this pressure."',
+        workbookId: 'general_recovery',
+        sectionId: 'main',
+        questionId: 'gen_3',
+        answer: 'I withdrew from my closest friends for almost a year and missed my sister\'s move without explanation. Rebuilding that trust is still in progress.',
         isEncrypted: false,
         updatedAt: daysAgo(10)
     },
-    // Guided CBT - Section 2, Question 1
+    // General Recovery Workbook — "What are your biggest fears about living sober?"
     {
         uid: 'mock-uid-maya',
-        workbookId: 'guided-cbt',
-        sectionId: 'cognitive-distortions',
-        questionId: 'distortion-check',
-        answer: 'Catastrophizing (expecting the worst) and All-or-Nothing thinking (feeling like a failure if a day isn\'t perfect).',
+        workbookId: 'general_recovery',
+        sectionId: 'main',
+        questionId: 'gen_8',
+        answer: 'That I\'ll lose the identity I built around always having an escape hatch, and won\'t know who I am without it.',
         isEncrypted: false,
         updatedAt: daysAgo(5)
     }
@@ -382,12 +459,210 @@ const WALT_INSIGHTS: SavedInsight[] = [
     }
 ];
 
+// Screenshot pipeline (TD-31): Walt's Recovery Capital/ROSC trend requires 2+ assessments
+// to render a real trajectory instead of "Insufficient Data" — matches his existing
+// long-history/Insights persona fit (WALT_INSIGHTS above).
+const WALT_ROSC_ASSESSMENTS: ROSCAssessment[] = [
+    {
+        id: 'walt-rosc-2',
+        uid: 'mock-uid-walt',
+        createdAt: createMockTimestamp(daysAgo(3)),
+        periodStart: createMockTimestamp(daysAgo(33)),
+        periodEnd: createMockTimestamp(daysAgo(3)),
+        scores: {
+            health: { score: 8, selfReportedScore: 4, evidenceCount: 3 },
+            home: { score: 9, selfReportedScore: 5, evidenceCount: 2 },
+            purpose: { score: 7, selfReportedScore: 4, evidenceCount: 4 },
+            community: { score: 7, selfReportedScore: 4, evidenceCount: 2 },
+        },
+        totalScore: 31,
+        trajectory: 'Improving',
+        journalEntriesAnalysed: 24,
+        encryptedAIContext: JSON.stringify({
+            narrative: 'The last 30 days show a steady climb across every domain, most notably Home and Health. Your evening meditation streak (120 days) continues to anchor your emotional baseline.',
+            strengths: ['Resilience', 'Meditation consistency', 'Proactive journaling'],
+            growth_areas: ['Community — slightly behind the other three domains'],
+            evidence: {
+                health: ['Consistent sleep-schedule entries', 'No fatigue mentions in the last 2 weeks'],
+                home: ['Describes home as "settled" in 3 separate entries'],
+                purpose: ['Two entries reference mentoring newer AA members'],
+                community: ['One meeting attendance mentioned this period'],
+            },
+            actions: {
+                health: 'Keep the current sleep routine — it\'s working.',
+                home: 'No action needed — this domain is strong.',
+                purpose: 'Consider formalizing the mentoring into a regular commitment.',
+                community: 'One additional meeting or Recovery Dharma sit this month would round this out.',
+            },
+        }),
+    },
+    {
+        id: 'walt-rosc-1',
+        uid: 'mock-uid-walt',
+        createdAt: createMockTimestamp(daysAgo(33)),
+        periodStart: createMockTimestamp(daysAgo(63)),
+        periodEnd: createMockTimestamp(daysAgo(33)),
+        scores: {
+            health: { score: 7, selfReportedScore: 4, evidenceCount: 2 },
+            home: { score: 8, selfReportedScore: 4, evidenceCount: 2 },
+            purpose: { score: 6, selfReportedScore: 3, evidenceCount: 3 },
+            community: { score: 6, selfReportedScore: 3, evidenceCount: 1 },
+        },
+        totalScore: 27,
+        trajectory: 'Stable',
+        journalEntriesAnalysed: 19,
+        encryptedAIContext: JSON.stringify({
+            narrative: 'A stable period overall, with Purpose and Community trailing Health and Home slightly.',
+            strengths: ['Consistent daily practice'],
+            growth_areas: ['Purpose', 'Community'],
+            evidence: { health: [], home: [], purpose: [], community: [] },
+            actions: {
+                health: 'Maintain current routine.',
+                home: 'Maintain current routine.',
+                purpose: 'Look for a next service commitment.',
+                community: 'Re-engage with the weekly Recovery Dharma group.',
+            },
+        }),
+    },
+];
+
+// ----------------------------------------------------
+// 5. JORDAN: Stabiliser (MAT, Day 200, Free, Sky Theme)
+// ----------------------------------------------------
+const JORDAN_PROFILE: UserProfile = {
+    uid: 'mock-uid-jordan',
+    email: 'jordan@mrt.mock',
+    displayName: 'Jordan',
+    photoURL: null,
+    sobrietyDate: createMockTimestamp(daysAgo(200)),
+    createdAt: createMockTimestamp(daysAgo(210)),
+    role: 'user',
+    hasCompletedOnboarding: true,
+    tier: 'free',
+    heroColor: 'sky',
+    anchorSettings: {
+        notifyCheckIn: true,
+        notifyReading: false,
+        defaultFellowship: 'Smart Recovery',
+    }
+};
+
+const JORDAN_TASKS: Task[] = [
+    {
+        id: 'jordan-task-1',
+        uid: 'mock-uid-jordan',
+        title: 'Morning routine check-in',
+        completed: true,
+        status: 'completed',
+        isRecurring: true,
+        frequency: 'daily',
+        currentStreak: 34,
+        priority: 'High',
+        category: 'Health',
+        createdAt: daysAgo(34),
+        dueDate: daysAgo(0),
+        lastCompletedAt: daysAgo(0)
+    },
+    {
+        id: 'jordan-task-2',
+        uid: 'mock-uid-jordan',
+        title: 'MARA online meeting',
+        completed: false,
+        status: 'pending',
+        isRecurring: true,
+        frequency: 'weekly',
+        currentStreak: 6,
+        priority: 'Medium',
+        category: 'Recovery',
+        createdAt: daysAgo(42),
+        dueDate: daysAgo(0)
+    }
+];
+
+const JORDAN_JOURNALS: JournalEntry[] = [
+    {
+        id: 'jordan-journal-1',
+        uid: 'mock-uid-jordan',
+        content: 'Stable week. Craving intensity has been low outside of the usual Thursday-afternoon dip. Sleep has been the biggest lever for how the rest of the day goes.',
+        moodScore: 7,
+        tags: ['stability', 'craving-log'],
+        createdAt: createMockTimestamp(hoursAgo(6)),
+        isEncrypted: false
+    }
+];
+
+// ----------------------------------------------------
+// 6. LISA: Service Superstar (7 Years, Premium, Rose Theme)
+// ----------------------------------------------------
+const LISA_PROFILE: UserProfile = {
+    uid: 'mock-uid-lisa',
+    email: 'lisa@mrt.mock',
+    displayName: 'Lisa',
+    photoURL: null,
+    sobrietyDate: createMockTimestamp(daysAgo(2555)),
+    createdAt: createMockTimestamp(daysAgo(2600)),
+    role: 'user',
+    hasCompletedOnboarding: true,
+    tier: 'premium',
+    heroColor: 'rose',
+    anchorSettings: {
+        notifyCheckIn: true,
+        notifyReading: true,
+    }
+};
+
+const LISA_TASKS: Task[] = [
+    {
+        id: 'lisa-task-1',
+        uid: 'mock-uid-lisa',
+        title: 'Check in with sponsees',
+        completed: true,
+        status: 'completed',
+        isRecurring: true,
+        frequency: 'daily',
+        currentStreak: 210,
+        priority: 'High',
+        category: 'Recovery',
+        createdAt: daysAgo(210),
+        dueDate: daysAgo(0),
+        lastCompletedAt: daysAgo(0)
+    },
+    {
+        id: 'lisa-task-2',
+        uid: 'mock-uid-lisa',
+        title: 'My own self-care check-in',
+        completed: false,
+        status: 'pending',
+        isRecurring: true,
+        frequency: 'daily',
+        currentStreak: 3,
+        priority: 'Medium',
+        category: 'Health',
+        createdAt: daysAgo(3),
+        dueDate: daysAgo(0)
+    }
+];
+
+const LISA_JOURNALS: JournalEntry[] = [
+    {
+        id: 'lisa-journal-1',
+        uid: 'mock-uid-lisa',
+        content: 'Reminded myself again tonight that I can\'t pour from an empty cup. Five sponsees is my real capacity, not four and "just one more."',
+        moodScore: 7,
+        tags: ['boundaries', 'service', 'self-care'],
+        createdAt: createMockTimestamp(hoursAgo(5)),
+        isEncrypted: false
+    }
+];
+
 // Helper functions for easy querying
 export function getMockProfile(email: string): UserProfile | null {
     if (email.startsWith('ned')) return NED_PROFILE;
     if (email.startsWith('maya')) return MAYA_PROFILE;
     if (email.startsWith('david')) return DAVID_PROFILE;
     if (email.startsWith('walt')) return WALT_PROFILE;
+    if (email.startsWith('jordan')) return JORDAN_PROFILE;
+    if (email.startsWith('lisa')) return LISA_PROFILE;
     return null;
 }
 
@@ -396,6 +671,8 @@ export function getMockTasks(email: string): Task[] {
     if (email.startsWith('maya')) return MAYA_TASKS;
     if (email.startsWith('david')) return DAVID_TASKS;
     if (email.startsWith('walt')) return WALT_TASKS;
+    if (email.startsWith('jordan')) return JORDAN_TASKS;
+    if (email.startsWith('lisa')) return LISA_TASKS;
     return [];
 }
 
@@ -404,6 +681,8 @@ export function getMockJournals(email: string): JournalEntry[] {
     if (email.startsWith('maya')) return MAYA_JOURNALS;
     if (email.startsWith('david')) return DAVID_JOURNALS;
     if (email.startsWith('walt')) return WALT_JOURNALS;
+    if (email.startsWith('jordan')) return JORDAN_JOURNALS;
+    if (email.startsWith('lisa')) return LISA_JOURNALS;
     return [];
 }
 
@@ -414,6 +693,12 @@ export function getMockWorkbookAnswers(email: string): WorkbookAnswer[] {
 
 export function getMockInsights(email: string): SavedInsight[] {
     if (email.startsWith('walt')) return WALT_INSIGHTS;
+    return [];
+}
+
+// Screenshot pipeline (TD-31): backs the mock branch added to useROSCAssessments.ts.
+export function getMockROSCAssessments(email: string): ROSCAssessment[] {
+    if (email.startsWith('walt')) return WALT_ROSC_ASSESSMENTS;
     return [];
 }
 

@@ -9,11 +9,14 @@ All screenshots are optimized WebP files located in:
 
 ## 👥 The Persona Context
 
-The app renders distinct UI themes and datasets tailored to four recovery personas. If uploading these screenshots to an LLM, refer to this mapping:
+The app renders distinct UI themes and datasets tailored to six recovery personas (per `docs/PERSONAS.md`). If uploading these screenshots to an LLM, refer to this mapping:
 *   **Ned (Momentum - Amber Theme)**: 45 days sober, premium tier. Focuses on daily habits, morning routines, and consistent check-ins.
 *   **Maya (Workbook - Violet Theme)**: 120 days sober, premium tier. Deeply engaged in cognitive behavioral therapy (CBT) workbooks and structured exercises.
 *   **David (Survival - Rose Theme)**: 5 days sober, free tier. Managing acute cravings, tracking immediate urges, and checking in with his sponsor.
 *   **Walt (Insights - Emerald Theme)**: 2 years (730 days) sober, premium tier. High stability, analyzing monthly recovery trends, and reviewing AI-generated cognitive insights.
+*   **Jordan (Stabiliser - Sky Theme)**: 200 days on MAT, free tier. Medication compliance, routine check-ins, non-judgmental framing. **Added 2026-09-04 (TD-31)** — previously had auth but no profile/task/journal mock data (`mockData.ts`), so any non-game screenshot for Jordan rendered blank.
+*   **Lisa (Service Superstar - Rose Theme)**: 7 years sober, premium tier. Sponsee check-ins alongside her own self-care boundaries. **Added 2026-09-04 (TD-31)** — same gap as Jordan; note her flagship Service Module (PROJ-05) has no UI built yet, so she's captured on generic app screens (Vitality), not a sponsee dashboard that doesn't exist.
+*   **Admin**: internal/operational account, not a recovery persona — used only for the Admin Dashboard and Debug Tools screens, never for marketing.
 
 ---
 
@@ -48,10 +51,37 @@ The app renders distinct UI themes and datasets tailored to four recovery person
 | **[`walt-trigger-match.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-trigger-match.webp)** | `/games/trigger-match?mockUser=walt` | Walt | Trigger Match idle screen (PROJ-87). Dark-immersive shell, Walt's blue accent (`#60A5FA`) on the "Start" button. |
 | **[`maya-knowledge-quests.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-knowledge-quests.webp)** | `/games/knowledge-quests?mockUser=maya` | Maya | Knowledge Quests pack-picker screen (PROJ-87). Dark-immersive shell, three quiz-pack cards (Stress & The Body / Habit Loops / Sleep & Recovery). |
 | **[`ned-daily-crossword.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-daily-crossword.webp)** | `/games/daily-crossword?mockUser=ned` | Ned | Daily Crossword idle screen (PROJ-88). Dark-immersive shell with the theme banner, first clue, and grid — rendered from a static mock puzzle (`useDailyCrossword.ts`'s `.mock`-user fallback, since the real puzzle is generated server-side nightly with no local equivalent) rather than a real dated puzzle. |
+| **[`maya-cba.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-cba.webp)** | `/tools/cba?mockUser=maya` | Maya | Cost Benefit Analysis intro screen — behavior-naming input before the guided quadrant flow. |
+| **[`maya-abc.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-abc.webp)** | `/tools/abc?mockUser=maya` | Maya | ABC Coping tool intro screen. |
+| **[`maya-dents.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-dents.webp)** | `/tools/dents?mockUser=maya` | Maya | D.E.N.T.S. Strategy tool intro screen. |
+| **[`maya-personify.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-personify.webp)** | `/tools/personify?mockUser=maya` | Maya | Personify & Disarm tool intro screen. |
+| **[`maya-lifestyle-balance.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-lifestyle-balance.webp)** | `/tools/lifestyle-balance?mockUser=maya` | Maya | Lifestyle Balance tool intro screen. |
+| **[`maya-five-questions.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-five-questions.webp)** | `/tools/five-questions?mockUser=maya` | Maya | Five Questions tool intro screen. |
+| **[`maya-morning-intent.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-morning-intent.webp)** | `/tools/morning-intent?mockUser=maya` | Maya | Morning Intent tool intro screen. |
+| **[`maya-resentment-burner.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-resentment-burner.webp)** | `/tools/resentment-burner?mockUser=maya` | Maya | The Resentment Burner's interactive burn-effigy screen — deliberately non-persisting (see `docs/screens/tools/resentment-burner.md`). |
+| **[`maya-tools-history.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-tools-history.webp)** | `/tools/CBA/history?mockUser=maya` | Maya | Tools → View History for Cost Benefit Analysis — one real completed entry ("Skipping my evening walk..."), sourced from `MAYA_JOURNALS`' CBA-tagged mock entry. |
+| **[`walt-recovery-capital-snapshot.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-recovery-capital-snapshot.webp)** | `/insights/rosc?mockUser=walt&tab=snapshot` | Walt | Recovery Capital (ROSC) Snapshot tab — 31/40 total, per-domain pill bars, "+4 this week". |
+| **[`walt-recovery-capital-trends.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-recovery-capital-trends.webp)** | `/insights/rosc?mockUser=walt&tab=trends` | Walt | Recovery Capital Trends tab — 2-point trend line across the two `WALT_ROSC_ASSESSMENTS` fixtures. |
+| **[`walt-recovery-capital-history.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/walt-recovery-capital-history.webp)** | `/insights/rosc?mockUser=walt&tab=history` | Walt | Recovery Capital History tab — list of past assessments (27/40 Stable, 31/40 Improving). |
+| **[`ned-profile-achievements.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-profile-achievements.webp)** | `/profile/achievements?mockUser=ned` | Ned | Profile → Achievements — Rank/Level/XP card, Journal Streak, Habit Fire, Vitality Rhythm, all populated from Ned's existing task/journal mock fixtures. |
+| **[`ned-profile-data.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-profile-data.webp)** | `/profile/data?mockUser=ned` | Ned | Profile → Data — export/import/backup controls. |
+| **[`maya-workbook-detail.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-workbook-detail.webp)** | `/workbooks/general_recovery?mockUser=maya` | Maya | Workbook Detail for the General Recovery Workbook — "3/25 completed" from `MAYA_WORKBOOK_ANSWERS`. |
+| **[`maya-workbook-session.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/maya-workbook-session.webp)** | `/workbooks/general_recovery/session/main?mockUser=maya` | Maya | Workbook Session — the guided one-question-at-a-time flow for the General Recovery Workbook's "Core Questions" section. |
+| **[`ned-tasks-later.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-tasks-later.webp)** | `/tasks?mockUser=ned` (click "Later") | Ned | Tasks → Later tab — two future-dated tasks ("Prepare a share for Friday's meeting", "60-Day Milestone Check-in with Sponsor"). |
+| **[`ned-tasks-log.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/ned-tasks-log.webp)** | `/tasks?mockUser=ned` (click "Log") | Ned | Tasks → Log tab — completed-task history, virtualized/grouped by year-month. |
+| **[`welcome.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/welcome.webp)** | `/` (no mock user — public page) | N/A | The public landing page — hero, "Begin Journey" CTA, "Sign In" link. |
+| **[`login.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/login.webp)** | `/login` (no mock user — public page) | N/A | Sign In / Create Account form, Google sign-in option. |
+| **[`links.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/links.webp)** | `/links` (no mock user — public page) | N/A | The public app-store/PWA-install links page. |
+| **[`delete-account.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/delete-account.webp)** | `/delete-account?mockUser=ned` | N/A | Standalone account-deletion page (reachable without opening the app) — its own re-authentication gate, independent of the global mock session. |
+| **[`debug-tools.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/debug-tools.webp)** | `/debug?mockUser=admin` | Admin | The "Time Travel Debugger" — admin-only dev tooling (TD-14 access-gated), not for marketing use. |
+| **[`jordan-dashboard.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/jordan-dashboard.webp)** | `/dashboard?mockUser=jordan` | Jordan | Dashboard showing Jordan's real profile (200 total days) — exercises the TD-31 Jordan mock-data fix. |
+| **[`lisa-vitality.webp`](file:///workspaces/MRT2/docs-site/public/screenshots/lisa-vitality.webp)** | `/vitality?mockUser=lisa` | Lisa | Vitality → Movement log form — exercises the TD-31 Lisa mock-data fix. |
 
 ---
 
 ## 📖 Detailed LLM Descriptions
+
+*Covers entries 1–27 (the original PROJ-63 set) in full prose. The 25 screenshots added 2026-09-04 (TD-31, coverage completion) are documented at table-row depth above rather than duplicated here in full prose — each row already carries route, persona, and content description; expand this section on request if a future pass needs the richer format for those too.*
 
 ### 1. Ned's Dashboard (`ned-dashboard.webp`)
 *   **Route**: `/dashboard?mockUser=ned`

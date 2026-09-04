@@ -52,7 +52,16 @@ async function captureScreenshots() {
     console.log('✅ Vite dev server is ready.');
 
     console.log('🌐 Launching headless browser...');
-    const browser = await chromium.launch({ headless: true });
+    // Some sandboxed dev environments pre-install a Chromium build under a fixed,
+    // unversioned path but can't reach the network to fetch the exact revision this
+    // Playwright version's default headless-shell launch expects. Prefer that
+    // pre-installed binary when present; every other environment (a real dev
+    // machine, CI) won't have this path and falls through to normal resolution.
+    const sandboxChromium = '/opt/pw-browsers/chromium';
+    const browser = await chromium.launch({
+        headless: true,
+        ...(fs.existsSync(sandboxChromium) ? { executablePath: sandboxChromium } : {}),
+    });
     
     // Pixel 7 emulation
     const pixel7 = devices['Pixel 7'];
@@ -186,15 +195,80 @@ async function captureScreenshots() {
         {
             name: 'ned-daily-crossword',
             url: `${BASE_URL}/games/daily-crossword?mockUser=ned`,
-        }
+        },
+
+        // --- TD-31: coverage completion (2026-09-04) ---
+        // Individual CBT tool intro screens (8 of 9 — thought-record already covered above).
+        // Admin's 3 remaining sub-tabs (Analytics/Health/Maintenance) are deliberately
+        // scoped out — see docs/projects/63_SCREENSHOT_GENERATOR.md §6.
+        { name: 'maya-cba', url: `${BASE_URL}/tools/cba?mockUser=maya` },
+        { name: 'maya-abc', url: `${BASE_URL}/tools/abc?mockUser=maya` },
+        { name: 'maya-dents', url: `${BASE_URL}/tools/dents?mockUser=maya` },
+        { name: 'maya-personify', url: `${BASE_URL}/tools/personify?mockUser=maya` },
+        { name: 'maya-lifestyle-balance', url: `${BASE_URL}/tools/lifestyle-balance?mockUser=maya` },
+        { name: 'maya-five-questions', url: `${BASE_URL}/tools/five-questions?mockUser=maya` },
+        { name: 'maya-morning-intent', url: `${BASE_URL}/tools/morning-intent?mockUser=maya` },
+        { name: 'maya-resentment-burner', url: `${BASE_URL}/tools/resentment-burner?mockUser=maya` },
+
+        // Tools → View History (CBA, since maya's mock journals include 2 real CBA/ABC entries).
+        { name: 'maya-tools-history', url: `${BASE_URL}/tools/CBA/history?mockUser=maya` },
+
+        // Insights → Recovery Capital (ROSC), split into 3 sub-screens this session.
+        { name: 'walt-recovery-capital-snapshot', url: `${BASE_URL}/insights/rosc?mockUser=walt&tab=snapshot` },
+        { name: 'walt-recovery-capital-trends', url: `${BASE_URL}/insights/rosc?mockUser=walt&tab=trends` },
+        { name: 'walt-recovery-capital-history', url: `${BASE_URL}/insights/rosc?mockUser=walt&tab=history` },
+
+        // Profile tabs not yet covered.
+        { name: 'ned-profile-achievements', url: `${BASE_URL}/profile/achievements?mockUser=ned` },
+        { name: 'ned-profile-data', url: `${BASE_URL}/profile/data?mockUser=ned` },
+
+        // Workbooks — Detail and a Session (general_recovery/main, matching MAYA_WORKBOOK_ANSWERS).
+        { name: 'maya-workbook-detail', url: `${BASE_URL}/workbooks/general_recovery?mockUser=maya` },
+        { name: 'maya-workbook-session', url: `${BASE_URL}/workbooks/general_recovery/session/main?mockUser=maya` },
+
+        // Tasks — Later and Log tabs (local component state, not a URL param — click to switch).
+        {
+            name: 'ned-tasks-later',
+            url: `${BASE_URL}/tasks?mockUser=ned`,
+            action: async (page) => { await page.click('button:has-text("Later")'); }
+        },
+        {
+            name: 'ned-tasks-log',
+            url: `${BASE_URL}/tasks?mockUser=ned`,
+            action: async (page) => { await page.click('button:has-text("Log")'); }
+        },
+
+        // Public pages — deliberately no ?mockUser=. AuthContext persists the mock
+        // login to localStorage ('mrt_mock_user'), not just the URL param, so a prior
+        // target's persona would otherwise leak into these "logged-out" captures —
+        // clearMockUser wipes it before navigating.
+        { name: 'welcome', url: `${BASE_URL}/`, clearMockUser: true },
+        { name: 'login', url: `${BASE_URL}/login`, clearMockUser: true },
+        { name: 'links', url: `${BASE_URL}/links`, clearMockUser: true },
+
+        // Account/admin utility pages.
+        { name: 'delete-account', url: `${BASE_URL}/delete-account?mockUser=ned` },
+        { name: 'debug-tools', url: `${BASE_URL}/debug?mockUser=admin` },
+
+        // Exercises the Jordan/Lisa mock-data fix (TD-31) — previously these two personas
+        // had auth but no profile/task/journal fixtures, so any non-game screen for them
+        // rendered blank.
+        { name: 'jordan-dashboard', url: `${BASE_URL}/dashboard?mockUser=jordan` },
+        { name: 'lisa-vitality', url: `${BASE_URL}/vitality?mockUser=lisa` },
     ];
 
     for (const target of targets) {
         console.log(`📸 Capturing ${target.name} from ${target.url}...`);
-        
+
+        if (target.clearMockUser) {
+            // localStorage is per-origin, not per-navigation — only safe to touch once
+            // the page has actually loaded something on this origin at least once.
+            await page.evaluate(() => localStorage.removeItem('mrt_mock_user')).catch(() => {});
+        }
+
         // Go to URL and wait for page load to finish
         await page.goto(target.url, { waitUntil: 'load' });
-        
+
         // Wait 3 seconds for layout calculations, mock state paints, and fonts to stabilize
         await page.waitForTimeout(3000);
 

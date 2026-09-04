@@ -1,6 +1,6 @@
 # 📁 Project 63: Mobile Screenshot Generator
 
-**Status:** ✅ Shipped (core pipeline) — 🟡 Coverage completion in progress, see Phase 6
+**Status:** ✅ Shipped — coverage completion (§6) done 2026-09-04
 **Primary Persona:** All (internal/developer experience)
 **Objective:** Provide an automated, single-command pipeline to run the Vite dev server, render the app using persona-driven mock states in a simulated mobile device viewport, capture screenshots via Playwright, and optimize the output images to WebP format for docs and app store usage.
 
@@ -110,3 +110,14 @@ Extend the existing mock-data + Playwright pipeline (this project) rather than b
 5. Update `docs/SCREENSHOTS_INDEX.md` so every `docs/screens/*.md` file maps to exactly one current screenshot, and add a cross-reference from each `docs/screens/*.md` file back to its screenshot (mirroring how `docs/marketing/` briefs already cross-reference `docs/screens/`).
 
 Tracked as `TD-31` in `docs/ACTIVE_CYCLE.md`.
+
+### 6.4 Completion (2026-09-04)
+
+Executed the plan above. Final state: **52 screenshots**, one per documented screen (Admin's 3 remaining sub-tabs excepted per §6.3), all 18 legacy `scn_*.webp` files retired, `docs/SCREENSHOTS_INDEX.md` updated with all 25 new entries plus Jordan/Lisa/Admin added to the persona-context section.
+
+Three real bugs were found and fixed along the way — the point of actually running the pipeline against every screen rather than assuming the plan would just work:
+- `WorkbookAnswer` fixtures in `mockData.ts` used a fictional `workbookId`/`sectionId`/`questionId` (`'guided-cbt'`/`'identifying-triggers'`/etc.) that matched no real workbook in `src/data/workbooks.ts` — `WorkbookDetail` rendered "Workbook not found." the moment a screenshot target actually exercised it. Remapped to the real `general_recovery` workbook's `main` section and its actual `gen_*` question ids.
+- `useToolHistory.ts`'s `enabled` clause required `db` truthy even for `.mock` users — in a dev environment with no Firebase config (`db` is falsy), this silently disabled the query for everyone, mock or not, independent of the mock-branch fix itself. `useSmartToolCompletions.ts` has the identical pattern and the identical latent bug (ToolsHub's per-tool completion-count badges) — not fixed here (it doesn't block any screenshot target from showing real content, `ned-tools.webp`'s main content is the 4 category accordions, not the badges), logged as a new, smaller finding rather than silently left undiscovered.
+- `AuthContext.tsx` persists the mock login to `localStorage` (`mrt_mock_user`), not just the URL's `?mockUser=` param. Since the pipeline reuses one browser context across all 52 captures, a public/logged-out target (Welcome, Login, Links) placed after any persona target inherited that persona's session. Fixed by clearing the key before navigating to those three.
+
+`npm run lint` / `build` / `test:once` (747 tests) / `docs:check-specs` (80 specs) all clean.
