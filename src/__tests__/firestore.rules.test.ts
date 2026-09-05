@@ -613,3 +613,68 @@ describe('playPurchaseIndex — PROJ-105 RTDN lookup pointer', () => {
     await assertFails(getDoc(doc(aliceDb, 'playPurchaseIndex', 'token-123')));
   });
 });
+
+// PROJ-115: ai_logs/client_errors/feedback previously had no owner-delete
+// path at all (ai_logs had no delete rule whatsoever; client_errors/feedback
+// were admin-only) — silently breaking account deletion's atomic batch for
+// any user who'd ever used an AI feature, hit a client error, or submitted
+// feedback. Read/update stay admin-only; only delete was widened.
+describe('ai_logs / client_errors / feedback — owner-read + owner-delete (PROJ-115)', () => {
+  const CASES = [
+    { collection: 'ai_logs', extraFields: { analysisType: 'deep_pattern_analysis' } },
+    { collection: 'client_errors', extraFields: { message: 'boom' } },
+    { collection: 'feedback', extraFields: { report: 'bug report text' } },
+  ];
+
+  for (const { collection: colName, extraFields } of CASES) {
+    it(`lets a user delete their own ${colName} doc`, async () => {
+      await seedAsAdmin(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), colName, 'doc1'), { uid: ALICE, ...extraFields });
+      });
+
+      const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+      await assertSucceeds(deleteDoc(doc(aliceDb, colName, 'doc1')));
+    });
+
+    it(`blocks a user from deleting someone else's ${colName} doc`, async () => {
+      await seedAsAdmin(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), colName, 'doc1'), { uid: BOB, ...extraFields });
+      });
+
+      const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+      await assertFails(deleteDoc(doc(aliceDb, colName, 'doc1')));
+    });
+
+    // Owner-read is required, not just owner-delete: a client can't delete
+    // by filter without first being allowed to list/query its own docs
+    // (executeTotalAccountAnnihilation finds them via a `where('uid','==',uid)`
+    // query) — found by a real emulator test denying the list itself even
+    // after delete alone was fixed.
+    it(`lets a user read (get) their own ${colName} doc`, async () => {
+      await seedAsAdmin(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), colName, 'doc1'), { uid: ALICE, ...extraFields });
+      });
+
+      const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+      await assertSucceeds(getDoc(doc(aliceDb, colName, 'doc1')));
+    });
+
+    it(`blocks a user from reading someone else's ${colName} doc`, async () => {
+      await seedAsAdmin(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), colName, 'doc1'), { uid: BOB, ...extraFields });
+      });
+
+      const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+      await assertFails(getDoc(doc(aliceDb, colName, 'doc1')));
+    });
+  }
+
+  it('still blocks a non-admin user from updating a feedback doc (admin-only workflow, unchanged)', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'feedback', 'doc1'), { uid: ALICE, report: 'bug report text' });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(updateDoc(doc(aliceDb, 'feedback', 'doc1'), { report: 'edited' }));
+  });
+});

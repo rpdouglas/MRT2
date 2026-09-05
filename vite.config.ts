@@ -98,12 +98,13 @@ export default defineConfig({
     // functions/node_modules for this job, so firebase-functions can't resolve).
     // e2e/ is Playwright's suite (PROJ-23) — its own runner (`test:e2e`) picks
     // it up; Vitest must not also try to import these as unit tests.
-    // firestore.rules.test.ts (PROJ-99) and storage.rules.test.ts (PROJ-113)
-    // need a live Firestore/Storage emulator, not mocks — their own runners
-    // (`test:rules` / `test:rules:storage`) start/stop the relevant emulator
-    // around them; the default mocked-only unit suite must not try to run
-    // them without one running and hang/fail.
-    exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**', 'src/__tests__/firestore.rules.test.ts', 'src/__tests__/storage.rules.test.ts'],
+    // firestore.rules.test.ts (PROJ-99), deletion.rules.test.ts (PROJ-115),
+    // and storage.rules.test.ts (PROJ-113) need a live Firestore/Storage
+    // emulator, not mocks — their own runners (`test:rules` /
+    // `test:rules:storage`) start/stop the relevant emulator around them;
+    // the default mocked-only unit suite must not try to run them without
+    // one running and hang/fail.
+    exclude: [...configDefaults.exclude, 'functions/**', 'e2e/**', 'src/__tests__/firestore.rules.test.ts', 'src/lib/__tests__/deletion.rules.test.ts', 'src/__tests__/storage.rules.test.ts'],
   },
   esbuild: {
     // CODE-01, Production Readiness Audit 2026-07-28: tree-shake any stray

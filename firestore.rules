@@ -19,9 +19,22 @@ service cloud.firestore {
       return request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
-    // Checks for Custom Claim 'admin'
+    // Checks for Custom Claim 'admin'.
+    // PROJ-115: found via a real emulator test (not previously exercised —
+    // every prior rules test only did single-doc get/set/update/delete, none
+    // did a list/query) that `request.auth.token.admin` throws
+    // "Property admin is undefined" for a non-admin's *list* request,
+    // instead of evaluating to false like a plain `get` does — a regular
+    // user's token has no `admin` key at all, and direct property access on
+    // an absent map key errors rather than short-circuiting. `.get(key,
+    // default)` never throws regardless of get/list context, which is why
+    // this was silently swallowed for years: executeTotalAccountAnnihilation
+    // list-queries ai_logs/feedback (etc.) as the non-admin owner, but wraps
+    // each scan in try/catch — so the permission-denied error was caught and
+    // warned, not surfaced, meaning those collections were never even
+    // discovered for deletion, let alone deleted.
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null && request.auth.token.get('admin', false) == true;
     }
 
     // --- SHAPE/SIZE VALIDATION (PROJ-99 Phase 1) ---
@@ -192,15 +205,28 @@ service cloud.firestore {
     }
 
     // 5. AI Analytics Logs
+    // PROJ-115: added owner-delete so a user can actually purge their own
+    // account — previously had no delete rule at all (default deny for
+    // everyone, including admin), which silently broke account deletion for
+    // any user who'd ever used an AI feature. Owner-read (get+list) is
+    // ALSO required, not just delete: executeTotalAccountAnnihilation finds
+    // its own docs via a `where('uid','==',uid)` list query, and Firestore
+    // has no way to delete-by-filter without first being allowed to list —
+    // discovered by a real emulator test denying the list itself even after
+    // delete was fixed. isResourceOwner()-scoped list access is the same
+    // proven pattern every other user-data collection here already uses
+    // (journals, tasks, game_progress, ...) — it only ever exposes a user's
+    // own documents, never another user's.
     match /ai_logs/{logId} {
       allow create: if isCreatingOwnedResource();
-      allow read: if isAdmin();
+      allow read, delete: if isAdmin() || isResourceOwner();
     }
 
     // 6. Client Error Logs
+    // PROJ-115: same fix as ai_logs above.
     match /client_errors/{errorId} {
       allow create: if isCreatingOwnedResource();
-      allow read, delete: if isAdmin();
+      allow read, delete: if isAdmin() || isResourceOwner();
     }
     
     // 7. Service (The Lisa Module - Placeholder for PROJ-05)
@@ -223,9 +249,15 @@ service cloud.firestore {
     }
 
     // 8. Feedback & Bug Reports
+    // PROJ-115: same fix as ai_logs/client_errors above — delete (and the
+    // owner-read a list-based delete requires, see ai_logs' comment) were
+    // admin-only, silently breaking account deletion for any user who'd ever
+    // submitted feedback. `update` stays admin-only — responding to/managing
+    // reports is an admin workflow this ticket doesn't touch.
     match /feedback/{reportId} {
       allow create: if isCreatingOwnedResource();
-      allow read, update, delete: if isAdmin();
+      allow read, delete: if isAdmin() || isResourceOwner();
+      allow update: if isAdmin();
     }
 
     // 9. Daily Reading Preferences (PROJ-42)
