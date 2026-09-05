@@ -73,3 +73,4 @@ stats.html
 # generation output, not curated assets. Promote a chosen image into public/raw_assets/
 # (and run scripts/optimize_assets.py) before it ships; never commit this dir directly.
 /generated-images/
+.inspirational_raw/
