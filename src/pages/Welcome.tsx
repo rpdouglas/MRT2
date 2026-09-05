@@ -5,6 +5,35 @@ import { ShieldCheckIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/reac
 
 import { ASSETS } from '../data/assets';
 import PersonaBioCard from '../components/PersonaBioCard';
+import { usePageMeta, SITE_ORIGIN } from '../hooks/usePageMeta';
+
+// PROJ-102 (SEO/AEO) Phase 2: SoftwareApplication + Organization structured
+// data for the homepage — the app's canonical entity description for search
+// and answer engines. Kept as plain objects at module scope so usePageMeta's
+// effect dependency array sees a stable reference (no unnecessary re-injects).
+const WELCOME_JSON_LD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'My Recovery Toolkit',
+    applicationCategory: 'HealthApplication',
+    operatingSystem: 'Web, Android, iOS',
+    url: SITE_ORIGIN,
+    description: 'A zero-knowledge encrypted recovery companion for 12-Step and Buddhist-inspired recovery. Journal, track habits, and get AI-powered insights — private by design.',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'My Recovery Toolkit',
+    url: SITE_ORIGIN,
+    logo: `${SITE_ORIGIN}/pwa-512x512.png`,
+  },
+];
 
 // ----------------------------------------------------------------------
 // PAGE CONTENT: Human-readable text, descriptions, and metadata
@@ -131,6 +160,13 @@ export default function Welcome() {
   const navigate = useNavigate();
   const { user, loading, loginWithGoogle, signupWithEmail, loginWithEmail } = useAuth();
   const [isSignUp, setIsSignUp] = useState(true);
+
+  usePageMeta({
+    title: 'My Recovery Toolkit',
+    description: "A zero-knowledge encrypted companion for 12-Step and Buddhist-inspired recovery. Journal, track habits, and get AI-powered insights — private by design, even our developers can't read your data.",
+    path: '/',
+    jsonLd: WELCOME_JSON_LD,
+  });
 
   // Smart Redirect: If user is already logged in, skip the splash page entirely
   useEffect(() => {

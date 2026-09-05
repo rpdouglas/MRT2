@@ -1,3 +1,7 @@
+---
+description: How My Recovery Toolkit's zero-knowledge encryption works, what data is and isn't collected, and how your privacy is protected.
+---
+
 # 🔒 Privacy Policy 
 
 **My Recovery Toolkit ("MRT", "we", "our")** is committed to protecting your privacy. This policy explains how your information is collected, used, and secured at `www.myrecoverytoolkit.ca`.

@@ -1,5 +1,5 @@
 import { Toaster } from 'sonner';
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -64,6 +64,19 @@ const RouteLoading = () => (
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+
+  // PROJ-102 (SEO/AEO) G12: defense-in-depth noindex for every authenticated
+  // route. The redirect-to-/login below already keeps unauthenticated
+  // crawlers from ever seeing real content — this just keeps the SPA shell
+  // itself out of search indexes too, on top of that.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, []);
+
   if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
   
   if (!user) {

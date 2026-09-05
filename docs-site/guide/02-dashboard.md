@@ -1,3 +1,7 @@
+---
+description: A guide to My Dashboard, the central home screen showing your clean time, streaks, and daily recovery snapshot.
+---
+
 # 🌅 My Dashboard
 
 Your Dashboard is the central command center for your recovery journey. It aggregates data from across the app to give you a real-time snapshot of your health.

@@ -1,3 +1,7 @@
+---
+description: The terms governing use of My Recovery Toolkit, including its medical disclaimer, account rules, and data ownership terms.
+---
+
 # 📜 Terms of Service
 
 **Last Updated:** February 2026

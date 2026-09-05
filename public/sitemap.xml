@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  My Recovery Toolkit — sitemap.xml
+  Hand-maintained: the app only ever has four public, unauthenticated routes
+  (everything else lives behind PrivateRoute and is intentionally excluded —
+  see public/robots.txt and docs/projects/102_SEO_AEO_OPTIMIZATION.md). If a
+  new public route is ever added to src/App.tsx, add it here too.
+  Update <lastmod> when a listed page's content meaningfully changes.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.myrecoverytoolkit.ca/</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.myrecoverytoolkit.ca/login</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.myrecoverytoolkit.ca/links</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.myrecoverytoolkit.ca/delete-account</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

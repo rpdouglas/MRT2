@@ -1,3 +1,7 @@
+---
+description: How Daily Readings deliver a recovery reflection each day across seven supported reading traditions.
+---
+
 # 📖 Daily Readings
 
 Daily Readings are a curated collection of recovery reflections — one per day, drawn from the tradition that matches your path. They are shared, publicly-sourced content and are **not encrypted**.

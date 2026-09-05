@@ -1,3 +1,7 @@
+---
+description: How My Vitality tracks sleep, movement, and breathwork to support somatic regulation in recovery.
+---
+
 # ❤️ My Vitality (Vitality & Breathwork)
 
 Somatic regulation—managing your physical body—is critical to preventing emotional relapse. The Vitality module tracks three pillars of physical health.

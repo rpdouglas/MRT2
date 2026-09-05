@@ -1,0 +1,61 @@
+# My Recovery Toolkit — robots.txt
+#
+# This app is a zero-knowledge, auth-gated PWA. Only the routes listed below
+# (the marketing splash, login, links, and account-deletion pages) are ever
+# meant to be public. Every other route (/dashboard, /journal, /tools/*,
+# /games/*, /insights, /admin, /debug, etc.) already requires authentication
+# and redirects unauthenticated visitors back to "/" — that redirect is the
+# real access-control boundary, not this file. Deliberately not listing those
+# paths here as Disallow entries: doing so would just publish an internal
+# route map to anyone reading this file, for no crawl-avoidance benefit
+# real auth doesn't already provide. See docs/projects/102_SEO_AEO_OPTIMIZATION.md.
+
+User-agent: *
+Allow: /
+
+# --- AI answer-engine / retrieval crawlers — allowed (PROJ-102 Phase 0) ---
+# Live, user-triggered lookups and answer-engine indexing. Product decision:
+# MRT's zero-knowledge pitch should be citable by these surfaces.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# --- AI training-data crawlers — disallowed (PROJ-102 Phase 0) ---
+# Bulk crawlers whose stated purpose is collecting training corpora, not
+# live retrieval. Product decision: allow citation, not training ingestion.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+Sitemap: https://www.myrecoverytoolkit.ca/sitemap.xml
