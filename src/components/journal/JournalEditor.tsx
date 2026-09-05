@@ -36,15 +36,18 @@ interface ExtendedJournalTemplate extends JournalTemplate {
     content?: string;
 }
 
-interface JournalEditorProps { 
-  initialEntry: JournalEntry | null; 
-  initialTemplateId?: string | null; 
+interface JournalEditorProps {
+  initialEntry: JournalEntry | null;
+  initialTemplateId?: string | null;
   initialContent?: string;
   initialTags?: string[];
-  onSaveComplete: () => void; 
+  // PROJ-113 (Daily Inspirational Image) — set only when opened from the
+  // daily-image "Journal about this" flow; threaded into addJournal on save.
+  linkedImageId?: string;
+  onSaveComplete: () => void;
 }
 
-export default function JournalEditor({ initialEntry, initialTemplateId, initialContent, initialTags, onSaveComplete }: JournalEditorProps) {
+export default function JournalEditor({ initialEntry, initialTemplateId, initialContent, initialTags, linkedImageId, onSaveComplete }: JournalEditorProps) {
   const { user, userTier } = useAuth();
   const { encrypt } = useEncryption();
   const { addJournal, updateJournal } = useJournalOperations();
@@ -241,7 +244,7 @@ export default function JournalEditor({ initialEntry, initialTemplateId, initial
       if (initialEntry) {
         await updateJournal({ id: initialEntry.id, content: contentToSave, moodScore: mood, tags: tags, isEncrypted: isEncrypted });
       } else {
-        await addJournal({ content: contentToSave, moodScore: mood, sentiment: 'Pending', weather: weather, tags: tags, isEncrypted: isEncrypted });
+        await addJournal({ content: contentToSave, moodScore: mood, sentiment: 'Pending', weather: weather, tags: tags, isEncrypted: isEncrypted, linkedImageId });
       }
       posthog.capture('journal_entry_saved', {
         is_edit: !!initialEntry,

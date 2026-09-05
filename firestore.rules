@@ -255,5 +255,23 @@ service cloud.firestore {
     match /buffer_status/{modality} {
       allow read, write: if false;
     }
+
+    // 13. Image Library (PROJ-113) — admin-uploaded inspirational image
+    // metadata (Storage path/URL, caption, rotation bookkeeping). Not user
+    // data — same read-any-authenticated/write-admin-only shape as
+    // Daily Readings/Daily Crossword above. See
+    // docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md §2/§3.
+    match /image_library/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // 14. Daily Images (PROJ-113) — nightly-assigned "today's image" record,
+    // one shared doc per calendar date, same shape/rationale as
+    // crossword_puzzles above.
+    match /daily_images/{date} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
   }
 }

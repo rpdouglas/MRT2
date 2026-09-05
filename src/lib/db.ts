@@ -24,6 +24,10 @@ export interface UserProfile {
   sponsorPhone?: string;
   hasCompletedOnboarding?: boolean;
   lastSeenBuildHash?: string;
+  // PROJ-113 (Daily Inspirational Image): local 'YYYY-MM-DD' of the last day
+  // the once-per-day Dashboard image popup was shown — same category/pattern
+  // as lastSeenBuildHash above.
+  lastSeenDailyImageDate?: string;
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -158,6 +162,11 @@ export interface JournalEntry {
   tags: string[];
   createdAt: Timestamp;
   isEncrypted?: boolean;
+  // PROJ-113 (Daily Inspirational Image): plaintext reference to the
+  // daily_images/{date} imageId this entry was journaled from, same category
+  // as tags/moodScore above — content stays encrypted as always. Only set at
+  // creation time (journaling *from* an image); not carried through edits.
+  linkedImageId?: string;
   weather?: {
     temp: number;
     condition: string;
@@ -263,6 +272,39 @@ export interface CrosswordPuzzleRecord {
   words: CrosswordWordEntry[];
   insightCard: { text: string; frameworkTags: string[] };
   grid: { rows: number; cols: number };
+}
+
+// PROJ-113 (Daily Inspirational Image, Phase 1). Editorial content — an
+// admin-uploaded library of pre-made images plus the nightly rotation
+// record of which one is "today's" — not user data, so unencrypted, same
+// posture as CrosswordPuzzleRecord above. See
+// docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md §2/§3.
+export interface ImageLibraryEntry {
+  id: string; // doc ID, also referenced as DailyImageRecord.imageId
+  storagePath: string;
+  downloadUrl: string;
+  caption?: string;
+  attribution?: string;
+  tags?: string[];
+  uploadedAt: Timestamp;
+  uploadedBy: string; // admin uid
+  // 'YYYY-MM-DD' (UTC) of the date this image was last assigned as "today's
+  // image", or '' if never shown. Always present (not optional) — the
+  // rotation function (functions/src/index.ts's generateDailyImage) orders
+  // by this field to pick the next image, and Firestore excludes documents
+  // missing an ordered field from orderBy() results entirely, so every
+  // uploaded doc must set it (empty string sorts first, ahead of any real
+  // date) rather than leaving it unset.
+  lastShownDate: string;
+}
+
+export interface DailyImageRecord {
+  date: string; // 'YYYY-MM-DD' (UTC), also the doc ID
+  imageId: string;
+  storagePath: string;
+  downloadUrl: string;
+  caption?: string;
+  assignedAt: Timestamp;
 }
 
 export async function getProfile(uid: string): Promise<UserProfile | null> {

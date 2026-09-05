@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { initializeFirestore, connectFirestoreEmulator, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Local-only test harness: set VITE_USE_EMULATORS=true (e.g. in a
@@ -36,10 +37,14 @@ export const db = app
       })
     })
   : undefined;
+// PROJ-113: first use of Firebase Storage in this app (admin-uploaded
+// inspirational images) — see storage.rules and docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md.
+export const storage = app ? getStorage(app) : undefined;
 
-if (USE_EMULATORS && auth && db) {
+if (USE_EMULATORS && auth && db && storage) {
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
   connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
   console.warn("[MRT] Using local Firebase emulators (VITE_USE_EMULATORS=true) — not the real mrt2-app-dev project.");
 }
 

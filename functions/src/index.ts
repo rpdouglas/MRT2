@@ -816,6 +816,70 @@ export const generateDailyCrossword = onSchedule({
     }
 });
 
+// ─── PROJ-113: Daily Inspirational Image — nightly rotation ──────────────────
+// Mirrors generateDailyCrossword's "check today + tomorrow" shape above, but
+// there's no AI generation step: image_library is a pre-uploaded pool (admin
+// upload UI, Phase 2) and this just assigns the next unused one to a date.
+// Round-robin by ImageLibraryEntry.lastShownDate (oldest/never-shown first),
+// so the pool cycles without repeats before wrapping — see
+// docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md §3/§4.
+
+async function assignDailyImage(date: string): Promise<void> {
+    const existing = await db.collection("daily_images").doc(date).get();
+    if (existing.exists) {
+        logger.info(`PROJ-113: daily image for ${date} already assigned — skipping.`);
+        return;
+    }
+
+    // Oldest lastShownDate first ('' — never shown — sorts ahead of any real
+    // date string). Docs missing the field entirely would be silently
+    // excluded by orderBy(), so ImageLibraryEntry.lastShownDate is a
+    // required field, not optional — see its definition in src/lib/db.ts.
+    const poolSnap = await db.collection("image_library")
+        .orderBy("lastShownDate", "asc")
+        .limit(1)
+        .get();
+
+    if (poolSnap.empty) {
+        logger.warn(`PROJ-113: image_library is empty — no image to assign for ${date}.`);
+        return;
+    }
+
+    const chosen = poolSnap.docs[0];
+    const data = chosen.data() as { storagePath: string; downloadUrl: string; caption?: string };
+
+    await db.collection("daily_images").doc(date).set({
+        date,
+        imageId: chosen.id,
+        storagePath: data.storagePath,
+        downloadUrl: data.downloadUrl,
+        ...(data.caption ? { caption: data.caption } : {}),
+        assignedAt: FieldValue.serverTimestamp(),
+    });
+
+    // Push this image to the back of the rotation queue.
+    await chosen.ref.update({ lastShownDate: date });
+
+    logger.info(`PROJ-113: assigned image ${chosen.id} to ${date}.`);
+}
+
+export const generateDailyImage = onSchedule({
+    schedule: "0 5 * * *",
+    timeoutSeconds: 60,
+    memory: "256MiB",
+    region: "northamerica-northeast1",
+}, async () => {
+    const today = utcDateString(new Date());
+    const tomorrow = addDaysToDate(today, 1);
+
+    // Sequential, not parallel — assigning "today" first (and persisting its
+    // lastShownDate update) before querying for "tomorrow" is what makes the
+    // round-robin correctly avoid picking the same image twice in one run
+    // when the pool has more than one image.
+    await assignDailyImage(today);
+    await assignDailyImage(tomorrow);
+});
+
 // ─── PROJ-42: Admin Generation Endpoint ───────────────────────────────────────
 
 interface GenerateRequest {

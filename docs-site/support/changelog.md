@@ -4,6 +4,10 @@ description: What's new in My Recovery Toolkit — a plain-language, version-by-
 
 # 🚀 Changelog
 
+## [v1.9.12] - 2026-09-05
+### ✨ New Feature
+- Added a daily inspirational image to your Dashboard — it appears once a day, and you can share it or write a journal entry about it.
+
 ## [v1.9.11] - 2026-09-04
 ### ✨ New Feature
 - Added a Stability Track for anyone on a medication-assisted recovery path: a one-tap "Log Dose" button on your Dashboard, a renameable sobriety counter (e.g. "Days of Stability" instead of "Days"), and discreet reminder notifications that never mention medication by name. Turn it on in Profile → General.

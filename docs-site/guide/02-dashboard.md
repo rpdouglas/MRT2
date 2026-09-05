@@ -84,11 +84,18 @@ Go to **Profile → General**, scroll to the **Anchor Notifications** section to
 
 Each badge can be toggled on or off independently. These control the visual indicators on the Dashboard — they are separate from the push notifications sent by The Beacon.
 
-## 5. Smart Data Alerts & Changelog
+## 5. Daily Inspirational Image
+The first time you open the app each day, you'll see a short pop-up with a hand-picked inspirational image. It's dismissible with a single tap — it never blocks your access to SOS or anything else on the Dashboard. From the pop-up you can:
+* **Share:** Send the image out through your phone's native share sheet — the same one-tap sharing you get from a milestone card.
+* **Journal:** Tap **Journal** to open a pre-filled journal entry about the image, so a quick reaction doesn't require starting from a blank page.
+
+You'll only see one image per day, no matter how many times you open the app.
+
+## 6. Smart Data Alerts & Changelog
 * **Backup Needed:** Because your data is encrypted with Zero-Knowledge architecture, we cannot recover it for you. If it has been more than 7 days since your last export, the Dashboard will politely remind you to download a backup. *(Note: If you have Google Drive Auto-Sync enabled in your Profile, this warning is hidden as the app handles it for you).*
 * **Changelog Beacon:** When we release a new feature or bug fix, a small banner will appear at the top of your dashboard to let you know what's new.
 
-## 6. The Bento Grid
+## 7. The Bento Grid
 Quickly view your active streaks and completion rates across your core pillars:
 * **Journal:** View your consecutive day streak and weekly consistency.
 * **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
@@ -97,7 +104,7 @@ Quickly view your active streaks and completion rates across your core pillars:
 * **Games:** Zero-knowledge, anti-shame mini-games and psychoeducation quizzes — see the [My Recovery Games](/guide/11-recovery-games) guide for the full list.
 * **Tools:** Access CBT exercises and grounding tools.
 
-## 7. The Gamification Engine
+## 8. The Gamification Engine
 Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
 * **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), logging vitality metrics, and completing your monthly Recovery Capital check-in (+25 XP).
 * **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
