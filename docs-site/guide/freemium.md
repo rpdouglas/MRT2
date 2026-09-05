@@ -38,7 +38,7 @@ Designed for users in the maintenance phase looking for deep insights, and spons
 
 ## 🔓 How to Upgrade
 If you encounter a premium feature, you will see a **Premium Gate** (a blurred overlay with a Lock icon or a golden "Supporter Feature" button). 
-1. Click on any locked feature or navigate directly to **Profile -> Upgrade**.
+1. Click on any locked feature, or go to **Profile -> General** and tap **Become a Supporter** in the Account Tier card at the top.
 2. You will be redirected to a secure Stripe Checkout portal.
 3. Once completed, your app will automatically unlock all Premium features without needing to restart.
 

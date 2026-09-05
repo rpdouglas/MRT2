@@ -1,8 +1,8 @@
 ---
-description: A guide to the CBT Toolbox — interactive Cognitive Behavioral Therapy exercises based on SMART Recovery and REBT.
+description: A guide to Recovery Tools — interactive Cognitive Behavioral Therapy exercises based on SMART Recovery and REBT.
 ---
 
-# 🧩 The Toolbox (SMART CBT)
+# 🧩 Recovery Tools
 
 Recovery is about interrupting automatic reactions with intentional logic. The **Tools Hub** contains interactive Cognitive Behavioral Therapy (CBT) exercises, adapted from evidence-based models like SMART Recovery and REBT.
 
@@ -30,7 +30,7 @@ Recovery is about interrupting automatic reactions with intentional logic. The *
 </div>
 
 ## Accessing the Tools
-From the Dashboard, tap the **Tools** tile in the Bento Grid. This will open the Tools Hub, where each tool's card shows a time estimate, a "Best for" tag, and — once you've completed it at least once — how many times you've used it.
+From the Dashboard, tap the **My Tools** tile in the Bento Grid. This will open Recovery Tools, where each tool's card shows a time estimate, a "Best for" tag, and — once you've completed it at least once — how many times you've used it.
 
 Tools are grouped into four sections based on when you'd reach for them:
 * **Right Now** — Urge Surfer and The Resentment Burner, for cravings and crisis. Always open when you arrive, so these are never more than a tap away.
