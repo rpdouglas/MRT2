@@ -1,6 +1,6 @@
 # 📁 Project 113: Daily Inspirational Image
 
-**Status:** 🟢 Implemented — Phases 1-3 (Storage/rotation backend, admin upload UI, Dashboard popup/share/journal) shipped 2026-09-05.
+**Status:** ✅ Shipped
 **Primary Persona:** Ned (early sobriety, wants gamification/positivity touchpoints) — secondary: Lisa (Primary Viral Driver, native share amplifies her role), All (the popup itself is non-persona-specific, same posture as PROJ-79's Daily Crossword)
 **Objective:** Surface one of the owner's existing library of hand-made inspirational images (originally created for MRT's Facebook/Instagram accounts) on the Dashboard the first time it's opened each day, lets the user share it via the phone's native share sheet, and lets the user journal specifically about that image — with new images addable at runtime via an admin upload UI, no code deploy required.
 
