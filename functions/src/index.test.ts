@@ -14,6 +14,7 @@ import {
     computeLockoutSeconds,
     checkCooldown,
     checkFloor,
+    isPremiumOnlyAnalysisType,
     evaluateVaultPinAttempt,
     deriveVaultPepper,
     validateCrosswordCandidates,
@@ -473,6 +474,35 @@ describe("checkFloor (PROJ-106: second-granularity all-tier anti-abuse floor)", 
         const now = new Date("2026-09-01T00:00:30Z");
         const lastRun = new Date("2026-09-01T00:00:10Z"); // 20s ago
         expect(checkFloor(now, lastRun, 15)).toEqual({ allowed: true });
+    });
+});
+
+describe("isPremiumOnlyAnalysisType (PROJ-114: server-side mirror of a client-only premium gate)", () => {
+    it("flags cbt_coaching_prompt as premium-only", () => {
+        expect(isPremiumOnlyAnalysisType("cbt_coaching_prompt")).toBe(true);
+    });
+
+    it("flags cba_reflection as premium-only", () => {
+        expect(isPremiumOnlyAnalysisType("cba_reflection")).toBe(true);
+    });
+
+    it("does not flag the other 7 approved analysisType values", () => {
+        const others = [
+            "deep_pattern_analysis",
+            "rosc_assessment",
+            "workbook_analysis",
+            "audio_analysis",
+            "comparative_analysis",
+            "workbook_coach",
+            "system_health_analysis",
+        ];
+        for (const analysisType of others) {
+            expect(isPremiumOnlyAnalysisType(analysisType)).toBe(false);
+        }
+    });
+
+    it("does not flag an unknown analysisType (validateAIProxyPayload's job, not this one)", () => {
+        expect(isPremiumOnlyAnalysisType("not_a_real_type")).toBe(false);
     });
 });
 
