@@ -13,7 +13,7 @@ import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
 import DailyImageModal from '../components/dashboard/DailyImageModal';
 import BentoCard, { type BentoTileConfig } from '../components/dashboard/BentoCard';
-import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, TrophyIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, TrophyIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { getHeroColorTheme } from '../lib/heroColors';
 import { RECOVERY_SLOGANS } from '../data/slogans';
 import type { UserProfile } from '../lib/db';
@@ -157,13 +157,18 @@ export default function Dashboard() {
 
       {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">
-        <VibrantHeader 
-            title="My Dashboard" 
+        <VibrantHeader
+            title="My Dashboard"
             subtitle={slogan}
             icon={HomeIcon}
             fromColor={heroTheme.dashboardHeader.from}
             viaColor={heroTheme.dashboardHeader.via}
             toColor={heroTheme.dashboardHeader.to}
+            extraAction={dailyImage ? {
+                icon: PhotoIcon,
+                onClick: () => setShowDailyImageModal(true),
+                label: "View today's inspirational image",
+            } : undefined}
         />
       </div>
 

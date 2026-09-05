@@ -6,7 +6,10 @@ description: What's new in My Recovery Toolkit — a plain-language, version-by-
 
 ## [v1.9.12] - 2026-09-05
 ### ✨ New Feature
-- Added a daily inspirational image to your Dashboard — it appears once a day, and you can share it or write a journal entry about it.
+- Added a daily inspirational image to your Dashboard — it appears once a day, and you can share it or write a journal entry about it. You can now also pull it back up any time with a new photo icon on the Dashboard header.
+
+### 🐛 Bug Fixes
+- Fixed the "Share" button on the daily inspirational image sometimes doing nothing — it now shows a clear message if sharing fails so you know to try again.
 
 ## [v1.9.11] - 2026-09-04
 ### ✨ New Feature

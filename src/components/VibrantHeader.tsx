@@ -3,16 +3,26 @@ import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon, QuestionMarkCircle
 import type { ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface VibrantHeaderExtraAction {
+  icon: ElementType;
+  onClick: () => void;
+  label: string;
+}
+
 interface VibrantHeaderProps {
   title: string;
   subtitle: string;
   icon?: ElementType;
   fromColor: string;
-  viaColor: string;  
-  toColor: string;   
+  viaColor: string;
+  toColor: string;
   percentage?: number;
   percentageColor?: string;
-  backLink?: string; 
+  backLink?: string;
+  // Optional extra icon button in the right-side cluster, before Help/SOS —
+  // e.g. Dashboard.tsx's "view today's inspirational image again" trigger
+  // (PROJ-113). Omitted by every other page that renders this shared header.
+  extraAction?: VibrantHeaderExtraAction;
 }
 
 const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?: string }) => {
@@ -59,7 +69,7 @@ const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?:
   );
 };
 
-export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, viaColor, toColor, percentage, percentageColor, backLink }: VibrantHeaderProps) {
+export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, viaColor, toColor, percentage, percentageColor, backLink, extraAction }: VibrantHeaderProps) {
   const { toggleSidebar, toggleSOS } = useLayout();
   const navigate = useNavigate();
 
@@ -111,6 +121,18 @@ export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, 
              <div className="hidden sm:block bg-white/10 backdrop-blur-md rounded-full p-1 shadow-inner border border-white/5">
                 <ProgressRing percentage={percentage} colorHex={percentageColor} />
              </div>
+          )}
+
+          {/* Optional Extra Action (e.g. Dashboard's "view today's image") */}
+          {extraAction && (
+            <button
+              onClick={extraAction.onClick}
+              className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md shadow-sm border border-white/10 active:scale-95"
+              aria-label={extraAction.label}
+              title={extraAction.label}
+            >
+              <extraAction.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
           )}
 
           {/* Contextual Help Icon */}
