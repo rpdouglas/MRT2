@@ -7,11 +7,11 @@ My Recovery Toolkit (MRT) combines encrypted journaling, CBT/SMART tools, habit 
 ## Key pages
 
 - [Home](https://www.myrecoverytoolkit.ca/): Product overview and sign-up.
-- [User Guide](https://rpdouglas.github.io/MRT2/guide/01-getting-started): Full documentation of every feature.
-- [FAQ](https://rpdouglas.github.io/MRT2/support/faq): Answers on zero-knowledge encryption, offline support, AI data handling, and account deletion.
-- [Privacy Policy](https://rpdouglas.github.io/MRT2/privacy): How data is collected, encrypted, and protected.
-- [Terms of Service](https://rpdouglas.github.io/MRT2/tos): Terms of use, including the medical disclaimer.
-- [Changelog](https://rpdouglas.github.io/MRT2/support/changelog): Version-by-version history.
+- [User Guide](https://docs.myrecoverytoolkit.ca/guide/01-getting-started): Full documentation of every feature.
+- [FAQ](https://docs.myrecoverytoolkit.ca/support/faq): Answers on zero-knowledge encryption, offline support, AI data handling, and account deletion.
+- [Privacy Policy](https://docs.myrecoverytoolkit.ca/privacy): How data is collected, encrypted, and protected.
+- [Terms of Service](https://docs.myrecoverytoolkit.ca/tos): Terms of use, including the medical disclaimer.
+- [Changelog](https://docs.myrecoverytoolkit.ca/support/changelog): Version-by-version history.
 
 ## Notes
 

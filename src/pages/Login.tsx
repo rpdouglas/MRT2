@@ -303,9 +303,9 @@ export default function Login() {
             </button>
 
             <div className="mt-8 text-center text-xs text-slate-400 space-x-4">
-                <a href="https://rpdouglas.github.io/MRT2/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Privacy Policy</a>
+                <a href="https://docs.myrecoverytoolkit.ca/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Privacy Policy</a>
                 <span>&middot;</span>
-                <a href="https://rpdouglas.github.io/MRT2/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Terms of Service</a>
+                <a href="https://docs.myrecoverytoolkit.ca/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Terms of Service</a>
             </div>
             <p className="mt-4 text-center text-xs text-slate-400 max-w-sm mx-auto">
                 My Recovery Toolkit is a self-help peer support tool and is not a medical device, diagnostic tool, or replacement for professional clinical addiction treatment.

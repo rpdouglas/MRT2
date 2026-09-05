@@ -115,7 +115,7 @@ export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, 
 
           {/* Contextual Help Icon */}
           <a 
-            href="https://rpdouglas.github.io/MRT2/"
+            href="https://docs.myrecoverytoolkit.ca/"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md shadow-sm border border-white/10 active:scale-95"

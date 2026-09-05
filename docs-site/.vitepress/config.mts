@@ -3,7 +3,17 @@ import { defineConfig } from 'vitepress'
 // PROJ-102 (SEO/AEO) Phase 3: matches the URL scheme scripts/generate-docs-sitemap.mjs
 // already uses (extensionless, index stripped) so canonical/og:url stay
 // consistent with what's actually listed in sitemap.xml.
-const SITE_ORIGIN = 'https://rpdouglas.github.io/MRT2';
+//
+// Discovered 2026-09-05: this previously read 'https://rpdouglas.github.io/MRT2'
+// on the (correct-at-the-time?) assumption that GitHub Pages served this repo
+// as a project page under /MRT2/. It never did in production — `gh api
+// repos/rpdouglas/MRT2/pages` shows a verified custom domain,
+// docs.myrecoverytoolkit.ca, served at the site root. Every asset request
+// (CSS, JS, screenshots) was 404ing in production the entire time; only the
+// prerendered text content ever rendered, unstyled — this is what actually
+// broke the guide's formatting, more completely than the separate
+// docs-site-had-no-Tailwind-pipeline bug fixed alongside this.
+const SITE_ORIGIN = 'https://docs.myrecoverytoolkit.ca';
 function relativePathToUrl(relativePath: string): string {
   const withoutExt = relativePath.replace(/\.md$/, '');
   const clean = withoutExt.replace(/(^|\/)index$/, '$1');
@@ -13,12 +23,12 @@ function relativePathToUrl(relativePath: string): string {
 export default defineConfig({
   title: "My Recovery Toolkit",
   description: "Privacy-first 12-step recovery toolkit and secure journaling guide.",
-  // Deployed to GitHub Pages as a project page at rpdouglas.github.io/MRT2/
-  // (see .github/workflows/deploy-docs.yaml) — base must match that path or
-  // every asset request (/assets/*.css, /assets/*.js) resolves against the
-  // wrong origin in production. Discovered during PROJ-102 Phase 1 while
-  // validating the new sitemap generator against a real build.
-  base: '/MRT2/',
+  // Served from the custom domain docs.myrecoverytoolkit.ca at the site
+  // root (confirmed via `gh api repos/rpdouglas/MRT2/pages`), not as a
+  // GitHub Pages project page under /MRT2/ — base must be '/' or every
+  // asset request (/assets/*.css, /assets/*.js, /screenshots/*.webp)
+  // resolves against the wrong path in production.
+  base: '/',
   // Site-wide defaults; per-page canonical/og:title/og:description/og:url
   // are added below in transformHead using each page's own resolved title
   // and frontmatter `description`.

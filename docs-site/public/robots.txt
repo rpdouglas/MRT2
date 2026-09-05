@@ -46,4 +46,4 @@ Disallow: /
 User-agent: Meta-ExternalAgent
 Disallow: /
 
-Sitemap: https://rpdouglas.github.io/MRT2/sitemap.xml
+Sitemap: https://docs.myrecoverytoolkit.ca/sitemap.xml

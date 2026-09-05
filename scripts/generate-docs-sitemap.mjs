@@ -14,7 +14,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DIST_DIR = path.join(__dirname, '../docs-site/.vitepress/dist');
-const SITE_ORIGIN = 'https://rpdouglas.github.io/MRT2';
+// docs.myrecoverytoolkit.ca is a verified custom domain served at the site
+// root (`gh api repos/rpdouglas/MRT2/pages`), not a GitHub Pages project
+// page under /MRT2/ — must match docs-site/.vitepress/config.mts's
+// SITE_ORIGIN and base.
+const SITE_ORIGIN = 'https://docs.myrecoverytoolkit.ca';
 
 function walkHtmlFiles(dir, files = []) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
