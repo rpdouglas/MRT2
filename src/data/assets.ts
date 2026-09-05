@@ -5,10 +5,14 @@
  */
 
 export const ASSETS = {
+  "llms": "/llms.txt",
   "firebase_messaging_sw": "/firebase-messaging-sw.js",
+  "sitemap": "/sitemap.xml",
   "pwa_512x512": "/pwa-512x512.png",
   "apple_touch_icon_180x180": "/apple-touch-icon-180x180.png",
+  "og_image": "/og-image.png",
   "favicon": "/favicon.ico",
+  "robots": "/robots.txt",
   "favicon_16x16": "/favicon-16x16.png",
   "favicon_32x32": "/favicon-32x32.png",
   "pwa_192x192": "/pwa-192x192.png",
@@ -18,32 +22,38 @@ export const ASSETS = {
     "jordan": {
       "headshot": "/personas/jordan/headshot.webp",
       "full_body": "/personas/jordan/full_body.webp",
-      "looking_left": "/personas/jordan/looking_left.webp"
+      "looking_left": "/personas/jordan/looking_left.webp",
+      "bio": "/personas/jordan/bio.webp"
     },
     "walt": {
       "headshot": "/personas/walt/headshot.webp",
       "full_body": "/personas/walt/full_body.webp",
-      "looking_left": "/personas/walt/looking_left.webp"
+      "looking_left": "/personas/walt/looking_left.webp",
+      "bio": "/personas/walt/bio.webp"
     },
     "ned": {
       "headshot": "/personas/ned/headshot.webp",
       "full_body": "/personas/ned/full_body.webp",
-      "looking_left": "/personas/ned/looking_left.webp"
+      "looking_left": "/personas/ned/looking_left.webp",
+      "bio": "/personas/ned/bio.webp"
     },
     "lisa": {
       "headshot": "/personas/lisa/headshot.webp",
       "full_body": "/personas/lisa/full_body.webp",
-      "looking_left": "/personas/lisa/looking_left.webp"
+      "looking_left": "/personas/lisa/looking_left.webp",
+      "bio": "/personas/lisa/bio.webp"
     },
     "maya": {
       "headshot": "/personas/maya/headshot.webp",
       "full_body": "/personas/maya/full_body.webp",
-      "looking_left": "/personas/maya/looking_left.webp"
+      "looking_left": "/personas/maya/looking_left.webp",
+      "bio": "/personas/maya/bio.webp"
     },
     "david": {
       "headshot": "/personas/david/headshot.webp",
       "full_body": "/personas/david/full_body.webp",
-      "looking_left": "/personas/david/looking_left.webp"
+      "looking_left": "/personas/david/looking_left.webp",
+      "bio": "/personas/david/bio.webp"
     }
   },
   "chips": {
