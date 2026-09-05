@@ -1241,6 +1241,19 @@ export function checkFloor(now: Date, lastRun: Date | null, floorSeconds: number
     return { allowed: true };
 }
 
+// PROJ-114: cbt_coaching_prompt/cba_reflection are gated premium-only entirely
+// client-side (GuidedWorkflowEngine.tsx's `aiEnabled`, CBATool.tsx's
+// `handleReflect` early return) with no free-tier cooldown of any kind — free
+// tier has zero legitimate access, so the server-side mirror is a flat reject,
+// not a checkCooldown/checkFloor-style time window. Extracted as its own pure
+// function (mirroring checkCooldown/checkFloor) so the tier decision is
+// directly unit-testable without exercising generateAIInsights' live-Firestore
+// onCall body, which the existing test suite deliberately doesn't do.
+const PREMIUM_ONLY_ANALYSIS_TYPES = new Set(["cbt_coaching_prompt", "cba_reflection"]);
+export function isPremiumOnlyAnalysisType(analysisType: string): boolean {
+    return PREMIUM_ONLY_ANALYSIS_TYPES.has(analysisType);
+}
+
 function getModelForType(analysisType: string): string {
     switch (analysisType) {
         case "journal_analysis":
@@ -1766,6 +1779,8 @@ export const generateAIInsights = onCall({
                     }
                 }
             }
+        } else if (isPremiumOnlyAnalysisType(analysisType)) {
+            throw new HttpsError("permission-denied", "This feature requires My Recovery Toolkit Premium.");
         }
     }
 
