@@ -20,7 +20,7 @@ const LINKS: LinkItem[] = [
     id: 'install_guide',
     title: 'Install App Guide',
     subtitle: 'How to add MRT to your home screen',
-    url: 'https://rpdouglas.github.io/MRT2/guide/installation',
+    url: 'https://docs.myrecoverytoolkit.ca/guide/installation',
     isExternal: true,
     icon: BookOpenIcon,
     colorClass: 'from-emerald-500 to-teal-600 shadow-emerald-500/20'

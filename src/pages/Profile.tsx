@@ -812,7 +812,7 @@ export default function Profile() {
                             </div>
                         </div>
                         <a 
-                            href="https://rpdouglas.github.io/MRT2/"
+                            href="https://docs.myrecoverytoolkit.ca/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block text-center w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors active:scale-95 shadow-md"
@@ -824,9 +824,9 @@ export default function Profile() {
 
                 {!isOnboarding && (
                     <div className="text-center text-xs text-gray-400 space-x-4 pt-2">
-                        <a href="https://rpdouglas.github.io/MRT2/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Privacy Policy</a>
+                        <a href="https://docs.myrecoverytoolkit.ca/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Privacy Policy</a>
                         <span>&middot;</span>
-                        <a href="https://rpdouglas.github.io/MRT2/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Terms of Service</a>
+                        <a href="https://docs.myrecoverytoolkit.ca/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Terms of Service</a>
                     </div>
                 )}
             </div>

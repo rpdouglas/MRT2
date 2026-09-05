@@ -193,7 +193,7 @@ export default function Dashboard() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <a href="https://rpdouglas.github.io/MRT2/support/changelog" target="_blank" rel="noopener noreferrer" className="text-xs font-bold bg-fuchsia-600 text-white px-3 py-1.5 rounded-lg hover:bg-fuchsia-700 whitespace-nowrap transition-colors">
+                    <a href="https://docs.myrecoverytoolkit.ca/support/changelog" target="_blank" rel="noopener noreferrer" className="text-xs font-bold bg-fuchsia-600 text-white px-3 py-1.5 rounded-lg hover:bg-fuchsia-700 whitespace-nowrap transition-colors">
                         View
                     </a>
                     <button onClick={() => setShowChangelogToast(false)} className="p-1 text-fuchsia-400 hover:text-fuchsia-600">
