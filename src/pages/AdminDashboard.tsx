@@ -8,7 +8,7 @@ import { db } from '../lib/firebase';
 import { collection, query, getDocs, orderBy, limit, } from 'firebase/firestore';
 import VibrantHeader from '../components/VibrantHeader';
 import { THEME } from '../lib/theme';
-import { CommandLineIcon, UserGroupIcon, CpuChipIcon, ServerIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { CommandLineIcon, UserGroupIcon, CpuChipIcon, ServerIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { Navigate } from 'react-router-dom';
 
 // Sub-components
@@ -18,10 +18,11 @@ import AnalyticsCharts, { type AIUsageLog } from '../components/admin/AnalyticsC
 import DeduplicationTool from '../components/admin/DeduplicationTool';
 import SchemaMigration from '../components/admin/SchemaMigration';
 import FeedbackViewer from '../components/admin/FeedbackViewer';
+import InspirationalImagesTab from '../components/admin/InspirationalImagesTab';
 
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'health' | 'feedback' | 'maintenance'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'health' | 'feedback' | 'maintenance' | 'images'>('analytics');
   
   // Analytics Data State
   const [logs, setLogs] = useState<AIUsageLog[]>([]);
@@ -95,11 +96,17 @@ export default function AdminDashboard() {
             >
                 <ChatBubbleLeftRightIcon className="h-4 w-4" /> Inbox
             </button>
-            <button 
+            <button
                 onClick={() => setActiveTab('maintenance')}
                 className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'maintenance' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
                 <WrenchScrewdriverIcon className="h-4 w-4" /> Tools
+            </button>
+            <button
+                onClick={() => setActiveTab('images')}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'images' ? 'bg-slate-800 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <PhotoIcon className="h-4 w-4" /> Images
             </button>
         </div>
       </div>
@@ -128,6 +135,9 @@ export default function AdminDashboard() {
 
         {/* --- TAB 4: FEEDBACK --- */}
         {activeTab === 'feedback' && <FeedbackViewer />}
+
+        {/* --- TAB: INSPIRATIONAL IMAGES (PROJ-113) --- */}
+        {activeTab === 'images' && <InspirationalImagesTab />}
 
         {/* --- TAB 5: MAINTENANCE --- */}
         {activeTab === 'maintenance' && user && (
