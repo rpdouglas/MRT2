@@ -503,6 +503,92 @@ describe('users/{userId}/playPurchases — PROJ-105 Play Billing', () => {
   });
 });
 
+describe('image_library / daily_images — PROJ-113 admin-write/authenticated-read editorial content', () => {
+  it('blocks a non-admin user from creating an image_library entry', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'image_library', 'img1'), {
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        uploadedAt: Timestamp.now(),
+        uploadedBy: ALICE,
+        lastShownDate: '',
+      }),
+    );
+  });
+
+  it('lets an admin (custom claim) create an image_library entry', async () => {
+    const adminDb = testEnv.authenticatedContext(BOB, { admin: true }).firestore();
+    await assertSucceeds(
+      setDoc(doc(adminDb, 'image_library', 'img1'), {
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        uploadedAt: Timestamp.now(),
+        uploadedBy: BOB,
+        lastShownDate: '',
+      }),
+    );
+  });
+
+  it('lets any authenticated user read an image_library entry', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'image_library', 'img1'), {
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        uploadedAt: Timestamp.now(),
+        uploadedBy: BOB,
+        lastShownDate: '',
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(getDoc(doc(aliceDb, 'image_library', 'img1')));
+  });
+
+  it('blocks an unauthenticated user from reading an image_library entry', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'image_library', 'img1'), {
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        uploadedAt: Timestamp.now(),
+        uploadedBy: BOB,
+        lastShownDate: '',
+      });
+    });
+
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anonDb, 'image_library', 'img1')));
+  });
+
+  it('blocks a non-admin user from writing a daily_images assignment', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'daily_images', '2026-09-05'), {
+        date: '2026-09-05',
+        imageId: 'img1',
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        assignedAt: Timestamp.now(),
+      }),
+    );
+  });
+
+  it('lets any authenticated user read today\'s daily_images assignment', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'daily_images', '2026-09-05'), {
+        date: '2026-09-05',
+        imageId: 'img1',
+        storagePath: 'daily-images/img1.jpg',
+        downloadUrl: 'https://example.com/img1.jpg',
+        assignedAt: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(getDoc(doc(aliceDb, 'daily_images', '2026-09-05')));
+  });
+});
+
 describe('playPurchaseIndex — PROJ-105 RTDN lookup pointer', () => {
   it('lets a user create their own token->uid pointer doc', async () => {
     const aliceDb = testEnv.authenticatedContext(ALICE).firestore();

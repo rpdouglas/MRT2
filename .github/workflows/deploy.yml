@@ -100,6 +100,12 @@ jobs:
       - name: Firestore Rules Tests (PROJ-99)
         run: npm run test:rules
 
+      # Storage Rules Tests (PROJ-113) — first use of Firebase Storage in this
+      # app; same emulator-backed pattern as the Firestore rules gate above,
+      # just against the Storage emulator instead.
+      - name: Storage Rules Tests (PROJ-113)
+        run: npm run test:rules:storage
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
