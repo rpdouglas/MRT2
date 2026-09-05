@@ -20,13 +20,18 @@ export default function DailyImageModal({ onClose }: DailyImageModalProps) {
   const { dailyImage } = useDailyImage();
   const [isJournaling, setIsJournaling] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState(false);
 
   if (!dailyImage) return null;
 
   const handleShare = async () => {
     setIsSharing(true);
+    setShareError(false);
     try {
       const res = await fetch(dailyImage.downloadUrl);
+      if (!res.ok) {
+        throw new Error(`Daily image fetch failed: ${res.status}`);
+      }
       const blob = await res.blob();
       await shareFile(
         blob,
@@ -35,7 +40,14 @@ export default function DailyImageModal({ onClose }: DailyImageModalProps) {
         dailyImage.caption || 'My Recovery Toolkit',
       );
     } catch (err) {
+      // AbortError just means the user closed the native share sheet without
+      // picking anything — normal, not a failure worth surfacing. Checked by
+      // duck-typing `name` rather than `instanceof Error`: navigator.share()
+      // rejects with a DOMException, which doesn't pass `instanceof Error`
+      // in every environment (confirmed in jsdom).
+      if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') return;
       console.error('Failed to share daily image', err);
+      setShareError(true);
     } finally {
       setIsSharing(false);
     }
@@ -101,6 +113,10 @@ export default function DailyImageModal({ onClose }: DailyImageModalProps) {
               Journal
             </button>
           </div>
+
+          {shareError && (
+            <p className="text-sm text-red-600 text-center">Couldn't share the image — try again.</p>
+          )}
         </div>
       </div>
     </div>
