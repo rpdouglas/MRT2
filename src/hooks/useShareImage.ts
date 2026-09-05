@@ -14,6 +14,26 @@ export interface ShareImageOptions {
   text: string;
 }
 
+// PROJ-113 (Daily Inspirational Image): extracted so a caller with a Blob
+// from fetch() (an already-existing image, not a DOM snapshot) can reuse the
+// same share/download-fallback logic without a toPng() step. Uses an object
+// URL derived from the blob for the fallback, rather than a toPng() data
+// URL, so it works for either kind of source blob.
+export async function shareFile(blob: Blob, filename: string, title: string, text: string): Promise<void> {
+  const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ title, text, files: [file] });
+  } else {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function useShareImage() {
   const [isSharing, setIsSharing] = useState(false);
 
@@ -28,16 +48,7 @@ export function useShareImage() {
 
       const dataUrl = await toPng(ref.current, { pixelRatio: 2 });
       const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], options.filename, { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: options.title, text: options.text, files: [file] });
-      } else {
-        const link = document.createElement('a');
-        link.download = options.filename;
-        link.href = dataUrl;
-        link.click();
-      }
+      await shareFile(blob, options.filename, options.title, options.text);
     } catch (err) {
       console.error('Failed to share image', err);
     } finally {

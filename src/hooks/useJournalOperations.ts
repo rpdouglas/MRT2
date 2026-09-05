@@ -33,6 +33,9 @@ export function useJournalOperations() {
             weather: { temp: number; condition: string } | null;
             tags: string[];
             isEncrypted: boolean;
+            // PROJ-113 (Daily Inspirational Image) — only set when journaling
+            // from a daily image; plaintext, see JournalEntry.linkedImageId.
+            linkedImageId?: string;
         },
         DocumentReference
     >(queryKey, {
@@ -47,7 +50,8 @@ export function useJournalOperations() {
                 weather: params.weather,
                 tags: params.tags,
                 createdAt: Timestamp.now(),
-                isEncrypted: params.isEncrypted
+                isEncrypted: params.isEncrypted,
+                ...(params.linkedImageId ? { linkedImageId: params.linkedImageId } : {}),
             });
         },
     });

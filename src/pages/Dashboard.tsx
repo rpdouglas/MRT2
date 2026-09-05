@@ -2,13 +2,16 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Timestamp } from 'firebase/firestore';
+import { format } from 'date-fns';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useDailyImage } from '../hooks/useDailyImage';
 import Confetti from 'react-confetti';
 import { getMilestone } from '../lib/milestones';
 import VibrantHeader from '../components/VibrantHeader';
 import SobrietyHero from '../components/SobrietyHero';
 import NotificationBanner from '../components/NotificationBanner';
 import DynamicAnchorWidget from '../components/dashboard/DynamicAnchorWidget';
+import DailyImageModal from '../components/dashboard/DailyImageModal';
 import BentoCard, { type BentoTileConfig } from '../components/dashboard/BentoCard';
 import { HomeIcon, FireIcon, ChartBarIcon, SparklesIcon, HeartIcon, ArrowDownTrayIcon, TrophyIcon, PuzzlePieceIcon, InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getHeroColorTheme } from '../lib/heroColors';
@@ -66,6 +69,22 @@ export default function Dashboard() {
           }
       }
   }, [userProfile, meta.globalHash, patchProfileFields]);
+
+  // PROJ-113: Daily Inspirational Image — one-tap-dismissible popup, shown
+  // at most once per local day. Unlike the changelog beacon above, a brand
+  // new user (no lastSeenDailyImageDate yet) SHOULD still see today's image
+  // on their first day, so there's no "first run, don't show" branch here.
+  const { dailyImage } = useDailyImage();
+  const [showDailyImageModal, setShowDailyImageModal] = useState(false);
+  useEffect(() => {
+      if (userProfile && dailyImage) {
+          const today = format(new Date(), 'yyyy-MM-dd');
+          if (userProfile.lastSeenDailyImageDate !== today) {
+              setTimeout(() => setShowDailyImageModal(true), 0);
+              patchProfileFields({ lastSeenDailyImageDate: today });
+          }
+      }
+  }, [userProfile, dailyImage, patchProfileFields]);
 
   const stats = useMemo(() => {
     if (profileLoading) return null;
@@ -132,6 +151,9 @@ export default function Dashboard() {
               <Confetti width={windowSize.width} height={windowSize.height} recycle={recycleConfetti} numberOfPieces={400} gravity={0.15} />
           </div>
       )}
+
+      {/* DAILY INSPIRATIONAL IMAGE (PROJ-113) */}
+      {showDailyImageModal && <DailyImageModal onClose={() => setShowDailyImageModal(false)} />}
 
       {/* 1. FIXED HEADER */}
       <div className="flex-shrink-0 z-10">

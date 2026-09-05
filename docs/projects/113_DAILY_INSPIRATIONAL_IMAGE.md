@@ -1,6 +1,6 @@
 # 📁 Project 113: Daily Inspirational Image
 
-**Status:** ⚪ Planned
+**Status:** 🟢 Implemented — Phases 1-3 (Storage/rotation backend, admin upload UI, Dashboard popup/share/journal) shipped 2026-09-05.
 **Primary Persona:** Ned (early sobriety, wants gamification/positivity touchpoints) — secondary: Lisa (Primary Viral Driver, native share amplifies her role), All (the popup itself is non-persona-specific, same posture as PROJ-79's Daily Crossword)
 **Objective:** Surface one of the owner's existing library of hand-made inspirational images (originally created for MRT's Facebook/Instagram accounts) on the Dashboard the first time it's opened each day, lets the user share it via the phone's native share sheet, and lets the user journal specifically about that image — with new images addable at runtime via an admin upload UI, no code deploy required.
 
@@ -126,13 +126,13 @@ export interface DailyImageRecord {
 
 ## 6. Open Questions
 
-To be resolved before/during implementation, not silently assumed:
+Resolved during implementation (2026-09-05), not silently assumed:
 
-| # | Question | Notes |
+| # | Question | Resolution |
 |---|---|---|
-| 1 | Should `image_library` support soft-delete/retire (an admin wants to stop showing an image without deleting the file), or is hard-delete sufficient for v1? | Affects whether `image_library` needs an `active: boolean` field from day one. |
-| 2 | Should the "journal about this image" flow support viewing past entries linked to a given image (using the new `linkedImageId` field), or does that field stay write-only until a future feature reads it? | The field is being added now per the product owner's choice to avoid a later migration, but no read/query UI is in scope for this spec unless decided otherwise. |
-| 3 | Tier gating: confirmed **free for all tiers** (not crisis-critical, but shareable/engagement content, and makes zero Gemini calls so carries no cost-exposure argument for gating) — flagged here per `CLAUDE.md`'s "ask whether it needs a tier check" rule so it isn't silently assumed. |
+| 1 | Should `image_library` support soft-delete/retire (an admin wants to stop showing an image without deleting the file), or is hard-delete sufficient for v1? | **Deferred.** Phase 2 shipped upload + read-only browse only, no delete/edit at all — an unspec'd interaction (hard-delete an in-rotation image? orphan the Storage object? what if it's today's live pick?) that stays out of scope until a real need surfaces. |
+| 2 | Should the "journal about this image" flow support viewing past entries linked to a given image (using the new `linkedImageId` field), or does that field stay write-only until a future feature reads it? | **Write-only for now**, as planned — Phase 3 sets `linkedImageId` on creation (`useJournalOperations.ts`'s `addJournalMutation`) but ships no read/query UI against it. Kept it a required-to-add-now field specifically so a future "see what you wrote about this image" view needs no schema migration. |
+| 3 | Tier gating for this feature. | **Free for all tiers**, confirmed and shipped as such — no `<PremiumGate>` anywhere in the Phase 3 UI. Not crisis-critical, but shareable/engagement content with zero Gemini calls, so no cost-exposure argument for gating existed either. |
 
 ---
 

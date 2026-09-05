@@ -24,6 +24,10 @@ export interface UserProfile {
   sponsorPhone?: string;
   hasCompletedOnboarding?: boolean;
   lastSeenBuildHash?: string;
+  // PROJ-113 (Daily Inspirational Image): local 'YYYY-MM-DD' of the last day
+  // the once-per-day Dashboard image popup was shown — same category/pattern
+  // as lastSeenBuildHash above.
+  lastSeenDailyImageDate?: string;
   usage_limits?: {
     lastWeeklyInsight?: Timestamp;
     lastMonthlyInsight?: Timestamp;
@@ -158,6 +162,11 @@ export interface JournalEntry {
   tags: string[];
   createdAt: Timestamp;
   isEncrypted?: boolean;
+  // PROJ-113 (Daily Inspirational Image): plaintext reference to the
+  // daily_images/{date} imageId this entry was journaled from, same category
+  // as tags/moodScore above — content stays encrypted as always. Only set at
+  // creation time (journaling *from* an image); not carried through edits.
+  linkedImageId?: string;
   weather?: {
     temp: number;
     condition: string;
