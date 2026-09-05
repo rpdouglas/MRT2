@@ -59,6 +59,15 @@ jobs:
       - name: Spec Quality Check
         run: npm run docs:check-specs
 
+      # GATE 3b: Docs Site Build — the deploy-docs.yaml workflow only runs
+      # `npm run docs:build` on push to main (after merge), so a broken
+      # docs-site build was never actually blocking a PR. That's how a stale
+      # screenshot reference broke the build once already (see e1616ca) and
+      # went unnoticed until a follow-up hotfix. Building it here catches
+      # that class of regression before merge instead of after.
+      - name: Docs Site Build
+        run: npm run docs:build
+
       # GATE 4: Unit Tests (Logic)
       - name: Unit Tests
         run: npm run test:watch -- --run # Runs once and exits

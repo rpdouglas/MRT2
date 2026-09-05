@@ -63,7 +63,7 @@ export default defineConfig({
           { text: 'My Tasks (Tasks & Habits)', link: '/guide/04-tasks-habits' },
           { text: 'My Vitality', link: '/guide/05-vitality' },
           { text: 'My Workbooks', link: '/guide/06-workbooks' },
-          { text: 'The Toolbox (CBT)', link: '/guide/08-cbt-tools' },
+          { text: 'Recovery Tools (CBT)', link: '/guide/08-cbt-tools' },
           { text: 'Daily Readings', link: '/guide/09-daily-readings' },
           { text: 'My Insights & Recovery Capital', link: '/guide/10-insights' },
           { text: 'My Recovery Games', link: '/guide/11-recovery-games' }

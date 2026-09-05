@@ -21,6 +21,10 @@ service-account*.json
 # Firebase CLI local deploy cache
 .firebase/
 
+# VitePress build cache (was accidentally committed pre-existing; regenerated
+# on every docs:build/docs:dev, never source)
+docs-site/.vitepress/cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

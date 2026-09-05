@@ -20,7 +20,6 @@ Your Dashboard is the central command center for your recovery journey. It aggre
 ## 1. The Identity & Momentum Card
 At the very top of your dashboard is your unified Identity Card.
 * **Clean Time:** Tracks your exact sobriety time in Years, Months, and Days. If you're on the Stability Track (see below), you can rename "Days" to something like "Days of Stability" in **Profile → General**.
-* **Gamification Rank:** Right below your time, you will see your current Level, Archetype (e.g., Scholar, Doer, Monk), and your XP Progress Bar.
 * **Financial Freedom:** If configured, the bottom right will show exactly how much money you have saved since your sobriety date.
   > **💡 Pro Tip:** You can configure your daily, weekly, or monthly substance cost in **Profile → General** to activate the Financial Freedom tracker.
 * **Hero Color:** Tap the swatch icon in the top-left corner of the card to pick from 5 color themes (Amber, Sky, Emerald, Violet, Rose). Your choice is saved instantly, applies to any milestone image you share, and now also sets the color of your Dashboard's header bar and background — so your whole Dashboard reflects the theme you picked, not just the hero card.
@@ -77,10 +76,9 @@ Staying on track is easier with gentle nudges. At the top of your Dashboard, you
 * *Note for iOS (iPhone) users:* Apple requires you to install the app to your Home Screen before it allows push notifications. Follow the installation guide if you don't see the banner.
 
 ### Managing Dashboard Badges
-Go to **Profile → General**, scroll to the **Anchor Notifications** section to control the red dot badges on your Dynamic Anchor:
+Go to **Profile → General**, scroll to the **Dashboard Badges** section to control the red dot badges on your Dynamic Anchor:
 * **Daily Check-In Badge** — shows a red dot on the check-in button when you haven't checked in today.
 * **Daily Reading Badge** — shows a red dot on the reading button when you haven't read today.
-* **Daily Intent Badge** — shows a red dot when you haven't set today's intention.
 
 Each badge can be toggled on or off independently. These control the visual indicators on the Dashboard — they are separate from the push notifications sent by The Beacon.
 
@@ -96,15 +94,18 @@ You'll only see one image per day, no matter how many times you open the app.
 * **Changelog Beacon:** When we release a new feature or bug fix, a small banner will appear at the top of your dashboard to let you know what's new.
 
 ## 7. The Bento Grid
-Quickly view your active streaks and completion rates across your core pillars:
-* **Journal:** View your consecutive day streak and weekly consistency.
-* **Habits:** View your overall completion rate and "Fire" score (the combined sum of all your active habit streaks).
-* **Vitality:** View your biological regulation streak and total logs.
-* **Wisdom:** See how many questions you've answered out of the total available across all workbooks, with your overall completion percentage shown just below.
-* **Games:** Zero-knowledge, anti-shame mini-games and psychoeducation quizzes — see the [My Recovery Games](/guide/11-recovery-games) guide for the full list.
-* **Tools:** Access CBT exercises and grounding tools.
+Six tiles give you one-tap navigation into each core pillar:
+* **My Journal — Reflect:** Write down what's on your mind today.
+* **My Tasks — Today's Routine:** Check off your recovery tasks.
+* **My Vitality — Check In:** Log your sleep, movement, and energy.
+* **My Workbooks — Guided Steps:** Work through your recovery workbooks.
+* **My Games — Recovery Games:** Zero-knowledge, anti-shame mini-games — see the [My Recovery Games](/guide/11-recovery-games) guide for the full list.
+* **My Tools:** CBT exercises and grounding tools — see the [Recovery Tools](/guide/08-cbt-tools) guide.
+
+These tiles are pure navigation shortcuts. Streaks, completion rates, and other stat numbers live in **Profile → Achievements** (below), not on the tiles themselves — this keeps the Dashboard calm and uncluttered.
 
 ## 8. The Gamification Engine
-Recovery is a high-performance lifestyle. MRT tracks your positive actions and assigns you an **Archetype** and **Level**.
+Recovery is a high-performance lifestyle. MRT tracks your positive actions behind the scenes and assigns you an **Archetype** and **Level** — view your current standing anytime in **Profile → Achievements**.
 * **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), logging vitality metrics, and completing your monthly Recovery Capital check-in (+25 XP).
 * **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
+* **Profile → Achievements:** Shows your **Rank & Level** (with an XP progress bar), **Journal Streak** and weekly consistency, **Habit Fire** and completion rate, **Vitality Rhythm** and total logs, and **Workbook Wisdom** (questions answered and overall completion). None of this appears on the Dashboard itself anymore — it moved here to keep the Dashboard focused on your daily snapshot.

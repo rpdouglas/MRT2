@@ -1,0 +1,6 @@
+/* Only `utilities` — deliberately omitting `@tailwind base`/`components` so
+   Tailwind's Preflight reset never runs here and can't clash with
+   VitePress's own default-theme typography/spacing. Guide markdown only
+   ever uses plain utility classes (rounded-3xl, shadow-xl, etc.) on
+   hand-authored <figure>/<img> blocks, never @apply or component classes. */
+@tailwind utilities;
