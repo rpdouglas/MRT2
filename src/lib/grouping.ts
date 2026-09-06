@@ -20,15 +20,17 @@ export function groupItemsByYearAndMonth<T extends TimeStampedItem>(items: T[]):
   items.forEach((item) => {
     let date: Date;
 
-    // Normalize Date
-    if (item.createdAt instanceof Timestamp) {
-      date = item.createdAt.toDate();
+    // Normalize Date. Duck-typed check (rather than `instanceof Timestamp`) so
+    // this also handles mockData.ts's createMockTimestamp() wrapper, which is
+    // not a real Timestamp instance (avoids a Vitest mock-loader issue).
+    if (typeof item.createdAt === 'string') {
+      date = parseISO(item.createdAt);
     } else if (item.createdAt instanceof Date) {
       date = item.createdAt;
-    } else if (typeof item.createdAt === 'string') {
-      date = parseISO(item.createdAt);
+    } else if (item.createdAt && typeof (item.createdAt as { toDate?: unknown }).toDate === 'function') {
+      date = (item.createdAt as Timestamp).toDate();
     } else {
-      date = new Date(item.createdAt);
+      date = new Date(item.createdAt as unknown as string);
     }
 
     const year = date.getFullYear().toString();

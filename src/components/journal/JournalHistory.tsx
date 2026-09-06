@@ -136,8 +136,12 @@ export default function JournalHistory({ onEdit }: JournalHistoryProps) {
         if (isMock) {
             const yearNum = Number(currentYear);
             return (getMockJournals(user.email!) as unknown as JournalEntryWithStatus[]).filter((entry) => {
+                // Duck-typed check: mock journals use createMockTimestamp(), which is
+                // not a real Timestamp instance (avoids a Vitest mock-loader issue).
                 const created = entry.createdAt as unknown;
-                const date = created instanceof Timestamp ? created.toDate() : new Date(created as string);
+                const date = created && typeof (created as { toDate?: unknown }).toDate === 'function'
+                    ? (created as Timestamp).toDate()
+                    : new Date(created as string);
                 return date.getFullYear() === yearNum;
             });
         }

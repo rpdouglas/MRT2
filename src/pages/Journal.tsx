@@ -67,7 +67,7 @@ export default function Journal() {
 
       {/* 3. SCROLLABLE CONTENT */}
       {/* pt-6 ensures content doesn't butt up against the floating tabs immediately */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20" data-screenshot-scroll-root>
         
         {activeTab === 'write' && (
             <div className="animate-fadeIn h-full flex flex-col">
