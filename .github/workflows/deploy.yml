@@ -7,9 +7,38 @@ on:
       - 'release/*'
       - 'feature/*'
       - 'claude/*'
+    # A change confined to these paths can't affect the app build, the
+    # Cloud Functions runtime, or anything the test suites exercise — skip
+    # the whole verify+deploy pipeline for it. Deliberately NOT docs-site/**
+    # or a blanket **/*.md: GATE 3b below (Docs Site Build) exists
+    # specifically to catch a broken docs-site build before merge (see its
+    # own comment, e1616ca) and a guide page is plain markdown too — an
+    # ignore list broad enough to skip docs/SCREENSHOTS_INDEX.md must not
+    # also skip docs-site/guide/*.md.
+    paths-ignore:
+      - 'docs/**'
+      - '_raw_screenshots/**'
+      - 'CLAUDE.md'
+      - 'GEMINI.md'
+      - 'README.md'
+      - '.claude/**'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '_raw_screenshots/**'
+      - 'CLAUDE.md'
+      - 'GEMINI.md'
+      - 'README.md'
+      - '.claude/**'
+
+# Cancel a superseded run on the same branch/PR (e.g. a quick sequence of
+# fixup pushes) instead of letting redundant verify+deploy runs pile up and
+# burn CI minutes in parallel.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # --- JOB 1: QUALITY GATES ---
@@ -70,7 +99,7 @@ jobs:
 
       # GATE 4: Unit Tests (Logic)
       - name: Unit Tests
-        run: npm run test:watch -- --run # Runs once and exits
+        run: npm run test:once
 
       # GATE 5: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
       - name: Install Functions dependencies
@@ -94,26 +123,24 @@ jobs:
             sleep $((attempt * 15))
           done
 
-      # GATE 7: E2E Golden Paths (PROJ-23) and Firestore Rules Tests (PROJ-99)
-      # both need the Firestore emulator — shared Java setup, run rules tests
-      # first since they're much faster and should fail fast before the
-      # slower Playwright suite. Firebase emulators are started/torn down
-      # automatically by `firebase emulators:exec`, so neither ever touches
-      # a real Firebase project.
-      - name: Setup Java (required by the Firestore emulator)
+      # GATE 7: E2E Golden Paths (PROJ-23) and Firestore/Storage Rules Tests
+      # (PROJ-99, PROJ-113) both need Firebase emulators — shared Java setup,
+      # run rules tests first since they're much faster and should fail fast
+      # before the slower Playwright suite. Firestore and Storage rules tests
+      # share one `firebase emulators:exec` session (one Java/emulator boot)
+      # rather than the two separate ones `npm run test:rules` and
+      # `npm run test:rules:storage` each start on their own when run
+      # individually (still the right way to run just one locally) — emulators
+      # are started/torn down automatically, so this never touches a real
+      # Firebase project.
+      - name: Setup Java (required by the Firestore/Storage emulators)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Firestore Rules Tests (PROJ-99)
-        run: npm run test:rules
-
-      # Storage Rules Tests (PROJ-113) — first use of Firebase Storage in this
-      # app; same emulator-backed pattern as the Firestore rules gate above,
-      # just against the Storage emulator instead.
-      - name: Storage Rules Tests (PROJ-113)
-        run: npm run test:rules:storage
+      - name: Firestore & Storage Rules Tests (PROJ-99, PROJ-113)
+        run: npx firebase-tools emulators:exec --project=mrt2-app-dev --only firestore,storage "npx vitest run --config vitest.rules.config.ts && npx vitest run --config vitest.rules.storage.config.ts"
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
