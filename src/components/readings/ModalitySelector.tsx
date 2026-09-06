@@ -40,7 +40,7 @@ export default function ModalitySelector() {
           </button>
         );
       })}
-      <p className="text-[10px] text-gray-400 pt-1">
+      <p className="text-[10px] text-gray-600 pt-1">
         Active modalities rotate day by day. Deselect any you don't want.
       </p>
     </div>

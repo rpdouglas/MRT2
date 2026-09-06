@@ -541,8 +541,9 @@ export default function Profile() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Sobriety Date {isOnboarding && <span className="text-red-500">*</span>}</label>
+                        <label htmlFor="sobriety-date" className="block text-sm font-medium text-gray-700">Sobriety Date {isOnboarding && <span className="text-red-500">*</span>}</label>
                         <input
+                            id="sobriety-date"
                             type="date"
                             value={sobrietyDate}
                             min={minSobrietyDateStr}
@@ -612,7 +613,7 @@ export default function Profile() {
                                 </select>
                             </div>
                         </div>
-                        <p className="mt-2 text-[10px] text-gray-400">Track how much money you save by staying clean on your dashboard.</p>
+                        <p className="mt-2 text-[10px] text-gray-600">Track how much money you save by staying clean on your dashboard.</p>
                     </div>
 
                     {/* Support Network */}
@@ -647,7 +648,7 @@ export default function Profile() {
                                     onBlur={commitSponsor}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border"
                                 />
-                                <p className="mt-1 text-[10px] text-gray-400">Used for quick access in the SOS modal.</p>
+                                <p className="mt-1 text-[10px] text-gray-600">Used for quick access in the SOS modal.</p>
                             </div>
                         </div>
                     </div>
@@ -685,7 +686,7 @@ export default function Profile() {
                                     onBlur={() => commitMat()}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2 border"
                                 />
-                                <p className="mt-1 text-[10px] text-gray-400">Replaces the "Days" label on your Dashboard counter. Leave blank to keep the default.</p>
+                                <p className="mt-1 text-[10px] text-gray-600">Replaces the "Days" label on your Dashboard counter. Leave blank to keep the default.</p>
                             </div>
                         )}
                     </div>
@@ -726,7 +727,7 @@ export default function Profile() {
                                 <span className="text-sm font-medium text-gray-700">Daily Reading Badge</span>
                             </label>
                         </div>
-                        <p className="mt-2 text-[10px] text-gray-400">Toggle whether the red exclamation badges show up on your dashboard anchor. This does not affect push notifications below.</p>
+                        <p className="mt-2 text-[10px] text-gray-600">Toggle whether the red exclamation badges show up on your dashboard anchor. This does not affect push notifications below.</p>
                     </div>
 
                     {/* Push Notifications — the only control that actually gates server-sent push (dailyBeacon) */}
@@ -747,7 +748,7 @@ export default function Profile() {
                             />
                             <span className="text-sm font-medium text-gray-700">Milestone &amp; habit reminders on this device</span>
                         </label>
-                        <p className="mt-2 text-[10px] text-gray-400">Turning this off stops all push notifications to this device. You can re-enable it any time.</p>
+                        <p className="mt-2 text-[10px] text-gray-600">Turning this off stops all push notifications to this device. You can re-enable it any time.</p>
                     </div>
 
                     {/* Hero Appearance — PROJ-56 */}
@@ -755,7 +756,7 @@ export default function Profile() {
                         <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
                             <SwatchIcon className="h-4 w-4 text-rose-500" /> Hero Appearance
                         </h4>
-                        <p className="text-[10px] text-gray-400 mb-3">Choose the color scheme for your dashboard sobriety hero.</p>
+                        <p className="text-[10px] text-gray-600 mb-3">Choose the color scheme for your dashboard sobriety hero.</p>
                         <div className="flex gap-3">
                             {(Object.keys(HERO_COLORS) as HeroColorKey[]).map((key) => (
                                 <button
@@ -777,7 +778,7 @@ export default function Profile() {
                         <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
                             <BookOpenIconOutline className="h-4 w-4 text-sky-500" /> Daily Reading
                         </h4>
-                        <p className="text-[10px] text-gray-400 mb-3">Select which reading traditions to rotate through each day.</p>
+                        <p className="text-[10px] text-gray-600 mb-3">Select which reading traditions to rotate through each day.</p>
                         <ModalitySelector />
                     </div>
 
@@ -823,7 +824,7 @@ export default function Profile() {
                 )}
 
                 {!isOnboarding && (
-                    <div className="text-center text-xs text-gray-400 space-x-4 pt-2">
+                    <div className="text-center text-xs text-gray-600 space-x-4 pt-2">
                         <a href="https://docs.myrecoverytoolkit.ca/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Privacy Policy</a>
                         <span>&middot;</span>
                         <a href="https://docs.myrecoverytoolkit.ca/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-gray-600">Terms of Service</a>
@@ -850,7 +851,7 @@ export default function Profile() {
                     )}
 
                     {rotError && (
-                        <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-start gap-3 animate-fadeIn">
+                        <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-start gap-3 animate-fadeIn">
                             <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
                             {rotError}
                         </div>
@@ -1115,14 +1116,14 @@ export default function Profile() {
         <div className="border-t border-gray-300 pt-6 mt-8">
             <button
               onClick={handleLogout}
-              className="w-full flex justify-center items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl font-semibold hover:bg-red-100 transition-colors"
+              className="w-full flex justify-center items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-xl font-semibold hover:bg-red-100 transition-colors"
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
               Log Out
             </button>
         </div>
 
-        <div className="text-center text-xs text-gray-400 font-mono">
+        <div className="text-center text-xs text-gray-600 font-mono">
             App Version: v{appVersion}
         </div>
       </div>
