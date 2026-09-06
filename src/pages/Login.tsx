@@ -189,13 +189,13 @@ export default function Login() {
             <div className="flex bg-slate-100 p-1.5 rounded-xl mb-8 shadow-inner">
                 <button 
                     onClick={() => { setIsLogin(true); setError(''); }}
-                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-white shadow-sm text-blue-700' : 'text-slate-600 hover:text-slate-700'}`}
                 >
                     Sign In
                 </button>
                 <button 
                     onClick={() => { setIsLogin(false); setError(''); }}
-                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-white shadow-sm text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-white shadow-sm text-blue-700' : 'text-slate-600 hover:text-slate-700'}`}
                 >
                     Create Account
                 </button>
@@ -288,7 +288,7 @@ export default function Login() {
                     <div className="w-full border-t border-slate-200" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-slate-400 font-medium">Or continue with</span>
+                    <span className="px-4 bg-white text-slate-600 font-medium">Or continue with</span>
                 </div>
             </div>
 
@@ -302,12 +302,12 @@ export default function Login() {
               Sign in with Google
             </button>
 
-            <div className="mt-8 text-center text-xs text-slate-400 space-x-4">
+            <div className="mt-8 text-center text-xs text-slate-600 space-x-4">
                 <a href="https://docs.myrecoverytoolkit.ca/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Privacy Policy</a>
                 <span>&middot;</span>
                 <a href="https://docs.myrecoverytoolkit.ca/tos" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-slate-600">Terms of Service</a>
             </div>
-            <p className="mt-4 text-center text-xs text-slate-400 max-w-sm mx-auto">
+            <p className="mt-4 text-center text-xs text-slate-600 max-w-sm mx-auto">
                 My Recovery Toolkit is a self-help peer support tool and is not a medical device, diagnostic tool, or replacement for professional clinical addiction treatment.
             </p>
         </div>

@@ -55,7 +55,7 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
     quote: '"Turning manic energy into grounded momentum."',
     headshot: ASSETS.personas.ned.headshot,
     screen: ASSETS.marketing.screenshots.scn_tasks_this_week,
-    color: 'bg-cyan-50 text-cyan-600',
+    color: 'bg-cyan-50 text-cyan-700',
     altDesc: 'Ned, representing users building daily habits and structure.',
     bio: {
       backstory: 'Chaotic partying, hit a wall in a holding cell. Tired of the chaos.',
@@ -76,7 +76,7 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
     quote: '"Self-care tools to prevent burnout."',
     headshot: ASSETS.personas.lisa.headshot,
     screen: ASSETS.marketing.screenshots.scn_vitality_breath,
-    color: 'bg-amber-50 text-amber-600',
+    color: 'bg-amber-50 text-amber-700',
     altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.',
     bio: {
       backstory: 'Functional user, high-stress life. Shame of neglecting her kids drove her into recovery.',
@@ -97,7 +97,7 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
     quote: '"Finding hidden patterns with AI analysis."',
     headshot: ASSETS.personas.walt.headshot,
     screen: ASSETS.marketing.screenshots.scn_journal_ai_wizard,
-    color: 'bg-fuchsia-50 text-fuchsia-600',
+    color: 'bg-fuchsia-50 text-fuchsia-700',
     altDesc: 'Walt, representing long-term users seeking AI insight.',
     bio: {
       backstory: 'Vietnam veteran, decades of hard use. Recovery is a deep spiritual practice.',
@@ -118,7 +118,7 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
     quote: '"I want to master the mechanics of my own recovery."',
     headshot: ASSETS.personas.maya.headshot,
     screen: ASSETS.marketing.screenshots.scn_workbooks_compass,
-    color: 'bg-emerald-50 text-emerald-600',
+    color: 'bg-emerald-50 text-emerald-700',
     altDesc: 'Maya, representing systematic, completion-driven users of the workbook tools.',
     bio: {
       backstory: 'Data-driven professional; 12-Step’s spiritual framework didn’t fit. Moved to SMART Recovery & Recovery Dharma instead.',
@@ -145,7 +145,7 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
     // close to one-tap dose logging) until a real MAT/dose-tracking feature
     // screenshot is captured — see docs/projects/116_WELCOME_PAGE_PERSONA_QUIZ.md §5.
     screen: ASSETS.marketing.screenshots.scn_tasks_log,
-    color: 'bg-teal-50 text-teal-600',
+    color: 'bg-teal-50 text-teal-700',
     altDesc: 'Jordan, representing users on medication-assisted recovery seeking non-judgmental tools.',
     bio: {
       backstory: 'Severe opioid use disorder; repeated abstinence-only relapses. Stabilised on Buprenorphine (Suboxone) MAT.',

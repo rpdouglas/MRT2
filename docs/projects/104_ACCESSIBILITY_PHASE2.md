@@ -1,6 +1,6 @@
 # 📁 Project 104: Accessibility Phase 2 — Crisis Access, WCAG 2.2, & Structural Gaps
 
-**Status:** 🟡 In Progress — Phase 1 shipped 2026-08-31; Phases 2-6 planned
+**Status:** 🟡 In Progress — Phase 1 shipped 2026-08-31; Phase 3 shipped 2026-09-06 (as PROJ-117 Tier 3, see below); Phases 2/4-6 planned
 **Primary Persona:** David (crisis-access reachability, PIN authentication burden), All (screen-reader/keyboard users, structural gaps)
 **Objective:** Close the accessibility gaps found by `docs/reports/2026-08_accessibility_gap_analysis.md` that weren't covered by `PROJ-91`/`PROJ-97`/`PROJ-98` — starting with a real product-safety bug (SOS unreachable when the vault is locked) and continuing through WCAG 2.2's new criteria, CI coverage expansion, and structural gaps (zero `aria-live` regions, no skip-link, no global reduced-motion baseline).
 
@@ -51,9 +51,12 @@ No Firestore schema changes in any phase. No `src/lib/db.ts` changes.
 * Surface the actual lockout duration as a countdown — `functions/src/index.ts:44-49`'s `computeLockoutSeconds` already computes this server-side; today the client only shows a static "please wait" string (`VaultGate.tsx:155`).
 * **Explicitly deferred, not Phase 2 scope:** a biometric/WebAuthn unlock alternative (the actual SC 3.3.8-compliant "alternative to a cognitive function test"). Requires a hardware-backed key-wrapping design compatible with the zero-knowledge model — real architecture work, needs its own future spec once scoped.
 
-### Phase 3: CI coverage expansion (⚪ Planned)
-* Extend `e2e/golden-paths/a11y.spec.ts` beyond its current 7 routes to add: `/tools/urge-surfer`, `/login`, `/delete-account`, `/profile`, `/admin`.
-* Add an assertion that opens the SOS modal (from an already-covered route) and scans it directly — today it's invisible to the axe gate entirely, since it's state-triggered, not a route.
+### Phase 3: CI coverage expansion — ✅ Shipped 2026-09-06 (as PROJ-117 Tier 3)
+* Extended `e2e/golden-paths/a11y.spec.ts` to add `/tools/urge-surfer`, `/login`, `/delete-account`, `/profile` — 4 of the originally-planned 5 routes.
+* **Correction found during implementation, not anticipated by this plan:** `/login` (like `/`, added in the same change for unrelated reasons — see `docs/projects/117_TESTING_CI_GAP_REMEDIATION.md` §6 Decision 1) redirects an already-authenticated visitor away, and the suite's single fixture always creates and authenticates a fresh user before every test. Scanning `/login` with that fixture as originally planned would have silently axe-scanned whatever it redirects to instead of the login form itself — a false pass. Fixed by splitting the file into `AUTHENTICATED_ROUTES` (existing fixture) and `PUBLIC_ROUTES` (plain, unauthenticated Playwright test), plus a runtime guard asserting `page.url()` still matches the target route before scanning, so a future regression of this kind fails loudly instead of silently passing.
+* **`/admin` deliberately NOT added**, differing from this plan's original scope: `AdminDashboard.tsx` redirects a non-admin user to `/dashboard`, and the fixture only ever creates a plain, non-admin user — the identical false-pass risk as `/login` above, but with no existing fixture infrastructure to grant the Auth emulator's admin custom claim before the route loads. Building that is a distinct, larger piece of test infrastructure than a route-list addition; tracked as a follow-up, not shipped with a silent false pass in its place.
+* **Real, pre-existing WCAG violations found and fixed** on every route added except `/tools/urge-surfer` (which passed clean) — none previously caught since none of these routes had ever been scanned before: color-contrast failures (`text-slate-400`/`text-gray-400` small text on white, several `text-{color}-600`-on-`{color}-50` badge/button pairs) across `Welcome.tsx`'s persona showcase (`src/data/welcomePersonas.ts`), `Login.tsx`, `DeleteAccount.tsx`, `Profile.tsx`, and `ModalitySelector.tsx`; plus one critical missing-label violation on `Profile.tsx`'s sobriety-date input (had a visual `<label>` with no `htmlFor`/`id` association). All fixed with minimal, targeted class/attribute changes — no visual redesign, no component restructuring.
+* SOS-modal-direct-scan assertion (opening it from an already-covered route) — still not done, remains open scope for a future pass.
 
 ### Phase 4: Structural gaps (⚪ Planned)
 * Global `prefers-reduced-motion`/`:focus-visible` CSS baseline in `src/index.css` — closes the `docs/ROADMAP.md` Wave 1 item that's been open since before this ticket (currently only 2 files handle it per-component).
