@@ -1,6 +1,6 @@
 # 📁 Project 117: Testing & CI Gap Remediation
 
-**Status:** ⚪ Planned — Planning Protocol complete, awaiting APPROVED
+**Status:** ✅ Shipped (2026-09-06) — Strategy B implemented as planned, all 3 tiers
 **Primary Persona:** Dev / AI Partner (CI correctness, test coverage of ZK/tier boundaries) — see `docs/governance/INTERNAL_PERSONAS.md`. No direct end-user-facing UI change in any item below; several items indirectly protect David's crisis-safety paths and the tier/ZK boundary from regressing silently.
 **Objective:** Implement all 8 recommendations from `docs/reports/2026-09_testing_strategy_gap_analysis.md` §4 — close the gap between what CI *looks* like it enforces and what it actually enforces (real type-checking, the SEC-01 security regression), and add coverage at the specific ZK/tier seams that report found untested (`workbook_answers`/`service` rules, `syncStripeSubscription`/`handlePlayRTDN`, the `/` a11y gap).
 
@@ -127,4 +127,22 @@
 ---
 
 ## Stop Gate
-Awaiting **APPROVED** before any implementation code is written.
+**APPROVED** (2026-09-06) — user approved Strategy B.
+
+---
+
+## 8. Implementation Summary (2026-09-06)
+
+Shipped as three independent, staged PRs exactly per Strategy B — each merges cleanly on its own, none depends on the others.
+
+**Tier 1 — CI-gate correctness** (this PR, #208): added a `Build` step (`tsc -b && vite build && prerender`) and an `E2E Security Regression (SEC-01)` step to the `verify` job. Both decisions from §6 held exactly as planned: the new `Build` step reuses the Playwright/Chromium install already present for the E2E Golden Paths step rather than installing a second time, and `test:e2e:security` needed no new dependency on it (self-contained `webServer`). Verified locally: a deliberately-introduced type error is caught by `tsc -b`, then reverted; `npm run test:e2e:security` passes against the current SEC-01 fix.
+
+**Tier 2 — rules + Cloud Functions tests** (#209): added `service`/`workbook_answers` Firestore rules tests (66/66 pass) and extracted+tested `computeStripeTierUpdate`/`shouldApplyPlayRTDNUpdate` from `syncStripeSubscription`/`handlePlayRTDN` (114/114 functions tests pass). Both §6 precedent corrections held: `service` mirrored `journals`/`game_saves`, `workbook_answers` mirrored `playPurchases`. Every new test proven to actually assert something by temporarily breaking the underlying rule/logic and confirming the test catches it, then reverting — including one deliberate rules-disable that also caught the pre-existing `deletion.rules.test.ts` cascade test, confirming the `service` collection's real delete-permission dependency.
+
+**Tier 3 — a11y route expansion** (#210): extended `a11y.spec.ts` from 7 to 12 routes. The §6 Decision 1 fixture-split correction (planned for `/`+`/login`) turned out to apply identically to `/admin` — found only once `/admin` was actually attempted: `AdminDashboard.tsx` has the same redirect-on-non-admin-visitor behavior as `Welcome.tsx`/`Login.tsx`'s redirect-on-authenticated-visitor, so `/admin` was deliberately **not** added rather than shipped with the same false-pass bug, pending a real admin-claim test fixture (tracked in `docs/projects/104_ACCESSIBILITY_PHASE2.md`).
+
+**The single biggest discovery of the whole project, found only by actually running the new tests, not by planning them:** every route added in Tier 3 except `/tools/urge-surfer` immediately failed on real, previously-uncaught WCAG 2.2 AA violations — the exact risk this project set out to close, and concrete proof the a11y gate was worth adding rather than a paperwork exercise. All fixed with minimal, targeted changes (color-contrast shade bumps, one missing `htmlFor`/`id` label association) rather than deferred, since an added CI gate that ships already-failing isn't shippable. This means the original report's ~1-day effort estimate for the a11y-expansion recommendations held only for the "add routes" half of the work — the WCAG remediation half it didn't anticipate added real, necessary scope, confirming §0's framing that recommendation effort estimates were closer to a floor than a ceiling once a route had never actually been scanned before.
+
+**Rec #7 (PIN rotation / account-deletion e2e) and Rec #8 (coverage tooling)** remain explicitly out of scope for this project, per the approved plan — #7 is a real backlog candidate; #8's reasoning (structural gaps found, not density gaps) held throughout implementation and wasn't revisited.
+
+**Full verification, all 3 tiers combined:** `npm run lint`, `npm run docs:check-specs`, `npm run test:once` (796/796), `npm run build`, `npm run test:rules` (66/66), `npm test --prefix functions` (114/114), and the full `a11y.spec.ts` suite (12/12) all pass. No regressions found in any existing test across any tier.
