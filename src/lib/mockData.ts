@@ -1,6 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { UserProfile, JournalEntry, Task, WorkbookAnswer } from './db';
 import type { SavedInsight } from './insights';
+import type { ROSCAssessment } from './types/rosc';
 
 // Helper to get relative dates
 const daysAgo = (days: number): Date => {
@@ -333,7 +334,96 @@ const WALT_JOURNALS: JournalEntry[] = [
         moodScore: 10,
         tags: ['anniversary', 'serenity', 'growth'],
         createdAt: createMockTimestamp(hoursAgo(8)),
+        isEncrypted: false,
+        weather: { temp: 68, condition: 'Clear' }
+    },
+    {
+        id: 'walt-journal-2',
+        uid: 'mock-uid-walt',
+        content: 'Quiet morning meditation. Noticed how much steadier my breathing has become compared to a year ago. Resilience compounds slowly.',
+        moodScore: 9,
+        tags: ['meditation', 'resilience'],
+        createdAt: createMockTimestamp(daysAgo(1)),
+        isEncrypted: false,
+        weather: { temp: 65, condition: 'Clear' }
+    },
+    {
+        id: 'walt-journal-3',
+        uid: 'mock-uid-walt',
+        content: 'Long walk this evening. Some fatigue from work stress, but the routine held. Gratitude for a stable week.',
+        moodScore: 7,
+        tags: ['gratitude', 'routine'],
+        createdAt: createMockTimestamp(daysAgo(2)),
+        isEncrypted: false,
+        weather: { temp: 61, condition: 'Cloudy' }
+    },
+    {
+        id: 'walt-journal-4',
+        uid: 'mock-uid-walt',
+        content: 'Reflected on an old thought record from years back. Struck by how far the reframing skills have come since then.',
+        moodScore: 8,
+        tags: ['reflection', 'growth'],
+        createdAt: createMockTimestamp(daysAgo(3)),
         isEncrypted: false
+    },
+    {
+        id: 'walt-journal-5',
+        uid: 'mock-uid-walt',
+        content: 'A harder day. Work deadline pressure crept in and sleep suffered. Leaning on the evening meditation routine to reset.',
+        moodScore: 5,
+        tags: ['stress', 'meditation'],
+        createdAt: createMockTimestamp(daysAgo(4)),
+        isEncrypted: false,
+        weather: { temp: 58, condition: 'Rain' }
+    },
+    {
+        id: 'walt-journal-6',
+        uid: 'mock-uid-walt',
+        content: 'Slept better. Mood lifted alongside it. The correlation between rest and emotional steadiness keeps showing up.',
+        moodScore: 8,
+        tags: ['sleep', 'stability'],
+        createdAt: createMockTimestamp(daysAgo(5)),
+        isEncrypted: false,
+        weather: { temp: 63, condition: 'Clear' }
+    },
+    {
+        id: 'walt-journal-7',
+        uid: 'mock-uid-walt',
+        content: 'Sponsorship call today. Grounding to hear someone else\'s early days and remember where this all started.',
+        moodScore: 9,
+        tags: ['service', 'gratitude'],
+        createdAt: createMockTimestamp(daysAgo(7)),
+        isEncrypted: false
+    },
+    {
+        id: 'walt-journal-8',
+        uid: 'mock-uid-walt',
+        content: 'Steady week overall. Morning routine holding. Noticing fewer catastrophic thoughts creeping in during traffic.',
+        moodScore: 8,
+        tags: ['routine', 'progress'],
+        createdAt: createMockTimestamp(daysAgo(9)),
+        isEncrypted: false,
+        weather: { temp: 70, condition: 'Clear' }
+    },
+    {
+        id: 'walt-journal-9',
+        uid: 'mock-uid-walt',
+        content: 'Family dinner brought up an old resentment. Sat with it instead of reacting. Small win, but a real one.',
+        moodScore: 6,
+        tags: ['reflection', 'patience'],
+        createdAt: createMockTimestamp(daysAgo(11)),
+        isEncrypted: false,
+        weather: { temp: 55, condition: 'Cloudy' }
+    },
+    {
+        id: 'walt-journal-10',
+        uid: 'mock-uid-walt',
+        content: 'Two-week check-in with myself: energy is up, sleep is consistent, and the meditation streak feels sustainable.',
+        moodScore: 9,
+        tags: ['stability', 'meditation'],
+        createdAt: createMockTimestamp(daysAgo(13)),
+        isEncrypted: false,
+        weather: { temp: 60, condition: 'Clear' }
     }
 ];
 
@@ -432,5 +522,54 @@ const DAVID_VITALITY_LOGS = [
 
 export function getMockVitalityLogs(email: string): Array<{ id: string; tags: string[]; createdAt: Timestamp }> {
     if (email.startsWith('david')) return DAVID_VITALITY_LOGS;
+    return [];
+}
+
+// PROJ-63 mock mode: /insights (ROSC Recovery Capital) had no mock fallback at
+// all — useROSCAssessments.ts's getROSCAssessments() always hit live
+// Firestore, which returns empty for a mock-uid-* account and renders the
+// "Your first snapshot awaits" onboarding empty state instead of the
+// documented AI-summary card. encryptedAIContext is plaintext here — .mock
+// emails get an identity encrypt/decrypt via EncryptionContext, same as every
+// other "encrypted" field in this file.
+const WALT_ROSC_ASSESSMENTS: ROSCAssessment[] = [
+    {
+        id: 'walt-rosc-2',
+        uid: 'mock-uid-walt',
+        createdAt: createMockTimestamp(daysAgo(2)),
+        periodStart: createMockTimestamp(daysAgo(9)),
+        periodEnd: createMockTimestamp(daysAgo(2)),
+        scores: {
+            health: { score: 8, selfReportedScore: 8, evidenceCount: 6 },
+            home: { score: 9, selfReportedScore: 9, evidenceCount: 4 },
+            purpose: { score: 7, selfReportedScore: 7, evidenceCount: 5 },
+            community: { score: 8, selfReportedScore: 8, evidenceCount: 7 },
+        },
+        totalScore: 32, // sum of the four domain scores above, out of a max of 40
+        trajectory: 'Improving',
+        journalEntriesAnalysed: 10,
+        encryptedAIContext: 'Recovery capital has climbed steadily across all four domains this period, with Home and Community showing the strongest evidence base.'
+    },
+    {
+        id: 'walt-rosc-1',
+        uid: 'mock-uid-walt',
+        createdAt: createMockTimestamp(daysAgo(16)),
+        periodStart: createMockTimestamp(daysAgo(23)),
+        periodEnd: createMockTimestamp(daysAgo(16)),
+        scores: {
+            health: { score: 7, selfReportedScore: 7, evidenceCount: 5 },
+            home: { score: 8, selfReportedScore: 8, evidenceCount: 3 },
+            purpose: { score: 6, selfReportedScore: 6, evidenceCount: 3 },
+            community: { score: 7, selfReportedScore: 7, evidenceCount: 5 },
+        },
+        totalScore: 28, // sum of the four domain scores above, out of a max of 40
+        trajectory: 'Stable',
+        journalEntriesAnalysed: 8,
+        encryptedAIContext: 'A stable baseline period — Purpose scored lowest, suggesting room to add more structured goal-setting into the weekly routine.'
+    }
+];
+
+export function getMockROSCAssessments(email: string): ROSCAssessment[] {
+    if (email.startsWith('walt')) return WALT_ROSC_ASSESSMENTS;
     return [];
 }
