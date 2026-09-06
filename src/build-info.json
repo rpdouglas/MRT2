@@ -2,95 +2,95 @@
   "meta": {
     "env": "PRODUCTION",
     "branch": "main",
-    "globalHash": "d57c098",
+    "globalHash": "95e759b",
     "coreHash": "caf29f23",
-    "buildTime": "2026-09-06T00:07:00.970Z",
+    "buildTime": "2026-09-06T00:41:19.689Z",
     "appVersion": "1.9.12"
   },
   "pages": {
     "AdminDashboard": {
       "hash": "8fce29c1",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Dashboard": {
       "hash": "ec571f01",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "DebugTools": {
       "hash": "5889614e",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "DeleteAccount": {
       "hash": "2d8899ce",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "GamesHub": {
       "hash": "7b22d150",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "InsightsLog": {
       "hash": "5bb21951",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Journal": {
       "hash": "2f1f481e",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Links": {
       "hash": "d3906c4e",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Login": {
       "hash": "8082a971",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "PremiumUpgrade": {
       "hash": "afba4050",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Profile": {
       "hash": "791acdc5",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "RecoveryCapital": {
       "hash": "d9be7ee6",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Tasks": {
       "hash": "84455910",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "ToolHistory": {
       "hash": "f70c6e07",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "ToolsHub": {
       "hash": "58413634",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "UrgeSurfer": {
       "hash": "b123400c",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Vitality": {
       "hash": "242599f7",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Welcome": {
       "hash": "afc95c9c",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "WorkbookDetail": {
       "hash": "51715ee5",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "WorkbookSession": {
       "hash": "4c8ab265",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     },
     "Workbooks": {
       "hash": "0d27c59b",
-      "lastModified": "2026-09-06T00:07:00.970Z"
+      "lastModified": "2026-09-06T00:41:19.689Z"
     }
   }
 }
