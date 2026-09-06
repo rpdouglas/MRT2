@@ -141,6 +141,10 @@ async function captureScreenshots() {
         {
             name: 'walt-journal-insights',
             url: `${BASE_URL}/journal?mockUser=walt&tab=insights`,
+            // Journal.tsx uses an internally-scrolling h-[100dvh] shell (not page
+            // scroll), so Playwright's fullPage option can't capture the charts
+            // below the fold — grow the viewport to fit the real content instead.
+            captureFullContent: true,
         },
         {
             name: 'walt-journal-ai-wizard',
@@ -191,16 +195,33 @@ async function captureScreenshots() {
 
     for (const target of targets) {
         console.log(`📸 Capturing ${target.name} from ${target.url}...`);
-        
+
+        // Reset to the default Pixel 7 viewport so a resize for one target
+        // (captureFullContent, below) never leaks into the next.
+        await page.setViewportSize(pixel7.viewport);
+
         // Go to URL and wait for page load to finish
         await page.goto(target.url, { waitUntil: 'load' });
-        
+
         // Wait 3 seconds for layout calculations, mock state paints, and fonts to stabilize
         await page.waitForTimeout(3000);
 
         if (target.action) {
             await target.action(page);
             await page.waitForTimeout(1000);
+        }
+
+        if (target.captureFullContent) {
+            const { top, scrollHeight } = await page.evaluate(() => {
+                const el = document.querySelector('[data-screenshot-scroll-root]');
+                if (!el) return { top: 0, scrollHeight: 0 };
+                return { top: el.getBoundingClientRect().top, scrollHeight: el.scrollHeight };
+            });
+            if (scrollHeight > 0) {
+                const { width } = page.viewportSize();
+                await page.setViewportSize({ width, height: Math.ceil(top + scrollHeight + 24) });
+                await page.waitForTimeout(400); // let dvh-based layout reflow
+            }
         }
 
         const screenshotPath = path.join(RAW_DIR, `${target.name}.png`);

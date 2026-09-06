@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx eslint --fix '$CLAUDE_TOOL_INPUT_FILE_PATH' --ext .ts,.tsx 2>&1 | tail -5 || true",
+            "command": "bash .claude/hooks/lint-fix-on-edit.sh",
             "timeout": 15
           }
         ]
@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx tsc --noEmit 2>&1 | tail -10 || true",
+            "command": "bash .claude/hooks/typecheck-on-edit.sh",
             "timeout": 30,
             "async": true
           }
