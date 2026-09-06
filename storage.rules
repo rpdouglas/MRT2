@@ -7,6 +7,15 @@ rules_version = '2';
 // editorial content (never user-generated), same posture as the
 // image_library/daily_images Firestore collections it backs — see
 // docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md §2/§3.
+//
+// NOTE: bucket-level CORS (needed for DailyImageModal.tsx's client-side
+// fetch() of downloadUrl, e.g. for the Share button — a browser `<img>` load
+// isn't CORS-gated but a fetch() is) lives in ../storage.cors.json, applied
+// via `gcloud storage buckets update gs://<bucket> --cors-file=storage.cors.json`.
+// `firebase deploy` does NOT apply it — there's no firebase.json field for
+// bucket CORS, it's a GCS-bucket-level setting only. See
+// docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md's Known Gaps for the
+// missing-CORS incident this was added to fix.
 service firebase.storage {
   match /b/{bucket}/o {
 
