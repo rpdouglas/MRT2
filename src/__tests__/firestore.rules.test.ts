@@ -678,3 +678,144 @@ describe('ai_logs / client_errors / feedback — owner-read + owner-delete (PROJ
     await assertFails(updateDoc(doc(aliceDb, 'feedback', 'doc1'), { report: 'edited' }));
   });
 });
+
+// PROJ-117: `service` and `workbook_answers` are two of the app's only
+// fully-encrypted collections (per CLAUDE.md's encryption-boundary table)
+// besides `journals`/`game_saves` — `service` holds a sponsor's encrypted
+// notes about *other people* (sponsees), not even the writer's own data.
+// Neither had any rules-test coverage until this ticket
+// (docs/reports/2026-09_testing_strategy_gap_analysis.md §2.1).
+describe('service — ownership (PROJ-117)', () => {
+  // `service` is a top-level, `uid`-tagged collection using
+  // isCreatingOwnedResource()/isResourceOwner() — the same rule shape as
+  // `journals`/`game_saves` above, so this mirrors that describe block.
+  it('lets a user create their own service note', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'service', 'note1'), {
+        uid: ALICE,
+        content: 'IV:cipher',
+        sponseeName: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+
+  it("blocks a user from creating a service note tagged with someone else's uid", async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'service', 'note1'), {
+        uid: BOB,
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+
+  it("blocks a user from reading another user's service note", async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'service', 'note1'), {
+        uid: BOB,
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(getDoc(doc(aliceDb, 'service', 'note1')));
+  });
+
+  it("blocks a user from updating another user's service note", async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'service', 'note1'), {
+        uid: BOB,
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(updateDoc(doc(aliceDb, 'service', 'note1'), { content: 'IV:tampered' }));
+  });
+
+  it('blocks an unauthenticated request entirely', async () => {
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(
+      setDoc(doc(anonDb, 'service', 'note1'), {
+        uid: ALICE,
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+});
+
+describe('users/{userId}/workbook_answers — ownership (PROJ-117)', () => {
+  // Nested subcollection under users/{userId}, `allow read, write: if
+  // isOwner(userId)` — structurally different from `service` above (a
+  // top-level, uid-tagged collection), so this mirrors the
+  // `users/{userId}/playPurchases` describe block's path shape instead.
+  // Unlike playPurchases (server-managed, owner-write deliberately blocked),
+  // workbook_answers grants the owner full read/write — closer to journals'
+  // permission shape, just nested under the owner's own users/{userId} doc.
+  it('lets a user create their own workbook answer', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'users', ALICE, 'workbook_answers', 'answer1'), {
+        workbookId: 'smart-recovery-1',
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+
+  it('lets a user update and delete their own workbook answer', async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(
+      setDoc(doc(aliceDb, 'users', ALICE, 'workbook_answers', 'answer1'), {
+        workbookId: 'smart-recovery-1',
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, 'users', ALICE, 'workbook_answers', 'answer1'), { content: 'IV:updated' }),
+    );
+    await assertSucceeds(deleteDoc(doc(aliceDb, 'users', ALICE, 'workbook_answers', 'answer1')));
+  });
+
+  it("blocks a user from reading another user's workbook answer", async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', BOB, 'workbook_answers', 'answer1'), {
+        workbookId: 'smart-recovery-1',
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(getDoc(doc(aliceDb, 'users', BOB, 'workbook_answers', 'answer1')));
+  });
+
+  it("blocks a user from writing into another user's workbook_answers subcollection", async () => {
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(
+      setDoc(doc(aliceDb, 'users', BOB, 'workbook_answers', 'answer1'), {
+        workbookId: 'smart-recovery-1',
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+
+  it('blocks an unauthenticated request entirely', async () => {
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(
+      setDoc(doc(anonDb, 'users', ALICE, 'workbook_answers', 'answer1'), {
+        workbookId: 'smart-recovery-1',
+        content: 'IV:cipher',
+        createdAt: Timestamp.now(),
+      }),
+    );
+  });
+});

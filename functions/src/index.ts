@@ -940,6 +940,27 @@ export const generateReadingsAdmin = onCall({
 // "users/{userId}/subscriptions/{subscriptionId}" subcollection are locked to "allow write: if false"
 // in firestore.rules (preventing client-side writes; only writable by admin SDK/Stripe extensions).
 // DO NOT modify firestore.rules to allow client writes without implementing caller validation here.
+export type StripeTierUpdate = { tier: "premium" | "free"; premium: boolean };
+
+/**
+ * PROJ-117: the tier-decision logic extracted from syncStripeSubscription's
+ * trigger body (visibility-only, zero behavior change — same "extract the
+ * testable core" pattern PROJ-73 established for verifyVaultPin's
+ * evaluateVaultPinAttempt) so it's unit-testable without mocking a Firestore
+ * document-write event. Returns null for the no-op case (status genuinely
+ * unchanged) so the caller can skip the write entirely, same as before.
+ */
+export function computeStripeTierUpdate(
+    beforeStatus: string | undefined,
+    afterStatus: string | undefined,
+): StripeTierUpdate | null {
+    if (beforeStatus === afterStatus) {
+        return null;
+    }
+    const premium = afterStatus === "active" || afterStatus === "trialing";
+    return { tier: premium ? "premium" : "free", premium };
+}
+
 export const syncStripeSubscription = onDocumentWritten(
     {
         document: "users/{userId}/subscriptions/{subscriptionId}",
@@ -955,24 +976,22 @@ export const syncStripeSubscription = onDocumentWritten(
         const beforeStatus = snapshot.before.data()?.status;
         const afterStatus = snapshot.after.data()?.status;
 
-        if (beforeStatus === afterStatus) {
+        const update = computeStripeTierUpdate(beforeStatus, afterStatus);
+        if (!update) {
             logger.info(`Status unchanged (${afterStatus}). Exiting.`);
             return;
         }
 
         const userId = event.params.userId;
-        const isPremium = afterStatus === "active" || afterStatus === "trialing";
-        const newTier = isPremium ? "premium" : "free";
-
-        logger.info(`Updating user ${userId} to tier: ${newTier} (Stripe: ${afterStatus || "deleted"})`);
+        logger.info(`Updating user ${userId} to tier: ${update.tier} (Stripe: ${afterStatus || "deleted"})`);
 
         try {
             await db.collection("users").doc(userId).update({
-                tier: newTier,
+                tier: update.tier,
                 tierSource: "Stripe-Managed",
             });
-            await getAuth().setCustomUserClaims(userId, { premium: isPremium });
-            logger.info(`Provisioned ${newTier} access for ${userId}.`);
+            await getAuth().setCustomUserClaims(userId, { premium: update.premium });
+            logger.info(`Provisioned ${update.tier} access for ${userId}.`);
         } catch (error) {
             logger.error(`Failed to provision access for ${userId}`, error);
         }
@@ -1145,6 +1164,19 @@ interface PlayRTDNMessage {
 }
 
 /**
+ * PROJ-117: the stale-notification guard extracted from handlePlayRTDN's
+ * body below (visibility-only, zero behavior change) — the one line
+ * standing between a delayed/out-of-order Play renewal notification and
+ * silently downgrading a user who has since upgraded via Stripe (or vice
+ * versa). A user's tierSource only ever changes by switching billing
+ * platforms entirely, so a Play notification arriving after that switch is
+ * stale and must not overwrite the current, authoritative source.
+ */
+export function shouldApplyPlayRTDNUpdate(currentTierSource: string | undefined): boolean {
+    return !currentTierSource || currentTierSource === "play-billing";
+}
+
+/**
  * Google calls this via Pub/Sub on subscription renewal/cancellation/
  * refund/grace-period events — the Play-side equivalent of the Stripe
  * extension's webhook. The topic name here must match whatever real-time
@@ -1181,7 +1213,7 @@ export const handlePlayRTDN = onMessagePublished<PlayRTDNMessage>(
         const userSnap = await userRef.get();
         const profile = userSnap.data() || {};
 
-        if (profile.tierSource && profile.tierSource !== "play-billing") {
+        if (!shouldApplyPlayRTDNUpdate(profile.tierSource)) {
             logger.info(`handlePlayRTDN: ${uid}'s tierSource is now '${profile.tierSource}', ignoring stale Play notification.`);
             return;
         }
