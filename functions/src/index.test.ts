@@ -22,6 +22,8 @@ import {
     validateAIProxyPayload,
     getPromptForType,
     fetchPlaySubscriptionStatus,
+    computeStripeTierUpdate,
+    shouldApplyPlayRTDNUpdate,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
@@ -864,5 +866,58 @@ describe("fetchPlaySubscriptionStatus (PROJ-105: Play Developer API verification
         expect(client.request).toHaveBeenCalledWith({
             url: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/ca.myrecoverytoolkit.app/purchases/subscriptions/premium%20monthly/tokens/token%2Fwith%20special%2Bchars",
         });
+    });
+});
+
+// ─── PROJ-117: syncStripeSubscription / handlePlayRTDN tier-decision logic ──
+// Neither function had any test coverage before this — both are among the
+// small set of code paths allowed to write `tier`/`tierSource` on
+// users/{uid}, per CLAUDE.md's Premium Tier & Billing section.
+
+describe("computeStripeTierUpdate (PROJ-117: syncStripeSubscription's tier decision)", () => {
+    it("returns null when status is unchanged (the no-op case)", () => {
+        expect(computeStripeTierUpdate("active", "active")).toBeNull();
+        expect(computeStripeTierUpdate(undefined, undefined)).toBeNull();
+    });
+
+    it("grants premium for an 'active' status", () => {
+        expect(computeStripeTierUpdate(undefined, "active")).toEqual({ tier: "premium", premium: true });
+    });
+
+    it("grants premium for a 'trialing' status", () => {
+        expect(computeStripeTierUpdate("incomplete", "trialing")).toEqual({ tier: "premium", premium: true });
+    });
+
+    it("downgrades to free for a 'canceled' status", () => {
+        expect(computeStripeTierUpdate("active", "canceled")).toEqual({ tier: "free", premium: false });
+    });
+
+    it("downgrades to free when the subscription doc is deleted (afterStatus undefined)", () => {
+        expect(computeStripeTierUpdate("active", undefined)).toEqual({ tier: "free", premium: false });
+    });
+
+    it("downgrades to free for a 'past_due' status", () => {
+        expect(computeStripeTierUpdate("active", "past_due")).toEqual({ tier: "free", premium: false });
+    });
+});
+
+describe("shouldApplyPlayRTDNUpdate (PROJ-117: handlePlayRTDN's stale-notification guard)", () => {
+    it("applies the update when the user has no tierSource yet (first-ever Play purchase)", () => {
+        expect(shouldApplyPlayRTDNUpdate(undefined)).toBe(true);
+    });
+
+    it("applies the update when the user's current tierSource is already play-billing", () => {
+        expect(shouldApplyPlayRTDNUpdate("play-billing")).toBe(true);
+    });
+
+    it("rejects the update when the user has since switched to Stripe-Managed billing", () => {
+        // The exact scenario the guard exists for: a delayed/out-of-order Play
+        // renewal notification arriving after the user upgraded via Stripe
+        // must not silently downgrade (or otherwise overwrite) their tier.
+        expect(shouldApplyPlayRTDNUpdate("Stripe-Managed")).toBe(false);
+    });
+
+    it("rejects the update for any other non-play-billing tierSource (e.g. an admin manual grant)", () => {
+        expect(shouldApplyPlayRTDNUpdate("manual")).toBe(false);
     });
 });
