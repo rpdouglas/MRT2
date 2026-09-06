@@ -31,6 +31,11 @@ export function useGameSave(gameId: string) {
     queryKey,
     queryFn: async () => {
       if (!db || !user) return null;
+      // PROJ-63 mock mode: a mock-uid-* account has no real Firestore session,
+      // so this was firing a doomed real query every time (console noise +
+      // wasted retries) even though it happened to still resolve to the
+      // correct "no save yet" empty state.
+      if (user.email?.endsWith('.mock')) return null;
 
       const snap = await getDoc(doc(db, 'game_saves', saveDocId(user.uid, gameId)));
       if (!snap.exists()) return null;

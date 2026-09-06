@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useEncryption } from '../contexts/EncryptionContext';
 import { createROSCAssessment, getROSCAssessments } from '../lib/rosc';
+import { getMockROSCAssessments } from '../lib/mockData';
 import { generateROSCAnalysis } from '../lib/gemini';
 import { processInChunks } from '../lib/utils';
 import { format, subDays } from 'date-fns';
@@ -32,7 +33,13 @@ export function useROSCAssessments() {
 
     const { data: assessments = [], isLoading } = useQuery<ROSCAssessment[]>({
         queryKey: ['rosc_assessments', user?.uid],
-        queryFn: () => getROSCAssessments(user!.uid),
+        // PROJ-63 mock mode: getROSCAssessments() had no mock fallback, so a
+        // mock-uid-* account always hit live Firestore and got back an empty
+        // array, rendering the "Your first snapshot awaits" onboarding state
+        // instead of a populated Recovery Capital card.
+        queryFn: () => user?.email?.endsWith('.mock')
+            ? Promise.resolve(getMockROSCAssessments(user.email))
+            : getROSCAssessments(user!.uid),
         enabled: !!user,
         staleTime: 24 * 60 * 60 * 1000,
         gcTime: 7 * 24 * 60 * 60 * 1000,

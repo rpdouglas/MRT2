@@ -10,6 +10,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFirestoreQuery } from '../../hooks/useFirestoreCrud';
 import { db } from '../../lib/firebase';
+import { getMockJournals } from '../../lib/mockData';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -89,6 +90,13 @@ const STORAGE_KEY_BLOCKLIST = 'mrt_word_cloud_ignore_list';
 // keystroke via the old effect's [user, userBlockList] deps) now just re-run
 // pure client-side computation against the already-cached data.
 async function fetchJournalsForInsights(uid: string): Promise<JournalEntryRaw[]> {
+    // PROJ-63 mock mode: this queried live Firestore unconditionally, so a
+    // mock-uid-* account (no real Firestore docs) always rendered "0 entries"
+    // and blank charts instead of Walt's canned journal history.
+    if (uid.startsWith('mock-uid-')) {
+        const persona = uid.replace('mock-uid-', '');
+        return getMockJournals(`${persona}@mrt.mock`);
+    }
     if (!db) return [];
     const q = query(
         collection(db, 'journals'),
