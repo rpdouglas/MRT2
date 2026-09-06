@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ShieldCheckIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, LockClosedIcon, ArrowRightIcon, LifebuoyIcon } from '@heroicons/react/24/outline';
 
 import { ASSETS } from '../data/assets';
 import PersonaBioCard from '../components/PersonaBioCard';
 import { usePageMeta, SITE_ORIGIN } from '../hooks/usePageMeta';
+import { WELCOME_PERSONAS } from '../data/welcomePersonas';
+import type { RecoveryPersona } from '../lib/welcomeQuizScoring';
+import RecoveryQuiz from '../components/welcome/RecoveryQuiz';
+import CrisisResourcesPanel from '../components/welcome/CrisisResourcesPanel';
+import PersonaCtaButtons, { QUIZ_PERSONA_STORAGE_KEY } from '../components/welcome/PersonaCtaButtons';
+import { trackShowcaseCardClicked } from '../lib/telemetry';
 
 // PROJ-102 (SEO/AEO) Phase 2: SoftwareApplication + Organization structured
 // data for the homepage — the app's canonical entity description for search
@@ -32,108 +38,6 @@ const WELCOME_JSON_LD = [
     name: 'My Recovery Toolkit',
     url: SITE_ORIGIN,
     logo: `${SITE_ORIGIN}/pwa-512x512.png`,
-  },
-];
-
-// ----------------------------------------------------------------------
-// PAGE CONTENT: Human-readable text, descriptions, and metadata
-// ----------------------------------------------------------------------
-const PERSONA_CONTENT = [
-  {
-    id: 'david',
-    name: 'David',
-    title: 'The Fresh Start',
-    quote: '"A completely private space to start over."',
-    headshot: ASSETS.personas.david.headshot,
-    screen: ASSETS.marketing.screenshots.scn_journal_write,
-    color: 'bg-blue-50 text-blue-600',
-    altDesc: 'David, representing early recovery users seeking privacy.',
-    bio: {
-      backstory: 'Had 2 years sober, got complacent, disastrous relapse. Lost everything.',
-      currentStage: 'Day 1 (Again). Acute crisis, overwhelmed by shame & guilt.',
-      sponsorStatus: 'None currently. Too ashamed to ask.',
-      keyChallenge: 'Overcoming shame just to walk back into a meeting.',
-    },
-  },
-  {
-    id: 'ned',
-    name: 'Ned',
-    title: 'The Pink Cloud',
-    quote: '"Turning manic energy into grounded momentum."',
-    headshot: ASSETS.personas.ned.headshot,
-    screen: ASSETS.marketing.screenshots.scn_tasks_this_week,
-    color: 'bg-cyan-50 text-cyan-600',
-    altDesc: 'Ned, representing users building daily habits and structure.',
-    bio: {
-      backstory: 'Chaotic partying, hit a wall in a holding cell. Tired of the chaos.',
-      currentStage: 'Early Recovery (90 Days). High on energy & gratitude. Raw emotions.',
-      sponsorStatus: 'Yes, active. Calls daily.',
-      keyChallenge: 'Impatience. Risk of crashing when reality hits.',
-    },
-  },
-  {
-    id: 'jordan',
-    name: 'Jordan',
-    title: 'The Stabiliser',
-    quote: '"Tools that support my recovery without judging my medication."',
-    headshot: ASSETS.personas.jordan.headshot,
-    screen: ASSETS.marketing.screenshots.scn_dashboard_02_clean_time,
-    color: 'bg-teal-50 text-teal-600',
-    altDesc: 'Jordan, representing users on medication-assisted recovery seeking non-judgmental tools.',
-    bio: {
-      backstory: 'Severe opioid use disorder; repeated abstinence-only relapses. Stabilised on Buprenorphine (Suboxone) MAT.',
-      currentStage: 'Early-to-Mid, active MAT. Stable, employed, rebuilding family relationships.',
-      sponsorStatus: 'MARA meetings online — no traditional 12-Step sponsor.',
-      keyChallenge: 'Finding tools that treat medication as recovery, not "cheating."',
-    },
-  },
-  {
-    id: 'maya',
-    name: 'Maya',
-    title: 'The Systematiser',
-    quote: '"I want to master the mechanics of my own recovery."',
-    headshot: ASSETS.personas.maya.headshot,
-    screen: ASSETS.marketing.screenshots.scn_workbooks_compass,
-    color: 'bg-emerald-50 text-emerald-600',
-    altDesc: 'Maya, representing systematic, completion-driven users of the workbook tools.',
-    bio: {
-      backstory: 'Data-driven professional; 12-Step’s spiritual framework didn’t fit. Moved to SMART Recovery & Recovery Dharma instead.',
-      currentStage: 'Early-to-Mid (8 months). Treats recovery like a curriculum to master.',
-      sponsorStatus: 'No formal sponsor — 1:1 wise-friend accountability.',
-      keyChallenge: 'Staying engaged once the curriculum runs out.',
-    },
-  },
-  {
-    id: 'walt',
-    name: 'Walt',
-    title: 'The Zen Master',
-    quote: '"Finding hidden patterns with AI analysis."',
-    headshot: ASSETS.personas.walt.headshot,
-    screen: ASSETS.marketing.screenshots.scn_journal_ai_wizard,
-    color: 'bg-fuchsia-50 text-fuchsia-600',
-    altDesc: 'Walt, representing long-term users seeking AI insight.',
-    bio: {
-      backstory: 'Vietnam veteran, decades of hard use. Recovery is a deep spiritual practice.',
-      currentStage: 'Spiritual Maintenance (35+ Years). Meditates daily, calming presence.',
-      sponsorStatus: '"Grand-Sponsor" / spiritual advisor.',
-      keyChallenge: 'Patience with change in the program.',
-    },
-  },
-  {
-    id: 'lisa',
-    name: 'Lisa',
-    title: 'The Service Superstar',
-    quote: '"Self-care tools to prevent burnout."',
-    headshot: ASSETS.personas.lisa.headshot,
-    screen: ASSETS.marketing.screenshots.scn_vitality_breath,
-    color: 'bg-amber-50 text-amber-600',
-    altDesc: 'Lisa, representing sponsors utilizing somatic grounding tools.',
-    bio: {
-      backstory: 'Functional user, high-stress life. Shame of neglecting her kids drove her into recovery.',
-      currentStage: 'Maintenance (7 Years). Focus on Step 12 & helping others.',
-      sponsorStatus: 'Yes, and sponsors 5 others.',
-      keyChallenge: 'Burnout & boundaries. Neglects her own self-care.',
-    },
   },
 ];
 
@@ -178,6 +82,33 @@ export default function Welcome() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [crisisPanelOpen, setCrisisPanelOpen] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<RecoveryPersona | null>(null);
+
+  const scrollToAuth = () => {
+    document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Shared by the quiz result card and the showcase cards below (PROJ-116,
+  // docs/projects/116_WELCOME_PAGE_PERSONA_QUIZ.md §6 Decision 1) — the
+  // primary path stays the embedded web signup form; the persona tag is kept
+  // in sessionStorage only (never persisted to Firestore) purely to
+  // personalize this page's own auth-section headline.
+  const handlePersonaWebSignup = (persona: RecoveryPersona) => {
+    setSelectedPersona(persona);
+    try {
+      sessionStorage.setItem(QUIZ_PERSONA_STORAGE_KEY, persona);
+    } catch {
+      // sessionStorage unavailable (e.g. private browsing) — non-fatal, the
+      // page still works, it just won't personalize the auth headline.
+    }
+    scrollToAuth();
+  };
+
+  const handleShowcaseCardClick = (persona: RecoveryPersona) => {
+    trackShowcaseCardClicked(persona);
+    handlePersonaWebSignup(persona);
+  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,12 +133,24 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200">
       
-      {/* 1. THE TRUST BAR (Sticky) */}
-      <div className="sticky top-0 w-full bg-slate-900 text-white py-3 px-4 flex items-center justify-center gap-3 text-xs sm:text-sm font-medium z-50 shadow-md">
-        <ShieldCheckIcon className="w-5 h-5 text-emerald-400 shrink-0" />
-        <span className="text-center">
-          Zero-Knowledge Encryption. <span className="hidden sm:inline">Even our developers can't read your journal.</span>
-        </span>
+      {/* 1. THE TRUST BAR (Sticky) — carries the crisis-bypass link so it's
+          truly always-visible (David Safety Test), not just "near the hero"
+          and vulnerable to being pushed below the fold on a short viewport. */}
+      <div className="sticky top-0 w-full bg-slate-900 text-white py-3 px-4 flex items-center justify-between gap-3 text-xs sm:text-sm font-medium z-50 shadow-md">
+        <div className="flex items-center gap-3 min-w-0">
+          <ShieldCheckIcon className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="truncate">
+            Zero-Knowledge Encryption. <span className="hidden sm:inline">Even our developers can't read your journal.</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCrisisPanelOpen(true)}
+          className="inline-flex items-center gap-1 shrink-0 text-red-300 hover:text-red-200 font-bold transition-colors"
+        >
+          <LifebuoyIcon className="w-4 h-4" />
+          <span>Need help?</span>
+        </button>
       </div>
 
       {/* 2. THE HERO SECTION */}
@@ -234,8 +177,8 @@ export default function Welcome() {
           {/* Spacer for mobile where we don't have the left block */}
           <div className="w-1 sm:hidden"></div>
 
-          <button 
-            onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })} 
+          <button
+            onClick={scrollToAuth}
             className="pointer-events-auto text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors bg-white/50 backdrop-blur-sm px-5 py-2.5 rounded-full border border-slate-200/50 shadow-sm z-50 relative"
           >
             Sign In
@@ -259,14 +202,18 @@ export default function Welcome() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button 
-              onClick={() => document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' })}
+            <button
+              onClick={scrollToAuth}
               className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-slate-900/20"
             >
-              Begin Journey
+              Begin your toolkit
               <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
+
+          <p className="mt-4 text-xs text-slate-500 max-w-md">
+            A self-help peer support tool — not a medical device or a replacement for professional treatment.
+          </p>
         </div>
 
         {/* Hero Bento Graphic */}
@@ -297,21 +244,44 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* 3. THE PERSONA CAROUSEL (CSS Scroll Snap) */}
-      <section className="py-24 bg-white relative">
+      {/* 3. FEATURE-SUMMARY STRIP */}
+      <section className="py-14 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-lg mb-1">Journal</h3>
+            <p className="text-sm text-slate-500">Encrypted long-form entries, voice notes, and guided templates.</p>
+          </div>
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-lg mb-1">Track habits</h3>
+            <p className="text-sm text-slate-500">Daily tasks and streaks that never shame you for a missed day.</p>
+          </div>
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-lg mb-1">Find patterns</h3>
+            <p className="text-sm text-slate-500">AI-powered insights across your own history — private by design.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. "FIND YOUR RECOVERY SEASON" QUIZ */}
+      <section className="py-24 bg-white px-6">
+        <RecoveryQuiz onWebSignupClick={handlePersonaWebSignup} />
+      </section>
+
+      {/* 5. THE PERSONA SHOWCASE (CSS Scroll Snap, trimmed + expandable) */}
+      <section className="py-24 bg-slate-50 relative">
         <div className="max-w-7xl mx-auto px-6 mb-12">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">Meet the Toolkit</h2>
           <p className="text-lg text-slate-500 max-w-2xl">
-            Recovery isn't a straight line. MRT transforms to provide exactly the tools you need, right when you need them.
+            Already know your season? Browse all six without taking the quiz.
           </p>
         </div>
 
         {/* Carousel Container */}
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {PERSONA_CONTENT.map((persona) => (
-            <article 
-              key={persona.id} 
-              className="snap-center shrink-0 w-[85vw] sm:w-[400px] bg-slate-50 rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col"
+          {WELCOME_PERSONAS.map((persona) => (
+            <article
+              key={persona.id}
+              className="snap-center shrink-0 w-[85vw] sm:w-[400px] bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col"
             >
               <div className="flex items-center gap-4 mb-6">
                 <img
@@ -332,21 +302,36 @@ export default function Welcome() {
                 {persona.quote}
               </p>
               <PersonaBioCard {...persona.bio} className="mb-6" />
-              <div className="mt-auto relative rounded-2xl overflow-hidden shadow-lg border border-slate-200/50 bg-white">
-                <img 
-                  src={persona.screen} 
-                  alt={`${persona.name} App Interface`} 
+              <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200/50 bg-white mb-2">
+                <img
+                  src={persona.screen}
+                  alt={`${persona.name} App Interface`}
                   loading="lazy"
                   className="w-full aspect-[4/3] object-cover object-top"
                   onError={(e) => { e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect width="100%25" height="100%25" fill="%23e2e8f0"/%3E%3C/svg%3E' }}
                 />
+              </div>
+              <div className="mt-auto">
+                <PersonaCtaButtons persona={persona.id} personaName={persona.name} onWebSignupClick={handleShowcaseCardClick} />
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      {/* 4. THE AUTH CARD (Conversion Zone) */}
+      {/* 6. TRUST STATEMENT */}
+      <section className="py-16 bg-white px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <ShieldCheckIcon className="w-8 h-8 text-emerald-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-3">We can't see your journal. Even if compelled to.</h2>
+          <p className="text-slate-500 leading-relaxed">
+            Everything you write is encrypted on your device before it ever reaches our servers. Your PIN never
+            leaves your device either — only you hold the key that unlocks your entries.
+          </p>
+        </div>
+      </section>
+
+      {/* 7. THE AUTH CARD (Closing CTA / Conversion Zone) */}
       <section id="auth-section" className="relative py-24 px-4 overflow-hidden bg-slate-900">
         {/* Background glowing effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-900 to-slate-900"></div>
@@ -355,7 +340,11 @@ export default function Welcome() {
           
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">
-              {isSignUp ? 'Create Your Vault' : 'Welcome Back'}
+              {isSignUp
+                ? selectedPersona
+                  ? `Begin your toolkit — built for ${WELCOME_PERSONAS.find((p) => p.id === selectedPersona)?.name}`
+                  : 'Begin your toolkit'
+                : 'Welcome Back'}
             </h2>
             <p className="text-slate-300 text-sm">
               {isSignUp ? 'Start your secure journey today.' : 'Enter your credentials to unlock.'}
@@ -390,7 +379,7 @@ export default function Welcome() {
               disabled={isSubmitting}
               className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-500 transition-colors mt-2 shadow-lg shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Please wait…' : isSignUp ? 'Initialize Toolkit' : 'Unlock Vault'}
+              {isSubmitting ? 'Please wait…' : isSignUp ? 'Begin your toolkit' : 'Unlock Vault'}
             </button>
           </form>
 
@@ -449,6 +438,8 @@ export default function Welcome() {
 
         </div>
       </section>
+
+      <CrisisResourcesPanel isOpen={crisisPanelOpen} onClose={() => setCrisisPanelOpen(false)} />
 
     </div>
   );

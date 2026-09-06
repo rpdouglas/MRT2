@@ -91,6 +91,36 @@ export function trackClientError(domain: string, errorName: string): void {
 }
 
 /**
+ * PROJ-116: Welcome-page "Find Your Recovery Season" quiz funnel + crisis
+ * bypass. Persona is always the resolved lowercase id (e.g. 'maya'), never
+ * free-text answers — no quiz-answer transcript is ever sent.
+ */
+export function trackQuizStarted(): void {
+  safeCapture('welcome_quiz_started');
+}
+
+export function trackQuizQuestionAnswered(questionNumber: 1 | 2 | 3 | 4): void {
+  safeCapture('welcome_quiz_question_answered', { question_number: questionNumber });
+}
+
+export function trackQuizCompleted(persona: string): void {
+  safeCapture('welcome_quiz_completed', { persona });
+}
+
+/**
+ * A visitor clicked a persona's CTA directly from the trimmed showcase,
+ * skipping the quiz — the self-identifying-visitor path SPEC-WELCOMEPAGE-002
+ * §6 asks to carry the same persona-tagged funnel continuity as a quiz completion.
+ */
+export function trackShowcaseCardClicked(persona: string): void {
+  safeCapture('welcome_showcase_card_clicked', { persona });
+}
+
+export function trackCrisisResourcesOpened(): void {
+  safeCapture('crisis_resources_opened', { source: 'welcome_page' });
+}
+
+/**
  * PROJ-99 Phase 5: fires only when the `profile.role === 'admin'` Firestore
  * fallback is the SOLE reason isAdmin resolved true for this session — i.e.
  * the custom claim was absent. Exists to make it safe to converge onto the

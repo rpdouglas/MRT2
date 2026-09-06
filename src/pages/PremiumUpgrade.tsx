@@ -8,9 +8,8 @@ import { collection, addDoc, doc, setDoc, onSnapshot, Timestamp } from 'firebase
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { isAndroidTWA } from '../lib/platform';
 import { isPlayBillingSupported, purchasePlaySubscription } from '../lib/playBilling';
+import { PLAY_PACKAGE_NAME } from '../lib/playStoreLink';
 import { SparklesIcon, CheckCircleIcon, ShieldCheckIcon, DocumentChartBarIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-
-const PLAY_PACKAGE_NAME = 'ca.myrecoverytoolkit.app';
 
 // Same emulator-connection idiom as src/lib/gemini.ts / src/lib/vaultAuth.ts —
 // this file previously called getFunctions() directly with no emulator
