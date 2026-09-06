@@ -118,6 +118,21 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # PROJ-117: `npm run lint` uses tseslint's non-type-checked recommended
+      # config, and Vitest transforms TypeScript per-file via esbuild with no
+      # cross-file type checking — so before this step, nothing in `verify`
+      # actually ran `tsc -b`. A real type error (missing prop, wrong
+      # signature, Firestore doc shape mismatch) could pass lint, pass every
+      # unit test, pass e2e, and merge clean, only to be caught when the
+      # `deploy` job's own `npm run build` ran post-merge on `main`. Reuses
+      # the Chromium install above (scripts/prerender-public-routes.mjs needs
+      # it) rather than installing a second time — confirmed locally that the
+      # build's prerender step needs no Firebase emulator (it renders 4
+      # public routes against a local `vite preview`, no Auth/Firestore
+      # dependency), so this has no emulator-ordering constraint.
+      - name: Build (type-check + production build + prerender)
+        run: npm run build
+
       # PROJ-73: the Functions emulator (now included in test:e2e's --only
       # list, so vault.spec.ts actually exercises verifyVaultPin instead of
       # silently falling back to the pre-PROJ-65 unpeppered derivation) needs
@@ -147,6 +162,19 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: mrt2-app-dev.firebasestorage.app
           VITE_FIREBASE_MESSAGING_SENDER_ID: "1040431613138"
           VITE_FIREBASE_APP_ID: "1:1040431613138:web:e0e613ab8551f74d48590b"
+
+      # PROJ-117: this is the regression test for SEC-01 (PROJ-90) — a real,
+      # previously-shipped production auth-bypass. It was written specifically
+      # because the golden-path suite above runs against `npm run dev` (where
+      # import.meta.env.DEV is always true) and would pass even if the SEC-01
+      # fix were reverted. It existed but was never wired into this workflow
+      # until now — see docs/reports/2026-09_testing_strategy_gap_analysis.md
+      # §2.2. Self-contained: playwright.security.config.ts's own webServer
+      # builds and serves a real production bundle, no Firebase emulators or
+      # env vars needed (the only assertion is an unauthenticated redirect to
+      # /login).
+      - name: E2E Security Regression (SEC-01)
+        run: npm run test:e2e:security
 
   # --- JOB 2: BUILD & DEPLOY (Only if Verify passes) ---
   # Guarded to push events only — a pull_request run has github.ref pointing at the
