@@ -9,6 +9,11 @@ import {
   trackBreathworkCompleted,
   trackVitalityLogged,
   trackUncaughtError,
+  trackQuizStarted,
+  trackQuizQuestionAnswered,
+  trackQuizCompleted,
+  trackShowcaseCardClicked,
+  trackCrisisResourcesOpened,
 } from '../telemetry';
 
 vi.mock('posthog-js', () => ({
@@ -82,5 +87,30 @@ describe('Telemetry Wrapper (src/lib/telemetry.ts)', () => {
       error_name: 'TypeError',
       component_stack: 'A'.repeat(200),
     });
+  });
+
+  it('trackQuizStarted captures welcome_quiz_started', () => {
+    trackQuizStarted();
+    expect(posthog.capture).toHaveBeenCalledWith('welcome_quiz_started', undefined);
+  });
+
+  it('trackQuizQuestionAnswered captures the question number', () => {
+    trackQuizQuestionAnswered(2);
+    expect(posthog.capture).toHaveBeenCalledWith('welcome_quiz_question_answered', { question_number: 2 });
+  });
+
+  it('trackQuizCompleted captures the resolved persona', () => {
+    trackQuizCompleted('maya');
+    expect(posthog.capture).toHaveBeenCalledWith('welcome_quiz_completed', { persona: 'maya' });
+  });
+
+  it('trackShowcaseCardClicked captures the clicked persona', () => {
+    trackShowcaseCardClicked('jordan');
+    expect(posthog.capture).toHaveBeenCalledWith('welcome_showcase_card_clicked', { persona: 'jordan' });
+  });
+
+  it('trackCrisisResourcesOpened captures the welcome_page source', () => {
+    trackCrisisResourcesOpened();
+    expect(posthog.capture).toHaveBeenCalledWith('crisis_resources_opened', { source: 'welcome_page' });
   });
 });
