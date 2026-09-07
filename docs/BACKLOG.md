@@ -23,9 +23,7 @@
 * **Feature:** Sleep Log / Wearable Integration.
   * **Concept:** Apple HealthKit API integration to correlate sleep debt with cravings.
   * **Complexity:** Extremely High. Deferred to Wave 4.
-* **Feature:** Recovery Reentry State (14+ Days Away).
-  * **Concept:** CLAUDE.md/the design system both document a specific "Recovery Reentry" pattern for a user returning after 14+ days away — no broken streak shown, no guilt copy, warm reentry language, and the streak metric resurfacing only after 7 days of renewed engagement. Confirmed 2026-09-03 during a design-system implementation audit: **none of this exists in code** — no "reentry"/"welcome back" handling, no 14-day-absence detection, anywhere in `src/`. Currently a user who returns after a long gap just sees whatever the normal (unforgiving-by-omission) UI shows.
-  * **Status:** Deferred — unscheduled. This is exactly the Day-90 Pink-Cloud-Crash-adjacent risk the persona docs warn about (a returning Ned feeling punished on reentry is a plausible relapse-risk moment), so worth prioritizing before it's needed rather than after a bad reentry experience is reported. **Spec drafted 2026-09-03:** `docs/projects/112_RECOVERY_REENTRY.md` — ready for `/planning` whenever this gets scheduled; the spec's key finding is that no new Firestore fields are needed, `users/{uid}.lastLogin` already carries what detection requires.
+* ~~**Feature:** Recovery Reentry State (14+ Days Away).~~ **Shipped 2026-09-07 as `PROJ-112`.** Journal Streak/Habit Fire/Vitality Rhythm on Profile → Achievements now pause with warm copy after a 14+ day `lastLogin` gap and resurface after 7 days of renewed activity; a one-time `dailyBeacon` push notification covers the same threshold for users who never open the app to trigger client-side detection. See `docs/projects/112_RECOVERY_REENTRY.md`.
 
 ## 👤 Lisa (The Service Superstar)
 * **Feature:** Accountability Partner Mode.
