@@ -144,4 +144,50 @@ describe('🏆 AchievementsTab', () => {
         // Base 25 XP only — no bonus, no thrown error reaching the UI.
         expect(await screen.findByText(/^25 \/ /)).toBeInTheDocument();
     });
+
+    describe('PROJ-112: Recovery Reentry', () => {
+        it('suppresses the 3 streak numbers with warm copy when reentry is active and not yet resurfaced', async () => {
+            mockProfile = {
+                uid: 'test-user-123',
+                sobrietyDate: null,
+                reentryStartedAt: { toDate: () => new Date() }, // 0 active days since — well under the 7-day resurfacing threshold
+            };
+            // journals / tasks / workbook_answers / rosc_assessments — no activity,
+            // so daysBack stays 0 and streakResurfaced never fires.
+            mockGetDocs
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 });
+
+            renderAchievementsTab();
+
+            expect(await screen.findByText('Every day counts again from here — no rush.')).toBeInTheDocument();
+            expect(screen.getByText('Your habits are ready when you are.')).toBeInTheDocument();
+            expect(screen.getByText("Whenever you're ready to log again.")).toBeInTheDocument();
+
+            // The suppressed cards' numeric unit labels must not render alongside the copy.
+            expect(screen.queryByText('Day Streak')).not.toBeInTheDocument();
+            expect(screen.queryByText('Fire')).not.toBeInTheDocument();
+
+            // Rank & Level and Workbook Wisdom are untouched by reentry — nothing to suppress there.
+            expect(screen.getByText('Rank & Level')).toBeInTheDocument();
+            expect(screen.getByText('Workbook Wisdom')).toBeInTheDocument();
+        });
+
+        it('renders normal streak numbers when there is no active reentry state', async () => {
+            mockProfile = { uid: 'test-user-123', sobrietyDate: null }; // no reentryStartedAt
+            mockGetDocs
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 })
+                .mockResolvedValueOnce({ docs: [], size: 0 });
+
+            renderAchievementsTab();
+
+            expect(await screen.findByText('Day Streak')).toBeInTheDocument();
+            expect(screen.getByText('Fire')).toBeInTheDocument();
+            expect(screen.queryByText('Every day counts again from here — no rush.')).not.toBeInTheDocument();
+        });
+    });
 });

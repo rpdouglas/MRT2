@@ -168,6 +168,53 @@ describe('AuthContext', () => {
             expect(result.current.userTierSource).toBe('play-billing');
         });
 
+        it('PROJ-112: captures the pre-update lastLogin as previousLastLogin', async () => {
+            const priorLastLogin = { toDate: () => new Date('2026-08-01T00:00:00Z') };
+            vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({
+                role: 'user', tier: 'free', lastLogin: priorLastLogin,
+            } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
+
+            const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+            await waitFor(() => expect(authStateCallback).not.toBeNull());
+
+            await act(async () => { authStateCallback!(mockAuthUser({})); });
+            await waitFor(() => expect(result.current.loading).toBe(false));
+
+            expect(result.current.previousLastLogin).toBe(priorLastLogin);
+        });
+
+        it('PROJ-112: previousLastLogin is null for a brand-new user (no prior lastLogin)', async () => {
+            vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({
+                role: 'user', tier: 'free',
+            } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
+
+            const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+            await waitFor(() => expect(authStateCallback).not.toBeNull());
+
+            await act(async () => { authStateCallback!(mockAuthUser({})); });
+            await waitFor(() => expect(result.current.loading).toBe(false));
+
+            expect(result.current.previousLastLogin).toBeNull();
+        });
+
+        it('PROJ-112: clears previousLastLogin on logout', async () => {
+            const priorLastLogin = { toDate: () => new Date('2026-08-01T00:00:00Z') };
+            vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({
+                role: 'user', tier: 'free', lastLogin: priorLastLogin,
+            } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
+
+            const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+            await waitFor(() => expect(authStateCallback).not.toBeNull());
+
+            await act(async () => { authStateCallback!(mockAuthUser({})); });
+            await waitFor(() => expect(result.current.previousLastLogin).toBe(priorLastLogin));
+
+            await act(async () => { authStateCallback!(null); });
+            await waitFor(() => expect(result.current.user).toBeNull());
+
+            expect(result.current.previousLastLogin).toBeNull();
+        });
+
         it('clears userTierSource on logout', async () => {
             vi.mocked(dbLib.getOrCreateUserProfile).mockResolvedValue({ role: 'user', tier: 'premium', tierSource: 'play-billing' } as unknown as Awaited<ReturnType<typeof dbLib.getOrCreateUserProfile>>);
 

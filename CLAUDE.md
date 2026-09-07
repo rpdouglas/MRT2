@@ -61,7 +61,7 @@ docs/specs/     # Feature specs — READ BEFORE implementing anything new
 
 | Collection | Encrypted? | Notes |
 |---|---|---|
-| `users/{uid}` | ❌ No | Profile metadata only. Includes `fcmTokens`, `fcmSwVersion`, `timezone`, `pushNotificationsEnabled` (push device/preference metadata, PROJ-26) and `anchorSettings` (dashboard badge preferences, PROJ-41) — none of it recovery content, so it's correctly unencrypted |
+| `users/{uid}` | ❌ No | Profile metadata only. Includes `fcmTokens`, `fcmSwVersion`, `timezone`, `pushNotificationsEnabled` (push device/preference metadata, PROJ-26), `anchorSettings` (dashboard badge preferences, PROJ-41), and `reentryStartedAt` (Recovery Reentry state anchor, PROJ-112 — set by whichever side notices a 14+ day `lastLogin` gap first) — none of it recovery content, so it's correctly unencrypted |
 | `journals/{id}` | ✅ Yes (content) | mood/tags/timestamps are plaintext. PROJ-113 (Daily Inspirational Image) adds an optional `linkedImageId` field — plaintext, same category as `tags`/`moodScore` — set only when the entry was created from the "Journal about this" flow on a daily image; `content` stays encrypted as always. |
 | `workbook_answers/{id}` | ✅ Yes | |
 | `service/{id}` | ✅ Yes | Sponsee notes |

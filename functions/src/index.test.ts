@@ -7,6 +7,7 @@ import {
     computeMilestoneAlert,
     computeHabitAlert,
     computeMatReminderAlert,
+    computeReentryAlert,
     processUserBatch,
     identifyStaleTokensByUser,
     sendBeaconMessagesChunked,
@@ -132,6 +133,45 @@ describe("computeMatReminderAlert", () => {
     });
 });
 
+describe("computeReentryAlert (PROJ-112)", () => {
+    const nowUTC = new Date(Date.UTC(2026, 6, 9));
+
+    it("returns null when there is no lastLogin (brand-new user)", () => {
+        expect(computeReentryAlert(undefined, null, nowUTC)).toBeNull();
+    });
+
+    it("returns null when reentryStartedAt is already set (dedup guard)", () => {
+        const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1))); // well past 14 days
+        const reentryStartedAt = Timestamp.fromDate(new Date(Date.UTC(2026, 6, 8)));
+        expect(computeReentryAlert(lastLogin, reentryStartedAt, nowUTC)).toBeNull();
+    });
+
+    it("returns null under the 14-day threshold", () => {
+        const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 6, 1))); // 8 days before
+        expect(computeReentryAlert(lastLogin, null, nowUTC)).toBeNull();
+    });
+
+    it("fires exactly at the 14-day threshold", () => {
+        const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 25))); // exactly 14 days before
+        const alert = computeReentryAlert(lastLogin, null, nowUTC);
+        expect(alert).not.toBeNull();
+    });
+
+    it("fires past the threshold", () => {
+        const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1))); // well past 14 days
+        expect(computeReentryAlert(lastLogin, null, nowUTC)).not.toBeNull();
+    });
+
+    it("never mentions a streak, days away, or the user being missed (Non-Manipulation Commitment)", () => {
+        const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1)));
+        const alert = computeReentryAlert(lastLogin, null, nowUTC);
+        const text = `${alert?.title} ${alert?.body}`.toLowerCase();
+        for (const term of ["streak", "days away", "missed", "miss you", "gone"]) {
+            expect(text).not.toContain(term);
+        }
+    });
+});
+
 function fakeUserDoc(id: string, data: Record<string, unknown>): BeaconUserDoc {
     return { id, data: () => data };
 }
@@ -243,6 +283,59 @@ describe("processUserBatch", () => {
             async () => false
         );
         expect(result.messages[0].notification?.title).toContain("Fire");
+    });
+
+    describe("PROJ-112 (Recovery Reentry)", () => {
+        it("fires a reentry alert and reports the uid in reentryStartedAtUpdates when no other alert is eligible", async () => {
+            const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1))); // well past 14 days
+            const calls: string[] = [];
+            const result = await processUserBatch(
+                [fakeUserDoc("u1", { fcmTokens: ["tok-a"], lastLogin })],
+                startOfTodayUTC,
+                async (uid) => { calls.push(uid); return 3; }
+            );
+            expect(result.messages[0].notification?.title).toBe("Whenever you're ready");
+            expect(result.reentryStartedAtUpdates).toEqual(["u1"]);
+            // A reentry alert beating the habit alert means the pending-task
+            // lookup (which the habit alert needs) is never reached.
+            expect(calls).toHaveLength(0);
+        });
+
+        it("prefers a milestone alert over a reentry alert when both are eligible", async () => {
+            const sobrietyDate = Timestamp.fromDate(new Date(Date.UTC(2026, 6, 8))); // 1 day before -> milestone
+            const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1))); // well past 14 days
+            const result = await processUserBatch(
+                [fakeUserDoc("u1", { fcmTokens: ["tok-a"], sobrietyDate, lastLogin })],
+                startOfTodayUTC,
+                async () => 0
+            );
+            expect(result.messages[0].notification?.title).toContain("Milestone");
+            expect(result.reentryStartedAtUpdates).toHaveLength(0);
+        });
+
+        it("does not re-fire (or re-report) once reentryStartedAt is already set", async () => {
+            const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 5, 1)));
+            const reentryStartedAt = Timestamp.fromDate(new Date(Date.UTC(2026, 6, 8)));
+            const result = await processUserBatch(
+                [fakeUserDoc("u1", { fcmTokens: ["tok-a"], lastLogin, reentryStartedAt })],
+                startOfTodayUTC,
+                async () => 3
+            );
+            // Falls through to the habit alert instead, since reentry is a no-op here.
+            expect(result.messages[0].notification?.title).toContain("Fire");
+            expect(result.reentryStartedAtUpdates).toHaveLength(0);
+        });
+
+        it("does not report an update for a user under the 14-day threshold", async () => {
+            const lastLogin = Timestamp.fromDate(new Date(Date.UTC(2026, 6, 1))); // 8 days before
+            const result = await processUserBatch(
+                [fakeUserDoc("u1", { fcmTokens: ["tok-a"], lastLogin })],
+                startOfTodayUTC,
+                async () => 0
+            );
+            expect(result.messages).toHaveLength(0);
+            expect(result.reentryStartedAtUpdates).toHaveLength(0);
+        });
     });
 });
 

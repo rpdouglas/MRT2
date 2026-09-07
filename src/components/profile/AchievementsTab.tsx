@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useEncryption } from '../../contexts/EncryptionContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useGameProgress } from '../../hooks/useGameProgress';
+import { useRecoveryReentry } from '../../hooks/useRecoveryReentry';
 import { db } from '../../lib/firebase';
 import { getMockJournals, getMockTasks, getMockWorkbookAnswers } from '../../lib/mockData';
 import {
@@ -146,6 +147,12 @@ export default function AchievementsTab() {
         return { journal: jStats, task: tStats, vitality: vStats, workbook: wStats, level };
     }, [journals, tasks, workbookCount, roscCount, gameHistory, userProfile, nowMs]);
 
+    // PROJ-112: suppresses only the 3 numbers that genuinely reset from
+    // inactivity (Journal Streak / Habit Fire / Vitality Rhythm) — Rank/Level/XP
+    // and Workbook Wisdom accumulate monotonically, nothing to suppress there.
+    const { isReentry, streakResurfaced } = useRecoveryReentry(journals);
+    const suppressStreaks = isReentry && !streakResurfaced;
+
     const loading = profileLoading || gameLoading || journalLoading || taskLoading || workbookLoading;
 
     if (loading) {
@@ -187,10 +194,14 @@ export default function AchievementsTab() {
                     <ChartBarIcon className="h-5 w-5 text-indigo-600" />
                     <h3 className="text-lg font-bold text-gray-900">Journal Streak</h3>
                 </div>
-                <div className="flex items-baseline gap-2 mb-2">
-                    <div className="text-3xl font-black text-gray-900">{stats.journal.journalStreak}</div>
-                    <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Days</div>
-                </div>
+                {suppressStreaks ? (
+                    <p className="text-sm font-medium text-gray-600 mb-2">Every day counts again from here — no rush.</p>
+                ) : (
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black text-gray-900">{stats.journal.journalStreak}</div>
+                        <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Days</div>
+                    </div>
+                )}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-bold text-gray-500">Consistency</span>
                     <span className="text-sm font-bold text-gray-900">{stats.journal.consistencyRate}/wk</span>
@@ -203,10 +214,14 @@ export default function AchievementsTab() {
                     <FireIcon className="h-5 w-5 text-cyan-600" />
                     <h3 className="text-lg font-bold text-gray-900">Habit Fire</h3>
                 </div>
-                <div className="flex items-baseline gap-2 mb-2">
-                    <div className="text-3xl font-black text-gray-900">{stats.task.habitFire}</div>
-                    <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Fire</div>
-                </div>
+                {suppressStreaks ? (
+                    <p className="text-sm font-medium text-gray-600 mb-2">Your habits are ready when you are.</p>
+                ) : (
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black text-gray-900">{stats.task.habitFire}</div>
+                        <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Fire</div>
+                    </div>
+                )}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-bold text-gray-500">Completion Rate</span>
                     <span className="text-sm font-bold text-gray-900">{stats.task.completionRate}%</span>
@@ -219,10 +234,14 @@ export default function AchievementsTab() {
                     <HeartIcon className="h-5 w-5 text-rose-600" />
                     <h3 className="text-lg font-bold text-gray-900">Vitality Rhythm</h3>
                 </div>
-                <div className="flex items-baseline gap-2 mb-2">
-                    <div className="text-3xl font-black text-gray-900">{stats.vitality.bioStreak}</div>
-                    <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Day Streak</div>
-                </div>
+                {suppressStreaks ? (
+                    <p className="text-sm font-medium text-gray-600 mb-2">Whenever you're ready to log again.</p>
+                ) : (
+                    <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-black text-gray-900">{stats.vitality.bioStreak}</div>
+                        <div className="text-sm font-bold text-gray-500 uppercase tracking-wide">Day Streak</div>
+                    </div>
+                )}
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-bold text-gray-500">Logs</span>
                     <span className="text-sm font-bold text-gray-900">{stats.vitality.totalLogs}</span>
