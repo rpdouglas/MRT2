@@ -32,6 +32,13 @@ on:
       - 'GEMINI.md'
       - 'README.md'
       - '.claude/**'
+  # A docs-only PR's paths-ignore above means `verify` never runs, and the
+  # branch ruleset requiring it as a status check has no bypass actors — so a
+  # pure-docs PR was structurally unmergeable with no way to satisfy the
+  # check. This lets `verify` be triggered manually against a PR's branch to
+  # unblock exactly that case; it never runs `deploy` (gated to `push` only,
+  # see that job's `if:` below).
+  workflow_dispatch:
 
 # Cancel a superseded run on the same branch/PR (e.g. a quick sequence of
 # fixup pushes) instead of letting redundant verify+deploy runs pile up and
