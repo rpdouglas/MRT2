@@ -1,6 +1,6 @@
 # 📁 Project 119: Notification Category Preferences
 
-**Status:** ⚪ Planned — not yet through `/planning`'s implementation approval (strategy drafted below); **blocked on `PROJ-118`** (Android notification channels are a native concept that only exists once TWA Notification Delegation is active — without it, Chrome owns display for every push and channels don't apply)
+**Status:** ⚪ Planned — not yet through `/planning`'s implementation approval (strategy drafted below); **blocked on `PROJ-118`'s Phase 1 device verification**, not on a code/config change — direct inspection (2026-09-07, `PROJ-118` §0) found Notification Delegation is already fully enabled and wired in the Bubblewrap scaffold (`/home/node/mrt-android`), so the blocker here is confirming it actually works correctly on-device, not waiting for it to be built
 **Primary Persona:** Ned (control-seeking, wants to tune what nudges him) and Lisa (accountability-type alerts specifically); a general Settings-power-feature for all personas
 **Objective:** Replace the single blanket `pushNotificationsEnabled` on/off switch with per-category control (Milestone / Habit Reminders / MAT Reminders / Recovery Reentry) — native Android notification channels where available (post-`PROJ-118`), a simple in-app toggle list everywhere else (iOS PWA, desktop, pre-delegation Android).
 
