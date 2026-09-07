@@ -7,37 +7,12 @@ on:
       - 'release/*'
       - 'feature/*'
       - 'claude/*'
-    # A change confined to these paths can't affect the app build, the
-    # Cloud Functions runtime, or anything the test suites exercise — skip
-    # the whole verify+deploy pipeline for it. Deliberately NOT docs-site/**
-    # or a blanket **/*.md: GATE 3b below (Docs Site Build) exists
-    # specifically to catch a broken docs-site build before merge (see its
-    # own comment, e1616ca) and a guide page is plain markdown too — an
-    # ignore list broad enough to skip docs/SCREENSHOTS_INDEX.md must not
-    # also skip docs-site/guide/*.md.
-    paths-ignore:
-      - 'docs/**'
-      - '_raw_screenshots/**'
-      - 'CLAUDE.md'
-      - 'GEMINI.md'
-      - 'README.md'
-      - '.claude/**'
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - 'docs/**'
-      - '_raw_screenshots/**'
-      - 'CLAUDE.md'
-      - 'GEMINI.md'
-      - 'README.md'
-      - '.claude/**'
-  # A docs-only PR's paths-ignore above means `verify` never runs, and the
-  # branch ruleset requiring it as a status check has no bypass actors — so a
-  # pure-docs PR was structurally unmergeable with no way to satisfy the
-  # check. This lets `verify` be triggered manually against a PR's branch to
-  # unblock exactly that case; it never runs `deploy` (gated to `push` only,
-  # see that job's `if:` below).
+  # General-purpose manual trigger — e.g. re-running `verify` by hand without
+  # a new commit. Not load-bearing for the docs-only case below (that's now
+  # handled automatically by the `changes` job), but still useful on its own.
   workflow_dispatch:
 
 # Cancel a superseded run on the same branch/PR (e.g. a quick sequence of
@@ -48,8 +23,79 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # --- JOB 0: CHANGE DETECTION ---
+  # Replaces the old trigger-level `paths-ignore` on push/pull_request. That
+  # approach saved CI cost the same way this does, but had a fatal flaw: when
+  # a PR's diff was entirely within the ignored paths, `verify` never ran at
+  # all — and the branch ruleset requires `verify` as a status check with
+  # zero bypass actors, so a pure-docs PR became structurally unmergeable
+  # (hit for real on PR #214/#216). GitHub's own docs confirm this is a known
+  # class of problem with path-filtered required checks and recommend a
+  # second workflow reporting the same check name — but that requires
+  # hand-keeping a duplicate step list in sync forever. Computing the same
+  # decision here, inside the one workflow, and gating each `verify` step on
+  # it instead avoids that duplication while getting the same properties:
+  # `verify` always reports a real result, and the expensive steps still
+  # only run for changes that could actually need them.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Path-filtering here needs to diff against a base commit that a
+          # shallow (depth-1) checkout won't have.
+          fetch-depth: 0
+
+      - name: Determine whether this change is confined to docs-only paths
+        id: filter
+        run: |
+          set -euo pipefail
+
+          # Mirrors the old paths-ignore list exactly — anything NOT matched
+          # here can't affect the app build, the Cloud Functions runtime, or
+          # anything the test suites exercise. Deliberately NOT docs-site/**
+          # or a blanket **/*.md: GATE 3b below (Docs Site Build) exists
+          # specifically to catch a broken docs-site build before merge (see
+          # e1616ca), and a guide page is plain markdown too.
+          IGNORE_PATTERN='^(docs/|_raw_screenshots/|CLAUDE\.md$|GEMINI\.md$|README\.md$|\.claude/)'
+
+          case "${{ github.event_name }}" in
+            pull_request)
+              BASE="${{ github.event.pull_request.base.sha }}"
+              ;;
+            push)
+              BASE="${{ github.event.before }}"
+              # A new branch's first push (or a history-losing force-push) has
+              # no comparable prior commit — fail open to the full pipeline
+              # rather than guess.
+              if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+                echo "docs_only=false" >> "$GITHUB_OUTPUT"
+                echo "No comparable base commit for this push — running the full pipeline."
+                exit 0
+              fi
+              ;;
+            *)
+              # workflow_dispatch: a manual run is asking for the real thing.
+              echo "docs_only=false" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          CHANGED_FILES=$(git diff --name-only "$BASE" "${{ github.sha }}")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          if echo "$CHANGED_FILES" | grep -qvE "$IGNORE_PATTERN"; then
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # --- JOB 1: QUALITY GATES ---
   verify:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +104,19 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
+
+      # Docs-only fast path: everything below this step is gated to skip when
+      # `changes` found nothing outside the ignored paths — none of it can be
+      # affected by a docs-only change. This is the one check that still
+      # applies (docs/projects/*.md must keep matching 00_TEMPLATE.md's
+      # required sections) and is cheap enough (no npm install — the script
+      # only uses node:fs) to just always run here.
+      - name: Spec Quality Check (docs-only fast path)
+        if: needs.changes.outputs.docs_only == 'true'
+        run: node scripts/check_spec_quality.mjs
+
       - name: Install
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm ci
 
       # GATE 1: Production Dependency Vulnerability Audit (PROJ-96)
@@ -79,6 +137,7 @@ jobs:
       # independent of the PR's actual diff — retry with backoff rather than let a
       # registry outage block every PR until someone notices and re-runs manually.
       - name: Dependency Vulnerability Audit (root, production deps)
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           for attempt in 1 2 3; do
             npm audit --omit=dev --audit-level=critical && exit 0
@@ -89,10 +148,12 @@ jobs:
 
       # GATE 2: Linting (Code Style)
       - name: Lint Check
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run lint
 
       # GATE 3: Spec Quality (docs/projects/*.md must match the governance skill's Check F)
       - name: Spec Quality Check
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run docs:check-specs
 
       # GATE 3b: Docs Site Build — the deploy-docs.yaml workflow only runs
@@ -102,17 +163,21 @@ jobs:
       # went unnoticed until a follow-up hotfix. Building it here catches
       # that class of regression before merge instead of after.
       - name: Docs Site Build
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run docs:build
 
       # GATE 4: Unit Tests (Logic)
       - name: Unit Tests
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run test:once
 
       # GATE 5: Cloud Functions Unit Tests (separate npm workspace, own vitest config)
       - name: Install Functions dependencies
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm ci --prefix functions
 
       - name: Functions Unit Tests
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm test --prefix functions
 
       # GATE 6: Production Dependency Vulnerability Audit (functions/, PROJ-96)
@@ -122,6 +187,7 @@ jobs:
       # Same registry-flake retry as the root audit above — this hits the same
       # registry.npmjs.org advisories-bulk endpoint from a separate npm workspace.
       - name: Dependency Vulnerability Audit (functions, production deps)
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           for attempt in 1 2 3; do
             npm audit --prefix functions --omit=dev --audit-level=high && exit 0
@@ -141,15 +207,18 @@ jobs:
       # are started/torn down automatically, so this never touches a real
       # Firebase project.
       - name: Setup Java (required by the Firestore/Storage emulators)
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
       - name: Firestore & Storage Rules Tests (PROJ-99, PROJ-113)
+        if: needs.changes.outputs.docs_only != 'true'
         run: npx firebase-tools emulators:exec --project=mrt2-app-dev --only firestore,storage "npx vitest run --config vitest.rules.config.ts && npx vitest run --config vitest.rules.storage.config.ts"
 
       - name: Install Playwright browsers
+        if: needs.changes.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
 
       # PROJ-117: `npm run lint` uses tseslint's non-type-checked recommended
@@ -165,6 +234,7 @@ jobs:
       # public routes against a local `vite preview`, no Auth/Firestore
       # dependency), so this has no emulator-ordering constraint.
       - name: Build (type-check + production build + prerender)
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run build
 
       # PROJ-73: the Functions emulator (now included in test:e2e's --only
@@ -174,11 +244,13 @@ jobs:
       # blocks waiting for interactive input. Placeholder only — never the
       # real Secret Manager values used at actual deploy time.
       - name: Write emulator-only secret placeholders
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           echo "GEMINI_API_KEY=emulator-placeholder-not-a-real-key" >> functions/.secret.local
           echo "VAULT_PEPPER=emulator-placeholder-not-a-real-pepper" >> functions/.secret.local
 
       - name: E2E Golden Paths
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run test:e2e
         env:
           # The verify job never runs the deploy job's "Set Env" steps, so
@@ -208,6 +280,7 @@ jobs:
       # env vars needed (the only assertion is an unauthenticated redirect to
       # /login).
       - name: E2E Security Regression (SEC-01)
+        if: needs.changes.outputs.docs_only != 'true'
         run: npm run test:e2e:security
 
   # --- JOB 2: BUILD & DEPLOY (Only if Verify passes) ---
@@ -217,9 +290,14 @@ jobs:
   # empty string and this job would attempt a real `firebase deploy` with no target.
   # PRs only need the verify job as a required check; deploys stay tied to actual
   # branch pushes (feature/*, claude/*, release/*, main).
+  #
+  # docs_only != 'true' restores the same skip-deploy-for-docs-only-pushes
+  # behavior the old trigger-level paths-ignore provided — now driven by the
+  # `changes` job's git-diff-based detection instead of GitHub's own path
+  # matching, since that's the only source of truth this workflow has left.
   deploy:
-    needs: verify
-    if: github.event_name == 'push'
+    needs: [changes, verify]
+    if: github.event_name == 'push' && needs.changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
