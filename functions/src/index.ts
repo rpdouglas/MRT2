@@ -100,6 +100,34 @@ export function computeHabitAlert(pendingTaskCount: number): BeaconAlert | null 
     };
 }
 
+// ─── PROJ-112 (Recovery Reentry) ──────────────────────────────────────────────
+
+const REENTRY_THRESHOLD_DAYS = 14;
+
+// Checked against docs/design/mrt_design_system.md §X's Non-Manipulation
+// Commitment (no artificial scarcity, no social pressure, no loss-framed
+// reminders): never mentions streaks, days away, or "missing" the user —
+// that would be loss/guilt framing by the design system's own definition.
+// Fixed, generic copy — same discipline as computeMatReminderAlert above.
+export function computeReentryAlert(
+    lastLogin: Timestamp | undefined,
+    // Doubles as the dedup guard: non-null means this already fired for the
+    // current absence (set by either this function's own caller or the
+    // client-side fallback, src/hooks/useRecoveryReentry.ts) — without this
+    // check, a still-absent user would get this push every single day, which
+    // is itself the nagging pattern this feature exists to prevent.
+    reentryStartedAt: Timestamp | null | undefined,
+    nowUTC: Date
+): BeaconAlert | null {
+    if (!lastLogin || reentryStartedAt) return null;
+    const daysAway = Math.floor((nowUTC.getTime() - lastLogin.toDate().getTime()) / (1000 * 60 * 60 * 24));
+    if (daysAway < REENTRY_THRESHOLD_DAYS) return null;
+    return {
+        title: "Whenever you're ready",
+        body: "My Recovery Toolkit is here when you want it — no rush.",
+    };
+}
+
 // PROJ-111: fixed, generic copy — never interpolates a drug name, dose
 // amount, or the user's own customCounterLabel (that label could itself be
 // identifying). This is the one hard security invariant this function must
@@ -119,6 +147,10 @@ export interface BeaconBatchResult {
     tokenToUid: Map<string, string>;
     usersProcessed: number;
     usersFailed: number;
+    // PROJ-112: uids whose reentryStartedAt should be set now — computeReentryAlert
+    // just fired for them, so this write is both the dedup guard for future runs
+    // and the anchor the client-side useRecoveryReentry() hook reads.
+    reentryStartedAtUpdates: string[];
 }
 
 // Isolated per-user so one malformed record (e.g. a bad sobrietyDate) can't abort
@@ -133,6 +165,7 @@ export async function processUserBatch(
 ): Promise<BeaconBatchResult> {
     const messages: TokenMessage[] = [];
     const tokenToUid = new Map<string, string>();
+    const reentryStartedAtUpdates: string[] = [];
     let usersProcessed = 0;
     let usersFailed = 0;
 
@@ -147,6 +180,17 @@ export async function processUserBatch(
             tokens.forEach((token) => tokenToUid.set(token, uid));
 
             let alert = computeMilestoneAlert(userData.sobrietyDate as Timestamp | undefined, startOfTodayUTC);
+            if (!alert) {
+                const reentryAlert = computeReentryAlert(
+                    userData.lastLogin as Timestamp | undefined,
+                    userData.reentryStartedAt as Timestamp | null | undefined,
+                    startOfTodayUTC
+                );
+                if (reentryAlert) {
+                    alert = reentryAlert;
+                    reentryStartedAtUpdates.push(uid);
+                }
+            }
             if (!alert) {
                 const pendingCount = await getPendingTaskCount(uid);
                 alert = computeHabitAlert(pendingCount);
@@ -173,7 +217,7 @@ export async function processUserBatch(
         }
     }
 
-    return { messages, tokenToUid, usersProcessed, usersFailed };
+    return { messages, tokenToUid, usersProcessed, usersFailed, reentryStartedAtUpdates };
 }
 
 interface BeaconSendResponse { success: boolean; error?: { code?: string }; }
@@ -455,6 +499,8 @@ export const dailyBeacon = onSchedule({
         // Maps each dispatched token back to its owning uid, so a failed send can be pruned
         // without re-scanning every fetched user doc (also survives pagination below).
         const tokenToUid = new Map<string, string>();
+        // PROJ-112: accumulated across pagination like tokenToUid above.
+        const reentryStartedAtUpdates: string[] = [];
         let usersProcessed = 0;
         let usersFailed = 0;
         let batchesProcessed = 0;
@@ -505,6 +551,7 @@ export const dailyBeacon = onSchedule({
             );
             messagesToSend.push(...batchResult.messages);
             batchResult.tokenToUid.forEach((uid, token) => tokenToUid.set(token, uid));
+            reentryStartedAtUpdates.push(...batchResult.reentryStartedAtUpdates);
             usersProcessed += batchResult.usersProcessed;
             usersFailed += batchResult.usersFailed;
 
@@ -514,6 +561,22 @@ export const dailyBeacon = onSchedule({
 
         if (usersFailed > 0) {
             logger.warn(`dailyBeacon: ${usersFailed} of ${usersProcessed} users failed processing and were skipped.`);
+        }
+
+        // PROJ-112: written unconditionally on whether the push itself sends
+        // successfully — this marks that the reentry state started, which is
+        // true regardless of send outcome, and is also the dedup guard for
+        // tomorrow's run. Unchunked like the stale-token-pruning batch below;
+        // only fires for users crossing the 14-day threshold on this exact
+        // day, a small subset of the whole fetched batch.
+        if (reentryStartedAtUpdates.length > 0) {
+            const reentryBatch = db.batch();
+            const reentryTimestamp = Timestamp.now();
+            reentryStartedAtUpdates.forEach((uid) => {
+                reentryBatch.update(db.collection("users").doc(uid), { reentryStartedAt: reentryTimestamp });
+            });
+            await reentryBatch.commit();
+            logger.info(`PROJ-112: set reentryStartedAt for ${reentryStartedAtUpdates.length} user(s).`);
         }
 
         if (messagesToSend.length === 0) {

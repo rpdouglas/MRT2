@@ -1,6 +1,6 @@
 # 🌅 Project 112: Recovery Reentry State
 
-**Status:** 🟡 Planned — Strategy approved via `/planning` (2026-09-07), ready for implementation
+**Status:** ✅ Shipped
 **Primary Persona:** Ned (Pink Cloud), secondarily anyone returning after a gap
 **Objective:** When a user returns after 14+ days away, greet them without a broken-streak display or guilt copy, and let their streak metrics resurface only after 7 days of renewed engagement — a pattern named in `CLAUDE.md` and `docs/PERSONAS.md` but confirmed by a 2026-09-03 code audit to have zero implementation anywhere in `src/`. Additionally proactively notify the user (push) when they actually cross the 14-day mark, since that moment can only ever be detected server-side — a client-side check can't fire for a user who isn't opening the app.
 

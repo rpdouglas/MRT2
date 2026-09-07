@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateUserLevel, calculateJournalStats, calculateTaskStats, calculateWorkbookStats } from '../gamification';
+import { calculateUserLevel, calculateJournalStats, calculateTaskStats, calculateWorkbookStats, countActiveDaysSince } from '../gamification';
 import { WORKBOOKS } from '../../data/workbooks';
 import { Timestamp } from 'firebase/firestore';
 
@@ -131,6 +131,38 @@ describe('🎮 Gamification Engine', () => {
 
           // 5 + 2 = 7 (Total Habit Fire)
           expect(result.habitFire).toBe(7);
+      });
+  });
+
+  describe('countActiveDaysSince (PROJ-112: Recovery Reentry)', () => {
+      it('returns 0 for an empty journal list', () => {
+          expect(countActiveDaysSince([], mockDate(0))).toBe(0);
+      });
+
+      it('counts distinct days with an entry on/after the boundary', () => {
+          const journals = [
+              { createdAt: mockTimestamp(0) }, // today
+              { createdAt: mockTimestamp(1) }, // yesterday
+              { createdAt: mockTimestamp(2) }, // 2 days ago
+          ] as unknown as Parameters<typeof calculateJournalStats>[0];
+          expect(countActiveDaysSince(journals, mockDate(2))).toBe(3);
+      });
+
+      it('excludes entries before the boundary', () => {
+          const journals = [
+              { createdAt: mockTimestamp(0) }, // today — after boundary
+              { createdAt: mockTimestamp(10) }, // well before boundary
+          ] as unknown as Parameters<typeof calculateJournalStats>[0];
+          expect(countActiveDaysSince(journals, mockDate(1))).toBe(1);
+      });
+
+      it('deduplicates multiple entries on the same day', () => {
+          const journals = [
+              { createdAt: mockTimestamp(0) },
+              { createdAt: mockTimestamp(0) },
+              { createdAt: mockTimestamp(0) },
+          ] as unknown as Parameters<typeof calculateJournalStats>[0];
+          expect(countActiveDaysSince(journals, mockDate(0))).toBe(1);
       });
   });
 

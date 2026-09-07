@@ -19,6 +19,14 @@ export interface UserProfile {
   // non-ok response), cleared on the next successful run — lets the UI
   // surface a failure that was previously silent (console.error only).
   lastAutoBackupFailedAt?: Timestamp | null;
+  // PROJ-112 (Recovery Reentry): set by whichever side notices a lastLogin
+  // gap of 14+ days first — dailyBeacon (server, functions/src/index.ts) for
+  // users with a registered push token, or useRecoveryReentry (client
+  // fallback) on the login that finally returns. Also doubles as the push
+  // notification's dedup guard (dailyBeacon only fires computeReentryAlert
+  // while this is unset). Cleared back to null once 7 days of renewed
+  // activity accrue — see docs/projects/112_RECOVERY_REENTRY.md.
+  reentryStartedAt?: Timestamp | null;
   role?: 'admin' | 'user';
   sponsorName?: string;
   sponsorPhone?: string;

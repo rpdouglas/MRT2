@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser, type User } from 'firebase/auth';
-import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, type Unsubscribe, type Timestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getOrCreateUserProfile } from '../lib/db';
 import { refreshFcmTokenIfStale, listenForForegroundMessages } from '../lib/messaging';
@@ -18,6 +18,13 @@ interface AuthContextType {
   // instead of assuming Stripe for every premium user.
   userTierSource?: 'Stripe-Managed' | 'play-billing' | 'manual';
   driveAccessToken: string | null;
+  // PROJ-112 (Recovery Reentry): the profile's lastLogin as it stood BEFORE
+  // this session's getOrCreateUserProfile call overwrote it to now — see that
+  // function's own comment in src/lib/db.ts. Nothing downstream of this
+  // capture point can recover the prior value once a later useUserProfile()
+  // fetch sees the already-updated doc, so this is the only place it's ever
+  // available. null for a brand-new user (no prior lastLogin to compare).
+  previousLastLogin: Timestamp | null;
   loginWithGoogle: () => Promise<void>;
   signupWithEmail: (email: string, pass: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
@@ -39,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userTier, setUserTier] = useState<'free' | 'premium'>('free');
   const [userTierSource, setUserTierSource] = useState<'Stripe-Managed' | 'play-billing' | 'manual' | undefined>(undefined);
   const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
+  const [previousLastLogin, setPreviousLastLogin] = useState<Timestamp | null>(null);
 
   useEffect(() => {
     // Dev/screenshot-pipeline-only bypass (scripts/generate_screenshots.js drives the Vite
@@ -92,6 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (currentUser) {
           const profile = await getOrCreateUserProfile(currentUser);
+          // PROJ-112: capture now, before anything downstream re-fetches this
+          // profile and only sees the "now" value getOrCreateUserProfile just
+          // wrote — see that function's comment in src/lib/db.ts.
+          setPreviousLastLogin(profile.lastLogin ?? null);
           const idTokenResult = await currentUser.getIdTokenResult();
           const hasAdminClaim = !!idTokenResult.claims.admin;
           const isAdminUser = hasAdminClaim || profile.role === 'admin';
@@ -142,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserTier('free');
           setUserTierSource(undefined);
           setDriveAccessToken(null);
+          setPreviousLastLogin(null);
           if (unsubscribeSubscriptions) {
               unsubscribeSubscriptions();
           }
@@ -224,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userTier,
     userTierSource,
     driveAccessToken,
+    previousLastLogin,
     loginWithGoogle,
     signupWithEmail,
     loginWithEmail,
@@ -231,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     reauthenticateWithGoogle,
     deleteAccount,
     logout
-  }), [user, loading, isAdmin, userTier, userTierSource, driveAccessToken, loginWithGoogle, signupWithEmail, loginWithEmail, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount, logout]);
+  }), [user, loading, isAdmin, userTier, userTierSource, driveAccessToken, previousLastLogin, loginWithGoogle, signupWithEmail, loginWithEmail, reauthenticateWithEmail, reauthenticateWithGoogle, deleteAccount, logout]);
 
   return (
     <AuthContext.Provider value={value}>

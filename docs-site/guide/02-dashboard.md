@@ -73,6 +73,7 @@ Staying on track is easier with gentle nudges. At the top of your Dashboard, you
 * **Milestone Celebrations:** Get notified the moment you hit a new recovery milestone.
 * **Habit Nudges:** Receive a quiet reminder if you have pending habits or tasks left to complete for the day.
 * **Stability Track Reminders:** If you've enabled the Stability Track, you'll get a discreet nudge on days you haven't logged a dose yet. The notification just says "Time for your morning routine check-in" — it never mentions medication, dosage, or anything else that could show up on a lock screen.
+* **Welcome Back:** If you've been away from the app for a couple of weeks, you may get a single gentle notification letting you know My Recovery Toolkit is there whenever you're ready — no rush, no pressure, and it won't repeat while you're still away.
 * *Note for iOS (iPhone) users:* Apple requires you to install the app to your Home Screen before it allows push notifications. Follow the installation guide if you don't see the banner.
 
 ### Managing Dashboard Badges
@@ -109,3 +110,4 @@ Recovery is a high-performance lifestyle. MRT tracks your positive actions behin
 * **Earning XP:** You earn XP by writing journals (+25 XP), completing tasks (+10 to +50 XP), logging vitality metrics, and completing your monthly Recovery Capital check-in (+25 XP).
 * **Archetypes:** Depending on where you spend your time, the system will assign you a persona: *Scholar* (Workbooks), *Doer* (Tasks), *Monk* (Vitality), or *Philosopher* (Journaling).
 * **Profile → Achievements:** Shows your **Rank & Level** (with an XP progress bar), **Journal Streak** and weekly consistency, **Habit Fire** and completion rate, **Vitality Rhythm** and total logs, and **Workbook Wisdom** (questions answered and overall completion). None of this appears on the Dashboard itself anymore — it moved here to keep the Dashboard focused on your daily snapshot.
+* **Coming back after time away:** If you return after being gone for two weeks or more, your Journal Streak, Habit Fire, and Vitality Rhythm numbers pause with a quiet message instead of showing as broken — there's no "you missed X days" messaging anywhere. They pick back up on their own once you've been active again for about a week.

@@ -304,6 +304,26 @@ export const calculateWorkbookStats = (answersSnapshotSize: number, totalQuestio
     };
 };
 
+// PROJ-112 (Recovery Reentry): counts distinct calendar days with at least
+// one journal entry on/after `since`. Deliberately journal-based, not
+// task-based like rhythmScore.ts's day-counting — a Task's currentStreak is a
+// single evolving scalar per task (overwritten on each completion), so it
+// can't reconstruct multi-day history for a user with only 1-2 recurring
+// tasks. A journal entry's createdAt is a genuine per-entry timestamp, and
+// journals are already fetched in full by every caller of this function
+// (AchievementsTab.tsx), so no new query is needed.
+export const countActiveDaysSince = (journals: ScorableJournal[], since: Date): number => {
+    if (!journals || journals.length === 0) return 0;
+    const uniqueDays = new Set<string>();
+    journals.forEach(j => {
+        const d = getNormalizedDate(j.createdAt);
+        if (d.getTime() >= since.getTime()) {
+            uniqueDays.add(d.toDateString());
+        }
+    });
+    return uniqueDays.size;
+};
+
 export const calculateVitalityStats = (journals: ScorableJournal[]): VitalityStats => {
     if (!journals) return { bioStreak: 0, totalLogs: 0 };
     const vitalityLogs = journals.filter(j => j.tags && j.tags.includes('Vitality'));
