@@ -63,6 +63,7 @@ exports.shouldApplyPlayRTDNUpdate = shouldApplyPlayRTDNUpdate;
 exports.checkCooldown = checkCooldown;
 exports.checkFloor = checkFloor;
 exports.isPremiumOnlyAnalysisType = isPremiumOnlyAnalysisType;
+exports.getModelForType = getModelForType;
 exports.validateAIProxyPayload = validateAIProxyPayload;
 exports.getPromptForType = getPromptForType;
 exports.evaluateVaultPinAttempt = evaluateVaultPinAttempt;
@@ -1364,7 +1365,14 @@ function getModelForType(analysisType) {
         case "audio_analysis":
             return "gemini-3.5-flash-lite";
         default:
-            return "gemini-2.5-flash";
+            // gemini-2.5-flash was retired ("no longer available to new users" —
+            // 404 from the API itself, which named this replacement) once the
+            // GEMINI_API_KEY secret was rotated to a new-user key (2026-09-09).
+            // Same retirement as generateForModality's fix (PROJ-42) — this
+            // default-case call site was missed in that pass, breaking
+            // deep_pattern_analysis, comparative_analysis, workbook_analysis,
+            // and rosc_assessment.
+            return "gemini-3.6-flash";
     }
 }
 // ─── PROJ-100 Phase 3: Gemini safety settings ────────────────────────────────
