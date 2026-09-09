@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 import type { UserProfile, JournalEntry, Task, WorkbookAnswer } from './db';
 import type { SavedInsight } from './insights';
@@ -9,6 +10,17 @@ const daysAgo = (days: number): Date => {
     d.setDate(d.getDate() - days);
     return d;
 };
+
+// PROJ-63 screenshot/local-dev mock profiles never persist patchFields writes
+// back anywhere real, so Dashboard.tsx's "have we shown today's Daily Image
+// yet" check (lastSeenDailyImageDate !== today) is permanently false for a
+// mock session -- the modal auto-pops on every single dashboard screenshot
+// capture, for any persona, showing useDailyImage.ts's stale placeholder
+// asset instead of the dashboard the screenshot is actually meant to show.
+// Seeding "already seen today" here closes that for good; anyone who wants
+// to actually test/screenshot the Daily Image feature itself can still
+// trigger it manually (see Dashboard.tsx's separate menu-item entry point).
+const TODAY_DATE_STRING = format(new Date(), 'yyyy-MM-dd');
 
 const hoursAgo = (hours: number): Date => {
     const d = new Date();
@@ -44,6 +56,7 @@ const NED_PROFILE: UserProfile = {
     substanceCost: 20,
     costFrequency: 'daily',
     currencySymbol: '$',
+    lastSeenDailyImageDate: TODAY_DATE_STRING,
     anchorSettings: {
         notifyCheckIn: true,
         notifyReading: true,
@@ -150,6 +163,7 @@ const MAYA_PROFILE: UserProfile = {
     substanceCost: 150,
     costFrequency: 'weekly',
     currencySymbol: '$',
+    lastSeenDailyImageDate: TODAY_DATE_STRING,
     anchorSettings: {
         notifyCheckIn: true,
         notifyReading: false,
@@ -235,6 +249,7 @@ const DAVID_PROFILE: UserProfile = {
     heroColor: 'rose',
     sponsorName: 'Sarah Jenkins',
     sponsorPhone: '555-0199',
+    lastSeenDailyImageDate: TODAY_DATE_STRING,
     anchorSettings: {
         notifyCheckIn: true,
         notifyReading: true,
@@ -302,6 +317,7 @@ const WALT_PROFILE: UserProfile = {
     substanceCost: 15,
     costFrequency: 'daily',
     currencySymbol: '$',
+    lastSeenDailyImageDate: TODAY_DATE_STRING,
     anchorSettings: {
         notifyCheckIn: true,
         notifyReading: true,
