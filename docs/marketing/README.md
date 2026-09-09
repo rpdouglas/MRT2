@@ -9,6 +9,7 @@ Each brief covers one feature and follows the same shape: the one-sentence pitch
 | Feature | File | Status |
 |---|---|---|
 | **Whole-app overview** | `OVERVIEW.md` | ✅ Drafted — synthesis layer over every brief below, plus personas/design system/roadmap |
+| **Brand & marketing guidelines** | `BRAND_GUIDELINES.md` | ✅ Drafted (Sept 2026) — compliance constraints, visual system, voice/hashtag rules, distribution rules. Extracted and fact-checked out of `MRT_Marketing_Strategy_v1.docx`, which had cited a non-existent "Brand Guidelines v3.0"; this file is that gap closed. Check any asset against it before it ships. |
 | Journal | `journal.md` | ✅ Drafted, reviewed |
 | Dashboard | `dashboard.md` | ✅ Drafted (built on a corrected `docs/screens/dashboard.md`) |
 | Tools (CBT/SMART worksheets) | `tools.md` | ✅ Drafted (technical docs spot-verified, held up clean) |
