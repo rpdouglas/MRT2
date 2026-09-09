@@ -1,6 +1,6 @@
 # 🧊 Feature Backlog (The Persona Icebox)
 
-**Last Reviewed:** 2026-09-03
+**Last Reviewed:** 2026-09-09
 
 **Storage:** Ideas and feature requests that are approved but deferred. Tagged by Persona to ensure we are building for specific psychological needs, not just adding features.
 

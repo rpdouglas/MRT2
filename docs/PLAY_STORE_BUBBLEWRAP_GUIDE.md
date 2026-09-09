@@ -125,6 +125,12 @@ bubblewrap build
 ```
 Produces `app-release-bundle.aab` (upload this to Play Console) and `app-release-unsigned.apk`. Bubblewrap prompts for the keystore alias/password from Phase 3 and signs the bundle during this step.
 
+**Copy the AAB into the MRT2 repo root so you can download it from VS Code/Codespace's Explorer** (`~/mrt-android` is outside the workspace folder VS Code has open, so it isn't otherwise reachable from the Explorer/download-file UI):
+```bash
+cp ~/mrt-android/app-release-bundle.aab /workspaces/MRT2/app-release-bundle.aab
+```
+Already covered by `.gitignore`'s `*.aab` rule (confirm with `git check-ignore -v app-release-bundle.aab` if ever in doubt) — it'll show up in the Explorer for download but can never be accidentally committed. Safe to leave the copy in place; the next build's `cp` just overwrites it.
+
 ---
 
 ## Phase 5 — Wire up Digital Asset Links
