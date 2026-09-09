@@ -138,6 +138,8 @@ Resolved during implementation (2026-09-05), not silently assumed:
 | 2 | Should the "journal about this image" flow support viewing past entries linked to a given image (using the new `linkedImageId` field), or does that field stay write-only until a future feature reads it? | **Write-only for now**, as planned — Phase 3 sets `linkedImageId` on creation (`useJournalOperations.ts`'s `addJournalMutation`) but ships no read/query UI against it. Kept it a required-to-add-now field specifically so a future "see what you wrote about this image" view needs no schema migration. |
 | 3 | Tier gating for this feature. | **Free for all tiers**, confirmed and shipped as such — no `<PremiumGate>` anywhere in the Phase 3 UI. Not crisis-critical, but shareable/engagement content with zero Gemini calls, so no cost-exposure argument for gating existed either. |
 
+**Note (2026-09-09):** `daily_readings`/`crossword_puzzles` were moved to a generate-once-in-dev/promote-to-uat-prod architecture — see `docs/projects/42_DAILY_READINGS.md` §15. `assignDailyImage` deliberately excluded from that pass: it's pool *selection* (round-robin from `image_library`), not Gemini generation, so the 3x-cost concern that motivated the change doesn't apply here — each environment picking a different image from its own rotation is a minor consistency nit, not a cost or content-drift risk. Candidate for the same pattern later if that changes.
+
 ---
 
 *MRT · PROJ-113 Daily Inspirational Image · v0.1 DRAFT · 2026-09-04 · Status: Planned*

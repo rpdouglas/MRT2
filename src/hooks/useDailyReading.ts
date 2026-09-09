@@ -7,11 +7,16 @@ function readingDocId(modality: ReadingModality, date: string): string {
   return `${modality}_${date}`;
 }
 
-function localDateString(): string {
+// UTC, not device-local — must match the Cloud Functions' utcDateString()
+// (functions/src/index.ts) exactly, since that's the date boundary the
+// buffer is actually generated/checked against. A device-local boundary
+// would occasionally request a date that hasn't been generated yet (or skip
+// one that has) for any user not on UTC, worst right around midnight.
+function utcDateString(): string {
   const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -37,7 +42,7 @@ async function fetchReading(modality: ReadingModality, date: string): Promise<Da
 }
 
 export function useDailyReading(modality: ReadingModality | null) {
-  const today = localDateString();
+  const today = utcDateString();
   return useQuery<DailyReading | null>({
     queryKey: ['daily-reading', modality, today],
     queryFn: () => fetchReading(modality!, today),
@@ -49,7 +54,7 @@ export function useDailyReading(modality: ReadingModality | null) {
 }
 
 export function useAllDailyReadings(modalities: ReadingModality[]) {
-  const today = localDateString();
+  const today = utcDateString();
   return useQueries({
     queries: modalities.map(modality => ({
       queryKey: ['daily-reading', modality, today] as const,

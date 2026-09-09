@@ -27,11 +27,13 @@ const mockReading: DailyReading = {
   generatedAt: {} as Timestamp,
 };
 
-function localDateString(): string {
+// Must mirror the hook's own utcDateString() exactly (UTC, not device-local —
+// see useDailyReading.ts), or this test is timezone-dependent near midnight.
+function utcDateString(): string {
   const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -79,7 +81,7 @@ describe('useDailyReading', () => {
   });
 
   it('serves cached reading without calling Firestore when cache is fresh', () => {
-    const today = localDateString();
+    const today = utcDateString();
     queryClient.setQueryData(['daily-reading', 'twelve-step-aa', today], mockReading);
 
     const { result } = renderHook(() => useDailyReading('twelve-step-aa'), { wrapper: Wrapper });
