@@ -315,6 +315,7 @@ jobs:
       VITE_GEMINI_API_KEY: ""
       VITE_STRIPE_PREMIUM_PRICE_ID: ""
       VITE_FIREBASE_VAPID_KEY: "" # <-- ADDED FOR PUSH NOTIFICATIONS
+      VITE_PLAY_BILLING_PRODUCT_ID: "" # PROJ-105: Android Play Billing subscription SKU
 
     steps:
       - uses: actions/checkout@v4
@@ -341,6 +342,7 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_DEV }}" >> $GITHUB_ENV
           echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "VITE_STRIPE_PREMIUM_PRICE_ID=${{ secrets.VITE_STRIPE_PREMIUM_PRICE_ID }}" >> $GITHUB_ENV
+          echo "VITE_PLAY_BILLING_PRODUCT_ID=${{ secrets.VITE_PLAY_BILLING_PRODUCT_ID }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_VAPID_KEY=${{ secrets.VITE_FIREBASE_VAPID_KEY_DEV }}" >> $GITHUB_ENV
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV_BASE64 }}" | base64 -d > ./service-account.json
 
@@ -357,6 +359,7 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_UAT }}" >> $GITHUB_ENV
           echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "VITE_STRIPE_PREMIUM_PRICE_ID=${{ secrets.VITE_STRIPE_PREMIUM_PRICE_ID }}" >> $GITHUB_ENV
+          echo "VITE_PLAY_BILLING_PRODUCT_ID=${{ secrets.VITE_PLAY_BILLING_PRODUCT_ID }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_VAPID_KEY=${{ secrets.VITE_FIREBASE_VAPID_KEY_UAT }}" >> $GITHUB_ENV
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_UAT_BASE64 }}" | base64 -d > ./service-account.json
 
@@ -373,6 +376,7 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID_PROD }}" >> $GITHUB_ENV
           echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "VITE_STRIPE_PREMIUM_PRICE_ID=${{ secrets.VITE_STRIPE_PREMIUM_PRICE_ID }}" >> $GITHUB_ENV
+          echo "VITE_PLAY_BILLING_PRODUCT_ID=${{ secrets.VITE_PLAY_BILLING_PRODUCT_ID }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_VAPID_KEY=${{ secrets.VITE_FIREBASE_VAPID_KEY_PROD }}" >> $GITHUB_ENV
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD_BASE64 }}" | base64 -d > ./service-account.json
 
@@ -419,6 +423,7 @@ jobs:
           VITE_GEMINI_API_KEY: ${{ env.VITE_GEMINI_API_KEY }}
           VITE_STRIPE_PREMIUM_PRICE_ID: ${{ env.VITE_STRIPE_PREMIUM_PRICE_ID }}
           VITE_FIREBASE_VAPID_KEY: ${{ env.VITE_FIREBASE_VAPID_KEY }}
+          VITE_PLAY_BILLING_PRODUCT_ID: ${{ env.VITE_PLAY_BILLING_PRODUCT_ID }}
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
