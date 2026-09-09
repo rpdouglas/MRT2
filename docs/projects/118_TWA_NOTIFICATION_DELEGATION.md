@@ -1,6 +1,6 @@
 # 📁 Project 118: TWA Notification Delegation
 
-**Status:** ⚪ Planned — scope narrowed to verification-only after direct inspection (see §0); not yet through `/planning`'s implementation approval
+**Status:** 🟡 Blocked — scope narrowed to verification-only after direct inspection (see §0); the config work is done, all that remains is Phase 1's manual device check. Backlogged 2026-09-09 (`docs/BACKLOG.md`) since this environment has no physical Android device or configured emulator to run it — confirmed via `adb devices` (zero attached) and no `system-images`/`emulator` package in the Bubblewrap SDK install. Needs a human with a real Android 13+ device.
 **Primary Persona:** All (trust/product-identity), secondarily David (a notification attributed to "Chrome" instead of the app itself is a small but real trust wobble at exactly the moments — milestones, habit reminders — this app wants to feel personal, not generic)
 **Objective:** Confirm, on a real device, that the Android build's already-enabled Trusted Web Activity Notification Delegation actually shows notifications under "My Recovery Toolkit" (not Chrome) before the Play Store production release.
 

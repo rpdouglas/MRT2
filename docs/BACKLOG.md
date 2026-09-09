@@ -6,36 +6,36 @@
 
 ## 👤 David (The User in Crisis)
 * **Feature:** Harm Reduction Mode.
-  * **Concept:** A toggle that shifts the app's language from "Abstinence" to "Management" (e.g., tracking drinks per week instead of days since last drink).
-  * **Status:** Deferred to post-Wave 2.
+    * **Concept:** A toggle that shifts the app's language from "Abstinence" to "Management" (e.g., tracking drinks per week instead of days since last drink).
+    * **Status:** Deferred to post-Wave 2.
 * **Feature:** Clinical Telehealth Off-Ramps (MAT Resources).
-  * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
-  * **Status:** Deferred — unscheduled.
+    * **Concept:** Direct links to Medication-Assisted Treatment if the SOS button is pressed multiple times.
+    * **Status:** Deferred — unscheduled.
 * ~~**Feature:** Bundle Size / Code-Splitting Reduction.~~ **Resolved by `PROJ-89` (vendor chunk split, 2026-07-29) and `PROJ-98` (PWA precache scope, 2026-08-02).** Precache is now 3.36MB (was ~19MB); no chunk exceeds 875KB raw. Removed from active backlog — re-add if bundle size regresses again.
 * **Feature:** Crisis-Hotline Deep Link in SOS Modal.
-  * **Concept:** A lightweight, opt-in deep link to a crisis hotline from the SOS Modal, matching a pattern seen in Loosid.
-  * **Status:** Deferred — unscheduled. Surfaced 2026-08-31 by the finalreview audit (`docs/finalreview/14_EXECUTIVE_REPORT.md` #42); investigate whether it's worth adding, not yet committed.
+    * **Concept:** A lightweight, opt-in deep link to a crisis hotline from the SOS Modal, matching a pattern seen in Loosid.
+    * **Status:** Deferred — unscheduled. Surfaced 2026-08-31 by the finalreview audit (`docs/finalreview/14_EXECUTIVE_REPORT.md` #42); investigate whether it's worth adding, not yet committed.
 
 ## 👤 Ned (The Pink Cloud)
 * **Feature:** "90 in 90" Meeting Tracker & Friend Challenges (PROJ-21).
-  * **Concept:** Gamified attendance tracking.
-  * **Complexity:** High (Requires secure multiplayer networking). Deferred to 5,000 user milestone.
+    * **Concept:** Gamified attendance tracking.
+    * **Complexity:** High (Requires secure multiplayer networking). Deferred to 5,000 user milestone.
 * **Feature:** Sleep Log / Wearable Integration.
-  * **Concept:** Apple HealthKit API integration to correlate sleep debt with cravings.
-  * **Complexity:** Extremely High. Deferred to Wave 4.
+    * **Concept:** Apple HealthKit API integration to correlate sleep debt with cravings.
+    * **Complexity:** Extremely High. Deferred to Wave 4.
 * ~~**Feature:** Recovery Reentry State (14+ Days Away).~~ **Shipped 2026-09-07 as `PROJ-112`.** Journal Streak/Habit Fire/Vitality Rhythm on Profile → Achievements now pause with warm copy after a 14+ day `lastLogin` gap and resurface after 7 days of renewed activity; a one-time `dailyBeacon` push notification covers the same threshold for users who never open the app to trigger client-side detection. See `docs/projects/112_RECOVERY_REENTRY.md`.
 
 ## 👤 Lisa (The Service Superstar)
 * **Feature:** Accountability Partner Mode.
-  * **Concept:** A read-only "Listener" view where a sponsor can see a sponsee's clean time and public mood graph (without seeing encrypted journal entries).
-  * **Status:** Deferred — unscheduled.
+    * **Concept:** A read-only "Listener" view where a sponsor can see a sponsee's clean time and public mood graph (without seeing encrypted journal entries).
+    * **Status:** Deferred — unscheduled.
 * **Feature:** Narrower ZK-compatible "Share Your Streak" Feature.
-  * **Concept:** A smaller, faster-to-ship alternative/complement to the full Service Module (`PROJ-05`) — share just a streak with an accountability partner, without full sponsor/sponsee tooling.
-  * **Status:** Deferred — unscheduled. Surfaced 2026-08-31 by the finalreview audit (`docs/finalreview/14_EXECUTIVE_REPORT.md` #39) as a possible faster complement to `PROJ-05`, which the audit separately calls the single highest-leverage recommendation in the report — see `docs/reports/2026-08_finalreview_synthesis_and_playstore_plan.md` §5. `PROJ-05` itself stays Paused; this is a distinct, smaller idea, not a substitute decision.
+    * **Concept:** A smaller, faster-to-ship alternative/complement to the full Service Module (`PROJ-05`) — share just a streak with an accountability partner, without full sponsor/sponsee tooling.
+    * **Status:** Deferred — unscheduled. Surfaced 2026-08-31 by the finalreview audit (`docs/finalreview/14_EXECUTIVE_REPORT.md` #39) as a possible faster complement to `PROJ-05`, which the audit separately calls the single highest-leverage recommendation in the report — see `docs/reports/2026-08_finalreview_synthesis_and_playstore_plan.md` §5. `PROJ-05` itself stays Paused; this is a distinct, smaller idea, not a substitute decision.
 
 ## 👤 Walt (The Zen Master)
 * **Feature:** Photo Attachments in Journal.
-  * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64). Deferred indefinitely.
+    * **Complexity:** High (Requires Blob -> ArrayBuffer -> AES-GCM -> Base64). Deferred indefinitely.
 
 ## 🅿️ Parked / Unscheduled (Have specs, not on the Roadmap)
 * **PROJ-38 — The Urge Intervention System ("The Lifeline Protocol").** Full spec exists at `docs/projects/38_URGE_INTERVENTION.md`. Status: ⚪ Planned, not yet scheduled into a Wave.
@@ -43,6 +43,7 @@
 * **PROJ-97 Phase 3 — `crossword-layout-generator` replacement.** Full spec exists at `docs/projects/97_DEPENDENCY_HYGIENE_ROUND_2.md` (§6 Addendum). Everything else in that ticket shipped 2026-08-04 (`@use-gesture/react` replaced with native touch handlers, verified `knip` dead code removed, `eslint-plugin-jsx-a11y` added and all 48 findings triaged) — only this one piece is deliberately deferred. The package has zero CVEs and no newer release exists to bump to either way; replacing its grid-interlocking algorithm from scratch is multi-day, real-correctness-risk work for a working, low-traffic (one nightly Cloud Function run) feature. **Trigger:** the package becomes uninstallable (e.g. a Node engine bump it can't support), gets a real CVE, or Daily Crossword needs a capability only a rewrite could provide — not "the package is old" on its own.
 * ~~**`PROJ-07` Sprint 9.2 — Google Play Console verification.**~~ **Cleared 2026-08-31** — account-holder confirmed both website ownership and identity/phone verification are complete. Moved to `docs/ROADMAP.md` Wave 0 / `docs/ACTIVE_CYCLE.md` as the actual Bubblewrap build/upload/submission step (still manual, account-holder-only — CLI + keystore + Play Console UI, not doable from an agent sandbox).
 * **`mrt2-app-uat` — `VAULT_PEPPER` secret not set / Secret Manager API not enabled.** Surfaced 2026-07-19 while closing out `docs/projects/67_SIGNING_KEY_SECRETS_HYGIENE.md` §7 (prod and dev were both fixed in that pass). uat isn't currently in active use, so this is deferred rather than fixed now — but it will break the first Cloud Functions deploy to uat with the same `defineSecret("VAULT_PEPPER")` failure prod hit, until someone enables `secretmanager.googleapis.com` on `mrt2-app-uat` and runs `firebase functions:secrets:set VAULT_PEPPER --project=mrt2-app-uat` (plus the matching `roles/secretmanager.secretAccessor` IAM grant). No spec needed — this is a one-command chore, not a feature.
+* **`PROJ-118` — TWA Notification Delegation device verification.** Full spec exists at `docs/projects/118_TWA_NOTIFICATION_DELEGATION.md`. The config work is already done (`enableNotifications: true` confirmed fully wired in the local Bubblewrap scaffold, 2026-09-07) — all that's left is Phase 1's manual check: install the existing signed build on a real Android 13+ device and confirm push notifications show under the app's own name/icon in system settings, not Chrome's. Backlogged 2026-09-09 — not doable from an agent sandbox (`adb devices` shows zero attached, no `emulator`/`system-images` package installed to spin one up). `PROJ-119` (Notification Category Preferences) stays blocked behind this.
 
 ## 🔧 Infrastructure & Scale Triggers (No persona — internal readiness, no spec written yet)
 *Surfaced by `docs/reports/2026-08_full_production_readiness_audit.md`'s Large-Refactor bucket (§20) and Scalability Review (§18). None are urgent at current traffic; each has a stated trigger condition below rather than a target Wave. Deliberately not spec'd yet per `CLAUDE.md`'s "no planning before a spec exists" rule — write the spec when the trigger is actually approaching, not speculatively now.*
