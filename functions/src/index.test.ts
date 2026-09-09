@@ -16,6 +16,7 @@ import {
     checkCooldown,
     checkFloor,
     isPremiumOnlyAnalysisType,
+    getModelForType,
     evaluateVaultPinAttempt,
     deriveVaultPepper,
     validateCrosswordCandidates,
@@ -642,6 +643,26 @@ describe("isPremiumOnlyAnalysisType (PROJ-114: server-side mirror of a client-on
 
     it("does not flag an unknown analysisType (validateAIProxyPayload's job, not this one)", () => {
         expect(isPremiumOnlyAnalysisType("not_a_real_type")).toBe(false);
+    });
+});
+
+describe("getModelForType (regression guard: gemini-2.5-flash was retired 2026-09-09, PROJ-42)", () => {
+    const RETIRED_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+
+    it("resolves the cheap tier to a live model for the 5 lightweight analysis types", () => {
+        const cheapTier = ["journal_analysis", "workbook_coach", "cbt_coaching_prompt", "cba_reflection", "audio_analysis"];
+        for (const analysisType of cheapTier) {
+            expect(getModelForType(analysisType)).toBe("gemini-3.5-flash-lite");
+        }
+    });
+
+    it("resolves the default tier to a live model, never the retired gemini-2.5-flash", () => {
+        const defaultTier = ["deep_pattern_analysis", "comparative_analysis", "workbook_analysis", "rosc_assessment"];
+        for (const analysisType of defaultTier) {
+            const model = getModelForType(analysisType);
+            expect(RETIRED_MODELS.has(model)).toBe(false);
+            expect(model).toBe("gemini-3.6-flash");
+        }
     });
 });
 

@@ -1599,7 +1599,7 @@ export function isPremiumOnlyAnalysisType(analysisType: string): boolean {
     return PREMIUM_ONLY_ANALYSIS_TYPES.has(analysisType);
 }
 
-function getModelForType(analysisType: string): string {
+export function getModelForType(analysisType: string): string {
     switch (analysisType) {
         case "journal_analysis":
         case "workbook_coach":
@@ -1608,7 +1608,14 @@ function getModelForType(analysisType: string): string {
         case "audio_analysis":
             return "gemini-3.5-flash-lite";
         default:
-            return "gemini-2.5-flash";
+            // gemini-2.5-flash was retired ("no longer available to new users" —
+            // 404 from the API itself, which named this replacement) once the
+            // GEMINI_API_KEY secret was rotated to a new-user key (2026-09-09).
+            // Same retirement as generateForModality's fix (PROJ-42) — this
+            // default-case call site was missed in that pass, breaking
+            // deep_pattern_analysis, comparative_analysis, workbook_analysis,
+            // and rosc_assessment.
+            return "gemini-3.6-flash";
     }
 }
 
