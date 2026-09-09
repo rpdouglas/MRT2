@@ -39,18 +39,21 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var _a;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyVaultPin = exports.generateAIInsights = exports.handlePlayRTDN = exports.verifyPlayPurchase = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.generateDailyImage = exports.generateDailyCrossword = exports.checkBufferHealth = exports.dailyBeacon = void 0;
+exports.verifyVaultPin = exports.generateAIInsights = exports.handlePlayRTDN = exports.verifyPlayPurchase = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.generateDailyImage = exports.generateDailyCrossword = exports.checkBufferHealth = exports.getPromotionContent = exports.dailyBeacon = void 0;
 exports.computeLockoutSeconds = computeLockoutSeconds;
 exports.getMilestone = getMilestone;
 exports.getMilestoneLabel = getMilestoneLabel;
 exports.computeMilestoneAlert = computeMilestoneAlert;
 exports.computeHabitAlert = computeHabitAlert;
+exports.computeReentryAlert = computeReentryAlert;
 exports.computeMatReminderAlert = computeMatReminderAlert;
 exports.processUserBatch = processUserBatch;
 exports.sendBeaconMessagesChunked = sendBeaconMessagesChunked;
 exports.identifyStaleTokensByUser = identifyStaleTokensByUser;
+exports.addDaysToDate = addDaysToDate;
+exports.computeContiguousLastGeneratedDate = computeContiguousLastGeneratedDate;
 exports.buildBatchPrompt = buildBatchPrompt;
 exports.validateCrosswordCandidates = validateCrosswordCandidates;
 exports.hasDuplicateClues = hasDuplicateClues;
@@ -148,6 +151,30 @@ function computeHabitAlert(pendingTaskCount) {
         body: `You have ${pendingTaskCount} habit${pendingTaskCount > 1 ? "s" : ""} to complete today.`,
     };
 }
+// ─── PROJ-112 (Recovery Reentry) ──────────────────────────────────────────────
+const REENTRY_THRESHOLD_DAYS = 14;
+// Checked against docs/design/mrt_design_system.md §X's Non-Manipulation
+// Commitment (no artificial scarcity, no social pressure, no loss-framed
+// reminders): never mentions streaks, days away, or "missing" the user —
+// that would be loss/guilt framing by the design system's own definition.
+// Fixed, generic copy — same discipline as computeMatReminderAlert above.
+function computeReentryAlert(lastLogin, 
+// Doubles as the dedup guard: non-null means this already fired for the
+// current absence (set by either this function's own caller or the
+// client-side fallback, src/hooks/useRecoveryReentry.ts) — without this
+// check, a still-absent user would get this push every single day, which
+// is itself the nagging pattern this feature exists to prevent.
+reentryStartedAt, nowUTC) {
+    if (!lastLogin || reentryStartedAt)
+        return null;
+    const daysAway = Math.floor((nowUTC.getTime() - lastLogin.toDate().getTime()) / (1000 * 60 * 60 * 24));
+    if (daysAway < REENTRY_THRESHOLD_DAYS)
+        return null;
+    return {
+        title: "Whenever you're ready",
+        body: "My Recovery Toolkit is here when you want it — no rush.",
+    };
+}
 // PROJ-111: fixed, generic copy — never interpolates a drug name, dose
 // amount, or the user's own customCounterLabel (that label could itself be
 // identifying). This is the one hard security invariant this function must
@@ -168,6 +195,7 @@ async function processUserBatch(userDocs, startOfTodayUTC, getPendingTaskCount,
 getMatDoseLoggedToday) {
     const messages = [];
     const tokenToUid = new Map();
+    const reentryStartedAtUpdates = [];
     let usersProcessed = 0;
     let usersFailed = 0;
     for (const userDoc of userDocs) {
@@ -180,6 +208,13 @@ getMatDoseLoggedToday) {
                 continue;
             tokens.forEach((token) => tokenToUid.set(token, uid));
             let alert = computeMilestoneAlert(userData.sobrietyDate, startOfTodayUTC);
+            if (!alert) {
+                const reentryAlert = computeReentryAlert(userData.lastLogin, userData.reentryStartedAt, startOfTodayUTC);
+                if (reentryAlert) {
+                    alert = reentryAlert;
+                    reentryStartedAtUpdates.push(uid);
+                }
+            }
             if (!alert) {
                 const pendingCount = await getPendingTaskCount(uid);
                 alert = computeHabitAlert(pendingCount);
@@ -205,7 +240,7 @@ getMatDoseLoggedToday) {
             logger.error(`dailyBeacon: failed to process user ${uid}`, userError);
         }
     }
-    return { messages, tokenToUid, usersProcessed, usersFailed };
+    return { messages, tokenToUid, usersProcessed, usersFailed, reentryStartedAtUpdates };
 }
 // PROJ-99 Phase 4: sendEach() accepts at most 500 messages per call — this
 // was previously called once with every batch's accumulated messages
@@ -257,6 +292,36 @@ const COPYRIGHT_TRIGGERS = [
     "Cocaine Anonymous World Services", "NA World Services",
     "AA World Services", "AAWS",
 ];
+// ─── Generate-once-in-dev / promote-to-uat-prod (PROJ-42 + PROJ-79) ──────────
+// All three environments (dev/uat/prod) get the same functions.ts codebase
+// deployed independently, each on its own onSchedule cron — without this
+// branch, that means daily_readings/crossword_puzzles content is generated by
+// three *separate* Gemini calls per day (3x the cost, and dev/uat/prod would
+// show different text for "today's AA reading" instead of the same content
+// promoted through environments). Only mrt2-app-dev actually calls Gemini for
+// these two collections; uat/prod pull the already-generated content from dev
+// via getPromotionContent below, rather than generating their own.
+const CURRENT_PROJECT_ID = (_c = (_b = process.env.GCLOUD_PROJECT) !== null && _b !== void 0 ? _b : process.env.GOOGLE_CLOUD_PROJECT) !== null && _c !== void 0 ? _c : "";
+const IS_DEV_PROJECT = CURRENT_PROJECT_ID === "mrt2-app-dev";
+const PROMOTION_REGION = "northamerica-northeast1";
+// Gen2 HTTPS functions keep the deterministic <region>-<project>.cloudfunctions.net
+// compatibility URL alongside their opaque *.run.app one — computed, not hardcoded,
+// so this can't drift from the actual deploy. Confirm against `firebase functions:list
+// --project mrt2-app-dev` after first deploy in case the exact casing/host format
+// differs from this construction.
+const PROMOTION_SOURCE_URL = `https://${PROMOTION_REGION}-mrt2-app-dev.cloudfunctions.net/getPromotionContent`;
+// Firestore/IAM has no collection-level scoping — a raw cross-project Firestore
+// IAM grant for uat/prod to read dev would expose ALL of dev's Firestore (incl.
+// real QA/demo-persona account data), not just these 3 editorial collections.
+// getPromotionContent is the narrow boundary instead: it only ever returns
+// daily_readings/crossword_puzzles, and is only invokable by the two service
+// accounts below (Cloud Run/Functions IAM *does* support per-service invoker
+// scoping, unlike Firestore) — never public. See docs/projects/42_DAILY_READINGS.md
+// §14 for the full design writeup.
+const PROMOTION_INVOKER_SERVICE_ACCOUNTS = [
+    "372659396470-compute@developer.gserviceaccount.com", // mrt2-app-uat default compute SA
+    "405528797784-compute@developer.gserviceaccount.com", // mrt2-app-prod default compute SA
+];
 function utcDateString(d) {
     const yyyy = d.getUTCFullYear();
     const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -276,6 +341,44 @@ function daysRemaining(lastGeneratedDate) {
 }
 function checkCopyright(text) {
     return COPYRIGHT_TRIGGERS.filter((t) => text.toLowerCase().includes(t.toLowerCase()));
+}
+// The buffer's water mark must only ever advance past dates that are ACTUALLY
+// written — never past a requested range regardless of what succeeded. Before
+// this, generateForModality set lastGeneratedDate to `startDate + numDays - 1`
+// unconditionally, so a single failed batch (JSON parse error, non-array
+// response) or even one invalid reading within an otherwise-good batch left a
+// permanent, invisible hole: checkBufferHealth only ever reads the water mark,
+// never verifies the dates behind it actually exist. This is exported for unit
+// testing and used by generateForModality below.
+function computeContiguousLastGeneratedDate(startDate, numDays, writtenDates) {
+    let last = null;
+    for (let i = 0; i < numDays; i++) {
+        const d = addDaysToDate(startDate, i);
+        if (!writtenDates.has(d))
+            break;
+        last = d;
+    }
+    return last;
+}
+// Reuses the client_errors collection/schema that ErrorLogViewer.tsx (admin-only)
+// already renders, rather than standing up new admin UI for server-side ops
+// alerts. userAgent: "cloud-function" distinguishes these from real client
+// errors at a glance. The spec always called for "alert admin on critical
+// buffer health" (docs/projects/42_DAILY_READINGS.md §6) but nothing ever
+// actually sent one — this closes that gap using existing infra.
+async function logOpsAlert(source, message, detail) {
+    try {
+        await db.collection("client_errors").add({
+            message: `[${source}] ${message}`,
+            stack: detail,
+            url: `cloud-function:${source}`,
+            timestamp: firestore_1.FieldValue.serverTimestamp(),
+            userAgent: "cloud-function",
+        });
+    }
+    catch (err) {
+        logger.error(`Failed to write ops alert for ${source}`, err);
+    }
 }
 function buildBatchPrompt(datesAndThemes, requiresAttribution) {
     const list = datesAndThemes
@@ -307,7 +410,10 @@ async function generateForModality(modality, startDate, numDays, apiKey) {
     const config = prompts_1.MODALITY_CONFIGS[modality];
     const genAI = new generative_ai_1.GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        // gemini-2.5-flash was retired ("no longer available to new users" —
+        // 404 from the API itself, which named this replacement) once the
+        // GEMINI_API_KEY secret was rotated to a new-user key (2026-09-09).
+        model: "gemini-3.6-flash",
         systemInstruction: config.systemPrompt,
         generationConfig: { responseMimeType: "application/json" },
         safetySettings: EDITORIAL_SAFETY_SETTINGS,
@@ -315,6 +421,7 @@ async function generateForModality(modality, startDate, numDays, apiKey) {
     const BATCH_SIZE = 10;
     let written = 0;
     let errors = 0;
+    const writtenDates = new Set();
     const batchNumber = Math.floor(Date.now() / 1000);
     for (let batchStart = 0; batchStart < numDays; batchStart += BATCH_SIZE) {
         const batchEnd = Math.min(batchStart + BATCH_SIZE, numDays);
@@ -347,6 +454,7 @@ async function generateForModality(modality, startDate, numDays, apiKey) {
             }
             const firestoreBatch = db.batch();
             let batchCount = 0;
+            const batchWrittenDates = [];
             for (const r of readings) {
                 if (!r.date || !r.body || !r.reflection || !r.affirmation) {
                     errors++;
@@ -377,9 +485,15 @@ async function generateForModality(modality, startDate, numDays, apiKey) {
                 });
                 written++;
                 batchCount++;
+                batchWrittenDates.push(r.date);
             }
             if (batchCount > 0) {
+                // Only counted as written once the commit itself succeeds — if
+                // commit() throws, the outer catch below correctly leaves these
+                // dates out of writtenDates (nothing actually landed in Firestore).
                 await firestoreBatch.commit();
+                for (const d of batchWrittenDates)
+                    writtenDates.add(d);
             }
         }
         catch (err) {
@@ -388,15 +502,27 @@ async function generateForModality(modality, startDate, numDays, apiKey) {
         }
         await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    // Update buffer_status after each modality so partial runs are tracked
-    const lastDate = addDaysToDate(startDate, numDays - 1);
-    await db.collection("buffer_status").doc(modality).set({
-        lastGeneratedDate: lastDate,
+    // Only advance the water mark through dates confirmed contiguously written —
+    // never to the nominal end of the requested range. A gap (whole-batch or a
+    // single invalid reading) simply isn't counted, so the *next* run's startDate
+    // (lastGeneratedDate + 1, computed by checkBufferHealth) naturally retries it —
+    // self-healing instead of a silent permanent hole.
+    const contiguousThroughDate = computeContiguousLastGeneratedDate(startDate, numDays, writtenDates);
+    const bufferStatusUpdate = {
         totalBuffered: written,
         lastBatchGeneratedAt: firestore_1.FieldValue.serverTimestamp(),
-        nextBatchDue: addDaysToDate(lastDate, -BUFFER_WARN_DAYS),
-    }, { merge: true });
-    logger.info(`PROJ-42: ${modality} — ${written} readings written, ${errors} errors. Buffer through ${lastDate}.`);
+    };
+    if (contiguousThroughDate) {
+        bufferStatusUpdate.lastGeneratedDate = contiguousThroughDate;
+        bufferStatusUpdate.nextBatchDue = addDaysToDate(contiguousThroughDate, -BUFFER_WARN_DAYS);
+    }
+    await db.collection("buffer_status").doc(modality).set(bufferStatusUpdate, { merge: true });
+    if (errors > 0) {
+        await logOpsAlert("generateForModality", `${modality} buffer generation had ${errors} error(s) — requested ${startDate} + ${numDays}d, ` +
+            `contiguous coverage reached ${contiguousThroughDate !== null && contiguousThroughDate !== void 0 ? contiguousThroughDate : "(none — startDate itself failed)"}.`, `written=${written} errors=${errors} startDate=${startDate} numDays=${numDays}`);
+    }
+    logger.info(`PROJ-42: ${modality} — ${written} readings written, ${errors} errors. ` +
+        `Contiguous buffer through ${contiguousThroughDate !== null && contiguousThroughDate !== void 0 ? contiguousThroughDate : "(unchanged — no new dates confirmed)"}.`);
     return { written, errors };
 }
 // ─── PROJ-26: Daily Beacon ─────────────────────────────────────────────────────
@@ -426,6 +552,8 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
         // Maps each dispatched token back to its owning uid, so a failed send can be pruned
         // without re-scanning every fetched user doc (also survives pagination below).
         const tokenToUid = new Map();
+        // PROJ-112: accumulated across pagination like tokenToUid above.
+        const reentryStartedAtUpdates = [];
         let usersProcessed = 0;
         let usersFailed = 0;
         let batchesProcessed = 0;
@@ -468,6 +596,7 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
             });
             messagesToSend.push(...batchResult.messages);
             batchResult.tokenToUid.forEach((uid, token) => tokenToUid.set(token, uid));
+            reentryStartedAtUpdates.push(...batchResult.reentryStartedAtUpdates);
             usersProcessed += batchResult.usersProcessed;
             usersFailed += batchResult.usersFailed;
             lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
@@ -476,6 +605,21 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
         }
         if (usersFailed > 0) {
             logger.warn(`dailyBeacon: ${usersFailed} of ${usersProcessed} users failed processing and were skipped.`);
+        }
+        // PROJ-112: written unconditionally on whether the push itself sends
+        // successfully — this marks that the reentry state started, which is
+        // true regardless of send outcome, and is also the dedup guard for
+        // tomorrow's run. Unchunked like the stale-token-pruning batch below;
+        // only fires for users crossing the 14-day threshold on this exact
+        // day, a small subset of the whole fetched batch.
+        if (reentryStartedAtUpdates.length > 0) {
+            const reentryBatch = db.batch();
+            const reentryTimestamp = firestore_1.Timestamp.now();
+            reentryStartedAtUpdates.forEach((uid) => {
+                reentryBatch.update(db.collection("users").doc(uid), { reentryStartedAt: reentryTimestamp });
+            });
+            await reentryBatch.commit();
+            logger.info(`PROJ-112: set reentryStartedAt for ${reentryStartedAtUpdates.length} user(s).`);
         }
         if (messagesToSend.length === 0) {
             logger.info("No actionable alerts to send today.");
@@ -504,6 +648,97 @@ exports.dailyBeacon = (0, scheduler_1.onSchedule)({
         logger.error("Error executing Daily Beacon", error);
     }
 });
+// ─── Promotion transport helpers (dev → uat/prod) ─────────────────────────────
+// JSON has no Timestamp type — explicit tagged conversion on both ends instead
+// of relying on whatever a bare Timestamp's default JSON serialization happens
+// to produce, so this can't silently drift if that default ever changes.
+function serializeForPromotion(data) {
+    const out = {};
+    for (const [k, v] of Object.entries(data)) {
+        out[k] = v instanceof firestore_1.Timestamp
+            ? { __timestamp: true, seconds: v.seconds, nanoseconds: v.nanoseconds }
+            : v;
+    }
+    return out;
+}
+function reviveTimestamps(data) {
+    var _a, _b;
+    const out = {};
+    for (const [k, v] of Object.entries(data)) {
+        const tagged = v;
+        out[k] = tagged && typeof tagged === "object" && tagged.__timestamp === true
+            ? new firestore_1.Timestamp((_a = tagged.seconds) !== null && _a !== void 0 ? _a : 0, (_b = tagged.nanoseconds) !== null && _b !== void 0 ? _b : 0)
+            : v;
+    }
+    return out;
+}
+async function fetchPromotionContent(collectionName, fromDate, toDate) {
+    const auth = new google_auth_library_1.GoogleAuth();
+    const client = await auth.getIdTokenClient(PROMOTION_SOURCE_URL);
+    const response = await client.request({
+        url: PROMOTION_SOURCE_URL,
+        params: { collection: collectionName, fromDate, toDate },
+    });
+    return response.data.docs;
+}
+// uat/prod call this instead of ever calling Gemini for these 2 collections.
+// merge:true upsert of a fixed rolling window is deliberately simple and
+// self-healing (if dev backfills a previously-missing date, the very next
+// nightly sync picks it up automatically) at the cost of re-reading/writing
+// already-synced docs each night — acceptable since this is Firestore
+// read/write cost, not Gemini cost, and correctness/simplicity matter more
+// here than shaving that read count.
+async function syncCollectionFromDev(collectionName, fromDate, toDate) {
+    const docs = await fetchPromotionContent(collectionName, fromDate, toDate);
+    let synced = 0;
+    // Firestore batch writes cap at 500 — chunk defensively even though this
+    // range is always far smaller in practice (readings: up to 7*90, crossword: 2).
+    for (let i = 0; i < docs.length; i += 400) {
+        const chunk = docs.slice(i, i + 400);
+        const batch = db.batch();
+        for (const { id, data } of chunk) {
+            batch.set(db.collection(collectionName).doc(id), reviveTimestamps(data), { merge: true });
+        }
+        await batch.commit();
+        synced += chunk.length;
+    }
+    return { synced };
+}
+// The narrow read boundary described in the PROJ-42/79 promotion comment above —
+// only ever returns daily_readings/crossword_puzzles for a bounded date range,
+// and only when invoked by uat/prod's own service accounts (the `invoker` list
+// below). Confirm at first deploy that Firebase Functions v2's `invoker` option
+// actually produces the Cloud Run IAM binding as expected
+// (`gcloud run services get-iam-policy getpromotioncontent --project mrt2-app-dev
+// --region northamerica-northeast1`) — this is the one piece of this design that
+// can't be verified without a real deploy.
+exports.getPromotionContent = (0, https_1.onRequest)({
+    region: PROMOTION_REGION,
+    invoker: PROMOTION_INVOKER_SERVICE_ACCOUNTS,
+}, async (req, res) => {
+    if (!IS_DEV_PROJECT) {
+        res.status(403).json({ error: "getPromotionContent only serves content from the source project." });
+        return;
+    }
+    const collectionName = req.query.collection;
+    const fromDate = req.query.fromDate;
+    const toDate = req.query.toDate;
+    if ((collectionName !== "daily_readings" && collectionName !== "crossword_puzzles") ||
+        typeof fromDate !== "string" || typeof toDate !== "string") {
+        res.status(400).json({
+            error: "collection must be daily_readings or crossword_puzzles; fromDate/toDate (YYYY-MM-DD) required.",
+        });
+        return;
+    }
+    const snap = await db.collection(collectionName)
+        .where("date", ">=", fromDate)
+        .where("date", "<=", toDate)
+        .get();
+    const response = {
+        docs: snap.docs.map((d) => ({ id: d.id, data: serializeForPromotion(d.data()) })),
+    };
+    res.status(200).json(response);
+});
 // ─── PROJ-42: Buffer Health Check ─────────────────────────────────────────────
 exports.checkBufferHealth = (0, scheduler_1.onSchedule)({
     schedule: "1 0 * * *",
@@ -512,8 +747,23 @@ exports.checkBufferHealth = (0, scheduler_1.onSchedule)({
     region: "northamerica-northeast1",
     secrets: [geminiApiKey],
 }, async () => {
+    if (!IS_DEV_PROJECT) {
+        // Never call Gemini outside dev for this collection — pull dev's
+        // already-generated content instead. See the promotion comment above
+        // getPromotionContent for why.
+        const today = utcDateString(new Date());
+        const throughDate = addDaysToDate(today, 90);
+        try {
+            const { synced } = await syncCollectionFromDev("daily_readings", today, throughDate);
+            logger.info(`PROJ-42: synced ${synced} daily_readings docs from dev (${today}..${throughDate}).`);
+        }
+        catch (err) {
+            logger.error("PROJ-42: sync from dev failed", err);
+            await logOpsAlert("checkBufferHealth (sync)", "Failed to sync daily_readings from dev", String(err));
+        }
+        return;
+    }
     logger.info("PROJ-42: Checking daily readings buffer health...");
-    const today = utcDateString(new Date());
     const modalitiesToRefill = [];
     for (const modality of prompts_1.READING_MODALITIES) {
         const statusSnap = await db.collection("buffer_status").doc(modality).get();
@@ -544,10 +794,14 @@ exports.checkBufferHealth = (0, scheduler_1.onSchedule)({
     for (const modality of modalitiesToRefill) {
         const statusSnap = await db.collection("buffer_status").doc(modality).get();
         const status = statusSnap.data();
-        // Start from the day after the last generated date (or tomorrow if buffer already expired)
-        const lastDate = status.lastGeneratedDate;
-        const tomorrow = addDaysToDate(today, 1);
-        const startDate = lastDate >= today ? addDaysToDate(lastDate, 1) : tomorrow;
+        // Always resume exactly one day after the water mark — never skip ahead
+        // to "tomorrow" when the buffer has fully expired. Skipping ahead is what
+        // silently orphaned every date between the old water mark and today the
+        // first time this buffer ever fully lapsed (a real incident — see
+        // docs/projects/42_DAILY_READINGS.md's as-built note). Resuming from
+        // lastDate+1 means a bad outage costs a few extra nights to fully catch
+        // up; it can never create a permanent gap.
+        const startDate = addDaysToDate(status.lastGeneratedDate, 1);
         await generateForModality(modality, startDate, 90, apiKey);
     }
     logger.info("PROJ-42: Buffer refill complete.");
@@ -714,13 +968,27 @@ exports.generateDailyCrossword = (0, scheduler_1.onSchedule)({
     region: "northamerica-northeast1",
     secrets: [geminiApiKey],
 }, async () => {
+    const today = utcDateString(new Date());
+    const tomorrow = addDaysToDate(today, 1);
+    if (!IS_DEV_PROJECT) {
+        // Never call Gemini outside dev for this collection — pull dev's
+        // already-generated content instead. See the promotion comment above
+        // getPromotionContent for why.
+        try {
+            const { synced } = await syncCollectionFromDev("crossword_puzzles", today, tomorrow);
+            logger.info(`PROJ-79: synced ${synced} crossword_puzzles docs from dev (${today}, ${tomorrow}).`);
+        }
+        catch (err) {
+            logger.error("PROJ-79: sync from dev failed", err);
+            await logOpsAlert("generateDailyCrossword (sync)", "Failed to sync crossword_puzzles from dev", String(err));
+        }
+        return;
+    }
     // Checks today's doc as well as tomorrow's — generating only "tomorrow"
     // relative to each run means today's puzzle never self-heals after a
     // missed night (or the very first deploy), permanently skipping that
     // date. Checking both keeps the "stay one day ahead" buffer while
     // closing that gap.
-    const today = utcDateString(new Date());
-    const tomorrow = addDaysToDate(today, 1);
     for (const date of [today, tomorrow]) {
         const existing = await db.collection("crossword_puzzles").doc(date).get();
         if (existing.exists) {

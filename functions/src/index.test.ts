@@ -25,6 +25,8 @@ import {
     fetchPlaySubscriptionStatus,
     computeStripeTierUpdate,
     shouldApplyPlayRTDNUpdate,
+    addDaysToDate,
+    computeContiguousLastGeneratedDate,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
@@ -502,6 +504,48 @@ describe("buildBatchPrompt", () => {
             expect(prompt).toContain(config.themes[0]);
             expect(prompt.includes("attribution")).toBe(config.requiresAttribution);
         }
+    });
+});
+
+describe("addDaysToDate", () => {
+    it("advances by n days, including across month/year boundaries", () => {
+        expect(addDaysToDate("2026-09-09", 1)).toBe("2026-09-10");
+        expect(addDaysToDate("2026-09-30", 1)).toBe("2026-10-01");
+        expect(addDaysToDate("2026-12-31", 1)).toBe("2027-01-01");
+    });
+
+    it("supports n=0 (identity) and negative n", () => {
+        expect(addDaysToDate("2026-09-09", 0)).toBe("2026-09-09");
+        expect(addDaysToDate("2026-09-09", -9)).toBe("2026-08-31");
+    });
+});
+
+describe("computeContiguousLastGeneratedDate (PROJ-42 buffer gap fix)", () => {
+    it("returns the full range end when every date was written", () => {
+        const written = new Set(["2026-09-09", "2026-09-10", "2026-09-11"]);
+        expect(computeContiguousLastGeneratedDate("2026-09-09", 3, written)).toBe("2026-09-11");
+    });
+
+    it("stops at the first missing date instead of advancing past it — the exact bug this closes: a whole failed batch used to leave lastGeneratedDate pointing past a hole it never actually filled", () => {
+        // day 2 (2026-09-11) is missing — e.g. its batch hit a JSON parse error
+        const written = new Set(["2026-09-09", "2026-09-10", "2026-09-12", "2026-09-13"]);
+        expect(computeContiguousLastGeneratedDate("2026-09-09", 5, written)).toBe("2026-09-10");
+    });
+
+    it("returns null when even startDate itself failed to write", () => {
+        const written = new Set(["2026-09-10", "2026-09-11"]); // startDate (09-09) missing
+        expect(computeContiguousLastGeneratedDate("2026-09-09", 3, written)).toBeNull();
+    });
+
+    it("returns null for an empty writtenDates set", () => {
+        expect(computeContiguousLastGeneratedDate("2026-09-09", 5, new Set())).toBeNull();
+    });
+
+    it("a single mid-batch invalid reading (not a whole-batch failure) still creates a detectable gap", () => {
+        // Mirrors: batch succeeds overall, but one reading fails field validation
+        // or the copyright check — that date is simply never added to writtenDates.
+        const written = new Set(["2026-09-09", "2026-09-10", "2026-09-12"]); // 09-11 skipped
+        expect(computeContiguousLastGeneratedDate("2026-09-09", 4, written)).toBe("2026-09-10");
     });
 });
 
