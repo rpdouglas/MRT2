@@ -22,8 +22,8 @@ const PERSONAS: Persona[] = [
   { id: 'ned', name: 'Ned', title: 'The Pink Cloud', stage: '90 Days', image: ASSETS.personas.ned.headshot, color: 'bg-cyan-500' },
   { id: 'jordan', name: 'Jordan', title: 'The Stabiliser', stage: 'MAT', image: ASSETS.personas.jordan.headshot, color: 'bg-teal-500' },
   { id: 'maya', name: 'Maya', title: 'The Systematiser', stage: '8 Months', image: ASSETS.personas.maya.headshot, color: 'bg-emerald-500' },
-  { id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', image: ASSETS.personas.walt.headshot, color: 'bg-amber-500' },
-  { id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', image: ASSETS.personas.lisa.headshot, color: 'bg-purple-500' },
+  { id: 'walt', name: 'Walt', title: 'The Zen Master', stage: '35+ Years', image: ASSETS.personas.walt.headshot, color: 'bg-fuchsia-500' },
+  { id: 'lisa', name: 'Lisa', title: 'Service Superstar', stage: '7 Years', image: ASSETS.personas.lisa.headshot, color: 'bg-amber-500' },
 ];
 
 export default function Login() {

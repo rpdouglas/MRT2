@@ -85,9 +85,9 @@ export const WELCOME_PERSONAS: WelcomePersonaContent[] = [
       keyChallenge: 'Burnout & boundaries. Neglects her own self-care.',
     },
     resultStrengths: [
-      'Encrypted sponsee rolodex, sorted by urgency.',
-      'Vitality tracking for her own self-care, not just theirs.',
-      'Anonymity-compliant sharing — nothing that outs anyone.',
+      'Vitality check-ins to protect her own energy, not just her sponsees’.',
+      'Encrypted journaling — her own reflection, separate from service work.',
+      'Anonymity-compliant by design — nothing that outs anyone.',
     ],
   },
   {

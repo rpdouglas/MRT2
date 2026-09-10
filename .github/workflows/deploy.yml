@@ -67,10 +67,11 @@ jobs:
               ;;
             push)
               BASE="${{ github.event.before }}"
-              # A new branch's first push (or a history-losing force-push) has
-              # no comparable prior commit — fail open to the full pipeline
-              # rather than guess.
-              if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+              # A new branch's first push (zero SHA) or a history-losing
+              # force-push (a non-zero SHA that's no longer a reachable
+              # object, e.g. a rebase/reset) has no comparable prior commit —
+              # fail open to the full pipeline rather than guess.
+              if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
                 echo "docs_only=false" >> "$GITHUB_OUTPUT"
                 echo "No comparable base commit for this push — running the full pipeline."
                 exit 0
