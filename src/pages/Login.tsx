@@ -1,11 +1,3 @@
-/**
- * src/pages/Login.tsx
- * GITHUB COMMENT:
- * [Login.tsx]
- * FEAT: Consolidated Login and Registration into a single tabbed view (Sprint 1).
- * FEAT: Implemented Onboarding Redirect. New users are forced to /profile to set their name and sobriety date.
- * FIX: Resolved unused import (EyeSlashIcon) and missing import (ExclamationTriangleIcon).
- */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
