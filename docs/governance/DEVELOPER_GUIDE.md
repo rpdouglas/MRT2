@@ -126,7 +126,16 @@ Automate "shadow processes" to prevent code rot, documentation drift, and techni
   ### ✨ [Features / Improvements / Fixes]
   - **Component Name [PROJ-ID]:** User-friendly description of change translating technical work into user benefits.
   ```
-* **Enforcement (PROJ-109):** `main` is PR-only — `.github/pull_request_template.md`'s checklist requires confirming this protocol (changelog) and `ticket-close`'s Check 3 (user guide, `docs-site/guide/*.md`) were run before every merge, not left to memory. Run the `/release-scribe` skill to audit for anything missed across recent work.
+* **Enforcement (PROJ-109):** `main` is PR-only — `.github/pull_request_template.md`'s checklist requires confirming this protocol (changelog), `ticket-close`'s Check 3 (user guide, `docs-site/guide/*.md`), and Check 7 (project board sync — see Protocol D below) were run before every merge, not left to memory. Run the `/release-scribe` skill to audit for anything missed across recent work.
+
+### Protocol D: The Governance Sweep
+* **Frequency:** Bi-weekly, same cadence as Protocol B — not "before sprint planning" left as the only trigger.
+* **Goal:** Catch tickets that shipped without their `ticket-close`/`sync_ticket_docs.py` step ever running, before the drift compounds across multiple cycles.
+* **Origin:** Added 2026-09-12 after a governance audit found 9 shipped tickets (PROJ-106 through PROJ-120) completely absent from `ROADMAP.md`'s RECENTLY SHIPPED and `ACTIVE_CYCLE.md`'s Resolved This Cycle — an entire cluster of real, verified-shipped work with zero trace in either tracking doc, because `ticket-close`'s Project Board Updates step had been silently skipped for all of them. Per-ticket discipline (Phase 4/Check 7) is the primary defense; this sweep is the backstop for when that discipline lapses.
+* **Task:**
+  1. Run the `governance` skill in full.
+  2. For every finding, either fix it directly (APPLY ALL, per the skill's own script-based protocol) or, if a finding needs a human product decision (e.g. a genuine status disagreement, not just a missing sync), leave it flagged in the report and say so explicitly rather than silently applying a guess.
+  3. Log the sweep's outcome (violation count, root causes) as its own line in this file's "Resolved This Cycle" or "Chores & Tech Debt" section — the sweep itself is a chore worth a paper trail, same as a debt-ledger pass.
 
 ---
 

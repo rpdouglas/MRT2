@@ -46,6 +46,13 @@ $ npm run check
 
 ---
 
+## Project Board Sync
+*Mirrors the `ticket-close` skill's Check 7, added 2026-09-12 after a governance audit found 9 shipped tickets with zero trace in either tracking file — the spec was marked Done but `sync_ticket_docs.py` had never actually been run.*
+- [ ] Ran `python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "..." --apply` (or confirmed this PR is a hotfix/chore with no PROJ-ID to sync)
+- [ ] Confirmed by grepping, not by trusting the exit code — a dry run and a real `--apply` run both exit `0`: the PROJ-ID now appears in `docs/ROADMAP.md`'s RECENTLY SHIPPED and `docs/ACTIVE_CYCLE.md`'s Resolved This Cycle, and the spec's own Status field says Done/Shipped
+
+---
+
 ## Public Changelog Classification
 *Mirrors the `ticket-close` skill's Check 0 (PROJ-69/70) — the changelog is public and reaches users, including mid-crisis via the in-app update toast.*
 - [ ] **Not user-visible** — internal/infra/tech-debt, no `docs-site/support/changelog.md` entry

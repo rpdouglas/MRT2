@@ -1,6 +1,6 @@
 # 📁 Project 102: SEO & AEO Foundation
 
-**Status:** ⚪ Planned
+**Status:** 🟡 In Progress — Phases 0-3 shipped 2026-08-30/31 (crawl infra, per-route metadata/renderability, docs-site + AEO content); only Phase 4 (external verification: Search Console/Bing enrollment, Rich Results Test, social-preview check) remains open. Corrected 2026-09-12 — the header had said Planned since this file was created despite the body recording three shipped phases.
 **Primary Persona:** Lisa (Primary Viral Driver — organic/referral discovery), plus prospective David/Ned/Maya/Walt/Jordan visitors who haven't signed up yet
 **Objective:** Make MRT's public surface (marketing splash, `Links`/`DeleteAccount` utility pages, and the VitePress docs site) fully crawlable, indexable, and citable by both traditional search engines and AI answer engines, without touching anything behind `PrivateRoute` — the zero-knowledge boundary makes the authenticated app correctly un-indexable, and that is a feature, not a gap.
 
