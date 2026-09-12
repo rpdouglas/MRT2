@@ -1,4 +1,4 @@
-# 📁 Project 108: Gate the `/templates` Route Itself, Not Just Its Entry Point
+# 📁 Project 120: Gate the `/templates` Route Itself, Not Just Its Entry Point
 
 **Status:** 🟢 Done
 **Primary Persona:** All (monetization enforcement — no persona-specific UX)

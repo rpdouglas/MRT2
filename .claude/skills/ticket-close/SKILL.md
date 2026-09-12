@@ -59,10 +59,10 @@ For every Firestore write introduced by the ticket:
 - User-generated content in a sensitive collection → confirm `encryptData()` / `encrypt()` is called before the write.
 - Plaintext fields in encrypted collections → confirm they are intentional metadata (e.g., scores, timestamps, tags) and documented in `CLAUDE.md` / `GEMINI.md`'s ZK boundary table.
 
----
+### 7. Project board sync — BLOCKING, run the script, don't just plan to
+**This check exists because it has already failed silently once.** A 2026-09-12 governance audit found 9 shipped tickets (PROJ-106 through PROJ-120) with zero trace in `ROADMAP.md` or `ACTIVE_CYCLE.md` — the spec files were correctly marked Done, but the "Project Board Updates" step below was never actually run for any of them. A ticket is not closed until this check is ✅, not merely intended.
 
-## Project Board Updates
-The mechanical part of this (spec Status field, `ACTIVE_CYCLE.md` Resolved line, `ROADMAP.md` Recently Shipped line, and — only for user-visible tickets per Check 0 — the public changelog entry) is handled by the reusable script — don't hand-generate a one-off script for it:
+Run the reusable script — don't hand-generate a one-off:
 ```
 # Internal-only ticket:
 python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line internal description of what shipped." --apply
@@ -71,9 +71,11 @@ python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line internal d
 python scripts/sync_ticket_docs.py --proj PROJ-XX --summary "One-line internal description of what shipped." \
     --public-note "Plain-language description for end users." --version 1.9.0 --apply
 ```
-Run it without `--apply` first to preview. `--summary` always feeds the internal record (spec/`ACTIVE_CYCLE`/`ROADMAP`) only; `--public-note` is the *only* thing that reaches `docs-site/support/changelog.md`, and only when passed. The script refuses to run if `--public-note` looks like it contains a ticket ID or file path, but it cannot judge tone or omission — that's Check 0's job.
+Run it without `--apply` first to preview. `--summary` always feeds the internal record (spec Status field / `ACTIVE_CYCLE.md` Resolved line / `ROADMAP.md` Recently Shipped line) only; `--public-note` is the *only* thing that reaches `docs-site/support/changelog.md`, and only when passed. The script refuses to run if `--public-note` looks like it contains a ticket ID or file path, but it cannot judge tone or omission — that's Check 0's job.
+
+**After running it, verify — don't just trust the exit code:** the script exits `0` both when it writes real changes with `--apply` and when it's run as a dry run that writes nothing (`"Dry run only — nothing written."`) — the most likely way this check silently lapses is running it once to preview, reading the output, and never re-running with `--apply`. Grep `docs/ROADMAP.md` and `docs/ACTIVE_CYCLE.md` for the PROJ-ID after running it and confirm a real line landed in each — don't infer success from a clean exit alone.
 
 ---
 
 ## Output
-A structured drift table with one row per check. Use 🔴 NEEDS FIX / 🟡 ADVISORY / ✅ Clean. State exactly which file to edit and what to change for every 🔴 item. Do not mark the ticket closed until all 🔴 items are resolved.
+A structured drift table with one row per check, **including Check 7** — do not omit it as "just tooling," it's the check this protocol exists to enforce most. Use 🔴 NEEDS FIX / 🟡 ADVISORY / ✅ Clean. State exactly which file to edit and what to change for every 🔴 item. Do not mark the ticket closed until all 🔴 items are resolved, and Check 7 is confirmed synced by direct inspection of the two target files.
