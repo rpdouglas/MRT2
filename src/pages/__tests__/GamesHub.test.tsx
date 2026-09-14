@@ -17,7 +17,7 @@ vi.mock('../../hooks/useGameSave', () => ({
 }));
 
 vi.mock('../../contexts/LayoutContext', () => ({
-  useLayout: () => ({ isOnline: true, toggleSidebar: vi.fn(), toggleSOS: vi.fn() }),
+  useLayout: () => ({ isOnline: true, toggleSidebar: vi.fn(), toggleSOS: vi.fn(), setHeaderSOSMounted: vi.fn() }),
 }));
 
 function renderGamesHub() {

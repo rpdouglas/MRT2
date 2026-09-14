@@ -10,7 +10,7 @@ import { useToolHistory } from '../../hooks/useToolHistory';
 import { useParams } from 'react-router-dom';
 
 vi.mock('../../hooks/useToolHistory', () => ({ useToolHistory: vi.fn() }));
-vi.mock('../../contexts/LayoutContext', () => ({ useLayout: () => ({ isOnline: true }) }));
+vi.mock('../../contexts/LayoutContext', () => ({ useLayout: () => ({ isOnline: true, setHeaderSOSMounted: vi.fn() }) }));
 
 vi.mock('react-router-dom', () => ({
     useParams: vi.fn(),

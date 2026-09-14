@@ -37,7 +37,7 @@ describe('🧭 GuidedWorkflowEngine', () => {
         vi.clearAllMocks();
         (useNavigate as Mock).mockReturnValue(mockNavigate);
         (useAuth as Mock).mockReturnValue({ userTier: 'free' });
-        (useLayout as Mock).mockReturnValue({ isOnline: true });
+        (useLayout as Mock).mockReturnValue({ isOnline: true, setHeaderSOSMounted: vi.fn() });
         mockGetDraft.mockReturnValue(null);
         (useGuidedDraft as Mock).mockReturnValue({ getDraft: mockGetDraft, saveDraft: mockSaveDraft, clearDraft: mockClearDraft });
     });
@@ -110,7 +110,7 @@ describe('🧭 GuidedWorkflowEngine', () => {
     });
 
     it('disables Save Progress/Finish and shows a connect message when offline', () => {
-        (useLayout as Mock).mockReturnValue({ isOnline: false });
+        (useLayout as Mock).mockReturnValue({ isOnline: false, setHeaderSOSMounted: vi.fn() });
         renderEngine();
         fireEvent.change(screen.getByPlaceholderText('a...'), { target: { value: 'hello world' } });
 

@@ -22,7 +22,7 @@ vi.mock('../../contexts/EncryptionContext', () => ({
 }));
 
 // NEW MOCK: Fixes the 'useLayout must be used within a LayoutProvider' error inside VibrantHeader
-vi.mock('../../contexts/LayoutContext', () => ({ useLayout: vi.fn(() => ({ toggleSidebar: vi.fn(), toggleSOS: vi.fn(), isOnline: true }))
+vi.mock('../../contexts/LayoutContext', () => ({ useLayout: vi.fn(() => ({ toggleSidebar: vi.fn(), toggleSOS: vi.fn(), isOnline: true, setHeaderSOSMounted: vi.fn() }))
 }));
 
 const mockRequestWakeLock = vi.fn();

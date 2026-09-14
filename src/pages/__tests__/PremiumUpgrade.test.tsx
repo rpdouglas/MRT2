@@ -17,7 +17,7 @@ vi.mock('../../lib/playBilling', () => ({
 }));
 
 vi.mock('../../contexts/LayoutContext', () => ({
-  useLayout: vi.fn(() => ({ toggleSidebar: vi.fn(), toggleSOS: vi.fn(), isOnline: true })),
+  useLayout: vi.fn(() => ({ toggleSidebar: vi.fn(), toggleSOS: vi.fn(), isOnline: true, setHeaderSOSMounted: vi.fn() })),
 }));
 
 const mockAddDoc = vi.fn();
