@@ -11,7 +11,7 @@ import { hasGuidedDraft } from '../../hooks/useGuidedDraft';
 
 vi.mock('../../hooks/useSmartToolCompletions', () => ({ useSmartToolCompletions: vi.fn() }));
 vi.mock('../../hooks/useGuidedDraft', () => ({ hasGuidedDraft: vi.fn(() => false) }));
-vi.mock('../../contexts/LayoutContext', () => ({ useLayout: () => ({ isOnline: true }) }));
+vi.mock('../../contexts/LayoutContext', () => ({ useLayout: () => ({ isOnline: true, setHeaderSOSMounted: vi.fn() }) }));
 vi.mock('react-router-dom', () => ({
     useNavigate: () => vi.fn(),
     Link: ({ children, to, className }: { children: React.ReactNode; to: string; className?: string }) => (

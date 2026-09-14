@@ -29,7 +29,7 @@ vi.mock('../../../contexts/EncryptionContext', () => ({
 }));
 
 vi.mock('../../../contexts/LayoutContext', () => ({
-    useLayout: () => ({ isOnline: true }),
+    useLayout: () => ({ isOnline: true, setHeaderSOSMounted: vi.fn() }),
 }));
 
 const mockAddJournal = vi.fn().mockResolvedValue({ id: 'new-doc' });

@@ -15,6 +15,12 @@ interface LayoutContextType {
   toggleSidebar: () => void;
   toggleSOS: () => void;
   isOnline: boolean; // NEW
+  // PROJ-104 follow-up: true while a page's own VibrantHeader (and its SOS
+  // button) is mounted, so AppShell's always-present fallback SOS button
+  // (needed for the locked-vault / headerless-page cases) can hide itself
+  // instead of duplicating an already-visible header SOS button.
+  headerSOSMounted: boolean;
+  setHeaderSOSMounted: (mounted: boolean) => void;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -28,6 +34,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSOSOpen, setIsSOSOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [headerSOSMounted, setHeaderSOSMounted] = useState(false);
 
   useEffect(() => {
       const handleOnline = () => setIsOnline(true);
@@ -48,8 +55,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   // PROJ-98 Phase 4: memoized so every useLayout() consumer doesn't re-render
   // whenever any one of sidebarOpen/isSOSOpen/isOnline changes independently.
   const value = useMemo(
-    () => ({ sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSidebar, toggleSOS, isOnline }),
-    [sidebarOpen, isSOSOpen, toggleSidebar, toggleSOS, isOnline]
+    () => ({ sidebarOpen, setSidebarOpen, isSOSOpen, setIsSOSOpen, toggleSidebar, toggleSOS, isOnline, headerSOSMounted, setHeaderSOSMounted }),
+    [sidebarOpen, isSOSOpen, toggleSidebar, toggleSOS, isOnline, headerSOSMounted]
   );
 
   return (

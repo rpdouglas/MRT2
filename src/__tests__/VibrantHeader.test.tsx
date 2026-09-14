@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import VibrantHeader from '../components/VibrantHeader';
-import { LayoutProvider } from '../contexts/LayoutContext';
+import { LayoutProvider, useLayout } from '../contexts/LayoutContext';
 import { HeartIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
 function renderHeader(subtitle: string, extraAction?: Parameters<typeof VibrantHeader>[0]['extraAction']) {
@@ -21,6 +21,13 @@ function renderHeader(subtitle: string, extraAction?: Parameters<typeof VibrantH
       </LayoutProvider>
     </MemoryRouter>
   );
+}
+
+// PROJ-104 follow-up regression guard: AppShell relies on this flag to know
+// whether it's safe to hide its own fallback SOS button.
+function HeaderSOSMountedProbe() {
+  const { headerSOSMounted } = useLayout();
+  return <span data-testid="header-sos-mounted">{String(headerSOSMounted)}</span>;
 }
 
 describe('VibrantHeader', () => {
@@ -65,5 +72,38 @@ describe('VibrantHeader', () => {
     expect(button).toBeInTheDocument();
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers headerSOSMounted on mount and clears it on unmount (PROJ-104 follow-up)', () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <LayoutProvider>
+          <HeaderSOSMountedProbe />
+          <VibrantHeader
+            title="My Workbooks"
+            subtitle="Structured guides to process your journey."
+            icon={HeartIcon}
+            fromColor="from-emerald-600"
+            viaColor="via-teal-600"
+            toColor="to-emerald-600"
+          />
+        </LayoutProvider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('header-sos-mounted').textContent).toBe('true');
+    unmount();
+  });
+
+  it('leaves headerSOSMounted false when no VibrantHeader is mounted', () => {
+    render(
+      <MemoryRouter>
+        <LayoutProvider>
+          <HeaderSOSMountedProbe />
+        </LayoutProvider>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('header-sos-mounted').textContent).toBe('false');
   });
 });

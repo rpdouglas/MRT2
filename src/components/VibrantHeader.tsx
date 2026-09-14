@@ -1,6 +1,6 @@
 import { useLayout } from '../contexts/LayoutContext';
 import { Bars3Icon, ExclamationTriangleIcon, ChevronLeftIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import type { ElementType } from 'react';
+import { useEffect, type ElementType } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface VibrantHeaderExtraAction {
@@ -70,8 +70,16 @@ const ProgressRing = ({ percentage, colorHex }: { percentage: number; colorHex?:
 };
 
 export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, viaColor, toColor, percentage, percentageColor, backLink, extraAction }: VibrantHeaderProps) {
-  const { toggleSidebar, toggleSOS } = useLayout();
+  const { toggleSidebar, toggleSOS, setHeaderSOSMounted } = useLayout();
   const navigate = useNavigate();
+
+  // PROJ-104 follow-up: tell AppShell this page already renders its own SOS
+  // button, so its fallback floating one (needed while locked, or on pages
+  // without a VibrantHeader) can hide instead of duplicating this one.
+  useEffect(() => {
+    setHeaderSOSMounted(true);
+    return () => setHeaderSOSMounted(false);
+  }, [setHeaderSOSMounted]);
 
   return (
     <div className={`bg-gradient-to-r ${fromColor} ${viaColor} ${toColor} px-4 pt-4 pb-16 shadow-lg relative overflow-hidden`}>
