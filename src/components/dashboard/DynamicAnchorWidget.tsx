@@ -11,6 +11,7 @@ import {
   LockClosedIcon,
   HeartIcon,
   CheckIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import JournalEditor from "../journal/JournalEditor";
@@ -26,7 +27,18 @@ import { triggerHaptic } from "../../lib/haptics";
 import { format } from "date-fns";
 import type { DailyReading } from "../../lib/db";
 
-export default function DynamicAnchorWidget() {
+interface DynamicAnchorWidgetProps {
+  // PROJ-113 follow-up: the daily inspirational image's manual re-open
+  // trigger moved here from VibrantHeader's extraAction (an icon button in
+  // the header's right-side cluster, which unbalanced the header's 3-column
+  // centering) — Dashboard.tsx still owns useDailyImage()/the modal/the
+  // once-per-day auto-popup effect; this widget only needs to know whether
+  // today's image exists and how to ask Dashboard to show it.
+  dailyImageAvailable?: boolean;
+  onViewDailyImage?: () => void;
+}
+
+export default function DynamicAnchorWidget({ dailyImageAvailable, onViewDailyImage }: DynamicAnchorWidgetProps) {
   const timeOfDay = useTimeOfDay();
   const { needsCheckIn, needsReading } = useAnchorStatus();
   const { isVaultUnlocked } = useEncryption();
@@ -174,6 +186,19 @@ export default function DynamicAnchorWidget() {
                   </button>
                 </MenuItem>
               ))}
+              {dailyImageAvailable && (
+                <MenuItem>
+                  <button
+                    onClick={onViewDailyImage}
+                    className="group flex w-full items-center gap-2 rounded-lg py-2 px-3 data-[focus]:bg-emerald-50"
+                  >
+                    <PhotoIcon className="h-4 w-4 text-emerald-500 opacity-50 group-data-[focus]:opacity-100" />
+                    <span className="text-xs font-bold text-gray-700">
+                      Today's Image
+                    </span>
+                  </button>
+                </MenuItem>
+              )}
             </MenuItems>
           </Menu>
         </div>

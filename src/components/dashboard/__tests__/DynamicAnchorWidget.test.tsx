@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ComponentProps } from 'react';
 import DynamicAnchorWidget from '../DynamicAnchorWidget';
 
 vi.mock('../../../hooks/useTimeOfDay', () => ({
@@ -55,11 +56,11 @@ vi.mock('../../journal/JournalEditor', () => ({ default: () => <div>Journal Edit
 vi.mock('../../VaultGate', () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock('../../readings/ReadingModal', () => ({ default: () => <div>Reading Modal</div> }));
 
-function renderWidget() {
+function renderWidget(props: ComponentProps<typeof DynamicAnchorWidget> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <DynamicAnchorWidget />
+      <DynamicAnchorWidget {...props} />
     </QueryClientProvider>,
   );
 }
@@ -119,5 +120,28 @@ describe('DynamicAnchorWidget', () => {
     await waitFor(() => expect(mockPatchFieldsMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ 'anchorSettings.lastReadingDate': expect.any(String) }),
     ));
+  });
+
+  // PROJ-113 follow-up: the daily image's manual re-open trigger moved from
+  // VibrantHeader's extraAction icon button into this dropdown, to fix the
+  // header's centering (see docs/projects/113_DAILY_INSPIRATIONAL_IMAGE.md).
+  it('does not show a "Today\'s Image" option when dailyImageAvailable is false/unset', () => {
+    renderWidget();
+
+    fireEvent.click(screen.getByLabelText('Choose fellowship reading'));
+
+    expect(screen.queryByText("Today's Image")).not.toBeInTheDocument();
+  });
+
+  it('shows and wires up "Today\'s Image" when dailyImageAvailable is true', () => {
+    const onViewDailyImage = vi.fn();
+    renderWidget({ dailyImageAvailable: true, onViewDailyImage });
+
+    fireEvent.click(screen.getByLabelText('Choose fellowship reading'));
+    const imageOption = screen.getByText("Today's Image");
+    expect(imageOption).toBeInTheDocument();
+
+    fireEvent.click(imageOption);
+    expect(onViewDailyImage).toHaveBeenCalledTimes(1);
   });
 });
