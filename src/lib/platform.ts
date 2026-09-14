@@ -17,6 +17,19 @@
  * showed Stripe). Caching the first true reading in `sessionStorage` fixes
  * this: it's per-tab and cleared when the tab/app fully closes, so it can't
  * leak into a plain browser session that never had the real referrer.
+ *
+ * That cache only helps if *something* calls this function during the
+ * pristine referrer window, before any reload happens. Found a session
+ * where it didn't: an already-authenticated user launches straight onto
+ * `/dashboard` (this function has no caller there), accepts an in-app
+ * update via `PWAUpdateBeacon.tsx` (which lives in `AppShell`, mounted only
+ * on authenticated routes) — that update's own reload wipes the referrer
+ * before anything ever cached it, so a later visit to `/premium` sees no
+ * live referrer and no cached one either. Fixed by also calling this
+ * eagerly in `main.tsx`, before React mounts and long before
+ * `PWAUpdateBeacon` can exist to trigger that reload — see the comment
+ * there. `Welcome.tsx`/`PremiumUpgrade.tsx`'s own calls stay in place too;
+ * this function is idempotent so the extra calls are harmless.
  */
 const SESSION_KEY = 'mrt_is_android_twa';
 
