@@ -98,7 +98,8 @@ export default function PremiumUpgrade() {
         // portal would just fail. Play subscriptions are managed natively in
         // the Play Store app, not in-app.
         if (userTierSource === 'play-billing') {
-            const productId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+            const rawProductId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+            const productId = typeof rawProductId === 'string' ? rawProductId.trim() : '';
             window.location.assign(
                 `https://play.google.com/store/account/subscriptions?sku=${encodeURIComponent(productId || '')}&package=${PLAY_PACKAGE_NAME}`
             );
@@ -128,7 +129,8 @@ export default function PremiumUpgrade() {
 
     const handlePlayPurchase = async () => {
         if (!user || !db) return;
-        const productId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+        const rawProductId = import.meta.env.VITE_PLAY_BILLING_PRODUCT_ID;
+        const productId = typeof rawProductId === 'string' ? rawProductId.trim() : '';
         if (!productId) {
             setPlayError('Play Billing is not configured for this build.');
             return;

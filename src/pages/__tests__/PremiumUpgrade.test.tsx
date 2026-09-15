@@ -134,6 +134,22 @@ describe('PremiumUpgrade — PROJ-105 Play Billing purchase flow', () => {
     expect(mockSetDoc).not.toHaveBeenCalled();
   });
 
+  it('trims whitespace from VITE_PLAY_BILLING_PRODUCT_ID before initiating purchase', async () => {
+    vi.stubEnv('VITE_PLAY_BILLING_PRODUCT_ID', '   premium.monthly   ');
+    mockIsAndroidTWA.mockReturnValue(true);
+    mockIsPlayBillingSupported.mockReturnValue(true);
+    mockPurchasePlaySubscription.mockResolvedValue({ purchaseToken: 'token-abc' });
+    const mockVerify = vi.fn().mockResolvedValue({ data: { success: true } });
+    mockHttpsCallable.mockReturnValue(mockVerify);
+    renderPage();
+
+    const button = screen.getByRole('button', { name: /become a supporter/i });
+    fireEvent.click(button);
+
+    await waitFor(() => expect(mockPurchasePlaySubscription).toHaveBeenCalledWith('premium.monthly'));
+    await waitFor(() => expect(mockVerify).toHaveBeenCalledWith({ productId: 'premium.monthly', purchaseToken: 'token-abc' }));
+  });
+
   it("routes an existing Play-Billing subscriber's Manage Subscription to the Play Store, not the Stripe portal", () => {
     mockIsAndroidTWA.mockReturnValue(true);
     mockIsPlayBillingSupported.mockReturnValue(true);
