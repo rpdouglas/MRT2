@@ -209,7 +209,7 @@ export default function ToolsHub() {
                 />
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-30 space-y-4">
+            <div className="max-w-md mx-auto px-4 -mt-8 relative z-30 space-y-4 w-full">
 
                 <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100 text-[15.4px] text-blue-900 shadow-sm">
                     <strong>SMART Recovery & CBT:</strong> These tools are designed to help you interrupt the cycle of addiction by applying logic and planning to emotional urges.

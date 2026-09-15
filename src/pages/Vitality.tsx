@@ -31,7 +31,7 @@ export default function Vitality() {
             </div>
 
             {/* TAB NAVIGATION (Overlaps Header) */}
-            <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
+            <div className="px-4 -mt-10 relative z-30 flex-shrink-0 max-w-md mx-auto w-full">
                 <TabBar
                     tabs={[
                         { id: 'move', label: 'Movement' },
@@ -48,7 +48,7 @@ export default function Vitality() {
             </div>
 
             {/* SCROLLABLE CONTENT AREA */}
-            <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20">
+            <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20 max-w-md mx-auto w-full">
                 {activeTab === 'move' && <MoveTab onLog={saveVitalityEntry} saving={isSaving} />}
                 {activeTab === 'fuel' && <FuelTab onLog={saveVitalityEntry} saving={isSaving} />}
                 {activeTab === 'breath' && <BreathTab onLog={saveVitalityEntry} saving={isSaving} />}

@@ -439,7 +439,7 @@ export default function Profile() {
         toColor={THEME.profile.header.to}
       />
 
-      <div className="max-w-2xl mx-auto space-y-6 px-4 -mt-10 relative z-30">
+      <div className="max-w-md mx-auto space-y-6 px-4 -mt-10 relative z-30 w-full">
         
         {isOnboarding && (
           <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg animate-slideDown">

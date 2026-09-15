@@ -117,7 +117,7 @@ export default function GamesHub() {
         />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30">
+      <div className="max-w-md mx-auto px-4 -mt-10 relative z-30 w-full">
         <GlassCard variant="games">
           <div className="flex flex-col gap-2">
             {ACTIVE_GAMES.map((game) => (

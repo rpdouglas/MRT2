@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    /* Prevent Chromium text autosizing (font boosting) on large Android displays
+       (e.g. Samsung Galaxy S Ultra devices) from inflating rem-based fonts/components
+       while preserving standard user pinch-to-zoom (WCAG 2.2 AA). */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply text-slate-800 antialiased;
     /* Prevents browser pull-to-refresh, which would otherwise wipe the

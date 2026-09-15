@@ -41,7 +41,7 @@ export default function Workbooks() {
           />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-30 space-y-6 flex flex-col">
+      <div className="max-w-md mx-auto px-4 -mt-10 relative z-30 space-y-6 flex flex-col w-full">
 
         {/* TAB NAVIGATION */}
         <TabBar

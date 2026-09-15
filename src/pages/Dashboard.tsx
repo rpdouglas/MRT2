@@ -168,7 +168,7 @@ export default function Dashboard() {
       </div>
 
       {/* 2. FLOATING HERO */}
-      <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp">
+      <div className="px-4 -mt-12 relative z-30 flex-shrink-0 animate-slideUp max-w-md mx-auto w-full">
          <SobrietyHero
             date={userProfile?.sobrietyDate}
             userProfile={userProfile as UserProfile}
@@ -176,7 +176,7 @@ export default function Dashboard() {
       </div>
 
       {/* 3. SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 space-y-6 max-w-md mx-auto w-full">
 
         {/* PUSH NOTIFICATION OPT-IN (PROJ-26) */}
         <NotificationBanner />
