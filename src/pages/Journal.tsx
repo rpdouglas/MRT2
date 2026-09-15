@@ -49,7 +49,7 @@ export default function Journal() {
       </div>
 
       {/* 2. FLOATING TABS (Overlaps Header) */}
-      <div className="px-4 -mt-10 relative z-30 flex-shrink-0">
+      <div className="px-4 -mt-10 relative z-30 flex-shrink-0 max-w-md mx-auto w-full">
         <TabBar
           tabs={[
             { id: 'write', label: 'Write', icon: PencilSquareIcon },
@@ -67,7 +67,7 @@ export default function Journal() {
 
       {/* 3. SCROLLABLE CONTENT */}
       {/* pt-6 ensures content doesn't butt up against the floating tabs immediately */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20" data-screenshot-scroll-root>
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-20 max-w-md mx-auto w-full" data-screenshot-scroll-root>
         
         {activeTab === 'write' && (
             <div className="animate-fadeIn h-full flex flex-col">

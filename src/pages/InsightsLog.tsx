@@ -177,7 +177,7 @@ export default function InsightsLog() {
                 toColor={THEME.insights.header.to} 
             />
 
-            <div className="max-w-4xl mx-auto px-4 mt-6 mb-6">
+            <div className="max-w-md mx-auto px-4 mt-6 mb-6 w-full">
                 <ROSCSummaryCard />
             </div>
 
@@ -199,7 +199,7 @@ export default function InsightsLog() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 mt-8">
+            <div className="max-w-md mx-auto px-4 mt-8 w-full">
                 {filteredInsights.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
                         <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">

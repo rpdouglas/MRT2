@@ -87,7 +87,7 @@ export default function VibrantHeader({ title, subtitle, icon: Icon, fromColor, 
       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
       
       {/* 3-Column Flex Layout for Perfect Centering */}
-      <div className="relative z-20 flex items-center justify-between w-full">
+      <div className="relative z-20 flex items-center justify-between w-full max-w-md mx-auto">
         
         {/* Left: Hamburger or Back Arrow (Flex-1 anchors left side) */}
         <div className="flex-1 flex justify-start">

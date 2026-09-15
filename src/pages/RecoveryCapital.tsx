@@ -114,7 +114,7 @@ export default function RecoveryCapital() {
                 backLink="/insights"
             />
 
-            <div className="max-w-4xl mx-auto px-4 mt-6 space-y-5">
+            <div className="max-w-md mx-auto px-4 mt-6 space-y-5 w-full">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-black text-gray-900 tracking-tight">Recovery Capital</h2>
                     {ctaLabel && (

@@ -283,7 +283,7 @@ export default function Tasks() {
                 />
             </div>
 
-            <div className="px-4 -mt-10 relative z-30">
+            <div className="px-4 -mt-10 relative z-30 max-w-md mx-auto w-full">
                 <TabBar
                     tabs={[
                         { id: 'today', label: 'Today', icon: CalendarIcon, badge: todayCount },
@@ -300,7 +300,7 @@ export default function Tasks() {
             </div>
 
             {activeTab !== 'log' && rhythmScore > 0 && (
-                <div className="px-4 mt-4 max-w-3xl mx-auto w-full flex items-center gap-3 bg-white/70 rounded-xl border border-slate-100 shadow-sm py-2.5 px-4">
+                <div className="px-4 mt-4 max-w-md mx-auto w-full flex items-center gap-3 bg-white/70 rounded-xl border border-slate-100 shadow-sm py-2.5 px-4">
                     <RhythmScoreRing score={rhythmScore} size={52} />
                     <div>
                         <p className="text-xs font-bold text-slate-700">14-Day Rhythm</p>
@@ -311,7 +311,7 @@ export default function Tasks() {
                 </div>
             )}
 
-            <div className="flex-1 px-4 mt-6 max-w-3xl mx-auto w-full">
+            <div className="flex-1 px-4 mt-6 max-w-md mx-auto w-full">
                 <div
                 ref={listContainerRef}
                 className={`bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col ${activeTab === 'log' ? 'h-[65vh] min-h-[400px]' : 'min-h-[300px]'}`}
