@@ -108,6 +108,24 @@ describe('purchasePlaySubscription', () => {
 
     await expect(purchasePlaySubscription('premium.monthly')).rejects.toThrow('User cancelled the payment request.');
   });
+
+  it('trims leading and trailing whitespace from productId before passing to PaymentRequest', async () => {
+    let capturedMethods: PaymentMethodData[] | undefined;
+    const mockShow = vi.fn().mockResolvedValue({
+      details: { purchaseToken: 'token-trimmed' },
+      complete: vi.fn().mockResolvedValue(undefined),
+    });
+    function FakePaymentRequest(this: { show: typeof mockShow }, methods: PaymentMethodData[]) {
+      capturedMethods = methods;
+      this.show = mockShow;
+    }
+    window.PaymentRequest = FakePaymentRequest as unknown as typeof PaymentRequest;
+
+    const result = await purchasePlaySubscription('   premium.monthly\n  ');
+
+    expect(result).toEqual({ purchaseToken: 'token-trimmed' });
+    expect(capturedMethods?.[0]?.data).toEqual({ sku: 'premium.monthly' });
+  });
 });
 
 describe('getPlayProductPrice', () => {
@@ -154,5 +172,17 @@ describe('getPlayProductPrice', () => {
 
     const price = await getPlayProductPrice('premium.monthly');
     expect(price).toBeNull();
+  });
+
+  it('trims leading and trailing whitespace from productId before calling getDetails', async () => {
+    const mockGetDetails = vi.fn().mockResolvedValue([
+      { itemId: 'premium.monthly', title: 'Supporter', description: '', price: { currency: 'USD', value: '3.99' } },
+    ]);
+    window.getDigitalGoodsService = vi.fn().mockResolvedValue({ getDetails: mockGetDetails });
+    const { getPlayProductPrice } = await import('../playBilling');
+
+    const price = await getPlayProductPrice('  premium.monthly  ');
+    expect(price).toEqual({ currency: 'USD', value: '3.99' });
+    expect(mockGetDetails).toHaveBeenCalledWith(['premium.monthly']);
   });
 });

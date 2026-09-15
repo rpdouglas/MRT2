@@ -103,12 +103,13 @@ export interface PlayProductPrice {
 
 /** Returns the live Play Console price for productId, or null if unavailable. */
 export async function getPlayProductPrice(productId: string): Promise<PlayProductPrice | null> {
+  const cleanId = productId.trim();
   if (isDevMockEnabled()) return { currency: 'USD', value: '3.99' };
   const service = await getService();
   if (!service) return null;
   try {
-    const details = await service.getDetails([productId]);
-    const match = details.find((d) => d.itemId === productId);
+    const details = await service.getDetails([cleanId]);
+    const match = details.find((d) => d.itemId === cleanId);
     return match ? match.price : null;
   } catch (err) {
     console.error('Play Billing: getDetails failed', err);
@@ -128,6 +129,7 @@ export interface PlayPurchaseResult {
  * (set server-side in the Play Console, not here).
  */
 export async function purchasePlaySubscription(productId: string): Promise<PlayPurchaseResult> {
+  const cleanId = productId.trim();
   if (isDevMockEnabled()) {
     return { purchaseToken: `MOCK-${crypto.randomUUID()}` };
   }
@@ -138,7 +140,7 @@ export async function purchasePlaySubscription(productId: string): Promise<PlayP
   const paymentMethods: PaymentMethodData[] = [
     {
       supportedMethods: PLAY_BILLING_PAYMENT_METHOD,
-      data: { sku: productId },
+      data: { sku: cleanId },
     },
   ];
   const paymentDetails: PaymentDetailsInit = {
