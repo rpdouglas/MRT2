@@ -6,6 +6,7 @@ description: What's new in My Recovery Toolkit — a plain-language, version-by-
 
 ## [v1.9.13] - 2026-09-07
 ### ✨ New Feature
+- Supporters using the Android app can now subscribe directly from inside the app with a single tap via Google Play Billing.
 - If you come back after being away for a couple of weeks, your Achievements page streak numbers now pause quietly instead of showing as broken, and pick back up once you're active again for about a week. You may also get a single gentle notification letting you know the app is there whenever you're ready.
 
 ## [v1.9.12] - 2026-09-05
