@@ -1,7 +1,7 @@
 📁 Project 26: The Beacon (Push Notification Engine)
-Status: ✅ Completed (shipped pre-2026-04; backfilled spec 2026-07-09 as part of the notification-system remediation)
-Primary Persona: Ned (Pink Cloud streaks), Walt (milestone tracking)
-Objective: Server-scheduled Web Push (FCM) that re-engages users outside the app via two alert types — sobriety milestone celebrations and overdue-habit reminders — without ever transmitting encrypted/sensitive content through the push payload.
+**Status:** ✅ Completed (shipped pre-2026-04; backfilled spec 2026-07-09 as part of the notification-system remediation)
+**Primary Persona:** Ned (Pink Cloud streaks), Walt (milestone tracking)
+**Objective:** Server-scheduled Web Push (FCM) that re-engages users outside the app via two alert types — sobriety milestone celebrations and overdue-habit reminders — without ever transmitting encrypted/sensitive content through the push payload.
 
 1. The Executive Summary
 User Story:

@@ -1,7 +1,7 @@
 📁 Project 41: The Dynamic Anchor (Circadian Companion)
-Status: ✅ Shipped (2026-05-03) — descoped from original spec, see §6: Intent Card (Card 3) was never built; its dead code was removed 2026-07-09. The Quick Action Bar ships as a 2-card (Check-In, Reading) widget, not the 3-card design below.
-Primary Persona: David (Crisis), Ned (Early Recovery)
-Objective: Replace the rigid "Daily Pledge" with a slim, frictionless, 3-column Quick Action Bar that adapts its journaling prompts based on the local time of day, complete with visual nudges and customizable alerts.
+**Status:** ✅ Shipped (2026-05-03) — descoped from original spec, see §6: Intent Card (Card 3) was never built; its dead code was removed 2026-07-09. The Quick Action Bar ships as a 2-card (Check-In, Reading) widget, not the 3-card design below.
+**Primary Persona:** David (Crisis), Ned (Early Recovery)
+**Objective:** Replace the rigid "Daily Pledge" with a slim, frictionless, 3-column Quick Action Bar that adapts its journaling prompts based on the local time of day, complete with visual nudges and customizable alerts.
 
 1. The Executive Summary
 User Story:

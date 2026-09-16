@@ -1,7 +1,7 @@
 📁 Project 38: The Urge Intervention System (“The Lifeline Protocol”)
-Status: ⚪ Planned
-Primary Persona: David (Crisis) → Secondary: Ned (Early Recovery)
-Objective: Provide a zero-friction, real-time intervention flow that interrupts urges and guides the user through a structured, somatic-first recovery protocol within 3–5 minutes.
+**Status:** ⚪ Planned
+**Primary Persona:** David (Crisis) → Secondary: Ned (Early Recovery)
+**Objective:** Provide a zero-friction, real-time intervention flow that interrupts urges and guides the user through a structured, somatic-first recovery protocol within 3–5 minutes.
 
 1. The Executive Summary
 User Story:
