@@ -78,3 +78,4 @@ stats.html
 # (and run scripts/optimize_assets.py) before it ships; never commit this dir directly.
 /generated-images/
 .inspirational_raw/
+todo_list.md
