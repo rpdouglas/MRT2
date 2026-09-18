@@ -41,7 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyVaultPin = exports.generateAIInsights = exports.handlePlayRTDN = exports.verifyPlayPurchase = exports.syncStripeSubscription = exports.generateReadingsAdmin = exports.generateDailyImage = exports.generateDailyCrossword = exports.checkBufferHealth = exports.getPromotionContent = exports.dailyBeacon = void 0;
+exports.verifyVaultPin = exports.generateAIInsights = exports.handlePlayRTDN = exports.verifyPlayPurchase = exports.syncStripeSubscription = exports.deleteUserAccount = exports.SERVER_PURGE_TARGETS = exports.generateReadingsAdmin = exports.generateDailyImage = exports.generateDailyCrossword = exports.checkBufferHealth = exports.getPromotionContent = exports.dailyBeacon = void 0;
 exports.computeLockoutSeconds = computeLockoutSeconds;
 exports.getMilestone = getMilestone;
 exports.getMilestoneLabel = getMilestoneLabel;
@@ -57,6 +57,7 @@ exports.computeContiguousLastGeneratedDate = computeContiguousLastGeneratedDate;
 exports.buildBatchPrompt = buildBatchPrompt;
 exports.validateCrosswordCandidates = validateCrosswordCandidates;
 exports.hasDuplicateClues = hasDuplicateClues;
+exports.validateDeleteUserAccountRequest = validateDeleteUserAccountRequest;
 exports.computeStripeTierUpdate = computeStripeTierUpdate;
 exports.fetchPlaySubscriptionStatus = fetchPlaySubscriptionStatus;
 exports.shouldApplyPlayRTDNUpdate = shouldApplyPlayRTDNUpdate;
@@ -1086,6 +1087,164 @@ exports.generateReadingsAdmin = (0, https_1.onCall)({
     }
     return { success: true, results };
 });
+exports.SERVER_PURGE_TARGETS = [
+    { name: "journals", type: "root" },
+    { name: "tasks", type: "root" },
+    { name: "mat_doses", type: "root" },
+    { name: "insights", type: "root" },
+    { name: "ai_logs", type: "root" },
+    { name: "client_errors", type: "root" },
+    { name: "service", type: "root" },
+    { name: "game_progress", type: "root" },
+    { name: "game_saves", type: "root" },
+    { name: "feedback", type: "root" },
+    { name: "workbook_answers", type: "subcollection" },
+    { name: "templates", type: "subcollection" },
+    { name: "rosc_assessments", type: "subcollection" },
+];
+/**
+ * Pure guardrail checks for deleteUserAccount, extracted so they're
+ * unit-testable without exercising the live onCall body — same "extract the
+ * testable core" convention as evaluateVaultPinAttempt/checkCooldown/
+ * checkFloor elsewhere in this file. Returns an error message, or null if
+ * the request is valid.
+ */
+function validateDeleteUserAccountRequest(callerUid, data) {
+    if (typeof data.targetUid !== "string" || data.targetUid.length === 0) {
+        return "targetUid must be a non-empty string.";
+    }
+    if (data.targetUid === callerUid) {
+        return "Cannot delete your own account through this tool — use account settings instead.";
+    }
+    if (data.purgeFirestoreData !== true && data.deleteAuthRecord !== true) {
+        return "At least one of purgeFirestoreData or deleteAuthRecord must be true.";
+    }
+    return null;
+}
+/**
+ * Admin-SDK purge of every SERVER_PURGE_TARGETS collection plus the
+ * user_reading_preferences special case and the users/{uid} profile — full
+ * parity with src/lib/deletion.ts's executeTotalAccountAnnihilation, but
+ * running with Admin SDK privileges (bypasses firestore.rules entirely, so
+ * it isn't limited to the handful of collections isAdmin() has client
+ * delete rights on). Batches commit sequentially, same PROJ-115 zk-audit
+ * rationale: a deterministic failure boundary beats a Promise.all race.
+ */
+async function purgeFirestoreDataForUser(uid) {
+    const refs = [];
+    for (const target of exports.SERVER_PURGE_TARGETS) {
+        const snap = target.type === "subcollection"
+            ? await db.collection("users").doc(uid).collection(target.name).get()
+            : await db.collection(target.name).where("uid", "==", uid).get();
+        snap.docs.forEach((d) => refs.push(d.ref));
+    }
+    // Special case: doc ID is the uid itself, not a uid-field query (PROJ-42).
+    refs.push(db.collection("user_reading_preferences").doc(uid));
+    refs.push(db.collection("users").doc(uid));
+    const batches = [];
+    let currentBatch = db.batch();
+    let opCount = 0;
+    for (const ref of refs) {
+        currentBatch.delete(ref);
+        opCount++;
+        if (opCount >= 450) {
+            batches.push(currentBatch);
+            currentBatch = db.batch();
+            opCount = 0;
+        }
+    }
+    if (opCount > 0)
+        batches.push(currentBatch);
+    for (const batch of batches) {
+        await batch.commit();
+    }
+    return refs.length;
+}
+exports.deleteUserAccount = (0, https_1.onCall)({
+    timeoutSeconds: 120,
+    region: "northamerica-northeast1",
+}, async (request) => {
+    var _a, _b, _c, _d;
+    if (!((_a = request.auth) === null || _a === void 0 ? void 0 : _a.token.admin)) {
+        throw new https_1.HttpsError("permission-denied", "Admin access required.");
+    }
+    const callerUid = request.auth.uid;
+    const data = request.data;
+    const validationError = validateDeleteUserAccountRequest(callerUid, data);
+    if (validationError) {
+        throw new https_1.HttpsError("invalid-argument", validationError);
+    }
+    const targetUid = data.targetUid;
+    const purgeFirestoreData = data.purgeFirestoreData === true;
+    const deleteAuthRecord = data.deleteAuthRecord === true;
+    // Capture email + block admin-on-admin deletion before anything is
+    // destroyed — after deleteUser succeeds, getAuth().getUser(targetUid)
+    // can no longer resolve, so this must happen up front.
+    const targetAuthUser = await (0, auth_1.getAuth)().getUser(targetUid).catch(() => null);
+    if (((_b = targetAuthUser === null || targetAuthUser === void 0 ? void 0 : targetAuthUser.customClaims) === null || _b === void 0 ? void 0 : _b.admin) === true) {
+        throw new https_1.HttpsError("failed-precondition", "Cannot delete another admin account through this tool — this tool is for test/spam account cleanup, not admin offboarding.");
+    }
+    const performedByEmail = (_c = request.auth.token.email) !== null && _c !== void 0 ? _c : null;
+    const targetEmail = (_d = targetAuthUser === null || targetAuthUser === void 0 ? void 0 : targetAuthUser.email) !== null && _d !== void 0 ? _d : null;
+    let documentsDeletedCount = 0;
+    let outcome = "success";
+    let detail;
+    if (purgeFirestoreData) {
+        try {
+            documentsDeletedCount = await purgeFirestoreDataForUser(targetUid);
+        }
+        catch (error) {
+            outcome = "partial_failure";
+            detail = `Firestore purge failed: ${error instanceof Error ? error.message : String(error)}`;
+            logger.error("deleteUserAccount: Firestore purge failed", { targetUid, error });
+        }
+    }
+    if (deleteAuthRecord) {
+        try {
+            await (0, auth_1.getAuth)().deleteUser(targetUid);
+        }
+        catch (error) {
+            // auth/user-not-found means the desired end state (no Auth
+            // record) already holds — not a failure worth flagging.
+            const code = error.code;
+            if (code !== "auth/user-not-found") {
+                outcome = outcome === "success" ? "partial_failure" : outcome;
+                const authDetail = `Auth deletion failed: ${error instanceof Error ? error.message : String(error)}`;
+                detail = detail ? `${detail}; ${authDetail}` : authDetail;
+                logger.error("deleteUserAccount: Auth deletion failed", { targetUid, error });
+            }
+        }
+    }
+    // Written unconditionally, including on partial failure — this is
+    // exactly the scenario the audit trail exists for.
+    await db.collection("admin_audit_log").add(Object.assign(Object.assign(Object.assign({ action: "user_deletion", performedByUid: callerUid, performedByEmail,
+        targetUid,
+        targetEmail, scope: { purgedFirestoreData: purgeFirestoreData, deletedAuthRecord: deleteAuthRecord }, outcome }, (detail ? { detail } : {})), (purgeFirestoreData ? { documentsDeletedCount } : {})), { timestamp: firestore_1.FieldValue.serverTimestamp() }));
+    if (outcome !== "success") {
+        throw new https_1.HttpsError("internal", detail !== null && detail !== void 0 ? detail : "Deletion partially failed — see admin_audit_log for details.");
+    }
+    return { success: true, documentsDeletedCount };
+});
+/**
+ * BUGFIX (admin-panel-user-list-pyhct0): `setCustomUserClaims` REPLACES the
+ * entire custom-claims object — it does not merge. Every billing-sync call
+ * site used to call it as `setCustomUserClaims(uid, { premium })` directly,
+ * which silently wiped out any other claim already on the account, most
+ * importantly `admin: true` (set out-of-band by `scripts/set_admin_role.cjs`
+ * per docs/screens/admin/README.md). An admin who is also a subscriber — or
+ * who just tests a Play Billing/Stripe purchase on their own account — would
+ * lose database-level admin access the moment any of these three functions
+ * ran, with no error surfaced anywhere: `firestore.rules`' `isAdmin()` checks
+ * only this claim, so `FriendsDirectory.tsx`'s `users` list query starts
+ * failing silently (caught, console.error only) while the Firestore
+ * `role: 'admin'` fallback still lets the account into the `/admin` UI —
+ * exactly the "admin panel loads but the user list is empty" symptom this
+ * fixes. Read-then-merge closes the gap for all three call sites below.
+ */
+async function setPremiumClaim(uid, premium) {
+    const userRecord = await (0, auth_1.getAuth)().getUser(uid);
+    await (0, auth_1.getAuth)().setCustomUserClaims(uid, Object.assign(Object.assign({}, userRecord.customClaims), { premium }));
+}
 /**
  * PROJ-117: the tier-decision logic extracted from syncStripeSubscription's
  * trigger body (visibility-only, zero behavior change — same "extract the
@@ -1125,7 +1284,7 @@ exports.syncStripeSubscription = (0, firestore_2.onDocumentWritten)({
             tier: update.tier,
             tierSource: "Stripe-Managed",
         });
-        await (0, auth_1.getAuth)().setCustomUserClaims(userId, { premium: update.premium });
+        await setPremiumClaim(userId, update.premium);
         logger.info(`Provisioned ${update.tier} access for ${userId}.`);
     }
     catch (error) {
@@ -1243,7 +1402,7 @@ exports.verifyPlayPurchase = (0, https_1.onCall)({
             expiryTime: status.expiryTime ? firestore_1.Timestamp.fromDate(status.expiryTime) : null,
         }, { merge: true });
         await userRef.update({ tier: "premium", tierSource: "play-billing" });
-        await (0, auth_1.getAuth)().setCustomUserClaims(uid, { premium: true });
+        await setPremiumClaim(uid, true);
         logger.info(`Provisioned premium access for ${uid} via Play Billing.`);
         return { success: true };
     }
@@ -1314,7 +1473,7 @@ exports.handlePlayRTDN = (0, pubsub_1.onMessagePublished)({
         tier: status.active ? "premium" : "free",
         tierSource: "play-billing",
     });
-    await (0, auth_1.getAuth)().setCustomUserClaims(uid, { premium: status.active });
+    await setPremiumClaim(uid, status.active);
     logger.info(`handlePlayRTDN: synced ${uid} to tier=${status.active ? "premium" : "free"} via Play Billing.`);
 });
 function getDaysDiff(d1, d2) {

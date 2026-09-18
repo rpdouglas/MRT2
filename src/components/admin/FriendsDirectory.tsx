@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
 import type { UserProfile } from '../../lib/db';
-import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon, ClipboardDocumentIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon, ClipboardDocumentIcon, ExclamationTriangleIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
+import DeleteUserModal from './DeleteUserModal';
+import AdminAuditLogViewer from './AdminAuditLogViewer';
 
 export default function FriendsDirectory() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [fetchError, setFetchError] = useState<string | null>(null);
+    const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
     const fetchUsers = async () => {
         if (!db) return;
@@ -104,6 +107,10 @@ export default function FriendsDirectory() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = 'mrt_users.csv'; a.click();
+    };
+
+    const handleUserDeleted = (uid: string) => {
+        setUsers(prev => prev.filter(u => u.uid !== uid));
     };
 
     const handleCopyEmails = async () => {
@@ -275,20 +282,34 @@ export default function FriendsDirectory() {
 
                                                 {/* Unified Role Management Icons */}
                                                 {u.role === 'admin' ? (
-                                                    <button 
-                                                        onClick={() => handleUpdateRole(u.uid, 'user')} 
-                                                        className="text-gray-400 hover:text-red-600 transition-colors" 
+                                                    <button
+                                                        onClick={() => handleUpdateRole(u.uid, 'user')}
+                                                        className="text-gray-400 hover:text-red-600 transition-colors"
                                                         title="Demote to User"
                                                     >
                                                         <UserMinusIcon className="h-5 w-5" />
                                                     </button>
                                                 ) : (
-                                                    <button 
-                                                        onClick={() => handleUpdateRole(u.uid, 'admin')} 
-                                                        className="text-gray-400 hover:text-blue-600 transition-colors" 
+                                                    <button
+                                                        onClick={() => handleUpdateRole(u.uid, 'admin')}
+                                                        className="text-gray-400 hover:text-blue-600 transition-colors"
                                                         title="Promote to Admin"
                                                     >
                                                         <ShieldCheckIcon className="h-5 w-5" />
+                                                    </button>
+                                                )}
+
+                                                {/* PROJ-121: Admin User Deletion. Blocked for other admins
+                                                    client-side as a UX hint — the Cloud Function enforces this
+                                                    server-side regardless (deleteUserAccount checks the target's
+                                                    real admin custom claim, not this Firestore role field). */}
+                                                {u.role !== 'admin' && (
+                                                    <button
+                                                        onClick={() => setUserToDelete(u)}
+                                                        className="text-gray-400 hover:text-red-600 transition-colors"
+                                                        title="Delete Account"
+                                                    >
+                                                        <TrashIcon className="h-5 w-5" />
                                                     </button>
                                                 )}
                                             </div>
@@ -300,6 +321,14 @@ export default function FriendsDirectory() {
                     </table>
                 </div>
             </div>
+
+            <AdminAuditLogViewer />
+
+            <DeleteUserModal
+                user={userToDelete}
+                onClose={() => setUserToDelete(null)}
+                onDeleted={handleUserDeleted}
+            />
         </div>
     );
 }

@@ -26,7 +26,9 @@ admin.initializeApp({
 async function setAdmin(email) {
     try {
         const user = await admin.auth().getUserByEmail(email);
-        await admin.auth().setCustomUserClaims(user.uid, { admin: true });
+        // setCustomUserClaims REPLACES the whole claims object rather than merging —
+        // read existing claims first so this doesn't wipe e.g. `premium` (see admin-panel-user-list-pyhct0).
+        await admin.auth().setCustomUserClaims(user.uid, { ...user.customClaims, admin: true });
         console.log(`✅ Success! ${email} is now an Admin (Custom Claims).`);
         console.log('👉 They must sign out and sign back in for changes to take effect.');
     } catch (error) {

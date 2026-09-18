@@ -28,6 +28,8 @@ import {
     shouldApplyPlayRTDNUpdate,
     addDaysToDate,
     computeContiguousLastGeneratedDate,
+    SERVER_PURGE_TARGETS,
+    validateDeleteUserAccountRequest,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
@@ -1077,5 +1079,78 @@ describe("shouldApplyPlayRTDNUpdate (PROJ-117: handlePlayRTDN's stale-notificati
 
     it("rejects the update for any other non-play-billing tierSource (e.g. an admin manual grant)", () => {
         expect(shouldApplyPlayRTDNUpdate("manual")).toBe(false);
+    });
+});
+
+describe("SERVER_PURGE_TARGETS (PROJ-121 regression guard)", () => {
+    // Mirrors src/lib/deletion.ts's own hardcoded-expected-list test
+    // (src/lib/__tests__/deletion.test.ts) — the two manifests can't share
+    // a single source file (separate client/functions builds), so each side
+    // pins its own copy against the same hardcoded expected collections.
+    // A collection added to SCAN_TARGETS but not SERVER_PURGE_TARGETS (or
+    // vice versa) fails one of these two test files instead of silently
+    // shipping an admin-triggered deletion with less coverage than
+    // self-service deletion.
+    const EXPECTED_ROOT_COLLECTIONS = [
+        "journals", "tasks", "mat_doses", "insights", "ai_logs",
+        "client_errors", "service", "game_progress", "game_saves", "feedback",
+    ];
+    const EXPECTED_SUBCOLLECTIONS = [
+        "workbook_answers", "templates", "rosc_assessments",
+    ];
+
+    it("covers every uid-owned, client-deletable root collection declared in firestore.rules", () => {
+        const roots = SERVER_PURGE_TARGETS.filter((t) => t.type === "root").map((t) => t.name);
+        expect(roots.sort()).toEqual([...EXPECTED_ROOT_COLLECTIONS].sort());
+    });
+
+    it("covers every uid-owned, client-deletable subcollection declared in firestore.rules", () => {
+        const subs = SERVER_PURGE_TARGETS.filter((t) => t.type === "subcollection").map((t) => t.name);
+        expect(subs.sort()).toEqual([...EXPECTED_SUBCOLLECTIONS].sort());
+    });
+
+    it("does not include the Stripe/Play-Billing collections locked against client mutation", () => {
+        const allNames = SERVER_PURGE_TARGETS.map((t) => t.name);
+        for (const lockedCollection of ["checkout_sessions", "subscriptions", "payments", "playPurchases", "playPurchaseIndex"]) {
+            expect(allNames).not.toContain(lockedCollection);
+        }
+    });
+});
+
+describe("validateDeleteUserAccountRequest (PROJ-121)", () => {
+    it("rejects a missing targetUid", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { purgeFirestoreData: true })).toMatch(/targetUid/);
+    });
+
+    it("rejects an empty-string targetUid", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: "", purgeFirestoreData: true })).toMatch(/targetUid/);
+    });
+
+    it("rejects a non-string targetUid", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: 123, purgeFirestoreData: true })).toMatch(/targetUid/);
+    });
+
+    it("rejects self-deletion through this tool", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: "admin-uid", purgeFirestoreData: true }))
+            .toMatch(/own account/);
+    });
+
+    it("rejects a request with neither scope flag set", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: "target-uid" }))
+            .toMatch(/purgeFirestoreData or deleteAuthRecord/);
+    });
+
+    it("accepts a valid purgeFirestoreData-only request", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: "target-uid", purgeFirestoreData: true })).toBeNull();
+    });
+
+    it("accepts a valid deleteAuthRecord-only request", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", { targetUid: "target-uid", deleteAuthRecord: true })).toBeNull();
+    });
+
+    it("accepts a valid request with both scope flags set", () => {
+        expect(validateDeleteUserAccountRequest("admin-uid", {
+            targetUid: "target-uid", purgeFirestoreData: true, deleteAuthRecord: true,
+        })).toBeNull();
     });
 });
