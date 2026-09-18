@@ -13,7 +13,7 @@ import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import * as crypto from "node:crypto";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue, Timestamp, type QueryDocumentSnapshot, type DocumentData } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp, type QueryDocumentSnapshot, type DocumentData, type DocumentReference, type WriteBatch } from "firebase-admin/firestore";
 import { getMessaging, TokenMessage } from "firebase-admin/messaging";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getAuth } from "firebase-admin/auth";
@@ -1244,6 +1244,192 @@ export const generateReadingsAdmin = onCall({
     }
 
     return { success: true, results };
+});
+
+// ─── PROJ-121: Admin User Deletion ────────────────────────────────────────
+
+// Mirrors src/lib/deletion.ts's SCAN_TARGETS. Can't literally import that
+// file (client build, separate tsconfig/root) so it's re-declared here — a
+// regression test in index.test.ts hardcodes both lists' expected contents
+// and asserts they match, so a collection added to one and not the other
+// fails CI instead of silently drifting apart, same recurrence-prevention
+// shape PROJ-115 used for SCAN_TARGETS itself (this exact bug shape has
+// already shipped twice: game_progress/game_saves, then five more
+// collections at PROJ-115 — a third time is a "when," not an "if," without
+// this guard). Deliberately excludes the Stripe/Play-Billing collections and
+// shared/editorial content for the same reasons SCAN_TARGETS does — see
+// docs/projects/121_ADMIN_USER_DELETION.md §4.
+interface PurgeTarget {
+    name: string;
+    type: "root" | "subcollection";
+}
+
+export const SERVER_PURGE_TARGETS: PurgeTarget[] = [
+    { name: "journals", type: "root" },
+    { name: "tasks", type: "root" },
+    { name: "mat_doses", type: "root" },
+    { name: "insights", type: "root" },
+    { name: "ai_logs", type: "root" },
+    { name: "client_errors", type: "root" },
+    { name: "service", type: "root" },
+    { name: "game_progress", type: "root" },
+    { name: "game_saves", type: "root" },
+    { name: "feedback", type: "root" },
+    { name: "workbook_answers", type: "subcollection" },
+    { name: "templates", type: "subcollection" },
+    { name: "rosc_assessments", type: "subcollection" },
+];
+
+/**
+ * Pure guardrail checks for deleteUserAccount, extracted so they're
+ * unit-testable without exercising the live onCall body — same "extract the
+ * testable core" convention as evaluateVaultPinAttempt/checkCooldown/
+ * checkFloor elsewhere in this file. Returns an error message, or null if
+ * the request is valid.
+ */
+export function validateDeleteUserAccountRequest(
+    callerUid: string,
+    data: { targetUid?: unknown; purgeFirestoreData?: unknown; deleteAuthRecord?: unknown },
+): string | null {
+    if (typeof data.targetUid !== "string" || data.targetUid.length === 0) {
+        return "targetUid must be a non-empty string.";
+    }
+    if (data.targetUid === callerUid) {
+        return "Cannot delete your own account through this tool — use account settings instead.";
+    }
+    if (data.purgeFirestoreData !== true && data.deleteAuthRecord !== true) {
+        return "At least one of purgeFirestoreData or deleteAuthRecord must be true.";
+    }
+    return null;
+}
+
+/**
+ * Admin-SDK purge of every SERVER_PURGE_TARGETS collection plus the
+ * user_reading_preferences special case and the users/{uid} profile — full
+ * parity with src/lib/deletion.ts's executeTotalAccountAnnihilation, but
+ * running with Admin SDK privileges (bypasses firestore.rules entirely, so
+ * it isn't limited to the handful of collections isAdmin() has client
+ * delete rights on). Batches commit sequentially, same PROJ-115 zk-audit
+ * rationale: a deterministic failure boundary beats a Promise.all race.
+ */
+async function purgeFirestoreDataForUser(uid: string): Promise<number> {
+    const refs: DocumentReference[] = [];
+
+    for (const target of SERVER_PURGE_TARGETS) {
+        const snap = target.type === "subcollection"
+            ? await db.collection("users").doc(uid).collection(target.name).get()
+            : await db.collection(target.name).where("uid", "==", uid).get();
+        snap.docs.forEach((d) => refs.push(d.ref));
+    }
+
+    // Special case: doc ID is the uid itself, not a uid-field query (PROJ-42).
+    refs.push(db.collection("user_reading_preferences").doc(uid));
+    refs.push(db.collection("users").doc(uid));
+
+    const batches: WriteBatch[] = [];
+    let currentBatch = db.batch();
+    let opCount = 0;
+    for (const ref of refs) {
+        currentBatch.delete(ref);
+        opCount++;
+        if (opCount >= 450) {
+            batches.push(currentBatch);
+            currentBatch = db.batch();
+            opCount = 0;
+        }
+    }
+    if (opCount > 0) batches.push(currentBatch);
+
+    for (const batch of batches) {
+        await batch.commit();
+    }
+
+    return refs.length;
+}
+
+export const deleteUserAccount = onCall({
+    timeoutSeconds: 120,
+    region: "northamerica-northeast1",
+}, async (request) => {
+    if (!request.auth?.token.admin) {
+        throw new HttpsError("permission-denied", "Admin access required.");
+    }
+
+    const callerUid = request.auth.uid;
+    const data = request.data as { targetUid?: unknown; purgeFirestoreData?: unknown; deleteAuthRecord?: unknown };
+    const validationError = validateDeleteUserAccountRequest(callerUid, data);
+    if (validationError) {
+        throw new HttpsError("invalid-argument", validationError);
+    }
+
+    const targetUid = data.targetUid as string;
+    const purgeFirestoreData = data.purgeFirestoreData === true;
+    const deleteAuthRecord = data.deleteAuthRecord === true;
+
+    // Capture email + block admin-on-admin deletion before anything is
+    // destroyed — after deleteUser succeeds, getAuth().getUser(targetUid)
+    // can no longer resolve, so this must happen up front.
+    const targetAuthUser = await getAuth().getUser(targetUid).catch(() => null);
+    if (targetAuthUser?.customClaims?.admin === true) {
+        throw new HttpsError(
+            "failed-precondition",
+            "Cannot delete another admin account through this tool — this tool is for test/spam account cleanup, not admin offboarding."
+        );
+    }
+
+    const performedByEmail = request.auth.token.email ?? null;
+    const targetEmail = targetAuthUser?.email ?? null;
+
+    let documentsDeletedCount = 0;
+    let outcome: "success" | "partial_failure" | "failure" = "success";
+    let detail: string | undefined;
+
+    if (purgeFirestoreData) {
+        try {
+            documentsDeletedCount = await purgeFirestoreDataForUser(targetUid);
+        } catch (error) {
+            outcome = "partial_failure";
+            detail = `Firestore purge failed: ${error instanceof Error ? error.message : String(error)}`;
+            logger.error("deleteUserAccount: Firestore purge failed", { targetUid, error });
+        }
+    }
+
+    if (deleteAuthRecord) {
+        try {
+            await getAuth().deleteUser(targetUid);
+        } catch (error) {
+            // auth/user-not-found means the desired end state (no Auth
+            // record) already holds — not a failure worth flagging.
+            const code = (error as { code?: string }).code;
+            if (code !== "auth/user-not-found") {
+                outcome = outcome === "success" ? "partial_failure" : outcome;
+                const authDetail = `Auth deletion failed: ${error instanceof Error ? error.message : String(error)}`;
+                detail = detail ? `${detail}; ${authDetail}` : authDetail;
+                logger.error("deleteUserAccount: Auth deletion failed", { targetUid, error });
+            }
+        }
+    }
+
+    // Written unconditionally, including on partial failure — this is
+    // exactly the scenario the audit trail exists for.
+    await db.collection("admin_audit_log").add({
+        action: "user_deletion",
+        performedByUid: callerUid,
+        performedByEmail,
+        targetUid,
+        targetEmail,
+        scope: { purgedFirestoreData: purgeFirestoreData, deletedAuthRecord: deleteAuthRecord },
+        outcome,
+        ...(detail ? { detail } : {}),
+        ...(purgeFirestoreData ? { documentsDeletedCount } : {}),
+        timestamp: FieldValue.serverTimestamp(),
+    });
+
+    if (outcome !== "success") {
+        throw new HttpsError("internal", detail ?? "Deletion partially failed — see admin_audit_log for details.");
+    }
+
+    return { success: true, documentsDeletedCount };
 });
 
 // ─── PROJ-BILLING: Stripe Subscription Sync ───────────────────────────────────
