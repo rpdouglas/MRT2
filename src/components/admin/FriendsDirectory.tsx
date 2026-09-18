@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, orderBy, type Firestore } from 'firebase/firestore';
 import type { UserProfile } from '../../lib/db';
-import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
+import { StarIcon, CheckCircleIcon, UserIcon, ArrowPathIcon, ClockIcon, ShieldCheckIcon, UserMinusIcon, ArrowDownTrayIcon, ClipboardDocumentIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
 
 export default function FriendsDirectory() {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     const fetchUsers = async () => {
         if (!db) return;
         setLoading(true);
+        setFetchError(null);
         const database: Firestore = db;
         try {
             const usersRef = collection(database, 'users');
@@ -22,6 +24,19 @@ export default function FriendsDirectory() {
             setUsers(loadedUsers);
         } catch (err: unknown) {
             console.error("Failed to fetch users", err);
+            // A permission-denied here almost always means this account's
+            // isAdmin=true is only the Firestore role-fallback (docs/screens/
+            // admin/README.md) — firestore.rules' isAdmin() only accepts the
+            // real `admin: true` custom claim, which `scripts/set_admin_role.cjs`
+            // sets out-of-band and which any premium-claim sync
+            // (syncStripeSubscription/verifyPlayPurchase/handlePlayRTDN) can
+            // wipe unless it explicitly preserves existing claims.
+            const isPermissionDenied = err instanceof Error && 'code' in err && (err as { code?: string }).code === 'permission-denied';
+            const message = isPermissionDenied
+                ? "Couldn't load the user list — this account is missing the real 'admin' custom claim at the database level (Firestore denied the request), even though it has UI access to this page. Re-run scripts/set_admin_role.cjs for this account, then sign out and back in."
+                : "Couldn't load the user list. Check the console for details.";
+            setFetchError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -133,6 +148,21 @@ export default function FriendsDirectory() {
             <div className="flex flex-col items-center justify-center p-12">
                 <ArrowPathIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
                 <p className="text-gray-500 font-medium">Loading user directory...</p>
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center max-w-lg mx-auto">
+                <ExclamationTriangleIcon className="h-8 w-8 text-amber-500 mb-4" />
+                <p className="text-gray-700 font-medium mb-4">{fetchError}</p>
+                <button
+                    onClick={fetchUsers}
+                    className="flex items-center gap-2 text-sm font-bold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
+                >
+                    <ArrowPathIcon className="h-4 w-4" /> Retry
+                </button>
             </div>
         );
     }

@@ -1256,6 +1256,27 @@ export const generateReadingsAdmin = onCall({
 export type StripeTierUpdate = { tier: "premium" | "free"; premium: boolean };
 
 /**
+ * BUGFIX (admin-panel-user-list-pyhct0): `setCustomUserClaims` REPLACES the
+ * entire custom-claims object — it does not merge. Every billing-sync call
+ * site used to call it as `setCustomUserClaims(uid, { premium })` directly,
+ * which silently wiped out any other claim already on the account, most
+ * importantly `admin: true` (set out-of-band by `scripts/set_admin_role.cjs`
+ * per docs/screens/admin/README.md). An admin who is also a subscriber — or
+ * who just tests a Play Billing/Stripe purchase on their own account — would
+ * lose database-level admin access the moment any of these three functions
+ * ran, with no error surfaced anywhere: `firestore.rules`' `isAdmin()` checks
+ * only this claim, so `FriendsDirectory.tsx`'s `users` list query starts
+ * failing silently (caught, console.error only) while the Firestore
+ * `role: 'admin'` fallback still lets the account into the `/admin` UI —
+ * exactly the "admin panel loads but the user list is empty" symptom this
+ * fixes. Read-then-merge closes the gap for all three call sites below.
+ */
+async function setPremiumClaim(uid: string, premium: boolean): Promise<void> {
+    const userRecord = await getAuth().getUser(uid);
+    await getAuth().setCustomUserClaims(uid, { ...userRecord.customClaims, premium });
+}
+
+/**
  * PROJ-117: the tier-decision logic extracted from syncStripeSubscription's
  * trigger body (visibility-only, zero behavior change — same "extract the
  * testable core" pattern PROJ-73 established for verifyVaultPin's
@@ -1303,7 +1324,7 @@ export const syncStripeSubscription = onDocumentWritten(
                 tier: update.tier,
                 tierSource: "Stripe-Managed",
             });
-            await getAuth().setCustomUserClaims(userId, { premium: update.premium });
+            await setPremiumClaim(userId, update.premium);
             logger.info(`Provisioned ${update.tier} access for ${userId}.`);
         } catch (error) {
             logger.error(`Failed to provision access for ${userId}`, error);
@@ -1448,7 +1469,7 @@ export const verifyPlayPurchase = onCall({
         }, { merge: true });
 
         await userRef.update({ tier: "premium", tierSource: "play-billing" });
-        await getAuth().setCustomUserClaims(uid, { premium: true });
+        await setPremiumClaim(uid, true);
 
         logger.info(`Provisioned premium access for ${uid} via Play Billing.`);
         return { success: true };
@@ -1545,7 +1566,7 @@ export const handlePlayRTDN = onMessagePublished<PlayRTDNMessage>(
             tier: status.active ? "premium" : "free",
             tierSource: "play-billing",
         });
-        await getAuth().setCustomUserClaims(uid, { premium: status.active });
+        await setPremiumClaim(uid, status.active);
 
         logger.info(`handlePlayRTDN: synced ${uid} to tier=${status.active ? "premium" : "free"} via Play Billing.`);
     },
