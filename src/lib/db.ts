@@ -449,6 +449,28 @@ export interface FullUserData {
   gameProgress: Record<string, unknown>[];
 }
 
+// PROJ-121: audit trail for admin-triggered user deletion. Written only by
+// the deleteUserAccount Cloud Function (Admin SDK) — see firestore.rules'
+// admin_audit_log match block (allow write: if false). Plaintext throughout:
+// operational metadata about an admin's own action, not recovery content,
+// same category as usage_limits/pinAttempts in CLAUDE.md's ZK table.
+export interface AdminAuditLogEntry {
+  id: string;
+  action: 'user_deletion';
+  performedByUid: string;
+  performedByEmail: string | null;
+  targetUid: string;
+  targetEmail: string | null;
+  scope: {
+    purgedFirestoreData: boolean;
+    deletedAuthRecord: boolean;
+  };
+  outcome: 'success' | 'partial_failure' | 'failure';
+  detail?: string;
+  documentsDeletedCount?: number;
+  timestamp: Timestamp;
+}
+
 export async function fetchAllUserData(uid: string): Promise<FullUserData> {
   if (!db) throw new Error("Database not initialized");
   const database: Firestore = db;

@@ -819,3 +819,53 @@ describe('users/{userId}/workbook_answers — ownership (PROJ-117)', () => {
     );
   });
 });
+
+describe('admin_audit_log — PROJ-121 (server-write-only, admin-read-only)', () => {
+  it('lets an admin (custom claim) read audit log entries', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'admin_audit_log', 'log1'), {
+        action: 'user_deletion',
+        performedByUid: BOB,
+        targetUid: ALICE,
+        outcome: 'success',
+        timestamp: Timestamp.now(),
+      });
+    });
+
+    const asAdmin = testEnv.authenticatedContext(BOB, { admin: true }).firestore();
+    await assertSucceeds(getDoc(doc(asAdmin, 'admin_audit_log', 'log1')));
+  });
+
+  it('blocks a non-admin authenticated user from reading audit log entries', async () => {
+    await seedAsAdmin(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'admin_audit_log', 'log1'), {
+        action: 'user_deletion',
+        performedByUid: BOB,
+        targetUid: ALICE,
+        outcome: 'success',
+        timestamp: Timestamp.now(),
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(getDoc(doc(aliceDb, 'admin_audit_log', 'log1')));
+  });
+
+  it('blocks a client write even from an admin (Cloud-Function/Admin-SDK-only)', async () => {
+    const asAdmin = testEnv.authenticatedContext(BOB, { admin: true }).firestore();
+    await assertFails(
+      setDoc(doc(asAdmin, 'admin_audit_log', 'log2'), {
+        action: 'user_deletion',
+        performedByUid: BOB,
+        targetUid: ALICE,
+        outcome: 'success',
+        timestamp: Timestamp.now(),
+      }),
+    );
+  });
+
+  it('blocks an unauthenticated request entirely', async () => {
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anonDb, 'admin_audit_log', 'log1')));
+  });
+});
