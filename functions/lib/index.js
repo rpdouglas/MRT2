@@ -313,15 +313,21 @@ const PROMOTION_REGION = "northamerica-northeast1";
 // differs from this construction.
 const PROMOTION_SOURCE_URL = `https://${PROMOTION_REGION}-mrt2-app-dev.cloudfunctions.net/getPromotionContent`;
 // Firestore/IAM has no collection-level scoping — a raw cross-project Firestore
-// IAM grant for uat/prod to read dev would expose ALL of dev's Firestore (incl.
+// IAM grant for prod to read dev would expose ALL of dev's Firestore (incl.
 // real QA/demo-persona account data), not just these 3 editorial collections.
 // getPromotionContent is the narrow boundary instead: it only ever returns
-// daily_readings/crossword_puzzles, and is only invokable by the two service
-// accounts below (Cloud Run/Functions IAM *does* support per-service invoker
+// daily_readings/crossword_puzzles, and is only invokable by the service
+// account below (Cloud Run/Functions IAM *does* support per-service invoker
 // scoping, unlike Firestore) — never public. See docs/projects/42_DAILY_READINGS.md
 // §14 for the full design writeup.
+// UAT is not a live environment (no traffic runs there) — its compute SA was
+// removed from this list 2026-09-28 after it was found to not exist in GCP
+// (`372659396470-compute@developer.gserviceaccount.com`, stale/wrong project
+// number), which broke the invoker-policy IAM write on *every* deploy — dev
+// and prod included, since setIamPolicy rejects the whole call if any member
+// in it doesn't exist. If UAT is ever stood up for real, re-add its real
+// compute SA here rather than trusting this old number.
 const PROMOTION_INVOKER_SERVICE_ACCOUNTS = [
-    "372659396470-compute@developer.gserviceaccount.com", // mrt2-app-uat default compute SA
     "405528797784-compute@developer.gserviceaccount.com", // mrt2-app-prod default compute SA
 ];
 function utcDateString(d) {
@@ -708,7 +714,7 @@ async function syncCollectionFromDev(collectionName, fromDate, toDate) {
 }
 // The narrow read boundary described in the PROJ-42/79 promotion comment above —
 // only ever returns daily_readings/crossword_puzzles for a bounded date range,
-// and only when invoked by uat/prod's own service accounts (the `invoker` list
+// and only when invoked by prod's own service account (the `invoker` list
 // below). Confirm at first deploy that Firebase Functions v2's `invoker` option
 // actually produces the Cloud Run IAM binding as expected
 // (`gcloud run services get-iam-policy getpromotioncontent --project mrt2-app-dev
