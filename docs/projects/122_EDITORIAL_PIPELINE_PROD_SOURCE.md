@@ -1,6 +1,6 @@
 # 📁 Project 122: Editorial Pipeline — Prod as Source of Truth
 
-**Status:** ⚪ Planned
+**Status:** 🟡 Active
 **Primary Persona:** Alex/Dev (Internal Stakeholder — `docs/governance/INTERNAL_PERSONAS.md`; operational/infra change). User-facing beneficiaries: Walt and Maya (Daily Crossword / Daily Reading as a daily ritual), Ned (Recovery Games streak surface).
 **Objective:** Reverse the direction of the generate-once/promote pipeline for `daily_readings` and `crossword_puzzles` so `mrt2-app-prod` generates the content users actually see and `mrt2-app-dev` pulls from it, and make any generation failure raise an ops alert instead of failing silently.
 
@@ -89,7 +89,8 @@ const PROMOTION_INVOKER_SERVICE_ACCOUNTS = ["1040431613138-compute@developer.gse
 ### Phase 1: Flip the source
 * Swap the constants and gates as above.
 * `getPromotionContent`: enforce a max range (reject `toDate - fromDate > 120 days` with 400).
-* Dev-only escape hatch for testing generator changes: an env param (e.g. `EDITORIAL_FORCE_GENERATE=true`, set only via `functions/.env.mrt2-app-dev` when needed, never committed as `true`) that makes dev generate locally instead of syncing. Default off. Decide during `/planning` whether this is worth it vs. just testing in the emulator (`npm run serve`) — the emulator path already exists and adds no prod-reachable config.
+* ~~Dev-only escape hatch for testing generator changes~~ — **decided during `/planning` (2026-09-30): not built.** Prompt/generator changes are tested in the emulator (`npm run serve`), which already exists and adds no config that could drift per environment.
+* **Added during `/planning`:** prod's `buffer_status` water marks were never synced (the old sync only copied `daily_readings`), so they sat at `2026-10-28` for all 7 modalities while prod's real coverage differed (AA has a gap after `10-25`; NA runs to `12-03`). `scripts/reconcile_buffer_status.cjs` (dry-run by default, `--apply` to write) recomputes each water mark as the contiguous run of existing readings from today, mirroring `computeContiguousLastGeneratedDate`. Run once against prod before the first prod `checkBufferHealth` run in generate mode.
 * No React Query hooks, no rules changes.
 
 ### Phase 2: Make failures loud (applies in the source project, i.e. prod)

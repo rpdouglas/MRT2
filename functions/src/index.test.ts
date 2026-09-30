@@ -30,6 +30,11 @@ import {
     computeContiguousLastGeneratedDate,
     SERVER_PURGE_TARGETS,
     validateDeleteUserAccountRequest,
+    isEditorialSourceProject,
+    validatePromotionRequest,
+    evaluateCrosswordRun,
+    evaluateBufferRefill,
+    evaluateSyncResult,
     type BeaconUserDoc,
     type VaultPinAttemptState,
 } from "./index";
@@ -1152,5 +1157,126 @@ describe("validateDeleteUserAccountRequest (PROJ-121)", () => {
         expect(validateDeleteUserAccountRequest("admin-uid", {
             targetUid: "target-uid", purgeFirestoreData: true, deleteAuthRecord: true,
         })).toBeNull();
+    });
+});
+
+describe("isEditorialSourceProject (PROJ-122: prod is the editorial source)", () => {
+    it("is true only for mrt2-app-prod", () => {
+        expect(isEditorialSourceProject("mrt2-app-prod")).toBe(true);
+    });
+
+    it.each(["mrt2-app-dev", "mrt2-app-uat", "", "demo-project"])("is false for %j", (projectId) => {
+        expect(isEditorialSourceProject(projectId)).toBe(false);
+    });
+});
+
+describe("validatePromotionRequest (PROJ-122: getPromotionContent's request validation)", () => {
+    it("accepts a valid crossword request", () => {
+        expect(validatePromotionRequest({ collection: "crossword_puzzles", fromDate: "2026-09-30", toDate: "2026-10-01" }))
+            .toEqual({ ok: true, collection: "crossword_puzzles", fromDate: "2026-09-30", toDate: "2026-10-01" });
+    });
+
+    it("accepts checkBufferHealth's 91-day readings sync window", () => {
+        const fromDate = "2026-09-30";
+        expect(validatePromotionRequest({ collection: "daily_readings", fromDate, toDate: addDaysToDate(fromDate, 90) }).ok).toBe(true);
+    });
+
+    it("accepts exactly the 120-day cap and rejects one day past it", () => {
+        const fromDate = "2026-09-30";
+        expect(validatePromotionRequest({ collection: "daily_readings", fromDate, toDate: addDaysToDate(fromDate, 120) }).ok).toBe(true);
+        expect(validatePromotionRequest({ collection: "daily_readings", fromDate, toDate: addDaysToDate(fromDate, 121) }).ok).toBe(false);
+    });
+
+    it.each(["users", "journals", "buffer_status", undefined, ["crossword_puzzles"]])("rejects collection %j", (collection) => {
+        expect(validatePromotionRequest({ collection, fromDate: "2026-09-30", toDate: "2026-10-01" }).ok).toBe(false);
+    });
+
+    it.each([
+        [undefined, "2026-10-01"],
+        ["2026-09-30", undefined],
+        ["20260930", "2026-10-01"],
+        ["2026-09-30", "not-a-date"],
+        [["2026-09-30"], "2026-10-01"],
+    ])("rejects malformed dates %j / %j", (fromDate, toDate) => {
+        expect(validatePromotionRequest({ collection: "crossword_puzzles", fromDate, toDate }).ok).toBe(false);
+    });
+
+    it("rejects fromDate after toDate", () => {
+        expect(validatePromotionRequest({ collection: "crossword_puzzles", fromDate: "2026-10-02", toDate: "2026-10-01" }).ok).toBe(false);
+    });
+});
+
+describe("evaluateCrosswordRun (PROJ-122: crossword alerting)", () => {
+    const today = "2026-09-30";
+    const tomorrow = "2026-10-01";
+
+    it("raises nothing when both dates exist or were generated", () => {
+        expect(evaluateCrosswordRun(today, [
+            { date: today, status: "exists" },
+            { date: tomorrow, status: "generated" },
+        ], true)).toEqual([]);
+    });
+
+    it("alerts on a Gemini throw (the 2026-09-25 402 shape) and on today missing", () => {
+        const error = "Error: [GoogleGenerativeAI Error]: [402 Payment Required] Your prepayment credits are depleted.";
+        const alerts = evaluateCrosswordRun(today, [
+            { date: today, status: "threw", error },
+            { date: tomorrow, status: "threw", error },
+        ], false);
+        expect(alerts).toHaveLength(3);
+        expect(alerts[0]).toEqual({ message: `Crossword generation threw for ${today}`, detail: error });
+        expect(alerts[2].message).toContain("missing");
+    });
+
+    it("alerts on a validation/layout abort", () => {
+        const alerts = evaluateCrosswordRun(today, [
+            { date: today, status: "exists" },
+            { date: tomorrow, status: "failed" },
+        ], true);
+        expect(alerts).toHaveLength(1);
+        expect(alerts[0].message).toBe(`Crossword generation aborted for ${tomorrow}`);
+    });
+
+    it("alerts when today is missing even if no attempt recorded a failure", () => {
+        const alerts = evaluateCrosswordRun(today, [
+            { date: today, status: "generated" },
+            { date: tomorrow, status: "generated" },
+        ], false);
+        expect(alerts).toHaveLength(1);
+        expect(alerts[0].message).toContain(today);
+    });
+});
+
+describe("evaluateBufferRefill (PROJ-122: readings refill alerting)", () => {
+    it("raises nothing for a clean refill", () => {
+        expect(evaluateBufferRefill("twelve-step-aa", { written: 90, errors: 0 })).toBeNull();
+    });
+
+    it("alerts when every batch failed (generateForModality swallows Gemini errors into this count)", () => {
+        expect(evaluateBufferRefill("twelve-step-aa", { written: 0, errors: 90 })?.message)
+            .toBe("Readings refill wrote nothing for twelve-step-aa");
+    });
+
+    it("alerts on a zero-write refill even when no errors were counted", () => {
+        expect(evaluateBufferRefill("twelve-step-aa", { written: 0, errors: 0 })).not.toBeNull();
+    });
+
+    it("alerts on a partial failure", () => {
+        expect(evaluateBufferRefill("twelve-step-na", { written: 60, errors: 30 })?.message)
+            .toBe("Readings refill partially failed for twelve-step-na");
+    });
+});
+
+describe("evaluateSyncResult (PROJ-122: sync-side alerting)", () => {
+    it("alerts on a 0-doc crossword sync", () => {
+        expect(evaluateSyncResult("crossword_puzzles", 0)).not.toBeNull();
+    });
+
+    it("raises nothing for a non-empty crossword sync", () => {
+        expect(evaluateSyncResult("crossword_puzzles", 2)).toBeNull();
+    });
+
+    it("does not alert on a 0-doc readings sync", () => {
+        expect(evaluateSyncResult("daily_readings", 0)).toBeNull();
     });
 });
