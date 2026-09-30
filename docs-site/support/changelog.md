@@ -4,6 +4,10 @@ description: What's new in My Recovery Toolkit — a plain-language, version-by-
 
 # 🚀 Changelog
 
+## [v1.9.14] - 2026-09-30
+### 🐛 Bug Fixes
+- Fixed an issue where the Daily Crossword showed "Today's puzzle isn't ready yet" instead of the day's puzzle.
+
 ## [v1.9.13] - 2026-09-07
 ### ✨ New Feature
 - Supporters using the Android app can now subscribe directly from inside the app with a single tap via Google Play Billing.

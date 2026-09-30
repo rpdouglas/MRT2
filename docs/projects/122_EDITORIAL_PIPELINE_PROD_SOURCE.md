@@ -1,6 +1,6 @@
 # 📁 Project 122: Editorial Pipeline — Prod as Source of Truth
 
-**Status:** 🟡 Active
+**Status:** ✅ Shipped
 **Primary Persona:** Alex/Dev (Internal Stakeholder — `docs/governance/INTERNAL_PERSONAS.md`; operational/infra change). User-facing beneficiaries: Walt and Maya (Daily Crossword / Daily Reading as a daily ritual), Ned (Recovery Games streak surface).
 **Objective:** Reverse the direction of the generate-once/promote pipeline for `daily_readings` and `crossword_puzzles` so `mrt2-app-prod` generates the content users actually see and `mrt2-app-dev` pulls from it, and make any generation failure raise an ops alert instead of failing silently.
 
@@ -104,26 +104,26 @@ const PROMOTION_INVOKER_SERVICE_ACCOUNTS = ["1040431613138-compute@developer.gse
 * [x] `navigator.onLine` false — unaffected; client reads are unchanged and TanStack-cached.
 * [x] `isVaultUnlocked` false — unaffected; neither collection is encrypted.
 * [x] 320px screen — no UI change.
-* [ ] **Deploy-ordering window.** `feature/*` deploys to dev before `main` deploys to prod. Between the dev deploy of this branch and the prod deploy of `main`: dev stops generating and starts calling prod's not-yet-existing `getPromotionContent`, while prod (old code) still syncs from dev's now-403ing endpoint → **prod gets no new content in that window.** Mitigations: merge to `main` the same day the branch first deploys to dev; readings have a 90-day buffer so only the crossword is at risk, and it self-heals (today + tomorrow check) on prod's first scheduled run after deploy. Optionally trigger `generateDailyCrossword` in prod manually right after the `main` deploy.
-* [ ] **Stale feature branches re-flipping dev.** Any other `feature/*` branch not rebased onto this change will redeploy the *old* functions code to dev, putting dev back into generate mode (spending dev Gemini credit) and re-enabling dev's old `getPromotionContent`. Prod is unaffected (it's running the new code from `main`). Acceptable — note it in `ACTIVE_CYCLE.md` so it isn't mistaken for a regression; resolves as branches rebase.
-* [ ] **Prod Gemini key funding.** Prod's `GEMINI_API_KEY` (secret version 2) becomes the key for editorial generation too. Verify it's on a funded/post-pay plan before the flip — if it's the same kind of AI Studio prepay account that ran dry in dev, this ticket moves the single point of failure rather than removing it, and the new alerts are the only safety net.
-* [ ] **URL construction.** Confirm `https://northamerica-northeast1-mrt2-app-prod.cloudfunctions.net/getPromotionContent` resolves after first prod deploy, and that the invoker binding exists (`gcloud run services get-iam-policy getpromotioncontent --project mrt2-app-prod --region northamerica-northeast1`) — the same unverifiable-until-deploy check PROJ-42 §15 flagged, which surfaced a real bug last time (2026-09-28 amendment).
+* [x] **Deploy-ordering window.** *(2026-09-30: merged same day; prod crossword triggered manually right after the `main` deploy.)* `feature/*` deploys to dev before `main` deploys to prod. Between the dev deploy of this branch and the prod deploy of `main`: dev stops generating and starts calling prod's not-yet-existing `getPromotionContent`, while prod (old code) still syncs from dev's now-403ing endpoint → **prod gets no new content in that window.** Mitigations: merge to `main` the same day the branch first deploys to dev; readings have a 90-day buffer so only the crossword is at risk, and it self-heals (today + tomorrow check) on prod's first scheduled run after deploy. Optionally trigger `generateDailyCrossword` in prod manually right after the `main` deploy.
+* [x] **Stale feature branches re-flipping dev.** *(Noted in `ACTIVE_CYCLE.md` at close.)* Any other `feature/*` branch not rebased onto this change will redeploy the *old* functions code to dev, putting dev back into generate mode (spending dev Gemini credit) and re-enabling dev's old `getPromotionContent`. Prod is unaffected (it's running the new code from `main`). Acceptable — note it in `ACTIVE_CYCLE.md` so it isn't mistaken for a regression; resolves as branches rebase.
+* [ ] **Prod Gemini key funding.** *(Partially verified 2026-09-30: prod's key is distinct from dev's (secret hashes differ) and returns 200 on `gemini-3.5-flash-lite`, and prod generated both puzzles. **Not verified:** whether it's on prepay or post-pay billing — check in AI Studio; if prepay, the new alerts are the only safety net.)* Prod's `GEMINI_API_KEY` (secret version 2) becomes the key for editorial generation too. Verify it's on a funded/post-pay plan before the flip — if it's the same kind of AI Studio prepay account that ran dry in dev, this ticket moves the single point of failure rather than removing it, and the new alerts are the only safety net.
+* [x] **URL construction.** *(2026-09-30: dev's sync reached prod's endpoint (`synced 2 … from source`); `get-iam-policy` shows only `serviceAccount:1040431613138-compute@developer.gserviceaccount.com` as `roles/run.invoker`.)* Confirm `https://northamerica-northeast1-mrt2-app-prod.cloudfunctions.net/getPromotionContent` resolves after first prod deploy, and that the invoker binding exists (`gcloud run services get-iam-policy getpromotioncontent --project mrt2-app-prod --region northamerica-northeast1`) — the same unverifiable-until-deploy check PROJ-42 §15 flagged, which surfaced a real bug last time (2026-09-28 amendment).
 
 ---
 
 ## 5. QA & Verification 🧪
-* [ ] **Unit Tests (`functions/src/index.test.ts`):**
+* [x] **Unit Tests (`functions/src/index.test.ts`):** *(26 added; 174 functions tests pass.)*
   * Source/sync gating: with `GCLOUD_PROJECT=mrt2-app-prod`, `generateDailyCrossword` generates and does not call the sync fetch; with `mrt2-app-dev`, it syncs and never constructs a Gemini client.
   * Same pair for `checkBufferHealth`.
   * `getPromotionContent`: 403 outside prod; 400 on a range over the cap; 400 on invalid collection (existing).
   * Alerting: Gemini throw → `logOpsAlert` written; `ok === false` → alert; today's doc absent after run → "missing" alert; sync `synced === 0` → alert.
-* [ ] **Integration (post-deploy, manual):**
+* [~] **Integration (post-deploy, manual):** *(2026-09-30: prod generated `2026-09-30` "Distress Tolerance" + `2026-10-01` "Letting Go"; dev logged `synced 2 crossword_puzzles docs from source`; IAM verified. **Not run:** the unauthenticated-`curl` 403 check and the invalid-key alert-path test — first real alert-path evidence will be the next genuine failure, or the 2026-10-01 00:01 UTC `checkBufferHealth` run's outcome.)*
   * Prod: trigger `generateDailyCrossword` manually → today + tomorrow docs exist in `mrt2-app-prod/crossword_puzzles`; logs show generation, not sync.
   * Dev: trigger → logs show `synced 2` from prod.
   * IAM: `get-iam-policy` on prod's `getpromotioncontent` shows only dev's compute SA as `roles/run.invoker`; an unauthenticated `curl` returns 403.
   * Alert path: temporarily point dev (via the Phase 1 escape hatch, or the emulator) at an invalid key → a `client_errors` row appears and is visible in the admin `ErrorLogViewer`.
-* [ ] **The Subway Test:** N/A — server-only change; client offline behaviour unchanged.
-* [ ] **The "Lost PIN" Test:** N/A — no encrypted data involved.
-* [ ] **Docs to update on close:** `CLAUDE.md` (PROJ-79 server-side Gemini note: dev → prod), `docs/projects/42_DAILY_READINGS.md` §15 and `docs/projects/79_DAILY_CROSSWORD.md` §5 (add a pointer to this spec as the superseding direction), the promotion comment block in `functions/src/index.ts`.
+* [x] **The Subway Test:** N/A — server-only change; client offline behaviour unchanged.
+* [x] **The "Lost PIN" Test:** N/A — no encrypted data involved.
+* [x] **Docs to update on close:** *(Done in PR #244.)* `CLAUDE.md` (PROJ-79 server-side Gemini note: dev → prod), `docs/projects/42_DAILY_READINGS.md` §15 and `docs/projects/79_DAILY_CROSSWORD.md` §5 (add a pointer to this spec as the superseding direction), the promotion comment block in `functions/src/index.ts`.
 
 **Rollback:** `git revert` restores the old direction. Because both environments' collections already hold the same content, reverting needs no data migration — only a redeploy of both projects (and the same deploy-ordering window as above, in reverse). No schema or rules changes to unwind.
