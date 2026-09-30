@@ -66,6 +66,7 @@
 | ⚪ Planned | `PROJ-37` | **Secure Handshake Protocol** | Lisa | Local QR-code generation to share encrypted 4th-step inventory directly to a sponsor. |
 
 ## ✅ RECENTLY SHIPPED
+* `PROJ-122` Editorial Pipeline — Prod as Source of Truth (Editorial pipeline flipped to prod-as-source (prod generates daily_readings/crossword_puzzles, dev syncs via getPromotionContent), plus logOpsAlert on every generation/sync failure path; restored Daily Crossword after dev's Gemini credits ran out 2026-09-25.)
 * `PROJ-105` Google Play Billing for Android TWA (Native one-tap $3.99/mo Supporter subscription in the Play Store TWA via Digital Goods API + Payment Request API, backend verification callable, RTDN Pub/Sub renewal/cancellation sync, dual-source tier gating, and defensive SKU whitespace trimming (PR #236), verified working on real device 2026-09-15.)
 * `PROJ-112` Recovery Reentry State (Recovery Reentry: suppresses Journal Streak/Habit Fire/Vitality Rhythm on Profile Achievements with warm copy after a 14+ day lastLogin gap, resurfacing after 7 days of renewed activity; adds a one-time dailyBeacon push notification for the same threshold, with client-side fallback (useRecoveryReentry) for users without a registered push token.)
 * `PROJ-113` Daily Inspirational Image (Admin-uploaded daily inspirational image library (Firebase Storage), nightly round-robin rotation into daily_images/{date}, a once-per-day Dashboard popup with native share and a structured linkedImageId reference on journal entries created from it.)
